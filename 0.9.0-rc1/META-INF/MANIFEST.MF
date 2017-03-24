@@ -1,0 +1,96 @@
+Manifest-Version: 1.0
+Build-Jdk: 1.8.0_111
+Built-By: mohammad
+Created-By: Apache Maven
+Archiver-Version: Plexus Archiver
+
+Name: com/microsoft/azure/documentdb/rx/AsyncDocumentClient.Builder.ht
+ ml
+SHA1-Digest: deqHNn4slXX/hT8Zska37lqyysA=
+
+Name: com/microsoft/azure/documentdb/package-frame.html
+SHA1-Digest: KlQcaWWnyuLBfY1MtPI96bchtiU=
+
+Name: com/microsoft/azure/documentdb/class-use/FeedResponsePage.html
+SHA1-Digest: JZEgmSxYRJgT3UUKc+j6BPZQKVc=
+
+Name: com/microsoft/azure/documentdb/rx/package-summary.html
+SHA1-Digest: Ow79U5AwW0kttKDXZUMSE6H77AA=
+
+Name: index-all.html
+SHA1-Digest: kGS+CryUHjh0H90vpC8L85Oo25c=
+
+Name: allclasses-frame.html
+SHA1-Digest: drqJk6c9rPQa98yNdPx/alUGa3U=
+
+Name: overview-frame.html
+SHA1-Digest: vP0BWu1r2P7yjQ7BVsl5CZOG+vw=
+
+Name: overview-summary.html
+SHA1-Digest: Nrxijw9uUXaftZ4NfDUcqFGVTEc=
+
+Name: deprecated-list.html
+SHA1-Digest: IME6UmEul27pjserzFCbfB+smf4=
+
+Name: com/microsoft/azure/documentdb/rx/class-use/AsyncDocumentClient.
+ html
+SHA1-Digest: BLNl4IxAoDzKV5Hw1Z7+pChFKR8=
+
+Name: overview-tree.html
+SHA1-Digest: B0tj7XXAnJK/4A8oSs12HPud+fo=
+
+Name: com/microsoft/azure/documentdb/rx/package-frame.html
+SHA1-Digest: v/N+hLZk5wQCFM7DbRefPYeEylo=
+
+Name: constant-values.html
+SHA1-Digest: ayPRDa8vNtZeRG+pI5WX9v6rUPA=
+
+Name: com/microsoft/azure/documentdb/rx/AsyncDocumentClient.html
+SHA1-Digest: RfkgDMvJc++5H1AhHHDuoVQpyl4=
+
+Name: com/microsoft/azure/documentdb/BridgeInternal.html
+SHA1-Digest: 2kGFqo5KalsHo/5w2eA2AGi/rEM=
+
+Name: com/microsoft/azure/documentdb/FeedResponsePage.html
+SHA1-Digest: XSrIb5u5FQS1gcpYDMXLfGKtA2w=
+
+Name: com/microsoft/azure/documentdb/package-tree.html
+SHA1-Digest: XIXbqB5n0yJZyeIX2vwldmR4I7A=
+
+Name: com/microsoft/azure/documentdb/package-use.html
+SHA1-Digest: 5qY55eRey5oZSaQq1ldj8DZ2VIs=
+
+Name: com/microsoft/azure/documentdb/class-use/BridgeInternal.html
+SHA1-Digest: 4jpII2wYPOD591kvjmt1WKtPZWY=
+
+Name: com/microsoft/azure/documentdb/rx/package-use.html
+SHA1-Digest: xHkgqKmkBvfDy+j/SO7nWGC1CRQ=
+
+Name: package-list
+SHA1-Digest: ZZtPr7YN4ZI722qVgxH3FID+vAY=
+
+Name: allclasses-noframe.html
+SHA1-Digest: hVIPr25SKng+6TCq4/3XthN6GEw=
+
+Name: help-doc.html
+SHA1-Digest: UwU5JrWD4HPaIiwm6m+j/JYlyf4=
+
+Name: script.js
+SHA1-Digest: WOUVHUkgmi4SuYjoTpp0t4HGii4=
+
+Name: stylesheet.css
+SHA1-Digest: kcBMV6eK7C3KCWJ9i8hX9QLmoSI=
+
+Name: index.html
+SHA1-Digest: h1ZRLwJmGB0QuK3yRPVtSXA02sE=
+
+Name: com/microsoft/azure/documentdb/package-summary.html
+SHA1-Digest: olZtASR/R/XrOff0j1Gay8KHFBk=
+
+Name: com/microsoft/azure/documentdb/rx/package-tree.html
+SHA1-Digest: 93iUL19jKWPQ+6nQXk1Yf5jWep8=
+
+Name: com/microsoft/azure/documentdb/rx/class-use/AsyncDocumentClient.
+ Builder.html
+SHA1-Digest: r43OqHM6WiZFd8ZwEj62OiuUnx4=
+
