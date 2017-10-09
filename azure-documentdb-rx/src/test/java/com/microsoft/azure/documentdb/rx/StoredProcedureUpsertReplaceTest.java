@@ -38,9 +38,9 @@ import com.microsoft.azure.documentdb.StoredProcedure;
 
 import rx.Observable;
 
-public class StoredProcedureCrudTest extends TestSuiteBase {
+public class StoredProcedureUpsertReplaceTest extends TestSuiteBase {
 
-    public final static String DATABASE_ID = getDatabaseId(StoredProcedureCrudTest.class);
+    public final static String DATABASE_ID = getDatabaseId(StoredProcedureUpsertReplaceTest.class);
 
     private static AsyncDocumentClient houseKeepingClient;
     private static Database createdDatabase;
@@ -50,69 +50,79 @@ public class StoredProcedureCrudTest extends TestSuiteBase {
     private AsyncDocumentClient client;
 
     @Factory(dataProvider = "clientBuilders")
-    public StoredProcedureCrudTest(AsyncDocumentClient.Builder clientBuilder) {
+    public StoredProcedureUpsertReplaceTest(AsyncDocumentClient.Builder clientBuilder) {
         this.clientBuilder = clientBuilder;
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
-    public void createStoredProcedure() throws Exception {
-
+    public void upsertStoredProcedure() throws Exception {
+        
         // create a stored procedure
         StoredProcedure storedProcedureDef = new StoredProcedure();
         storedProcedureDef.setId(UUID.randomUUID().toString());
         storedProcedureDef.setBody("function() {var x = 10;}");
+        StoredProcedure readBackSp = client.upsertStoredProcedure(getCollectionLink(), storedProcedureDef, null).toBlocking().single().getResource();
 
-        Observable<ResourceResponse<StoredProcedure>> createObservable = client.createStoredProcedure(getCollectionLink(), storedProcedureDef, null);
+        //read back stored procedure
+        Observable<ResourceResponse<StoredProcedure>> readObservable = client.readStoredProcedure(readBackSp.getSelfLink(), null);
 
         // validate stored procedure creation
-        ResourceResponseValidator<StoredProcedure> validator = new ResourceResponseValidator.Builder<StoredProcedure>()
-                .withId(storedProcedureDef.getId())
+        ResourceResponseValidator<StoredProcedure> validatorForRead = new ResourceResponseValidator.Builder<StoredProcedure>()
+                .withId(readBackSp.getId())
                 .withBody("function() {var x = 10;}", StoredProcedure.class)
                 .notNullEtag()
                 .build();
-        validateSuccess(createObservable, validator);
+        validateSuccess(readObservable, validatorForRead);
+        
+        //update stored procedure
+        readBackSp.setBody("function() {var x = 11;}");
+
+        Observable<ResourceResponse<StoredProcedure>> updateObservable = client.upsertStoredProcedure(getCollectionLink(), readBackSp, null);
+
+        // validate stored procedure update
+        ResourceResponseValidator<StoredProcedure> validatorForUpdate = new ResourceResponseValidator.Builder<StoredProcedure>()
+                .withId(readBackSp.getId())
+                .withBody("function() {var x = 11;}", StoredProcedure.class)
+                .notNullEtag()
+                .build();
+        validateSuccess(updateObservable, validatorForUpdate);   
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
-    public void readStoredProcedure() throws Exception {
+    public void replaceStoredProcedure() throws Exception {
+
         // create a stored procedure
         StoredProcedure storedProcedureDef = new StoredProcedure();
         storedProcedureDef.setId(UUID.randomUUID().toString());
-        storedProcedureDef.setBody("function() {var x = 10;}");
-        StoredProcedure storedProcedure = client.createStoredProcedure(getCollectionLink(), storedProcedureDef, null).toBlocking().single().getResource();
+        storedProcedureDef.setBody("function() {var x = 10;}");        
+        StoredProcedure readBackSp = client.createStoredProcedure(getCollectionLink(), storedProcedureDef, null).toBlocking().single().getResource();
+        
+        // read stored procedure to validate creation
+        Observable<ResourceResponse<StoredProcedure>> readObservable = client.readStoredProcedure(readBackSp.getSelfLink(), null);
 
-        // read stored procedure
-        Observable<ResourceResponse<StoredProcedure>> readObservable = client.readStoredProcedure(storedProcedure.getSelfLink(), null);
-
-
-        ResourceResponseValidator<StoredProcedure> validator = new ResourceResponseValidator.Builder<StoredProcedure>()
-                .withId(storedProcedureDef.getId())
+        // validate stored procedure creation
+        ResourceResponseValidator<StoredProcedure> validatorForRead = new ResourceResponseValidator.Builder<StoredProcedure>()
+                .withId(readBackSp.getId())
                 .withBody("function() {var x = 10;}", StoredProcedure.class)
                 .notNullEtag()
                 .build();
-        validateSuccess(readObservable, validator);
-    }
+        validateSuccess(readObservable, validatorForRead);
+        
+        //update stored procedure
+        readBackSp.setBody("function() {var x = 11;}");
 
-    @Test(groups = { "simple" }, timeOut = TIMEOUT)
-    public void deleteStoredProcedure() throws Exception {
-        // create a stored procedure
-        StoredProcedure storedProcedureDef = new StoredProcedure();
-        storedProcedureDef.setId(UUID.randomUUID().toString());
-        storedProcedureDef.setBody("function() {var x = 10;}");
-        StoredProcedure storedProcedure = client.createStoredProcedure(getCollectionLink(), storedProcedureDef, null).toBlocking().single().getResource();
+        Observable<ResourceResponse<StoredProcedure>> replaceObservable = client.replaceStoredProcedure(readBackSp, null);
 
-        // delete
-        Observable<ResourceResponse<StoredProcedure>> deleteObservable = client.deleteStoredProcedure(storedProcedure.getSelfLink(), null);
-
-        // validate
-        ResourceResponseValidator<StoredProcedure> validator = new ResourceResponseValidator.Builder<StoredProcedure>()
-                .nullResource()
+        //validate stored procedure replace
+        ResourceResponseValidator<StoredProcedure> validatorForReplace = new ResourceResponseValidator.Builder<StoredProcedure>()
+                .withId(readBackSp.getId())
+                .withBody("function() {var x = 11;}", StoredProcedure.class)
+                .notNullEtag()
                 .build();
-        validateSuccess(deleteObservable, validator);
-
-        //TODO validate after deletion the resource is actually deleted (not found)
+        validateSuccess(replaceObservable, validatorForReplace);   
     }
 
+    
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
         this.client = this.clientBuilder.build();       
@@ -129,9 +139,17 @@ public class StoredProcedureCrudTest extends TestSuiteBase {
         Database d = new Database();
         d.setId(DATABASE_ID);
         createdDatabase = safeCreateDatabase(houseKeepingClient, d);
-        createdCollection = safeCreateCollection(houseKeepingClient, createdDatabase.getSelfLink(), getCollectionDefinition());
+        createdCollection = safeCreateCollection(houseKeepingClient, createdDatabase.getSelfLink(), getCollectionDefinitionSinglePartition());
     }
+    
+    private static DocumentCollection getCollectionDefinitionSinglePartition() {
+        
+        DocumentCollection collectionDefinition = new DocumentCollection();
+        collectionDefinition.setId(UUID.randomUUID().toString());
 
+        return collectionDefinition;
+    }
+    
     @AfterSuite(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public static void afterSuite() {
 

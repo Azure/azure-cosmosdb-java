@@ -34,13 +34,13 @@ import org.testng.annotations.Test;
 import com.microsoft.azure.documentdb.Database;
 import com.microsoft.azure.documentdb.DocumentCollection;
 import com.microsoft.azure.documentdb.ResourceResponse;
-import com.microsoft.azure.documentdb.StoredProcedure;
+import com.microsoft.azure.documentdb.UserDefinedFunction;
 
 import rx.Observable;
 
-public class StoredProcedureCrudTest extends TestSuiteBase {
+public class UserDefinedFunctionCrudTest extends TestSuiteBase {
 
-    public final static String DATABASE_ID = getDatabaseId(StoredProcedureCrudTest.class);
+    public final static String DATABASE_ID = getDatabaseId(UserDefinedFunctionCrudTest.class);
 
     private static AsyncDocumentClient houseKeepingClient;
     private static Database createdDatabase;
@@ -50,62 +50,61 @@ public class StoredProcedureCrudTest extends TestSuiteBase {
     private AsyncDocumentClient client;
 
     @Factory(dataProvider = "clientBuilders")
-    public StoredProcedureCrudTest(AsyncDocumentClient.Builder clientBuilder) {
+    public UserDefinedFunctionCrudTest(AsyncDocumentClient.Builder clientBuilder) {
         this.clientBuilder = clientBuilder;
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
-    public void createStoredProcedure() throws Exception {
+    public void createUserDefinedFunction() throws Exception {
+        // create udf
+        UserDefinedFunction udf = new UserDefinedFunction();
+        udf.setId(UUID.randomUUID().toString());
+        udf.setBody("function() {var x = 10;}");
 
-        // create a stored procedure
-        StoredProcedure storedProcedureDef = new StoredProcedure();
-        storedProcedureDef.setId(UUID.randomUUID().toString());
-        storedProcedureDef.setBody("function() {var x = 10;}");
+        Observable<ResourceResponse<UserDefinedFunction>> createObservable = client.createUserDefinedFunction(getCollectionLink(), udf, null);
 
-        Observable<ResourceResponse<StoredProcedure>> createObservable = client.createStoredProcedure(getCollectionLink(), storedProcedureDef, null);
-
-        // validate stored procedure creation
-        ResourceResponseValidator<StoredProcedure> validator = new ResourceResponseValidator.Builder<StoredProcedure>()
-                .withId(storedProcedureDef.getId())
-                .withBody("function() {var x = 10;}", StoredProcedure.class)
+        // validate udf creation
+        ResourceResponseValidator<UserDefinedFunction> validator = new ResourceResponseValidator.Builder<UserDefinedFunction>()
+                .withId(udf.getId())
+                .withBody("function() {var x = 10;}", UserDefinedFunction.class)
                 .notNullEtag()
                 .build();
         validateSuccess(createObservable, validator);
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
-    public void readStoredProcedure() throws Exception {
-        // create a stored procedure
-        StoredProcedure storedProcedureDef = new StoredProcedure();
-        storedProcedureDef.setId(UUID.randomUUID().toString());
-        storedProcedureDef.setBody("function() {var x = 10;}");
-        StoredProcedure storedProcedure = client.createStoredProcedure(getCollectionLink(), storedProcedureDef, null).toBlocking().single().getResource();
+    public void readUserDefinedFunction() throws Exception {
+        // create a udf
+        UserDefinedFunction udf = new UserDefinedFunction();
+        udf.setId(UUID.randomUUID().toString());
+        udf.setBody("function() {var x = 10;}");
+        UserDefinedFunction readBackUdf = client.createUserDefinedFunction(getCollectionLink(), udf, null).toBlocking().single().getResource();
 
-        // read stored procedure
-        Observable<ResourceResponse<StoredProcedure>> readObservable = client.readStoredProcedure(storedProcedure.getSelfLink(), null);
+        // read udf
+        Observable<ResourceResponse<UserDefinedFunction>> readObservable = client.readUserDefinedFunction(readBackUdf.getSelfLink(), null);
 
-
-        ResourceResponseValidator<StoredProcedure> validator = new ResourceResponseValidator.Builder<StoredProcedure>()
-                .withId(storedProcedureDef.getId())
-                .withBody("function() {var x = 10;}", StoredProcedure.class)
+        //validate udf read
+        ResourceResponseValidator<UserDefinedFunction> validator = new ResourceResponseValidator.Builder<UserDefinedFunction>()
+                .withId(udf.getId())
+                .withBody("function() {var x = 10;}", UserDefinedFunction.class)
                 .notNullEtag()
                 .build();
         validateSuccess(readObservable, validator);
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
-    public void deleteStoredProcedure() throws Exception {
-        // create a stored procedure
-        StoredProcedure storedProcedureDef = new StoredProcedure();
-        storedProcedureDef.setId(UUID.randomUUID().toString());
-        storedProcedureDef.setBody("function() {var x = 10;}");
-        StoredProcedure storedProcedure = client.createStoredProcedure(getCollectionLink(), storedProcedureDef, null).toBlocking().single().getResource();
+    public void deleteUserDefinedFunction() throws Exception {
+        // create a udf
+        UserDefinedFunction udf = new UserDefinedFunction();
+        udf.setId(UUID.randomUUID().toString());
+        udf.setBody("function() {var x = 10;}");
+        UserDefinedFunction readBackUdf = client.createUserDefinedFunction(getCollectionLink(), udf, null).toBlocking().single().getResource();
 
-        // delete
-        Observable<ResourceResponse<StoredProcedure>> deleteObservable = client.deleteStoredProcedure(storedProcedure.getSelfLink(), null);
+        // delete udf
+        Observable<ResourceResponse<UserDefinedFunction>> deleteObservable = client.deleteUserDefinedFunction(readBackUdf.getSelfLink(), null);
 
-        // validate
-        ResourceResponseValidator<StoredProcedure> validator = new ResourceResponseValidator.Builder<StoredProcedure>()
+        // validate udf delete
+        ResourceResponseValidator<UserDefinedFunction> validator = new ResourceResponseValidator.Builder<UserDefinedFunction>()
                 .nullResource()
                 .build();
         validateSuccess(deleteObservable, validator);

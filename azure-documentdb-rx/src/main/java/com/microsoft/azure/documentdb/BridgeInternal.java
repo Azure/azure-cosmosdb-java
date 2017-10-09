@@ -30,6 +30,7 @@ import com.microsoft.azure.documentdb.internal.AbstractDocumentServiceRequest;
 import com.microsoft.azure.documentdb.internal.CollectionCacheInternal;
 import com.microsoft.azure.documentdb.internal.DocumentServiceResponse;
 import com.microsoft.azure.documentdb.internal.EndpointManager;
+import com.microsoft.azure.documentdb.internal.HttpConstants;
 import com.microsoft.azure.documentdb.internal.UserAgentContainer;
 import com.microsoft.azure.documentdb.internal.routing.ClientCollectionCache;
 import com.microsoft.azure.documentdb.rx.AsyncDocumentClient;
@@ -53,6 +54,24 @@ public class BridgeInternal {
 
     public static <T extends Resource> ResourceResponse<T> toResourceResponse(DocumentServiceResponse response, Class<T> cls) {
         return new ResourceResponse<T>(response, cls);
+    }
+    
+    public static StoredProcedureResponse toStoredProcedureResponse(DocumentServiceResponse response) {
+        return new StoredProcedureResponse(response);
+    }
+
+    public static DatabaseAccount toDatabaseAccount(DocumentServiceResponse response) {
+        DatabaseAccount account = response.getResource(DatabaseAccount.class);
+
+        // read the headers and set to the account
+        Map<String, String> responseHeader = response.getResponseHeaders();
+
+        account.setMaxMediaStorageUsageInMB(Long.valueOf(responseHeader.get(
+                HttpConstants.HttpHeaders.MAX_MEDIA_STORAGE_USAGE_IN_MB)));
+        account.setMediaStorageUsageInMB(Long.valueOf(responseHeader.get(
+                HttpConstants.HttpHeaders.CURRENT_MEDIA_STORAGE_USAGE_IN_MB)));
+
+        return account;
     }
     
     public static void validateResource(Resource resource){

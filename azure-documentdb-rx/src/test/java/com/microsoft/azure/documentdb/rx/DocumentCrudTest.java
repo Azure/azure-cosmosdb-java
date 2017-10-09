@@ -195,6 +195,26 @@ public class DocumentCrudTest extends TestSuiteBase {
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
+    public void replaceDocument_UsingDocumentLink() throws Exception {
+        // create a document
+        Document docDefinition = getDocumentDefinition();
+
+        Document document = client
+                .createDocument(getCollectionLink(), docDefinition, null, false).toBlocking().single().getResource();
+
+        String newPropValue = UUID.randomUUID().toString();
+        document.set("newProp", newPropValue);
+
+        // replace document
+        Observable<ResourceResponse<Document>> readObservable = client.replaceDocument(document.getSelfLink(), document, null);
+
+        // validate
+        ResourceResponseValidator<Document> validator = new ResourceResponseValidator.Builder<Document>()
+                .withProperty("newProp", newPropValue).build();
+        validateSuccess(readObservable, validator);
+    }
+    
+    @Test(groups = { "simple" }, timeOut = TIMEOUT)
     public void upsertDocument_CreateDocument() throws Exception {
         // create a document
         Document docDefinition = getDocumentDefinition();

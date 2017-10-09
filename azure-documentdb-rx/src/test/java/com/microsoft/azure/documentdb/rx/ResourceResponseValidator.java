@@ -28,12 +28,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.assertj.core.api.Condition;
+import org.json.JSONObject;
 
+import com.microsoft.azure.documentdb.Attachment;
 import com.microsoft.azure.documentdb.DocumentCollection;
 import com.microsoft.azure.documentdb.IndexingMode;
+import com.microsoft.azure.documentdb.Offer;
 import com.microsoft.azure.documentdb.Resource;
 import com.microsoft.azure.documentdb.ResourceResponse;
 import com.microsoft.azure.documentdb.StoredProcedure;
+import com.microsoft.azure.documentdb.Trigger;
+import com.microsoft.azure.documentdb.TriggerOperation;
+import com.microsoft.azure.documentdb.TriggerType;
+import com.microsoft.azure.documentdb.UserDefinedFunction;
 
 public interface ResourceResponseValidator<T extends Resource> {
 
@@ -118,17 +125,35 @@ public interface ResourceResponseValidator<T extends Resource> {
             return this;
         }
 
-        public Builder<T> withBody(String storedProcedureFunction) {
-            validators.add(new ResourceResponseValidator<StoredProcedure>() {
+        public Builder<T> withBody(String functionBody, Class cls) {
+            if (cls.equals(StoredProcedure.class)) {
+                validators.add(new ResourceResponseValidator<StoredProcedure>() {
 
-                @Override
-                public void validate(ResourceResponse<StoredProcedure> resourceResponse) {
-                    assertThat(resourceResponse.getResource().getBody()).isEqualTo(storedProcedureFunction);
-                }
-            });
+                    @Override
+                    public void validate(ResourceResponse<StoredProcedure> resourceResponse) {
+                        assertThat(resourceResponse.getResource().getBody()).isEqualTo(functionBody);
+                    }
+                });
+            } else if (cls.equals(UserDefinedFunction.class)){
+                validators.add(new ResourceResponseValidator<UserDefinedFunction>() {
+
+                    @Override
+                    public void validate(ResourceResponse<UserDefinedFunction> resourceResponse) {
+                        assertThat(resourceResponse.getResource().getBody()).isEqualTo(functionBody);
+                    }
+                });                
+            } else {
+                validators.add(new ResourceResponseValidator<Trigger>() {
+
+                    @Override
+                    public void validate(ResourceResponse<Trigger> resourceResponse) {
+                        assertThat(resourceResponse.getResource().getBody()).isEqualTo(functionBody);
+                    }
+                });                                
+            }
             return this;
         }
-
+        
         public Builder<T> notNullEtag() {
             validators.add(new ResourceResponseValidator<T>() {
 
@@ -141,6 +166,41 @@ public interface ResourceResponseValidator<T extends Resource> {
             return this;
         }
         
+        public Builder<T> withTriggerInternals(TriggerType type, TriggerOperation op) {
+            validators.add(new ResourceResponseValidator<Trigger>() {
+
+                @Override
+                public void validate(ResourceResponse<Trigger> resourceResponse) {
+                    assertThat(resourceResponse.getResource().getTriggerType()).isEqualTo(type);
+                    assertThat(resourceResponse.getResource().getTriggerOperation()).isEqualTo(op);
+                }
+            });
+            return this;
+        }
+        
+        public Builder<T> withContentType(final String contentType) {
+            validators.add(new ResourceResponseValidator<Attachment>() {
+
+                @Override
+                public void validate(ResourceResponse<Attachment> resourceResponse) {
+                    assertThat(resourceResponse.getResource().getContentType()).isEqualTo(contentType);
+                }
+            });
+            return this;
+        }
+
+        public Builder<T> withOfferThroughput(int throughput) {
+            validators.add(new ResourceResponseValidator<Offer>() {
+
+                @Override
+                public void validate(ResourceResponse<Offer> resourceResponse) {
+                    assertThat(resourceResponse.getResource().getContent().getInt("offerThroughput")).isEqualTo(throughput);
+                }
+            });
+            return this;
+        }
+
+        
         public Builder<T> validatePropertyCondition(String key, Condition<Object> condition) {
             validators.add(new ResourceResponseValidator<T>() {
 
@@ -152,6 +212,6 @@ public interface ResourceResponseValidator<T extends Resource> {
                 }
             });
             return this;
-        }
+        }        
     }
 }

@@ -35,9 +35,12 @@ import com.microsoft.azure.documentdb.ConnectionMode;
 import com.microsoft.azure.documentdb.ConnectionPolicy;
 import com.microsoft.azure.documentdb.ConsistencyLevel;
 import com.microsoft.azure.documentdb.Database;
+import com.microsoft.azure.documentdb.Document;
 import com.microsoft.azure.documentdb.DocumentClient;
 import com.microsoft.azure.documentdb.DocumentCollection;
+import com.microsoft.azure.documentdb.FeedOptions;
 import com.microsoft.azure.documentdb.FeedResponsePage;
+import com.microsoft.azure.documentdb.PartitionKey;
 import com.microsoft.azure.documentdb.PartitionKeyDefinition;
 import com.microsoft.azure.documentdb.RequestOptions;
 import com.microsoft.azure.documentdb.Resource;
@@ -69,10 +72,21 @@ public class TestSuiteBase {
                 databaseLink, collection, null)
                 .toBlocking().single().getResource();
     }
+    
+    public static Document createDocument(AsyncDocumentClient client, String collectionLink, Document document) {
+        return client.createDocument(
+                collectionLink, document, null, false)
+                .toBlocking().single().getResource();
+    }
 
     public static DocumentCollection safeCreateCollection(AsyncDocumentClient client, String databaseLink, DocumentCollection collection) {
         deleteCollectionIfExists(client, databaseLink, collection.getId());
         return createCollection(client, databaseLink, collection);
+    }
+
+    public static Document safeCreateDocument(AsyncDocumentClient client, String collectionLink, Document document) {
+        deleteDocumentIfExists(client, collectionLink, document.getId());
+        return createDocument(client, collectionLink, document);
     }
 
     public static String getCollectionLink(DocumentCollection collection) {
@@ -93,7 +107,7 @@ public class TestSuiteBase {
 
         return collectionDefinition;
     }
-
+    
     public static void deleteCollectionIfExists(AsyncDocumentClient client, String databaseLink, String collectionId) {
        List<DocumentCollection> res = client.queryCollections(databaseLink, 
                 String.format("SELECT * FROM root r where r.id = '%s'", collectionId), null).toBlocking().single().getResults();
@@ -106,6 +120,21 @@ public class TestSuiteBase {
         client.deleteCollection(collectionLink, null).toBlocking().single();
     }
 
+    public static void deleteDocumentIfExists(AsyncDocumentClient client, String collectionLink, String docId) {
+        FeedOptions options = new FeedOptions();
+        options.setPartitionKey(new PartitionKey(docId));
+        List<Document> res = client.queryDocuments(collectionLink, 
+                 String.format("SELECT * FROM root r where r.id = '%s'", docId), options).toBlocking().single().getResults();
+        if (!res.isEmpty()) {
+            deleteDocument(client, Utils.getDocumentNameLink(collectionLink, docId));
+        }
+     }
+     
+     public static void deleteDocument(AsyncDocumentClient client, String documentLink) {
+         client.deleteCollection(documentLink, null).toBlocking().single();
+     }
+
+    
     public static String getDatabaseLink(Database database) {
         return database.getSelfLink();
     }
