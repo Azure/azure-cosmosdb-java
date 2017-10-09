@@ -35,9 +35,7 @@ import com.microsoft.azure.documentdb.Attachment;
 import com.microsoft.azure.documentdb.Database;
 import com.microsoft.azure.documentdb.Document;
 import com.microsoft.azure.documentdb.DocumentCollection;
-import com.microsoft.azure.documentdb.MediaOptions;
 import com.microsoft.azure.documentdb.PartitionKey;
-import com.microsoft.azure.documentdb.ReadableStream;
 import com.microsoft.azure.documentdb.RequestOptions;
 import com.microsoft.azure.documentdb.ResourceResponse;
 
