@@ -1,6 +1,6 @@
 /**
  * The MIT License (MIT)
- * Copyright (c) 2016 Microsoft Corporation
+ * Copyright (c) 2017 Microsoft Corporation
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -34,7 +34,6 @@ import org.testng.annotations.Test;
 import com.microsoft.azure.documentdb.Database;
 import com.microsoft.azure.documentdb.DocumentCollection;
 import com.microsoft.azure.documentdb.ResourceResponse;
-import com.microsoft.azure.documentdb.StoredProcedure;
 import com.microsoft.azure.documentdb.Trigger;
 import com.microsoft.azure.documentdb.TriggerOperation;
 import com.microsoft.azure.documentdb.TriggerType;
@@ -74,7 +73,7 @@ public class TriggerUpsertReplaceTest extends TestSuiteBase {
         // validate trigger creation
         ResourceResponseValidator<Trigger> validatorForRead = new ResourceResponseValidator.Builder<Trigger>()
                 .withId(readBackTrigger.getId())
-                .withBody("function() {var x = 10;}", Trigger.class)
+                .withTriggerBody("function() {var x = 10;}")
                 .withTriggerInternals(TriggerType.Pre, TriggerOperation.Create)
                 .notNullEtag()
                 .build();
@@ -88,7 +87,7 @@ public class TriggerUpsertReplaceTest extends TestSuiteBase {
         // validate trigger update
         ResourceResponseValidator<Trigger> validatorForUpdate = new ResourceResponseValidator.Builder<Trigger>()
                 .withId(readBackTrigger.getId())
-                .withBody("function() {var x = 11;}", Trigger.class)
+                .withTriggerBody("function() {var x = 11;}")
                 .withTriggerInternals(TriggerType.Pre, TriggerOperation.Create)
                 .notNullEtag()
                 .build();
@@ -112,7 +111,7 @@ public class TriggerUpsertReplaceTest extends TestSuiteBase {
         // validate trigger creation
         ResourceResponseValidator<Trigger> validatorForRead = new ResourceResponseValidator.Builder<Trigger>()
                 .withId(readBackTrigger.getId())
-                .withBody("function() {var x = 10;}", Trigger.class)
+                .withTriggerBody("function() {var x = 10;}")
                 .withTriggerInternals(TriggerType.Pre, TriggerOperation.Create)
                 .notNullEtag()
                 .build();
@@ -126,7 +125,7 @@ public class TriggerUpsertReplaceTest extends TestSuiteBase {
         // validate trigger replace
         ResourceResponseValidator<Trigger> validatorForUpdate = new ResourceResponseValidator.Builder<Trigger>()
                 .withId(readBackTrigger.getId())
-                .withBody("function() {var x = 11;}", Trigger.class)
+                .withTriggerBody("function() {var x = 11;}")
                 .withTriggerInternals(TriggerType.Pre, TriggerOperation.Create)
                 .notNullEtag()
                 .build();
@@ -150,7 +149,7 @@ public class TriggerUpsertReplaceTest extends TestSuiteBase {
         Database d = new Database();
         d.setId(DATABASE_ID);
         createdDatabase = safeCreateDatabase(houseKeepingClient, d);
-        createdCollection = safeCreateCollection(houseKeepingClient, createdDatabase.getSelfLink(), getCollectionDefinitionSinglePartition());
+        createdCollection = safeCreateCollection(houseKeepingClient, createdDatabase.getId(), getCollectionDefinitionSinglePartition());
     }
     
     private static DocumentCollection getCollectionDefinitionSinglePartition() {

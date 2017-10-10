@@ -34,6 +34,8 @@ import com.microsoft.azure.documentdb.Attachment;
 import com.microsoft.azure.documentdb.DocumentCollection;
 import com.microsoft.azure.documentdb.IndexingMode;
 import com.microsoft.azure.documentdb.Offer;
+import com.microsoft.azure.documentdb.Permission;
+import com.microsoft.azure.documentdb.PermissionMode;
 import com.microsoft.azure.documentdb.Resource;
 import com.microsoft.azure.documentdb.ResourceResponse;
 import com.microsoft.azure.documentdb.StoredProcedure;
@@ -97,7 +99,7 @@ public interface ResourceResponseValidator<T extends Resource> {
             });
             return this;
         }
-        
+
         public Builder<T> withProperty(String propertyName, Object value) {
             validators.add(new ResourceResponseValidator<T>() {
 
@@ -111,7 +113,28 @@ public interface ResourceResponseValidator<T extends Resource> {
             return this;
         }
 
+        public Builder<T> withPermissionMode(PermissionMode mode) {
+            validators.add(new ResourceResponseValidator<Permission>() {
 
+                @Override
+                public void validate(ResourceResponse<Permission> resourceResponse) {
+                    assertThat(resourceResponse.getResource().getPermissionMode()).isEqualTo(mode);
+                }
+            });
+            return this;
+        }
+        
+        public Builder<T> withPermissionResourceLink(String link) {
+            validators.add(new ResourceResponseValidator<Permission>() {
+
+                @Override
+                public void validate(ResourceResponse<Permission> resourceResponse) {
+                    assertThat(resourceResponse.getResource().getResourceLink()).isEqualTo(link);
+                }
+            });
+            return this;
+        }
+        
         public Builder<T> indexingMode(IndexingMode mode) {
             validators.add(new ResourceResponseValidator<DocumentCollection>() {
 
@@ -125,35 +148,40 @@ public interface ResourceResponseValidator<T extends Resource> {
             return this;
         }
 
-        public Builder<T> withBody(String functionBody, Class cls) {
-            if (cls.equals(StoredProcedure.class)) {
-                validators.add(new ResourceResponseValidator<StoredProcedure>() {
+        public Builder<T> withStoredProcedureBody(String functionBody) {
+            validators.add(new ResourceResponseValidator<StoredProcedure>() {
 
-                    @Override
-                    public void validate(ResourceResponse<StoredProcedure> resourceResponse) {
-                        assertThat(resourceResponse.getResource().getBody()).isEqualTo(functionBody);
-                    }
-                });
-            } else if (cls.equals(UserDefinedFunction.class)){
-                validators.add(new ResourceResponseValidator<UserDefinedFunction>() {
-
-                    @Override
-                    public void validate(ResourceResponse<UserDefinedFunction> resourceResponse) {
-                        assertThat(resourceResponse.getResource().getBody()).isEqualTo(functionBody);
-                    }
-                });                
-            } else {
-                validators.add(new ResourceResponseValidator<Trigger>() {
-
-                    @Override
-                    public void validate(ResourceResponse<Trigger> resourceResponse) {
-                        assertThat(resourceResponse.getResource().getBody()).isEqualTo(functionBody);
-                    }
-                });                                
-            }
+                @Override
+                public void validate(ResourceResponse<StoredProcedure> resourceResponse) {
+                    assertThat(resourceResponse.getResource().getBody()).isEqualTo(functionBody);
+                }
+            });
             return this;
         }
         
+        public Builder<T> withUserDefinedFunctionBody(String functionBody) {
+            validators.add(new ResourceResponseValidator<UserDefinedFunction>() {
+
+                @Override
+                public void validate(ResourceResponse<UserDefinedFunction> resourceResponse) {
+                    assertThat(resourceResponse.getResource().getBody()).isEqualTo(functionBody);
+                }
+            });
+            return this;
+        }
+
+        
+        public Builder<T> withTriggerBody(String functionBody) {
+            validators.add(new ResourceResponseValidator<Trigger>() {
+
+                @Override
+                public void validate(ResourceResponse<Trigger> resourceResponse) {
+                    assertThat(resourceResponse.getResource().getBody()).isEqualTo(functionBody);
+                }
+            });
+            return this;
+        }
+
         public Builder<T> notNullEtag() {
             validators.add(new ResourceResponseValidator<T>() {
 
@@ -165,7 +193,7 @@ public interface ResourceResponseValidator<T extends Resource> {
             });
             return this;
         }
-        
+
         public Builder<T> withTriggerInternals(TriggerType type, TriggerOperation op) {
             validators.add(new ResourceResponseValidator<Trigger>() {
 
@@ -177,7 +205,7 @@ public interface ResourceResponseValidator<T extends Resource> {
             });
             return this;
         }
-        
+
         public Builder<T> withContentType(final String contentType) {
             validators.add(new ResourceResponseValidator<Attachment>() {
 
@@ -194,13 +222,13 @@ public interface ResourceResponseValidator<T extends Resource> {
 
                 @Override
                 public void validate(ResourceResponse<Offer> resourceResponse) {
-                    assertThat(resourceResponse.getResource().getContent().getInt("offerThroughput")).isEqualTo(throughput);
+                    assertThat(resourceResponse.getResource().getContent().getInt("offerThroughput"))
+                            .isEqualTo(throughput);
                 }
             });
             return this;
         }
 
-        
         public Builder<T> validatePropertyCondition(String key, Condition<Object> condition) {
             validators.add(new ResourceResponseValidator<T>() {
 
@@ -212,6 +240,6 @@ public interface ResourceResponseValidator<T extends Resource> {
                 }
             });
             return this;
-        }        
+        }
     }
 }

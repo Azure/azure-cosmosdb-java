@@ -1,6 +1,6 @@
 /**
  * The MIT License (MIT)
- * Copyright (c) 2016 Microsoft Corporation
+ * Copyright (c) 2017 Microsoft Corporation
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -195,7 +195,6 @@ public class AttachmentCrudTest extends TestSuiteBase {
         validateSuccess(updateObservable, validatorForUpdate);   
     }
 
-    
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
         this.client = this.clientBuilder.build();       
@@ -212,8 +211,8 @@ public class AttachmentCrudTest extends TestSuiteBase {
         Database d = new Database();
         d.setId(DATABASE_ID);
         createdDatabase = safeCreateDatabase(houseKeepingClient, d);
-        createdCollection = safeCreateCollection(houseKeepingClient, createdDatabase.getSelfLink(), getCollectionDefinition());
-        createdDocument = safeCreateDocument(houseKeepingClient, createdCollection.getSelfLink(), getDocumentDefinition());
+        createdCollection = safeCreateCollection(houseKeepingClient, createdDatabase.getId(), getCollectionDefinition());
+        createdDocument = safeCreateDocument(houseKeepingClient, createdDatabase.getId(), createdCollection.getId(), getDocumentDefinition());
     }
 
     @AfterSuite(groups = { "simple" }, timeOut = SETUP_TIMEOUT)

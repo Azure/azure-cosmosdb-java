@@ -1,4 +1,5 @@
 /**
+
  * The MIT License (MIT)
  * Copyright (c) 2016 Microsoft Corporation
  * 
@@ -135,6 +136,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
     private final HttpClient<ByteBuf, ByteBuf> rxClient;
     private final EndpointManager globalEndpointManager;
     private final ExecutorService computationExecutor;
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     public RxDocumentClientImpl(URI serviceEndpoint, String masterKey, ConnectionPolicy connectionPolicy,
             ConsistencyLevel consistencyLevel, int eventLoopSize, int computationPoolSize) {
@@ -536,7 +538,6 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
     }
 
     private static String serializeProcedureParams(Object[] objectArray) {
-        ObjectMapper mapper = null;
         String[] stringArray = new String[objectArray.length];
 
         for (int i = 0; i < objectArray.length; ++i) {
@@ -546,9 +547,6 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
             } else if (object instanceof JSONObject){
                 stringArray[i] = object.toString();
             } else {
-                if (mapper == null) {
-                    mapper = new ObjectMapper();
-                }
 
                 // POJO, number, String or Boolean
                 try {
@@ -1148,8 +1146,6 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
     @Override
     public Observable<ResourceResponse<StoredProcedure>> replaceStoredProcedure(StoredProcedure storedProcedure,
             RequestOptions options) {
-
-        //return this.rxWrapperClient.replaceStoredProcedure(storedProcedure, options);
         return Observable.defer(() -> {
             try {
 
@@ -1259,14 +1255,13 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
     @Override
     public Observable<StoredProcedureResponse> executeStoredProcedure(String storedProcedureLink,
             Object[] procedureParams) {
-        //return this.rxWrapperClient.executeStoredProcedure(storedProcedureLink, procedureParams);
         return this.executeStoredProcedure(storedProcedureLink, null, procedureParams);
     }
 
     @Override
     public Observable<StoredProcedureResponse> executeStoredProcedure(String storedProcedureLink,
             RequestOptions options, Object[] procedureParams) {
-        //return this.rxWrapperClient.executeStoredProcedure(storedProcedureLink, options, procedureParams);
+        
         return Observable.defer(() -> {
             try {
                 logger.debug("Executing a StoredProcedure. storedProcedureLink [{}]", storedProcedureLink);
@@ -1302,7 +1297,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
     @Override
     public Observable<ResourceResponse<Trigger>> createTrigger(String collectionLink, Trigger trigger,
             RequestOptions options) {
-        //return this.rxWrapperClient.createTrigger(collectionLink, trigger, options);
+        
         return Observable.defer(() -> {
             try {
                 
@@ -1321,7 +1316,6 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
     @Override
     public Observable<ResourceResponse<Trigger>> upsertTrigger(String collectionLink, Trigger trigger,
             RequestOptions options) {
-        //return this.rxWrapperClient.upsertTrigger(collectionLink, trigger, options);
         
         return Observable.defer(() -> {
             try {
@@ -1360,7 +1354,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
 
     @Override
     public Observable<ResourceResponse<Trigger>> replaceTrigger(Trigger trigger, RequestOptions options) {
-        //return this.rxWrapperClient.replaceTrigger(trigger, options);
+        
         return Observable.defer(() -> {
             try {
                 if (trigger == null) {
@@ -1387,7 +1381,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
 
     @Override
     public Observable<ResourceResponse<Trigger>> deleteTrigger(String triggerLink, RequestOptions options) {
-        //return this.rxWrapperClient.deleteTrigger(triggerLink, options);
+
         return Observable.defer(() -> {
             try {
                 if (StringUtils.isEmpty(triggerLink)) {
@@ -1409,7 +1403,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
 
     @Override
     public Observable<ResourceResponse<Trigger>> readTrigger(String triggerLink, RequestOptions options) {
-        //return this.rxWrapperClient.readTrigger(triggerLink, options);
+
         return Observable.defer(() -> {
             try {
                 if (StringUtils.isEmpty(triggerLink)) {
@@ -1601,7 +1595,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
     @Override
     public Observable<ResourceResponse<Attachment>> createAttachment(String documentLink, Attachment attachment,
             RequestOptions options) {
-        //return this.rxWrapperClient.createAttachment(documentLink, attachment, options);
+
         return Observable.defer(() -> {
             try {
                 logger.debug("Creating a Attachment. documentLink [{}], attachment id [{}]", documentLink, attachment.getId());                
@@ -1618,7 +1612,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
     @Override
     public Observable<ResourceResponse<Attachment>> upsertAttachment(String documentLink, Attachment attachment,
             RequestOptions options) {
-        //return this.rxWrapperClient.upsertAttachment(documentLink, attachment, options);
+
         return Observable.defer(() -> {
             try {
                 logger.debug("Upserting a Attachment. documentLink [{}], attachment id [{}]", documentLink, attachment.getId());                
@@ -1634,7 +1628,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
 
     @Override
     public Observable<ResourceResponse<Attachment>> replaceAttachment(Attachment attachment, RequestOptions options) {
-        //return this.rxWrapperClient.replaceAttachment(attachment, options);
+
         return Observable.defer(() -> {
             try {
                 if (attachment == null) {
@@ -1662,7 +1656,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
 
     @Override
     public Observable<ResourceResponse<Attachment>> deleteAttachment(String attachmentLink, RequestOptions options) {
-        //return this.rxWrapperClient.deleteAttachment(attachmentLink, options);
+
         return Observable.defer(() -> {
             try {
                 if (StringUtils.isEmpty(attachmentLink)) {
@@ -1687,7 +1681,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
 
     @Override
     public Observable<ResourceResponse<Attachment>> readAttachment(String attachmentLink, RequestOptions options) {
-        //return this.rxWrapperClient.readAttachment(attachmentLink, options);
+
         return Observable.defer(() -> {
             try {
                 if (StringUtils.isEmpty(attachmentLink)) {
@@ -1749,7 +1743,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
     @Override
     public Observable<ResourceResponse<Attachment>> createAttachment(String documentLink, InputStream mediaStream,
             MediaOptions options) {
-        //return this.rxWrapperClient.createAttachment(documentLink, mediaStream, options);
+
         return Observable.defer(() -> {
             try {
                 logger.debug("Creating a Attachment. attachmentLink [{}]", documentLink);                
@@ -1766,7 +1760,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
     @Override
     public Observable<ResourceResponse<Attachment>> upsertAttachment(String documentLink, InputStream mediaStream,
             MediaOptions options) {
-        //return this.rxWrapperClient.upsertAttachment(documentLink, mediaStream, options);
+
         return Observable.defer(() -> {
             try {
                 logger.debug("Upserting a Attachment. attachmentLink [{}]", documentLink);                
@@ -1811,7 +1805,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
 
     @Override
     public Observable<ResourceResponse<Conflict>> readConflict(String conflictLink, RequestOptions options) {
-        //return this.rxWrapperClient.readConflict(conflictLink, options);
+
         return Observable.defer(() -> {
             try {
                 if (StringUtils.isEmpty(conflictLink)) {
@@ -1851,7 +1845,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
 
     @Override
     public Observable<ResourceResponse<Conflict>> deleteConflict(String conflictLink, RequestOptions options) {
-        //return this.rxWrapperClient.deleteConflict(conflictLink, options);
+
         return Observable.defer(() -> {
             try {
                 if (StringUtils.isEmpty(conflictLink)) {
@@ -1874,7 +1868,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
 
     @Override
     public Observable<ResourceResponse<User>> createUser(String databaseLink, User user, RequestOptions options) {
-        //return this.rxWrapperClient.createUser(databaseLink, user, options);
+
         return Observable.defer(() -> {
             try {
                 logger.debug("Creating a User. databaseLink [{}], user id [{}]", databaseLink, user.getId());                
@@ -1891,7 +1885,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
 
     @Override
     public Observable<ResourceResponse<User>> upsertUser(String databaseLink, User user, RequestOptions options) {
-        //return this.rxWrapperClient.upsertUser(databaseLink, user, options);
+
         return Observable.defer(() -> {
             try {
                 logger.debug("Upserting a User. databaseLink [{}], user id [{}]", databaseLink, user.getId());                
@@ -1924,7 +1918,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
     
     @Override
     public Observable<ResourceResponse<User>> replaceUser(User user, RequestOptions options) {
-        //return this.rxWrapperClient.replaceUser(user, options);
+
         return Observable.defer(() -> {
             try {
                 if (user == null) {
@@ -1947,7 +1941,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
 
     @Override
     public Observable<ResourceResponse<User>> deleteUser(String userLink, RequestOptions options) {
-        //return this.rxWrapperClient.deleteUser(userLink, options);
+
         return Observable.defer(() -> {
             try {
                 if (StringUtils.isEmpty(userLink)) {
@@ -1968,7 +1962,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
 
     @Override
     public Observable<ResourceResponse<User>> readUser(String userLink, RequestOptions options) {
-       //return this.rxWrapperClient.readUser(userLink, options);
+
         return Observable.defer(() -> {
             try {
                 if (StringUtils.isEmpty(userLink)) {
@@ -2006,7 +2000,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
     @Override
     public Observable<ResourceResponse<Permission>> createPermission(String userLink, Permission permission,
             RequestOptions options) {
-        //return this.rxWrapperClient.createPermission(userLink, permission, options);
+
         return Observable.defer(() -> {
             try {
                 logger.debug("Creating a Permission. userLink [{}], permission id [{}]", userLink, permission.getId());                
@@ -2023,7 +2017,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
     @Override
     public Observable<ResourceResponse<Permission>> upsertPermission(String userLink, Permission permission,
             RequestOptions options) {
-        //return this.rxWrapperClient.upsertPermission(userLink, permission, options);
+
         return Observable.defer(() -> {
             try {
                 logger.debug("Upserting a Permission. userLink [{}], permission id [{}]", userLink, permission.getId());                
@@ -2059,7 +2053,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
     
     @Override
     public Observable<ResourceResponse<Permission>> replacePermission(Permission permission, RequestOptions options) {
-        //return this.rxWrapperClient.replacePermission(permission, options);
+
         return Observable.defer(() -> {
             try {
                 if (permission == null) {
@@ -2085,7 +2079,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
 
     @Override
     public Observable<ResourceResponse<Permission>> deletePermission(String permissionLink, RequestOptions options) {
-        //return this.rxWrapperClient.deletePermission(permissionLink, options);
+
         return Observable.defer(() -> {
             try {
                 if (StringUtils.isEmpty(permissionLink)) {
@@ -2106,7 +2100,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
 
     @Override
     public Observable<ResourceResponse<Permission>> readPermission(String permissionLink, RequestOptions options) {
-        //return this.rxWrapperClient.readPermission(permissionLink, options);
+
         return Observable.defer(() -> {
             try {
                 if (StringUtils.isEmpty(permissionLink)) {
@@ -2144,7 +2138,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
 
     @Override
     public Observable<ResourceResponse<Offer>> replaceOffer(Offer offer) {
-        //return this.rxWrapperClient.replaceOffer(offer);
+
         return Observable.defer(() -> {
             try {
                 if (offer == null) {
@@ -2169,7 +2163,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
 
     @Override
     public Observable<ResourceResponse<Offer>> readOffer(String offerLink) {
-        //return this.rxWrapperClient.readOffer(offerLink);
+
         return Observable.defer(() -> {
             try {
                 if (StringUtils.isEmpty(offerLink)) {
@@ -2204,7 +2198,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
 
     @Override
     public Observable<DatabaseAccount> getDatabaseAccount() {
-        //return this.rxWrapperClient.getDatabaseAccount();
+
         return Observable.defer(() -> {
             try {
                 logger.debug("Getting Database Account");                

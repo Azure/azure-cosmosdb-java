@@ -1,6 +1,6 @@
 /**
  * The MIT License (MIT)
- * Copyright (c) 2016 Microsoft Corporation
+ * Copyright (c) 2017 Microsoft Corporation
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -69,7 +69,7 @@ public class UserDefinedFunctionUpsertReplaceTest extends TestSuiteBase {
         // validate udf create
         ResourceResponseValidator<UserDefinedFunction> validatorForRead = new ResourceResponseValidator.Builder<UserDefinedFunction>()
                 .withId(readBackUdf.getId())
-                .withBody("function() {var x = 10;}", UserDefinedFunction.class)
+                .withUserDefinedFunctionBody("function() {var x = 10;}")
                 .notNullEtag()
                 .build();
         validateSuccess(readObservable, validatorForRead);
@@ -82,7 +82,7 @@ public class UserDefinedFunctionUpsertReplaceTest extends TestSuiteBase {
         // validate udf update
         ResourceResponseValidator<UserDefinedFunction> validatorForUpdate = new ResourceResponseValidator.Builder<UserDefinedFunction>()
                 .withId(readBackUdf.getId())
-                .withBody("function() {var x = 11;}", UserDefinedFunction.class)
+                .withUserDefinedFunctionBody("function() {var x = 11;}")
                 .notNullEtag()
                 .build();
         validateSuccess(updateObservable, validatorForUpdate);   
@@ -103,7 +103,7 @@ public class UserDefinedFunctionUpsertReplaceTest extends TestSuiteBase {
         // validate udf creation
         ResourceResponseValidator<UserDefinedFunction> validatorForRead = new ResourceResponseValidator.Builder<UserDefinedFunction>()
                 .withId(readBackUdf.getId())
-                .withBody("function() {var x = 10;}", UserDefinedFunction.class)
+                .withUserDefinedFunctionBody("function() {var x = 10;}")
                 .notNullEtag()
                 .build();
         validateSuccess(readObservable, validatorForRead);
@@ -116,7 +116,7 @@ public class UserDefinedFunctionUpsertReplaceTest extends TestSuiteBase {
         //validate udf replace
         ResourceResponseValidator<UserDefinedFunction> validatorForReplace = new ResourceResponseValidator.Builder<UserDefinedFunction>()
                 .withId(readBackUdf.getId())
-                .withBody("function() {var x = 11;}", UserDefinedFunction.class)
+                .withUserDefinedFunctionBody("function() {var x = 11;}")
                 .notNullEtag()
                 .build();
         validateSuccess(replaceObservable, validatorForReplace);   
@@ -138,7 +138,7 @@ public class UserDefinedFunctionUpsertReplaceTest extends TestSuiteBase {
         Database d = new Database();
         d.setId(DATABASE_ID);
         createdDatabase = safeCreateDatabase(houseKeepingClient, d);
-        createdCollection = safeCreateCollection(houseKeepingClient, createdDatabase.getSelfLink(), getCollectionDefinitionSinglePartition());
+        createdCollection = safeCreateCollection(houseKeepingClient, createdDatabase.getId(), getCollectionDefinitionSinglePartition());
     }
     
     private static DocumentCollection getCollectionDefinitionSinglePartition() {

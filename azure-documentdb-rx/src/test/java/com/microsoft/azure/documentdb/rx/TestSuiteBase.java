@@ -45,6 +45,7 @@ import com.microsoft.azure.documentdb.PartitionKeyDefinition;
 import com.microsoft.azure.documentdb.RequestOptions;
 import com.microsoft.azure.documentdb.Resource;
 import com.microsoft.azure.documentdb.ResourceResponse;
+import com.microsoft.azure.documentdb.User;
 import com.microsoft.azure.documentdb.internal.directconnectivity.HttpClientFactory;
 import com.microsoft.azure.documentdb.rx.internal.RxWrapperDocumentClientImpl;
 
@@ -67,26 +68,33 @@ public class TestSuiteBase {
         return String.format("java.rx.%s", klass.getName());
     }
 
-    public static DocumentCollection createCollection(AsyncDocumentClient client, String databaseLink, DocumentCollection collection) {
-        return client.createCollection(
-                databaseLink, collection, null)
-                .toBlocking().single().getResource();
+    public static DocumentCollection createCollection(AsyncDocumentClient client, String databaseId,
+            DocumentCollection collection) {
+        return client.createCollection("dbs/" + databaseId, collection, null).toBlocking().single().getResource();
+    }
+
+    public static Document createDocument(AsyncDocumentClient client, String databaseId, String collectionId, Document document) {
+        return client.createDocument(Utils.getCollectionNameLink(databaseId, collectionId), document, null, false).toBlocking().single().getResource();
+    }
+
+    public static User createUser(AsyncDocumentClient client, String databaseId, User user) {
+        return client.createUser("dbs/" + databaseId, user, null).toBlocking().single().getResource();
     }
     
-    public static Document createDocument(AsyncDocumentClient client, String collectionLink, Document document) {
-        return client.createDocument(
-                collectionLink, document, null, false)
-                .toBlocking().single().getResource();
+    public static DocumentCollection safeCreateCollection(AsyncDocumentClient client, String databaseId,
+            DocumentCollection collection) {
+        deleteCollectionIfExists(client, databaseId, collection.getId());
+        return createCollection(client, databaseId, collection);
     }
 
-    public static DocumentCollection safeCreateCollection(AsyncDocumentClient client, String databaseLink, DocumentCollection collection) {
-        deleteCollectionIfExists(client, databaseLink, collection.getId());
-        return createCollection(client, databaseLink, collection);
+    public static Document safeCreateDocument(AsyncDocumentClient client, String databaseId, String collectionId, Document document) {
+        deleteDocumentIfExists(client, databaseId, collectionId, document.getId());
+        return createDocument(client, databaseId, collectionId, document);
     }
 
-    public static Document safeCreateDocument(AsyncDocumentClient client, String collectionLink, Document document) {
-        deleteDocumentIfExists(client, collectionLink, document.getId());
-        return createDocument(client, collectionLink, document);
+    public static User safeCreateUser(AsyncDocumentClient client, String databaseId, User user) {
+        deleteUserIfExists(client, databaseId, user.getId());
+        return createUser(client, databaseId, user);
     }
 
     public static String getCollectionLink(DocumentCollection collection) {
@@ -107,12 +115,13 @@ public class TestSuiteBase {
 
         return collectionDefinition;
     }
-    
-    public static void deleteCollectionIfExists(AsyncDocumentClient client, String databaseLink, String collectionId) {
-        List<DocumentCollection> res = client.queryCollections(databaseLink,
-                String.format("SELECT * FROM root r where r.id = '%s'", collectionId), null).toBlocking().single().getResults();
+
+    public static void deleteCollectionIfExists(AsyncDocumentClient client, String databaseId, String collectionId) {
+        List<DocumentCollection> res = client.queryCollections("dbs/" + databaseId,
+                String.format("SELECT * FROM root r where r.id = '%s'", collectionId), null).toBlocking().single()
+                .getResults();
         if (!res.isEmpty()) {
-            deleteCollection(client, Utils.getCollectionNameLink(databaseLink, collectionId));
+            deleteCollection(client, Utils.getCollectionNameLink(databaseId, collectionId));
         }
     }
 
@@ -120,21 +129,34 @@ public class TestSuiteBase {
         client.deleteCollection(collectionLink, null).toBlocking().single();
     }
 
-    public static void deleteDocumentIfExists(AsyncDocumentClient client, String collectionLink, String docId) {
+    public static void deleteDocumentIfExists(AsyncDocumentClient client, String databaseId, String collectionId, String docId) {
         FeedOptions options = new FeedOptions();
         options.setPartitionKey(new PartitionKey(docId));
-        List<Document> res = client.queryDocuments(collectionLink, 
-                 String.format("SELECT * FROM root r where r.id = '%s'", docId), options).toBlocking().single().getResults();
+        List<Document> res = client
+                .queryDocuments(Utils.getCollectionNameLink(databaseId, collectionId), String.format("SELECT * FROM root r where r.id = '%s'", docId), options)
+                .toBlocking().single().getResults();
         if (!res.isEmpty()) {
-            deleteDocument(client, Utils.getDocumentNameLink(collectionLink, docId));
+            deleteDocument(client, Utils.getDocumentNameLink(databaseId, collectionId, docId));
         }
-     }
-     
-     public static void deleteDocument(AsyncDocumentClient client, String documentLink) {
-         client.deleteCollection(documentLink, null).toBlocking().single();
-     }
+    }
 
-    
+    public static void deleteDocument(AsyncDocumentClient client, String documentLink) {
+        client.deleteDocument(documentLink, null).toBlocking().single();
+    }
+
+    public static void deleteUserIfExists(AsyncDocumentClient client, String databaseId, String userId) {
+        List<User> res = client
+                .queryUsers("dbs/" + databaseId, String.format("SELECT * FROM root r where r.id = '%s'", userId), null)
+                .toBlocking().single().getResults();
+        if (!res.isEmpty()) {
+            deleteUser(client, Utils.getUserNameLink(databaseId, userId));
+        }
+    }
+
+    public static void deleteUser(AsyncDocumentClient client, String userLink) {
+        client.deleteUser(userLink, null).toBlocking().single();
+    }
+
     public static String getDatabaseLink(Database database) {
         return database.getSelfLink();
     }
@@ -148,8 +170,7 @@ public class TestSuiteBase {
     }
 
     static private Database createDatabase(AsyncDocumentClient client, Database database) {
-        Observable<ResourceResponse<Database>> databaseObservable = client.createDatabase(database,
-                null);
+        Observable<ResourceResponse<Database>> databaseObservable = client.createDatabase(database, null);
         return databaseObservable.toBlocking().single().getResource();
     }
 
@@ -182,14 +203,12 @@ public class TestSuiteBase {
     }
 
     public <T extends Resource> void validateFailure(Observable<ResourceResponse<T>> observable,
-            FailureValidator validator)
-                    throws InterruptedException {
+            FailureValidator validator) throws InterruptedException {
         validateFailure(observable, validator, subscriberValidationTimeout);
     }
 
     public static <T extends Resource> void validateFailure(Observable<ResourceResponse<T>> observable,
-            FailureValidator validator, long timeout)
-                    throws InterruptedException {
+            FailureValidator validator, long timeout) throws InterruptedException {
 
         TestSubscriber<ResourceResponse<T>> testSubscriber = new TestSubscriber<>();
 
@@ -219,14 +238,12 @@ public class TestSuiteBase {
     }
 
     public <T extends Resource> void validateQueryFailure(Observable<FeedResponsePage<T>> observable,
-            FailureValidator validator)
-                    throws InterruptedException {
+            FailureValidator validator) throws InterruptedException {
         validateQueryFailure(observable, validator, subscriberValidationTimeout);
     }
 
     public static <T extends Resource> void validateQueryFailure(Observable<FeedResponsePage<T>> observable,
-            FailureValidator validator, long timeout)
-                    throws InterruptedException {
+            FailureValidator validator, long timeout) throws InterruptedException {
 
         TestSubscriber<FeedResponsePage<T>> testSubscriber = new TestSubscriber<>();
 
@@ -246,27 +263,25 @@ public class TestSuiteBase {
     static protected AsyncDocumentClient.Builder createGatewayRxDocumentClient() {
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
         connectionPolicy.setConnectionMode(ConnectionMode.Gateway);
-        return new AsyncDocumentClient.Builder()
-                .withServiceEndpoint(TestConfigurations.HOST)
-                .withMasterKey(TestConfigurations.MASTER_KEY)
-                .withConnectionPolicy(connectionPolicy)
+        return new AsyncDocumentClient.Builder().withServiceEndpoint(TestConfigurations.HOST)
+                .withMasterKey(TestConfigurations.MASTER_KEY).withConnectionPolicy(connectionPolicy)
                 .withConsistencyLevel(ConsistencyLevel.Session);
     }
 
     static protected AsyncDocumentClient.Builder createDirectHttpsRxDocumentClient() {
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
         connectionPolicy.setConnectionMode(ConnectionMode.DirectHttps);
-        return new AsyncDocumentClient.Builder()
-                .withServiceEndpoint(TestConfigurations.HOST)
-                .withMasterKey(TestConfigurations.MASTER_KEY)
-                .withConnectionPolicy(connectionPolicy)
+        return new AsyncDocumentClient.Builder().withServiceEndpoint(TestConfigurations.HOST)
+                .withMasterKey(TestConfigurations.MASTER_KEY).withConnectionPolicy(connectionPolicy)
                 .withConsistencyLevel(ConsistencyLevel.Session);
     }
 
     static protected AsyncDocumentClient.Builder createRxWrapperDocumentClient() {
 
         return new AsyncDocumentClient.Builder() {
-            /* (non-Javadoc)
+            /*
+             * (non-Javadoc)
+             * 
              * @see com.microsoft.azure.documentdb.rx.AsyncDocumentClient.Builder#build()
              */
             @Override

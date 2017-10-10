@@ -214,7 +214,7 @@ public class DocumentQueryTest extends TestSuiteBase {
         Database d = new Database();
         d.setId(DATABASE_ID);
         createdDatabase = safeCreateDatabase(houseKeepingClient, d);
-        createdCollection = safeCreateCollection(houseKeepingClient, createdDatabase.getSelfLink(), getCollectionDefinition());
+        createdCollection = safeCreateCollection(houseKeepingClient, createdDatabase.getId(), getCollectionDefinition());
         for(int i = 0; i < 5; i++) {
             createDocument(houseKeepingClient, i);
         }

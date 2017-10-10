@@ -163,7 +163,7 @@ public class ChangeFeedTest extends TestSuiteBase {
         d.setId(DATABASE_ID);
         createdDatabase = safeCreateDatabase(client, d);
 
-        createdCollection = safeCreateCollection(client, createdDatabase.getSelfLink(), getCollectionDefinition());
+        createdCollection = safeCreateCollection(client, createdDatabase.getId(), getCollectionDefinition());
         for(int i = 0; i < 5; i++) {
             createDocument(client, i);
         }

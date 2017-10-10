@@ -73,7 +73,7 @@ public class SessionTest extends TestSuiteBase {
         
         DocumentCollection cl = new DocumentCollection();
         cl.setId(UUID.randomUUID().toString());
-        createdCollection = safeCreateCollection(houseKeepingClient, createdDatabase.getSelfLink(), cl);
+        createdCollection = safeCreateCollection(houseKeepingClient, createdDatabase.getId(), cl);
     }
 
     @AfterClass(groups = { "simple" }, timeOut = SHUTDOWN_TIMEOUT)

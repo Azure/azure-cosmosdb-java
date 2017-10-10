@@ -1,6 +1,6 @@
 /**
  * The MIT License (MIT)
- * Copyright (c) 2016 Microsoft Corporation
+ * Copyright (c) 2017 Microsoft Corporation
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -66,7 +66,7 @@ public class UserDefinedFunctionCrudTest extends TestSuiteBase {
         // validate udf creation
         ResourceResponseValidator<UserDefinedFunction> validator = new ResourceResponseValidator.Builder<UserDefinedFunction>()
                 .withId(udf.getId())
-                .withBody("function() {var x = 10;}", UserDefinedFunction.class)
+                .withUserDefinedFunctionBody("function() {var x = 10;}")
                 .notNullEtag()
                 .build();
         validateSuccess(createObservable, validator);
@@ -86,7 +86,7 @@ public class UserDefinedFunctionCrudTest extends TestSuiteBase {
         //validate udf read
         ResourceResponseValidator<UserDefinedFunction> validator = new ResourceResponseValidator.Builder<UserDefinedFunction>()
                 .withId(udf.getId())
-                .withBody("function() {var x = 10;}", UserDefinedFunction.class)
+                .withUserDefinedFunctionBody("function() {var x = 10;}")
                 .notNullEtag()
                 .build();
         validateSuccess(readObservable, validator);
@@ -128,7 +128,7 @@ public class UserDefinedFunctionCrudTest extends TestSuiteBase {
         Database d = new Database();
         d.setId(DATABASE_ID);
         createdDatabase = safeCreateDatabase(houseKeepingClient, d);
-        createdCollection = safeCreateCollection(houseKeepingClient, createdDatabase.getSelfLink(), getCollectionDefinition());
+        createdCollection = safeCreateCollection(houseKeepingClient, createdDatabase.getId(), getCollectionDefinition());
     }
 
     @AfterSuite(groups = { "simple" }, timeOut = SETUP_TIMEOUT)

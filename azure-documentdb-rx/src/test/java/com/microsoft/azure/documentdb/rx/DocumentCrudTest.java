@@ -257,7 +257,7 @@ public class DocumentCrudTest extends TestSuiteBase {
         Database d = new Database();
         d.setId(DATABASE_ID);
         createdDatabase = safeCreateDatabase(houseKeepingClient, d);
-        createdCollection = safeCreateCollection(houseKeepingClient, createdDatabase.getSelfLink(), getCollectionDefinition());
+        createdCollection = safeCreateCollection(houseKeepingClient, createdDatabase.getId(), getCollectionDefinition());
     }
 
     @AfterSuite(groups = { "simple" }, timeOut = SETUP_TIMEOUT)

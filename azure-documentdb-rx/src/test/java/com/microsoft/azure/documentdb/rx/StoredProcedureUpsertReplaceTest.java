@@ -1,6 +1,6 @@
 /**
  * The MIT License (MIT)
- * Copyright (c) 2016 Microsoft Corporation
+ * Copyright (c) 2017 Microsoft Corporation
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,6 +21,8 @@
  * SOFTWARE.
  */
 package com.microsoft.azure.documentdb.rx;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.UUID;
 
@@ -69,7 +71,7 @@ public class StoredProcedureUpsertReplaceTest extends TestSuiteBase {
         // validate stored procedure creation
         ResourceResponseValidator<StoredProcedure> validatorForRead = new ResourceResponseValidator.Builder<StoredProcedure>()
                 .withId(readBackSp.getId())
-                .withBody("function() {var x = 10;}", StoredProcedure.class)
+                .withStoredProcedureBody("function() {var x = 10;}")
                 .notNullEtag()
                 .build();
         validateSuccess(readObservable, validatorForRead);
@@ -82,7 +84,7 @@ public class StoredProcedureUpsertReplaceTest extends TestSuiteBase {
         // validate stored procedure update
         ResourceResponseValidator<StoredProcedure> validatorForUpdate = new ResourceResponseValidator.Builder<StoredProcedure>()
                 .withId(readBackSp.getId())
-                .withBody("function() {var x = 11;}", StoredProcedure.class)
+                .withStoredProcedureBody("function() {var x = 11;}")
                 .notNullEtag()
                 .build();
         validateSuccess(updateObservable, validatorForUpdate);   
@@ -103,7 +105,7 @@ public class StoredProcedureUpsertReplaceTest extends TestSuiteBase {
         // validate stored procedure creation
         ResourceResponseValidator<StoredProcedure> validatorForRead = new ResourceResponseValidator.Builder<StoredProcedure>()
                 .withId(readBackSp.getId())
-                .withBody("function() {var x = 10;}", StoredProcedure.class)
+                .withStoredProcedureBody("function() {var x = 10;}")
                 .notNullEtag()
                 .build();
         validateSuccess(readObservable, validatorForRead);
@@ -116,12 +118,32 @@ public class StoredProcedureUpsertReplaceTest extends TestSuiteBase {
         //validate stored procedure replace
         ResourceResponseValidator<StoredProcedure> validatorForReplace = new ResourceResponseValidator.Builder<StoredProcedure>()
                 .withId(readBackSp.getId())
-                .withBody("function() {var x = 11;}", StoredProcedure.class)
+                .withStoredProcedureBody("function() {var x = 11;}")
                 .notNullEtag()
                 .build();
         validateSuccess(replaceObservable, validatorForReplace);   
     }
 
+    @Test(groups = { "simple" }, timeOut = TIMEOUT)
+    public void executeStoredProcedure() throws Exception {
+        // create a stored procedure
+        StoredProcedure storedProcedureDef = new StoredProcedure(
+                "{" +
+                        "  'id': '" +UUID.randomUUID().toString() + "'," +
+                        "  'body':" +
+                        "    'function () {" +
+                        "      for (var i = 0; i < 10; i++) {" +
+                        "        getContext().getResponse().appendValue(\"Body\", i);" +
+                        "      }" +
+                        "    }'" +
+                        "}");
+        
+        StoredProcedure storedProcedure = client.createStoredProcedure(getCollectionLink(), storedProcedureDef, null).toBlocking().single().getResource();
+
+        // execute
+        String result = client.executeStoredProcedure(storedProcedure.getSelfLink(), null).toBlocking().single().getResponseAsString();
+        assertThat(result).isEqualTo("\"0123456789\"");
+    }
     
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
@@ -139,7 +161,7 @@ public class StoredProcedureUpsertReplaceTest extends TestSuiteBase {
         Database d = new Database();
         d.setId(DATABASE_ID);
         createdDatabase = safeCreateDatabase(houseKeepingClient, d);
-        createdCollection = safeCreateCollection(houseKeepingClient, createdDatabase.getSelfLink(), getCollectionDefinitionSinglePartition());
+        createdCollection = safeCreateCollection(houseKeepingClient, createdDatabase.getId(), getCollectionDefinitionSinglePartition());
     }
     
     private static DocumentCollection getCollectionDefinitionSinglePartition() {

@@ -1,6 +1,6 @@
 /**
  * The MIT License (MIT)
- * Copyright (c) 2016 Microsoft Corporation
+ * Copyright (c) 2017 Microsoft Corporation
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -33,8 +33,10 @@ import org.testng.annotations.Test;
 
 import com.microsoft.azure.documentdb.Database;
 import com.microsoft.azure.documentdb.DocumentCollection;
+import com.microsoft.azure.documentdb.RequestOptions;
 import com.microsoft.azure.documentdb.ResourceResponse;
 import com.microsoft.azure.documentdb.StoredProcedure;
+import com.microsoft.azure.documentdb.StoredProcedureResponse;
 
 import rx.Observable;
 
@@ -67,7 +69,7 @@ public class StoredProcedureCrudTest extends TestSuiteBase {
         // validate stored procedure creation
         ResourceResponseValidator<StoredProcedure> validator = new ResourceResponseValidator.Builder<StoredProcedure>()
                 .withId(storedProcedureDef.getId())
-                .withBody("function() {var x = 10;}", StoredProcedure.class)
+                .withStoredProcedureBody("function() {var x = 10;}")
                 .notNullEtag()
                 .build();
         validateSuccess(createObservable, validator);
@@ -87,7 +89,7 @@ public class StoredProcedureCrudTest extends TestSuiteBase {
 
         ResourceResponseValidator<StoredProcedure> validator = new ResourceResponseValidator.Builder<StoredProcedure>()
                 .withId(storedProcedureDef.getId())
-                .withBody("function() {var x = 10;}", StoredProcedure.class)
+                .withStoredProcedureBody("function() {var x = 10;}")
                 .notNullEtag()
                 .build();
         validateSuccess(readObservable, validator);
@@ -112,7 +114,7 @@ public class StoredProcedureCrudTest extends TestSuiteBase {
 
         //TODO validate after deletion the resource is actually deleted (not found)
     }
-
+    
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
         this.client = this.clientBuilder.build();       
@@ -129,7 +131,7 @@ public class StoredProcedureCrudTest extends TestSuiteBase {
         Database d = new Database();
         d.setId(DATABASE_ID);
         createdDatabase = safeCreateDatabase(houseKeepingClient, d);
-        createdCollection = safeCreateCollection(houseKeepingClient, createdDatabase.getSelfLink(), getCollectionDefinition());
+        createdCollection = safeCreateCollection(houseKeepingClient, createdDatabase.getId(), getCollectionDefinition());
     }
 
     @AfterSuite(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
