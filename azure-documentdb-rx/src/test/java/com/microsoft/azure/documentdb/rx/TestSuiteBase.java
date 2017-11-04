@@ -260,6 +260,11 @@ public class TestSuiteBase {
         return new Object[][] { { createGatewayRxDocumentClient() }, { createDirectHttpsRxDocumentClient() } };
     }
 
+    @DataProvider
+    public static Object[][] gatewayOnlyBuilder() {
+        return new Object[][] { { createGatewayRxDocumentClient() } };
+    }
+    
     static protected AsyncDocumentClient.Builder createGatewayRxDocumentClient() {
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
         connectionPolicy.setConnectionMode(ConnectionMode.Gateway);

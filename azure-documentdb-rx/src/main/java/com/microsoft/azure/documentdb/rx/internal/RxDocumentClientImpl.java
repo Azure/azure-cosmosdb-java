@@ -1,5 +1,4 @@
 /**
-
  * The MIT License (MIT)
  * Copyright (c) 2016 Microsoft Corporation
  * 
@@ -24,9 +23,10 @@
 package com.microsoft.azure.documentdb.rx.internal;
 
 import static com.microsoft.azure.documentdb.BridgeInternal.documentFromObject;
+import static com.microsoft.azure.documentdb.BridgeInternal.toDatabaseAccount;
+import static com.microsoft.azure.documentdb.BridgeInternal.toFeedResponsePage;
 import static com.microsoft.azure.documentdb.BridgeInternal.toResourceResponse;
 import static com.microsoft.azure.documentdb.BridgeInternal.toStoredProcedureResponse;
-import static com.microsoft.azure.documentdb.BridgeInternal.toDatabaseAccount;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,6 +34,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
@@ -66,6 +67,7 @@ import com.microsoft.azure.documentdb.DocumentClient;
 import com.microsoft.azure.documentdb.DocumentClientException;
 import com.microsoft.azure.documentdb.DocumentCollection;
 import com.microsoft.azure.documentdb.FeedOptions;
+import com.microsoft.azure.documentdb.FeedOptionsBase;
 import com.microsoft.azure.documentdb.FeedResponsePage;
 import com.microsoft.azure.documentdb.JsonSerializable;
 import com.microsoft.azure.documentdb.MediaOptions;
@@ -108,8 +110,13 @@ import io.reactivex.netty.protocol.http.client.HttpClientBuilder;
 import rx.Observable;
 import rx.Scheduler;
 import rx.functions.Func1;
+import rx.functions.Func3;
+import rx.functions.Func4;
 import rx.internal.util.RxThreadFactory;
 import rx.schedulers.Schedulers;
+import rx.subjects.BehaviorSubject;
+import rx.subjects.PublishSubject;
+import rx.subjects.ReplaySubject;
 
 public class RxDocumentClientImpl implements AsyncDocumentClient {
 
@@ -128,9 +135,9 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
     private final Scheduler computationScheduler;
     private Map<String, String> resourceTokens;
     /**
-     * Compatibility mode: Allows to specify compatibility mode used by client
-     * when making query requests. Should be removed when application/sql is no
-     * longer supported.
+     * Compatibility mode: Allows to specify compatibility mode used by client when
+     * making query requests. Should be removed when application/sql is no longer
+     * supported.
      */
     private final QueryCompatibilityMode queryCompatibilityMode = QueryCompatibilityMode.Default;
     private final HttpClient<ByteBuf, ByteBuf> rxClient;
@@ -141,8 +148,9 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
     public RxDocumentClientImpl(URI serviceEndpoint, String masterKey, ConnectionPolicy connectionPolicy,
             ConsistencyLevel consistencyLevel, int eventLoopSize, int computationPoolSize) {
 
-        logger.info("Initializing DocumentClient with"
-                + " serviceEndpoint [{}], ConnectionPolicy [{}], ConsistencyLevel [{}]",
+        logger.info(
+                "Initializing DocumentClient with"
+                        + " serviceEndpoint [{}], ConnectionPolicy [{}], ConsistencyLevel [{}]",
                 serviceEndpoint, connectionPolicy, consistencyLevel);
 
         this.masterKey = masterKey;
@@ -157,12 +165,13 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
         this.sessionContainer = new SessionContainer(this.serviceEndpoint.getHost());
         this.consistencyLevel = consistencyLevel;
 
-        UserAgentContainer userAgentContainer = new UserAgentContainer(Constants.Versions.SDK_NAME, Constants.Versions.SDK_VERSION);
+        UserAgentContainer userAgentContainer = new UserAgentContainer(Constants.Versions.SDK_NAME,
+                Constants.Versions.SDK_VERSION);
         String userAgentSuffix = this.connectionPolicy.getUserAgentSuffix();
         if (userAgentSuffix != null && userAgentSuffix.length() > 0) {
             userAgentContainer.setSuffix(userAgentSuffix);
         }
-        
+
         if (eventLoopSize <= 0) {
             int cpuCount = Runtime.getRuntime().availableProcessors();
             if (cpuCount >= 4) {
@@ -174,12 +183,13 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
                 computationPoolSize = 0;
                 eventLoopSize = cpuCount;
             }
-            logger.debug("Auto configuring eventLoop size and computation pool size. CPU cores {[]}, eventLoopSize [{}], computationPoolSize [{}]",
+            logger.debug(
+                    "Auto configuring eventLoop size and computation pool size. CPU cores {[]}, eventLoopSize [{}], computationPoolSize [{}]",
                     cpuCount, eventLoopSize, computationPoolSize);
         }
-        
+
         logger.debug("EventLoop size [{}]", eventLoopSize);
-        
+
         synchronized (RxDocumentClientImpl.class) {
             SingleNioLoopProvider rxEventLoopProvider = new SingleNioLoopProvider(1, eventLoopSize);
             RxEventLoopProvider oldEventLoopProvider = RxNetty.useEventLoopProvider(rxEventLoopProvider);
@@ -188,10 +198,10 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
         }
 
         if (computationPoolSize > 0) {
-            logger.debug("Intensive computation configured on a computation scheduler backed by thread pool size [{}]", computationPoolSize);
-            this.computationExecutor = new ThreadPoolExecutor(computationPoolSize, computationPoolSize,
-                    0L, TimeUnit.MILLISECONDS,
-                    new ArrayBlockingQueue<Runnable>(2),
+            logger.debug("Intensive computation configured on a computation scheduler backed by thread pool size [{}]",
+                    computationPoolSize);
+            this.computationExecutor = new ThreadPoolExecutor(computationPoolSize, computationPoolSize, 0L,
+                    TimeUnit.MILLISECONDS, new ArrayBlockingQueue<Runnable>(2),
                     new RxThreadFactory("rxdocdb-computation"), new CallerRunsPolicy());
 
             this.computationScheduler = Schedulers.from(this.computationExecutor);
@@ -210,15 +220,16 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
 
         this.globalEndpointManager = BridgeInternal.createGlobalEndpointManager(this);
 
-        this.gatewayProxy = new RxGatewayStoreModel(this.connectionPolicy, consistencyLevel, this.queryCompatibilityMode,
-                this.masterKey, this.resourceTokens, userAgentContainer, this.globalEndpointManager, this.rxClient);
+        this.gatewayProxy = new RxGatewayStoreModel(this.connectionPolicy, consistencyLevel,
+                this.queryCompatibilityMode, this.masterKey, this.resourceTokens, userAgentContainer,
+                this.globalEndpointManager, this.rxClient);
 
         this.rxWrapperClient = new RxWrapperDocumentClientImpl(
                 new DocumentClient(serviceEndpoint.toString(), masterKey, connectionPolicy, consistencyLevel));
 
-        // If DirectHttps mode is configured in AsyncDocumentClient.Builder we fallback 
+        // If DirectHttps mode is configured in AsyncDocumentClient.Builder we fallback
         // to RxWrapperDocumentClientImpl. So we should never get here
-        
+
         if (this.connectionPolicy.getConnectionMode() == ConnectionMode.DirectHttps) {
             throw new UnsupportedOperationException("Direct Https is not supported");
         }
@@ -327,9 +338,69 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
 
     @Override
     public Observable<FeedResponsePage<Database>> readDatabases(FeedOptions options) {
-        return this.rxWrapperClient.readDatabases(options);
+        
+        if (options == null)
+            options = new FeedOptions();
+        
+        return getObservableFeedResponsePage(null, options, Database.class,
+                new Func4<String, String, Map<String, String>, RxDocumentClientImpl, Observable<FeedResponsePage<Database>>>() {
+
+                    @Override
+                    public Observable<FeedResponsePage<Database>> call(String token, String resourceLink,
+                            Map<String, String> requestHeaders, RxDocumentClientImpl client) {
+                        if (token != null)
+                            requestHeaders.put(HttpConstants.HttpHeaders.CONTINUATION, token);
+
+                        RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.ReadFeed,
+                                ResourceType.Database, Paths.DATABASES_ROOT, requestHeaders);
+                        try {
+                            return client.doReadFeed(request).map(response -> toFeedResponsePage(response, Database.class));
+                        } catch (DocumentClientException e) {
+                            return Observable.error(e);
+                        }
+                    }
+                });
     }
 
+    private <T extends Resource> Observable<FeedResponsePage<T>> getObservableFeedResponsePage(String resourceLink,
+            FeedOptions options, Class<T> cls,
+            Func4<String, String, Map<String, String>, RxDocumentClientImpl, Observable<FeedResponsePage<T>>> getObservable) {
+
+        return Observable.defer(() -> {
+            try {
+                
+                logger.debug("Reading " + cls.getClass() + "s");
+                Map<String, String> requestHeaders = getFeedHeaders(options);
+                return getObservable.call(options.getRequestContinuation(), resourceLink, requestHeaders, this).single()
+                        .concatMap(firstPage -> {
+                            
+                            BehaviorSubject<FeedResponsePage<T>> pagingSubject = BehaviorSubject.<FeedResponsePage<T>>create();
+                            Observable<FeedResponsePage<T>> feedResponsePageObservable = pagingSubject
+                                    .asObservable()
+                                    .concatMap(previousPage -> {
+                                        String token = previousPage.getResponseContinuation();
+                                        if (token != null) {
+                                            return getObservable.call(token, resourceLink, requestHeaders, this)
+                                                    .doOnNext(page -> {
+                                                        pagingSubject.onNext(page);
+                                                    });
+                                        } else {
+                                            return Observable.<FeedResponsePage<T>>empty()
+                                                    .doOnCompleted(() -> pagingSubject.onCompleted());
+                                        }
+                                    });
+
+                            pagingSubject.onNext(firstPage);
+                             
+                            return Observable.just(firstPage).concatWith(feedResponsePageObservable);
+                        });
+            } catch (Exception e) {
+                logger.debug("Failure in reading " + cls.getClass() + "s due to [{}]", e.getMessage(), e);
+                return Observable.error(e);
+            }
+        });
+    }
+    
     @Override
     public Observable<FeedResponsePage<Database>> queryDatabases(String query, FeedOptions options) {
         return this.rxWrapperClient.queryDatabases(query, options);
@@ -435,10 +506,9 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
                 return Observable.error(e);
             }
         }).retryWhen(createExecuteRequestRetryHandler(request));
-        
+
         return createPutMoreContentObservable(request, HttpConstants.HttpMethods.DELETE)
-                .doOnNext(req -> this.applySessionToken(request))
-                .flatMap(req -> responseObservable);
+                .doOnNext(req -> this.applySessionToken(request)).flatMap(req -> responseObservable);
     }
 
     private Observable<DocumentServiceResponse> doRead(RxDocumentServiceRequest request)
@@ -453,10 +523,28 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
                 return Observable.error(e);
             }
         }).retryWhen(createExecuteRequestRetryHandler(request));
-        
+
         return createPutMoreContentObservable(request, HttpConstants.HttpMethods.GET)
-            .doOnNext(req -> this.applySessionToken(request))
-            .flatMap(req -> responseObservable);
+                .doOnNext(req -> this.applySessionToken(request)).flatMap(req -> responseObservable);
+    }
+
+    private Observable<DocumentServiceResponse> doReadFeed(RxDocumentServiceRequest request)
+            throws DocumentClientException {
+        Observable<DocumentServiceResponse> responseObservable = Observable.defer(() -> {
+            try {
+                return this.gatewayProxy.processMessage(request).doOnNext(response -> {
+                    this.captureSessionToken(request, response);
+                });
+            } catch (Exception e) {
+                return Observable.error(e);
+            }
+        }).retryWhen(createExecuteRequestRetryHandler(request));
+
+        return createPutMoreContentObservable(request, HttpConstants.HttpMethods.GET).doOnNext(req -> {
+            if (!request.isChangeFeedRequest()) {
+                this.applySessionToken(request);
+            }
+        }).flatMap(req -> responseObservable);
     }
 
     @Override
@@ -490,7 +578,32 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
 
     @Override
     public Observable<FeedResponsePage<DocumentCollection>> readCollections(String databaseLink, FeedOptions options) {
-        return this.rxWrapperClient.readCollections(databaseLink, options);
+        
+        if (StringUtils.isEmpty(databaseLink)) {
+            throw new IllegalArgumentException("databaseLink");
+        }
+        
+        if (options == null)
+            options = new FeedOptions();
+        
+        return getObservableFeedResponsePage(databaseLink, options, DocumentCollection.class,
+                new Func4<String, String, Map<String, String>, RxDocumentClientImpl, Observable<FeedResponsePage<DocumentCollection>>>() {
+
+                    @Override
+                    public Observable<FeedResponsePage<DocumentCollection>> call(String token, String databaseLink,
+                            Map<String, String> requestHeaders, RxDocumentClientImpl client) {
+                        if (token != null)
+                            requestHeaders.put(HttpConstants.HttpHeaders.CONTINUATION, token);
+
+                        RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.ReadFeed,
+                                ResourceType.DocumentCollection, Utils.joinPath(databaseLink, Paths.COLLECTIONS_PATH_SEGMENT), requestHeaders);
+                        try {
+                            return client.doReadFeed(request).map(response -> toFeedResponsePage(response, DocumentCollection.class));
+                        } catch (DocumentClientException e) {
+                            return Observable.error(e);
+                        }
+                    }
+                });
     }
 
     @Override
@@ -544,7 +657,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
             Object object = objectArray[i];
             if (object instanceof JsonSerializable) {
                 stringArray[i] = ((JsonSerializable) object).toJson();
-            } else if (object instanceof JSONObject){
+            } else if (object instanceof JSONObject) {
                 stringArray[i] = object.toString();
             } else {
 
@@ -560,7 +673,6 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
         return String.format("[%s]", StringUtils.join(stringArray, ","));
     }
 
-    
     private static void validateResource(Resource resource) {
         BridgeInternal.validateResource(resource);
     }
@@ -568,7 +680,11 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
     private Map<String, String> getRequestHeaders(RequestOptions options) {
         return BridgeInternal.getRequestHeaders(options);
     }
-    
+
+    private Map<String, String> getFeedHeaders(FeedOptionsBase options) {
+        return BridgeInternal.getFeedHeaders(options);
+    }
+
     private Map<String, String> getMediaHeaders(MediaOptions options) {
         Map<String, String> requestHeaders = new HashMap<String, String>();
 
@@ -588,10 +704,11 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
         return requestHeaders;
     }
 
-    private void addPartitionKeyInformation(RxDocumentServiceRequest request, Document document, RequestOptions options) {
+    private void addPartitionKeyInformation(RxDocumentServiceRequest request, Document document,
+            RequestOptions options) {
         addPartitionKeyInformation(request, document, options, this.collectionCache.resolveCollection(request));
     }
-    
+
     private void addPartitionKeyInformation(RxDocumentServiceRequest request, Document document, RequestOptions options,
             DocumentCollection collection) {
         BridgeInternal.addPartitionKeyInformation(request, document, options, collection);
@@ -665,26 +782,29 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
     private String getAuthorizationToken(String resourceOrOwnerId, String path, ResourceType resourceType,
             String requestVerb, Map<String, String> headers, String masterKey, Map<String, String> resourceTokens) {
         if (masterKey != null) {
-            return this.authorizationTokenProvider.generateKeyAuthorizationSignature(requestVerb, resourceOrOwnerId, resourceType, headers);
+            return this.authorizationTokenProvider.generateKeyAuthorizationSignature(requestVerb, resourceOrOwnerId,
+                    resourceType, headers);
         } else {
             assert resourceTokens != null;
-            return this.authorizationTokenProvider.getAuthorizationTokenUsingResourceTokens(resourceTokens, path, resourceOrOwnerId);
+            return this.authorizationTokenProvider.getAuthorizationTokenUsingResourceTokens(resourceTokens, path,
+                    resourceOrOwnerId);
         }
     }
 
     private void applySessionToken(RxDocumentServiceRequest request) {
         Map<String, String> headers = request.getHeaders();
         if (headers != null && !StringUtils.isEmpty(headers.get(HttpConstants.HttpHeaders.SESSION_TOKEN))) {
-            return;  // User is explicitly controlling the session.
+            return; // User is explicitly controlling the session.
         }
-        
+
         String requestConsistency = request.getHeaders().get(HttpConstants.HttpHeaders.CONSISTENCY_LEVEL);
-        boolean sessionConsistency = this.consistencyLevel == ConsistencyLevel.Session ||
-                (!StringUtils.isEmpty(requestConsistency) && StringUtils.equalsIgnoreCase(requestConsistency, ConsistencyLevel.Session.toString()));
+        boolean sessionConsistency = this.consistencyLevel == ConsistencyLevel.Session
+                || (!StringUtils.isEmpty(requestConsistency)
+                        && StringUtils.equalsIgnoreCase(requestConsistency, ConsistencyLevel.Session.toString()));
         if (!sessionConsistency) {
-            return;  // Only apply the session token in case of session consistency
+            return; // Only apply the session token in case of session consistency
         }
-        
+
         // Apply the ambient session.
         if (!StringUtils.isEmpty(request.getResourceAddress())) {
             String sessionToken = this.sessionContainer.resolveGlobalSessionToken(request);
@@ -705,28 +825,27 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
 
     private Observable<DocumentServiceResponse> doCreate(RxDocumentServiceRequest request) {
 
-        Observable<DocumentServiceResponse> responseObservable =
-                Observable.defer(() -> {
-                    try {
-                        return this.gatewayProxy.processMessage(request)
-                                .doOnNext(response -> {
-                                    this.captureSessionToken(request, response);
-                                });
-                    } catch (Exception e) {
-                        return Observable.error(e);
-                    }
-                })
-                .retryWhen(createExecuteRequestRetryHandler(request));
-                
+        Observable<DocumentServiceResponse> responseObservable = Observable.defer(() -> {
+            try {
+                return this.gatewayProxy.processMessage(request).doOnNext(response -> {
+                    this.captureSessionToken(request, response);
+                });
+            } catch (Exception e) {
+                return Observable.error(e);
+            }
+        }).retryWhen(createExecuteRequestRetryHandler(request));
+
         return createPutMoreContentObservable(request, HttpConstants.HttpMethods.POST)
                 .doOnNext(r -> applySessionToken(request)).flatMap(req -> responseObservable);
-       
+
     }
-    
+
     /**
-     * Creates an observable which does the CPU intensive operation of generating authentication token and putting more content in the request
+     * Creates an observable which does the CPU intensive operation of generating
+     * authentication token and putting more content in the request
      * 
      * This observable runs on computationScheduler
+     * 
      * @param request
      * @param method
      * @return
@@ -755,23 +874,20 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
             }
         }).retryWhen(createExecuteRequestRetryHandler(request));
 
-        return createPutMoreContentObservable(request, HttpConstants.HttpMethods.POST)
-                .doOnNext(r -> {
-                    applySessionToken(request);
-                    Map<String, String> headers = request.getHeaders();
-                    // headers can never be null, since it will be initialized even when no
-                    // request options are specified,
-                    // hence using assertion here instead of exception, being in the private
-                    // method
-                    assert (headers != null);
-                    headers.put(HttpConstants.HttpHeaders.IS_UPSERT, "true");
-                    
-                })
-                .flatMap(req -> responseObservable);
+        return createPutMoreContentObservable(request, HttpConstants.HttpMethods.POST).doOnNext(r -> {
+            applySessionToken(request);
+            Map<String, String> headers = request.getHeaders();
+            // headers can never be null, since it will be initialized even when no
+            // request options are specified,
+            // hence using assertion here instead of exception, being in the private
+            // method
+            assert (headers != null);
+            headers.put(HttpConstants.HttpHeaders.IS_UPSERT, "true");
+
+        }).flatMap(req -> responseObservable);
     }
 
     private Observable<DocumentServiceResponse> doReplace(RxDocumentServiceRequest request) {
-
 
         Observable<DocumentServiceResponse> responseObservable = Observable.defer(() -> {
             try {
@@ -782,46 +898,38 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
                 return Observable.error(e);
             }
         }).retryWhen(createExecuteRequestRetryHandler(request));
-        
-        
+
         return createPutMoreContentObservable(request, HttpConstants.HttpMethods.PUT)
                 .doOnNext(r -> applySessionToken(request)).flatMap(req -> responseObservable);
 
     }
-    
+
     @Override
-    public Observable<ResourceResponse<Document>> createDocument(String
-            collectionLink, Object document,
+    public Observable<ResourceResponse<Document>> createDocument(String collectionLink, Object document,
             RequestOptions options, boolean disableAutomaticIdGeneration) {
 
         return Observable.defer(() -> {
 
             try {
-                logger.debug("Creating a Document. collectionLink: [{}]",
-                        collectionLink);
+                logger.debug("Creating a Document. collectionLink: [{}]", collectionLink);
 
-                final String documentCollectionLink =
-                        this.getTargetDocumentCollectionLink(collectionLink, document);
+                final String documentCollectionLink = this.getTargetDocumentCollectionLink(collectionLink, document);
                 final Object documentLocal = document;
                 final RequestOptions optionsLocal = options;
                 final boolean disableAutomaticIdGenerationLocal = disableAutomaticIdGeneration;
                 final boolean shouldRetry = options == null || options.getPartitionKey() == null;
-                Observable<ResourceResponse<Document>> createObservable =
-                        Observable.defer(() -> {
-                            RxDocumentServiceRequest request =
-                                    getCreateDocumentRequest(documentCollectionLink, documentLocal,
-                                            optionsLocal,
-                                            disableAutomaticIdGenerationLocal, OperationType.Create);
+                Observable<ResourceResponse<Document>> createObservable = Observable.defer(() -> {
+                    RxDocumentServiceRequest request = getCreateDocumentRequest(documentCollectionLink, documentLocal,
+                            optionsLocal, disableAutomaticIdGenerationLocal, OperationType.Create);
 
-                            Observable<DocumentServiceResponse> responseObservable =
-                                    this.doCreate(request);
-                            return responseObservable
-                                    .map(serviceResponse -> toResourceResponse(serviceResponse,
-                                            Document.class));
-                        });
+                    Observable<DocumentServiceResponse> responseObservable = this.doCreate(request);
+                    return responseObservable
+                            .map(serviceResponse -> toResourceResponse(serviceResponse, Document.class));
+                });
 
                 if (shouldRetry) {
-                    CreateDocumentRetryHandler createDocumentRetryHandler = new CreateDocumentRetryHandler(this.collectionCache, documentCollectionLink);
+                    CreateDocumentRetryHandler createDocumentRetryHandler = new CreateDocumentRetryHandler(
+                            this.collectionCache, documentCollectionLink);
                     return createObservable.retryWhen(RetryFunctionFactory.from(createDocumentRetryHandler));
                 } else {
                     return createObservable;
@@ -846,22 +954,19 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
                 final boolean disableAutomaticIdGenerationLocal = disableAutomaticIdGeneration;
                 final boolean shouldRetry = options == null || options.getPartitionKey() == null;
 
-                Observable<ResourceResponse<Document>> upsertObservable =
-                        Observable.defer(() -> {
+                Observable<ResourceResponse<Document>> upsertObservable = Observable.defer(() -> {
 
-                            RxDocumentServiceRequest request = getCreateDocumentRequest(documentCollectionLink,
-                                    documentLocal, optionsLocal, disableAutomaticIdGenerationLocal,
-                                    OperationType.Upsert);
+                    RxDocumentServiceRequest request = getCreateDocumentRequest(documentCollectionLink, documentLocal,
+                            optionsLocal, disableAutomaticIdGenerationLocal, OperationType.Upsert);
 
-                            Observable<DocumentServiceResponse> responseObservable =
-                                    this.doUpsert(request);
-                            return responseObservable
-                                    .map(serviceResponse -> toResourceResponse(serviceResponse,
-                                            Document.class));
-                        });
+                    Observable<DocumentServiceResponse> responseObservable = this.doUpsert(request);
+                    return responseObservable
+                            .map(serviceResponse -> toResourceResponse(serviceResponse, Document.class));
+                });
 
                 if (shouldRetry) {
-                    CreateDocumentRetryHandler createDocumentRetryHandler = new CreateDocumentRetryHandler(this.collectionCache, documentCollectionLink);
+                    CreateDocumentRetryHandler createDocumentRetryHandler = new CreateDocumentRetryHandler(
+                            this.collectionCache, documentCollectionLink);
                     return upsertObservable.retryWhen(RetryFunctionFactory.from(createDocumentRetryHandler));
                 } else {
                     return upsertObservable;
@@ -1018,7 +1123,41 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
 
     @Override
     public Observable<FeedResponsePage<Document>> readDocuments(String collectionLink, FeedOptions options) {
-        return this.rxWrapperClient.readDocuments(collectionLink, options);
+        
+        if (StringUtils.isEmpty(collectionLink)) {
+            throw new IllegalArgumentException("collectionLink");
+        }
+        
+        if (options == null)
+            options = new FeedOptions();
+        
+        RequestOptions requestOptions = new RequestOptions();
+        requestOptions.setPartitionKey(options.getPartitionKey());
+        
+        //currently works only for non partitioned collections
+        return getObservableFeedResponsePage(collectionLink, options, Document.class,
+                new Func4<String, String, Map<String, String>, RxDocumentClientImpl, Observable<FeedResponsePage<Document>>>() {
+
+                    @Override
+                    public Observable<FeedResponsePage<Document>> call(String token, String collectionLink,
+                            Map<String, String> requestHeaders, RxDocumentClientImpl client) {
+                        if (token != null)
+                            requestHeaders.put(HttpConstants.HttpHeaders.CONTINUATION, token);
+
+                        RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.ReadFeed,
+                                ResourceType.Document, Utils.joinPath(collectionLink, Paths.DOCUMENTS_PATH_SEGMENT), requestHeaders);
+
+                        DocumentCollection collection = client.collectionCache.resolveCollection(request);
+                        client.addPartitionKeyInformation(request, null, requestOptions, collection);
+                        
+                        try {
+                            return client.doReadFeed(request)
+                                    .map(response -> toFeedResponsePage(response, Document.class));
+                        } catch (DocumentClientException e) {
+                            return Observable.error(e);
+                        }
+                    }
+                });
     }
 
     @Override
@@ -1046,16 +1185,46 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
     }
 
     @Override
-    public Observable<FeedResponsePage<Document>> queryDocumentChangeFeed(final String collectionLink, final
-            ChangeFeedOptions changeFeedOptions) {
+    public Observable<FeedResponsePage<Document>> queryDocumentChangeFeed(final String collectionLink,
+            final ChangeFeedOptions changeFeedOptions) {
         return this.rxWrapperClient.queryDocumentChangeFeed(collectionLink, changeFeedOptions);
     }
-    
+
     @Override
-    public Observable<FeedResponsePage<PartitionKeyRange>> readPartitionKeyRanges(final String collectionLink, final FeedOptions options) {
-        return this.rxWrapperClient.readPartitionKeyRanges(collectionLink, options);
+    public Observable<FeedResponsePage<PartitionKeyRange>> readPartitionKeyRanges(final String collectionLink,
+            FeedOptions options) {
+        
+        if (StringUtils.isEmpty(collectionLink)) {
+            throw new IllegalArgumentException("collectionLink");
+        }
+        
+        if (options == null)
+            options = new FeedOptions();
+        
+        return getObservableFeedResponsePage(collectionLink, options, PartitionKeyRange.class,
+                new Func4<String, String, Map<String, String>, RxDocumentClientImpl, Observable<FeedResponsePage<PartitionKeyRange>>>() {
+
+                    @Override
+                    public Observable<FeedResponsePage<PartitionKeyRange>> call(String token, String collectionLink,
+                            Map<String, String> requestHeaders, RxDocumentClientImpl client) {
+                        if (token != null)
+                            requestHeaders.put(HttpConstants.HttpHeaders.CONTINUATION, token);
+
+                        RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.ReadFeed,
+                                ResourceType.PartitionKeyRange, Utils.joinPath(collectionLink, Paths.PARTITION_KEY_RANGE_PATH_SEGMENT), requestHeaders);
+
+                        // Add partitionkey info
+
+                        try {
+                            return client.doReadFeed(request)
+                                    .map(response -> toFeedResponsePage(response, PartitionKeyRange.class));
+                        } catch (DocumentClientException e) {
+                            return Observable.error(e);
+                        }
+                    }
+                });
     }
-    
+
     private RxDocumentServiceRequest getStoredProcedureRequest(String collectionLink, StoredProcedure storedProcedure,
             RequestOptions options, OperationType operationType) {
         if (StringUtils.isEmpty(collectionLink)) {
@@ -1150,7 +1319,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
             try {
 
                 if (storedProcedure == null) {
-                    throw new IllegalArgumentException("storedProcedure");          
+                    throw new IllegalArgumentException("storedProcedure");
                 }
                 logger.debug("Replacing a StoredProcedure. storedProcedure id [{}]", storedProcedure.getId());
 
@@ -1158,11 +1327,8 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
 
                 String path = Utils.joinPath(storedProcedure.getSelfLink(), null);
                 Map<String, String> requestHeaders = getRequestHeaders(options);
-                RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.Replace, 
-                        ResourceType.StoredProcedure,
-                        path,
-                        storedProcedure,
-                        requestHeaders);
+                RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.Replace,
+                        ResourceType.StoredProcedure, path, storedProcedure, requestHeaders);
                 return this.doReplace(request).map(response -> toResourceResponse(response, StoredProcedure.class));
 
             } catch (Exception e) {
@@ -1237,7 +1403,32 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
     @Override
     public Observable<FeedResponsePage<StoredProcedure>> readStoredProcedures(String collectionLink,
             FeedOptions options) {
-        return this.rxWrapperClient.readStoredProcedures(collectionLink, options);
+        
+        if (StringUtils.isEmpty(collectionLink)) {
+            throw new IllegalArgumentException("collectionLink");
+        }
+        
+        if (options == null)
+            options = new FeedOptions();
+        
+        return getObservableFeedResponsePage(collectionLink, options, StoredProcedure.class,
+                new Func4<String, String, Map<String, String>, RxDocumentClientImpl, Observable<FeedResponsePage<StoredProcedure>>>() {
+
+                    @Override
+                    public Observable<FeedResponsePage<StoredProcedure>> call(String token, String collectionLink,
+                            Map<String, String> requestHeaders, RxDocumentClientImpl client) {
+                        if (token != null)
+                            requestHeaders.put(HttpConstants.HttpHeaders.CONTINUATION, token);
+
+                        RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.ReadFeed,
+                                ResourceType.StoredProcedure, Utils.joinPath(collectionLink, Paths.STORED_PROCEDURES_PATH_SEGMENT), requestHeaders);
+                        try {
+                            return client.doReadFeed(request).map(response -> toFeedResponsePage(response, StoredProcedure.class));
+                        } catch (DocumentClientException e) {
+                            return Observable.error(e);
+                        }
+                    }
+                });
     }
 
     @Override
@@ -1261,7 +1452,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
     @Override
     public Observable<StoredProcedureResponse> executeStoredProcedure(String storedProcedureLink,
             RequestOptions options, Object[] procedureParams) {
-        
+
         return Observable.defer(() -> {
             try {
                 logger.debug("Executing a StoredProcedure. storedProcedureLink [{}]", storedProcedureLink);
@@ -1271,7 +1462,8 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
                 requestHeaders.put(HttpConstants.HttpHeaders.ACCEPT, RuntimeConstants.MediaTypes.JSON);
                 if (options != null) {
                     if (options.getPartitionKey() != null) {
-                        requestHeaders.put(HttpConstants.HttpHeaders.PARTITION_KEY, options.getPartitionKey().toString());
+                        requestHeaders.put(HttpConstants.HttpHeaders.PARTITION_KEY,
+                                options.getPartitionKey().toString());
                     }
                     if (options.isScriptLoggingEnabled()) {
                         requestHeaders.put(HttpConstants.HttpHeaders.SCRIPT_ENABLE_LOGGING, String.valueOf(true));
@@ -1279,10 +1471,9 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
                 }
 
                 RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.ExecuteJavaScript,
-                        ResourceType.StoredProcedure,
-                        path,
+                        ResourceType.StoredProcedure, path,
                         procedureParams != null ? RxDocumentClientImpl.serializeProcedureParams(procedureParams) : "",
-                                requestHeaders);
+                        requestHeaders);
                 this.addPartitionKeyInformation(request, null, options);
                 return this.doCreate(request).map(response -> toStoredProcedureResponse(response));
 
@@ -1297,14 +1488,16 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
     @Override
     public Observable<ResourceResponse<Trigger>> createTrigger(String collectionLink, Trigger trigger,
             RequestOptions options) {
-        
+
         return Observable.defer(() -> {
             try {
-                
-                logger.debug("Creating a Trigger. collectionLink [{}], trigger id [{}]", collectionLink, trigger.getId());
-                RxDocumentServiceRequest request = getTriggerRequest(collectionLink, trigger, options, OperationType.Create);
+
+                logger.debug("Creating a Trigger. collectionLink [{}], trigger id [{}]", collectionLink,
+                        trigger.getId());
+                RxDocumentServiceRequest request = getTriggerRequest(collectionLink, trigger, options,
+                        OperationType.Create);
                 return this.doCreate(request).map(response -> toResourceResponse(response, Trigger.class));
-            
+
             } catch (Exception e) {
                 logger.debug("Failure in creating a Trigger due to [{}]", e.getMessage(), e);
                 return Observable.error(e);
@@ -1316,12 +1509,14 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
     @Override
     public Observable<ResourceResponse<Trigger>> upsertTrigger(String collectionLink, Trigger trigger,
             RequestOptions options) {
-        
+
         return Observable.defer(() -> {
             try {
 
-                logger.debug("Upserting a Trigger. collectionLink [{}], trigger id [{}]", collectionLink, trigger.getId());
-                RxDocumentServiceRequest request = getTriggerRequest(collectionLink, trigger, options, OperationType.Upsert);
+                logger.debug("Upserting a Trigger. collectionLink [{}], trigger id [{}]", collectionLink,
+                        trigger.getId());
+                RxDocumentServiceRequest request = getTriggerRequest(collectionLink, trigger, options,
+                        OperationType.Upsert);
                 return this.doUpsert(request).map(response -> toResourceResponse(response, Trigger.class));
 
             } catch (Exception e) {
@@ -1329,36 +1524,34 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
                 return Observable.error(e);
             }
         });
-        
+
     }
-    
-    private RxDocumentServiceRequest getTriggerRequest(String collectionLink, Trigger trigger, RequestOptions options, OperationType operationType) {
+
+    private RxDocumentServiceRequest getTriggerRequest(String collectionLink, Trigger trigger, RequestOptions options,
+            OperationType operationType) {
         if (StringUtils.isEmpty(collectionLink)) {
             throw new IllegalArgumentException("collectionLink");
         }
         if (trigger == null) {
-            throw new IllegalArgumentException("trigger");          
+            throw new IllegalArgumentException("trigger");
         }
 
         RxDocumentClientImpl.validateResource(trigger);
 
         String path = Utils.joinPath(collectionLink, Paths.TRIGGERS_PATH_SEGMENT);
         Map<String, String> requestHeaders = getRequestHeaders(options);
-        RxDocumentServiceRequest request = RxDocumentServiceRequest.create(operationType, 
-                ResourceType.Trigger,
-                path,
-                trigger,
-                requestHeaders);
+        RxDocumentServiceRequest request = RxDocumentServiceRequest.create(operationType, ResourceType.Trigger, path,
+                trigger, requestHeaders);
         return request;
     }
 
     @Override
     public Observable<ResourceResponse<Trigger>> replaceTrigger(Trigger trigger, RequestOptions options) {
-        
+
         return Observable.defer(() -> {
             try {
                 if (trigger == null) {
-                    throw new IllegalArgumentException("trigger");          
+                    throw new IllegalArgumentException("trigger");
                 }
 
                 logger.debug("Replacing a Trigger. trigger id [{}]", trigger.getId());
@@ -1366,10 +1559,8 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
 
                 String path = Utils.joinPath(trigger.getSelfLink(), null);
                 Map<String, String> requestHeaders = getRequestHeaders(options);
-                RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.Replace, ResourceType.Trigger,
-                        path,
-                        trigger,
-                        requestHeaders);
+                RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.Replace,
+                        ResourceType.Trigger, path, trigger, requestHeaders);
                 return this.doReplace(request).map(response -> toResourceResponse(response, Trigger.class));
 
             } catch (Exception e) {
@@ -1391,7 +1582,8 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
                 logger.debug("Deleting a Trigger. triggerLink [{}]", triggerLink);
                 String path = Utils.joinPath(triggerLink, null);
                 Map<String, String> requestHeaders = getRequestHeaders(options);
-                RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.Delete, ResourceType.Trigger, path, requestHeaders);
+                RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.Delete,
+                        ResourceType.Trigger, path, requestHeaders);
                 return this.doDelete(request).map(response -> toResourceResponse(response, Trigger.class));
 
             } catch (Exception e) {
@@ -1413,7 +1605,8 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
                 logger.debug("Reading a Trigger. triggerLink [{}]", triggerLink);
                 String path = Utils.joinPath(triggerLink, null);
                 Map<String, String> requestHeaders = getRequestHeaders(options);
-                RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.Read, ResourceType.Trigger, path, requestHeaders);
+                RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.Read,
+                        ResourceType.Trigger, path, requestHeaders);
                 return this.doRead(request).map(response -> toResourceResponse(response, Trigger.class));
 
             } catch (Exception e) {
@@ -1425,7 +1618,32 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
 
     @Override
     public Observable<FeedResponsePage<Trigger>> readTriggers(String collectionLink, FeedOptions options) {
-        return this.rxWrapperClient.readTriggers(collectionLink, options);
+        
+        if (StringUtils.isEmpty(collectionLink)) {
+            throw new IllegalArgumentException("collectionLink");
+        }
+        
+        if (options == null)
+            options = new FeedOptions();
+        
+        return getObservableFeedResponsePage(collectionLink, options, Trigger.class,
+                new Func4<String, String, Map<String, String>, RxDocumentClientImpl, Observable<FeedResponsePage<Trigger>>>() {
+
+                    @Override
+                    public Observable<FeedResponsePage<Trigger>> call(String token, String collectionLink,
+                            Map<String, String> requestHeaders, RxDocumentClientImpl client) {
+                        if (token != null)
+                            requestHeaders.put(HttpConstants.HttpHeaders.CONTINUATION, token);
+
+                        RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.ReadFeed,
+                                ResourceType.Trigger, Utils.joinPath(collectionLink, Paths.TRIGGERS_PATH_SEGMENT), requestHeaders);
+                        try {
+                            return client.doReadFeed(request).map(response -> toFeedResponsePage(response, Trigger.class));
+                        } catch (DocumentClientException e) {
+                            return Observable.error(e);
+                        }
+                    }
+                });
     }
 
     @Override
@@ -1577,7 +1795,32 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
     @Override
     public Observable<FeedResponsePage<UserDefinedFunction>> readUserDefinedFunctions(String collectionLink,
             FeedOptions options) {
-        return this.rxWrapperClient.readUserDefinedFunctions(collectionLink, options);
+        
+        if (StringUtils.isEmpty(collectionLink)) {
+            throw new IllegalArgumentException("collectionLink");
+        }
+        
+        if (options == null)
+            options = new FeedOptions();
+        
+        return getObservableFeedResponsePage(collectionLink, options, UserDefinedFunction.class,
+                new Func4<String, String, Map<String, String>, RxDocumentClientImpl, Observable<FeedResponsePage<UserDefinedFunction>>>() {
+
+                    @Override
+                    public Observable<FeedResponsePage<UserDefinedFunction>> call(String token, String collectionLink,
+                            Map<String, String> requestHeaders, RxDocumentClientImpl client) {
+                        if (token != null)
+                            requestHeaders.put(HttpConstants.HttpHeaders.CONTINUATION, token);
+
+                        RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.ReadFeed,
+                                ResourceType.UserDefinedFunction, Utils.joinPath(collectionLink, Paths.USER_DEFINED_FUNCTIONS_PATH_SEGMENT), requestHeaders);
+                        try {
+                            return client.doReadFeed(request).map(response -> toFeedResponsePage(response, UserDefinedFunction.class));
+                        } catch (DocumentClientException e) {
+                            return Observable.error(e);
+                        }
+                    }
+                });
     }
 
     @Override
@@ -1598,8 +1841,10 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
 
         return Observable.defer(() -> {
             try {
-                logger.debug("Creating a Attachment. documentLink [{}], attachment id [{}]", documentLink, attachment.getId());                
-                RxDocumentServiceRequest request = getAttachmentRequest(documentLink, attachment, options, OperationType.Create);
+                logger.debug("Creating a Attachment. documentLink [{}], attachment id [{}]", documentLink,
+                        attachment.getId());
+                RxDocumentServiceRequest request = getAttachmentRequest(documentLink, attachment, options,
+                        OperationType.Create);
                 return this.doCreate(request).map(response -> toResourceResponse(response, Attachment.class));
 
             } catch (Exception e) {
@@ -1615,8 +1860,10 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
 
         return Observable.defer(() -> {
             try {
-                logger.debug("Upserting a Attachment. documentLink [{}], attachment id [{}]", documentLink, attachment.getId());                
-                RxDocumentServiceRequest request = getAttachmentRequest(documentLink, attachment, options, OperationType.Upsert);
+                logger.debug("Upserting a Attachment. documentLink [{}], attachment id [{}]", documentLink,
+                        attachment.getId());
+                RxDocumentServiceRequest request = getAttachmentRequest(documentLink, attachment, options,
+                        OperationType.Upsert);
                 return this.doUpsert(request).map(response -> toResourceResponse(response, Attachment.class));
 
             } catch (Exception e) {
@@ -1632,18 +1879,16 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
         return Observable.defer(() -> {
             try {
                 if (attachment == null) {
-                    throw new IllegalArgumentException("attachment");          
+                    throw new IllegalArgumentException("attachment");
                 }
 
-                logger.debug("Replacing a Attachment. attachment id [{}]", attachment.getId());                
+                logger.debug("Replacing a Attachment. attachment id [{}]", attachment.getId());
                 RxDocumentClientImpl.validateResource(attachment);
 
                 String path = Utils.joinPath(attachment.getSelfLink(), null);
                 Map<String, String> requestHeaders = getRequestHeaders(options);
-                RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.Replace, ResourceType.Attachment,
-                        path,
-                        attachment,
-                        requestHeaders);
+                RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.Replace,
+                        ResourceType.Attachment, path, attachment, requestHeaders);
                 this.addPartitionKeyInformation(request, null, options);
                 return this.doReplace(request).map(response -> toResourceResponse(response, Attachment.class));
 
@@ -1663,12 +1908,11 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
                     throw new IllegalArgumentException("attachmentLink");
                 }
 
-                logger.debug("Deleting a Attachment. attachmentLink [{}]", attachmentLink);                
+                logger.debug("Deleting a Attachment. attachmentLink [{}]", attachmentLink);
                 String path = Utils.joinPath(attachmentLink, null);
                 Map<String, String> requestHeaders = getRequestHeaders(options);
-                RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.Delete, ResourceType.Attachment,
-                        path,
-                        requestHeaders);
+                RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.Delete,
+                        ResourceType.Attachment, path, requestHeaders);
                 this.addPartitionKeyInformation(request, null, options);
                 return this.doDelete(request).map(response -> toResourceResponse(response, Attachment.class));
 
@@ -1688,10 +1932,11 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
                     throw new IllegalArgumentException("attachmentLink");
                 }
 
-                logger.debug("Reading a Attachment. attachmentLink [{}]", attachmentLink);                
+                logger.debug("Reading a Attachment. attachmentLink [{}]", attachmentLink);
                 String path = Utils.joinPath(attachmentLink, null);
                 Map<String, String> requestHeaders = getRequestHeaders(options);
-                RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.Read, ResourceType.Attachment, path, requestHeaders);
+                RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.Read,
+                        ResourceType.Attachment, path, requestHeaders);
                 this.addPartitionKeyInformation(request, null, options);
                 return this.doRead(request).map(response -> toResourceResponse(response, Attachment.class));
 
@@ -1725,29 +1970,28 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
             throw new IllegalArgumentException("documentLink");
         }
         if (attachment == null) {
-            throw new IllegalArgumentException("attachment");          
+            throw new IllegalArgumentException("attachment");
         }
 
         RxDocumentClientImpl.validateResource(attachment);
 
         String path = Utils.joinPath(documentLink, Paths.ATTACHMENTS_PATH_SEGMENT);
         Map<String, String> requestHeaders = getRequestHeaders(options);
-        RxDocumentServiceRequest request = RxDocumentServiceRequest.create(operationType, ResourceType.Attachment,
-                path,
-                attachment,
-                requestHeaders);
+        RxDocumentServiceRequest request = RxDocumentServiceRequest.create(operationType, ResourceType.Attachment, path,
+                attachment, requestHeaders);
         this.addPartitionKeyInformation(request, null, options);
         return request;
     }
-    
+
     @Override
     public Observable<ResourceResponse<Attachment>> createAttachment(String documentLink, InputStream mediaStream,
             MediaOptions options) {
 
         return Observable.defer(() -> {
             try {
-                logger.debug("Creating a Attachment. attachmentLink [{}]", documentLink);                
-                RxDocumentServiceRequest request = getAttachmentRequest(documentLink, mediaStream, options, OperationType.Create);
+                logger.debug("Creating a Attachment. attachmentLink [{}]", documentLink);
+                RxDocumentServiceRequest request = getAttachmentRequest(documentLink, mediaStream, options,
+                        OperationType.Create);
                 return this.doCreate(request).map(response -> toResourceResponse(response, Attachment.class));
 
             } catch (Exception e) {
@@ -1763,8 +2007,9 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
 
         return Observable.defer(() -> {
             try {
-                logger.debug("Upserting a Attachment. attachmentLink [{}]", documentLink);                
-                RxDocumentServiceRequest request = getAttachmentRequest(documentLink, mediaStream, options, OperationType.Upsert);
+                logger.debug("Upserting a Attachment. attachmentLink [{}]", documentLink);
+                RxDocumentServiceRequest request = getAttachmentRequest(documentLink, mediaStream, options,
+                        OperationType.Upsert);
                 return this.doUpsert(request).map(response -> toResourceResponse(response, Attachment.class));
 
             } catch (Exception e) {
@@ -1773,26 +2018,24 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
             }
         });
     }
-    
+
     private RxDocumentServiceRequest getAttachmentRequest(String documentLink, InputStream mediaStream,
             MediaOptions options, OperationType operationType) {
         if (StringUtils.isEmpty(documentLink)) {
             throw new IllegalArgumentException("documentLink");
         }
         if (mediaStream == null) {
-            throw new IllegalArgumentException("mediaStream");          
+            throw new IllegalArgumentException("mediaStream");
         }
         String path = Utils.joinPath(documentLink, Paths.ATTACHMENTS_PATH_SEGMENT);
         Map<String, String> requestHeaders = this.getMediaHeaders(options);
-        RxDocumentServiceRequest request = RxDocumentServiceRequest.create(operationType, ResourceType.Attachment,
-                path,
-                mediaStream,
-                requestHeaders);
+        RxDocumentServiceRequest request = RxDocumentServiceRequest.create(operationType, ResourceType.Attachment, path,
+                mediaStream, requestHeaders);
         request.setIsMedia(true);
         this.addPartitionKeyInformation(request, null, null);
         return request;
     }
-    
+
     @Override
     public Observable<MediaResponse> readMedia(String mediaLink) {
         return this.rxWrapperClient.readMedia(mediaLink);
@@ -1812,10 +2055,11 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
                     throw new IllegalArgumentException("conflictLink");
                 }
 
-                logger.debug("Reading a Conflict. conflictLink [{}]", conflictLink);                
+                logger.debug("Reading a Conflict. conflictLink [{}]", conflictLink);
                 String path = Utils.joinPath(conflictLink, null);
                 Map<String, String> requestHeaders = getRequestHeaders(options);
-                RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.Read, ResourceType.Conflict, path, requestHeaders);
+                RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.Read,
+                        ResourceType.Conflict, path, requestHeaders);
                 this.addPartitionKeyInformation(request, null, options);
                 return this.doRead(request).map(response -> toResourceResponse(response, Conflict.class));
 
@@ -1828,7 +2072,32 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
 
     @Override
     public Observable<FeedResponsePage<Conflict>> readConflicts(String collectionLink, FeedOptions options) {
-        return this.rxWrapperClient.readConflicts(collectionLink, options);
+        
+        if (StringUtils.isEmpty(collectionLink)) {
+            throw new IllegalArgumentException("collectionLink");
+        }
+
+        if (options == null)
+            options = new FeedOptions();
+        
+        return getObservableFeedResponsePage(collectionLink, options, Conflict.class,
+                new Func4<String, String, Map<String, String>, RxDocumentClientImpl, Observable<FeedResponsePage<Conflict>>>() {
+
+                    @Override
+                    public Observable<FeedResponsePage<Conflict>> call(String token, String collectionLink,
+                            Map<String, String> requestHeaders, RxDocumentClientImpl client) {
+                        if (token != null)
+                            requestHeaders.put(HttpConstants.HttpHeaders.CONTINUATION, token);
+
+                        RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.ReadFeed,
+                                ResourceType.Conflict, Utils.joinPath(collectionLink, Paths.CONFLICTS_PATH_SEGMENT), requestHeaders);
+                        try {
+                            return client.doReadFeed(request).map(response -> toFeedResponsePage(response, Conflict.class));
+                        } catch (DocumentClientException e) {
+                            return Observable.error(e);
+                        }
+                    }
+                });
     }
 
     @Override
@@ -1852,10 +2121,11 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
                     throw new IllegalArgumentException("conflictLink");
                 }
 
-                logger.debug("Deleting a Conflict. conflictLink [{}]", conflictLink);                
+                logger.debug("Deleting a Conflict. conflictLink [{}]", conflictLink);
                 String path = Utils.joinPath(conflictLink, null);
                 Map<String, String> requestHeaders = getRequestHeaders(options);
-                RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.Read, ResourceType.Conflict, path, requestHeaders);
+                RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.Read,
+                        ResourceType.Conflict, path, requestHeaders);
                 this.addPartitionKeyInformation(request, null, options);
                 return this.doDelete(request).map(response -> toResourceResponse(response, Conflict.class));
 
@@ -1871,7 +2141,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
 
         return Observable.defer(() -> {
             try {
-                logger.debug("Creating a User. databaseLink [{}], user id [{}]", databaseLink, user.getId());                
+                logger.debug("Creating a User. databaseLink [{}], user id [{}]", databaseLink, user.getId());
                 RxDocumentServiceRequest request = getUserRequest(databaseLink, user, options, OperationType.Create);
                 return this.doCreate(request).map(response -> toResourceResponse(response, User.class));
 
@@ -1888,7 +2158,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
 
         return Observable.defer(() -> {
             try {
-                logger.debug("Upserting a User. databaseLink [{}], user id [{}]", databaseLink, user.getId());                
+                logger.debug("Upserting a User. databaseLink [{}], user id [{}]", databaseLink, user.getId());
                 RxDocumentServiceRequest request = getUserRequest(databaseLink, user, options, OperationType.Upsert);
                 return this.doUpsert(request).map(response -> toResourceResponse(response, User.class));
 
@@ -1899,7 +2169,8 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
         });
     }
 
-    private RxDocumentServiceRequest getUserRequest(String databaseLink, User user, RequestOptions options, OperationType operationType) {
+    private RxDocumentServiceRequest getUserRequest(String databaseLink, User user, RequestOptions options,
+            OperationType operationType) {
         if (StringUtils.isEmpty(databaseLink)) {
             throw new IllegalArgumentException("databaseLink");
         }
@@ -1911,25 +2182,26 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
 
         String path = Utils.joinPath(databaseLink, Paths.USERS_PATH_SEGMENT);
         Map<String, String> requestHeaders = getRequestHeaders(options);
-        RxDocumentServiceRequest request = RxDocumentServiceRequest.create(operationType, ResourceType.User, path, user, requestHeaders);
+        RxDocumentServiceRequest request = RxDocumentServiceRequest.create(operationType, ResourceType.User, path, user,
+                requestHeaders);
         return request;
     }
 
-    
     @Override
     public Observable<ResourceResponse<User>> replaceUser(User user, RequestOptions options) {
 
         return Observable.defer(() -> {
             try {
                 if (user == null) {
-                    throw new IllegalArgumentException("user");          
+                    throw new IllegalArgumentException("user");
                 }
-                logger.debug("Replacing a User. user id [{}]", user.getId());                
+                logger.debug("Replacing a User. user id [{}]", user.getId());
                 RxDocumentClientImpl.validateResource(user);
 
                 String path = Utils.joinPath(user.getSelfLink(), null);
                 Map<String, String> requestHeaders = getRequestHeaders(options);
-                RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.Replace, ResourceType.User, path, user, requestHeaders);
+                RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.Replace,
+                        ResourceType.User, path, user, requestHeaders);
                 return this.doReplace(request).map(response -> toResourceResponse(response, User.class));
 
             } catch (Exception e) {
@@ -1947,10 +2219,11 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
                 if (StringUtils.isEmpty(userLink)) {
                     throw new IllegalArgumentException("userLink");
                 }
-                logger.debug("Deleting a User. userLink [{}]", userLink);                
+                logger.debug("Deleting a User. userLink [{}]", userLink);
                 String path = Utils.joinPath(userLink, null);
                 Map<String, String> requestHeaders = getRequestHeaders(options);
-                RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.Delete, ResourceType.User, path, requestHeaders);
+                RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.Delete,
+                        ResourceType.User, path, requestHeaders);
                 return this.doDelete(request).map(response -> toResourceResponse(response, User.class));
 
             } catch (Exception e) {
@@ -1968,10 +2241,11 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
                 if (StringUtils.isEmpty(userLink)) {
                     throw new IllegalArgumentException("userLink");
                 }
-                logger.debug("Reading a User. userLink [{}]", userLink);                
+                logger.debug("Reading a User. userLink [{}]", userLink);
                 String path = Utils.joinPath(userLink, null);
                 Map<String, String> requestHeaders = getRequestHeaders(options);
-                RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.Read, ResourceType.User, path, requestHeaders);
+                RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.Read,
+                        ResourceType.User, path, requestHeaders);
                 return this.doRead(request).map(response -> toResourceResponse(response, User.class));
 
             } catch (Exception e) {
@@ -1983,7 +2257,32 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
 
     @Override
     public Observable<FeedResponsePage<User>> readUsers(String databaseLink, FeedOptions options) {
-        return this.rxWrapperClient.readUsers(databaseLink, options);
+        
+        if (StringUtils.isEmpty(databaseLink)) {
+            throw new IllegalArgumentException("databaseLink");
+        }
+        
+        if (options == null)
+            options = new FeedOptions();
+        
+        return getObservableFeedResponsePage(databaseLink, options, User.class,
+                new Func4<String, String, Map<String, String>, RxDocumentClientImpl, Observable<FeedResponsePage<User>>>() {
+
+                    @Override
+                    public Observable<FeedResponsePage<User>> call(String token, String databaseLink,
+                            Map<String, String> requestHeaders, RxDocumentClientImpl client) {
+                        if (token != null)
+                            requestHeaders.put(HttpConstants.HttpHeaders.CONTINUATION, token);
+
+                        RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.ReadFeed,
+                                ResourceType.User, Utils.joinPath(databaseLink, Paths.USERS_PATH_SEGMENT), requestHeaders);
+                        try {
+                            return client.doReadFeed(request).map(response -> toFeedResponsePage(response, User.class));
+                        } catch (DocumentClientException e) {
+                            return Observable.error(e);
+                        }
+                    }
+                });
     }
 
     @Override
@@ -2003,8 +2302,9 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
 
         return Observable.defer(() -> {
             try {
-                logger.debug("Creating a Permission. userLink [{}], permission id [{}]", userLink, permission.getId());                
-                RxDocumentServiceRequest request = getPermissionRequest(userLink, permission, options, OperationType.Create);
+                logger.debug("Creating a Permission. userLink [{}], permission id [{}]", userLink, permission.getId());
+                RxDocumentServiceRequest request = getPermissionRequest(userLink, permission, options,
+                        OperationType.Create);
                 return this.doCreate(request).map(response -> toResourceResponse(response, Permission.class));
 
             } catch (Exception e) {
@@ -2020,8 +2320,9 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
 
         return Observable.defer(() -> {
             try {
-                logger.debug("Upserting a Permission. userLink [{}], permission id [{}]", userLink, permission.getId());                
-                RxDocumentServiceRequest request = getPermissionRequest(userLink, permission, options, OperationType.Upsert);
+                logger.debug("Upserting a Permission. userLink [{}], permission id [{}]", userLink, permission.getId());
+                RxDocumentServiceRequest request = getPermissionRequest(userLink, permission, options,
+                        OperationType.Upsert);
                 return this.doUpsert(request).map(response -> toResourceResponse(response, Permission.class));
 
             } catch (Exception e) {
@@ -2037,37 +2338,33 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
             throw new IllegalArgumentException("userLink");
         }
         if (permission == null) {
-            throw new IllegalArgumentException("permission");          
+            throw new IllegalArgumentException("permission");
         }
 
         RxDocumentClientImpl.validateResource(permission);
 
         String path = Utils.joinPath(userLink, Paths.PERMISSIONS_PATH_SEGMENT);
         Map<String, String> requestHeaders = getRequestHeaders(options);
-        RxDocumentServiceRequest request = RxDocumentServiceRequest.create(operationType, ResourceType.Permission,
-                path,
-                permission,
-                requestHeaders);
+        RxDocumentServiceRequest request = RxDocumentServiceRequest.create(operationType, ResourceType.Permission, path,
+                permission, requestHeaders);
         return request;
     }
-    
+
     @Override
     public Observable<ResourceResponse<Permission>> replacePermission(Permission permission, RequestOptions options) {
 
         return Observable.defer(() -> {
             try {
                 if (permission == null) {
-                    throw new IllegalArgumentException("permission");          
+                    throw new IllegalArgumentException("permission");
                 }
-                logger.debug("Replacing a Permission. permission id [{}]", permission.getId());                
+                logger.debug("Replacing a Permission. permission id [{}]", permission.getId());
                 RxDocumentClientImpl.validateResource(permission);
 
                 String path = Utils.joinPath(permission.getSelfLink(), null);
                 Map<String, String> requestHeaders = getRequestHeaders(options);
-                RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.Replace, ResourceType.Permission,
-                        path,
-                        permission,
-                        requestHeaders);
+                RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.Replace,
+                        ResourceType.Permission, path, permission, requestHeaders);
                 return this.doReplace(request).map(response -> toResourceResponse(response, Permission.class));
 
             } catch (Exception e) {
@@ -2085,10 +2382,11 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
                 if (StringUtils.isEmpty(permissionLink)) {
                     throw new IllegalArgumentException("permissionLink");
                 }
-                logger.debug("Deleting a Permission. permissionLink [{}]", permissionLink);                
+                logger.debug("Deleting a Permission. permissionLink [{}]", permissionLink);
                 String path = Utils.joinPath(permissionLink, null);
                 Map<String, String> requestHeaders = getRequestHeaders(options);
-                RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.Delete, ResourceType.Permission, path, requestHeaders);
+                RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.Delete,
+                        ResourceType.Permission, path, requestHeaders);
                 return this.doDelete(request).map(response -> toResourceResponse(response, Permission.class));
 
             } catch (Exception e) {
@@ -2106,10 +2404,11 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
                 if (StringUtils.isEmpty(permissionLink)) {
                     throw new IllegalArgumentException("permissionLink");
                 }
-                logger.debug("Reading a Permission. permissionLink [{}]", permissionLink);                
+                logger.debug("Reading a Permission. permissionLink [{}]", permissionLink);
                 String path = Utils.joinPath(permissionLink, null);
                 Map<String, String> requestHeaders = getRequestHeaders(options);
-                RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.Read, ResourceType.Permission, path, requestHeaders);
+                RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.Read,
+                        ResourceType.Permission, path, requestHeaders);
                 return this.doRead(request).map(response -> toResourceResponse(response, Permission.class));
 
             } catch (Exception e) {
@@ -2120,8 +2419,35 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
     }
 
     @Override
-    public Observable<FeedResponsePage<Permission>> readPermissions(String permissionLink, FeedOptions options) {
-        return this.rxWrapperClient.readPermissions(permissionLink, options);
+    public Observable<FeedResponsePage<Permission>> readPermissions(String userLink, FeedOptions options) {
+        
+        if (StringUtils.isEmpty(userLink)) {
+            throw new IllegalArgumentException("userLink");
+        }
+        
+        if (options == null)
+            options = new FeedOptions();
+        
+        return getObservableFeedResponsePage(userLink, options, Permission.class,
+                new Func4<String, String, Map<String, String>, RxDocumentClientImpl, Observable<FeedResponsePage<Permission>>>() {
+
+                    @Override
+                    public Observable<FeedResponsePage<Permission>> call(String token, String userLink,
+                            Map<String, String> requestHeaders, RxDocumentClientImpl client) {
+                        if (token != null)
+                            requestHeaders.put(HttpConstants.HttpHeaders.CONTINUATION, token);
+
+                        RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.ReadFeed,
+                                ResourceType.Permission, Utils.joinPath(userLink, Paths.PERMISSIONS_PATH_SEGMENT), requestHeaders);
+                        
+                        try {
+                            return client.doReadFeed(request)
+                                    .map(response -> toFeedResponsePage(response, Permission.class));
+                        } catch (DocumentClientException e) {
+                            return Observable.error(e);
+                        }
+                    }
+                });
     }
 
     @Override
@@ -2142,16 +2468,14 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
         return Observable.defer(() -> {
             try {
                 if (offer == null) {
-                    throw new IllegalArgumentException("offer");          
+                    throw new IllegalArgumentException("offer");
                 }
-                logger.debug("Replacing an Offer. offer id [{}]", offer.getId());                
+                logger.debug("Replacing an Offer. offer id [{}]", offer.getId());
                 RxDocumentClientImpl.validateResource(offer);
 
                 String path = Utils.joinPath(offer.getSelfLink(), null);
-                RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.Replace, ResourceType.Offer,
-                        path,
-                        offer,
-                        null);
+                RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.Replace,
+                        ResourceType.Offer, path, offer, null);
                 return this.doReplace(request).map(response -> toResourceResponse(response, Offer.class));
 
             } catch (Exception e) {
@@ -2169,9 +2493,10 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
                 if (StringUtils.isEmpty(offerLink)) {
                     throw new IllegalArgumentException("offerLink");
                 }
-                logger.debug("Reading an Offer. offerLink [{}]", offerLink);                
+                logger.debug("Reading an Offer. offerLink [{}]", offerLink);
                 String path = Utils.joinPath(offerLink, null);
-                RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.Read, ResourceType.Offer, path, null);
+                RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.Read,
+                        ResourceType.Offer, path, null);
                 return this.doRead(request).map(response -> toResourceResponse(response, Offer.class));
 
             } catch (Exception e) {
@@ -2183,7 +2508,28 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
 
     @Override
     public Observable<FeedResponsePage<Offer>> readOffers(FeedOptions options) {
-        return this.rxWrapperClient.readOffers(options);
+        
+        if (options == null)
+            options = new FeedOptions();
+        
+        return getObservableFeedResponsePage(null, options, Offer.class,
+                new Func4<String, String, Map<String, String>, RxDocumentClientImpl, Observable<FeedResponsePage<Offer>>>() {
+
+                    @Override
+                    public Observable<FeedResponsePage<Offer>> call(String token, String resourceLink,
+                            Map<String, String> requestHeaders, RxDocumentClientImpl client) {
+                        if (token != null)
+                            requestHeaders.put(HttpConstants.HttpHeaders.CONTINUATION, token);
+
+                        RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.ReadFeed,
+                                ResourceType.Offer, Utils.joinPath(Paths.OFFERS_PATH_SEGMENT, null), requestHeaders);
+                        try {
+                            return client.doReadFeed(request).map(response -> toFeedResponsePage(response, Offer.class));
+                        } catch (DocumentClientException e) {
+                            return Observable.error(e);
+                        }
+                    }
+                });
     }
 
     @Override
@@ -2201,12 +2547,12 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
 
         return Observable.defer(() -> {
             try {
-                logger.debug("Getting Database Account");                
-                RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.Read, ResourceType.DatabaseAccount,
-                        "",  // path
+                logger.debug("Getting Database Account");
+                RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.Read,
+                        ResourceType.DatabaseAccount, "", // path
                         null);
                 return this.doRead(request).map(response -> toDatabaseAccount(response));
-                
+
             } catch (Exception e) {
                 logger.debug("Failure in getting Database Account due to [{}]", e.getMessage(), e);
                 return Observable.error(e);
@@ -2238,7 +2584,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
         if (exS == null) {
             return;
         }
-        
+
         try {
             exS.shutdown();
             exS.awaitTermination(15, TimeUnit.SECONDS);
@@ -2246,7 +2592,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient {
             logger.warn("Failure in shutting down a executor service", e);
         }
     }
-    
+
     @Override
     public void close() {
 
