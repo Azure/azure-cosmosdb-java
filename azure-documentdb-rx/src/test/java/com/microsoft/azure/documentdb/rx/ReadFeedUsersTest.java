@@ -55,7 +55,7 @@ public class ReadFeedUsersTest extends TestSuiteBase {
         feedOptions.setPageSize(1);
     }
     
-    @Test(groups = { "simple" }, timeOut = TIMEOUT)
+    @Test(groups = { "simple" }, timeOut = FEED_TIMEOUT)
     public void readUsers() throws Exception {
 
         String databaseLink = "dbs/" + getDatabaseId();

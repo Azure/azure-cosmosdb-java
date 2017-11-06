@@ -57,7 +57,7 @@ public class ReadFeedStoredProceduresTest extends TestSuiteBase {
         feedOptions.setPageSize(1);
     }
    
-    @Test(groups = { "simple" }, timeOut = TIMEOUT)
+    @Test(groups = { "simple" }, timeOut = FEED_TIMEOUT)
     public void readStoredProcedures() throws Exception {
 
         String collectionLink = "dbs/" + getDatabaseId() + "/colls/" + getCollectionId();

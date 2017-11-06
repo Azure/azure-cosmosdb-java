@@ -57,7 +57,7 @@ public class ReadFeedUdfsTest extends TestSuiteBase {
         feedOptions.setPageSize(1);
     }
    
-    @Test(groups = { "simple" }, timeOut = TIMEOUT)
+    @Test(groups = { "simple" }, timeOut = FEED_TIMEOUT)
     public void readUserDefinedFunctions() throws Exception {
 
         String collectionLink = "dbs/" + getDatabaseId() + "/colls/" + getCollectionId();

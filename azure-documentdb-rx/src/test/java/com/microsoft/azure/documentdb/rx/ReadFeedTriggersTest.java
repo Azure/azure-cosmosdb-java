@@ -59,7 +59,7 @@ public class ReadFeedTriggersTest extends TestSuiteBase {
         feedOptions.setPageSize(1);
     }
     
-    @Test(groups = { "simple" }, timeOut = TIMEOUT)
+    @Test(groups = { "simple" }, timeOut = FEED_TIMEOUT)
     public void readTriggers() throws Exception {
 
         String collectionLink = "dbs/" + getDatabaseId() + "/colls/" + getCollectionId();

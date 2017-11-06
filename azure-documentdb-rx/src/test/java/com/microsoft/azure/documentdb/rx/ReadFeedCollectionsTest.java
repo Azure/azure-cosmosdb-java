@@ -55,7 +55,7 @@ public class ReadFeedCollectionsTest extends TestSuiteBase {
         feedOptions.setPageSize(1);
     }
    
-    @Test(groups = { "simple" }, timeOut = TIMEOUT)
+    @Test(groups = { "simple" }, timeOut = FEED_TIMEOUT)
     public void readCollections() throws Exception {
 
         String databaseLink = "dbs/" + getDatabaseId();

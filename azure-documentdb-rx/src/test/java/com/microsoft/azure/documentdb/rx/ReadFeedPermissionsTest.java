@@ -58,7 +58,7 @@ public class ReadFeedPermissionsTest extends TestSuiteBase {
         feedOptions.setPageSize(1);
     }
 
-    @Test(groups = { "simple" }, timeOut = TIMEOUT)
+    @Test(groups = { "simple" }, timeOut = FEED_TIMEOUT)
     public void createPermission() throws Exception {
 
         createdUser = safeCreateUser(houseKeepingClient, createdDatabase.getId(), getUserDefinition());
