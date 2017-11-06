@@ -648,7 +648,7 @@ public class RxWrapperDocumentClientImpl implements AsyncDocumentClient {
         return this.createResourceResponseObservable(new ImplFunc<ResourceResponse<Trigger>>() {
             @Override
             public ResourceResponse<Trigger> invoke() throws Exception {
-                return client.createTrigger(collectionLink, trigger, options);
+                return client.upsertTrigger(collectionLink, trigger, options);
             }
         });
     }

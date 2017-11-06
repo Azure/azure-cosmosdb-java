@@ -28,12 +28,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.assertj.core.api.Condition;
+import org.json.JSONObject;
 
+import com.microsoft.azure.documentdb.Attachment;
 import com.microsoft.azure.documentdb.DocumentCollection;
 import com.microsoft.azure.documentdb.IndexingMode;
+import com.microsoft.azure.documentdb.Offer;
+import com.microsoft.azure.documentdb.Permission;
+import com.microsoft.azure.documentdb.PermissionMode;
 import com.microsoft.azure.documentdb.Resource;
 import com.microsoft.azure.documentdb.ResourceResponse;
 import com.microsoft.azure.documentdb.StoredProcedure;
+import com.microsoft.azure.documentdb.Trigger;
+import com.microsoft.azure.documentdb.TriggerOperation;
+import com.microsoft.azure.documentdb.TriggerType;
+import com.microsoft.azure.documentdb.UserDefinedFunction;
 
 public interface ResourceResponseValidator<T extends Resource> {
 
@@ -90,7 +99,7 @@ public interface ResourceResponseValidator<T extends Resource> {
             });
             return this;
         }
-        
+
         public Builder<T> withProperty(String propertyName, Object value) {
             validators.add(new ResourceResponseValidator<T>() {
 
@@ -104,7 +113,28 @@ public interface ResourceResponseValidator<T extends Resource> {
             return this;
         }
 
+        public Builder<T> withPermissionMode(PermissionMode mode) {
+            validators.add(new ResourceResponseValidator<Permission>() {
 
+                @Override
+                public void validate(ResourceResponse<Permission> resourceResponse) {
+                    assertThat(resourceResponse.getResource().getPermissionMode()).isEqualTo(mode);
+                }
+            });
+            return this;
+        }
+        
+        public Builder<T> withPermissionResourceLink(String link) {
+            validators.add(new ResourceResponseValidator<Permission>() {
+
+                @Override
+                public void validate(ResourceResponse<Permission> resourceResponse) {
+                    assertThat(resourceResponse.getResource().getResourceLink()).isEqualTo(link);
+                }
+            });
+            return this;
+        }
+        
         public Builder<T> indexingMode(IndexingMode mode) {
             validators.add(new ResourceResponseValidator<DocumentCollection>() {
 
@@ -118,12 +148,35 @@ public interface ResourceResponseValidator<T extends Resource> {
             return this;
         }
 
-        public Builder<T> withBody(String storedProcedureFunction) {
+        public Builder<T> withStoredProcedureBody(String functionBody) {
             validators.add(new ResourceResponseValidator<StoredProcedure>() {
 
                 @Override
                 public void validate(ResourceResponse<StoredProcedure> resourceResponse) {
-                    assertThat(resourceResponse.getResource().getBody()).isEqualTo(storedProcedureFunction);
+                    assertThat(resourceResponse.getResource().getBody()).isEqualTo(functionBody);
+                }
+            });
+            return this;
+        }
+        
+        public Builder<T> withUserDefinedFunctionBody(String functionBody) {
+            validators.add(new ResourceResponseValidator<UserDefinedFunction>() {
+
+                @Override
+                public void validate(ResourceResponse<UserDefinedFunction> resourceResponse) {
+                    assertThat(resourceResponse.getResource().getBody()).isEqualTo(functionBody);
+                }
+            });
+            return this;
+        }
+
+        
+        public Builder<T> withTriggerBody(String functionBody) {
+            validators.add(new ResourceResponseValidator<Trigger>() {
+
+                @Override
+                public void validate(ResourceResponse<Trigger> resourceResponse) {
+                    assertThat(resourceResponse.getResource().getBody()).isEqualTo(functionBody);
                 }
             });
             return this;
@@ -140,7 +193,42 @@ public interface ResourceResponseValidator<T extends Resource> {
             });
             return this;
         }
-        
+
+        public Builder<T> withTriggerInternals(TriggerType type, TriggerOperation op) {
+            validators.add(new ResourceResponseValidator<Trigger>() {
+
+                @Override
+                public void validate(ResourceResponse<Trigger> resourceResponse) {
+                    assertThat(resourceResponse.getResource().getTriggerType()).isEqualTo(type);
+                    assertThat(resourceResponse.getResource().getTriggerOperation()).isEqualTo(op);
+                }
+            });
+            return this;
+        }
+
+        public Builder<T> withContentType(final String contentType) {
+            validators.add(new ResourceResponseValidator<Attachment>() {
+
+                @Override
+                public void validate(ResourceResponse<Attachment> resourceResponse) {
+                    assertThat(resourceResponse.getResource().getContentType()).isEqualTo(contentType);
+                }
+            });
+            return this;
+        }
+
+        public Builder<T> withOfferThroughput(int throughput) {
+            validators.add(new ResourceResponseValidator<Offer>() {
+
+                @Override
+                public void validate(ResourceResponse<Offer> resourceResponse) {
+                    assertThat(resourceResponse.getResource().getContent().getInt("offerThroughput"))
+                            .isEqualTo(throughput);
+                }
+            });
+            return this;
+        }
+
         public Builder<T> validatePropertyCondition(String key, Condition<Object> condition) {
             validators.add(new ResourceResponseValidator<T>() {
 

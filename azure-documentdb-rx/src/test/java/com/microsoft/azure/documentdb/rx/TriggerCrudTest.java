@@ -33,16 +33,16 @@ import org.testng.annotations.Test;
 
 import com.microsoft.azure.documentdb.Database;
 import com.microsoft.azure.documentdb.DocumentCollection;
-import com.microsoft.azure.documentdb.RequestOptions;
 import com.microsoft.azure.documentdb.ResourceResponse;
-import com.microsoft.azure.documentdb.StoredProcedure;
-import com.microsoft.azure.documentdb.StoredProcedureResponse;
+import com.microsoft.azure.documentdb.Trigger;
+import com.microsoft.azure.documentdb.TriggerOperation;
+import com.microsoft.azure.documentdb.TriggerType;
 
 import rx.Observable;
 
-public class StoredProcedureCrudTest extends TestSuiteBase {
+public class TriggerCrudTest extends TestSuiteBase {
 
-    public final static String DATABASE_ID = getDatabaseId(StoredProcedureCrudTest.class);
+    public final static String DATABASE_ID = getDatabaseId(TriggerCrudTest.class);
 
     private static AsyncDocumentClient houseKeepingClient;
     private static Database createdDatabase;
@@ -52,62 +52,70 @@ public class StoredProcedureCrudTest extends TestSuiteBase {
     private AsyncDocumentClient client;
 
     @Factory(dataProvider = "clientBuilders")
-    public StoredProcedureCrudTest(AsyncDocumentClient.Builder clientBuilder) {
+    public TriggerCrudTest(AsyncDocumentClient.Builder clientBuilder) {
         this.clientBuilder = clientBuilder;
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
-    public void createStoredProcedure() throws Exception {
+    public void createTrigger() throws Exception {
 
-        // create a stored procedure
-        StoredProcedure storedProcedureDef = new StoredProcedure();
-        storedProcedureDef.setId(UUID.randomUUID().toString());
-        storedProcedureDef.setBody("function() {var x = 10;}");
+        // create a trigger
+        Trigger trigger = new Trigger();
+        trigger.setId(UUID.randomUUID().toString());
+        trigger.setBody("function() {var x = 10;}");
+        trigger.setTriggerOperation(TriggerOperation.Create);
+        trigger.setTriggerType(TriggerType.Pre);
 
-        Observable<ResourceResponse<StoredProcedure>> createObservable = client.createStoredProcedure(getCollectionLink(), storedProcedureDef, null);
+        Observable<ResourceResponse<Trigger>> createObservable = client.createTrigger(getCollectionLink(), trigger, null);
 
-        // validate stored procedure creation
-        ResourceResponseValidator<StoredProcedure> validator = new ResourceResponseValidator.Builder<StoredProcedure>()
-                .withId(storedProcedureDef.getId())
-                .withStoredProcedureBody("function() {var x = 10;}")
+        // validate trigger creation
+        ResourceResponseValidator<Trigger> validator = new ResourceResponseValidator.Builder<Trigger>()
+                .withId(trigger.getId())
+                .withTriggerBody("function() {var x = 10;}")
+                .withTriggerInternals(TriggerType.Pre, TriggerOperation.Create)
                 .notNullEtag()
                 .build();
         validateSuccess(createObservable, validator);
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
-    public void readStoredProcedure() throws Exception {
-        // create a stored procedure
-        StoredProcedure storedProcedureDef = new StoredProcedure();
-        storedProcedureDef.setId(UUID.randomUUID().toString());
-        storedProcedureDef.setBody("function() {var x = 10;}");
-        StoredProcedure storedProcedure = client.createStoredProcedure(getCollectionLink(), storedProcedureDef, null).toBlocking().single().getResource();
+    public void readTrigger() throws Exception {
+        // create a trigger
+        Trigger trigger = new Trigger();
+        trigger.setId(UUID.randomUUID().toString());
+        trigger.setBody("function() {var x = 10;}");
+        trigger.setTriggerOperation(TriggerOperation.Create);
+        trigger.setTriggerType(TriggerType.Pre);
+        Trigger readBackTrigger = client.createTrigger(getCollectionLink(), trigger, null).toBlocking().single().getResource();
 
-        // read stored procedure
-        Observable<ResourceResponse<StoredProcedure>> readObservable = client.readStoredProcedure(storedProcedure.getSelfLink(), null);
+        // read trigger
+        Observable<ResourceResponse<Trigger>> readObservable = client.readTrigger(readBackTrigger.getSelfLink(), null);
 
-
-        ResourceResponseValidator<StoredProcedure> validator = new ResourceResponseValidator.Builder<StoredProcedure>()
-                .withId(storedProcedureDef.getId())
-                .withStoredProcedureBody("function() {var x = 10;}")
+        // validate read trigger
+        ResourceResponseValidator<Trigger> validator = new ResourceResponseValidator.Builder<Trigger>()
+                .withId(trigger.getId())
+                .withTriggerBody("function() {var x = 10;}")
+                .withTriggerInternals(TriggerType.Pre, TriggerOperation.Create)
                 .notNullEtag()
                 .build();
         validateSuccess(readObservable, validator);
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
-    public void deleteStoredProcedure() throws Exception {
-        // create a stored procedure
-        StoredProcedure storedProcedureDef = new StoredProcedure();
-        storedProcedureDef.setId(UUID.randomUUID().toString());
-        storedProcedureDef.setBody("function() {var x = 10;}");
-        StoredProcedure storedProcedure = client.createStoredProcedure(getCollectionLink(), storedProcedureDef, null).toBlocking().single().getResource();
+    public void deleteTrigger() throws Exception {
+        // create a trigger
+        Trigger trigger = new Trigger();
+        trigger.setId(UUID.randomUUID().toString());
+        trigger.setBody("function() {var x = 10;}");
+        trigger.setTriggerOperation(TriggerOperation.Create);
+        trigger.setTriggerType(TriggerType.Pre);
+        Trigger readBackTrigger = client.createTrigger(getCollectionLink(), trigger, null).toBlocking().single().getResource();
 
-        // delete
-        Observable<ResourceResponse<StoredProcedure>> deleteObservable = client.deleteStoredProcedure(storedProcedure.getSelfLink(), null);
+        // delete trigger
+        Observable<ResourceResponse<Trigger>> deleteObservable = client.deleteTrigger(readBackTrigger.getSelfLink(), null);
 
-        // validate
-        ResourceResponseValidator<StoredProcedure> validator = new ResourceResponseValidator.Builder<StoredProcedure>()
+        // validate delete trigger
+        ResourceResponseValidator<Trigger> validator = new ResourceResponseValidator.Builder<Trigger>()
                 .nullResource()
                 .build();
         validateSuccess(deleteObservable, validator);

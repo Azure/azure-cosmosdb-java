@@ -27,7 +27,8 @@ import com.microsoft.azure.documentdb.Database;
 public class Utils {
     private static final String DATABASES_PATH_SEGMENT = "dbs";
     private static final String COLLECTIONS_PATH_SEGMENT = "colls";
-
+    private static final String DOCUMENTS_PATH_SEGMENT = "docs";
+    private static final String USERS_PATH_SEGMENT = "users";
 
     public static String getDatabaseLink(Database database, boolean isNameBased) {
         if (isNameBased) {
@@ -43,13 +44,19 @@ public class Utils {
 
     public static String getCollectionNameLink(String databaseId, String collectionId) {
 
-        if (collectionId.equals("/")) {
-            return databaseId + "/" + COLLECTIONS_PATH_SEGMENT + "/" + collectionId;
-
-        } else {
-            return DATABASES_PATH_SEGMENT + "/" + databaseId + "/" + COLLECTIONS_PATH_SEGMENT + "/" + collectionId;
-        }
+        return DATABASES_PATH_SEGMENT + "/" + databaseId + "/" + COLLECTIONS_PATH_SEGMENT + "/" + collectionId;
     }
 
-    private Utils() {}
+    public static String getDocumentNameLink(String databaseId, String collectionLink, String docId) {
+
+        return DATABASES_PATH_SEGMENT + "/" + databaseId + COLLECTIONS_PATH_SEGMENT + "/" +collectionLink + "/" + DOCUMENTS_PATH_SEGMENT + "/" + docId;
+    }
+
+    public static String getUserNameLink(String databaseId, String userId) {
+        
+        return DATABASES_PATH_SEGMENT + "/" + databaseId + "/" + USERS_PATH_SEGMENT + "/" + userId;
+    }
+
+    private Utils() {
+    }
 }
