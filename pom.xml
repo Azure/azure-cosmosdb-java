@@ -133,8 +133,6 @@
                   <property name="format" value="^_?[A-Z][a-zA-Z0-9]*$"/>
                 </module>
 
-                <!-- Checks for imports                              -->
-                <!-- See http://checkstyle.sf.net/config_import.html -->
                 <module name="AvoidStarImport">
                   <property name="excludes"
                             value="java.io,java.net,java.util,javax.enterprise.inject.spi,javax.enterprise.context"/>
@@ -155,8 +153,6 @@
                   <property name="max" value="15"/>
                 </module>
 
-                <!-- Checks for blocks. You know, those {}'s         -->
-                <!-- See http://checkstyle.sf.net/config_blocks.html -->
                 <module name="EmptyBlock">
                   <property name="option" value="text"/>
                 </module>
@@ -172,8 +168,6 @@
                   <property name="option" value="SAME"/>
                 </module>
 
-                <!-- Checks for common coding problems               -->
-                <!-- See http://checkstyle.sf.net/config_coding.html -->
                 <module name="EmptyStatement"/>
                 <module name="EqualsHashCode"/>
                 <module name="DefaultComesLast"/>
@@ -181,8 +175,6 @@
                 <module name="FallThrough"/>
                 <module name="MultipleVariableDeclarations"/>
 
-                <!-- Checks for class design                         -->
-                <!-- See http://checkstyle.sf.net/config_design.html -->
                 <module name="com.puppycrawl.tools.checkstyle.checks.design.DesignForExtensionCheck">
                   <property name="severity" value="ignore"/>
                 </module>
