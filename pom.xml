@@ -51,6 +51,7 @@
     <assertj.version>3.9.1</assertj.version>
     <mockito.version>1.10.8</mockito.version>
     <test.groups>unit</test.groups>
+    <maven.checkstyle.plugin.version>2.17</maven.checkstyle.plugin.version>
   </properties>
 
   <dependencyManagement>
