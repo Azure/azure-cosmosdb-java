@@ -67,7 +67,7 @@ public class DatabaseAccountLocation extends JsonSerializable {
      * @return the name of the database account location.
      */
     public String getName() {
-        return super.getString(Constants.Properties.Name);
+        return super.getString(Constants.Properties.NAME);
     }
 
     /**
@@ -76,7 +76,7 @@ public class DatabaseAccountLocation extends JsonSerializable {
      * @param name the name of the database account location.
      */
     public void setName(String name) {
-        super.set(Constants.Properties.Name, name);
+        super.set(Constants.Properties.NAME, name);
     }
 
     /**
