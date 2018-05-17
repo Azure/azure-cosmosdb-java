@@ -61,39 +61,21 @@ final class DefaultMapper<T> implements Mapper<T> {
     }
 
     @Override
-    public Observable<T> create(T entity) {
+    public Observable<T> save(T entity) {
         requireNonNull(entity, "entity is required");
 
 
         String collectionLink = entityMetadata.getCollectionLink();
-        Observable<ResourceResponse<Document>> observable = client.createDocument(
+        Observable<ResourceResponse<Document>> observable = client.upsertDocument(
                 collectionLink, entity, new RequestOptions(), true);
         return observable.map(mapperFunction);
     }
 
     @Override
-    public Observable<List<T>> create(Iterable<T> entities) {
+    public Observable<List<T>> save(Iterable<T> entities) {
         checkNullElements(entities);
 
-        List<Observable<T>> observables = stream(entities.spliterator(), false).map(this::create).collect(toList());
-        return Observable.merge(observables).toList();
-    }
-
-    @Override
-    public Observable<T> update(T entity) {
-        requireNonNull(entity, "entities are required");
-        String collectionLink = entityMetadata.getCollectionLink();
-
-        Observable<ResourceResponse<Document>> observable = client.replaceDocument(
-                collectionLink, entity, new RequestOptions());
-        return observable.map(mapperFunction);
-    }
-
-    @Override
-    public Observable<List<T>> update(Iterable<T> entities) {
-        checkNullElements(entities);
-
-        List<Observable<T>> observables = stream(entities.spliterator(), false).map(this::update).collect(toList());
+        List<Observable<T>> observables = stream(entities.spliterator(), false).map(this::save).collect(toList());
         return Observable.merge(observables).toList();
     }
 

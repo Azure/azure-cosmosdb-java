@@ -37,41 +37,22 @@ import java.util.List;
 public interface Mapper<T> {
 
     /**
-     * Creates an entity.
+     * Saves an entity.
      *
      * @param entity the entity to be created in the database
      * @return an {@link Observable} containing the single resource response with the created document or an error.
      * @throws NullPointerException when entity is null
      */
-    Observable<T> create(T entity);
+    Observable<T> save(T entity);
 
     /**
-     * Creates entities in database.
+     * Saves entities in database.
      *
      * @param entities the entities to be created in the database
      * @return an {@link Observable} containing the merged resource response with the created document or an error.
      * @throws NullPointerException when either entities is null or there is any null element
      */
-    Observable<List<T>> create(Iterable<T> entities);
-
-    /**
-     * Updates an entity using {@link AsyncDocumentClient#replaceDocument(String, Object, RequestOptions)}
-     *
-     * @param entity the entity to be updated in the database
-     * @return an {@link Observable} containing the single resource response with the created document or an error.
-     * @throws NullPointerException when entity is null
-     */
-    Observable<T> update(T entity);
-
-    /**
-     * Updates an entity using {@link AsyncDocumentClient#replaceDocument(String, Object, RequestOptions)}
-     * then merge the result
-     *
-     * @param entities the entities to be updated in the database
-     * @return an {@link Observable} containing the merged resource response with the created document or an error.
-     * @throws NullPointerException when either entities is null or there is any null element
-     */
-    Observable<List<T>> update(Iterable<T> entities);
+    Observable<List<T>> save(Iterable<T> entities);
 
     /**
      * Finds entity by id
