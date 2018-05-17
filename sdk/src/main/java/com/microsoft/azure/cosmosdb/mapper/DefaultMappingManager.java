@@ -32,10 +32,7 @@ import com.microsoft.azure.cosmosdb.SqlQuerySpec;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import rx.Observable;
 
-import java.util.Collections;
 import java.util.Objects;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 /**
@@ -47,10 +44,6 @@ final class DefaultMappingManager implements MappingManager {
 
     private static final Logger LOGGER = Logger.getLogger(DefaultMappingManager.class.getName());
 
-    private final Set<String> databases = Collections.newSetFromMap(new ConcurrentHashMap<>());
-
-    private final Set<EntityMetadata> metadatas = Collections.newSetFromMap(new ConcurrentHashMap<>());
-
 
     DefaultMappingManager(AsyncDocumentClient client) {
         this.client = client;
@@ -61,13 +54,8 @@ final class DefaultMappingManager implements MappingManager {
         Objects.requireNonNull(entityClass, "entity class is required");
         EntityMetadata metadata = EntityMetadata.of(entityClass);
 
-        if (metadatas.contains(metadata)) {
-            LOGGER.info("Entity already checked");
-        } else {
-            metadatas.add(metadata);
-            createDatabase(metadata);
-            createCollection(metadata);
-        }
+        createDatabase(metadata);
+        createCollection(metadata);
         return new DefaultMapper<>(entityClass, client, metadata);
     }
 
@@ -102,13 +90,8 @@ final class DefaultMappingManager implements MappingManager {
     private void createDatabase(EntityMetadata metadata) {
 
 
-        if (databases.contains(metadata.getDatabaseName())) {
-            LOGGER.info("Database already checked");
-            return;
-        }
 
         String databaseName = metadata.getDatabaseName();
-        databases.add(databaseName);
         String databaseLink = metadata.getCollectionLink();
         Observable<ResourceResponse<Database>> databaseReadObs =
                 client.readDatabase(databaseLink, null);
