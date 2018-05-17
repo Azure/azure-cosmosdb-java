@@ -45,6 +45,10 @@ class EntityMetadata {
         return collectionName;
     }
 
+    public String getDatabaseLink() {
+        return String.format("/dbs/%s", databaseName);
+    }
+
     public String getCollectionLink() {
         return String.format("/dbs/%s/colls/%s", databaseName, collectionName);
     }

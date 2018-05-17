@@ -24,7 +24,7 @@ package com.microsoft.azure.cosmosdb.mapper;
 
 import java.io.Serializable;
 
-@Entity(databaseName = "database")
+@Entity(databaseName = "AzureSampleFamilyDB")
 public class Person implements Serializable {
 
     private String id;
