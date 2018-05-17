@@ -67,18 +67,12 @@ public class MappingManagerTest {
 
     public static class User {
 
-        private String id;
-
-        private String value;
     }
 
 
     @Entity(databaseName = "")
     public static class Family {
 
-        private String id;
-
-        private String value;
     }
 
 
