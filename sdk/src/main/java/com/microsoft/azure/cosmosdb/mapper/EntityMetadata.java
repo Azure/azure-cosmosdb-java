@@ -22,9 +22,9 @@
  */
 package com.microsoft.azure.cosmosdb.mapper;
 
-import org.apache.commons.lang3.StringUtils;
-
 import java.util.Objects;
+
+import static org.apache.commons.lang3.StringUtils.isBlank;
 
 class EntityMetadata {
 
@@ -81,9 +81,18 @@ class EntityMetadata {
     }
 
     public static <T> EntityMetadata of(Class<T> entityClass) {
+
         Entity entity = entityClass.getAnnotation(Entity.class);
+
+        if(entity == null) {
+            throw new IllegalArgumentException("The annotation com.microsoft.azure.cosmosdb.mapper.Entity is required at this class: " + entityClass);
+        }
+
+        if(isBlank(entity.databaseName())) {
+            throw new IllegalArgumentException("The database field cannot be null at @Entity in the class: " + entityClass);
+        }
         String databaseName = entity.databaseName();
-        String collectionName = StringUtils.isBlank(entity.collectionName()) ? entityClass.getSimpleName()
+        String collectionName = isBlank(entity.collectionName()) ? entityClass.getSimpleName()
                 : entity.collectionName();
         return new EntityMetadata(databaseName, collectionName);
     }

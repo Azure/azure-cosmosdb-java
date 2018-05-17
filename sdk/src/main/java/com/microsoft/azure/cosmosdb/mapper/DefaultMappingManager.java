@@ -32,10 +32,10 @@ import com.microsoft.azure.cosmosdb.SqlQuerySpec;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import rx.Observable;
 
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
-import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 /**
@@ -47,9 +47,9 @@ final class DefaultMappingManager implements MappingManager {
 
     private static final Logger LOGGER = Logger.getLogger(DefaultMappingManager.class.getName());
 
-    private final Set<String> databases = new TreeSet<>();
+    private final Set<String> databases = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
-    private final Set<EntityMetadata> metadatas = new HashSet<>();
+    private final Set<EntityMetadata> metadatas = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
 
     DefaultMappingManager(AsyncDocumentClient client) {
@@ -75,7 +75,6 @@ final class DefaultMappingManager implements MappingManager {
     private void createCollection(EntityMetadata metadata) {
 
 
-        String databaseName = metadata.getDatabaseName();
         String collectionName = metadata.getCollectionName();
 
         String databaseLink = metadata.getCollectionLink();
@@ -110,7 +109,7 @@ final class DefaultMappingManager implements MappingManager {
 
         String databaseName = metadata.getDatabaseName();
         databases.add(databaseName);
-        String databaseLink = String.format("/dbs/%s", databaseName);
+        String databaseLink = metadata.getCollectionLink();
         Observable<ResourceResponse<Database>> databaseReadObs =
                 client.readDatabase(databaseLink, null);
 
