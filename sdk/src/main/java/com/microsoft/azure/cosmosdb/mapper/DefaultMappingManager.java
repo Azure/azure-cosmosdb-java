@@ -65,7 +65,7 @@ final class DefaultMappingManager implements MappingManager {
 
         String collectionName = metadata.getCollectionName();
 
-        String databaseLink = metadata.getCollectionLink();
+        String databaseLink = metadata.getDatabaseLink();
 
         client.queryCollections(databaseLink,
                 new SqlQuerySpec("SELECT * FROM r where r.id = @id",
@@ -79,7 +79,7 @@ final class DefaultMappingManager implements MappingManager {
                         LOGGER.info("Creating collection " + collectionName);
                         return client.createCollection(databaseLink, collection, null);
                     } else {
-                        LOGGER.info("Collection " + collectionName + "already exists");
+                        LOGGER.info("Collection " + collectionName + " already exists");
                         return Observable.empty();
                     }
                 }).toCompletable().await();
@@ -92,7 +92,7 @@ final class DefaultMappingManager implements MappingManager {
 
 
         String databaseName = metadata.getDatabaseName();
-        String databaseLink = metadata.getCollectionLink();
+        String databaseLink = metadata.getDatabaseLink();
         Observable<ResourceResponse<Database>> databaseReadObs =
                 client.readDatabase(databaseLink, null);
 
