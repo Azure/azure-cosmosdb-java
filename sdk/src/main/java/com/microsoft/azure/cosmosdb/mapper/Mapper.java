@@ -24,6 +24,7 @@ package com.microsoft.azure.cosmosdb.mapper;
 
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.RequestOptions;
+import com.microsoft.azure.cosmosdb.SqlQuerySpec;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import rx.Observable;
 
@@ -99,5 +100,15 @@ public interface Mapper<T> {
      * @throws NullPointerException when either query or queryOptions are null
      */
     Observable<List<T>> query(String query, FeedOptions queryOptions);
+
+    /**
+     * Searches entities by query
+     *
+     * @param query        the {@link SqlQuerySpec} query
+     * @param queryOptions the query options
+     * @return an {@link Observable} containing the single resource response with the created document or an error.
+     * @throws NullPointerException when either query or queryOptions are null
+     */
+    Observable<List<T>> query(SqlQuerySpec query, FeedOptions queryOptions);
 
 }

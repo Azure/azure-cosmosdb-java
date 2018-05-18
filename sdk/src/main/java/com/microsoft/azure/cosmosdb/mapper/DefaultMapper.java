@@ -27,6 +27,7 @@ import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.RequestOptions;
 import com.microsoft.azure.cosmosdb.ResourceResponse;
+import com.microsoft.azure.cosmosdb.SqlQuerySpec;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import rx.Observable;
 import rx.functions.Func1;
@@ -53,7 +54,7 @@ final class DefaultMapper<T> implements Mapper<T> {
     private final Func1<ResourceResponse<Document>, T> mapperFunction;
 
 
-    public DefaultMapper(Class<T> entityClass, AsyncDocumentClient client, EntityMetadata entityMetadata) {
+    DefaultMapper(Class<T> entityClass, AsyncDocumentClient client, EntityMetadata entityMetadata) {
         this.entityClass = entityClass;
         this.client = client;
         this.entityMetadata = entityMetadata;
@@ -102,6 +103,19 @@ final class DefaultMapper<T> implements Mapper<T> {
 
     @Override
     public Observable<List<T>> query(String query, FeedOptions queryOptions) {
+        requireNonNull(query, "query is required");
+        requireNonNull(queryOptions, "queryOptions is required");
+
+        Observable<FeedResponse<Document>> queryObservable =
+                client.queryDocuments(entityMetadata.getCollectionLink(), query, queryOptions);
+
+        return queryObservable.map(d -> d.getResults().stream()
+                .map(r -> r.toObject(entityClass))
+                .collect(toList()));
+    }
+
+    @Override
+    public Observable<List<T>> query(SqlQuerySpec query, FeedOptions queryOptions) {
         requireNonNull(query, "query is required");
         requireNonNull(queryOptions, "queryOptions is required");
 
