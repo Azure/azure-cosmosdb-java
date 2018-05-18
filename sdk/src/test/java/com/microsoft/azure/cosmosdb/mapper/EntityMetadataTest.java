@@ -25,6 +25,8 @@ package com.microsoft.azure.cosmosdb.mapper;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
 
 public class EntityMetadataTest {
 
@@ -45,6 +47,7 @@ public class EntityMetadataTest {
         EntityMetadata metadata = EntityMetadata.of(Animal.class);
         assertEquals("database", metadata.getDatabaseName());
         assertEquals(Animal.class.getSimpleName(), metadata.getCollectionName());
+        assertTrue(metadata.isDisableAutomaticIdGeneration());
     }
 
     @Test
@@ -52,12 +55,22 @@ public class EntityMetadataTest {
         EntityMetadata metadata = EntityMetadata.of(Work.class);
         assertEquals("database", metadata.getDatabaseName());
         assertEquals("usingAnnotation", metadata.getCollectionName());
+        assertTrue(metadata.isDisableAutomaticIdGeneration());
+    }
+    
+    @Test
+    public void shouldReturnEntity2() {
+        EntityMetadata metadata = EntityMetadata.of(Soccer.class);
+        assertEquals("database", metadata.getDatabaseName());
+        assertEquals(Soccer.class.getSimpleName(), metadata.getCollectionName());
+        assertFalse(metadata.isDisableAutomaticIdGeneration());
     }
 
     @Test
     public void shouldReturnDocumentLink() {
         EntityMetadata metadata = EntityMetadata.of(Animal.class);
         assertEquals("/dbs/database/colls/Animal", metadata.getCollectionLink());
+
     }
 
     @Test
@@ -83,6 +96,11 @@ public class EntityMetadataTest {
 
     @Entity(databaseName = "database", collectionName = "usingAnnotation")
     static class Work {
+
+    }
+
+    @Entity(databaseName = "database", disableAutomaticIdGeneration = false)
+    static class Soccer {
 
     }
 }

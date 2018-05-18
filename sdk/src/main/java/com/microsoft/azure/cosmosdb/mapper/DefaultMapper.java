@@ -68,7 +68,7 @@ final class DefaultMapper<T> implements Mapper<T> {
 
         String collectionLink = entityMetadata.getCollectionLink();
         Observable<ResourceResponse<Document>> observable = client.upsertDocument(
-                collectionLink, entity, new RequestOptions(), true);
+                collectionLink, entity, new RequestOptions(), entityMetadata.isDisableAutomaticIdGeneration());
         return observable.map(mapperFunction);
     }
 

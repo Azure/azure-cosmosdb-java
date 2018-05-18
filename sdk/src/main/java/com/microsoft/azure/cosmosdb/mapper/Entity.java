@@ -39,7 +39,13 @@ public @interface Entity {
 
     /**
      * The name of an entity. Defaults to the unqualified name of the entity class.
+     *
      * @return the entity name (Optional)
      */
     String collectionName() default "";
+
+    /**
+     * @return the flag for disabling automatic id generation.
+     */
+    boolean disableAutomaticIdGeneration() default true;
 }

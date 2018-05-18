@@ -30,9 +30,12 @@ class EntityMetadata {
 
     private final String collectionName;
 
-    EntityMetadata(String databaseName, String collectionName) {
+    private final boolean disableAutomaticIdGeneration;
+
+    EntityMetadata(String databaseName, String collectionName, boolean disableAutomaticIdGeneration) {
         this.databaseName = databaseName;
         this.collectionName = collectionName;
+        this.disableAutomaticIdGeneration = disableAutomaticIdGeneration;
     }
 
     public String getDatabaseName() {
@@ -49,6 +52,10 @@ class EntityMetadata {
 
     public String getCollectionLink() {
         return String.format("/dbs/%s/colls/%s", databaseName, collectionName);
+    }
+
+    public boolean isDisableAutomaticIdGeneration() {
+        return disableAutomaticIdGeneration;
     }
 
     public String getDocumentId(String id) {
@@ -70,7 +77,7 @@ class EntityMetadata {
         String databaseName = entity.databaseName();
         String collectionName = isBlank(entity.collectionName()) ? entityClass.getSimpleName()
                 : entity.collectionName();
-        return new EntityMetadata(databaseName, collectionName);
+        return new EntityMetadata(databaseName, collectionName, entity.disableAutomaticIdGeneration());
     }
 
 }
