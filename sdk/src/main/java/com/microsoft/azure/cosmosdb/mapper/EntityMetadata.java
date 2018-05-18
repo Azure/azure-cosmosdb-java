@@ -22,8 +22,6 @@
  */
 package com.microsoft.azure.cosmosdb.mapper;
 
-import java.util.Objects;
-
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
 class EntityMetadata {
@@ -57,32 +55,6 @@ class EntityMetadata {
         return String.format("/dbs/%s/colls/%s/docs/%s", databaseName, collectionName, id);
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof EntityMetadata)) {
-            return false;
-        }
-        EntityMetadata that = (EntityMetadata) o;
-        return Objects.equals(databaseName, that.databaseName) &&
-                Objects.equals(collectionName, that.collectionName);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(databaseName, collectionName);
-    }
-
-    @Override
-    public String toString() {
-        final StringBuilder sb = new StringBuilder("EntityMetadata{");
-        sb.append("databaseName='").append(databaseName).append('\'');
-        sb.append(", collectionName='").append(collectionName).append('\'');
-        sb.append('}');
-        return sb.toString();
-    }
 
     public static <T> EntityMetadata of(Class<T> entityClass) {
 
