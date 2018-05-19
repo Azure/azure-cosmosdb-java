@@ -22,46 +22,5 @@
  */
 package com.microsoft.azure.cosmosdb.mapper;
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.util.HashSet;
-import java.util.Set;
-
-import static java.util.Arrays.asList;
-
-/**
- * Proxy to {@link Repository} maker
- *
- * @param <T> the entity type
- */
-class RepositoryProxy<T> implements InvocationHandler {
-
-    private static final Set<Method> METHODS = new HashSet<>();
-
-    static {
-        METHODS.addAll(asList(Mapper.class.getDeclaredMethods()));
-        METHODS.addAll(asList(Object.class.getDeclaredMethods()));
-    }
-
-
-    private final Mapper<T> mapper;
-
-    RepositoryProxy(Mapper<T> mapper) {
-        this.mapper = mapper;
-    }
-
-    @Override
-    public Object invoke(Object instance, Method method, Object[] params) throws Throwable {
-
-        if(METHODS.contains(method)){
-            try {
-                return method.invoke(mapper, params);
-            }catch (Exception ex) {
-                throw ex.getCause();
-            }
-
-        }
-
-        return null;
-    }
+public interface PersonRepository extends Repository<Person> {
 }
