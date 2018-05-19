@@ -63,16 +63,18 @@ class EntityMetadata {
     }
 
 
-    public static <T> EntityMetadata of(Class<T> entityClass) {
+    static <T> EntityMetadata of(Class<T> entityClass) {
 
         Entity entity = entityClass.getAnnotation(Entity.class);
 
-        if(entity == null) {
-            throw new IllegalArgumentException("The annotation com.microsoft.azure.cosmosdb.mapper.Entity is required at this class: " + entityClass);
+        if (entity == null) {
+            throw new IllegalArgumentException("The annotation " + Entity.class.getName()
+                    + " is required at this class: " + entityClass);
         }
 
-        if(isBlank(entity.databaseName())) {
-            throw new IllegalArgumentException("The database field cannot be null at @Entity in the class: " + entityClass);
+        if (isBlank(entity.databaseName())) {
+            throw new IllegalArgumentException("The database field cannot be null at @Entity in the class: "
+                    + entityClass);
         }
         String databaseName = entity.databaseName();
         String collectionName = isBlank(entity.collectionName()) ? entityClass.getSimpleName()
