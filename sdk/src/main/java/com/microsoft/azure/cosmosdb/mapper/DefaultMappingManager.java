@@ -32,6 +32,7 @@ import com.microsoft.azure.cosmosdb.SqlQuerySpec;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import rx.Observable;
 
+import java.lang.reflect.ParameterizedType;
 import java.util.Objects;
 import java.util.logging.Logger;
 
@@ -57,6 +58,19 @@ final class DefaultMappingManager implements MappingManager {
         createDatabase(metadata);
         createCollection(metadata);
         return new DefaultMapper<>(entityClass, client, metadata);
+    }
+
+    @Override
+    public <E, T extends Repository<E>> T repository(Class<T> repositoryClass) {
+        Objects.requireNonNull(repositoryClass, "repositoryClass class is required");
+
+        if (!repositoryClass.isInterface()) {
+            throw new IllegalArgumentException("The repository should be an interface");
+        }
+        Class<E> entityType = Class.class.cast(ParameterizedType.class.cast(repositoryClass.getGenericInterfaces()[0])
+                .getActualTypeArguments()[0]);
+        Mapper<E> mapper = mapper(entityType);
+        return null;
     }
 
 
@@ -88,7 +102,6 @@ final class DefaultMappingManager implements MappingManager {
     }
 
     private void createDatabase(EntityMetadata metadata) {
-
 
 
         String databaseName = metadata.getDatabaseName();

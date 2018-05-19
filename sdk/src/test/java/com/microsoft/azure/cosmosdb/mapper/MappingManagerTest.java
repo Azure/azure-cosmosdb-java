@@ -63,15 +63,43 @@ public class MappingManagerTest {
         mappingManager.mapper(Family.class);
     }
 
+    @Test(expectedExceptions = NullPointerException.class)
+    public void shouldShouldReturnErrorWhenRepositoryIsNull() {
+        AsyncDocumentClient client = Mockito.mock(AsyncDocumentClient.class);
+        MappingManager mappingManager = MappingManager.of(client);
+        mappingManager.repository(null);
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void shouldShouldReturnErrorWhenRepositoryIsAClass() {
+        AsyncDocumentClient client = Mockito.mock(AsyncDocumentClient.class);
+        MappingManager mappingManager = MappingManager.of(client);
+        mappingManager.repository(UserRepository.class);
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void shouldReturnErrorWhenRepositoryHasEntityNotAnnotated() {
+        AsyncDocumentClient client = Mockito.mock(AsyncDocumentClient.class);
+        MappingManager mappingManager = MappingManager.of(client);
+        mappingManager.repository(UserRepository2.class);
+    }
 
 
-    public static class User {
+    public class User {
+
+    }
+
+    public abstract class UserRepository implements Repository<User> {
+
+    }
+
+    public interface UserRepository2 extends Repository<User> {
 
     }
 
 
     @Entity(databaseName = "")
-    public static class Family {
+    public class Family {
 
     }
 
