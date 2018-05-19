@@ -22,5 +22,17 @@
  */
 package com.microsoft.azure.cosmosdb.mapper;
 
+import rx.Observable;
+
+import java.util.List;
+
 public interface PersonRepository extends Repository<Person> {
+
+    void methodHasNotSupport();
+
+    @Query("SELECT * FROM Person WHERE Person.name = @name")
+    Observable<List<Person>> findByName(@Param("name") String name);
+
+    @Query("SELECT * FROM Person WHERE Person.name = @name")
+    Observable<List<Person>> invalidQuery(String name);
 }

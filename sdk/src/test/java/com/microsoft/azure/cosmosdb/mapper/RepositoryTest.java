@@ -22,7 +22,15 @@
  */
 package com.microsoft.azure.cosmosdb.mapper;
 
-public class RepositoryTest  extends AbstractMapperClass {
+import org.testng.annotations.Test;
+import rx.Observable;
+
+import java.util.Arrays;
+import java.util.List;
+
+import static org.testng.Assert.assertTrue;
+
+public class RepositoryTest extends AbstractMapperClass {
 
 
     private PersonRepository repository = MappingManager.of(client).repository(PersonRepository.class);
@@ -31,5 +39,46 @@ public class RepositoryTest  extends AbstractMapperClass {
     @Override
     Mapper<Person> getMapper() {
         return repository;
+    }
+
+    @Test(expectedExceptions = UnsupportedOperationException.class)
+    public void shouldReturnErrorWhenMethodIsNotSupported() {
+        repository.methodHasNotSupport();
+    }
+
+    @Test(groups = {"internal"}, timeOut = LARGE_TIMEOUT)
+    public void shouldExecuteQuery() {
+        Person ada = new Person();
+        ada.setId("ada" + System.currentTimeMillis());
+        ada.setName("Ada Lovelace");
+        ada.setAge(20);
+
+        Person marie = new Person();
+        marie.setId("marie" + System.currentTimeMillis());
+        marie.setName("Marie Curie");
+        marie.setAge(20);
+
+        getMapper().save(Arrays.asList(ada, marie)).toCompletable().await();
+        Observable<List<Person>> result = repository.findByName("Ada Lovelace");
+
+        List<Person> people = result.toBlocking().first();
+
+        assertTrue(people.size() > 1);
+        assertTrue(people.stream().map(Person::getName).allMatch(ada.getName()::equals));
+    }
+
+    @Test(expectedExceptions = NullPointerException.class)
+    public void shouldReturnErrorWhenTheParameterValueIsNull() {
+        repository.findByName(null);
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void shouldReturnErrorWhenTheMethodIsInvalid() {
+        repository.findByName(null);
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void shouldReturnErrorWhen() {
+        repository.invalidQuery("opa");
     }
 }

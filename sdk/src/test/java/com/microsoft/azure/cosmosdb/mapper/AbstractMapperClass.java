@@ -43,7 +43,7 @@ import static org.testng.Assert.assertTrue;
 
 public abstract class AbstractMapperClass {
 
-    private final static int LARGE_TIMEOUT = 30000;
+    protected final static int LARGE_TIMEOUT = 30000;
 
     protected final AsyncDocumentClient client = new AsyncDocumentClient.Builder()
             .withServiceEndpoint(TestConfigurations.HOST)

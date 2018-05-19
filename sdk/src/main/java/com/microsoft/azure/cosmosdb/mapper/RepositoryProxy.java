@@ -22,12 +22,24 @@
  */
 package com.microsoft.azure.cosmosdb.mapper;
 
+import com.microsoft.azure.cosmosdb.FeedOptions;
+import com.microsoft.azure.cosmosdb.SqlParameter;
+import com.microsoft.azure.cosmosdb.SqlParameterCollection;
+import com.microsoft.azure.cosmosdb.SqlQuerySpec;
+import org.apache.commons.lang3.StringUtils;
+import rx.Observable;
+
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 import static java.util.Arrays.asList;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Proxy to {@link Repository} maker
@@ -37,6 +49,8 @@ import static java.util.Arrays.asList;
 class RepositoryProxy<T> implements InvocationHandler {
 
     private static final Set<Method> METHODS = new HashSet<>();
+    private static final FeedOptions QUERY_OPTIONS = new FeedOptions();
+    private static final char PARAM_PREFIX = '@';
 
     static {
         METHODS.addAll(asList(Mapper.class.getDeclaredMethods()));
@@ -53,15 +67,60 @@ class RepositoryProxy<T> implements InvocationHandler {
     @Override
     public Object invoke(Object instance, Method method, Object[] params) throws Throwable {
 
-        if(METHODS.contains(method)){
+        if (METHODS.contains(method)) {
             try {
                 return method.invoke(mapper, params);
-            }catch (Exception ex) {
+            } catch (Exception ex) {
                 throw ex.getCause();
             }
 
         }
 
-        return null;
+        Query query = method.getAnnotation(Query.class);
+        if (Objects.nonNull(query)) {
+
+            if (StringUtils.isBlank(query.value())) {
+                throw new IllegalArgumentException("The value @Query cannot be blank");
+            }
+
+            if (returnIsValidQuery(method)) {
+                return executeQuery(method, params, query);
+            }
+        }
+
+        throw new UnsupportedOperationException(String.format("The method %s is not supported yet", method));
+    }
+
+    private Object executeQuery(Method method, Object[] params, Query query) {
+        SqlParameterCollection sqlParameters = new SqlParameterCollection();
+        Parameter[] parameters = method.getParameters();
+        for (int index = 0; index < params.length; index++) {
+            Parameter parameter = parameters[index];
+            Param param = Optional.ofNullable(parameter.getAnnotation(Param.class))
+                    .orElseThrow(() -> new IllegalArgumentException("When the method has @Query all parameters " +
+                            "should have @Param"));
+
+            sqlParameters.add(createParameter(param, params[index]));
+        }
+
+        return mapper.query(new SqlQuerySpec(query.value(), sqlParameters), QUERY_OPTIONS);
+    }
+
+
+    private SqlParameter createParameter(Param param, Object value) {
+        return new SqlParameter(getParamName(param), requireNonNull(value, param.value() + " is required."));
+    }
+
+    private String getParamName(Param param) {
+        String name = param.value();
+        if (name.charAt(0) != PARAM_PREFIX) {
+            return PARAM_PREFIX + name;
+        }
+        return name;
+    }
+
+    private boolean returnIsValidQuery(Method method) {
+        Class<?> returnType = method.getReturnType();
+        return Observable.class.equals(returnType);
     }
 }
