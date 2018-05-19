@@ -33,7 +33,6 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -48,13 +47,14 @@ import static java.util.Objects.requireNonNull;
  */
 class RepositoryProxy<T> implements InvocationHandler {
 
-    private static final Set<Method> METHODS = new HashSet<>();
+    private static final Set<Method> MAPPER_METHODS = new HashSet<>();
+    private static final Set<Method> OBJECT_METHODS = new HashSet<>();
     private static final FeedOptions QUERY_OPTIONS = new FeedOptions();
     private static final char PARAM_PREFIX = '@';
 
     static {
-        METHODS.addAll(asList(Mapper.class.getDeclaredMethods()));
-        METHODS.addAll(asList(Object.class.getDeclaredMethods()));
+        MAPPER_METHODS.addAll(asList(Mapper.class.getDeclaredMethods()));
+        OBJECT_METHODS.addAll(asList(Object.class.getDeclaredMethods()));
     }
 
 
@@ -67,13 +67,15 @@ class RepositoryProxy<T> implements InvocationHandler {
     @Override
     public Object invoke(Object instance, Method method, Object[] params) throws Throwable {
 
-        if (METHODS.contains(method)) {
+        if (MAPPER_METHODS.contains(method)) {
             try {
                 return method.invoke(mapper, params);
             } catch (Exception ex) {
                 throw ex.getCause();
             }
 
+        } else if (OBJECT_METHODS.contains(method)) {
+            return method.invoke(this, params);
         }
 
         Query query = method.getAnnotation(Query.class);

@@ -79,6 +79,6 @@ public class RepositoryTest extends AbstractMapperClass {
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void shouldReturnErrorWhen() {
-        repository.invalidQuery("opa");
+        repository.invalidQuery("ops");
     }
 }
