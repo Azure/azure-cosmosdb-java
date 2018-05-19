@@ -34,17 +34,34 @@ public interface MappingManager {
     /**
      * returns a Mapper instance. Also, check if both document and database do exist based on {@link Entity}
      * annotation otherwise will create.
+     *
      * @param entityClass the entity class
-     * @param <T> the entity type
+     * @param <T>         the entity type
      * @return the Mapper instance
-     * @throws NullPointerException when entityClass is null
+     * @throws NullPointerException     when entityClass is null
      * @throws IllegalArgumentException when the class is not annotated with {@link Entity}
      */
     <T> Mapper<T> mapper(Class<T> entityClass);
 
 
     /**
+     * returns a {@link Repository} instance already implemented.
+     * Also, check if both document and database do exist based on {@link Entity} annotation otherwise will create.
+     *
+     * @param repositoryClass the repository class
+     * @param <E>             the entity class
+     * @param <T>             the repository interface
+     * @return a {@link Repository} instance
+     * @throws NullPointerException     when repositoryClass is null
+     * @throws IllegalArgumentException when the <b>E</b> class is not annotated with {@link Entity},
+     *                                  when the <b>T</b> is not an interface,
+     *                                  check {@link MappingManager#mapper(Class)}
+     */
+    <E, T extends Repository<E>> T repository(Class<T> repositoryClass);
+
+    /**
      * returns a {@link MappingManager} instance
+     *
      * @param client the AsyncDocumentClient client
      * @return a instance
      * @throws NullPointerException when client is null
