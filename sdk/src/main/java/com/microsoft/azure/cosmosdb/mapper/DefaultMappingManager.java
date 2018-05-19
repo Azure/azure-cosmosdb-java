@@ -33,6 +33,7 @@ import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import rx.Observable;
 
 import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Proxy;
 import java.util.Objects;
 import java.util.logging.Logger;
 
@@ -70,7 +71,10 @@ final class DefaultMappingManager implements MappingManager {
         Class<E> entityType = Class.class.cast(ParameterizedType.class.cast(repositoryClass.getGenericInterfaces()[0])
                 .getActualTypeArguments()[0]);
         Mapper<E> mapper = mapper(entityType);
-        return null;
+        RepositoryProxy<E> handler = new RepositoryProxy<>(mapper);
+        return (T) Proxy.newProxyInstance(repositoryClass.getClassLoader(),
+                new Class[]{repositoryClass},
+                handler);
     }
 
 
