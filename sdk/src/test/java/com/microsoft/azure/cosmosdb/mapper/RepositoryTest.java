@@ -72,13 +72,8 @@ public class RepositoryTest extends AbstractMapperClass {
         repository.findByName(null);
     }
 
-    @Test(expectedExceptions = IllegalStateException.class)
-    public void shouldReturnErrorWhenTheMethodIsInvalid() {
-        repository.findByName(null);
-    }
-
-    @Test(expectedExceptions = IllegalStateException.class)
-    public void shouldReturnErrorWhen() {
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void shouldReturnErrorWhenMethodIsInvalid() {
         repository.invalidQuery("ops");
     }
 }
