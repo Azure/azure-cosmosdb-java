@@ -24,6 +24,7 @@ package com.microsoft.azure.cosmosdb.mapper;
 
 /**
  * A Repository specializes Mapper that allows methods implemented dynamically.
+ * Interface for generic CRUD operations on a repository for a specific type.
  *
  * @param <T> the entity
  */
