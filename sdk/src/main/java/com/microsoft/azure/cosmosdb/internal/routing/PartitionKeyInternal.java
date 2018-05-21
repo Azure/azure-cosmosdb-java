@@ -312,7 +312,7 @@ public class PartitionKeyInternal implements Comparable<PartitionKeyInternal> {
                     } else if (node.isArray() && node.size() == 0
                             || node.isObject()
                                 && (node.fields() == null || !node.fields().hasNext())) {
-                        objects.add(Undefined.Value());
+                        objects.add(Undefined.value());
                     } else {
                         objects.add(node);
                     }

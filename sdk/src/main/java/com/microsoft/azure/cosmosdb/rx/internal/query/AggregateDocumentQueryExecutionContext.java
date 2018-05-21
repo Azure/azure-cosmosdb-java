@@ -105,7 +105,7 @@ public class AggregateDocumentQueryExecutionContext<T extends Resource> implemen
                         this.aggregator.aggregate(values.getItem());
                     }
                     
-                    if (this.aggregator.getResult() == null || !this.aggregator.getResult().equals(Undefined.Value())) {
+                    if (this.aggregator.getResult() == null || !this.aggregator.getResult().equals(Undefined.value())) {
                         Document aggregateDocument = new Document();
                         aggregateDocument.set(Constants.Properties.AGGREGATE, this.aggregator.getResult());
                         aggregateResults.add(aggregateDocument);
