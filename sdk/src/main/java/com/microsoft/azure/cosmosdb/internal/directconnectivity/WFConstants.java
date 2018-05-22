@@ -26,6 +26,9 @@ package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 class WFConstants {
     static final int DEFAULT_FABRIC_NAME_RESOLUTION_TIMEOUT_IN_SECONDS = 10;
 
+    private WFConstants() {
+    }
+
     static class AzureNames {
         public static final String WORKER_ROLE_NAME = "WAFab";
         public static final String NODE_ADDRESS_ENDPOINT = "NodeAddress";

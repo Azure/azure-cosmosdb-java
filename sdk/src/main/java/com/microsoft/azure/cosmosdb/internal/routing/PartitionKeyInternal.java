@@ -1,17 +1,17 @@
 /*
  * The MIT License (MIT)
  * Copyright (c) 2018 Microsoft Corporation
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -174,8 +174,7 @@ public class PartitionKeyInternal implements Comparable<PartitionKeyInternal> {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj == null) 
-        { 
+        if (obj == null) {
             return false;
         }
         return equals(obj.getClass() == PartitionKeyInternal.class ? (PartitionKeyInternal) obj : null);
@@ -189,7 +188,7 @@ public class PartitionKeyInternal implements Comparable<PartitionKeyInternal> {
 
         return HexConvert.bytesToHex(stream.toByteArray());
     }
-    
+
     public String toJson() {
         try {
             return Utils.getSimpleObjectMapper().writeValueAsString(this);
@@ -219,7 +218,9 @@ public class PartitionKeyInternal implements Comparable<PartitionKeyInternal> {
     @SuppressWarnings("serial")
     static final class PartitionKeyInternalJsonSerializer extends StdSerializer<PartitionKeyInternal> {
 
-        protected PartitionKeyInternalJsonSerializer() { this(null); }
+        protected PartitionKeyInternalJsonSerializer() {
+            this(null);
+        }
 
         protected PartitionKeyInternalJsonSerializer(Class<PartitionKeyInternal> t) {
             super(t);
@@ -275,7 +276,9 @@ public class PartitionKeyInternal implements Comparable<PartitionKeyInternal> {
     @SuppressWarnings("serial")
     static final class PartitionKeyInternalJsonDeserializer extends StdDeserializer<PartitionKeyInternal> {
 
-        protected PartitionKeyInternalJsonDeserializer() { this(null); }
+        protected PartitionKeyInternalJsonDeserializer() {
+            this(null);
+        }
 
         protected PartitionKeyInternalJsonDeserializer(Class<?> vc) {
             super(vc);
@@ -311,7 +314,7 @@ public class PartitionKeyInternal implements Comparable<PartitionKeyInternal> {
                         objects.add(node.asText());
                     } else if (node.isArray() && node.size() == 0
                             || node.isObject()
-                                && (node.fields() == null || !node.fields().hasNext())) {
+                            && (node.fields() == null || !node.fields().hasNext())) {
                         objects.add(Undefined.value());
                     } else {
                         objects.add(node);

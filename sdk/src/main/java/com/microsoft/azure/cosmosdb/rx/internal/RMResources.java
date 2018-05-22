@@ -25,10 +25,13 @@ package com.microsoft.azure.cosmosdb.rx.internal;
 /**
  * 
  */
-public class RMResources {
+public final class RMResources {
     public static final String UNKNOWN_RESOURCE_TYPE = "Resource type %s is unknown";
     public static final String INVALID_DOCUMENT_COLLECTION = "The specified document collection is invalid.";
     public static final String STRING_ARGUMENT_NULL_OR_EMPTY = "String agument %s is null or empty";
     public static final String PARTITION_KEY_AND_PARITION_KEY_RANGE_ID_BOTH_SPECIFIED = "Both Partition Key and Partition Key range are Specified in %s";
     public static final String PARTITION_KEY_RANGE_ID_OR_PARTITION_KEY_MUST_BE_SPECIFIED = "One of the partition key range id or partition key must be specified";
+
+    private RMResources() {
+    }
 }

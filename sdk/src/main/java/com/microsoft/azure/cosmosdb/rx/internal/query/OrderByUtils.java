@@ -34,12 +34,15 @@ import com.microsoft.azure.cosmosdb.internal.query.orderbyquery.OrderbyRowCompar
 import rx.Observable;
 import rx.Observable.Transformer;
 
-class OrderByUtils {
+final class OrderByUtils {
 
-    public static <T extends Resource> Observable<OrderByRowResult<T>> orderedMerge(Class<T> klass, 
-            OrderbyRowComparer<T> consumeComparer,
-            RequestChargeTracker tracker, 
-            List<DocumentProducer<T>> documentProducers) {
+    private OrderByUtils() {
+    }
+
+    public static <T extends Resource> Observable<OrderByRowResult<T>> orderedMerge(Class<T> klass,
+                                                                                    OrderbyRowComparer<T> consumeComparer,
+                                                                                    RequestChargeTracker tracker,
+                                                                                    List<DocumentProducer<T>> documentProducers) {
         return toOrderByQueryResultObservable(klass, documentProducers.get(0), tracker)
                 .compose(
                         Transformers.orderedMergeWith(

@@ -1,17 +1,17 @@
 /*
  * The MIT License (MIT)
  * Copyright (c) 2018 Microsoft Corporation
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -65,7 +65,7 @@ import rx.Observable;
 /**
  * While this class is public, but it is not part of our published public APIs.
  * This is meant to be internally used only by our sdk.
- * 
+ * <p>
  * Used internally to provide functionality to communicate and process response from Gateway in the Azure Cosmos DB database service.
  */
 class RxGatewayStoreModel implements RxStoreModel {
@@ -78,13 +78,13 @@ class RxGatewayStoreModel implements RxStoreModel {
     private final EndpointManager globalEndpointManager;
 
     public RxGatewayStoreModel(ConnectionPolicy connectionPolicy,
-            ConsistencyLevel consistencyLevel,
-            QueryCompatibilityMode queryCompatibilityMode,
-            String masterKey,
-            Map<String, String> resourceTokens,
-            UserAgentContainer userAgentContainer,
-            EndpointManager globalEndpointManager,
-            CompositeHttpClient<ByteBuf, ByteBuf> httpClient) {
+                               ConsistencyLevel consistencyLevel,
+                               QueryCompatibilityMode queryCompatibilityMode,
+                               String masterKey,
+                               Map<String, String> resourceTokens,
+                               UserAgentContainer userAgentContainer,
+                               EndpointManager globalEndpointManager,
+                               CompositeHttpClient<ByteBuf, ByteBuf> httpClient) {
         this.defaultHeaders = new HashMap<String, String>();
         this.defaultHeaders.put(HttpConstants.HttpHeaders.CACHE_CONTROL,
                 "no-cache");
@@ -140,17 +140,17 @@ class RxGatewayStoreModel implements RxStoreModel {
         request.getHeaders().put(HttpConstants.HttpHeaders.IS_QUERY, "true");
 
         switch (this.queryCompatibilityMode) {
-        case SqlQuery:
-            request.getHeaders().put(HttpConstants.HttpHeaders.CONTENT_TYPE,
-                    RuntimeConstants.MediaTypes.SQL);
-            break;
-        case Default:
-        case Query:
-        default:
-            request.getHeaders().put(HttpConstants.HttpHeaders.CONTENT_TYPE,
-                    RuntimeConstants.MediaTypes.QUERY_JSON);
-            break;
-           }
+            case SqlQuery:
+                request.getHeaders().put(HttpConstants.HttpHeaders.CONTENT_TYPE,
+                        RuntimeConstants.MediaTypes.SQL);
+                break;
+            case Default:
+            case Query:
+            default:
+                request.getHeaders().put(HttpConstants.HttpHeaders.CONTENT_TYPE,
+                        RuntimeConstants.MediaTypes.QUERY_JSON);
+                break;
+        }
         return this.performRequest(request, HttpMethod.POST);
     }
 
@@ -176,10 +176,10 @@ class RxGatewayStoreModel implements RxStoreModel {
                 // convert byte[] to ByteBuf
                 // why not use Observable<byte[]> directly?
                 Observable<ByteBuf> byteBufObservable = request.getContentObservable()
-                        .map(bytes ->  Unpooled.wrappedBuffer(bytes));
+                        .map(bytes -> Unpooled.wrappedBuffer(bytes));
 
                 httpRequest.withContentSource(byteBufObservable);
-            } else if (request.getContent() != null){
+            } else if (request.getContent() != null) {
                 httpRequest.withContent(request.getContent());
             }
 
@@ -199,7 +199,7 @@ class RxGatewayStoreModel implements RxStoreModel {
         for (Map.Entry<String, String> entry : this.defaultHeaders.entrySet()) {
             req.withHeader(entry.getKey(), entry.getValue());
         }
-        
+
         // Add override headers.
         if (headers != null) {
             for (Map.Entry<String, String> entry : headers.entrySet()) {
@@ -238,16 +238,16 @@ class RxGatewayStoreModel implements RxStoreModel {
 
         return uri;
     }
-    
+
     private String ensureSlashPrefixed(String path) {
         if (path == null) {
             return path;
         }
-        
+
         if (path.startsWith("/")) {
             return path;
         }
-        
+
         return "/" + path;
     }
 
@@ -267,8 +267,7 @@ class RxGatewayStoreModel implements RxStoreModel {
                             try {
                                 bb.readBytes(out, bb.readableBytes());
                                 return out;
-                            }
-                            catch (java.io.IOException e) {
+                            } catch (java.io.IOException e) {
                                 throw new RuntimeException(e);
                             }
                         })
@@ -285,29 +284,28 @@ class RxGatewayStoreModel implements RxStoreModel {
                             try {
                                 bb.readBytes(out, bb.readableBytes());
                                 return out;
-                            }
-                            catch (java.io.IOException e) {
+                            } catch (java.io.IOException e) {
                                 throw new RuntimeException(e);
                             }
                         })
                 .map(out -> {
-                     return new String(out.toByteArray(), StandardCharsets.UTF_8);
+                    return new String(out.toByteArray(), StandardCharsets.UTF_8);
                 });
     }
 
     /**
      * Transforms the rxNetty's client response Observable to RxDocumentServiceResponse Observable.
-     * 
-     * 
+     * <p>
+     * <p>
      * Once the the customer code subscribes to the observable returned by the {@link AsyncDocumentClient} CRUD APIs,
      * the subscription goes up till it reaches the source rxNetty's observable, and at that point the HTTP invocation will be made.
-     * 
+     *
      * @param clientResponseObservable
      * @param request
      * @return {@link Observable}
      */
-    private Observable<RxDocumentServiceResponse> toDocumentServiceResponse(Observable<HttpClientResponse<ByteBuf>> clientResponseObservable, 
-            RxDocumentServiceRequest request) {
+    private Observable<RxDocumentServiceResponse> toDocumentServiceResponse(Observable<HttpClientResponse<ByteBuf>> clientResponseObservable,
+                                                                            RxDocumentServiceRequest request) {
 
         if (request.getIsMedia()) {
             return clientResponseObservable.flatMap(clientResponse -> {
@@ -384,7 +382,7 @@ class RxGatewayStoreModel implements RxStoreModel {
     }
 
     private void validateOrThrow(RxDocumentServiceRequest request, HttpResponseStatus status, HttpResponseHeaders headers, String body,
-            InputStream inputStream) throws DocumentClientException {
+                                 InputStream inputStream) throws DocumentClientException {
 
         int statusCode = status.code();
 
@@ -407,39 +405,39 @@ class RxGatewayStoreModel implements RxStoreModel {
 
             String statusCodeString = status.reasonPhrase() != null
                     ? status.reasonPhrase().replace(" ", "")
-                            : "";
-                    Error error = null;
-                    error = (body != null)? new Error(body): new Error();
-                    error = new Error(statusCodeString,
-                            String.format("%s, StatusCode: %s", error.getMessage(), statusCodeString),
-                            error.getPartitionedQueryExecutionInfo());
+                    : "";
+            Error error = null;
+            error = (body != null) ? new Error(body) : new Error();
+            error = new Error(statusCodeString,
+                    String.format("%s, StatusCode: %s", error.getMessage(), statusCodeString),
+                    error.getPartitionedQueryExecutionInfo());
 
-                    throw new DocumentClientException(statusCode, error, responseHeaders);
+            throw new DocumentClientException(statusCode, error, responseHeaders);
         }
     }
 
     @Override
-    public Observable<RxDocumentServiceResponse> processMessage(RxDocumentServiceRequest request)  {
+    public Observable<RxDocumentServiceResponse> processMessage(RxDocumentServiceRequest request) {
         switch (request.getOperationType()) {
-        case Create:
-            return this.doCreate(request);
-        case Upsert:
-            return this.upsert(request);
-        case Delete:
-            return this.delete(request);
-        case ExecuteJavaScript:
-            return this.execute(request);
-        case Read:
-            return this.read(request);
-        case ReadFeed:
-            return this.readFeed(request);
-        case Replace:
-            return this.replace(request);
-        case SqlQuery:
-        case Query:
-            return this.query(request);
-        default:
-            throw new IllegalStateException("Unknown operation type " + request.getOperationType());
+            case Create:
+                return this.doCreate(request);
+            case Upsert:
+                return this.upsert(request);
+            case Delete:
+                return this.delete(request);
+            case ExecuteJavaScript:
+                return this.execute(request);
+            case Read:
+                return this.read(request);
+            case ReadFeed:
+                return this.readFeed(request);
+            case Replace:
+                return this.replace(request);
+            case SqlQuery:
+            case Query:
+                return this.query(request);
+            default:
+                throw new IllegalStateException("Unknown operation type " + request.getOperationType());
         }
     }
 }

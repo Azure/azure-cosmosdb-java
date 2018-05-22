@@ -26,8 +26,10 @@ package com.microsoft.azure.cosmosdb.rx.internal.query;
  * While this class is public, but it is not part of our published public APIs.
  * This is meant to be internally used only by our sdk.
  */
-public class ParallelQueryConfig {
+public final class ParallelQueryConfig {
 
     public static final int CLIENT_INTERNAL_PAGE_SIZE = 100;
 
+    private ParallelQueryConfig() {
+    }
 }

@@ -40,9 +40,12 @@ import rx.observables.AsyncOnSubscribe;
  * While this class is public, but it is not part of our published public APIs.
  * This is meant to be internally used only by our sdk.
  */
-public class Paginator {
+public final class Paginator {
 
     private final static Logger logger = LoggerFactory.getLogger(Paginator.class);
+
+    private Paginator() {
+    }
 
     public static <T extends Resource> Observable<FeedResponse<T>> getPaginatedChangeFeedQueryResultAsObservable(
             ChangeFeedOptions feedOptions, Func2<String, Integer, RxDocumentServiceRequest> createRequestFunc,

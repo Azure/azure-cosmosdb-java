@@ -40,7 +40,10 @@ import com.microsoft.azure.cosmosdb.rx.internal.Strings;
  * This is meant to be used only internally as a bridge access to classes in
  * com.microsoft.azure.cosmosdb
  **/
-public class BridgeInternal {
+public final class BridgeInternal {
+
+    private BridgeInternal() {
+    }
 
     public static Document documentFromObject(Object document, ObjectMapper mapper) {
         return Document.fromObject(document, mapper);

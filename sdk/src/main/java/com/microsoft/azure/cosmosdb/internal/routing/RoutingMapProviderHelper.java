@@ -33,7 +33,10 @@ import com.microsoft.azure.cosmosdb.PartitionKeyRange;
  * Provide utility functionality to route request in direct connectivity mode in the Azure Cosmos DB database service.
  */
 public final class RoutingMapProviderHelper {
-    private static final Range.MaxComparator<String> MAX_COMPARATOR = new Range.MaxComparator<String>();
+    private static final Range.MaxComparator<String> MAX_COMPARATOR = new Range.MaxComparator<>();
+
+    private RoutingMapProviderHelper() {
+    }
 
     private static String max(String left, String right) {
         return left.compareTo(right) < 0 ? right : left;

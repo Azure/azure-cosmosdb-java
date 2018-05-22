@@ -1,17 +1,17 @@
 /*
  * The MIT License (MIT)
  * Copyright (c) 2018 Microsoft Corporation
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -155,9 +155,8 @@ public class ResourceId {
 
             if (buffer.length == ResourceId.OFFER_ID_LENGTH) {
                 rid.offer = 0;
-                for (int index = 0; index < ResourceId.OFFER_ID_LENGTH; index++)
-                {
-                    rid.offer |= (long)(buffer[index] << (index * 8));
+                for (int index = 0; index < ResourceId.OFFER_ID_LENGTH; index++) {
+                    rid.offer |= (long) (buffer[index] << (index * 8));
                 }
                 return Pair.of(true, rid);
             }
@@ -259,8 +258,9 @@ public class ResourceId {
     // bytes to copy
     static void blockCopy(byte[] src, int srcOffset, byte[] dst, int dstOffset, int count) {
         int stop = srcOffset + count;
-        for (int i = srcOffset; i < stop; i++)
+        for (int i = srcOffset; i < stop; i++) {
             dst[dstOffset++] = src[i];
+        }
     }
 
     private static byte[] convertToBytesUsingByteBuffer(int value) {
@@ -371,7 +371,7 @@ public class ResourceId {
         rid.document = this.document;
         return rid;
     }
-    
+
     public long getPartitionKeyRange() {
         return this.partitionKeyRange;
     }
@@ -420,7 +420,9 @@ public class ResourceId {
         return rid;
     }
 
-    public long getOffer() { return this.offer; }
+    public long getOffer() {
+        return this.offer;
+    }
 
     public ResourceId getOfferId() {
         ResourceId rid = new ResourceId();
@@ -455,22 +457,22 @@ public class ResourceId {
 
         if (this.documentCollection != 0)
             ResourceId.blockCopy(
-                    convertToBytesUsingByteBuffer(this.documentCollection), 
+                    convertToBytesUsingByteBuffer(this.documentCollection),
                     0, val, 4, 4);
         else if (this.user != 0)
-            ResourceId.blockCopy(convertToBytesUsingByteBuffer(this.user), 
+            ResourceId.blockCopy(convertToBytesUsingByteBuffer(this.user),
                     0, val, 4, 4);
 
         if (this.storedProcedure != 0)
             ResourceId.blockCopy(
-                    convertToBytesUsingByteBuffer(this.storedProcedure), 
+                    convertToBytesUsingByteBuffer(this.storedProcedure),
                     0, val, 8, 8);
         else if (this.trigger != 0)
             ResourceId.blockCopy(convertToBytesUsingByteBuffer(this.trigger),
                     0, val, 8, 8);
         else if (this.userDefinedFunction != 0)
             ResourceId.blockCopy(
-                    convertToBytesUsingByteBuffer(this.userDefinedFunction), 
+                    convertToBytesUsingByteBuffer(this.userDefinedFunction),
                     0, val, 8, 8);
         else if (this.conflict != 0)
             ResourceId.blockCopy(convertToBytesUsingByteBuffer(this.conflict),
@@ -480,16 +482,16 @@ public class ResourceId {
                     0, val, 8, 8);
         else if (this.permission != 0)
             ResourceId.blockCopy(
-                    convertToBytesUsingByteBuffer(this.permission), 
+                    convertToBytesUsingByteBuffer(this.permission),
                     0, val, 8, 8);
         else if (this.partitionKeyRange != 0)
             ResourceId.blockCopy(
-                    convertToBytesUsingByteBuffer(this.partitionKeyRange), 
+                    convertToBytesUsingByteBuffer(this.partitionKeyRange),
                     0, val, 8, 8);
 
         if (this.attachment != 0)
             ResourceId.blockCopy(
-                    convertToBytesUsingByteBuffer(this.attachment), 
+                    convertToBytesUsingByteBuffer(this.attachment),
                     0, val, 16, 4);
 
         return val;

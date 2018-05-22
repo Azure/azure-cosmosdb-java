@@ -26,6 +26,10 @@ package com.microsoft.azure.cosmosdb.internal.query;
 import com.microsoft.azure.cosmosdb.Undefined;
 
 public final class ItemTypeHelper {
+
+    private ItemTypeHelper() {
+    }
+
     public static ItemType getOrderByItemType(Object obj) {
         if (obj == null) {
             return ItemType.Null;

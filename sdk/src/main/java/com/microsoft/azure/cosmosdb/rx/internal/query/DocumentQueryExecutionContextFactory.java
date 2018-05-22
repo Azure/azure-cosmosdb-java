@@ -1,17 +1,17 @@
 /*
  * The MIT License (MIT)
  * Copyright (c) 2018 Microsoft Corporation
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -46,12 +46,15 @@ import rx.Single;
  * While this class is public, but it is not part of our published public APIs.
  * This is meant to be internally used only by our sdk.
  */
-public class DocumentQueryExecutionContextFactory {
+public final class DocumentQueryExecutionContextFactory {
 
     private final static int PAGE_SIZE_FACTOR_FOR_TOP = 5;
 
-    private static Single<DocumentCollection> resolveCollection(IDocumentQueryClient client, SqlQuerySpec query, 
-            ResourceType resourceTypeEnum, String resourceLink) {
+    private DocumentQueryExecutionContextFactory() {
+    }
+
+    private static Single<DocumentCollection> resolveCollection(IDocumentQueryClient client, SqlQuerySpec query,
+                                                                ResourceType resourceTypeEnum, String resourceLink) {
 
         RxCollectionCache collectionCache = client.getCollectionCache();
 
@@ -60,7 +63,7 @@ public class DocumentQueryExecutionContextFactory {
                 resourceTypeEnum,
                 resourceLink, null
                 // TODO      AuthorizationTokenType.Invalid)
-                ); //this request doesnt actually go to server
+        ); //this request doesnt actually go to server
         return collectionCache.resolveCollectionAsync(request);
     }
 
@@ -76,7 +79,7 @@ public class DocumentQueryExecutionContextFactory {
 
         // return proxy
         Observable<DocumentCollection> collectionObs = Observable.just(null);
-        
+
         if (resourceTypeEnum.isCollectionChild()) {
             collectionObs = resolveCollection(client, query, resourceTypeEnum, resourceLink).toObservable();
         }
@@ -86,17 +89,17 @@ public class DocumentQueryExecutionContextFactory {
         // PipelinedDocumentQueryExecutionContext by providing the partition query execution info that's needed(which we get from the exception returned from Gateway).
 
         Observable<ProxyDocumentQueryExecutionContext<T>> proxyQueryExecutionContext =
-                collectionObs.flatMap(collection -> 
-                ProxyDocumentQueryExecutionContext.createAsync(
-                        client,
-                        resourceTypeEnum,
-                        resourceType,
-                        query,
-                        feedOptions,
-                        resourceLink,
-                        collection,
-                        isContinuationExpected,
-                        correlatedActivityId));
+                collectionObs.flatMap(collection ->
+                        ProxyDocumentQueryExecutionContext.createAsync(
+                                client,
+                                resourceTypeEnum,
+                                resourceType,
+                                query,
+                                feedOptions,
+                                resourceLink,
+                                collection,
+                                isContinuationExpected,
+                                correlatedActivityId));
 
         return proxyQueryExecutionContext;
     }
@@ -131,13 +134,12 @@ public class DocumentQueryExecutionContextFactory {
             int top;
             if (queryInfo.hasTop() && (top = partitionedQueryExecutionInfo.getQueryInfo().getTop()) > 0) {
                 int pageSizeWithTop = Math.min(
-                        (int)Math.ceil(top / (double)targetRanges.size()) * PAGE_SIZE_FACTOR_FOR_TOP,
+                        (int) Math.ceil(top / (double) targetRanges.size()) * PAGE_SIZE_FACTOR_FOR_TOP,
                         top);
 
                 if (initialPageSize > 0) {
                     initialPageSize = Math.min(pageSizeWithTop, initialPageSize);
-                }
-                else {
+                } else {
                     initialPageSize = pageSizeWithTop;
                 }
             }
@@ -168,6 +170,6 @@ public class DocumentQueryExecutionContextFactory {
                 initialPageSize,
                 isContinuationExpected,
                 getLazyFeedResponse,
-                correlatedActivityId);           
+                correlatedActivityId);
     }
 }

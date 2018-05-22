@@ -33,6 +33,9 @@ public final class PathParser {
 
     private static final char segmentSeparator = '/';
 
+    private PathParser() {
+    }
+
     public static Collection<String> getPathParts(String path) {
         ArrayList<String> tokens = new ArrayList<String>();
         int currentIndex = 0;
