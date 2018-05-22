@@ -104,9 +104,7 @@ public abstract class ParallelDocumentQueryExecutionContextBase<T extends Resour
             };
 
             Func1<RxDocumentServiceRequest, Observable<FeedResponse<T>>> executeFunc =
-                    (request) -> {
-                        return this.executeRequestAsync(request).toObservable();
-                    };
+                    (request) -> this.executeRequestAsync(request).toObservable();
 
             DocumentProducer<T> dp = createDocumentProducer(
                     collectionRid,

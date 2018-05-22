@@ -427,9 +427,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
         IDocumentQueryClient queryClient = DocumentQueryClientImpl(RxDocumentClientImpl.this);
         Observable<? extends IDocumentQueryExecutionContext<T>> executionContext = 
                 DocumentQueryExecutionContextFactory.createDocumentQueryExecutionContextAsync(queryClient, resourceTypeEnum, klass, sqlQuery , options, queryResourceLink, false, activityId);
-        return executionContext.single().flatMap(ex -> {
-            return ex.executeAsync();
-        });
+        return executionContext.single().flatMap(IDocumentQueryExecutionContext::executeAsync);
     }
 
 
@@ -551,9 +549,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
 
         populateHeaders(request, HttpConstants.HttpMethods.GET);
         applySessionToken(request);
-        return gatewayProxy.processMessage(request).doOnNext(response -> {
-            this.captureSessionToken(request, response);
-        });
+        return gatewayProxy.processMessage(request).doOnNext(response -> this.captureSessionToken(request, response));
     }
 
     Observable<RxDocumentServiceResponse> readFeed(RxDocumentServiceRequest request) {
@@ -989,9 +985,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
 
             Observable<RxDocumentServiceResponse> responseObservable = requestObs
                     .toObservable()
-                    .flatMap(req -> { 
-                        return create(req);
-                    });
+                    .flatMap(this::create);
 
             Observable<ResourceResponse<Document>> createObservable = 
                     responseObservable
@@ -1026,7 +1020,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
             Observable<RxDocumentServiceRequest> reqObs = getCreateDocumentRequest(collectionLink, document,
                     options, disableAutomaticIdGeneration, OperationType.Upsert).toObservable();
 
-            Observable<RxDocumentServiceResponse> responseObservable = reqObs.flatMap(req -> upsert(req));
+            Observable<RxDocumentServiceResponse> responseObservable = reqObs.flatMap(this::upsert);
             return responseObservable
                     .map(serviceResponse -> toResourceResponse(serviceResponse, Document.class));
 
@@ -1534,7 +1528,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
                     procedureParams != null ? RxDocumentClientImpl.serializeProcedureParams(procedureParams) : "",
                             requestHeaders);
             Observable<RxDocumentServiceRequest> reqObs = addPartitionKeyInformation(request, null, options).toObservable();
-            return reqObs.flatMap(req -> create(request).map(response -> toStoredProcedureResponse(response)));
+            return reqObs.flatMap(req -> create(request).map(BridgeInternal::toStoredProcedureResponse));
 
         } catch (Exception e) {
             logger.debug("Failure in executing a StoredProcedure due to [{}]", e.getMessage(), e);
@@ -2685,7 +2679,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
 
     @Override
     public Observable<DatabaseAccount> getDatabaseAccount() {
-        return ObservableHelper.inlineIfPossibleAsObs(() -> getDatabaseAccountInternal(), retryPolicy.getRequestPolicy());
+        return ObservableHelper.inlineIfPossibleAsObs(this::getDatabaseAccountInternal, retryPolicy.getRequestPolicy());
     }
 
     private Observable<DatabaseAccount> getDatabaseAccountInternal() {
@@ -2694,7 +2688,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
             RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.Read,
                     ResourceType.DatabaseAccount, "", // path
                     null);
-            return this.read(request).map(response -> toDatabaseAccount(response));
+            return this.read(request).map(BridgeInternal::toDatabaseAccount);
 
         } catch (Exception e) {
             logger.debug("Failure in getting Database Account due to [{}]", e.getMessage(), e);

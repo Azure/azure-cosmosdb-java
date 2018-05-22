@@ -35,6 +35,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.microsoft.azure.cosmosdb.Resource;
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONObject;
 import org.testng.annotations.AfterClass;
@@ -252,7 +253,7 @@ public class OrderbyDocumentQueryTest extends TestSuiteBase {
         return createdDocuments.stream()
                 .filter(d -> d.getHashMap().containsKey(propName)) // removes undefined
                 .sorted((d1, d2) -> comparer.compare(extractProp.apply(d1), extractProp.apply(d2)))
-                .map(d -> d.getResourceId()).collect(Collectors.toList());
+                .map(Resource::getResourceId).collect(Collectors.toList());
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
@@ -306,8 +307,8 @@ public class OrderbyDocumentQueryTest extends TestSuiteBase {
         
         FeedResponseListValidator<Document> validator = new FeedResponseListValidator.Builder<Document>()
                 .containsExactly(expectedDocs.stream()
-                        .sorted((e1, e2) -> Integer.compare(e1.getInt("propScopedPartitionInt"), e2.getInt("propScopedPartitionInt")))
-                        .map(d -> d.getResourceId()).collect(Collectors.toList()))
+                        .sorted(Comparator.comparingInt(e -> e.getInt("propScopedPartitionInt")))
+                        .map(Resource::getResourceId).collect(Collectors.toList()))
                 .numberOfPages(expectedPageSize)
                 .allPagesSatisfy(new FeedResponseValidator.Builder<Document>()
                         .requestChargeGreaterThanOrEqualTo(1.0).build())
@@ -335,7 +336,7 @@ public class OrderbyDocumentQueryTest extends TestSuiteBase {
         }
 
         return Observable.merge(result, 100).
-                map(resp -> resp.getResource())
+                map(ResourceResponse::getResource)
                 .toList().toBlocking().single();
     }
 

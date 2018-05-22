@@ -67,10 +67,7 @@ public class BackoffRetryUtility {
     static private <T> Single<T> executeRetry(Func0<Single<T>> callbackMethod,
             Func1<Exception, Single<Long>> callShouldRetry, Action1<Exception> preRetryCallback) {
 
-        return Single.defer(() -> {
-            return callbackMethod.call();
-
-        }).retryWhen(toRetryWhenFunc(callShouldRetry, preRetryCallback));
+        return Single.defer(callbackMethod::call).retryWhen(toRetryWhenFunc(callShouldRetry, preRetryCallback));
     }
 
     // a helper method for invoking callback method given the retry policy.
@@ -79,20 +76,16 @@ public class BackoffRetryUtility {
             IRetryPolicy retryPolicy,
             Action1<Throwable> preRetryCallback) {
 
-        return Single.defer(() -> {
-            // TODO: is defer required?
-            return callbackMethod.call();
-        }).retryWhen(RetryUtils.toRetryWhenFunc(retryPolicy));
+        // TODO: is defer required?
+        return Single.defer(callbackMethod::call).retryWhen(RetryUtils.toRetryWhenFunc(retryPolicy));
     }
 
     // a helper method for invoking callback method given the retry policy
     static public <T> Single<T> executeRetry(Func0<Single<T>> callbackMethod,
             IRetryPolicy retryPolicy) {
 
-        return Single.defer(() -> {
-            // TODO: is defer required?
-            return callbackMethod.call();
-        }).retryWhen(RetryUtils.toRetryWhenFunc(retryPolicy));
+        // TODO: is defer required?
+        return Single.defer(callbackMethod::call).retryWhen(RetryUtils.toRetryWhenFunc(retryPolicy));
     }
         
     private BackoffRetryUtility() {}

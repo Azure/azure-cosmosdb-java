@@ -90,7 +90,7 @@ public class DefaultDocumentQueryExecutionContext<T extends Resource> extends Do
 
         int maxPageSize = feedOptions.getMaxItemCount() != null ? feedOptions.getMaxItemCount() : Constants.Properties.DEFAULT_MAX_PAGE_SIZE;
 
-        Func2<String, Integer, RxDocumentServiceRequest> createRequestFunc = (continuationToken, pageSize) -> this.createRequestAsync(continuationToken, pageSize);
+        Func2<String, Integer, RxDocumentServiceRequest> createRequestFunc = this::createRequestAsync;
 
         // TODO: clean up if we want to use single vs observable.
         Func1<RxDocumentServiceRequest, Observable<FeedResponse<T>>> executeFunc = executeInternalAyncFunc();

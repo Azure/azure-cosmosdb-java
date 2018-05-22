@@ -132,7 +132,7 @@ class ChangeFeedQueryImpl<T extends Resource> {
     
     public Observable<FeedResponse<T>> executeAsync() {
 
-        Func2<String, Integer, RxDocumentServiceRequest> createRequestFunc = (continuationToken, pageSize) -> this.createDocumentServiceRequest(continuationToken, pageSize);
+        Func2<String, Integer, RxDocumentServiceRequest> createRequestFunc = this::createDocumentServiceRequest;
 
         // TODO: clean up if we want to use single vs observable.
         Func1<RxDocumentServiceRequest, Observable<FeedResponse<T>>> executeFunc = request -> this.executeRequestAsync(request).toObservable();

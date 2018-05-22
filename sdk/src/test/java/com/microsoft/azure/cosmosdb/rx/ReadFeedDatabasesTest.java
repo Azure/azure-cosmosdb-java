@@ -24,10 +24,12 @@ package com.microsoft.azure.cosmosdb.rx;
 
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.microsoft.azure.cosmosdb.Resource;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
@@ -65,7 +67,7 @@ public class ReadFeedDatabasesTest extends TestSuiteBase {
         int expectedPageSize = (allDatabases.size() + options.getMaxItemCount() - 1) / options.getMaxItemCount();
         FeedResponseListValidator<Database> validator = new FeedResponseListValidator.Builder<Database>()
                 .totalSize(allDatabases.size())
-                .exactlyContainsInAnyOrder(allDatabases.stream().map(d -> d.getResourceId()).collect(Collectors.toList()))
+                .exactlyContainsInAnyOrder(allDatabases.stream().map(Resource::getResourceId).collect(Collectors.toList()))
                 .numberOfPages(expectedPageSize)
                 .pageSatisfy(0, new FeedResponseValidator.Builder<Database>()
                         .requestChargeGreaterThanOrEqualTo(1.0).build())
@@ -78,9 +80,9 @@ public class ReadFeedDatabasesTest extends TestSuiteBase {
     public void beforeClass() throws URISyntaxException, DocumentClientException {
         client = clientBuilder.build();
         allDatabases = client.readDatabases(null)
-                             .map(frp -> frp.getResults())
+                             .map(FeedResponse::getResults)
                              .toList()
-                             .map(list -> list.stream().flatMap(x -> x.stream()).collect(Collectors.toList()))
+                             .map(list -> list.stream().flatMap(Collection::stream).collect(Collectors.toList()))
                              .toBlocking()
                              .single();
         for(int i = 0; i < 5; i++) {

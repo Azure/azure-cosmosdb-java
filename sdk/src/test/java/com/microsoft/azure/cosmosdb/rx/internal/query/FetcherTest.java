@@ -172,9 +172,7 @@ public class FetcherTest {
 
         AtomicInteger executeIndex = new AtomicInteger(0);
 
-        Func1<RxDocumentServiceRequest, Observable<FeedResponse<Document>>> executeFunc = request -> {
-            return Observable.just(feedResponseList.get(executeIndex.getAndIncrement()));
-        };
+        Func1<RxDocumentServiceRequest, Observable<FeedResponse<Document>>> executeFunc = request -> Observable.just(feedResponseList.get(executeIndex.getAndIncrement()));
 
         Fetcher<Document> fetcher =
                 new Fetcher<>(createRequestFunc, executeFunc, options, isChangeFeed, top,

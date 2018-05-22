@@ -176,7 +176,7 @@ class RxGatewayStoreModel implements RxStoreModel {
                 // convert byte[] to ByteBuf
                 // why not use Observable<byte[]> directly?
                 Observable<ByteBuf> byteBufObservable = request.getContentObservable()
-                        .map(bytes ->  Unpooled.wrappedBuffer(bytes));
+                        .map(Unpooled::wrappedBuffer);
 
                 httpRequest.withContentSource(byteBufObservable);
             } else if (request.getContent() != null){
@@ -272,9 +272,7 @@ class RxGatewayStoreModel implements RxStoreModel {
                                 throw new RuntimeException(e);
                             }
                         })
-                .map(out -> {
-                    return new ByteArrayInputStream(out.toByteArray());
-                });
+                .map(out -> new ByteArrayInputStream(out.toByteArray()));
     }
 
     private Observable<String> toString(Observable<ByteBuf> contentObservable) {
@@ -343,7 +341,7 @@ class RxGatewayStoreModel implements RxStoreModel {
 
                 return storeResponseObservable;
 
-            }).map(storeResponse -> new RxDocumentServiceResponse(storeResponse));
+            }).map(RxDocumentServiceResponse::new);
 
         } else {
             return clientResponseObservable.flatMap(clientResponse -> {
@@ -379,7 +377,7 @@ class RxGatewayStoreModel implements RxStoreModel {
 
                 return storeResponseObservable;
 
-            }).map(storeResponse -> new RxDocumentServiceResponse(storeResponse));
+            }).map(RxDocumentServiceResponse::new);
         }
     }
 

@@ -111,7 +111,7 @@ class AsyncCache<TKey, TValue> {
                         (lazyValue1, lazyValu2) -> lazyValue1 == initialLazyValue ? lazyValu2 : lazyValue1);
                 return resultAsyncLazy.single().toObservable();
 
-            }, () -> Observable.empty()).toSingle();
+            }, Observable::empty).toSingle();
         }
 
         logger.debug("cache[{}] doesn't exist, computing new value", key);

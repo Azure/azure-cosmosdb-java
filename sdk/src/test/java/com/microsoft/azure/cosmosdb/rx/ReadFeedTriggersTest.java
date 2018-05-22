@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.microsoft.azure.cosmosdb.Resource;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
@@ -74,7 +75,7 @@ public class ReadFeedTriggersTest extends TestSuiteBase {
                 .totalSize(createdTriggers.size())
                 .exactlyContainsInAnyOrder(createdTriggers
                         .stream()
-                        .map(d -> d.getResourceId())
+                        .map(Resource::getResourceId)
                         .collect(Collectors.toList()))
                 .numberOfPages(expectedPageSize)
                 .allPagesSatisfy(new FeedResponseValidator.Builder<Trigger>()

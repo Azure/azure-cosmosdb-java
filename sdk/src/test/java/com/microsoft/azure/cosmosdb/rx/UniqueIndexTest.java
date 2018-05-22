@@ -201,7 +201,7 @@ public class UniqueIndexTest extends TestSuiteBase {
         assertThat(collection.getUniqueKeyPolicy().getUniqueKeys())
                 .hasSameSizeAs(collectionDefinition.getUniqueKeyPolicy().getUniqueKeys());
         assertThat(collection.getUniqueKeyPolicy().getUniqueKeys()
-                .stream().map(ui -> ui.getPaths()).collect(Collectors.toList()))
+                .stream().map(UniqueKey::getPaths).collect(Collectors.toList()))
                 .containsExactlyElementsOf(
                         ImmutableList.of(ImmutableList.of("/name", "/description")));
     }

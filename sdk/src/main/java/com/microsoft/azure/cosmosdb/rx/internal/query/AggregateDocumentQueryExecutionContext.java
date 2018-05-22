@@ -120,9 +120,7 @@ public class AggregateDocumentQueryExecutionContext<T extends Resource> implemen
     public static <T extends Resource>  Observable<IDocumentQueryExecutionComponent<T>> createAsync(
             Observable<IDocumentQueryExecutionComponent<T>> observableComponent, Collection<AggregateOperator> aggregates) {
 
-        return observableComponent.map( component -> {
-            return new AggregateDocumentQueryExecutionContext<T>(component, aggregates);
-        });
+        return observableComponent.map( component -> new AggregateDocumentQueryExecutionContext<T>(component, aggregates));
     }
 
     public IDocumentQueryExecutionComponent<T> getComponent() {

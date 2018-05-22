@@ -32,6 +32,7 @@ import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.Error;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.PartitionKeyRange;
+import com.microsoft.azure.cosmosdb.Resource;
 import com.microsoft.azure.cosmosdb.internal.EndpointManager;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.internal.query.QueryItem;
@@ -59,6 +60,7 @@ import rx.functions.Func3;
 import rx.observers.TestSubscriber;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -361,7 +363,7 @@ public class DocumentProducerTest extends TestSuiteBase {
         assertThat(requestCreator.invocations.get(0).continuationToken).isEqualTo(initialContinuationToken);
         assertThat(requestCreator.invocations.stream().skip(1).map(i -> i.continuationToken)
                 .collect(Collectors.toList())).containsExactlyElementsOf(
-                responses.stream().limit(9).map(r -> r.getResponseContinuation()).collect(Collectors.toList()));
+                responses.stream().limit(9).map(FeedResponse::getResponseContinuation).collect(Collectors.toList()));
 
         // source partition
         assertThat(requestCreator.invocations.stream().map(i -> i.sourcePartition).distinct()
@@ -429,9 +431,9 @@ public class DocumentProducerTest extends TestSuiteBase {
         List<String> resultContinuationToken = subscriber.getOnNextEvents()
                 .stream().map(r -> r.pageResult.getResponseContinuation()).collect(Collectors.toList());
         List<String> beforeExceptionContinuationTokens = responsesBeforeThrottle.stream()
-                .map(r -> r.getResponseContinuation()).collect(Collectors.toList());
+                .map(FeedResponse::getResponseContinuation).collect(Collectors.toList());
         List<String> afterExceptionContinuationTokens = responsesAfterThrottle.stream()
-                .map(r -> r.getResponseContinuation()).collect(Collectors.toList());
+                .map(FeedResponse::getResponseContinuation).collect(Collectors.toList());
 
         assertThat(resultContinuationToken).containsExactlyElementsOf(
                 Iterables.concat(beforeExceptionContinuationTokens, afterExceptionContinuationTokens));
@@ -649,7 +651,7 @@ public class DocumentProducerTest extends TestSuiteBase {
                 -> stream.filter(i -> i.sourcePartition.getId().equals(partitionId));
 
         Function<List<FeedResponse<Document>>, Stream<String>> extractContinuationToken =
-                (list) -> list.stream().map(p -> p.getResponseContinuation());
+                (list) -> list.stream().map(FeedResponse::getResponseContinuation);
 
         assertThat(filterByPartition.apply(capturedInvocationList.stream(), parentPartitionId)
                 .map(r -> r.continuationToken)).containsExactlyElementsOf(
@@ -705,18 +707,18 @@ public class DocumentProducerTest extends TestSuiteBase {
         assertThat(resultFromRightChild).hasSize(numberOfResultPagesFromRightChildAfterSplit);
 
         //validate expected result continuation token
-        assertThat(toList(resultFromParent.stream().map(p -> p.getResponseContinuation())
-                .filter(cp -> Strings.isNullOrEmpty(cp)))).isEmpty();
+        assertThat(toList(resultFromParent.stream().map(FeedResponse::getResponseContinuation)
+                .filter(Strings::isNullOrEmpty))).isEmpty();
 
-        assertThat(toList(resultFromLeftChild.stream().map(p -> p.getResponseContinuation())
+        assertThat(toList(resultFromLeftChild.stream().map(FeedResponse::getResponseContinuation)
                 .limit(resultFromLeftChild.size() - 1)
-                .filter(cp -> Strings.isNullOrEmpty(cp)))).isEmpty();
+                .filter(Strings::isNullOrEmpty))).isEmpty();
 
         assertThat(resultFromLeftChild.get(resultFromLeftChild.size() - 1).getResponseContinuation()).isNullOrEmpty();
 
-        assertThat(toList(resultFromRightChild.stream().map(p -> p.getResponseContinuation())
+        assertThat(toList(resultFromRightChild.stream().map(FeedResponse::getResponseContinuation)
                 .limit(resultFromRightChild.size() - 1)
-                .filter(cp -> Strings.isNullOrEmpty(cp)))).isEmpty();
+                .filter(Strings::isNullOrEmpty))).isEmpty();
 
         assertThat(resultFromRightChild.get(resultFromRightChild.size() - 1).getResponseContinuation()).isNullOrEmpty();
     }
@@ -757,18 +759,16 @@ public class DocumentProducerTest extends TestSuiteBase {
                     .sorted(comparator)
                     .collect(Collectors.toList());
 
-            List<String> actualDocuments = getStreamOfActualDocuments.get().map(d -> d.getId()).collect(Collectors.toList());
+            List<String> actualDocuments = getStreamOfActualDocuments.get().map(Resource::getId).collect(Collectors.toList());
             assertThat(actualDocuments)
-                    .containsExactlyElementsOf(expectedDocuments.stream().map(d -> d.getId()).collect(Collectors.toList()));
+                    .containsExactlyElementsOf(expectedDocuments.stream().map(Resource::getId).collect(Collectors.toList()));
 
         } else {
             assertThat(actualPages).hasSize(resultFromParent.size()
                     + resultFromLeftChild.size()
                     + resultFromRightChild.size());
 
-            BiFunction<String, Integer, Stream<String>> repeater = (v, cnt) -> {
-                return IntStream.range(0, cnt).mapToObj(i -> v);
-            };
+            BiFunction<String, Integer, Stream<String>> repeater = (v, cnt) -> IntStream.range(0, cnt).mapToObj(i -> v);
 
             List<String> expectedCapturedPartitionIds = toList(Stream.concat(Stream.concat(repeater.apply(parentPartitionId, resultFromParent.size()),
                     repeater.apply(leftChildPartitionId, resultFromLeftChild.size())),
@@ -801,7 +801,7 @@ public class DocumentProducerTest extends TestSuiteBase {
 
     private static void validateResults(List<FeedResponse<Document>> captured, List<List<FeedResponse<Document>>> expectedResponsesFromPartitions) {
         List<FeedResponse<Document>> expected = expectedResponsesFromPartitions
-                .stream().flatMap(l -> l.stream()).collect(Collectors.toList());
+                .stream().flatMap(Collection::stream).collect(Collectors.toList());
         assertThat(captured).hasSameSizeAs(expected);
         for(int i = 0; i < expected.size(); i++) {
             FeedResponse<Document> actualPage = captured.get(i);

@@ -59,7 +59,7 @@ public class AsyncCacheTest {
             }
         }
 
-        Observable<Integer> o = Observable.merge(tasks.stream().map(s -> s.toObservable()).collect(Collectors.toList()));
+        Observable<Integer> o = Observable.merge(tasks.stream().map(Single::toObservable).collect(Collectors.toList()));
         o.toList().toSingle().toBlocking().value();
 
         assertThat(numberOfCacheRefreshes.get()).isEqualTo(10);
@@ -83,7 +83,7 @@ public class AsyncCacheTest {
             }
         }
 
-        Observable<Integer> o1 = Observable.merge(tasks1.stream().map(s -> s.toObservable()).collect(Collectors.toList()));
+        Observable<Integer> o1 = Observable.merge(tasks1.stream().map(Single::toObservable).collect(Collectors.toList()));
         o1.toList().toSingle().toBlocking().value();
 
         assertThat(numberOfCacheRefreshes.get()).isEqualTo(20);

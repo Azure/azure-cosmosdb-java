@@ -72,7 +72,7 @@ public interface FeedResponseListValidator<T extends Resource> {
                     List<String> actualIds = feedList
                             .stream()
                             .flatMap(f -> f.getResults().stream())
-                            .map(r -> r.getResourceId())
+                            .map(Resource::getResourceId)
                             .collect(Collectors.toList());
                     assertThat(actualIds)
                     .describedAs("Resource IDs of results")
@@ -108,7 +108,7 @@ public interface FeedResponseListValidator<T extends Resource> {
                     List<String> actualIds = feedList
                             .stream()
                             .flatMap(f -> f.getResults().stream())
-                            .map(r -> r.getResourceId())
+                            .map(Resource::getResourceId)
                             .collect(Collectors.toList());
                     assertThat(actualIds)
                     .describedAs("Resource IDs of results")
@@ -134,7 +134,7 @@ public interface FeedResponseListValidator<T extends Resource> {
             validators.add(new FeedResponseListValidator<T>() {
                 @Override
                 public void validate(List<FeedResponse<T>> feedList) {
-                    assertThat(feedList.stream().mapToDouble(p -> p.getRequestCharge()).sum())
+                    assertThat(feedList.stream().mapToDouble(FeedResponse::getRequestCharge).sum())
                     .describedAs("total request charge")
                     .isGreaterThanOrEqualTo(minimumCharge);
                 }

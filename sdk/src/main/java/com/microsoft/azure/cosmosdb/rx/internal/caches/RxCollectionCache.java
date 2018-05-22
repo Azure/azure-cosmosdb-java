@@ -122,9 +122,8 @@ public abstract class RxCollectionCache {
                     resourceFullName,
                     () -> {
                         Single<DocumentCollection> collectionObs = this.getByNameAsync(resourceFullName);
-                        return collectionObs.doOnSuccess(collection -> {
-                            this.collectionInfoByIdCache.set(collection.getResourceId(), collection);
-                        });                
+                        return collectionObs
+                                .doOnSuccess(collection -> this.collectionInfoByIdCache.set(collection.getResourceId(), collection));
                     });
         }
     }

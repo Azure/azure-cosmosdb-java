@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.microsoft.azure.cosmosdb.Resource;
 import org.assertj.core.util.Strings;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -82,7 +83,7 @@ public class OfferQueryTest extends TestSuiteBase {
 
         FeedResponseListValidator<Offer> validator = new FeedResponseListValidator.Builder<Offer>()
                 .totalSize(expectedOffers.size())
-                .exactlyContainsInAnyOrder(expectedOffers.stream().map(d -> d.getResourceId()).collect(Collectors.toList()))
+                .exactlyContainsInAnyOrder(expectedOffers.stream().map(Resource::getResourceId).collect(Collectors.toList()))
                 .numberOfPages(expectedPageSize)
                 .pageSatisfy(0, new FeedResponseValidator.Builder<Offer>()
                         .requestChargeGreaterThanOrEqualTo(1.0).build())
@@ -94,7 +95,7 @@ public class OfferQueryTest extends TestSuiteBase {
     @Test(groups = { "simple" }, timeOut = TIMEOUT * 100)
     public void queryOffersFilterMorePages() throws Exception {
         
-        List<String> collectionResourceIds = createdCollections.stream().map(c -> c.getResourceId()).collect(Collectors.toList());
+        List<String> collectionResourceIds = createdCollections.stream().map(Resource::getResourceId).collect(Collectors.toList());
         String query = String.format("SELECT * from c where c.offerResourceId in (%s)", 
                 Strings.join(collectionResourceIds.stream().map(s -> "'" + s + "'").collect(Collectors.toList())).with(","));
 
@@ -112,7 +113,7 @@ public class OfferQueryTest extends TestSuiteBase {
 
         FeedResponseListValidator<Offer> validator = new FeedResponseListValidator.Builder<Offer>()
                 .totalSize(expectedOffers.size())
-                .exactlyContainsInAnyOrder(expectedOffers.stream().map(d -> d.getResourceId()).collect(Collectors.toList()))
+                .exactlyContainsInAnyOrder(expectedOffers.stream().map(Resource::getResourceId).collect(Collectors.toList()))
                 .numberOfPages(expectedPageSize)
                 .pageSatisfy(0, new FeedResponseValidator.Builder<Offer>()
                         .requestChargeGreaterThanOrEqualTo(1.0).build())
