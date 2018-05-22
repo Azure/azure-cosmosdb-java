@@ -242,7 +242,7 @@ public class ResourceId {
     }
 
     static byte[] fromBase64String(String s) {
-        return Utils.Base64Decoder.decode(s.replace('-', '/'));
+        return Utils.BASE_64_DECODER.decode(s.replace('-', '/'));
     }
 
     static String toBase64String(byte[] buffer) {

@@ -80,7 +80,7 @@ public class StoredProcedureAsyncAPITest {
         asyncClient = new AsyncDocumentClient.Builder()
                 .withServiceEndpoint(TestConfigurations.HOST)
                 .withMasterKey(TestConfigurations.MASTER_KEY)
-                .withConnectionPolicy(ConnectionPolicy.GetDefault())
+                .withConnectionPolicy(ConnectionPolicy.getDefault())
                 .withConsistencyLevel(ConsistencyLevel.Session)
                 .build();
 

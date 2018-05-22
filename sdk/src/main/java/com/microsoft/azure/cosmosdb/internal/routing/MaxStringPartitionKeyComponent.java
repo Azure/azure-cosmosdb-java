@@ -32,7 +32,7 @@ class MaxStringPartitionKeyComponent implements IPartitionKeyComponent {
     public static final MaxStringPartitionKeyComponent VALUE = new MaxStringPartitionKeyComponent();
 
     @Override
-    public int CompareTo(IPartitionKeyComponent other) {
+    public int compareTo(IPartitionKeyComponent other) {
         if (!(other instanceof MaxStringPartitionKeyComponent)) {
             throw new IllegalArgumentException("other");
         }
@@ -46,17 +46,17 @@ class MaxStringPartitionKeyComponent implements IPartitionKeyComponent {
     }
 
     @Override
-    public void JsonEncode(JsonGenerator writer) {
+    public void jsonEncode(JsonGenerator writer) {
         PartitionKeyInternal.PartitionKeyInternalJsonSerializer.jsonEncode(this, writer);
     }
 
     @Override
-    public void WriteForHashing(OutputStream outputStream) {
+    public void writeForHashing(OutputStream outputStream) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void WriteForBinaryEncoding(OutputStream outputStream) {
+    public void writeForBinaryEncoding(OutputStream outputStream) {
         try {
             outputStream.write(PartitionKeyComponentType.MAXSTRING.getValue());
         } catch (IOException e) {

@@ -399,7 +399,7 @@ public class RxDocumentServiceRequest {
 
     static String getAttachmentIdFromMediaId(String mediaId) {
         // '/' was replaced with '-'.
-        byte[] buffer = Utils.Base64Decoder.decode(mediaId.replace('-', '/').getBytes());
+        byte[] buffer = Utils.BASE_64_DECODER.decode(mediaId.replace('-', '/').getBytes());
 
         final int resoureIdLength = 20;
         String attachmentId;
@@ -545,13 +545,13 @@ public class RxDocumentServiceRequest {
             if (segments.length % 2 == 0) {
                 // if path has even segments, it is the individual resource
                 // like dbs/db1/colls/coll1
-                if (Utils.IsResourceType(segments[segments.length - 2])) {
+                if (Utils.isResourceType(segments[segments.length - 2])) {
                     this.resourceFullName = trimmedPath;
                 }
             } else {
                 // if path has odd segments, get the parent(dbs/db1 from
                 // dbs/db1/colls)
-                if (Utils.IsResourceType(segments[segments.length - 1])) {
+                if (Utils.isResourceType(segments[segments.length - 1])) {
                     this.resourceFullName = trimmedPath.substring(0, trimmedPath.lastIndexOf("/"));
                 }
             }

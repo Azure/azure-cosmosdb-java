@@ -58,10 +58,6 @@ import com.microsoft.azure.cosmosdb.rx.ResourceResponseValidator;
 import com.microsoft.azure.cosmosdb.rx.TestConfigurations;
 import com.microsoft.azure.cosmosdb.rx.TestSuiteBase;
 import com.microsoft.azure.cosmosdb.rx.Utils;
-import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentClientImpl;
-import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
-import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceResponse;
-import com.microsoft.azure.cosmosdb.rx.internal.RxGatewayStoreModel;
 
 import rx.Observable;
 
@@ -218,7 +214,7 @@ public class RetryCreateDocumentTest extends TestSuiteBase {
         client = new AsyncDocumentClient.Builder()
                 .withServiceEndpoint(TestConfigurations.HOST)
                 .withMasterKey(TestConfigurations.MASTER_KEY)
-                .withConnectionPolicy(ConnectionPolicy.GetDefault())
+                .withConnectionPolicy(ConnectionPolicy.getDefault())
                 .withConsistencyLevel(ConsistencyLevel.Session)
                 .build();
         registerSpyProxy();

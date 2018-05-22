@@ -56,7 +56,6 @@ import com.microsoft.azure.cosmosdb.SqlParameter;
 import com.microsoft.azure.cosmosdb.SqlParameterCollection;
 import com.microsoft.azure.cosmosdb.SqlQuerySpec;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
-import com.microsoft.azure.cosmosdb.rx.examples.TestConfigurations;
 
 import rx.Observable;
 import rx.functions.Action1;
@@ -104,7 +103,7 @@ public class CollectionCRUDAsyncAPITest {
         asyncClient = new AsyncDocumentClient.Builder()
                 .withServiceEndpoint(TestConfigurations.HOST)
                 .withMasterKey(TestConfigurations.MASTER_KEY)
-                .withConnectionPolicy(ConnectionPolicy.GetDefault())
+                .withConnectionPolicy(ConnectionPolicy.getDefault())
                 .withConsistencyLevel(ConsistencyLevel.Session)
                 .build();
 

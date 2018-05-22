@@ -70,7 +70,7 @@ public final class ConnectionPolicy {
      *
      * @return the default connection policy.
      */
-    public static ConnectionPolicy GetDefault() {
+    public static ConnectionPolicy getDefault() {
         if (ConnectionPolicy.connectionPolicy == null) {
             ConnectionPolicy.connectionPolicy = new ConnectionPolicy();
         }

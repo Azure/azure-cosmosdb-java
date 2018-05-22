@@ -30,7 +30,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 
 class InfinityPartitionKeyComponent implements IPartitionKeyComponent {
     @Override
-    public int CompareTo(IPartitionKeyComponent other) {
+    public int compareTo(IPartitionKeyComponent other) {
         if (other.getClass() != InfinityPartitionKeyComponent.class) {
             throw new IllegalArgumentException("other");
         }
@@ -44,17 +44,17 @@ class InfinityPartitionKeyComponent implements IPartitionKeyComponent {
     }
 
     @Override
-    public void JsonEncode(JsonGenerator writer) {
+    public void jsonEncode(JsonGenerator writer) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void WriteForHashing(OutputStream outputStream) {
+    public void writeForHashing(OutputStream outputStream) {
         throw new IllegalStateException();
     }
 
     @Override
-    public void WriteForBinaryEncoding(OutputStream outputStream) {
+    public void writeForBinaryEncoding(OutputStream outputStream) {
         try {
             outputStream.write(PartitionKeyComponentType.INFINITY.getValue());
         } catch (IOException e) {

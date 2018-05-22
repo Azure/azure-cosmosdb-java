@@ -59,19 +59,19 @@ public class PartitionKeyInternal implements Comparable<PartitionKeyInternal> {
     private static final String MAX_STRING = "MaxString";
     private static final String INFINITY = "Infinity";
 
-    private static final PartitionKeyInternal EmptyPartitionKey =
-            new PartitionKeyInternal(new ArrayList<IPartitionKeyComponent>());
-    public static final String MinimumInclusiveEffectivePartitionKey = EmptyPartitionKey.toHexEncodedBinaryString();
+    private static final PartitionKeyInternal EMPTY_PARTITION_KEY =
+            new PartitionKeyInternal(new ArrayList<>());
+    public static final String MINIMUM_INCLUSIVE_EFFECTIVE_PARTITION_KEY = EMPTY_PARTITION_KEY.toHexEncodedBinaryString();
     @SuppressWarnings("serial")
-    private static final PartitionKeyInternal InfinityPartitionKey =
+    private static final PartitionKeyInternal INFINITY_PARTITION_KEY =
             new PartitionKeyInternal(new ArrayList<IPartitionKeyComponent>() {{
                 add(new InfinityPartitionKeyComponent());
             }});
-    public static final String MaximumExclusiveEffectivePartitionKey = InfinityPartitionKey.toHexEncodedBinaryString();
+    public static final String MAXIMUM_EXCLUSIVE_EFFECTIVE_PARTITION_KEY = INFINITY_PARTITION_KEY.toHexEncodedBinaryString();
     private final int MaxPartitionKeyBinarySize = (1 /*type marker */ +
             9 /* hash value*/ +
             1 /* type marker*/ +
-            StringPartitionKeyComponent.MaxStringComponentLength +
+            StringPartitionKeyComponent.MAX_STRING_COMPONENT_LENGTH +
             1 /*trailing zero*/) * 3;
     private final List<IPartitionKeyComponent> components;
 
@@ -132,11 +132,11 @@ public class PartitionKeyInternal implements Comparable<PartitionKeyInternal> {
     }
 
     public static PartitionKeyInternal getExclusiveMaximum() {
-        return PartitionKeyInternal.InfinityPartitionKey;
+        return PartitionKeyInternal.INFINITY_PARTITION_KEY;
     }
 
     public static PartitionKeyInternal getEmpty() {
-        return PartitionKeyInternal.EmptyPartitionKey;
+        return PartitionKeyInternal.EMPTY_PARTITION_KEY;
     }
 
     private boolean equals(PartitionKeyInternal obj) {
@@ -163,7 +163,7 @@ public class PartitionKeyInternal implements Comparable<PartitionKeyInternal> {
                 return (int) Math.signum(leftOrdinal - rightOrdinal);
             }
 
-            int result = this.components.get(i).CompareTo(other.components.get(i));
+            int result = this.components.get(i).compareTo(other.components.get(i));
             if (result != 0) {
                 return (int) Math.signum(result);
             }
@@ -184,7 +184,7 @@ public class PartitionKeyInternal implements Comparable<PartitionKeyInternal> {
     public String toHexEncodedBinaryString() {
         ByteArrayOutputStream stream = new ByteArrayOutputStream(MaxPartitionKeyBinarySize);
         for (int index = 0; index < this.components.size(); index++) {
-            this.components.get(index).WriteForBinaryEncoding(stream);
+            this.components.get(index).writeForBinaryEncoding(stream);
         }
 
         return HexConvert.bytesToHex(stream.toByteArray());
@@ -235,7 +235,7 @@ public class PartitionKeyInternal implements Comparable<PartitionKeyInternal> {
 
                 writer.writeStartArray();
                 for (IPartitionKeyComponent componentValue : partitionKey.getComponents()) {
-                    componentValue.JsonEncode(writer);
+                    componentValue.jsonEncode(writer);
                 }
                 writer.writeEndArray();
             } catch (IOException e) {

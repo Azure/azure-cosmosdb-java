@@ -115,7 +115,7 @@ public class DocumentProducerTest extends TestSuiteBase {
     private IRetryPolicyFactory mockDocumentClientIRetryPolicyFactory() {
         EndpointManager endpointManager = mock(EndpointManager.class);
         doReturn(false).when(endpointManager).isClosed();
-        return new RetryPolicy(endpointManager, ConnectionPolicy.GetDefault());
+        return new RetryPolicy(endpointManager, ConnectionPolicy.getDefault());
     }
 
     @Test(groups = { "simple" }, dataProvider = "splitParamProvider",  timeOut = TIMEOUT)

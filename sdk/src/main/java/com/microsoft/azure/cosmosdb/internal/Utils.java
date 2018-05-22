@@ -48,11 +48,11 @@ import com.microsoft.azure.cosmosdb.DocumentCollection;
  */
 public final class Utils {
     private static final ZoneId GMT_ZONE_ID = ZoneId.of("GMT");
-    public static final Base64.Encoder Base64Encoder = java.util.Base64.getEncoder();
-    public static final Base64.Decoder Base64Decoder = java.util.Base64.getDecoder();
+    public static final Base64.Encoder BASE_64_ENCODER = java.util.Base64.getEncoder();
+    public static final Base64.Decoder BASE_64_DECODER = java.util.Base64.getDecoder();
 
-    private static final ObjectMapper simpleObjectMapper = new ObjectMapper();
-    private static final TimeBasedGenerator TimeUUIDGegerator = 
+    private static final ObjectMapper SIMPLE_OBJECT_MAPPER = new ObjectMapper();
+    private static final TimeBasedGenerator TIME_UUID_GEGERATOR =
             Generators.timeBasedGenerator(EthernetAddress.constructMulticastAddress());
 
     // NOTE DateTimeFormatter.RFC_1123_DATE_TIME cannot be used.
@@ -63,11 +63,11 @@ public final class Utils {
     private static final DateTimeFormatter RFC_1123_DATE_TIME = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss zzz");
 
     static {
-        Utils.simpleObjectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        Utils.SIMPLE_OBJECT_MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
     public static String encodeBase64String(byte[] binaryData) {
-        String encodedString = Base64Encoder.encodeToString(binaryData);
+        String encodedString = BASE_64_ENCODER.encodeToString(binaryData);
 
         if (encodedString.endsWith("\r\n")) {
             encodedString = encodedString.substring(0, encodedString.length() - 2);
@@ -167,7 +167,7 @@ public final class Utils {
      * @param resourcePathSegment the path segment to analyze.
      * @return true or false
      */
-    public static boolean IsResourceType(String resourcePathSegment) {
+    public static boolean isResourceType(String resourcePathSegment) {
         if (StringUtils.isEmpty(resourcePathSegment)) {
             return false;
         }
@@ -366,7 +366,7 @@ public final class Utils {
     }
 
     public static ObjectMapper getSimpleObjectMapper() {
-        return Utils.simpleObjectMapper;
+        return Utils.SIMPLE_OBJECT_MAPPER;
     }
 
     /**
@@ -381,6 +381,6 @@ public final class Utils {
     }
 
     public static UUID randomUUID() {
-        return TimeUUIDGegerator.generate();
+        return TIME_UUID_GEGERATOR.generate();
     }
 }

@@ -33,7 +33,7 @@ class UndefinedPartitionKeyComponent implements IPartitionKeyComponent {
     public static final UndefinedPartitionKeyComponent VALUE = new UndefinedPartitionKeyComponent();
 
     @Override
-    public int CompareTo(IPartitionKeyComponent other) {
+    public int compareTo(IPartitionKeyComponent other) {
         if (!(other instanceof UndefinedPartitionKeyComponent)) {
             throw new IllegalArgumentException("other");
         }
@@ -47,7 +47,7 @@ class UndefinedPartitionKeyComponent implements IPartitionKeyComponent {
     }
 
     @Override
-    public void JsonEncode(JsonGenerator writer) {
+    public void jsonEncode(JsonGenerator writer) {
         try {
             writer.writeStartObject();
             writer.writeEndObject();
@@ -57,7 +57,7 @@ class UndefinedPartitionKeyComponent implements IPartitionKeyComponent {
     }
 
     @Override
-    public void WriteForHashing(OutputStream outputStream) {
+    public void writeForHashing(OutputStream outputStream) {
         try {
             outputStream.write((byte) PartitionKeyComponentType.UNDEFINED.getValue());
         } catch (IOException e) {
@@ -66,7 +66,7 @@ class UndefinedPartitionKeyComponent implements IPartitionKeyComponent {
     }
 
     @Override
-    public void WriteForBinaryEncoding(OutputStream outputStream) {
+    public void writeForBinaryEncoding(OutputStream outputStream) {
         try {
             outputStream.write((byte) PartitionKeyComponentType.UNDEFINED.getValue());
         } catch (IOException e) {

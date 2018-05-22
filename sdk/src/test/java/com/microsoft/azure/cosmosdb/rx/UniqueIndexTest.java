@@ -27,16 +27,12 @@ import static org.assertj.core.api.Assertions.fail;
 
 import java.util.Collections;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.util.JSONPObject;
-import org.json.JSONObject;
 import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -53,13 +49,9 @@ import com.microsoft.azure.cosmosdb.HashIndex;
 import com.microsoft.azure.cosmosdb.IncludedPath;
 import com.microsoft.azure.cosmosdb.IndexingMode;
 import com.microsoft.azure.cosmosdb.IndexingPolicy;
-import com.microsoft.azure.cosmosdb.ResourceResponse;
 import com.microsoft.azure.cosmosdb.UniqueKey;
 import com.microsoft.azure.cosmosdb.UniqueKeyPolicy;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
-
-import rx.Observable;
-import rx.observers.TestSubscriber;
 
 public class UniqueIndexTest extends TestSuiteBase {
     private final static String DATABASE_ID = getDatabaseId(UniqueIndexTest.class);
@@ -226,7 +218,7 @@ public class UniqueIndexTest extends TestSuiteBase {
         client = new AsyncDocumentClient.Builder()
                 .withServiceEndpoint(TestConfigurations.HOST)
                 .withMasterKey(TestConfigurations.MASTER_KEY)
-                .withConnectionPolicy(ConnectionPolicy.GetDefault())
+                .withConnectionPolicy(ConnectionPolicy.getDefault())
                 .withConsistencyLevel(ConsistencyLevel.Session).build();
 
         Database databaseDefinition = new Database();
