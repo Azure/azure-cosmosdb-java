@@ -157,8 +157,8 @@ public class PartitionKeyInternal implements Comparable<PartitionKeyInternal> {
         }
 
         for (int i = 0; i < Math.min(this.components.size(), other.components.size()); i++) {
-            int leftOrdinal = this.components.get(i).GetTypeOrdinal();
-            int rightOrdinal = other.components.get(i).GetTypeOrdinal();
+            int leftOrdinal = this.components.get(i).getTypeOrdinal();
+            int rightOrdinal = other.components.get(i).getTypeOrdinal();
             if (leftOrdinal != rightOrdinal) {
                 return (int) Math.signum(leftOrdinal - rightOrdinal);
             }

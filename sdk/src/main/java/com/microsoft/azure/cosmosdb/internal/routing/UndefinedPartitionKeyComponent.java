@@ -42,7 +42,7 @@ class UndefinedPartitionKeyComponent implements IPartitionKeyComponent {
     }
 
     @Override
-    public int GetTypeOrdinal() {
+    public int getTypeOrdinal() {
         return PartitionKeyComponentType.UNDEFINED.getValue();
     }
 

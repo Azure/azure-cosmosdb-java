@@ -41,7 +41,7 @@ class MaxNumberPartitionKeyComponent implements IPartitionKeyComponent {
     }
 
     @Override
-    public int GetTypeOrdinal() {
+    public int getTypeOrdinal() {
         return PartitionKeyComponentType.MAXNUMBER.ordinal();
     }
 

@@ -41,7 +41,7 @@ class MinNumberPartitionKeyComponent implements IPartitionKeyComponent {
     }
 
     @Override
-    public int GetTypeOrdinal() {
+    public int getTypeOrdinal() {
         return PartitionKeyComponentType.MINNUMBER.ordinal();
     }
 

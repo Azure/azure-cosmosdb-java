@@ -30,7 +30,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 interface IPartitionKeyComponent {
     int compareTo(IPartitionKeyComponent other);
 
-    int GetTypeOrdinal();
+    int getTypeOrdinal();
 
     void jsonEncode(JsonGenerator writer);
 

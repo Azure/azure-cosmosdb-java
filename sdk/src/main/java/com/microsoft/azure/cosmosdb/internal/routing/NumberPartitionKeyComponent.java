@@ -70,7 +70,7 @@ public class NumberPartitionKeyComponent implements IPartitionKeyComponent {
     }
 
     @Override
-    public int GetTypeOrdinal() {
+    public int getTypeOrdinal() {
         return PartitionKeyComponentType.NUMBER.getValue();
     }
 

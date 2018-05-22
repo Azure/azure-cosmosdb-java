@@ -46,7 +46,7 @@ class BoolPartitionKeyComponent implements IPartitionKeyComponent {
     }
 
     @Override
-    public int GetTypeOrdinal() {
+    public int getTypeOrdinal() {
         return this.value ? PartitionKeyComponentType.TRUE.getValue() : PartitionKeyComponentType.FALSE.getValue();
     }
 

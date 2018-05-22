@@ -39,7 +39,7 @@ class InfinityPartitionKeyComponent implements IPartitionKeyComponent {
     }
 
     @Override
-    public int GetTypeOrdinal() {
+    public int getTypeOrdinal() {
         return PartitionKeyComponentType.INFINITY.getValue();
     }
 
