@@ -63,8 +63,8 @@ public class RuntimeConstants {
         static final char[] COOKIE_VALUE_SEPARATOR = new char[] {'='};
         static final char[] PPM_USER_TOKEN = new char[] {':'};
         static final char[] IDENTIFIER = new char[] {'-'};
-        static final char[] Host = new char[] {'.'};
-        static final char[] Version = new char[] {','};
+        static final char[] HOST = new char[] {'.'};
+        static final char[] VERSION = new char[] {','};
         static final char[] PAIR = new char[] {';'};
         static final char[] E_TAG = new char[] {'#'};
         static final char[] MEMBER_QUERY = new char[] {'+'};

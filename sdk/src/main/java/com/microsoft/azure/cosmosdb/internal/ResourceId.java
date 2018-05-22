@@ -179,21 +179,21 @@ public class ResourceId {
                         ResourceId.blockCopy(buffer, 8, subCollRes, 0, 8);
 
                         long subCollectionResource = ByteBuffer.wrap(buffer, 8, 8).getLong();
-                        if ((subCollRes[7] >> 4) == (byte) CollectionChildResourceType.Document) {
+                        if ((subCollRes[7] >> 4) == (byte) CollectionChildResourceType.DOCUMENT) {
                             rid.document = subCollectionResource;
 
                             if (buffer.length == 20) {
                                 rid.attachment = ByteBuffer.wrap(buffer, 16, 4).getInt();
                             }
-                        } else if (Math.abs(subCollRes[7] >> 4) == (byte) CollectionChildResourceType.StoredProcedure) {
+                        } else if (Math.abs(subCollRes[7] >> 4) == (byte) CollectionChildResourceType.STORED_PROCEDURE) {
                             rid.storedProcedure = subCollectionResource;
-                        } else if ((subCollRes[7] >> 4) == (byte) CollectionChildResourceType.Trigger) {
+                        } else if ((subCollRes[7] >> 4) == (byte) CollectionChildResourceType.TRIGGER) {
                             rid.trigger = subCollectionResource;
-                        } else if ((subCollRes[7] >> 4) == (byte) CollectionChildResourceType.UserDefinedFunction) {
+                        } else if ((subCollRes[7] >> 4) == (byte) CollectionChildResourceType.USER_DEFINED_FUNCTION) {
                             rid.userDefinedFunction = subCollectionResource;
-                        } else if ((subCollRes[7] >> 4) == (byte) CollectionChildResourceType.Conflict) {
+                        } else if ((subCollRes[7] >> 4) == (byte) CollectionChildResourceType.CONFLICT) {
                             rid.conflict = subCollectionResource;
-                        } else if ((subCollRes[7] >> 4) == (byte) CollectionChildResourceType.PartitionKeyRange) {
+                        } else if ((subCollRes[7] >> 4) == (byte) CollectionChildResourceType.PARTITION_KEY_RANGE) {
                             rid.partitionKeyRange = subCollectionResource;
                         } else {
                             return Pair.of(false, rid);
@@ -501,11 +501,11 @@ public class ResourceId {
 
     // Using a byte however, we only need nibble here.
     private static class CollectionChildResourceType {
-        public static final byte Document = 0x0;
-        public static final byte StoredProcedure = 0x08;
-        public static final byte Trigger = 0x07;
-        public static final byte UserDefinedFunction = 0x06;
-        public static final byte Conflict = 0x04;
-        public static final byte PartitionKeyRange = 0x05;
+        public static final byte DOCUMENT = 0x0;
+        public static final byte STORED_PROCEDURE = 0x08;
+        public static final byte TRIGGER = 0x07;
+        public static final byte USER_DEFINED_FUNCTION = 0x06;
+        public static final byte CONFLICT = 0x04;
+        public static final byte PARTITION_KEY_RANGE = 0x05;
     }
 }
