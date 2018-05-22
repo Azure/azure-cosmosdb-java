@@ -98,7 +98,8 @@ class Configuration {
     private boolean help = false;
 
     enum Operation {
-        ReadThroughput, WriteThroughput, ReadLatency, WriteLatency, QueryCross, QuerySingle, QuerySingleMany, QueryParallel, QueryOrderby, QueryAggregate, QueryAggregateTopOrderby, QueryTopOrderby, Mixed;
+        ReadThroughput, WriteThroughput, ReadLatency, WriteLatency, QueryCross, QuerySingle, QuerySingleMany,
+        QueryParallel, QueryOrderby, QueryAggregate, QueryAggregateTopOrderby, QueryTopOrderby, Mixed;
 
         public static Operation fromString(String code) {
 

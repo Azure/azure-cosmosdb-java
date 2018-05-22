@@ -424,10 +424,10 @@ public final class PathsHelper {
 
             case Paths.SCHEMAS_PATH_SEGMENT:
                 return ResourceType.Schema;
+            default:
+                String errorMessage = String.format(RMResources.UNKNOWN_RESOURCE_TYPE, resourcePathSegment);
+                throw new BadRequestException(errorMessage);
         }
-
-        String errorMessage = String.format(RMResources.UNKNOWN_RESOURCE_TYPE, resourcePathSegment);
-        throw new BadRequestException(errorMessage);
     }
     
     public static String getResourcePath(ResourceType resourceType) throws BadRequestException {

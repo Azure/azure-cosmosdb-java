@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 
 import org.json.JSONObject;
 
@@ -101,7 +102,8 @@ public class PartitionKeyInternal implements Comparable<PartitionKeyInternal> {
             } else if (isNumeric(value)) {
                 components.add(new NumberPartitionKeyComponent(((Number) value).doubleValue()));
             } else if (value instanceof ObjectNode && ((ObjectNode) value).get(TYPE) != null) {
-                switch (((ObjectNode) value).get(TYPE).asText()) {
+                String text = ((ObjectNode) value).get(TYPE).asText();
+                switch (text) {
                     case MIN_NUMBER:
                         components.add(MinNumberPartitionKeyComponent.VALUE);
                         break;
@@ -114,6 +116,8 @@ public class PartitionKeyInternal implements Comparable<PartitionKeyInternal> {
                     case MAX_STRING:
                         components.add(MaxStringPartitionKeyComponent.VALUE);
                         break;
+                    default:
+                        throw new UnsupportedOperationException("There is not support to: " + text);
                 }
             } else {
                 if (strict) {
@@ -178,6 +182,11 @@ public class PartitionKeyInternal implements Comparable<PartitionKeyInternal> {
             return false;
         }
         return equals(obj.getClass() == PartitionKeyInternal.class ? (PartitionKeyInternal) obj : null);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(components);
     }
 
     public String toHexEncodedBinaryString() {
