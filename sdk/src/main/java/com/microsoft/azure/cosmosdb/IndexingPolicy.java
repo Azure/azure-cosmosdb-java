@@ -60,7 +60,7 @@ public final class IndexingPolicy extends JsonSerializable {
      * {@code
      * HashIndex hashIndexOverride = Index.hash(DataType.String, 5);
      * RangeIndex rangeIndexOverride = Index.range(DataType.Number, 2);
-     * SpatialIndex spatialIndexOverride = Index.Spatial(DataType.Point);
+     * SpatialIndex spatialIndexOverride = Index.spatial(DataType.Point);
      *
      * IndexingPolicy indexingPolicy = new IndexingPolicy(hashIndexOverride, rangeIndexOverride, spatialIndexOverride);
      * }

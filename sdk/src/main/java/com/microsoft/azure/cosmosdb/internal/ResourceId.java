@@ -36,7 +36,7 @@ import com.microsoft.azure.cosmosdb.DocumentClientException;
  * Used internally to represents a Resource ID in the Azure Cosmos DB database service.
  */
 public class ResourceId {
-    static final short Length = 20;
+    static final short LENGTH = 20;
     static final short OFFER_ID_LENGTH = 3;
 
     private int database;
@@ -229,7 +229,7 @@ public class ResourceId {
         } catch (Exception e) {
         }
 
-        if (buffer == null || buffer.length > ResourceId.Length) {
+        if (buffer == null || buffer.length > ResourceId.LENGTH) {
             buffer = null;
             return Pair.of(false, buffer);
         }

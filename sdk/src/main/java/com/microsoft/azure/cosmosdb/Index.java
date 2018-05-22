@@ -143,12 +143,12 @@ public abstract class Index extends JsonSerializable {
      * <p>
      * Here is an example to create SpatialIndex instance passing in the DataType:
      * <p>
-     * SpatialIndex spatialIndex = Index.Spatial(DataType.Point);
+     * SpatialIndex spatialIndex = Index.spatial(DataType.Point);
      *
      * @param dataType specifies the target data type for the index path specification.
      * @return an instance of SpatialIndex type.
      */
-    public static SpatialIndex Spatial(DataType dataType) {
+    public static SpatialIndex spatial(DataType dataType) {
         return new SpatialIndex(dataType);
     }
 
