@@ -1,17 +1,17 @@
 /*
  * The MIT License (MIT)
  * Copyright (c) 2018 Microsoft Corporation
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -38,9 +38,9 @@ import rx.Single;
 /**
  * While this class is public, but it is not part of our published public APIs.
  * This is meant to be internally used only by our sdk.
- * 
- *  Client policy is combination of endpoint change retry + throttling retry.
-        */
+ * <p>
+ * Client policy is combination of endpoint change retry + throttling retry.
+ */
 public class ClientRetryPolicy implements IDocumentClientRetryPolicy {
 
     private final static Logger logger = LoggerFactory.getLogger(ClientRetryPolicy.class);
@@ -75,10 +75,9 @@ public class ClientRetryPolicy implements IDocumentClientRetryPolicy {
     public Single<ShouldRetryResult> shouldRetry(Exception e) {
         // Received 403.3 on write region, initiate the endpoint re-discovery
         DocumentClientException clientException = Utils.as(e, DocumentClientException.class);
-        if (clientException != null && 
+        if (clientException != null &&
                 Exceptions.isStatusCode(clientException, HttpConstants.StatusCodes.FORBIDDEN) &&
-                Exceptions.isSubStatusCode(clientException, HttpConstants.SubStatusCodes.FORBIDDEN_WRITEFORBIDDEN))
-        {
+                Exceptions.isSubStatusCode(clientException, HttpConstants.SubStatusCodes.FORBIDDEN_WRITEFORBIDDEN)) {
             logger.warn("Endpoint not writable. Refresh cache and retry");
             return this.shouldRetryOnEndpointFailureAsync();
         }
@@ -87,8 +86,7 @@ public class ClientRetryPolicy implements IDocumentClientRetryPolicy {
         if (clientException != null &&
                 Exceptions.isStatusCode(clientException, HttpConstants.StatusCodes.FORBIDDEN) &&
                 Exceptions.isSubStatusCode(clientException, HttpConstants.SubStatusCodes.DATABASE_ACCOUNT_NOTFOUND) &&
-                this.isReadRequest)
-        {
+                this.isReadRequest) {
             logger.warn("Endpoint not available for reads. Refresh cache and retry");
             return this.shouldRetryOnEndpointFailureAsync();
         }
@@ -101,9 +99,9 @@ public class ClientRetryPolicy implements IDocumentClientRetryPolicy {
             return this.shouldRetryOnEndpointFailureAsync();
         }
 
-        if (clientException != null && 
+        if (clientException != null &&
                 Exceptions.isStatusCode(clientException, HttpConstants.StatusCodes.NOTFOUND) &&
-                Exceptions.isSubStatusCode(clientException, HttpConstants.SubStatusCodes.READ_SESSION_NOT_AVAILABLE)){
+                Exceptions.isSubStatusCode(clientException, HttpConstants.SubStatusCodes.READ_SESSION_NOT_AVAILABLE)) {
             return Single.just(this.shouldRetryOnSessionNotAvailable());
         }
 

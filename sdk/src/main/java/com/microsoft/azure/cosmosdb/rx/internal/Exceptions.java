@@ -29,7 +29,10 @@ import com.microsoft.azure.cosmosdb.internal.HttpConstants;
  * While this class is public, but it is not part of our published public APIs.
  * This is meant to be internally used only by our sdk.
  */
-public class Exceptions {
+public final class Exceptions {
+
+    private Exceptions() {
+    }
 
     public static boolean isStatusCode(DocumentClientException e, int status) {
         return status == e.getStatusCode();

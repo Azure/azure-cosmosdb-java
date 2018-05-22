@@ -66,6 +66,9 @@ public final class Utils {
         Utils.SIMPLE_OBJECT_MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
+    private Utils() {
+    }
+
     public static String encodeBase64String(byte[] binaryData) {
         String encodedString = BASE_64_ENCODER.encodeToString(binaryData);
 

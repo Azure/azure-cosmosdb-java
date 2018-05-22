@@ -425,7 +425,9 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
         UUID activityId = Utils.randomUUID();
         IDocumentQueryClient queryClient = documentQueryClientImpl(RxDocumentClientImpl.this);
         Observable<? extends IDocumentQueryExecutionContext<T>> executionContext =
-                DocumentQueryExecutionContextFactory.createDocumentQueryExecutionContextAsync(queryClient, resourceTypeEnum, klass, sqlQuery, options, queryResourceLink, false, activityId);
+                DocumentQueryExecutionContextFactory.createDocumentQueryExecutionContextAsync(queryClient,
+                        resourceTypeEnum, klass, sqlQuery, options, queryResourceLink, false,
+                        activityId);
         return executionContext.single().flatMap(ex -> {
             return ex.executeAsync();
         });

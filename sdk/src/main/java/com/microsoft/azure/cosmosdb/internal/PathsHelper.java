@@ -34,7 +34,11 @@ import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
 /**
  * Used internally to provide utility methods to work with the resource's path in the Azure Cosmos DB database service.
  */
-public class PathsHelper {
+public final class PathsHelper {
+
+    private PathsHelper() {
+    }
+
     public static String generatePath(ResourceType resourceType, RxDocumentServiceRequest request, boolean isFeed) {
         if (request.getIsNameBased()) {
             return request.getPath();
