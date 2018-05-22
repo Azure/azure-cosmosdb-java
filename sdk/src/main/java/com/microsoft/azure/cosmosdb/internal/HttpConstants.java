@@ -212,7 +212,7 @@ public class HttpConstants {
         public static final String A_IM = "A-IM";
     }
 
-    public static class A_IMHeaderValues {
+    public static class AIMHeaderValues {
         public static final String INCREMENTAL_FEED = "Incremental Feed";
     }
 

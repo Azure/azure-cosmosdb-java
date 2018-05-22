@@ -44,7 +44,9 @@ public class BaseDatabaseAccountConfigurationProvider implements DatabaseAccount
             return databaseAccountConsistency;
         } else if (!Utils.isValidConsistency(databaseAccountConsistency, this.desiredConsistencyLevel)) {
             throw new IllegalArgumentException(String.format(
-                    "ConsistencyLevel %1s specified in the request is invalid when service is configured with consistency level %2s. Ensure the request consistency level is not stronger than the service consistency level.",
+                    "ConsistencyLevel %1s specified in the request is invalid when service is configured " +
+                            "with consistency level %2s. Ensure the request consistency level is not stronger" +
+                            " than the service consistency level.",
                     this.desiredConsistencyLevel.toString(),
                     databaseAccountConsistency.toString()));
         } else {

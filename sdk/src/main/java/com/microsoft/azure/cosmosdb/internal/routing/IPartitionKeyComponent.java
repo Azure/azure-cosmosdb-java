@@ -28,6 +28,7 @@ import java.io.OutputStream;
 import com.fasterxml.jackson.core.JsonGenerator;
 
 interface IPartitionKeyComponent {
+    
     int compareTo(IPartitionKeyComponent other);
 
     int getTypeOrdinal();

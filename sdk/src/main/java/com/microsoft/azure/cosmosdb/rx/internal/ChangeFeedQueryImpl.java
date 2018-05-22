@@ -104,7 +104,7 @@ class ChangeFeedQueryImpl<T extends Resource> {
             headers.put(HttpConstants.HttpHeaders.IF_NONE_MATCH, continuationToken);
         }
 
-        headers.put(HttpConstants.HttpHeaders.A_IM, HttpConstants.A_IMHeaderValues.INCREMENTAL_FEED);
+        headers.put(HttpConstants.HttpHeaders.A_IM, HttpConstants.AIMHeaderValues.INCREMENTAL_FEED);
 
         if (options.getPartitionKey() != null) {
             PartitionKeyInternal partitionKey = options.getPartitionKey().getInternalPartitionKey();

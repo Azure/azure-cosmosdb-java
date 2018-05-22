@@ -305,9 +305,9 @@ public final class Utils {
 
     private static String addTrailingSlash(String path) {
         if (path == null || path.isEmpty())
-            path = new String(RuntimeConstants.Separators.Url);
-        else if (path.charAt(path.length() - 1) != RuntimeConstants.Separators.Url[0])
-            path = path + RuntimeConstants.Separators.Url[0];
+            path = new String(RuntimeConstants.Separators.URL);
+        else if (path.charAt(path.length() - 1) != RuntimeConstants.Separators.URL[0])
+            path = path + RuntimeConstants.Separators.URL[0];
 
         return path;
     }

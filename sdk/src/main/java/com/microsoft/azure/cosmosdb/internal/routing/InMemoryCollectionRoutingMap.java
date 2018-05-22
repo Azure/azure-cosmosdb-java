@@ -23,8 +23,10 @@
 
 package com.microsoft.azure.cosmosdb.internal.routing;
 
+import com.microsoft.azure.cosmosdb.PartitionKeyRange;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -32,10 +34,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-
-import org.apache.commons.lang3.tuple.ImmutablePair;
-
-import com.microsoft.azure.cosmosdb.PartitionKeyRange;
 
 /**
  * Used internally to cache partition key ranges of a collection in the Azure Cosmos DB database service.

@@ -39,7 +39,7 @@ public final class RoutingMapProviderHelper {
         return left.compareTo(right) < 0 ? right : left;
     }
 
-    private static <T extends Comparable<T>> boolean IsSortedAndNonOverlapping(List<Range<T>> list) {
+    private static <T extends Comparable<T>> boolean isSortedAndNonOverlapping(List<Range<T>> list) {
         for (int i = 1; i < list.size(); i++) {
             Range<T> previousRange = list.get(i - 1);
             Range<T> currentRange = list.get(i);
@@ -57,7 +57,7 @@ public final class RoutingMapProviderHelper {
 
     public static Collection<PartitionKeyRange> getOverlappingRanges(RoutingMapProvider routingMapProvider,
             String collectionSelfLink, List<Range<String>> sortedRanges) {
-        if (!IsSortedAndNonOverlapping(sortedRanges)) {
+        if (!isSortedAndNonOverlapping(sortedRanges)) {
             throw new IllegalArgumentException("sortedRanges");
         }
 
