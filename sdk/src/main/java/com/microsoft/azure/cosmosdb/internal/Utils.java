@@ -239,7 +239,7 @@ public final class Utils {
         query = Utils.removeLeadingQuestionMark(query);
         try {
             if (query != null && !query.isEmpty()) {
-                return new URI(Utils.addTrailingSlash(urlString) + RuntimeConstants.Separators.Query[0] + query)
+                return new URI(Utils.addTrailingSlash(urlString) + RuntimeConstants.Separators.QUERY[0] + query)
                         .toURL();
             } else {
                 return new URI(Utils.addTrailingSlash(urlString)).toURL();
@@ -316,7 +316,7 @@ public final class Utils {
         if (path == null || path.isEmpty())
             return path;
 
-        if (path.charAt(0) == RuntimeConstants.Separators.Query[0])
+        if (path.charAt(0) == RuntimeConstants.Separators.QUERY[0])
             return path.substring(1);
 
         return path;

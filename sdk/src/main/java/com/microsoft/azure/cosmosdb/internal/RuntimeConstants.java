@@ -50,7 +50,7 @@ public class RuntimeConstants {
         static final char[] URL = new char[] {'/'};
         static final char[] QUOTE = new char[] {'\''};
         static final char[] DOMAIN_ID = new char[] {'-'};
-        static final char[] Query = new char[] {'?', '&', '='};
+        static final char[] QUERY = new char[] {'?', '&', '='};
         static final char[] PARENTHESIS = new char[] {'(', ')'};
         static final char[] USER_AGENT_HEADER = new char[] {'(', ')', ';', ','};
 
