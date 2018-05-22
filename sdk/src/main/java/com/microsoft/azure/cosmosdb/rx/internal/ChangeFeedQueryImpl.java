@@ -45,7 +45,7 @@ import rx.functions.Func2;
 
 class ChangeFeedQueryImpl<T extends Resource> {
 
-    private static final String IfNonMatchAllHeaderValue = "*";
+    private static final String IF_NON_MATCH_ALL_HEADER_VALUE = "*";
     private final RxDocumentClientImpl client;
     private final ResourceType resourceType;
     private final Class<T> klass;
@@ -66,14 +66,14 @@ class ChangeFeedQueryImpl<T extends Resource> {
         
 
         if (resourceType.isPartitioned() && changeFeedOptions.getPartitionKeyRangeId() == null && changeFeedOptions.getPartitionKey() == null) {
-            throw new IllegalArgumentException(RMResources.PartitionKeyRangeIdOrPartitionKeyMustBeSpecified);
+            throw new IllegalArgumentException(RMResources.PARTITION_KEY_RANGE_ID_OR_PARTITION_KEY_MUST_BE_SPECIFIED);
         }
 
         if (changeFeedOptions.getPartitionKey() != null && 
                 !Strings.isNullOrEmpty(changeFeedOptions.getPartitionKeyRangeId())) {
 
             throw new IllegalArgumentException(String.format(
-                    RMResources.PartitionKeyAndParitionKeyRangeIdBothSpecified
+                    RMResources.PARTITION_KEY_AND_PARITION_KEY_RANGE_ID_BOTH_SPECIFIED
                     , "feedOptions"));
         }
 
@@ -86,7 +86,7 @@ class ChangeFeedQueryImpl<T extends Resource> {
         }
 
         if (canUseStartFromBeginning && !changeFeedOptions.isStartFromBeginning()) {
-            initialNextIfNoneMatch = IfNonMatchAllHeaderValue;
+            initialNextIfNoneMatch = IF_NON_MATCH_ALL_HEADER_VALUE;
         }
 
         this.options = getChangeFeedOptions(changeFeedOptions, initialNextIfNoneMatch);

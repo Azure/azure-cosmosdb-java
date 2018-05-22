@@ -142,7 +142,7 @@ public abstract class RxCollectionCache {
                         if (e instanceof NotFoundException) {
                             // This is signal to the upper logic either to refresh
                             // collection cache and retry.
-                            return Single.error(new InvalidPartitionException(RMResources.InvalidDocumentCollection));
+                            return Single.error(new InvalidPartitionException(RMResources.INVALID_DOCUMENT_COLLECTION));
                         }
                         return Single.error(e);
 

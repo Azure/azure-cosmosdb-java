@@ -380,7 +380,7 @@ public class PathsHelper {
 
     public static ResourceType getResourcePathSegment(String resourcePathSegment) throws BadRequestException {
         if (StringUtils.isEmpty(resourcePathSegment)) {
-            String message = String.format(RMResources.StringArgumentNullOrEmpty, "resourcePathSegment");
+            String message = String.format(RMResources.STRING_ARGUMENT_NULL_OR_EMPTY, "resourcePathSegment");
             throw new BadRequestException(message);
         }
 
@@ -422,7 +422,7 @@ public class PathsHelper {
                 return ResourceType.Schema;
         }
 
-        String errorMessage = String.format(RMResources.UnknownResourceType, resourcePathSegment);
+        String errorMessage = String.format(RMResources.UNKNOWN_RESOURCE_TYPE, resourcePathSegment);
         throw new BadRequestException(errorMessage);
     }
     
@@ -481,7 +481,7 @@ public class PathsHelper {
                 return Paths.ROOT;
 
             default:
-                String errorMessage = String.format(RMResources.UnknownResourceType, resourceType.toString());
+                String errorMessage = String.format(RMResources.UNKNOWN_RESOURCE_TYPE, resourceType.toString());
                 throw new BadRequestException(errorMessage);
         }
     }

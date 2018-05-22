@@ -40,8 +40,8 @@ public class ResourceThrottleRetryPolicy implements IDocumentClientRetryPolicy{
 
     private final static Logger logger = LoggerFactory.getLogger(ResourceThrottleRetryPolicy.class);
 
-    private final static int DefaultMaxWaitTimeInSeconds = 60;
-    private final static int DefaultRetryInSeconds = 5;
+    private final static int DEFAULT_MAX_WAIT_TIME_IN_SECONDS = 60;
+    private final static int DEFAULT_RETRY_IN_SECONDS = 5;
     private final int backoffDelayFactor;
     private final int maxAttemptCount;
     private final Duration maxWaitTime;
@@ -56,7 +56,7 @@ public class ResourceThrottleRetryPolicy implements IDocumentClientRetryPolicy{
     }
 
     public ResourceThrottleRetryPolicy(int maxAttemptCount) {
-        this(maxAttemptCount, DefaultMaxWaitTimeInSeconds, 1);
+        this(maxAttemptCount, DEFAULT_MAX_WAIT_TIME_IN_SECONDS, 1);
     }
 
     public ResourceThrottleRetryPolicy(int maxAttemptCount, int maxWaitTimeInSeconds, int backoffDelayFactor) {
@@ -123,7 +123,7 @@ public class ResourceThrottleRetryPolicy implements IDocumentClientRetryPolicy{
                     if (retryDelay == Duration.ZERO){
                         // we should never reach here as BE should turn non-zero of retryDelay
                         logger.trace("Received retryDelay of 0 with Http 429: {}", exception);
-                        retryDelay = Duration.ofSeconds(DefaultRetryInSeconds);
+                        retryDelay = Duration.ofSeconds(DEFAULT_RETRY_IN_SECONDS);
                     }
 
                     return retryDelay;

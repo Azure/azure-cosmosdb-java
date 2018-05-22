@@ -423,7 +423,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
         String queryResourceLink = parentResourceLinkToQueryLink(parentResourceLink, resourceTypeEnum);
 
         UUID activityId = Utils.randomUUID();
-        IDocumentQueryClient queryClient = DocumentQueryClientImpl(RxDocumentClientImpl.this);
+        IDocumentQueryClient queryClient = documentQueryClientImpl(RxDocumentClientImpl.this);
         Observable<? extends IDocumentQueryExecutionContext<T>> executionContext = 
                 DocumentQueryExecutionContextFactory.createDocumentQueryExecutionContextAsync(queryClient, resourceTypeEnum, klass, sqlQuery , options, queryResourceLink, false, activityId);
         return executionContext.single().flatMap(ex -> {
@@ -1198,7 +1198,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
         return queryDocuments(collectionLink, new SqlQuerySpec(query), options);
     }
 
-    private IDocumentQueryClient DocumentQueryClientImpl(RxDocumentClientImpl rxDocumentClientImpl) {
+    private IDocumentQueryClient documentQueryClientImpl(RxDocumentClientImpl rxDocumentClientImpl) {
 
         return new IDocumentQueryClient () {
 

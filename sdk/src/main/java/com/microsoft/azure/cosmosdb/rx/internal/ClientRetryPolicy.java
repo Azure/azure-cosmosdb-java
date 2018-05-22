@@ -45,8 +45,8 @@ public class ClientRetryPolicy implements IDocumentClientRetryPolicy {
 
     private final static Logger logger = LoggerFactory.getLogger(ClientRetryPolicy.class);
 
-    private final static int RetryIntervalInMS = 1000; //Once we detect failover wait for 1 second before retrying request.
-    private final static int MaxRetryCount = 120;
+    private final static int RETRY_INTERVAL_IN_MS = 1000; //Once we detect failover wait for 1 second before retrying request.
+    private final static int MAX_RETRY_COUNT = 120;
 
     private final IDocumentClientRetryPolicy throttlingRetry;
     private final EndpointManager globalEndpointManager;
@@ -122,7 +122,7 @@ public class ClientRetryPolicy implements IDocumentClientRetryPolicy {
     }
 
     private Single<ShouldRetryResult> shouldRetryOnEndpointFailureAsync() {
-        if (!this.enableEndpointDiscovery || this.failoverRetryCount > MaxRetryCount) {
+        if (!this.enableEndpointDiscovery || this.failoverRetryCount > MAX_RETRY_COUNT) {
             logger.warn("ShouldRetryOnEndpointFailureAsync() Not retrying. Retry count = {}", this.failoverRetryCount);
             return Single.just(ShouldRetryResult.noRetry());
         }
@@ -142,7 +142,7 @@ public class ClientRetryPolicy implements IDocumentClientRetryPolicy {
         } else {
             this.globalEndpointManager.refreshEndpointList();
         }
-        Duration retryDelay = Duration.ofMillis(ClientRetryPolicy.RetryIntervalInMS);
+        Duration retryDelay = Duration.ofMillis(ClientRetryPolicy.RETRY_INTERVAL_IN_MS);
 
         return Single.just(ShouldRetryResult.retryAfter(retryDelay));
     }

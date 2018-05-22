@@ -28,6 +28,6 @@ package com.microsoft.azure.cosmosdb.rx.internal.query;
  */
 public class ParallelQueryConfig {
 
-    public static final int ClientInternalPageSize = 100;
+    public static final int CLIENT_INTERNAL_PAGE_SIZE = 100;
 
 }
