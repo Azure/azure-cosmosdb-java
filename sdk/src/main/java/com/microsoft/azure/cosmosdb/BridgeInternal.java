@@ -43,7 +43,7 @@ import com.microsoft.azure.cosmosdb.rx.internal.Strings;
 public class BridgeInternal {
 
     public static Document documentFromObject(Object document, ObjectMapper mapper) {
-        return Document.FromObject(document, mapper);
+        return Document.fromObject(document, mapper);
     }
 
     public static <T extends Resource> ResourceResponse<T> toResourceResponse(RxDocumentServiceResponse response,

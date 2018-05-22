@@ -48,7 +48,7 @@ import rx.Single;
  */
 public class DocumentQueryExecutionContextFactory {
 
-    private final static int PageSizeFactorForTop = 5;
+    private final static int PAGE_SIZE_FACTOR_FOR_TOP = 5;
 
     private static Single<DocumentCollection> resolveCollection(IDocumentQueryClient client, SqlQuerySpec query, 
             ResourceType resourceTypeEnum, String resourceLink) {
@@ -131,7 +131,7 @@ public class DocumentQueryExecutionContextFactory {
             int top;
             if (queryInfo.hasTop() && (top = partitionedQueryExecutionInfo.getQueryInfo().getTop()) > 0) {
                 int pageSizeWithTop = Math.min(
-                        (int)Math.ceil(top / (double)targetRanges.size()) * PageSizeFactorForTop,
+                        (int)Math.ceil(top / (double)targetRanges.size()) * PAGE_SIZE_FACTOR_FOR_TOP,
                         top);
 
                 if (initialPageSize > 0) {
@@ -150,7 +150,7 @@ public class DocumentQueryExecutionContextFactory {
             //                }
             //
             //                initialPageSize = Math.Min(
-            //                    (int)Math.Ceiling(initialPageSize / (double)targetRanges.Count) * PageSizeFactorForTop,
+            //                    (int)Math.Ceiling(initialPageSize / (double)targetRanges.Count) * PAGE_SIZE_FACTOR_FOR_TOP,
             //                    initialPageSize);
             //            } 
         }
