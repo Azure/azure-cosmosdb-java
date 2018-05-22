@@ -58,8 +58,8 @@ public final class IndexingPolicy extends JsonSerializable {
      * The following example shows how to override the default indexingPolicy for root path:
      * <pre>
      * {@code
-     * HashIndex hashIndexOverride = Index.Hash(DataType.String, 5);
-     * RangeIndex rangeIndexOverride = Index.Range(DataType.Number, 2);
+     * HashIndex hashIndexOverride = Index.hash(DataType.String, 5);
+     * RangeIndex rangeIndexOverride = Index.range(DataType.Number, 2);
      * SpatialIndex spatialIndexOverride = Index.Spatial(DataType.Point);
      *
      * IndexingPolicy indexingPolicy = new IndexingPolicy(hashIndexOverride, rangeIndexOverride, spatialIndexOverride);
@@ -69,7 +69,7 @@ public final class IndexingPolicy extends JsonSerializable {
      * If you would like to just override the indexingPolicy for Numbers you can specify just that:
      * <pre>
      * {@code
-     * RangeIndex rangeIndexOverride = Index.Range(DataType.Number, 2);
+     * RangeIndex rangeIndexOverride = Index.range(DataType.Number, 2);
      *
      * IndexingPolicy indexingPolicy = new IndexingPolicy(rangeIndexOverride);
      * }

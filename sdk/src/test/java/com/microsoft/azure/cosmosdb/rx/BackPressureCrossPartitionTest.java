@@ -90,11 +90,11 @@ public class BackPressureCrossPartitionTest extends TestSuiteBase {
         IncludedPath includedPath = new IncludedPath();
         includedPath.setPath("/*");
         Collection<Index> indexes = new ArrayList<>();
-        Index stringIndex = Index.Range(DataType.String);
+        Index stringIndex = Index.range(DataType.String);
         stringIndex.set("precision", -1);
         indexes.add(stringIndex);
 
-        Index numberIndex = Index.Range(DataType.Number);
+        Index numberIndex = Index.range(DataType.Number);
         numberIndex.set("precision", -1);
         indexes.add(numberIndex);
         includedPath.setIndexes(indexes);

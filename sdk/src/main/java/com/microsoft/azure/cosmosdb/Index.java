@@ -73,7 +73,7 @@ public abstract class Index extends JsonSerializable {
      * <pre>
      * {@code
      *
-     * RangeIndex rangeIndex = Index.Range(DataType.Number);
+     * RangeIndex rangeIndex = Index.range(DataType.Number);
      *
      * }
      * </pre>
@@ -81,7 +81,7 @@ public abstract class Index extends JsonSerializable {
      * @param dataType the data type.
      * @return an instance of RangeIndex type.
      */
-    public static RangeIndex Range(DataType dataType) {
+    public static RangeIndex range(DataType dataType) {
         return new RangeIndex(dataType);
     }
 
@@ -92,7 +92,7 @@ public abstract class Index extends JsonSerializable {
      * <pre>
      * {@code
      *
-     * RangeIndex rangeIndex = Index.Range(DataType.Number, -1);
+     * RangeIndex rangeIndex = Index.range(DataType.Number, -1);
      *
      * }
      * </pre>
@@ -101,7 +101,7 @@ public abstract class Index extends JsonSerializable {
      * @param precision specifies the precision to be used for the data type associated with this index.
      * @return an instance of RangeIndex type.
      */
-    public static RangeIndex Range(DataType dataType, int precision) {
+    public static RangeIndex range(DataType dataType, int precision) {
         return new RangeIndex(dataType, precision);
     }
 
@@ -112,14 +112,14 @@ public abstract class Index extends JsonSerializable {
      * <pre>
      * {@code
      *
-     * HashIndex hashIndex = Index.Hash(DataType.String);
+     * HashIndex hashIndex = Index.hash(DataType.String);
      * }
      * </pre>
      *
      * @param dataType specifies the target data type for the index path specification.
      * @return an instance of HashIndex type.
      */
-    public static HashIndex Hash(DataType dataType) {
+    public static HashIndex hash(DataType dataType) {
         return new HashIndex(dataType);
     }
 
@@ -128,13 +128,13 @@ public abstract class Index extends JsonSerializable {
      * <p>
      * Here is an example to create HashIndex instance passing in the DataType and precision:
      * <p>
-     * HashIndex hashIndex = Index.Hash(DataType.String, 3);
+     * HashIndex hashIndex = Index.hash(DataType.String, 3);
      *
      * @param dataType  specifies the target data type for the index path specification.
      * @param precision specifies the precision to be used for the data type associated with this index.
      * @return an instance of HashIndex type.
      */
-    public static HashIndex Hash(DataType dataType, int precision) {
+    public static HashIndex hash(DataType dataType, int precision) {
         return new HashIndex(dataType, precision);
     }
 
