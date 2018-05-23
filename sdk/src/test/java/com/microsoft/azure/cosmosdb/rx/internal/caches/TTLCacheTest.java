@@ -27,6 +27,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.time.Duration;
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -131,5 +132,60 @@ public class TTLCacheTest {
         assertTrue(map.isEmpty());
     }
 
-    
+    @Test(expectedExceptions = NullPointerException.class)
+    public void shouldReturnErrorWhenPutAllIsNull() {
+        Map<String, Integer> map = TTLCache.of(2, TimeUnit.MILLISECONDS);
+        map.putAll(null);
+    }
+
+    @Test
+    public void shouldPutAll() throws InterruptedException {
+        Map<String, Integer> map = TTLCache.of(2, TimeUnit.MILLISECONDS);
+        map.putAll(Collections.singletonMap("one", 1));
+        assertTrue(map.containsKey("one"));
+        TimeUnit.MILLISECONDS.sleep(5L);
+        assertFalse(map.containsKey("one"));
+    }
+
+    @Test
+    public void shouldReturnKeySet() throws InterruptedException {
+        Map<String, Integer> map = TTLCache.of(2, TimeUnit.MILLISECONDS);
+        assertTrue(map.keySet().isEmpty());
+        map.put("one", 1);
+        map.put("two", 2);
+        assertFalse(map.keySet().isEmpty());
+        assertEquals(2, map.keySet().size());
+        TimeUnit.MILLISECONDS.sleep(5L);
+        map.put("four", 4);
+        assertFalse(map.keySet().isEmpty());
+        assertEquals(1, map.keySet().size());
+    }
+
+    @Test
+    public void shouldReturnValues() throws InterruptedException {
+        Map<String, Integer> map = TTLCache.of(2, TimeUnit.MILLISECONDS);
+        assertTrue(map.values().isEmpty());
+        map.put("one", 1);
+        map.put("two", 2);
+        assertFalse(map.values().isEmpty());
+        assertEquals(2, map.values().size());
+        TimeUnit.MILLISECONDS.sleep(5L);
+        map.put("four", 4);
+        assertFalse(map.values().isEmpty());
+        assertEquals(1, map.values().size());
+    }
+
+    @Test
+    public void shouldReturnEntrySet() throws InterruptedException {
+        Map<String, Integer> map = TTLCache.of(2, TimeUnit.MILLISECONDS);
+        assertTrue(map.entrySet().isEmpty());
+        map.put("one", 1);
+        map.put("two", 2);
+        assertFalse(map.entrySet().isEmpty());
+        assertEquals(2, map.entrySet().size());
+        TimeUnit.MILLISECONDS.sleep(5L);
+        map.put("four", 4);
+        assertFalse(map.entrySet().isEmpty());
+        assertEquals(1, map.entrySet().size());
+    }
 }
