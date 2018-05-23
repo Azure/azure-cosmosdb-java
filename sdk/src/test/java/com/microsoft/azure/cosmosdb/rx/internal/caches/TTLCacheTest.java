@@ -61,13 +61,19 @@ public class TTLCacheTest {
     }
 
     @Test
-    public void shouldPut() throws InterruptedException {
+    public void shouldPut() {
         Map<String, Integer> map = TTLCache.of(1, TimeUnit.NANOSECONDS);
         assertNull(map.put("one", 1));
         assertNotNull(map.put("one", 1));
-        TimeUnit.NANOSECONDS.sleep(1L);
-        assertNull(map.put("one", 1));
     }
 
+    @Test
+    public void shouldGet() throws InterruptedException {
+        Map<String, Integer> map = TTLCache.of(10, TimeUnit.SECONDS);
+        map.put("one", 1);
+        assertNotNull(map.get("one"));
+        TimeUnit.NANOSECONDS.sleep(12L);
+        assertNull(map.get("one"));
+    }
 
 }

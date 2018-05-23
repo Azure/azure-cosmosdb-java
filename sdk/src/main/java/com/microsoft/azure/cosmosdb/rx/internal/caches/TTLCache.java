@@ -145,7 +145,8 @@ public class TTLCache<K, V> implements Map<K, V> {
     }
 
     /**
-     * Creates a {@link Map} that expires values from the TTL defined
+     * Creates a {@link Map} that expires values from the TTL defined.
+     * The value is represented by milliseconds, so any amount lower than one millisecond will come around to one.
      * @param value the value
      * @param timeUnit the unit
      * @param <K> the key type
@@ -159,6 +160,7 @@ public class TTLCache<K, V> implements Map<K, V> {
         if(value <= 0) {
             throw new IllegalArgumentException("The value to TTL must be greater than zero");
         }
+        System.out.println("ttl: " + timeUnit.toNanos(value));
         return new TTLCache<>(timeUnit.toNanos(value));
     }
 
