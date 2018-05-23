@@ -22,6 +22,7 @@
  */
 package com.microsoft.azure.cosmosdb.rx.internal.caches;
 
+import org.apache.commons.lang3.builder.ToStringExclude;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -69,11 +70,66 @@ public class TTLCacheTest {
 
     @Test
     public void shouldGet() throws InterruptedException {
-        Map<String, Integer> map = TTLCache.of(10, TimeUnit.SECONDS);
+        Map<String, Integer> map = TTLCache.of(2, TimeUnit.MILLISECONDS);
         map.put("one", 1);
         assertNotNull(map.get("one"));
-        TimeUnit.NANOSECONDS.sleep(12L);
+        TimeUnit.MILLISECONDS.sleep(5L);
         assertNull(map.get("one"));
     }
 
+    @Test
+    public void shouldGetSize() {
+        Map<String, Integer> map = TTLCache.of(2, TimeUnit.MILLISECONDS);
+        assertEquals(0, map.size());
+        map.put("one", 1);
+        assertEquals(1, map.size());
+        map.put("two", 2);
+        assertEquals(2, map.size());
+    }
+
+    @Test
+    public void shouldGetEmpty() {
+        Map<String, Integer> map = TTLCache.of(2, TimeUnit.MILLISECONDS);
+        assertTrue(map.isEmpty());
+        map.put("one", 1);
+        assertFalse(map.isEmpty());
+    }
+
+    @Test
+    public void shouldContains() throws InterruptedException {
+        Map<String, Integer> map = TTLCache.of(2, TimeUnit.MILLISECONDS);
+        map.put("one", 1);
+        assertTrue(map.containsKey("one"));
+        TimeUnit.MILLISECONDS.sleep(5L);
+        assertFalse(map.containsKey("one"));
+    }
+
+    @Test
+    public void shouldContainsValue() {
+        Map<String, Integer> map = TTLCache.of(2, TimeUnit.MILLISECONDS);
+        map.put("one", 1);
+        assertTrue(map.containsValue(1));
+        assertFalse(map.containsValue(2));
+    }
+
+    @Test
+    public void shouldRemove() {
+        Map<String, Integer> map = TTLCache.of(2, TimeUnit.MILLISECONDS);
+        map.put("one", 1);
+        assertTrue(map.containsKey("one"));
+        map.remove("one");
+        assertFalse(map.containsKey("one"));
+    }
+
+    @Test
+    public void shouldClear() {
+        Map<String, Integer> map = TTLCache.of(2, TimeUnit.MILLISECONDS);
+        map.put("one", 1);
+        map.put("two", 1);
+        assertFalse(map.isEmpty());
+        map.clear();
+        assertTrue(map.isEmpty());
+    }
+
+    
 }
