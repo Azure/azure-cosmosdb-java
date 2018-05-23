@@ -22,16 +22,17 @@
  */
 package com.microsoft.azure.cosmosdb.rx.internal.caches;
 
-import org.apache.commons.lang3.builder.ToStringExclude;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import java.time.Duration;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
 
 public class TTLCacheTest {
 
