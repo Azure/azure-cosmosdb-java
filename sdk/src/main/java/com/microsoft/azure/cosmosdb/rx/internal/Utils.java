@@ -32,7 +32,10 @@ import java.util.Map;
  * While this class is public, but it is not part of our published public APIs.
  * This is meant to be internally used only by our sdk.
  */
-public class Utils {
+public final class Utils {
+
+    private Utils() {
+    }
 
     public static int getValueOrDefault(Integer val, int defaultValue) {
         return val != null ? val.intValue() : defaultValue;

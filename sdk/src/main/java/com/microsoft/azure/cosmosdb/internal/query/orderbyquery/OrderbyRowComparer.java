@@ -54,11 +54,14 @@ public final class OrderbyRowComparer<T> implements Comparator<OrderByRowResult<
             for (int i = 0; i < result1.size(); ++i) {
                 int cmp = ItemComparator.getInstance().compare(result1.get(i).getItem(), result2.get(i).getItem());
                 if (cmp != 0) {
-                    switch (this.sortOrders.get(i)) {
+                    SortOrder sortOrder = this.sortOrders.get(i);
+                    switch (sortOrder) {
                     case Ascending:
                         return cmp;
                     case Descending:
                         return -cmp;
+                        default:
+                            throw new UnsupportedOperationException("There is not support to: " + sortOrder);
                     }
                 }
             }

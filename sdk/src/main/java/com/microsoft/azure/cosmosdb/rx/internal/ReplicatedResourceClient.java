@@ -29,7 +29,10 @@ import com.microsoft.azure.cosmosdb.internal.ResourceType;
  * While this class is public, but it is not part of our published public APIs.
  * This is meant to be internally used only by our sdk.
  */
-public class ReplicatedResourceClient {
+public final class ReplicatedResourceClient {
+
+    private ReplicatedResourceClient() {
+    }
 
     public static boolean isReadingFromMaster(ResourceType resourceTypeEnum, OperationType readfeed) {
         // TODO Auto-generated method stub

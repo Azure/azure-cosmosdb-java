@@ -33,6 +33,9 @@ public class Main {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
+    private Main() {
+    }
+
     public static void main(String[] args) throws Exception {
         org.apache.log4j.Logger.getLogger("io.netty").setLevel(org.apache.log4j.Level.OFF);
 

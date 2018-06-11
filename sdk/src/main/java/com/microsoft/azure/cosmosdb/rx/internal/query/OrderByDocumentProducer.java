@@ -22,10 +22,6 @@
  */
 package com.microsoft.azure.cosmosdb.rx.internal.query;
 
-import java.util.Collections;
-import java.util.Map;
-import java.util.UUID;
-
 import com.microsoft.azure.cosmosdb.BridgeInternal;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.PartitionKeyRange;
@@ -35,14 +31,16 @@ import com.microsoft.azure.cosmosdb.internal.RequestChargeTracker;
 import com.microsoft.azure.cosmosdb.internal.query.orderbyquery.OrderByRowResult;
 import com.microsoft.azure.cosmosdb.internal.query.orderbyquery.OrderbyRowComparer;
 import com.microsoft.azure.cosmosdb.rx.internal.IDocumentClientRetryPolicy;
-import com.microsoft.azure.cosmosdb.rx.internal.RetryPolicy;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
 import com.microsoft.azure.cosmosdb.rx.internal.Utils;
-
 import rx.Observable;
 import rx.functions.Func0;
 import rx.functions.Func1;
 import rx.functions.Func3;
+
+import java.util.Collections;
+import java.util.Map;
+import java.util.UUID;
 
 class OrderByDocumentProducer<T extends Resource> extends DocumentProducer<T> {
     private final OrderbyRowComparer<T> consumeComparer;

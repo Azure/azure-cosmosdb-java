@@ -26,7 +26,7 @@ package com.microsoft.azure.cosmosdb.internal;
 /**
  * Used internally. Contains string constants to work with the paths in the Azure Cosmos DB database service.
  */
-public class Paths {
+public final class Paths {
     static final String ROOT = "/";
 
     public static final String DATABASES_PATH_SEGMENT = "dbs";
@@ -54,4 +54,7 @@ public class Paths {
     public static final String MEDIA_ROOT = ROOT + MEDIA_PATH_SEGMENT;
     public static final String SCHEMAS_PATH_SEGMENT = "schemas";
     public static final String PARTITION_KEY_RANGE_PATH_SEGMENT = "pkranges";
+
+    private Paths() {
+    }
 }

@@ -1,17 +1,17 @@
 /*
  * The MIT License (MIT)
  * Copyright (c) 2018 Microsoft Corporation
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -54,30 +54,32 @@ public class JsonSerializable implements Serializable {
     private final static int INDENT_FACTOR = 4;
     private final static Logger logger = LoggerFactory.getLogger(JsonSerializable.class);
     private final static ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
     static {
         OBJECT_MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
+
     private ObjectMapper om;
     transient JSONObject propertyBag = null;
-    
+
     protected JsonSerializable() {
         this.propertyBag = new JSONObject();
     }
 
     /**
      * Constructor.
-     * 
-     * @param jsonString the json string that represents the JsonSerializable.
+     *
+     * @param jsonString   the json string that represents the JsonSerializable.
      * @param objectMapper the custom object mapper
      */
     protected JsonSerializable(String jsonString, ObjectMapper objectMapper) {
         this.propertyBag = new JSONObject(jsonString);
         this.om = objectMapper;
     }
-    
+
     /**
      * Constructor.
-     * 
+     *
      * @param jsonString the json string that represents the JsonSerializable.
      */
     protected JsonSerializable(String jsonString) {
@@ -86,23 +88,25 @@ public class JsonSerializable implements Serializable {
 
     /**
      * Constructor.
-     * 
+     *
      * @param jsonObject the json object that represents the JsonSerializable.
      */
     protected JsonSerializable(JSONObject jsonObject) {
         this.propertyBag = new JSONObject(jsonObject);
     }
-    
+
     protected ObjectMapper getMapper() {
-    if (this.om != null) { return this.om; }
+        if (this.om != null) {
+            return this.om;
+        }
         return OBJECT_MAPPER;
     }
-        
+
     private static HashMap<String, Object> toMap(JSONObject object) throws JSONException {
         HashMap<String, Object> map = new HashMap<String, Object>();
 
         @SuppressWarnings("unchecked") // Using legacy API
-        Iterator<String> keysItr = object.keys();
+                Iterator<String> keysItr = object.keys();
         while (keysItr.hasNext()) {
             String key = keysItr.next();
             Object value = object.get(key);
@@ -174,7 +178,7 @@ public class JsonSerializable implements Serializable {
 
     /**
      * Checks whether a property exists.
-     * 
+     *
      * @param propertyName the property to look up.
      * @return true if the property exists.
      */
@@ -184,7 +188,7 @@ public class JsonSerializable implements Serializable {
 
     /**
      * Removes a value by propertyName.
-     * 
+     *
      * @param propertyName the property to remove.
      */
     public void remove(String propertyName) {
@@ -193,7 +197,7 @@ public class JsonSerializable implements Serializable {
 
     /**
      * Sets the value of a property.
-     * 
+     *
      * @param <T>          the type of the object.
      * @param propertyName the property to set.
      * @param value        the value of the property.
@@ -240,39 +244,39 @@ public class JsonSerializable implements Serializable {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     private <T> void internalSetCollection(String propertyName, Collection<T> collection, JSONArray targetArray) {
-            for (T childValue : collection) {
-                if (childValue == null) {
-                    // Sets null.
-                    targetArray.put(JSONObject.NULL);
-                } else if (childValue instanceof Collection) {
-                    // When T is also a Collection, use recursion.
-                    JSONArray childArray = new JSONArray();
-                    this.internalSetCollection(propertyName, (Collection) childValue, childArray);
-                    targetArray.put(childArray);
+        for (T childValue : collection) {
+            if (childValue == null) {
+                // Sets null.
+                targetArray.put(JSONObject.NULL);
+            } else if (childValue instanceof Collection) {
+                // When T is also a Collection, use recursion.
+                JSONArray childArray = new JSONArray();
+                this.internalSetCollection(propertyName, (Collection) childValue, childArray);
+                targetArray.put(childArray);
             } else if (childValue instanceof Number || childValue instanceof Boolean || childValue instanceof String
                     || childValue instanceof JSONObject) {
                 // JSONObject, Number (includes Int, Float, Double etc),
                 // Boolean, and String.
-                    targetArray.put(childValue);
-                } else if (childValue instanceof JsonSerializable) {
-                    // JsonSerializable
-                    JsonSerializable castedValue = (JsonSerializable) childValue;
-                    castedValue.populatePropertyBag();
-                    targetArray.put(castedValue.propertyBag != null ? castedValue.propertyBag : new JSONObject());
-                } else {
-                    // POJO
-                    try {
-                        targetArray.put(new JSONObject(this.getMapper().writeValueAsString(childValue)));
-                    } catch (IOException e) {
-                        throw new IllegalArgumentException("Can't serialize the object into the json string", e);
-                    }
+                targetArray.put(childValue);
+            } else if (childValue instanceof JsonSerializable) {
+                // JsonSerializable
+                JsonSerializable castedValue = (JsonSerializable) childValue;
+                castedValue.populatePropertyBag();
+                targetArray.put(castedValue.propertyBag != null ? castedValue.propertyBag : new JSONObject());
+            } else {
+                // POJO
+                try {
+                    targetArray.put(new JSONObject(this.getMapper().writeValueAsString(childValue)));
+                } catch (IOException e) {
+                    throw new IllegalArgumentException("Can't serialize the object into the json string", e);
                 }
             }
-       }
+        }
+    }
 
     /**
      * Gets a property value as Object.
-     * 
+     *
      * @param propertyName the property to get.
      * @return the value of the property.
      */
@@ -283,10 +287,10 @@ public class JsonSerializable implements Serializable {
             return null;
         }
     }
-    
+
     /**
      * Gets a string value.
-     * 
+     *
      * @param propertyName the property to get.
      * @return the string value.
      */
@@ -300,7 +304,7 @@ public class JsonSerializable implements Serializable {
 
     /**
      * Gets a boolean value.
-     * 
+     *
      * @param propertyName the property to get.
      * @return the boolean value.
      */
@@ -314,7 +318,7 @@ public class JsonSerializable implements Serializable {
 
     /**
      * Gets an integer value.
-     * 
+     *
      * @param propertyName the property to get.
      * @return the boolean value
      */
@@ -328,7 +332,7 @@ public class JsonSerializable implements Serializable {
 
     /**
      * Gets a long value.
-     * 
+     *
      * @param propertyName the property to get.
      * @return the long value
      */
@@ -342,7 +346,7 @@ public class JsonSerializable implements Serializable {
 
     /**
      * Gets a double value.
-     * 
+     *
      * @param propertyName the property to get.
      * @return the double value.
      */
@@ -356,7 +360,7 @@ public class JsonSerializable implements Serializable {
 
     /**
      * Gets an object value.
-     * 
+     *
      * @param <T>          the type of the object.
      * @param propertyName the property to get.
      * @param c            the class of the object. If c is a POJO class, it must be a member (and not an anonymous or local)
@@ -400,7 +404,7 @@ public class JsonSerializable implements Serializable {
 
     /**
      * Gets an object collection.
-     * 
+     *
      * @param <T>          the type of the objects in the collection.
      * @param propertyName the property to get
      * @param c            the class of the object. If c is a POJO class, it must be a member (and not an anonymous or local)
@@ -467,7 +471,7 @@ public class JsonSerializable implements Serializable {
 
     /**
      * Gets a JSONObject.
-     * 
+     *
      * @param propertyName the property to get.
      * @return the JSONObject.
      */
@@ -481,7 +485,7 @@ public class JsonSerializable implements Serializable {
 
     /**
      * Gets a JSONObject collection.
-     * 
+     *
      * @param propertyName the property to get.
      * @return the JSONObject collection.
      */
@@ -497,12 +501,12 @@ public class JsonSerializable implements Serializable {
             }
         }
 
-        return result;    
+        return result;
     }
 
     /**
      * Gets the value of a property identified by an array of property names that forms the path.
-     * 
+     *
      * @param propertyNames that form the path to the the property to get.
      * @return the value of the property.
      */
@@ -526,18 +530,18 @@ public class JsonSerializable implements Serializable {
                     break;
                 }
             } while (iterator.hasNext());
-            
+
             if (value != null && matchedProperties == propertyNames.size()) {
                 return value;
             }
         }
-        
+
         return null;
     }
-    
+
     /**
      * Converts to an Object (only POJOs and JSONObject are supported).
-     * 
+     *
      * @param <T> the type of the object.
      * @param c   the class of the object, either a POJO class or JSONObject. If c is a POJO class, it must be a member
      *            (and not an anonymous or local) and a static one.
@@ -567,22 +571,22 @@ public class JsonSerializable implements Serializable {
 
     /**
      * Converts to a JSON string.
-     * 
+     *
      * @return the JSON string.
      */
     public String toJson() {
         return this.toJson(SerializationFormattingPolicy.None);
     }
-    
+
     /**
      * Converts to a JSON string.
-     * 
+     *
      * @param formattingPolicy the formatting policy to be used.
      * @return the JSON string.
      */
     public String toJson(SerializationFormattingPolicy formattingPolicy) {
         this.populatePropertyBag();
-        if (SerializationFormattingPolicy.Indented.equals(formattingPolicy) ) {
+        if (SerializationFormattingPolicy.Indented.equals(formattingPolicy)) {
             return this.propertyBag.toString(INDENT_FACTOR);
         } else {
             return this.propertyBag.toString();
@@ -591,10 +595,10 @@ public class JsonSerializable implements Serializable {
 
     /**
      * Gets Simple String representation of property bag.
-     * 
-     * For proper conversion to json and inclusion of the default values 
+     * <p>
+     * For proper conversion to json and inclusion of the default values
      * use {@link #toJson()}.
-     * 
+     *
      * @return string representation of property bag.
      */
     public String toString() {

@@ -45,7 +45,7 @@ import rx.functions.Func2;
 
 class ChangeFeedQueryImpl<T extends Resource> {
 
-    private static final String IfNonMatchAllHeaderValue = "*";
+    private static final String IF_NON_MATCH_ALL_HEADER_VALUE = "*";
     private final RxDocumentClientImpl client;
     private final ResourceType resourceType;
     private final Class<T> klass;
@@ -66,14 +66,14 @@ class ChangeFeedQueryImpl<T extends Resource> {
         
 
         if (resourceType.isPartitioned() && changeFeedOptions.getPartitionKeyRangeId() == null && changeFeedOptions.getPartitionKey() == null) {
-            throw new IllegalArgumentException(RMResources.PartitionKeyRangeIdOrPartitionKeyMustBeSpecified);
+            throw new IllegalArgumentException(RMResources.PARTITION_KEY_RANGE_ID_OR_PARTITION_KEY_MUST_BE_SPECIFIED);
         }
 
         if (changeFeedOptions.getPartitionKey() != null && 
                 !Strings.isNullOrEmpty(changeFeedOptions.getPartitionKeyRangeId())) {
 
             throw new IllegalArgumentException(String.format(
-                    RMResources.PartitionKeyAndParitionKeyRangeIdBothSpecified
+                    RMResources.PARTITION_KEY_AND_PARITION_KEY_RANGE_ID_BOTH_SPECIFIED
                     , "feedOptions"));
         }
 
@@ -86,7 +86,7 @@ class ChangeFeedQueryImpl<T extends Resource> {
         }
 
         if (canUseStartFromBeginning && !changeFeedOptions.isStartFromBeginning()) {
-            initialNextIfNoneMatch = IfNonMatchAllHeaderValue;
+            initialNextIfNoneMatch = IF_NON_MATCH_ALL_HEADER_VALUE;
         }
 
         this.options = getChangeFeedOptions(changeFeedOptions, initialNextIfNoneMatch);
@@ -104,7 +104,7 @@ class ChangeFeedQueryImpl<T extends Resource> {
             headers.put(HttpConstants.HttpHeaders.IF_NONE_MATCH, continuationToken);
         }
 
-        headers.put(HttpConstants.HttpHeaders.A_IM, HttpConstants.A_IMHeaderValues.INCREMENTAL_FEED);
+        headers.put(HttpConstants.HttpHeaders.A_IM, HttpConstants.AIMHeaderValues.INCREMENTAL_FEED);
 
         if (options.getPartitionKey() != null) {
             PartitionKeyInternal partitionKey = options.getPartitionKey().getInternalPartitionKey();
@@ -137,7 +137,8 @@ class ChangeFeedQueryImpl<T extends Resource> {
         // TODO: clean up if we want to use single vs observable.
         Func1<RxDocumentServiceRequest, Observable<FeedResponse<T>>> executeFunc = request -> this.executeRequestAsync(request).toObservable();
 
-        return Paginator.getPaginatedChangeFeedQueryResultAsObservable(options, createRequestFunc, executeFunc, klass, options.getMaxItemCount() != null ? options.getMaxItemCount(): -1);
+        return Paginator.getPaginatedChangeFeedQueryResultAsObservable(options, createRequestFunc, executeFunc, klass,
+                options.getMaxItemCount() != null ? options.getMaxItemCount(): -1);
     }
 
     private Single<FeedResponse<T>> executeRequestAsync(RxDocumentServiceRequest request) {

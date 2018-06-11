@@ -28,7 +28,11 @@ import org.apache.commons.lang3.StringUtils;
  * While this class is public, but it is not part of our published public APIs.
  * This is meant to be internally used only by our sdk.
  */
-public class Strings {
+public final class Strings {
+
+    private Strings() {
+    }
+
     public static boolean isNullOrEmpty(String str) {
         return StringUtils.isEmpty(str);
     }

@@ -1,17 +1,17 @@
 /*
  * The MIT License (MIT)
  * Copyright (c) 2018 Microsoft Corporation
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -48,10 +48,9 @@ public class PartitionKeyRange extends Resource {
 
     /**
      * Initialize a partition key range object from json string.
-     * 
-     * @param jsonString
-     *            the json string that represents the partition key range
-     *            object.
+     *
+     * @param jsonString the json string that represents the partition key range
+     *                   object.
      */
     public PartitionKeyRange(String jsonString) {
         super(jsonString);
@@ -59,10 +58,9 @@ public class PartitionKeyRange extends Resource {
 
     /**
      * Initialize a partition key range object from json object.
-     * 
-     * @param jsonObject
-     *            the json object that represents the partition key range
-     *            object.
+     *
+     * @param jsonObject the json object that represents the partition key range
+     *                   object.
      */
     public PartitionKeyRange(JSONObject jsonObject) {
         super(jsonObject);
@@ -123,7 +121,10 @@ public class PartitionKeyRange extends Resource {
 
     /**
      * Used internally to indicate the ID of the parent range
+     *
      * @return a list partition key range ID
      */
-    public Collection<String> getParents() { return this.getCollection(Constants.Properties.PARENTS, String.class); }
+    public Collection<String> getParents() {
+        return this.getCollection(Constants.Properties.PARENTS, String.class);
+    }
 }

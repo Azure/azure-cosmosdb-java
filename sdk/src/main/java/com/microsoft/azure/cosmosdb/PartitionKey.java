@@ -58,7 +58,7 @@ public class PartitionKey {
      * @param jsonString the JSON string representation of this PartitionKey object.
      * @return the PartitionKey instance.
      */
-    public static PartitionKey FromJsonString(String jsonString) {
+    public static PartitionKey fromJsonString(String jsonString) {
         JSONArray array = new JSONArray(jsonString);
         PartitionKey key = new PartitionKey(array.get(0));
 

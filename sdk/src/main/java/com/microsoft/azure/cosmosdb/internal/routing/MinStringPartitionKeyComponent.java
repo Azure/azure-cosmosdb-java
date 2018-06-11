@@ -32,7 +32,7 @@ class MinStringPartitionKeyComponent implements IPartitionKeyComponent {
     public static final MinStringPartitionKeyComponent VALUE = new MinStringPartitionKeyComponent();
 
     @Override
-    public int CompareTo(IPartitionKeyComponent other) {
+    public int compareTo(IPartitionKeyComponent other) {
         if (!(other instanceof MinStringPartitionKeyComponent)) {
             throw new IllegalArgumentException("other");
         }
@@ -41,22 +41,22 @@ class MinStringPartitionKeyComponent implements IPartitionKeyComponent {
     }
 
     @Override
-    public int GetTypeOrdinal() {
+    public int getTypeOrdinal() {
         return PartitionKeyComponentType.MINSTRING.ordinal();
     }
 
     @Override
-    public void JsonEncode(JsonGenerator writer) {
+    public void jsonEncode(JsonGenerator writer) {
         PartitionKeyInternal.PartitionKeyInternalJsonSerializer.jsonEncode(this, writer);
     }
 
     @Override
-    public void WriteForHashing(OutputStream outputStream) {
+    public void writeForHashing(OutputStream outputStream) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void WriteForBinaryEncoding(OutputStream outputStream) {
+    public void writeForBinaryEncoding(OutputStream outputStream) {
         try {
             outputStream.write(PartitionKeyComponentType.MINSTRING.getValue());
         } catch (IOException e) {

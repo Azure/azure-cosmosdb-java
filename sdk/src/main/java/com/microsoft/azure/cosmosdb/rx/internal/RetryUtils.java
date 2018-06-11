@@ -31,31 +31,29 @@ import rx.functions.Func1;
  * While this class is public, but it is not part of our published public APIs.
  * This is meant to be internally used only by our sdk.
  */
-public class RetryUtils {
+public final class RetryUtils {
+
+    private RetryUtils() {
+    }
+
     public static Func1<Observable<? extends Throwable>, Observable<Long>> toRetryWhenFunc(IRetryPolicy policy) {
-        return new Func1<Observable<? extends Throwable>, Observable<Long>>() {
-
-            @Override
-            public Observable<Long> call(Observable<? extends Throwable> throwableObs) {
-                return throwableObs.flatMap( t -> { 
-                    Exception e = Utils.as(t, Exception.class);
-                    if (e == null) {
-                        return Observable.error(t);
-                    }
-
-                    return policy.shouldRetry(e).toObservable().flatMap(s -> {
-
-                        if (s.backOffTime != null) {
-                            return Observable.timer(s.backOffTime.toMillis(), TimeUnit.MILLISECONDS);
-                        } else if (s.exception != null) {
-                            return Observable.error(s.exception);
-                        } else {
-                            // NoRetry return original failure
-                            return Observable.error(t);
-                        }
-                    });
-                });
+        return throwableObs -> throwableObs.flatMap(t -> {
+            Exception e = Utils.as(t, Exception.class);
+            if (e == null) {
+                return Observable.error(t);
             }
-        };
+
+            return policy.shouldRetry(e).toObservable().flatMap(s -> {
+
+                if (s.backOffTime != null) {
+                    return Observable.timer(s.backOffTime.toMillis(), TimeUnit.MILLISECONDS);
+                } else if (s.exception != null) {
+                    return Observable.error(s.exception);
+                } else {
+                    // NoRetry return original failure
+                    return Observable.error(t);
+                }
+            });
+        });
     }
 }

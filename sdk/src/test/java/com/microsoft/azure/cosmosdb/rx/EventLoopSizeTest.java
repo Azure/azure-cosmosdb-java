@@ -35,7 +35,6 @@ import com.microsoft.azure.cosmosdb.Database;
 import com.microsoft.azure.cosmosdb.Document;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.ResourceResponse;
-import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 
 import rx.Observable;
 
@@ -55,7 +54,7 @@ public class EventLoopSizeTest extends TestSuiteBase {
         new AsyncDocumentClient.Builder()
                 .withServiceEndpoint(TestConfigurations.HOST)
                 .withMasterKey(TestConfigurations.MASTER_KEY)
-                .withConnectionPolicy(ConnectionPolicy.GetDefault())
+                .withConnectionPolicy(ConnectionPolicy.getDefault())
                 .withConsistencyLevel(ConsistencyLevel.Session)
                 .withWorkers(2)
                 .withConnectionPolicy(cp).build();
@@ -67,7 +66,7 @@ public class EventLoopSizeTest extends TestSuiteBase {
         AsyncDocumentClient newClient = new AsyncDocumentClient.Builder()
                 .withServiceEndpoint(TestConfigurations.HOST)
                 .withMasterKey(TestConfigurations.MASTER_KEY)
-                .withConnectionPolicy(ConnectionPolicy.GetDefault())
+                .withConnectionPolicy(ConnectionPolicy.getDefault())
                 .withConsistencyLevel(ConsistencyLevel.Session)
                 .withWorkers(2)
                 .build();
@@ -94,7 +93,7 @@ public class EventLoopSizeTest extends TestSuiteBase {
         client = new AsyncDocumentClient.Builder()
                 .withServiceEndpoint(TestConfigurations.HOST)
                 .withMasterKey(TestConfigurations.MASTER_KEY)
-                .withConnectionPolicy(ConnectionPolicy.GetDefault())
+                .withConnectionPolicy(ConnectionPolicy.getDefault())
                 .withConsistencyLevel(ConsistencyLevel.Session)
                 .build();
         

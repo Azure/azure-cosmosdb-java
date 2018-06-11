@@ -165,7 +165,7 @@ public final class Constants {
         public static final String DEFAULT_TTL = "defaultTtl";
 
         // Global DB account properties
-        public static final String Name = "name";
+        public static final String NAME = "name";
         public static final String WRITABLE_LOCATIONS = "writableLocations";
         public static final String READABLE_LOCATIONS = "readableLocations";
         public static final String DATABASE_ACCOUNT_ENDPOINT = "databaseAccountEndpoint";

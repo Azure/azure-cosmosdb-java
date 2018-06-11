@@ -22,12 +22,6 @@
  */
 package com.microsoft.azure.cosmosdb.rx.internal.query;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.PartitionKeyRange;
@@ -37,14 +31,18 @@ import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.internal.ResourceType;
 import com.microsoft.azure.cosmosdb.internal.routing.Range;
 import com.microsoft.azure.cosmosdb.rx.internal.IDocumentClientRetryPolicy;
-import com.microsoft.azure.cosmosdb.rx.internal.IRetryPolicyFactory;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
 import com.microsoft.azure.cosmosdb.rx.internal.Strings;
-
 import rx.Observable;
 import rx.functions.Func0;
 import rx.functions.Func1;
 import rx.functions.Func3;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * While this class is public, but it is not part of our published public APIs.

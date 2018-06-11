@@ -31,7 +31,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 
 class StringPartitionKeyComponent implements IPartitionKeyComponent {
 
-    public static final int MaxStringComponentLength = 100;
+    public static final int MAX_STRING_COMPONENT_LENGTH = 100;
     private final String value;
 
     public StringPartitionKeyComponent(String value) {
@@ -39,11 +39,11 @@ class StringPartitionKeyComponent implements IPartitionKeyComponent {
             throw new IllegalArgumentException("value");
         }
 
-        this.value = value.length() < MaxStringComponentLength ? value : value.substring(0, MaxStringComponentLength);
+        this.value = value.length() < MAX_STRING_COMPONENT_LENGTH ? value : value.substring(0, MAX_STRING_COMPONENT_LENGTH);
     }
 
     @Override
-    public int CompareTo(IPartitionKeyComponent other) {
+    public int compareTo(IPartitionKeyComponent other) {
         if (!(other instanceof StringPartitionKeyComponent)) {
             throw new IllegalArgumentException("other");
         }
@@ -69,12 +69,12 @@ class StringPartitionKeyComponent implements IPartitionKeyComponent {
     }
 
     @Override
-    public int GetTypeOrdinal() {
+    public int getTypeOrdinal() {
         return PartitionKeyComponentType.STRING.getValue();
     }
 
     @Override
-    public void JsonEncode(JsonGenerator writer) {
+    public void jsonEncode(JsonGenerator writer) {
         try {
             writer.writeString(this.value);
         } catch (IOException e) {
@@ -83,7 +83,7 @@ class StringPartitionKeyComponent implements IPartitionKeyComponent {
     }
 
     @Override
-    public void WriteForHashing(OutputStream outputStream) {
+    public void writeForHashing(OutputStream outputStream) {
         try {
             outputStream.write(PartitionKeyComponentType.STRING.getValue());
             outputStream.write(this.value.getBytes("UTF-8"));
@@ -94,7 +94,7 @@ class StringPartitionKeyComponent implements IPartitionKeyComponent {
     }
 
     @Override
-    public void WriteForBinaryEncoding(OutputStream outputStream) {
+    public void writeForBinaryEncoding(OutputStream outputStream) {
         try {
             outputStream.write(PartitionKeyComponentType.STRING.getValue());
 
@@ -102,7 +102,7 @@ class StringPartitionKeyComponent implements IPartitionKeyComponent {
 
             for (int index = 0; index < this.value.length(); index++) {
                 byte charByte = (byte) this.value.charAt(index);
-                if (index <= MaxStringComponentLength) {
+                if (index <= MAX_STRING_COMPONENT_LENGTH) {
                     if (charByte < 0xFF) charByte++;
                     outputStream.write(charByte);
                 } else {

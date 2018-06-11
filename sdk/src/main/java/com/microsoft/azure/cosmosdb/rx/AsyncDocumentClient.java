@@ -75,7 +75,7 @@ import rx.Observable;
  *   AsyncDocumentClient client = new AsyncDocumentClient.Builder()
  *           .withServiceEndpoint(serviceEndpoint)
  *           .withMasterKey(masterKey)
- *           .withConnectionPolicy(ConnectionPolicy.GetDefault())
+ *           .withConnectionPolicy(ConnectionPolicy.getDefault())
  *           .withConsistencyLevel(ConsistencyLevel.Session)
  *           .build();
  * }
@@ -92,7 +92,7 @@ public interface AsyncDocumentClient {
      *   AsyncDocumentClient client = new AsyncDocumentClient.Builder()
      *           .withServiceEndpoint(serviceEndpoint)
      *           .withMasterKey(masterKey)
-     *           .withConnectionPolicy(ConnectionPolicy.GetDefault())
+     *           .withConnectionPolicy(ConnectionPolicy.getDefault())
      *           .withConsistencyLevel(ConsistencyLevel.Session)
      *           .build();
      * }

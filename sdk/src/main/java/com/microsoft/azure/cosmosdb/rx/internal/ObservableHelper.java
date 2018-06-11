@@ -33,7 +33,10 @@ import rx.functions.Func0;
  * TODO: once Srinath PR is merged we should replace Observable.defer(.) pattern in {@link RxDocumentClientImpl} 
  * with this one.
  **/
-public class ObservableHelper {
+public final class ObservableHelper {
+
+    private ObservableHelper() {
+    }
 
     static public <T> Single<T> inlineIfPossible(Func0<Single<T>> function, IRetryPolicy retryPolicy) {
 

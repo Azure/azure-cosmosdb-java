@@ -47,7 +47,7 @@ public class BaseAuthorizationTokenProvider implements AuthorizationTokenProvide
 
     public BaseAuthorizationTokenProvider(String masterKey) {
         this.masterKey = masterKey;
-        byte[] masterKeyDecodedBytes = Utils.Base64Decoder.decode(this.masterKey.getBytes());
+        byte[] masterKeyDecodedBytes = Utils.BASE_64_DECODER.decode(this.masterKey.getBytes());
         SecretKey signingKey = new SecretKeySpec(masterKeyDecodedBytes, "HMACSHA256");
         try {
             this.macInstance = Mac.getInstance("HMACSHA256");

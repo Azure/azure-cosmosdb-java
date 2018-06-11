@@ -34,7 +34,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
  */
 public class NumberPartitionKeyComponent implements IPartitionKeyComponent {
 
-    public static final NumberPartitionKeyComponent Zero = new NumberPartitionKeyComponent(0);
+    public static final NumberPartitionKeyComponent ZERO = new NumberPartitionKeyComponent(0);
     private final double value;
 
     public NumberPartitionKeyComponent(double value) {
@@ -50,7 +50,7 @@ public class NumberPartitionKeyComponent implements IPartitionKeyComponent {
         return output;
     }
 
-    private static long EncodeDoubleAsUInt64(double value) {
+    private static long encodeDoubleAsUInt64(double value) {
         long rawLongBits = Double.doubleToRawLongBits(value);
         long mask = 0x8000000000000000L;
         BigInteger longValue = new BigInteger(Long.toBinaryString(rawLongBits), 2);
@@ -61,7 +61,7 @@ public class NumberPartitionKeyComponent implements IPartitionKeyComponent {
     }
 
     @Override
-    public int CompareTo(IPartitionKeyComponent other) {
+    public int compareTo(IPartitionKeyComponent other) {
         if (!(other instanceof NumberPartitionKeyComponent)) {
             throw new IllegalArgumentException("other");
         }
@@ -70,12 +70,12 @@ public class NumberPartitionKeyComponent implements IPartitionKeyComponent {
     }
 
     @Override
-    public int GetTypeOrdinal() {
+    public int getTypeOrdinal() {
         return PartitionKeyComponentType.NUMBER.getValue();
     }
 
     @Override
-    public void JsonEncode(JsonGenerator writer) {
+    public void jsonEncode(JsonGenerator writer) {
         try {
             writer.writeRaw(String.valueOf(value));
         } catch (IOException e) {
@@ -84,7 +84,7 @@ public class NumberPartitionKeyComponent implements IPartitionKeyComponent {
     }
 
     @Override
-    public void WriteForHashing(OutputStream outputStream) {
+    public void writeForHashing(OutputStream outputStream) {
         try {
             outputStream.write((byte) PartitionKeyComponentType.NUMBER.getValue());
             outputStream.write(doubleToByteArray(this.value));
@@ -94,11 +94,11 @@ public class NumberPartitionKeyComponent implements IPartitionKeyComponent {
     }
 
     @Override
-    public void WriteForBinaryEncoding(OutputStream outputStream) {
+    public void writeForBinaryEncoding(OutputStream outputStream) {
         try {
             outputStream.write((byte) PartitionKeyComponentType.NUMBER.getValue());
 
-            long payload = NumberPartitionKeyComponent.EncodeDoubleAsUInt64(this.value);
+            long payload = NumberPartitionKeyComponent.encodeDoubleAsUInt64(this.value);
 
             // Encode first chunk with 8-bits of payload
             outputStream.write((byte) (payload >> (64 - 8)));

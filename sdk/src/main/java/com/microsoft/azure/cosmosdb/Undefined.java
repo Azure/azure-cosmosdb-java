@@ -42,7 +42,7 @@ public class Undefined extends JsonSerializable {
      *
      * @return the Undefined value
     */
-    public static Undefined Value() {
+    public static Undefined value() {
         return value;
     }
 

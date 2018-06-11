@@ -58,7 +58,7 @@ public class Address extends Resource {
         super(jsonObject);
     }
 
-    public boolean IsPrimary() {
+    public boolean isPrimary() {
         return super.getBoolean(Constants.Properties.IS_PRIMARY);
     }
 

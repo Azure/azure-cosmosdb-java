@@ -49,7 +49,7 @@ public class PartitionKeyMismatchRetryPolicy implements IDocumentClientRetryPoli
     private IDocumentClientRetryPolicy nextRetryPolicy;
     private AtomicInteger retriesAttempted = new AtomicInteger(0);
     private String collectionLink;
-    private final static int MaxRetries = 1;
+    private final static int MAX_RETRIES = 1;
 
 
     public PartitionKeyMismatchRetryPolicy(
@@ -76,7 +76,7 @@ public class PartitionKeyMismatchRetryPolicy implements IDocumentClientRetryPoli
         if (clientException != null && 
                 Exceptions.isStatusCode(clientException, HttpConstants.StatusCodes.BADREQUEST) &&
                 Exceptions.isSubStatusCode(clientException, HttpConstants.SubStatusCodes.PARTITION_KEY_MISMATCH)                
-                && this.retriesAttempted.get() < MaxRetries) {
+                && this.retriesAttempted.get() < MAX_RETRIES) {
             //Debug.Assert(clientException.ResourceAddress != null);
 
             // TODO:

@@ -80,7 +80,7 @@ public class StoredProcedureAsyncAPITest {
         asyncClient = new AsyncDocumentClient.Builder()
                 .withServiceEndpoint(TestConfigurations.HOST)
                 .withMasterKey(TestConfigurations.MASTER_KEY)
-                .withConnectionPolicy(ConnectionPolicy.GetDefault())
+                .withConnectionPolicy(ConnectionPolicy.getDefault())
                 .withConsistencyLevel(ConsistencyLevel.Session)
                 .build();
 
@@ -258,11 +258,11 @@ public class StoredProcedureAsyncAPITest {
         IncludedPath includedPath = new IncludedPath();
         includedPath.setPath("/*");
         Collection<Index> indexes = new ArrayList<Index>();
-        Index stringIndex = Index.Range(DataType.String);
+        Index stringIndex = Index.range(DataType.String);
         stringIndex.set("precision", -1);
         indexes.add(stringIndex);
 
-        Index numberIndex = Index.Range(DataType.Number);
+        Index numberIndex = Index.range(DataType.Number);
         numberIndex.set("precision", -1);
         indexes.add(numberIndex);
         includedPath.setIndexes(indexes);

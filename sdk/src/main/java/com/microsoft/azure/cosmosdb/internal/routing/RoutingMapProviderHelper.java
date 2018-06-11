@@ -33,13 +33,16 @@ import com.microsoft.azure.cosmosdb.PartitionKeyRange;
  * Provide utility functionality to route request in direct connectivity mode in the Azure Cosmos DB database service.
  */
 public final class RoutingMapProviderHelper {
-    private static final Range.MaxComparator<String> MAX_COMPARATOR = new Range.MaxComparator<String>();
+    private static final Range.MaxComparator<String> MAX_COMPARATOR = new Range.MaxComparator<>();
+
+    private RoutingMapProviderHelper() {
+    }
 
     private static String max(String left, String right) {
         return left.compareTo(right) < 0 ? right : left;
     }
 
-    private static <T extends Comparable<T>> boolean IsSortedAndNonOverlapping(List<Range<T>> list) {
+    private static <T extends Comparable<T>> boolean isSortedAndNonOverlapping(List<Range<T>> list) {
         for (int i = 1; i < list.size(); i++) {
             Range<T> previousRange = list.get(i - 1);
             Range<T> currentRange = list.get(i);
@@ -57,7 +60,7 @@ public final class RoutingMapProviderHelper {
 
     public static Collection<PartitionKeyRange> getOverlappingRanges(RoutingMapProvider routingMapProvider,
             String collectionSelfLink, List<Range<String>> sortedRanges) {
-        if (!IsSortedAndNonOverlapping(sortedRanges)) {
+        if (!isSortedAndNonOverlapping(sortedRanges)) {
             throw new IllegalArgumentException("sortedRanges");
         }
 

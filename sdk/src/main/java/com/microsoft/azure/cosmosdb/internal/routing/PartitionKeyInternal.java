@@ -1,17 +1,17 @@
 /*
  * The MIT License (MIT)
  * Copyright (c) 2018 Microsoft Corporation
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 
 import org.json.JSONObject;
 
@@ -59,19 +60,19 @@ public class PartitionKeyInternal implements Comparable<PartitionKeyInternal> {
     private static final String MAX_STRING = "MaxString";
     private static final String INFINITY = "Infinity";
 
-    private static final PartitionKeyInternal EmptyPartitionKey =
-            new PartitionKeyInternal(new ArrayList<IPartitionKeyComponent>());
-    public static final String MinimumInclusiveEffectivePartitionKey = EmptyPartitionKey.toHexEncodedBinaryString();
+    private static final PartitionKeyInternal EMPTY_PARTITION_KEY =
+            new PartitionKeyInternal(new ArrayList<>());
+    public static final String MINIMUM_INCLUSIVE_EFFECTIVE_PARTITION_KEY = EMPTY_PARTITION_KEY.toHexEncodedBinaryString();
     @SuppressWarnings("serial")
-    private static final PartitionKeyInternal InfinityPartitionKey =
+    private static final PartitionKeyInternal INFINITY_PARTITION_KEY =
             new PartitionKeyInternal(new ArrayList<IPartitionKeyComponent>() {{
                 add(new InfinityPartitionKeyComponent());
             }});
-    public static final String MaximumExclusiveEffectivePartitionKey = InfinityPartitionKey.toHexEncodedBinaryString();
+    public static final String MAXIMUM_EXCLUSIVE_EFFECTIVE_PARTITION_KEY = INFINITY_PARTITION_KEY.toHexEncodedBinaryString();
     private final int MaxPartitionKeyBinarySize = (1 /*type marker */ +
             9 /* hash value*/ +
             1 /* type marker*/ +
-            StringPartitionKeyComponent.MaxStringComponentLength +
+            StringPartitionKeyComponent.MAX_STRING_COMPONENT_LENGTH +
             1 /*trailing zero*/) * 3;
     private final List<IPartitionKeyComponent> components;
 
@@ -101,7 +102,8 @@ public class PartitionKeyInternal implements Comparable<PartitionKeyInternal> {
             } else if (isNumeric(value)) {
                 components.add(new NumberPartitionKeyComponent(((Number) value).doubleValue()));
             } else if (value instanceof ObjectNode && ((ObjectNode) value).get(TYPE) != null) {
-                switch (((ObjectNode) value).get(TYPE).asText()) {
+                String text = ((ObjectNode) value).get(TYPE).asText();
+                switch (text) {
                     case MIN_NUMBER:
                         components.add(MinNumberPartitionKeyComponent.VALUE);
                         break;
@@ -114,6 +116,8 @@ public class PartitionKeyInternal implements Comparable<PartitionKeyInternal> {
                     case MAX_STRING:
                         components.add(MaxStringPartitionKeyComponent.VALUE);
                         break;
+                    default:
+                        throw new UnsupportedOperationException("There is not support to: " + text);
                 }
             } else {
                 if (strict) {
@@ -132,11 +136,11 @@ public class PartitionKeyInternal implements Comparable<PartitionKeyInternal> {
     }
 
     public static PartitionKeyInternal getExclusiveMaximum() {
-        return PartitionKeyInternal.InfinityPartitionKey;
+        return PartitionKeyInternal.INFINITY_PARTITION_KEY;
     }
 
     public static PartitionKeyInternal getEmpty() {
-        return PartitionKeyInternal.EmptyPartitionKey;
+        return PartitionKeyInternal.EMPTY_PARTITION_KEY;
     }
 
     private boolean equals(PartitionKeyInternal obj) {
@@ -157,13 +161,13 @@ public class PartitionKeyInternal implements Comparable<PartitionKeyInternal> {
         }
 
         for (int i = 0; i < Math.min(this.components.size(), other.components.size()); i++) {
-            int leftOrdinal = this.components.get(i).GetTypeOrdinal();
-            int rightOrdinal = other.components.get(i).GetTypeOrdinal();
+            int leftOrdinal = this.components.get(i).getTypeOrdinal();
+            int rightOrdinal = other.components.get(i).getTypeOrdinal();
             if (leftOrdinal != rightOrdinal) {
                 return (int) Math.signum(leftOrdinal - rightOrdinal);
             }
 
-            int result = this.components.get(i).CompareTo(other.components.get(i));
+            int result = this.components.get(i).compareTo(other.components.get(i));
             if (result != 0) {
                 return (int) Math.signum(result);
             }
@@ -174,22 +178,26 @@ public class PartitionKeyInternal implements Comparable<PartitionKeyInternal> {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj == null) 
-        { 
+        if (obj == null) {
             return false;
         }
         return equals(obj.getClass() == PartitionKeyInternal.class ? (PartitionKeyInternal) obj : null);
     }
 
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(components);
+    }
+
     public String toHexEncodedBinaryString() {
         ByteArrayOutputStream stream = new ByteArrayOutputStream(MaxPartitionKeyBinarySize);
         for (int index = 0; index < this.components.size(); index++) {
-            this.components.get(index).WriteForBinaryEncoding(stream);
+            this.components.get(index).writeForBinaryEncoding(stream);
         }
 
         return HexConvert.bytesToHex(stream.toByteArray());
     }
-    
+
     public String toJson() {
         try {
             return Utils.getSimpleObjectMapper().writeValueAsString(this);
@@ -219,7 +227,9 @@ public class PartitionKeyInternal implements Comparable<PartitionKeyInternal> {
     @SuppressWarnings("serial")
     static final class PartitionKeyInternalJsonSerializer extends StdSerializer<PartitionKeyInternal> {
 
-        protected PartitionKeyInternalJsonSerializer() { this(null); }
+        protected PartitionKeyInternalJsonSerializer() {
+            this(null);
+        }
 
         protected PartitionKeyInternalJsonSerializer(Class<PartitionKeyInternal> t) {
             super(t);
@@ -235,7 +245,7 @@ public class PartitionKeyInternal implements Comparable<PartitionKeyInternal> {
 
                 writer.writeStartArray();
                 for (IPartitionKeyComponent componentValue : partitionKey.getComponents()) {
-                    componentValue.JsonEncode(writer);
+                    componentValue.jsonEncode(writer);
                 }
                 writer.writeEndArray();
             } catch (IOException e) {
@@ -275,7 +285,9 @@ public class PartitionKeyInternal implements Comparable<PartitionKeyInternal> {
     @SuppressWarnings("serial")
     static final class PartitionKeyInternalJsonDeserializer extends StdDeserializer<PartitionKeyInternal> {
 
-        protected PartitionKeyInternalJsonDeserializer() { this(null); }
+        protected PartitionKeyInternalJsonDeserializer() {
+            this(null);
+        }
 
         protected PartitionKeyInternalJsonDeserializer(Class<?> vc) {
             super(vc);
@@ -311,8 +323,8 @@ public class PartitionKeyInternal implements Comparable<PartitionKeyInternal> {
                         objects.add(node.asText());
                     } else if (node.isArray() && node.size() == 0
                             || node.isObject()
-                                && (node.fields() == null || !node.fields().hasNext())) {
-                        objects.add(Undefined.Value());
+                            && (node.fields() == null || !node.fields().hasNext())) {
+                        objects.add(Undefined.value());
                     } else {
                         objects.add(node);
                     }

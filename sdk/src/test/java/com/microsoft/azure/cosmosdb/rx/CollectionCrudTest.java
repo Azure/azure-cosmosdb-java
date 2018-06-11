@@ -35,7 +35,6 @@ import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.IndexingMode;
 import com.microsoft.azure.cosmosdb.IndexingPolicy;
 import com.microsoft.azure.cosmosdb.ResourceResponse;
-import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 
 import rx.Observable;
 
@@ -148,7 +147,7 @@ public class CollectionCrudTest extends TestSuiteBase {
         client = new AsyncDocumentClient.Builder()
             .withServiceEndpoint(TestConfigurations.HOST)
             .withMasterKey(TestConfigurations.MASTER_KEY)
-            .withConnectionPolicy(ConnectionPolicy.GetDefault())
+            .withConnectionPolicy(ConnectionPolicy.getDefault())
             .withConsistencyLevel(ConsistencyLevel.Session).build();
 
         Database databaseDefinition = new Database();

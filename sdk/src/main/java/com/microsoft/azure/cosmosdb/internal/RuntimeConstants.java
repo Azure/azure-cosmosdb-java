@@ -47,30 +47,30 @@ public class RuntimeConstants {
     }
 
     static class Separators {
-        static final char[] Url = new char[] {'/'};
-        static final char[] Quote = new char[] {'\''};
-        static final char[] DomainId = new char[] {'-'};
-        static final char[] Query = new char[] {'?', '&', '='};
-        static final char[] Parenthesis = new char[] {'(', ')'};
-        static final char[] UserAgentHeader = new char[] {'(', ')', ';', ','};
+        static final char[] URL = new char[] {'/'};
+        static final char[] QUOTE = new char[] {'\''};
+        static final char[] DOMAIN_ID = new char[] {'-'};
+        static final char[] QUERY = new char[] {'?', '&', '='};
+        static final char[] PARENTHESIS = new char[] {'(', ')'};
+        static final char[] USER_AGENT_HEADER = new char[] {'(', ')', ';', ','};
 
 
         //Note that the accept header separator here is ideally comma. Semicolon is used for separators within individual
         //header for now cloud moe does not recognize such accept header hence we allow both semicolon or comma separated
         //accept header
-        static final char[] Header = new char[] {';', ','};
-        static final char[] CookieSeparator = new char[] {';'};
-        static final char[] CookieValueSeparator = new char[] {'='};
-        static final char[] PPMUserToken = new char[] {':'};
-        static final char[] Identifier = new char[] {'-'};
-        static final char[] Host = new char[] {'.'};
-        static final char[] Version = new char[] {','};
-        static final char[] Pair = new char[] {';'};
-        static final char[] ETag = new char[] {'#'};
-        static final char[] MemberQuery = new char[] {'+'};
+        static final char[] HEADER = new char[] {';', ','};
+        static final char[] COOKIE_SEPARATOR = new char[] {';'};
+        static final char[] COOKIE_VALUE_SEPARATOR = new char[] {'='};
+        static final char[] PPM_USER_TOKEN = new char[] {':'};
+        static final char[] IDENTIFIER = new char[] {'-'};
+        static final char[] HOST = new char[] {'.'};
+        static final char[] VERSION = new char[] {','};
+        static final char[] PAIR = new char[] {';'};
+        static final char[] E_TAG = new char[] {'#'};
+        static final char[] MEMBER_QUERY = new char[] {'+'};
 
-        static final String HeaderEncodingBegin = "=?";
-        static final String HeaderEncodingEnd = "?=";
-        static final String HeaderEncodingSeparator = "?";
+        static final String HEADER_ENCODING_BEGIN = "=?";
+        static final String HEADER_ENCODING_END = "?=";
+        static final String HEADER_ENCODING_SEPARATOR = "?";
     }
 }

@@ -37,7 +37,7 @@ class BoolPartitionKeyComponent implements IPartitionKeyComponent {
     }
 
     @Override
-    public int CompareTo(IPartitionKeyComponent other) {
+    public int compareTo(IPartitionKeyComponent other) {
         if (!(other instanceof BoolPartitionKeyComponent)) {
             throw new IllegalArgumentException("other");
         }
@@ -46,12 +46,12 @@ class BoolPartitionKeyComponent implements IPartitionKeyComponent {
     }
 
     @Override
-    public int GetTypeOrdinal() {
+    public int getTypeOrdinal() {
         return this.value ? PartitionKeyComponentType.TRUE.getValue() : PartitionKeyComponentType.FALSE.getValue();
     }
 
     @Override
-    public void JsonEncode(JsonGenerator writer) {
+    public void jsonEncode(JsonGenerator writer) {
         try {
             writer.writeBoolean(this.value);
         } catch (IOException e) {
@@ -60,7 +60,7 @@ class BoolPartitionKeyComponent implements IPartitionKeyComponent {
     }
 
     @Override
-    public void WriteForHashing(OutputStream outputStream) {
+    public void writeForHashing(OutputStream outputStream) {
         try {
             outputStream.write((byte) (this.value ? PartitionKeyComponentType.TRUE.getValue()
                     : PartitionKeyComponentType.FALSE.getValue()));
@@ -70,7 +70,7 @@ class BoolPartitionKeyComponent implements IPartitionKeyComponent {
     }
 
     @Override
-    public void WriteForBinaryEncoding(OutputStream outputStream) {
+    public void writeForBinaryEncoding(OutputStream outputStream) {
         try {
             outputStream.write((byte) (this.value ? PartitionKeyComponentType.TRUE.getValue()
                     : PartitionKeyComponentType.FALSE.getValue()));

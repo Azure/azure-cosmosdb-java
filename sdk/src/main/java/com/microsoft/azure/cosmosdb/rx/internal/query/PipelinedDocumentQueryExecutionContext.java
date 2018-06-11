@@ -133,7 +133,7 @@ public class PipelinedDocumentQueryExecutionContext<T extends Resource> implemen
             component = TopDocumentQueryExecutionContext.createAsync(component, queryInfo.getTop());
         }
 
-        int actualPageSize = Utils.getValueOrDefault(feedOptions.getMaxItemCount(), ParallelQueryConfig.ClientInternalPageSize);
+        int actualPageSize = Utils.getValueOrDefault(feedOptions.getMaxItemCount(), ParallelQueryConfig.CLIENT_INTERNAL_PAGE_SIZE);
 
         if (actualPageSize == -1) {
             actualPageSize = Integer.MAX_VALUE;

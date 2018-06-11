@@ -1,17 +1,17 @@
 /*
  * The MIT License (MIT)
  * Copyright (c) 2018 Microsoft Corporation
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -36,7 +36,7 @@ import com.microsoft.azure.cosmosdb.DocumentClientException;
  * Used internally to represents a Resource ID in the Azure Cosmos DB database service.
  */
 public class ResourceId {
-    static final short Length = 20;
+    static final short LENGTH = 20;
     static final short OFFER_ID_LENGTH = 3;
 
     private int database;
@@ -155,9 +155,8 @@ public class ResourceId {
 
             if (buffer.length == ResourceId.OFFER_ID_LENGTH) {
                 rid.offer = 0;
-                for (int index = 0; index < ResourceId.OFFER_ID_LENGTH; index++)
-                {
-                    rid.offer |= (long)(buffer[index] << (index * 8));
+                for (int index = 0; index < ResourceId.OFFER_ID_LENGTH; index++) {
+                    rid.offer |= (long) (buffer[index] << (index * 8));
                 }
                 return Pair.of(true, rid);
             }
@@ -179,21 +178,21 @@ public class ResourceId {
                         ResourceId.blockCopy(buffer, 8, subCollRes, 0, 8);
 
                         long subCollectionResource = ByteBuffer.wrap(buffer, 8, 8).getLong();
-                        if ((subCollRes[7] >> 4) == (byte) CollectionChildResourceType.Document) {
+                        if ((subCollRes[7] >> 4) == (byte) CollectionChildResourceType.DOCUMENT) {
                             rid.document = subCollectionResource;
 
                             if (buffer.length == 20) {
                                 rid.attachment = ByteBuffer.wrap(buffer, 16, 4).getInt();
                             }
-                        } else if (Math.abs(subCollRes[7] >> 4) == (byte) CollectionChildResourceType.StoredProcedure) {
+                        } else if (Math.abs(subCollRes[7] >> 4) == (byte) CollectionChildResourceType.STORED_PROCEDURE) {
                             rid.storedProcedure = subCollectionResource;
-                        } else if ((subCollRes[7] >> 4) == (byte) CollectionChildResourceType.Trigger) {
+                        } else if ((subCollRes[7] >> 4) == (byte) CollectionChildResourceType.TRIGGER) {
                             rid.trigger = subCollectionResource;
-                        } else if ((subCollRes[7] >> 4) == (byte) CollectionChildResourceType.UserDefinedFunction) {
+                        } else if ((subCollRes[7] >> 4) == (byte) CollectionChildResourceType.USER_DEFINED_FUNCTION) {
                             rid.userDefinedFunction = subCollectionResource;
-                        } else if ((subCollRes[7] >> 4) == (byte) CollectionChildResourceType.Conflict) {
+                        } else if ((subCollRes[7] >> 4) == (byte) CollectionChildResourceType.CONFLICT) {
                             rid.conflict = subCollectionResource;
-                        } else if ((subCollRes[7] >> 4) == (byte) CollectionChildResourceType.PartitionKeyRange) {
+                        } else if ((subCollRes[7] >> 4) == (byte) CollectionChildResourceType.PARTITION_KEY_RANGE) {
                             rid.partitionKeyRange = subCollectionResource;
                         } else {
                             return Pair.of(false, rid);
@@ -229,7 +228,7 @@ public class ResourceId {
         } catch (Exception e) {
         }
 
-        if (buffer == null || buffer.length > ResourceId.Length) {
+        if (buffer == null || buffer.length > ResourceId.LENGTH) {
             buffer = null;
             return Pair.of(false, buffer);
         }
@@ -242,7 +241,7 @@ public class ResourceId {
     }
 
     static byte[] fromBase64String(String s) {
-        return Utils.Base64Decoder.decode(s.replace('-', '/'));
+        return Utils.BASE_64_DECODER.decode(s.replace('-', '/'));
     }
 
     static String toBase64String(byte[] buffer) {
@@ -259,8 +258,9 @@ public class ResourceId {
     // bytes to copy
     static void blockCopy(byte[] src, int srcOffset, byte[] dst, int dstOffset, int count) {
         int stop = srcOffset + count;
-        for (int i = srcOffset; i < stop; i++)
+        for (int i = srcOffset; i < stop; i++) {
             dst[dstOffset++] = src[i];
+        }
     }
 
     private static byte[] convertToBytesUsingByteBuffer(int value) {
@@ -371,7 +371,7 @@ public class ResourceId {
         rid.document = this.document;
         return rid;
     }
-    
+
     public long getPartitionKeyRange() {
         return this.partitionKeyRange;
     }
@@ -420,7 +420,9 @@ public class ResourceId {
         return rid;
     }
 
-    public long getOffer() { return this.offer; }
+    public long getOffer() {
+        return this.offer;
+    }
 
     public ResourceId getOfferId() {
         ResourceId rid = new ResourceId();
@@ -455,22 +457,22 @@ public class ResourceId {
 
         if (this.documentCollection != 0)
             ResourceId.blockCopy(
-                    convertToBytesUsingByteBuffer(this.documentCollection), 
+                    convertToBytesUsingByteBuffer(this.documentCollection),
                     0, val, 4, 4);
         else if (this.user != 0)
-            ResourceId.blockCopy(convertToBytesUsingByteBuffer(this.user), 
+            ResourceId.blockCopy(convertToBytesUsingByteBuffer(this.user),
                     0, val, 4, 4);
 
         if (this.storedProcedure != 0)
             ResourceId.blockCopy(
-                    convertToBytesUsingByteBuffer(this.storedProcedure), 
+                    convertToBytesUsingByteBuffer(this.storedProcedure),
                     0, val, 8, 8);
         else if (this.trigger != 0)
             ResourceId.blockCopy(convertToBytesUsingByteBuffer(this.trigger),
                     0, val, 8, 8);
         else if (this.userDefinedFunction != 0)
             ResourceId.blockCopy(
-                    convertToBytesUsingByteBuffer(this.userDefinedFunction), 
+                    convertToBytesUsingByteBuffer(this.userDefinedFunction),
                     0, val, 8, 8);
         else if (this.conflict != 0)
             ResourceId.blockCopy(convertToBytesUsingByteBuffer(this.conflict),
@@ -480,16 +482,16 @@ public class ResourceId {
                     0, val, 8, 8);
         else if (this.permission != 0)
             ResourceId.blockCopy(
-                    convertToBytesUsingByteBuffer(this.permission), 
+                    convertToBytesUsingByteBuffer(this.permission),
                     0, val, 8, 8);
         else if (this.partitionKeyRange != 0)
             ResourceId.blockCopy(
-                    convertToBytesUsingByteBuffer(this.partitionKeyRange), 
+                    convertToBytesUsingByteBuffer(this.partitionKeyRange),
                     0, val, 8, 8);
 
         if (this.attachment != 0)
             ResourceId.blockCopy(
-                    convertToBytesUsingByteBuffer(this.attachment), 
+                    convertToBytesUsingByteBuffer(this.attachment),
                     0, val, 16, 4);
 
         return val;
@@ -501,11 +503,11 @@ public class ResourceId {
 
     // Using a byte however, we only need nibble here.
     private static class CollectionChildResourceType {
-        public static final byte Document = 0x0;
-        public static final byte StoredProcedure = 0x08;
-        public static final byte Trigger = 0x07;
-        public static final byte UserDefinedFunction = 0x06;
-        public static final byte Conflict = 0x04;
-        public static final byte PartitionKeyRange = 0x05;
+        public static final byte DOCUMENT = 0x0;
+        public static final byte STORED_PROCEDURE = 0x08;
+        public static final byte TRIGGER = 0x07;
+        public static final byte USER_DEFINED_FUNCTION = 0x06;
+        public static final byte CONFLICT = 0x04;
+        public static final byte PARTITION_KEY_RANGE = 0x05;
     }
 }

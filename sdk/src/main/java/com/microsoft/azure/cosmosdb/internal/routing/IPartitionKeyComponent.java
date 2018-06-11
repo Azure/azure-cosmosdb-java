@@ -28,13 +28,14 @@ import java.io.OutputStream;
 import com.fasterxml.jackson.core.JsonGenerator;
 
 interface IPartitionKeyComponent {
-    int CompareTo(IPartitionKeyComponent other);
+    
+    int compareTo(IPartitionKeyComponent other);
 
-    int GetTypeOrdinal();
+    int getTypeOrdinal();
 
-    void JsonEncode(JsonGenerator writer);
+    void jsonEncode(JsonGenerator writer);
 
-    void WriteForHashing(OutputStream outputStream);
+    void writeForHashing(OutputStream outputStream);
 
-    void WriteForBinaryEncoding(OutputStream outputStream);
+    void writeForBinaryEncoding(OutputStream outputStream);
 }

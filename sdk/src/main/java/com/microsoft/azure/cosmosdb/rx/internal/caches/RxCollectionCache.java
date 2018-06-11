@@ -65,7 +65,7 @@ public abstract class RxCollectionCache {
                 init = completable.andThen(Completable.fromAction(() -> request.setForceNameCacheRefresh(false)));
             }
 
-            Single<DocumentCollection> collectionInfoObs = this.ResolveByPartitionKeyRangeIdentityAsync(
+            Single<DocumentCollection> collectionInfoObs = this.resolveByPartitionKeyRangeIdentityAsync(
                     request.getPartitionKeyRangeIdentity());
 
             if (init != null) {
@@ -98,7 +98,7 @@ public abstract class RxCollectionCache {
                 }                
             });
         } else {
-            return ResolveByPartitionKeyRangeIdentityAsync(request.getPartitionKeyRangeIdentity())
+            return resolveByPartitionKeyRangeIdentityAsync(request.getPartitionKeyRangeIdentity())
                     .flatMap(collection -> {
 
                         if (collection != null) {
@@ -133,7 +133,7 @@ public abstract class RxCollectionCache {
 
     protected abstract Single<DocumentCollection> getByNameAsync(String resourceAddress);
 
-    private Single<DocumentCollection> ResolveByPartitionKeyRangeIdentityAsync(PartitionKeyRangeIdentity partitionKeyRangeIdentity) {
+    private Single<DocumentCollection> resolveByPartitionKeyRangeIdentityAsync(PartitionKeyRangeIdentity partitionKeyRangeIdentity) {
         // if request is targeted at specific partition using x-ms-documentd-partitionkeyrangeid header,
         // which contains value "<collectionrid>,<partitionkeyrangeid>", then resolve to collection rid in this header.
         if (partitionKeyRangeIdentity != null && partitionKeyRangeIdentity.getCollectionRid() != null) {
@@ -142,7 +142,7 @@ public abstract class RxCollectionCache {
                         if (e instanceof NotFoundException) {
                             // This is signal to the upper logic either to refresh
                             // collection cache and retry.
-                            return Single.error(new InvalidPartitionException(RMResources.InvalidDocumentCollection));
+                            return Single.error(new InvalidPartitionException(RMResources.INVALID_DOCUMENT_COLLECTION));
                         }
                         return Single.error(e);
 

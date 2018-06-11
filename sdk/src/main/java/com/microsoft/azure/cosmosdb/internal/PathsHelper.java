@@ -34,7 +34,11 @@ import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
 /**
  * Used internally to provide utility methods to work with the resource's path in the Azure Cosmos DB database service.
  */
-public class PathsHelper {
+public final class PathsHelper {
+
+    private PathsHelper() {
+    }
+
     public static String generatePath(ResourceType resourceType, RxDocumentServiceRequest request, boolean isFeed) {
         if (request.getIsNameBased()) {
             return request.getPath();
@@ -380,7 +384,7 @@ public class PathsHelper {
 
     public static ResourceType getResourcePathSegment(String resourcePathSegment) throws BadRequestException {
         if (StringUtils.isEmpty(resourcePathSegment)) {
-            String message = String.format(RMResources.StringArgumentNullOrEmpty, "resourcePathSegment");
+            String message = String.format(RMResources.STRING_ARGUMENT_NULL_OR_EMPTY, "resourcePathSegment");
             throw new BadRequestException(message);
         }
 
@@ -420,10 +424,10 @@ public class PathsHelper {
 
             case Paths.SCHEMAS_PATH_SEGMENT:
                 return ResourceType.Schema;
+            default:
+                String errorMessage = String.format(RMResources.UNKNOWN_RESOURCE_TYPE, resourcePathSegment);
+                throw new BadRequestException(errorMessage);
         }
-
-        String errorMessage = String.format(RMResources.UnknownResourceType, resourcePathSegment);
-        throw new BadRequestException(errorMessage);
     }
     
     public static String getResourcePath(ResourceType resourceType) throws BadRequestException {
@@ -481,7 +485,7 @@ public class PathsHelper {
                 return Paths.ROOT;
 
             default:
-                String errorMessage = String.format(RMResources.UnknownResourceType, resourceType.toString());
+                String errorMessage = String.format(RMResources.UNKNOWN_RESOURCE_TYPE, resourceType.toString());
                 throw new BadRequestException(errorMessage);
         }
     }

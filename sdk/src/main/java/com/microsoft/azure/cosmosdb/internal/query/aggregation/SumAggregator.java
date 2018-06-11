@@ -30,7 +30,7 @@ public class SumAggregator implements Aggregator {
 
     @Override
     public void aggregate(Object item) {
-        if (Undefined.Value().equals(item)) {
+        if (Undefined.value().equals(item)) {
             return;
         }
 
@@ -43,7 +43,7 @@ public class SumAggregator implements Aggregator {
     @Override
     public Object getResult() {
         if (this.sum == null) {
-            return Undefined.Value();
+            return Undefined.value();
         }
         return this.sum;
     }

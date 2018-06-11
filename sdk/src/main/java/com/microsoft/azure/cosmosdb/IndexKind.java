@@ -33,7 +33,7 @@ public enum IndexKind {
     // Can be used to serve queries like: SELECT * FROM docs d WHERE d.prop = 5
     Hash,
 
-    // The index entries are ordered. Range indexes are optimized for inequality predicate queries with efficient range
+    // The index entries are ordered. range indexes are optimized for inequality predicate queries with efficient range
     // scans.
     // Can be used to serve queries like: SELECT * FROM docs d WHERE d.prop > 5
     Range,
