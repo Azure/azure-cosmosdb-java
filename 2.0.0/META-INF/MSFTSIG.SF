@@ -1,0 +1,458 @@
+Signature-Version: 1.0
+SHA-256-Digest-Manifest-Main-Attributes: WiNUM7/BOyYWFlvqXZ7CbSo60C4f5
+ qVfbSEltMpyi/g=
+SHA-256-Digest-Manifest: kFgLr4zi9CuR7TX6jYhnvtGUwExuwxJoDvLaiOCCAdk=
+Created-By: 1.8.0_112 (Oracle Corporation)
+
+Name: com/microsoft/azure/cosmosdb/UserDefinedFunction.html
+SHA-256-Digest: rduH0kUIiZYTaYUH6UG9ngryJIkCApzEXSmWm1IC29M=
+
+Name: com/microsoft/azure/cosmosdb/Undefined.html
+SHA-256-Digest: zlcVK9sAWSsZiBI2/6kmn63tLHhC67rnfgvhagAarxQ=
+
+Name: com/microsoft/azure/cosmosdb/class-use/PermissionMode.html
+SHA-256-Digest: TvnltgIfnYy9mqeoj+xsnLs6tFz9YUQmqEWIlFyHc1U=
+
+Name: com/microsoft/azure/cosmosdb/class-use/DocumentCollection.html
+SHA-256-Digest: eqxJZJszvMRhM/GajIMT05h0Ir4ZeMfPdX2/KkrJNfg=
+
+Name: com/microsoft/azure/cosmosdb/FeedOptions.html
+SHA-256-Digest: C7tkfGgeDVp0nXlsYNPpBEy5rUlaslhWGvqyM5QNdqQ=
+
+Name: com/microsoft/azure/cosmosdb/PartitionKind.html
+SHA-256-Digest: n0PL8AcsPtZ/2bnbrqYSkIHE+a9jIoEbZw+qrIuTBbU=
+
+Name: com/microsoft/azure/cosmosdb/Permission.html
+SHA-256-Digest: TZLfikd8CuNokJOCx5Vsp1t4YnAIqmbP2CdOaxGDKBk=
+
+Name: com/microsoft/azure/cosmosdb/class-use/SqlQuerySpec.html
+SHA-256-Digest: +wvW/ms+rwpfRYg+7OkcJZz3gmJq/pAGKnqR+9NhL08=
+
+Name: com/microsoft/azure/cosmosdb/class-use/UserDefinedFunction.html
+SHA-256-Digest: 3oZQSyTYUaKizcWU6AI0S/LGyKL1pixS2cj68PHJ3HQ=
+
+Name: com/microsoft/azure/cosmosdb/class-use/SpatialIndex.html
+SHA-256-Digest: t/R58NMt22fDuugAwAosk+w5NgJ+9o+4jV7Fk37JqSw=
+
+Name: com/microsoft/azure/cosmosdb/SqlQuerySpec.html
+SHA-256-Digest: hqU5i7QXGVTEBEKTG/RhYE0SiF+8a3DiMsZdlRahn6Q=
+
+Name: com/microsoft/azure/cosmosdb/MediaReadMode.html
+SHA-256-Digest: eENu9GE2cx5eenlzxnX5qXguvIkEroZbYDEDuTKY0/I=
+
+Name: com/microsoft/azure/cosmosdb/class-use/IndexingDirective.html
+SHA-256-Digest: oAu3Y96Ks2Z9WQO6FaJHxdBx3AK1/XrNmoVLfj1j1n4=
+
+Name: com/microsoft/azure/cosmosdb/class-use/DatabaseAccountLocation.h
+ tml
+SHA-256-Digest: Jz/WY8T7QQJVVe+kOgieB/zHsEUbf5THYaoED7PcAoI=
+
+Name: com/microsoft/azure/cosmosdb/package-tree.html
+SHA-256-Digest: 6zlWQ1TUWiwPfFBq6ZdBd9Nqz84IupMby1PRgKayhng=
+
+Name: com/microsoft/azure/cosmosdb/class-use/User.html
+SHA-256-Digest: QtDRY5zW6ZBpAm2RGWigvbfE4oxIbVXeLfWc/4vdOMw=
+
+Name: com/microsoft/azure/cosmosdb/IncludedPath.html
+SHA-256-Digest: acoBxOEJOWgGzaZpDGy5C3jbpeR7vrg8DgHOgBaHFW4=
+
+Name: com/microsoft/azure/cosmosdb/class-use/MediaReadMode.html
+SHA-256-Digest: YDIa6WOLvr83SYn26wNAt1vd1/8IMCEpjrn3xXkMoCU=
+
+Name: com/microsoft/azure/cosmosdb/class-use/RangeIndex.html
+SHA-256-Digest: rnHkOOvZZc/CfTkt9CBhP0iarqJe/v27O76IpCMZp9k=
+
+Name: com/microsoft/azure/cosmosdb/class-use/TriggerOperation.html
+SHA-256-Digest: fjgp+nBv9k/MtTnSawrioaSVFmTLjAb10LAzJWCjOjw=
+
+Name: com/microsoft/azure/cosmosdb/ConnectionMode.html
+SHA-256-Digest: sGGSMGyg0OctCkkmodOikLBnN8ejs22cO3N5I1O5daA=
+
+Name: com/microsoft/azure/cosmosdb/PartitionKeyRange.html
+SHA-256-Digest: TU+II+b/rNacAYbOXfqPR2i3ykefBigPy0XG9oJczRg=
+
+Name: com/microsoft/azure/cosmosdb/class-use/RequestOptions.html
+SHA-256-Digest: kXDlWOwsK8dr2HKFeX26I6rDBZD1MBatR6X5QKaagGQ=
+
+Name: constant-values.html
+SHA-256-Digest: 4FCojKampisz4fm25AEMW2vlQdaEZa2lDrZHpSg0X3M=
+
+Name: com/microsoft/azure/cosmosdb/class-use/IndexingMode.html
+SHA-256-Digest: WQycI0TaRdrwhuzSAxxXGqPcs3pM0pt9N/cby6vKqRY=
+
+Name: com/microsoft/azure/cosmosdb/SpatialIndex.html
+SHA-256-Digest: 97pSAXStJNxbPbEO3nrnQaLu2JKiIracU6lYtjkzBk4=
+
+Name: com/microsoft/azure/cosmosdb/class-use/BridgeInternal.html
+SHA-256-Digest: wUOwvI+pJ1JkHJz3qZ3sKrzsgn/skNiXTXuxhE+bAcU=
+
+Name: com/microsoft/azure/cosmosdb/DataType.html
+SHA-256-Digest: PRrJF9ruZykF8RLGA1fwBQk7/bqXTvd1awp/S1+WmV8=
+
+Name: com/microsoft/azure/cosmosdb/class-use/AccessCondition.html
+SHA-256-Digest: IoawzL8anxU5IM70wEX/ZHLJwgqu1a8RBo68CBSZfnU=
+
+Name: stylesheet.css
+SHA-256-Digest: +qz/hCU5lBogE8j1p9SSoIr+ij+qotxZldebobLidmw=
+
+Name: com/microsoft/azure/cosmosdb/AccessConditionType.html
+SHA-256-Digest: woxPD1XFK9EncdwXPQ6hFg13Y8wXo74tpMyen7Fbjk8=
+
+Name: com/microsoft/azure/cosmosdb/Document.html
+SHA-256-Digest: MJskQFuzIWLwa8yP3jF2hR3bWzt7iUinb4TYKjs3fko=
+
+Name: com/microsoft/azure/cosmosdb/PartitionKeyDefinition.html
+SHA-256-Digest: EwLKzYNra0QE/wW/RR4bCGgtp8HDaOlIZq7WxanmM7Y=
+
+Name: com/microsoft/azure/cosmosdb/class-use/DatabaseAccount.html
+SHA-256-Digest: aQEz3Q7EU+jkT6BWiwjJmAIrCJBPcvRSjSIFg8KKyhM=
+
+Name: com/microsoft/azure/cosmosdb/class-use/ResourceResponse.html
+SHA-256-Digest: H45pTODZ76MV6EJRPgXVNaPLvFkoqQXFjSvibedpnEk=
+
+Name: com/microsoft/azure/cosmosdb/UniqueKey.html
+SHA-256-Digest: Ih8UI1xkwiFLROcAdCbX1ZIYMoFFDkd+JrHoFaWp6XI=
+
+Name: com/microsoft/azure/cosmosdb/package-use.html
+SHA-256-Digest: 8FMOQ2Ei0FEr0HkrB+i0Hv8GAt11/4d2GLfWTZ2cO88=
+
+Name: deprecated-list.html
+SHA-256-Digest: q2AFgHJxC8bvVpXqhmKJW5Bdt85IDEpAvijkafnO8z8=
+
+Name: com/microsoft/azure/cosmosdb/class-use/MediaResponse.html
+SHA-256-Digest: CaOM9505hqI2n7lgQOBG/KtH0ccc9ckuyb9NtbEy6qU=
+
+Name: com/microsoft/azure/cosmosdb/class-use/StoredProcedure.html
+SHA-256-Digest: Lvv+JLpCccEYAbS3Bilp8NcEqRJctU60r/8A39TXcfk=
+
+Name: com/microsoft/azure/cosmosdb/rx/package-use.html
+SHA-256-Digest: YBOt5Gbq1pvA536vip7j56NhTUKRlmns32q4lAxsUVI=
+
+Name: com/microsoft/azure/cosmosdb/ConsistencyPolicy.html
+SHA-256-Digest: r5m2n+gya5YzpYDgs9fX54tAa0Lxi6ig+w5uO3jh+ws=
+
+Name: com/microsoft/azure/cosmosdb/Trigger.html
+SHA-256-Digest: 3wS1uqvUFEuCW42MamgeoHAT/AaYycLLQoo4SwElix8=
+
+Name: com/microsoft/azure/cosmosdb/class-use/ConsistencyLevel.html
+SHA-256-Digest: Fq5vOPfk9EtmfuwSNP/A5+wZzn1uMrVlXzIBicLWWAY=
+
+Name: allclasses-noframe.html
+SHA-256-Digest: BW24RbSuauveNJ4XI71bmUkMaQItVEvGv45B4ulwxT4=
+
+Name: com/microsoft/azure/cosmosdb/DocumentClientException.html
+SHA-256-Digest: oWdexPC/YtmtGY+2cUo2yC+Oub7pt+tgf9jMUBW68uw=
+
+Name: com/microsoft/azure/cosmosdb/class-use/Undefined.html
+SHA-256-Digest: /ta9e2MRfXP0/X/eJwljTMUhRIXMvM9eqTggjGToM7w=
+
+Name: com/microsoft/azure/cosmosdb/RetryOptions.html
+SHA-256-Digest: 133ORok2RYAhhMbTtkTfzuWCDcvKERAZe1NNofxQz4k=
+
+Name: com/microsoft/azure/cosmosdb/class-use/Index.html
+SHA-256-Digest: zWztyk/nff5nkyjK+iPJZ9pM42NmCXn1YTG4aCq+K6c=
+
+Name: com/microsoft/azure/cosmosdb/class-use/HashIndex.html
+SHA-256-Digest: oLOngVMfTXvuyag7i6XtZTALMDxT9Wauyak9/1h15mg=
+
+Name: com/microsoft/azure/cosmosdb/RangeIndex.html
+SHA-256-Digest: Te3QVZMLXmtrU+iO5WRblwSbzli05id4yB5HwGn2o0c=
+
+Name: com/microsoft/azure/cosmosdb/class-use/AccessConditionType.html
+SHA-256-Digest: nH6wDM66D9w8Dt5uQCbeLu/LM95XRSbeXZYU2UtyNaw=
+
+Name: com/microsoft/azure/cosmosdb/class-use/ConnectionMode.html
+SHA-256-Digest: J8KIU4xhby7J4833RDXYD5eQMsm1g3yALqU9+KMG0Gs=
+
+Name: com/microsoft/azure/cosmosdb/FeedOptionsBase.html
+SHA-256-Digest: blxdd4PYho0DWElepQkZ5YKazOiAvHVVYaBE0Xs2gXE=
+
+Name: com/microsoft/azure/cosmosdb/SerializationFormattingPolicy.html
+SHA-256-Digest: H3rIz+HjlSrLXE1BLqWAvcthS5Q/m4iBsRf1gZCY2KE=
+
+Name: com/microsoft/azure/cosmosdb/MediaOptions.html
+SHA-256-Digest: n9NIvijs5QISuzDv1gop6C8a4LDKj+Y74tzo5ZCf9fw=
+
+Name: com/microsoft/azure/cosmosdb/ConsistencyLevel.html
+SHA-256-Digest: uLGeC/6klRgZkZiCmemdLWz8vVh7ngGaPNrbSHAXYg4=
+
+Name: com/microsoft/azure/cosmosdb/class-use/PartitionKeyDefinition.ht
+ ml
+SHA-256-Digest: RowLSkJ9mNSUORd08lNDrVq570YQizx6neucsRZoEdI=
+
+Name: com/microsoft/azure/cosmosdb/StoredProcedure.html
+SHA-256-Digest: ZxLGisJzi+SpdkLTBLh0lDTT8r8YWIFk7q2SSpweeRU=
+
+Name: com/microsoft/azure/cosmosdb/Offer.html
+SHA-256-Digest: e6oCuTlarF9zceqYFeHg7YbSy3fAlPct6XacQ883cvs=
+
+Name: com/microsoft/azure/cosmosdb/MediaResponse.html
+SHA-256-Digest: NDYQ8s8yNZTEUDwDJ/FpHIgtYWCAXizJMPT/6yxmwBo=
+
+Name: com/microsoft/azure/cosmosdb/PartitionKey.html
+SHA-256-Digest: QhtvDF6gjjX9S9940L2kgzce9eYIBvGChBX5ybwHOBc=
+
+Name: com/microsoft/azure/cosmosdb/JsonSerializable.html
+SHA-256-Digest: Doj93YCui6cYtxNVVhCMnagj+SS8fA5C0IXxFCxPkVc=
+
+Name: com/microsoft/azure/cosmosdb/class-use/UniqueKey.html
+SHA-256-Digest: szfrJFXxtaRKU//I+Dj1iiE234uUdK0ieeogOscnL6w=
+
+Name: com/microsoft/azure/cosmosdb/class-use/Resource.html
+SHA-256-Digest: pAyvSIMwNdAzco4QT8858sICNzN/zigXtG+szHtAaUw=
+
+Name: com/microsoft/azure/cosmosdb/package-summary.html
+SHA-256-Digest: lZBa5rBxS8mi9aPVi7Iwz1PKr+sE2SBiQHXFrdeg9Co=
+
+Name: overview-summary.html
+SHA-256-Digest: YlX5RgAxxE8tvGwWXBdJovpOk3DPNbQpxn8j6QYJELA=
+
+Name: com/microsoft/azure/cosmosdb/class-use/UniqueKeyPolicy.html
+SHA-256-Digest: uHW0EgLGCbbsPHIf10W1MVXL9LYaNsQfZuX81/9ZnnQ=
+
+Name: com/microsoft/azure/cosmosdb/UniqueKeyPolicy.html
+SHA-256-Digest: bNxAzxglNt4jvdRiDwDHnjKTwVAK78VvrlFLbWjTh9U=
+
+Name: com/microsoft/azure/cosmosdb/class-use/SerializationFormattingPo
+ licy.html
+SHA-256-Digest: J0LVxHqJoqUaSIcGZdLDW388GQal9howqv/0uutjkWY=
+
+Name: allclasses-frame.html
+SHA-256-Digest: b9C1Ef8tiGYPDeqj5lJmxOoSdkOiWPx6cDnrGeK1tW0=
+
+Name: com/microsoft/azure/cosmosdb/class-use/Offer.html
+SHA-256-Digest: nswIkP10DzPEfr3ZTMf/t2938KzFcObt66b5BlqKxhw=
+
+Name: com/microsoft/azure/cosmosdb/IndexingMode.html
+SHA-256-Digest: TXZNdpb57qwCdtvB07Vv3Qbu1Q2TSuzbAKzZoBQo7pQ=
+
+Name: com/microsoft/azure/cosmosdb/class-use/Database.html
+SHA-256-Digest: EJP/UNEcKVg0/Uz6Dr4PzUdIycUVJflDyLSsaT+omME=
+
+Name: com/microsoft/azure/cosmosdb/class-use/Permission.html
+SHA-256-Digest: 6DXOyB7XX2ku8agA2fOXnL1U3QG9ZTSx5Mc48W2ZnEk=
+
+Name: com/microsoft/azure/cosmosdb/DatabaseAccountLocation.html
+SHA-256-Digest: S8nVjLPeSFgdxEeplNtwrkxH1ucFklt/YmSPKT/UXMQ=
+
+Name: com/microsoft/azure/cosmosdb/ReplicationPolicy.html
+SHA-256-Digest: PjWdw6pTPq87MvNnUzEvIfWA5qkEtrbwJHuato43IPY=
+
+Name: com/microsoft/azure/cosmosdb/Database.html
+SHA-256-Digest: zdWy9e4eSwreh2DkF9TD0OTb0XqiZl9NxIxv/BA6mew=
+
+Name: com/microsoft/azure/cosmosdb/class-use/PartitionKeyRange.html
+SHA-256-Digest: NJMwfqP3oVcti55c829QKA4YwpegmbC91Ogsn5rCRm0=
+
+Name: com/microsoft/azure/cosmosdb/class-use/FeedOptions.html
+SHA-256-Digest: AxiE+CmO0lla2SREf4xNjJaltKxA2QFFIQ/yZPQ78pw=
+
+Name: com/microsoft/azure/cosmosdb/DocumentCollection.html
+SHA-256-Digest: 1Jnj4kUq3M8e3TzX7+mX/LZqkyGyce6Nl7SSPZMjax4=
+
+Name: com/microsoft/azure/cosmosdb/class-use/FeedOptionsBase.html
+SHA-256-Digest: hNYh6Zyt7fmw3p8h5m0iPKL1yzxw1ois01tlBA5qf6w=
+
+Name: com/microsoft/azure/cosmosdb/DatabaseAccount.html
+SHA-256-Digest: 2/NckO4a1HUghhGxPzpg4bXo1g3/WB4b75zz89PRZXo=
+
+Name: com/microsoft/azure/cosmosdb/ResourceResponse.html
+SHA-256-Digest: 52jFX0WLBo9g1BoGUAscl0G3ereQFSpTP1D2vkuIsNk=
+
+Name: com/microsoft/azure/cosmosdb/SqlParameter.html
+SHA-256-Digest: C7yWuLdhMnLhoSMUNVXvt7tsml7oRWyU2RDlppsQbSc=
+
+Name: index.html
+SHA-256-Digest: 6YLNsAXrQQBS8jqFME0e1HQYyg5aHQTStW6jHdFL7qg=
+
+Name: com/microsoft/azure/cosmosdb/Attachment.html
+SHA-256-Digest: Y8Idl5YCzevc5jp8QXAkIxUCr97WCEAx2OeKHigdOHY=
+
+Name: com/microsoft/azure/cosmosdb/ExcludedPath.html
+SHA-256-Digest: KnPkbmyndoZmjuykV56Omv4ODVYDCjcmq7nMjLz0x7E=
+
+Name: com/microsoft/azure/cosmosdb/class-use/ExcludedPath.html
+SHA-256-Digest: B2eEqUs1N7EA4uxvC9ipZyPEELpaBpPvcysvr+6LhL4=
+
+Name: com/microsoft/azure/cosmosdb/PermissionMode.html
+SHA-256-Digest: zk4uHdRf9JxC0SF9HsLUhPyLwYXo7REsqf6uRbOrQZQ=
+
+Name: com/microsoft/azure/cosmosdb/rx/class-use/AsyncDocumentClient.ht
+ ml
+SHA-256-Digest: ZvftSvK2k38/2FmHUJKSSvLWdPkIuFUYbglx0xsrbzs=
+
+Name: com/microsoft/azure/cosmosdb/class-use/SqlParameter.html
+SHA-256-Digest: y8m7kTIqqdfnwNJksJPeTZ1snFUsFTvZ+n/wiA4NJa8=
+
+Name: com/microsoft/azure/cosmosdb/ConnectionPolicy.html
+SHA-256-Digest: mest9ZtwK1xepcEt8flRLyfM/Dtn4QUJFz+mec0v95w=
+
+Name: com/microsoft/azure/cosmosdb/rx/package-frame.html
+SHA-256-Digest: nL7KZChcP7RViWlhtci2hoq+5K8TECX+MEE/XWiqGHE=
+
+Name: package-list
+SHA-256-Digest: IgOPbD6DxBhjyTv5su2PgEPnTji8iFfi1VxWL/znwic=
+
+Name: com/microsoft/azure/cosmosdb/class-use/MediaOptions.html
+SHA-256-Digest: Yp4fVNDBU9jkr0yPhkkSK1xyZMZwndxotwWJwf5YMog=
+
+Name: com/microsoft/azure/cosmosdb/class-use/PartitionKey.html
+SHA-256-Digest: 7zYcWTUXFWO8LGMJiCE8645ZEah1hU1w1JnmPbTUhN8=
+
+Name: com/microsoft/azure/cosmosdb/User.html
+SHA-256-Digest: SpwjT2Qwp/Abd1oRDa1DXISs1kpcRgveTlj9q4vu+Jk=
+
+Name: com/microsoft/azure/cosmosdb/StoredProcedureResponse.html
+SHA-256-Digest: 8bY6pU7aKeXNNpPRsfQ+8aYrpJHXy0uHdyUeaecmYZ0=
+
+Name: com/microsoft/azure/cosmosdb/class-use/Error.html
+SHA-256-Digest: YAlkGeoeprzWLW0n0EcGzC2YGNDlhzArQOjeoU/1gFI=
+
+Name: com/microsoft/azure/cosmosdb/rx/package-tree.html
+SHA-256-Digest: wr70E/puB9pmORnLDNST22dfCFr2B2Nkx1uglb9JycM=
+
+Name: script.js
+SHA-256-Digest: nJwDr+aQIKCr6lA9u+r9q199SUJpGEpnleeAlR4khjk=
+
+Name: com/microsoft/azure/cosmosdb/class-use/ChangeFeedOptions.html
+SHA-256-Digest: tR6A/WTGpHaiR1yaB55HD9N1TMDoXyqh5JIiySU/fI4=
+
+Name: com/microsoft/azure/cosmosdb/class-use/Document.html
+SHA-256-Digest: sMbh2/Bxi2lJrSWh7OKq5JWinXN1fT94jA6VW9gQoyo=
+
+Name: com/microsoft/azure/cosmosdb/class-use/IndexKind.html
+SHA-256-Digest: aZ5hEjZ2gVOwYpJYnZrEzPNux42hcD3VhGIyil4Sa0Q=
+
+Name: com/microsoft/azure/cosmosdb/rx/AsyncDocumentClient.html
+SHA-256-Digest: aljpEOeu5wkXv919tnqw9fw07mYsnVbdAe+jTGq15sc=
+
+Name: com/microsoft/azure/cosmosdb/rx/package-summary.html
+SHA-256-Digest: NyxTLY6q90E68I7aGH/LW5cQQAHguiHJUm3ILT3ukOU=
+
+Name: overview-frame.html
+SHA-256-Digest: aqv/5BcbI+KLvhXuUD7LurruXuzPeBa4wjCt1FXPbz4=
+
+Name: com/microsoft/azure/cosmosdb/class-use/Attachment.html
+SHA-256-Digest: l96cJYgNN7t7r39ly8yPpOnsBDFbfCZ5ijjFAzQfsFo=
+
+Name: com/microsoft/azure/cosmosdb/class-use/Conflict.html
+SHA-256-Digest: bvmsO/QIvdav3yUJtMgXze/exiKh7c1wMq23w4xgQpc=
+
+Name: com/microsoft/azure/cosmosdb/Error.html
+SHA-256-Digest: W3yrR62jWarwgmCl2Bh+9bL7IQZ4zRKGno3FtoEzal8=
+
+Name: com/microsoft/azure/cosmosdb/class-use/DocumentClientException.h
+ tml
+SHA-256-Digest: YsiJmUumE68uvwTdk/ILq3BMvlRtY8oN5zaOdJkB360=
+
+Name: com/microsoft/azure/cosmosdb/class-use/FeedResponse.html
+SHA-256-Digest: 3HnaZV3sNyGlrg3Byn0cGiesdewmCZE/bOLamgoQdh4=
+
+Name: com/microsoft/azure/cosmosdb/IndexingPolicy.html
+SHA-256-Digest: 4TJmKaw2pkaYPmNtVjyGxrO9ftVGtoBc+3h1KfnH440=
+
+Name: com/microsoft/azure/cosmosdb/Conflict.html
+SHA-256-Digest: WQcCZX5DTW+FlEfJ8y+JHfw68EcwyBDHdEBXA65Hmc4=
+
+Name: com/microsoft/azure/cosmosdb/class-use/JsonSerializable.html
+SHA-256-Digest: vOSUF/fGr3gnCyh/J8bUxzd8URrdt74xgLXOaUCR8h8=
+
+Name: index-all.html
+SHA-256-Digest: cpw4whHPXFPo/7OvGdK1Qa4UXzlDgPU9a44jkwyYLp4=
+
+Name: com/microsoft/azure/cosmosdb/AccessCondition.html
+SHA-256-Digest: bA27Q0kvKvRB8LpjK9rzMx4AZ7rodme1CZeybSddGBE=
+
+Name: com/microsoft/azure/cosmosdb/ChangeFeedOptions.html
+SHA-256-Digest: Y4n2nt6CyVOwn40XKigTuStjmUw84+Ncp5slU0T5mI0=
+
+Name: com/microsoft/azure/cosmosdb/class-use/DataType.html
+SHA-256-Digest: OKKuOA5fZASXHuwFszZje0fcm1hTh0+AN61Q30nFvzY=
+
+Name: com/microsoft/azure/cosmosdb/Index.html
+SHA-256-Digest: bUo1LqpD1EnSmIQYe280XRzNndYGImeJl1yFZg1q+y8=
+
+Name: com/microsoft/azure/cosmosdb/SqlParameterCollection.html
+SHA-256-Digest: wj3te8ZpO6gIxlk4+CoSOU97ptyentTYu5lUiqbDsbk=
+
+Name: com/microsoft/azure/cosmosdb/class-use/IndexingPolicy.html
+SHA-256-Digest: graOGxo3JXdP8BLGkXPZaLA5MRNcYGkru+Aj+F0eIpw=
+
+Name: serialized-form.html
+SHA-256-Digest: weyslANXwpJidmrxeoWx5OVTYl8yDREgP7iWKnVYHuk=
+
+Name: com/microsoft/azure/cosmosdb/class-use/RetryOptions.html
+SHA-256-Digest: Bxlw0KlLy1VuP6G9j7o2WCZUynmhAM0/1KVq8kiB4/g=
+
+Name: help-doc.html
+SHA-256-Digest: M8ZgJKEmFTE7KIggKddEKflJpb42mIlAAteuD9XFJLk=
+
+Name: com/microsoft/azure/cosmosdb/rx/AsyncDocumentClient.Builder.html
+SHA-256-Digest: VQ1I49i79QMFGDDLfnf9Li+a9VrkIdbArLjoy/eXN+c=
+
+Name: com/microsoft/azure/cosmosdb/package-frame.html
+SHA-256-Digest: pCh1TQU/PWuw+ebUhP1EzS5ot+KuuLcm+5MElHxX/9U=
+
+Name: com/microsoft/azure/cosmosdb/class-use/SqlParameterCollection.ht
+ ml
+SHA-256-Digest: o2cQX4UC0QHqHR5LnBzes0smRd0Fupwjrcz4hyBFCAM=
+
+Name: com/microsoft/azure/cosmosdb/TriggerType.html
+SHA-256-Digest: iNN6rWZauJCPGKXzTKpuCYavNexF9uUdWJErj0CJQyo=
+
+Name: com/microsoft/azure/cosmosdb/rx/class-use/AsyncDocumentClient.Bu
+ ilder.html
+SHA-256-Digest: eOXncazfW/CnFnilSzLqhei7qBDBXMGsvb3qwOoo8os=
+
+Name: com/microsoft/azure/cosmosdb/class-use/ConsistencyPolicy.html
+SHA-256-Digest: gJwAM5GWgapDVijZ3AvNc3RIdS22llSPwPVePyz2tcg=
+
+Name: com/microsoft/azure/cosmosdb/TriggerOperation.html
+SHA-256-Digest: c5TkdQzqA6Pt5vZgn2EX2pVNeuOqu1xapgmnwxVQ3/w=
+
+Name: com/microsoft/azure/cosmosdb/class-use/TriggerType.html
+SHA-256-Digest: iW1Eewj8SmeYLcz2E5zzCR/DET9lI6hNRi/QOqWvARQ=
+
+Name: overview-tree.html
+SHA-256-Digest: xVE2pw54GoyVBJpxz6fRj8QgI+kryyWtY8MSLWgyEX4=
+
+Name: com/microsoft/azure/cosmosdb/BridgeInternal.html
+SHA-256-Digest: DfpdOxvMCo7b7NN0pYvP9g7i1Bp9FGAdPttQZl7HHaI=
+
+Name: com/microsoft/azure/cosmosdb/class-use/ConnectionPolicy.html
+SHA-256-Digest: nl7OoSpywXqdQXT93WdKunx1autRgoqsXtGUTxgXTzI=
+
+Name: com/microsoft/azure/cosmosdb/RequestOptions.html
+SHA-256-Digest: 2ACy2yvpyaW1HWwCz57wMOVvkzHrQgOU/+JwyKyOQWU=
+
+Name: com/microsoft/azure/cosmosdb/class-use/IncludedPath.html
+SHA-256-Digest: 57h/vcV3mRbMkbLG8ck6sRl1PSI/HSdoYQ0+K0VRUDQ=
+
+Name: com/microsoft/azure/cosmosdb/class-use/Trigger.html
+SHA-256-Digest: nYMqwfHUXM5pQs7oiQCwn9kqr/9OLyKfPZ/lhuluDVM=
+
+Name: com/microsoft/azure/cosmosdb/Resource.html
+SHA-256-Digest: RmVlMt6htIiJWa1rY4VULoBdMD03yr7vRs7uVRkpXQE=
+
+Name: com/microsoft/azure/cosmosdb/class-use/PartitionKind.html
+SHA-256-Digest: 0/oJjeLnGVhBeALH0gkQpGBkIFJnp1NDWB0MeHO1IXk=
+
+Name: com/microsoft/azure/cosmosdb/HashIndex.html
+SHA-256-Digest: 1kesPfJA1J0YevOyoO/JsuUcG40N5kJTzOVi1libv4E=
+
+Name: com/microsoft/azure/cosmosdb/IndexingDirective.html
+SHA-256-Digest: 9VdvnDGQH3IUx6YpwQXAp99DEtRm3aeMccmbSYCyTPg=
+
+Name: com/microsoft/azure/cosmosdb/class-use/StoredProcedureResponse.h
+ tml
+SHA-256-Digest: jQxChZki8nalCFiw1gXAkc6XeOaTFNY3DOaep+n5S8U=
+
+Name: com/microsoft/azure/cosmosdb/class-use/ReplicationPolicy.html
+SHA-256-Digest: 3gan7GZQMNtxFjFqnm1magBMr/GvdNVTb+bTxDeo6mc=
+
+Name: com/microsoft/azure/cosmosdb/IndexKind.html
+SHA-256-Digest: wInBZWkexFgNSjVYX5NeZ8C4RtZMY4sOotH/bG/IK8s=
+
+Name: com/microsoft/azure/cosmosdb/FeedResponse.html
+SHA-256-Digest: 6B93DdXVTcyvQkRTKPAjuXoZ5H8ll8pPyJ3/yY1S1FM=
+
