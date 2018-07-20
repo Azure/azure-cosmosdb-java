@@ -45,7 +45,7 @@
     <log4j.version>1.2.17</log4j.version>
     <netty.version>4.1.22.Final</netty.version>
     <rxnetty.version>0.4.20</rxnetty.version>
-    <rxjava.version>1.3.3</rxjava.version>
+    <rxjava.version>1.3.0</rxjava.version>
     <rxjava-extras.version>0.8.0.17</rxjava-extras.version>
     <testng.version>6.8.8</testng.version>
     <assertj.version>3.9.1</assertj.version>
