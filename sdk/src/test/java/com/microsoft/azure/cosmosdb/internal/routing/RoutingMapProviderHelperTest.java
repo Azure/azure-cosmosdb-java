@@ -24,6 +24,7 @@
 package com.microsoft.azure.cosmosdb.internal.routing;
 
 import com.microsoft.azure.cosmosdb.PartitionKeyRange;
+import com.microsoft.azure.cosmosdb.Resource;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.testng.annotations.Test;
@@ -101,12 +102,7 @@ public class RoutingMapProviderHelperTest {
                         new Range<String>("000E", "000F", true, false), new Range<String>("000F", "0010", true, true),
                         new Range<String>("0015", "0015", true, true)));
 
-        Function<PartitionKeyRange, String> func = new Function<PartitionKeyRange, String>() {
-            @Override
-            public String apply(PartitionKeyRange range) {
-                return range.getId();
-            }
-        };
+        Function<PartitionKeyRange, String> func = Resource::getId;
 
         assertThat("1,2,4").isEqualTo(ranges.stream().map(func).collect(Collectors.joining(",")));
 

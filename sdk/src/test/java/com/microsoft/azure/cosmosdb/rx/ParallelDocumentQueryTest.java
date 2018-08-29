@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.microsoft.azure.cosmosdb.Resource;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
@@ -93,7 +94,7 @@ public class ParallelDocumentQueryTest extends TestSuiteBase {
 
         FeedResponseListValidator<Document> validator = new FeedResponseListValidator.Builder<Document>()
                 .totalSize(expectedDocs.size())
-                .exactlyContainsInAnyOrder(expectedDocs.stream().map(d -> d.getResourceId()).collect(Collectors.toList()))
+                .exactlyContainsInAnyOrder(expectedDocs.stream().map(Resource::getResourceId).collect(Collectors.toList()))
                 .allPagesSatisfy(new FeedResponseValidator.Builder<Document>()
                         .requestChargeGreaterThanOrEqualTo(1.0).build())
                 .build();
@@ -136,7 +137,7 @@ public class ParallelDocumentQueryTest extends TestSuiteBase {
                 .Builder<Document>()
                 .containsExactly(expectedDocs
                         .stream()
-                        .map(d -> d.getResourceId())
+                        .map(Resource::getResourceId)
                         .collect(Collectors.toList()))
                 .numberOfPages((expectedDocs.size() + 1) / 3)
                 .allPagesSatisfy(new FeedResponseValidator.Builder<Document>()
@@ -182,7 +183,7 @@ public class ParallelDocumentQueryTest extends TestSuiteBase {
         int sum = 0;
         for(String partitionKeyRangeId: client.readPartitionKeyRanges(getCollectionLink(), null)
                 .flatMap(p -> Observable.from(p.getResults()))
-                .map(pkr -> pkr.getId()).toList().toBlocking().single()) {
+                .map(Resource::getId).toList().toBlocking().single()) {
             String query = "SELECT * from root";
             FeedOptions options = new FeedOptions();
             options.setPartitionKeyRangeIdInternal(partitionKeyRangeId);

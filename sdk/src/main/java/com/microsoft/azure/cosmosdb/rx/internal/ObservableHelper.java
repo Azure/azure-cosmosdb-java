@@ -49,9 +49,7 @@ public class ObservableHelper {
 
         if (retryPolicy == null) {
             // shortcut
-            return Observable.defer(() -> {
-                return function.call();
-            });
+            return Observable.defer(function::call);
 
         } else {
             return BackoffRetryUtility.executeRetry(() -> function.call().toSingle(), retryPolicy).toObservable();

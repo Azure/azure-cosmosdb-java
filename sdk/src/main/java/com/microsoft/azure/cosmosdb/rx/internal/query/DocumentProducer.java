@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.microsoft.azure.cosmosdb.JsonSerializable;
 import com.microsoft.azure.cosmosdb.rx.internal.IDocumentClientRetryPolicy;
 import com.microsoft.azure.cosmosdb.rx.internal.IRetryPolicyFactory;
 import com.microsoft.azure.cosmosdb.rx.internal.ObservableHelper;
@@ -138,7 +139,7 @@ class DocumentProducer<T extends Resource> {
                     return rsp;
                 });
 
-        return splitProof(obs.map(page -> new DocumentProducerFeedResponse(page)));
+        return splitProof(obs.map(DocumentProducerFeedResponse::new));
     }
 
     private Observable<DocumentProducerFeedResponse> splitProof(Observable<DocumentProducerFeedResponse> sourceFeedResponseObservable) {
@@ -161,7 +162,7 @@ class DocumentProducer<T extends Resource> {
                                     + " last continuation token is [{}].",
                                     targetRange.toJson(),
                                     String.join(", ", partitionKeyRanges.stream()
-                                            .map(pkr -> pkr.toJson()).collect(Collectors.toList())),
+                                            .map(JsonSerializable::toJson).collect(Collectors.toList())),
                                     lastResponseContinuationToken);
                         }
                         return Observable.from(createReplacingDocumentProducersOnSplit(partitionKeyRanges));
@@ -172,7 +173,7 @@ class DocumentProducer<T extends Resource> {
     }
 
     protected Observable<DocumentProducerFeedResponse> produceOnSplit(Observable<DocumentProducer<T>> replacingDocumentProducers) {
-        return replacingDocumentProducers.flatMap(dp -> dp.produceAsync(), 1);
+        return replacingDocumentProducers.flatMap(DocumentProducer::produceAsync, 1);
     }
 
     private List<DocumentProducer<T>> createReplacingDocumentProducersOnSplit(List<PartitionKeyRange> partitionKeyRanges) {

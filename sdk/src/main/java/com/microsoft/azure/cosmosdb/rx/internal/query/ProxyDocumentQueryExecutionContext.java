@@ -144,7 +144,7 @@ public class ProxyDocumentQueryExecutionContext<T extends Resource> implements I
                             this.collection.getResourceId(),
                             this.correlatedActivityId));
 
-            return exContext.flatMap(context -> context.executeAsync());
+            return exContext.flatMap(IDocumentQueryExecutionContext::executeAsync);
         };
 
         return this.innerExecutionContext.executeAsync().onErrorResumeNext(func);

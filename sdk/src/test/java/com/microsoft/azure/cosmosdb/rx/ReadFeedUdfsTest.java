@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.microsoft.azure.cosmosdb.Resource;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
@@ -72,7 +73,7 @@ public class ReadFeedUdfsTest extends TestSuiteBase {
                 .totalSize(createdUserDefinedFunctions.size())
                 .exactlyContainsInAnyOrder(createdUserDefinedFunctions
                         .stream()
-                        .map(d -> d.getResourceId())
+                        .map(Resource::getResourceId)
                         .collect(Collectors.toList()))
                 .numberOfPages(expectedPageSize)
                 .allPagesSatisfy(new FeedResponseValidator.Builder<UserDefinedFunction>()

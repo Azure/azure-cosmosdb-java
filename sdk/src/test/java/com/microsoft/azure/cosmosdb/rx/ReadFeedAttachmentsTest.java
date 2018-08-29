@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.microsoft.azure.cosmosdb.Resource;
 import org.apache.commons.io.IOUtils;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -89,7 +90,7 @@ public class ReadFeedAttachmentsTest extends TestSuiteBase {
                 .totalSize(createdAttachments.size())
                 .exactlyContainsInAnyOrder(createdAttachments
                         .stream()
-                        .map(d -> d.getResourceId())
+                        .map(Resource::getResourceId)
                         .collect(Collectors.toList()))
                 .numberOfPages(expectedPageSize)
                 .allPagesSatisfy(new FeedResponseValidator.Builder<Attachment>()

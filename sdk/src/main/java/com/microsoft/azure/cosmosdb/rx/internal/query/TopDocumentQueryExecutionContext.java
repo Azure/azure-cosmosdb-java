@@ -43,9 +43,7 @@ public class TopDocumentQueryExecutionContext <T extends Resource> implements ID
     public static <T extends Resource>  Observable<IDocumentQueryExecutionComponent<T>> createAsync(
             Observable<IDocumentQueryExecutionComponent<T>> observableComponent, int top) {
 
-        return observableComponent.map( component -> {
-           return new TopDocumentQueryExecutionContext<T>(component, top);
-        });
+        return observableComponent.map( component -> new TopDocumentQueryExecutionContext<T>(component, top));
     }
 
     @Override

@@ -29,6 +29,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
+import com.microsoft.azure.cosmosdb.Resource;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -115,7 +116,7 @@ public class ChangeFeedTest extends TestSuiteBase {
     public void changesFromParitionKeyRangeId_FromBeginning() throws Exception {
         List<String> partitionKeyRangeIds = client.readPartitionKeyRanges(getCollectionLink(), null)
                 .flatMap(p -> Observable.from(p.getResults()), 1)
-                .map(pkr -> pkr.getId())
+                .map(Resource::getId)
                 .toList()
                 .toBlocking()
                 .single();
@@ -209,7 +210,7 @@ public class ChangeFeedTest extends TestSuiteBase {
             result.add(client.createDocument("dbs/" + createdDatabase.getId() + "/colls/" + createdCollection.getId(), docs.get(i), null, false));
         }
 
-        return Observable.merge(result, 100).map(r -> r.getResource()).toList().toBlocking().single();
+        return Observable.merge(result, 100).map(ResourceResponse::getResource).toList().toBlocking().single();
     }
 
     @AfterMethod(groups = { "simple" }, timeOut = SETUP_TIMEOUT)

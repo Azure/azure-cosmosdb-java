@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.microsoft.azure.cosmosdb.Resource;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
@@ -72,7 +73,7 @@ public class ReadFeedPermissionsTest extends TestSuiteBase {
         FeedResponseListValidator<Permission> validator = new FeedResponseListValidator.Builder<Permission>()
                 .totalSize(createdPermissions.size())
                 .numberOfPages(expectedPageSize)
-                .exactlyContainsInAnyOrder(createdPermissions.stream().map(d -> d.getResourceId()).collect(Collectors.toList()))
+                .exactlyContainsInAnyOrder(createdPermissions.stream().map(Resource::getResourceId).collect(Collectors.toList()))
                 .allPagesSatisfy(new FeedResponseValidator.Builder<Permission>()
                         .requestChargeGreaterThanOrEqualTo(1.0).build())
                 .build();

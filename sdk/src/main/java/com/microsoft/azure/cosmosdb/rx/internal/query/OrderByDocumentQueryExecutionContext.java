@@ -38,6 +38,7 @@ import com.microsoft.azure.cosmosdb.internal.RequestChargeTracker;
 import com.microsoft.azure.cosmosdb.internal.ResourceType;
 import com.microsoft.azure.cosmosdb.internal.query.PartitionedQueryExecutionInfo;
 import com.microsoft.azure.cosmosdb.internal.query.SortOrder;
+import com.microsoft.azure.cosmosdb.internal.query.orderbyquery.OrderByRowResult;
 import com.microsoft.azure.cosmosdb.internal.query.orderbyquery.OrderbyRowComparer;
 import com.microsoft.azure.cosmosdb.internal.routing.Range;
 import com.microsoft.azure.cosmosdb.rx.internal.IDocumentClientRetryPolicy;
@@ -138,7 +139,7 @@ public class OrderByDocumentQueryExecutionContext<T extends Resource> extends Pa
 
         tracker = new RequestChargeTracker();
         orderByObservable = OrderByUtils.orderedMerge(resourceType, consumeComparer, tracker, documentProducers)
-                .map(orderByQueryResult -> orderByQueryResult.getPayload());
+                .map(OrderByRowResult::getPayload);
     }
     
     protected OrderByDocumentProducer<T> createDocumentProducer(
@@ -186,7 +187,7 @@ public class OrderByDocumentQueryExecutionContext<T extends Resource> extends Pa
                     // .windows: creates an observable of observable where inner observable
                     // emits max maxPageSize elements 
                     .window(maxPageSize)
-                    .map(o -> o.toList())
+                    .map(Observable::toList)
                     // flattens the observable<Observable<List<T>>> to Observable<List<T>>
                     .flatMap(resultListObs -> resultListObs, 1)
                     // translates Observable<List<T>> to Observable<FeedResponsePage<T>>>

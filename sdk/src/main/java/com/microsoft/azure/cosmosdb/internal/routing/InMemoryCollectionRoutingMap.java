@@ -75,7 +75,7 @@ public class InMemoryCollectionRoutingMap<TPartitionInfo> implements CollectionR
             sortedRanges.add(pair);
         }
 
-        Collections.sort(sortedRanges, new MinPartitionKeyPairComparator<TPartitionInfo>());
+        sortedRanges.sort(new MinPartitionKeyPairComparator<>());
 
         List<PartitionKeyRange> orderedPartitionKeyRanges = new ArrayList<PartitionKeyRange>(sortedRanges.size());
         List<TPartitionInfo> orderedPartitionInfo = new ArrayList<TPartitionInfo>(sortedRanges.size());

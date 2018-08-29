@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.microsoft.azure.cosmosdb.Resource;
 import org.apache.commons.lang3.StringUtils;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -81,7 +82,7 @@ public class CollectionQueryTest extends TestSuiteBase {
 
         FeedResponseListValidator<DocumentCollection> validator = new FeedResponseListValidator.Builder<DocumentCollection>()
                 .totalSize(expectedCollections.size())
-                .exactlyContainsInAnyOrder(expectedCollections.stream().map(d -> d.getResourceId()).collect(Collectors.toList()))
+                .exactlyContainsInAnyOrder(expectedCollections.stream().map(Resource::getResourceId).collect(Collectors.toList()))
                 .numberOfPages(expectedPageSize)
                 .pageSatisfy(0, new FeedResponseValidator.Builder<DocumentCollection>()
                         .requestChargeGreaterThanOrEqualTo(1.0).build())
@@ -108,7 +109,7 @@ public class CollectionQueryTest extends TestSuiteBase {
 
         FeedResponseListValidator<DocumentCollection> validator = new FeedResponseListValidator.Builder<DocumentCollection>()
                 .totalSize(expectedCollections.size())
-                .exactlyContainsInAnyOrder(expectedCollections.stream().map(d -> d.getResourceId()).collect(Collectors.toList()))
+                .exactlyContainsInAnyOrder(expectedCollections.stream().map(Resource::getResourceId).collect(Collectors.toList()))
                 .numberOfPages(expectedPageSize)
                 .pageSatisfy(0, new FeedResponseValidator.Builder<DocumentCollection>()
                         .requestChargeGreaterThanOrEqualTo(1.0).build())

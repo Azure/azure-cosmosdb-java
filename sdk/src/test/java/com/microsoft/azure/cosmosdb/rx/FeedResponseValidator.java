@@ -124,7 +124,7 @@ public interface FeedResponseValidator<T extends Resource> {
                 public void validate(FeedResponse<T> feedPage) {
                     assertThat(feedPage
                             .getResults().stream()
-                            .map(r -> r.getResourceId())
+                            .map(Resource::getResourceId)
                             .collect(Collectors.toList()))
                             .containsExactlyElementsOf(expectedIds);
                 }
