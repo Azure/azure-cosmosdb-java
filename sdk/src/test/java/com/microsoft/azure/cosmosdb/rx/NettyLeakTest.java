@@ -4,6 +4,8 @@ import com.microsoft.azure.cosmosdb.*;
 import io.netty.util.ResourceLeakDetector;
 import io.netty.util.ResourceLeakDetectorFactory;
 import io.netty.util.internal.PlatformDependent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
@@ -12,10 +14,7 @@ import rx.Observable;
 import rx.observers.TestSubscriber;
 
 import java.lang.reflect.Field;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -24,6 +23,7 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class NettyLeakTest extends TestSuiteBase {
+    private static final Logger log = LoggerFactory.getLogger(NettyLeakTest.class);
     private final static String DATABASE_ID = getDatabaseId();
 
     private final static String USE_EXISTING_DB = "cosmosdb.useExistingDB";
@@ -31,8 +31,15 @@ public class NettyLeakTest extends TestSuiteBase {
     private final static String COLL_NAME = "activations";
 
     private static final int INVOCATION_COUNT = 200;
+    private static final long ATTR_START = 1542890298107L;
+    private static final int START_RANGE = (int)TimeUnit.DAYS.toMillis(7);
+
+    private static final int TEST_DATA_COUNT = 50000;
+    private static final int INSERT_BATCH_SIZE = 1000;
+    private static final long TEST_TIMEOUT = 3600 * 1000;
 
 
+    private Random rnd = new Random(42);
     private Database createdDatabase;
     private DocumentCollection createdCollection;
 
@@ -45,12 +52,12 @@ public class NettyLeakTest extends TestSuiteBase {
         this.clientBuilder = clientBuilder;
     }
 
-    @Test(groups = {"simple"}, timeOut = 3600 * 1000, invocationCount = INVOCATION_COUNT, threadPoolSize = 5, invocationTimeOut = 3600 * 1000)
+    @Test(groups = {"simple"}, timeOut = TEST_TIMEOUT, invocationCount = INVOCATION_COUNT, threadPoolSize = 5, invocationTimeOut = TEST_TIMEOUT)
     public void queryDocumentsSortedManyTimes() {
         queryAndLog(true);
     }
 
-    @Test(groups = {"simple"}, timeOut = 3600 * 1000, invocationCount = INVOCATION_COUNT, threadPoolSize = 5, invocationTimeOut = 3600 * 1000)
+    @Test(groups = {"simple"}, timeOut = TEST_TIMEOUT, invocationCount = INVOCATION_COUNT, threadPoolSize = 5, invocationTimeOut = TEST_TIMEOUT)
     public void queryDocumentsUnSortedManyTimes() {
         queryAndLog(false);
     }
@@ -86,15 +93,15 @@ public class NettyLeakTest extends TestSuiteBase {
         if (sorted) {
             query += " ORDER BY r.start DESC";
         }
-        long start = Instant.now().minus(5, ChronoUnit.DAYS).toEpochMilli();
+        long start = ATTR_START + START_RANGE / 2;
         SqlParameterCollection coll = new SqlParameterCollection(new SqlParameter("@start", start));
         return new SqlQuerySpec(query, coll);
     }
 
-    @BeforeClass(groups = {"simple"}, timeOut = SETUP_TIMEOUT)
+    @BeforeClass(groups = {"simple"}, timeOut = TEST_TIMEOUT)
     public void beforeClass() throws Exception {
         RecordingLeakDetectorFactory.register();
-        //ResourceLeakDetector.setLevel(ResourceLeakDetector.Level.PARANOID);
+        ResourceLeakDetector.setLevel(ResourceLeakDetector.Level.PARANOID);
         client = clientBuilder.build();
 
         if (useExistingDB()) {
@@ -106,20 +113,135 @@ public class NettyLeakTest extends TestSuiteBase {
             createdDatabase = safeCreateDatabase(client, d);
             RequestOptions options = new RequestOptions();
             options.setOfferThroughput(10100);
-            createdCollection = createCollection(client, createdDatabase.getId(), getCollectionDefinition(), options);
+            createdCollection = createCollection(client, createdDatabase.getId(), getTestCollectionDefinition(), options);
+            log.info("Seeding database with {} records", TEST_DATA_COUNT);
+            bulkInsertInBatch(client, TEST_DATA_COUNT);
+            log.info("Created db with {} records", TEST_DATA_COUNT);
         }
     }
 
     @AfterClass(groups = {"simple"}, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)
     public void afterClass() {
         if (!useExistingDB()) {
-            safeDeleteDatabase(client, createdDatabase.getId());
+            //safeDeleteDatabase(client, createdDatabase.getId());
         }
         safeClose(client);
     }
 
     private String getCollectionLink() {
         return Utils.getCollectionNameLink(createdDatabase.getId(), createdCollection.getId());
+    }
+
+    /**
+     * Creates a collection with 'id' as partition key and an ordered index on 'start' key
+     */
+    private DocumentCollection getTestCollectionDefinition() {
+        PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition();
+        ArrayList<String> paths = new ArrayList<>();
+        paths.add("/id");
+        partitionKeyDef.setPaths(paths);
+        IndexingPolicy indexingPolicy = new IndexingPolicy();
+
+        Collection<IncludedPath> includedPaths = new ArrayList<>();
+        IncludedPath includedPath = new IncludedPath();
+        includedPath.setPath("/start/?");
+        Collection<Index> indexes = new ArrayList<>();
+
+        Index numberIndex = Index.Range(DataType.Number);
+        numberIndex.set("precision", -1);
+        indexes.add(numberIndex);
+        includedPath.setIndexes(indexes);
+        includedPaths.add(includedPath);
+        indexingPolicy.setIncludedPaths(includedPaths);
+
+        List<ExcludedPath> excludedPaths = new ArrayList<>();
+        ExcludedPath excludedPath = new ExcludedPath();
+        excludedPath.setPath("/");
+        excludedPaths.add(excludedPath);
+        indexingPolicy.setExcludedPaths(excludedPaths);
+
+        DocumentCollection collectionDefinition = new DocumentCollection();
+        collectionDefinition.setIndexingPolicy(indexingPolicy);
+        collectionDefinition.setId(COLL_NAME);
+        collectionDefinition.setPartitionKey(partitionKeyDef);
+
+        return collectionDefinition;
+    }
+
+    private void bulkInsertInBatch(AsyncDocumentClient client, int count) {
+        int batchCount = count / 1000;
+        for (int i = 0; i < batchCount; i++) {
+            bulkInsert(client, INSERT_BATCH_SIZE);
+            int progress = (int)((i + 1) * INSERT_BATCH_SIZE / (double) count * 100);
+            log.info("Inserted batch of {}. {}% done", INSERT_BATCH_SIZE, progress);
+        }
+    }
+
+    private List<Document> bulkInsert(AsyncDocumentClient client, int count) {
+
+        List<Observable<ResourceResponse<Document>>> result = new ArrayList<>(count);
+
+        for (int i = 0; i < count; i++) {
+            Document docDefinition = getDocumentDefinition(i);
+            Observable<ResourceResponse<Document>> obs = client.createDocument(getCollectionLink(), docDefinition, null, false);
+            result.add(obs);
+        }
+
+        return Observable.merge(result, 100).
+                map(resp -> resp.getResource())
+                .toList().toBlocking().single();
+    }
+
+    private Document getDocumentDefinition(int i) {
+        long start = ATTR_START + rnd.nextInt(START_RANGE);
+        String template = "{" +
+                "  'id': '%s'," +
+                "  '_c': {" +
+                "    'deleteLogs': true," +
+                "    'nspath': 'whisk.system/invokerHealthTestAction0'" +
+                "  }," +
+                "  'activationId': '8658e536d85244b098e536d852e4b026'," +
+                "  'annotations': [" +
+                "    {" +
+                "      'key': 'limits'," +
+                "      'value': {" +
+                "        'concurrency': 1," +
+                "        'logs': 10," +
+                "        'memory': 256," +
+                "        'timeout': 60000" +
+                "      }" +
+                "    }," +
+                "    {" +
+                "      'key': 'path'," +
+                "      'value': 'whisk.system/invokerHealthTestAction0'" +
+                "    }," +
+                "    {" +
+                "      'key': 'kind'," +
+                "      'value': 'nodejs:6'" +
+                "    }," +
+                "    {" +
+                "      'key': 'waitTime'," +
+                "      'value': 478995" +
+                "    }" +
+                "  ]," +
+                "  'duration': 14," +
+                "  'end': 1542890298107," +
+                "  'entityType': 'activation'," +
+                "  'logs': []," +
+                "  'name': 'invokerHealthTestAction0'," +
+                "  'namespace': 'whisk.system'," +
+                "  'publish': false," +
+                "  'response': {" +
+                "    'result': {}," +
+                "    'statusCode': 0" +
+                "  }," +
+                "  'start': " + start + "," +
+                "  'subject': 'whisk.system'," +
+                "  'updated': 1542890298113," +
+                "  'version': '0.0.1'," +
+                "}";
+        String json = String.format(template, UUID.randomUUID().toString());
+        return new Document(json);
     }
 
     //~------------------------------------< CosmosDB utility methods >
