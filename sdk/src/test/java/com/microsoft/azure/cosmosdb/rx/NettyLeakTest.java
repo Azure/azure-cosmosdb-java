@@ -177,9 +177,10 @@ public class NettyLeakTest extends TestSuiteBase {
 
     public static class RecordingLeakDetectorFactory extends ResourceLeakDetectorFactory {
         static final AtomicInteger counter = new AtomicInteger();
+
         @Override
         public <T> ResourceLeakDetector<T> newResourceLeakDetector(Class<T> resource, int samplingInterval, long maxActive) {
-            return new RecordingLeakDetector<T>(counter, resource, samplingInterval);
+            return new RecordingLeakDetector<>(counter, resource, samplingInterval);
         }
 
         public static void register() {
@@ -193,7 +194,8 @@ public class NettyLeakTest extends TestSuiteBase {
 
     private static class RecordingLeakDetector<T> extends ResourceLeakDetector<T> {
         private final AtomicInteger counter;
-        public RecordingLeakDetector(AtomicInteger counter, Class<?> resourceType, int samplingInterval) {
+
+        RecordingLeakDetector(AtomicInteger counter, Class<?> resourceType, int samplingInterval) {
             super(resourceType, samplingInterval);
             this.counter = counter;
         }
