@@ -40,39 +40,48 @@ public class NettyLeakTest extends TestSuiteBase {
         this.clientBuilder = clientBuilder;
     }
 
-    @Test(groups = { "simple" }, timeOut = 3600 * 1000, invocationCount = 500, threadPoolSize = 5, invocationTimeOut = 3600 * 1000 )
-    public void queryDocumentsManyTimes() throws Exception {
-        int size = queryDocuments().size();
+    @Test(groups = {"simple"}, timeOut = 3600 * 1000, invocationCount = 500, threadPoolSize = 5, invocationTimeOut = 3600 * 1000)
+    public void queryDocumentsSortedManyTimes() {
+        queryAndLog(true);
+    }
+
+    @Test(groups = {"simple"}, timeOut = 3600 * 1000, invocationCount = 500, threadPoolSize = 5, invocationTimeOut = 3600 * 1000)
+    public void queryDocumentsUnSortedManyTimes() {
+        queryAndLog(false);
+    }
+
+    private void queryAndLog(boolean sorted) {
+        int size = queryDocuments(sorted).size();
         int count = counts.incrementAndGet();
         if (count % 5 == 0) {
             System.out.printf("%d - %d [%d]%n", count, getDirectMemorySize(), size);
         }
     }
 
-    private List<Document> queryDocuments() throws Exception {
-        String query = "SELECT TOP 200 * FROM root r WHERE r.start >= @start ORDER BY r.start DESC";
-        long start = Instant.now().minus(5, ChronoUnit.DAYS).toEpochMilli();
-        SqlParameterCollection coll = new SqlParameterCollection(new SqlParameter("@start", start));
-        SqlQuerySpec spec = new SqlQuerySpec(query, coll);
-
+    private List<Document> queryDocuments(boolean sorted) {
         FeedOptions options = new FeedOptions();
         options.setEnableCrossPartitionQuery(true);
 
-        Observable<FeedResponse<Document>> queryObservable = client.queryDocuments(getCollectionLink(), spec, options);
+        Observable<FeedResponse<Document>> queryObservable = client.queryDocuments(getCollectionLink(), createQuerySpec(sorted), options);
         TestSubscriber<FeedResponse<Document>> testSubscriber = new TestSubscriber<>();
         queryObservable.subscribe(testSubscriber);
-        try {
-            testSubscriber.awaitTerminalEvent(120, TimeUnit.SECONDS);
-        } catch (IllegalStateException ignore) {
-
-        }
-
+        testSubscriber.awaitTerminalEvent(120, TimeUnit.SECONDS);
         testSubscriber.assertNoErrors();
         testSubscriber.assertCompleted();
         return testSubscriber.getOnNextEvents().stream().flatMap(f -> f.getResults().stream()).collect(Collectors.toList());
     }
 
-    @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
+    private SqlQuerySpec createQuerySpec(boolean sorted) {
+        String query = "SELECT TOP 200 * FROM root r WHERE r.start >= @start";
+        if (sorted) {
+            query += " ORDER BY r.start DESC";
+        }
+        long start = Instant.now().minus(5, ChronoUnit.DAYS).toEpochMilli();
+        SqlParameterCollection coll = new SqlParameterCollection(new SqlParameter("@start", start));
+        return new SqlQuerySpec(query, coll);
+    }
+
+    @BeforeClass(groups = {"simple"}, timeOut = SETUP_TIMEOUT)
     public void beforeClass() throws Exception {
         //ResourceLeakDetector.setLevel(ResourceLeakDetector.Level.PARANOID);
         client = clientBuilder.build();
@@ -90,7 +99,7 @@ public class NettyLeakTest extends TestSuiteBase {
         }
     }
 
-    @AfterClass(groups = { "simple" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)
+    @AfterClass(groups = {"simple"}, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)
     public void afterClass() {
         if (!useExistingDB()) {
             safeDeleteDatabase(client, createdDatabase.getId());
@@ -99,10 +108,10 @@ public class NettyLeakTest extends TestSuiteBase {
     }
 
     private static long getDirectMemorySize() {
-        try{
-        Field field = PlatformDependent.class.getDeclaredField("DIRECT_MEMORY_COUNTER");
-        field.setAccessible(true);
-        return ((AtomicLong)field.get(null)).longValue();
+        try {
+            Field field = PlatformDependent.class.getDeclaredField("DIRECT_MEMORY_COUNTER");
+            field.setAccessible(true);
+            return ((AtomicLong) field.get(null)).longValue();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -125,7 +134,7 @@ public class NettyLeakTest extends TestSuiteBase {
     }
 
     private static DocumentCollection getCollection(AsyncDocumentClient client, String databaseLink,
-                                                   String collectionId) {
+                                                    String collectionId) {
         FeedResponse<DocumentCollection> feedResponsePages = client
                 .queryCollections(databaseLink,
                         new SqlQuerySpec("SELECT * FROM root r WHERE r.id=@id",
@@ -139,11 +148,11 @@ public class NettyLeakTest extends TestSuiteBase {
         return feedResponsePages.getResults().get(0);
     }
 
-    private static boolean useExistingDB(){
+    private static boolean useExistingDB() {
         return Boolean.getBoolean(USE_EXISTING_DB);
     }
 
-    private static String getDatabaseId(){
+    private static String getDatabaseId() {
         if (useExistingDB()) {
             return Objects.requireNonNull(System.getProperty(DB_NAME), "Define db name via system property - " + DB_NAME);
         } else {
