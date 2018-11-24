@@ -118,23 +118,11 @@ public class NettyLeakTest extends TestSuiteBase {
         safeClose(client);
     }
 
-    /**
-     * Gets the direct memory size counter maintained by Netty. If there is a leak then this counter
-     * would have an increasing trend
-     */
-    private static long getDirectMemorySize() {
-        try {
-            Field field = PlatformDependent.class.getDeclaredField("DIRECT_MEMORY_COUNTER");
-            field.setAccessible(true);
-            return ((AtomicLong) field.get(null)).longValue();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     private String getCollectionLink() {
         return Utils.getCollectionNameLink(createdDatabase.getId(), createdCollection.getId());
     }
+
+    //~------------------------------------< CosmosDB utility methods >
 
     private static Database getDatabase(AsyncDocumentClient client, String databaseId) {
         FeedResponse<Database> feedResponsePages = client
@@ -172,6 +160,23 @@ public class NettyLeakTest extends TestSuiteBase {
             return Objects.requireNonNull(System.getProperty(DB_NAME), "Define db name via system property - " + DB_NAME);
         } else {
             return getDatabaseId(NettyLeakTest.class);
+        }
+    }
+
+    //~----------------------------------< Netty Utility classes >
+
+
+    /**
+     * Gets the direct memory size counter maintained by Netty. If there is a leak then this counter
+     * would have an increasing trend
+     */
+    private static long getDirectMemorySize() {
+        try {
+            Field field = PlatformDependent.class.getDeclaredField("DIRECT_MEMORY_COUNTER");
+            field.setAccessible(true);
+            return ((AtomicLong) field.get(null)).longValue();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 
