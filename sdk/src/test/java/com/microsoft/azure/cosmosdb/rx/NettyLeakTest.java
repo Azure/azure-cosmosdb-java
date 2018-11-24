@@ -31,12 +31,15 @@ public class NettyLeakTest extends TestSuiteBase {
     private final static String COLL_NAME = "activations";
 
     private static final int INVOCATION_COUNT = 200;
-    private static final long ATTR_START = 1542890298107L;
-    private static final int START_RANGE = (int)TimeUnit.DAYS.toMillis(7);
+
+    //Base value of 'start' key. Set to match our internal data
+    private static final long ATTR_START = 1542197510430L;
+    private static final int START_RANGE = (int)TimeUnit.DAYS.toMillis(5);
 
     private static final int TEST_DATA_COUNT = 50000;
     private static final int INSERT_BATCH_SIZE = 1000;
-    private static final long TEST_TIMEOUT = 3600 * 1000;
+
+    private static final long TEST_TIMEOUT = 3600 * 1000; //Timeout set to 1 hr
 
 
     private Random rnd = new Random(42);
