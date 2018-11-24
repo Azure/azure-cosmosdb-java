@@ -2,6 +2,7 @@ package com.microsoft.azure.cosmosdb.rx;
 
 import com.microsoft.azure.cosmosdb.*;
 import io.netty.util.ResourceLeakDetector;
+import io.netty.util.ResourceLeakDetectorFactory;
 import io.netty.util.internal.PlatformDependent;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -20,12 +21,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 public class NettyLeakTest extends TestSuiteBase {
     private final static String DATABASE_ID = getDatabaseId();
 
     private final static String USE_EXISTING_DB = "cosmosdb.useExistingDB";
     private final static String DB_NAME = "cosmosdb.dbName";
     private final static String COLL_NAME = "activations";
+
+    private static final int INVOCATION_COUNT = 200;
 
 
     private Database createdDatabase;
@@ -40,12 +45,12 @@ public class NettyLeakTest extends TestSuiteBase {
         this.clientBuilder = clientBuilder;
     }
 
-    @Test(groups = {"simple"}, timeOut = 3600 * 1000, invocationCount = 500, threadPoolSize = 5, invocationTimeOut = 3600 * 1000)
+    @Test(groups = {"simple"}, timeOut = 3600 * 1000, invocationCount = INVOCATION_COUNT, threadPoolSize = 5, invocationTimeOut = 3600 * 1000)
     public void queryDocumentsSortedManyTimes() {
         queryAndLog(true);
     }
 
-    @Test(groups = {"simple"}, timeOut = 3600 * 1000, invocationCount = 500, threadPoolSize = 5, invocationTimeOut = 3600 * 1000)
+    @Test(groups = {"simple"}, timeOut = 3600 * 1000, invocationCount = INVOCATION_COUNT, threadPoolSize = 5, invocationTimeOut = 3600 * 1000)
     public void queryDocumentsUnSortedManyTimes() {
         queryAndLog(false);
     }
@@ -55,6 +60,11 @@ public class NettyLeakTest extends TestSuiteBase {
         int count = counts.incrementAndGet();
         if (count % 5 == 0) {
             System.out.printf("%d - %d [%d]%n", count, getDirectMemorySize(), size);
+        }
+
+        if (count == INVOCATION_COUNT) {
+            assertThat(RecordingLeakDetectorFactory.getLeakCount())
+                    .describedAs("reported leak count").isEqualTo(0);
         }
     }
 
@@ -83,6 +93,7 @@ public class NettyLeakTest extends TestSuiteBase {
 
     @BeforeClass(groups = {"simple"}, timeOut = SETUP_TIMEOUT)
     public void beforeClass() throws Exception {
+        RecordingLeakDetectorFactory.register();
         //ResourceLeakDetector.setLevel(ResourceLeakDetector.Level.PARANOID);
         client = clientBuilder.build();
 
@@ -107,6 +118,10 @@ public class NettyLeakTest extends TestSuiteBase {
         safeClose(client);
     }
 
+    /**
+     * Gets the direct memory size counter maintained by Netty. If there is a leak then this counter
+     * would have an increasing trend
+     */
     private static long getDirectMemorySize() {
         try {
             Field field = PlatformDependent.class.getDeclaredField("DIRECT_MEMORY_COUNTER");
@@ -157,6 +172,42 @@ public class NettyLeakTest extends TestSuiteBase {
             return Objects.requireNonNull(System.getProperty(DB_NAME), "Define db name via system property - " + DB_NAME);
         } else {
             return getDatabaseId(NettyLeakTest.class);
+        }
+    }
+
+    public static class RecordingLeakDetectorFactory extends ResourceLeakDetectorFactory {
+        static final AtomicInteger counter = new AtomicInteger();
+        @Override
+        public <T> ResourceLeakDetector<T> newResourceLeakDetector(Class<T> resource, int samplingInterval, long maxActive) {
+            return new RecordingLeakDetector<T>(counter, resource, samplingInterval);
+        }
+
+        public static void register() {
+            ResourceLeakDetectorFactory.setResourceLeakDetectorFactory(new RecordingLeakDetectorFactory());
+        }
+
+        public static int getLeakCount() {
+            return counter.get();
+        }
+    }
+
+    private static class RecordingLeakDetector<T> extends ResourceLeakDetector<T> {
+        private final AtomicInteger counter;
+        public RecordingLeakDetector(AtomicInteger counter, Class<?> resourceType, int samplingInterval) {
+            super(resourceType, samplingInterval);
+            this.counter = counter;
+        }
+
+        @Override
+        protected void reportTracedLeak(String resourceType, String records) {
+            super.reportTracedLeak(resourceType, records);
+            counter.incrementAndGet();
+        }
+
+        @Override
+        protected void reportUntracedLeak(String resourceType) {
+            super.reportUntracedLeak(resourceType);
+            counter.incrementAndGet();
         }
     }
 }
