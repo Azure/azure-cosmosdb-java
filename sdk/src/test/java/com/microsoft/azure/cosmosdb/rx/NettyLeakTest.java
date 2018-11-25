@@ -67,12 +67,15 @@ public class NettyLeakTest extends TestSuiteBase {
 
     private void queryAndLog(boolean sorted) {
         int size = queryDocuments(sorted).size();
-        int count = counts.incrementAndGet();
+        int count = counts.getAndIncrement();
+        if (count == 0) {
+            System.out.printf("==> Query Count - Direct Memory Counter [Query Result Count]%n");
+        }
         if (count % 5 == 0) {
-            System.out.printf("%d - %d [%d]%n", count, getDirectMemorySize(), size);
+            System.out.printf("==> %3d - %d [%d]%n", count, getDirectMemorySize(), size);
         }
 
-        if (count == INVOCATION_COUNT) {
+        if (count == INVOCATION_COUNT - 1) {
             assertThat(RecordingLeakDetectorFactory.getLeakCount())
                     .describedAs("reported leak count").isEqualTo(0);
         }
@@ -104,7 +107,7 @@ public class NettyLeakTest extends TestSuiteBase {
     @BeforeClass(groups = {"simple"}, timeOut = TEST_TIMEOUT)
     public void beforeClass() throws Exception {
         RecordingLeakDetectorFactory.register();
-        ResourceLeakDetector.setLevel(ResourceLeakDetector.Level.PARANOID);
+        //ResourceLeakDetector.setLevel(ResourceLeakDetector.Level.PARANOID);
         client = clientBuilder.build();
 
         if (useExistingDB()) {
