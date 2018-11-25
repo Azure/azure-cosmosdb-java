@@ -126,7 +126,7 @@ public class NettyLeakTest extends TestSuiteBase {
     @AfterClass(groups = {"simple"}, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)
     public void afterClass() {
         if (!useExistingDB()) {
-            //safeDeleteDatabase(client, createdDatabase.getId());
+            safeDeleteDatabase(client, createdDatabase.getId());
         }
         safeClose(client);
     }
