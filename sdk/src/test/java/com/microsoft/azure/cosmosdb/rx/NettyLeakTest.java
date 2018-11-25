@@ -107,7 +107,7 @@ public class NettyLeakTest extends TestSuiteBase {
     @BeforeClass(groups = {"simple"}, timeOut = TEST_TIMEOUT)
     public void beforeClass() throws Exception {
         RecordingLeakDetectorFactory.register();
-        //ResourceLeakDetector.setLevel(ResourceLeakDetector.Level.PARANOID);
+        ResourceLeakDetector.setLevel(ResourceLeakDetector.Level.PARANOID);
         client = clientBuilder.build();
 
         if (useExistingDB()) {
@@ -179,7 +179,9 @@ public class NettyLeakTest extends TestSuiteBase {
         for (int i = 0; i < batchCount; i++) {
             bulkInsert(client, INSERT_BATCH_SIZE);
             int progress = (int)((i + 1) * INSERT_BATCH_SIZE / (double) count * 100);
-            log.info("Inserted batch of {}. {}% done", INSERT_BATCH_SIZE, progress);
+            if (batchCount % 5 == 0) {
+                log.info("Inserted batch of {}. {}% done", INSERT_BATCH_SIZE, progress);
+            }
         }
     }
 
