@@ -169,11 +169,11 @@ public class HttpClientFactory {
         .appendPipelineConfigurator(new SslPipelineConfiguratorUsedWithProxy<HttpClientResponse<ByteBuf>,HttpClientRequest<ByteBuf>>(defaultSSLEngineFactory))
         .appendPipelineConfigurator(createClientPipelineConfigurator(configs));
 
-        if (requestTimeoutInMillis != null) {
-            RxClient.ClientConfig.Builder clientConfigBuilder = new RxClient.ClientConfig.Builder();
-            clientConfigBuilder.readTimeout(requestTimeoutInMillis, TimeUnit.MILLISECONDS);
-            return builder.config(clientConfigBuilder.build());
-        }
+        // if (requestTimeoutInMillis != null) {
+        //     RxClient.ClientConfig.Builder clientConfigBuilder = new RxClient.ClientConfig.Builder();
+        //     clientConfigBuilder.readTimeout(requestTimeoutInMillis, TimeUnit.MILLISECONDS);
+        //     return builder.config(clientConfigBuilder.build());
+        // }
 
         return builder;
     }
