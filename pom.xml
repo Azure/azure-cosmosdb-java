@@ -37,6 +37,7 @@
     <module>examples</module>
     <module>benchmark</module>
     <module>commons-test-utils</module>
+    <module>patterns</module>
     <module>sdk</module>
   </modules>
   <properties>
