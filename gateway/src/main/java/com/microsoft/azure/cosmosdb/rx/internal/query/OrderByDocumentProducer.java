@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import com.microsoft.azure.cosmosdb.BridgeInternal;
+import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.PartitionKeyRange;
 import com.microsoft.azure.cosmosdb.Resource;
@@ -52,6 +53,7 @@ class OrderByDocumentProducer<T extends Resource> extends DocumentProducer<T> {
             OrderbyRowComparer<T> consumeComparer,
             IDocumentQueryClient client, 
             String collectionResourceId,
+            FeedOptions feedOptions,
             Func3<PartitionKeyRange, String, Integer, RxDocumentServiceRequest> createRequestFunc,
             Func1<RxDocumentServiceRequest, Observable<FeedResponse<T>>> executeRequestFunc,
             PartitionKeyRange targetRange, 
@@ -62,7 +64,7 @@ class OrderByDocumentProducer<T extends Resource> extends DocumentProducer<T> {
             int initialPageSize, 
             String initialContinuationToken, 
             int top) {
-        super(client, collectionResourceId, createRequestFunc, executeRequestFunc, targetRange, collectionLink,
+        super(client, collectionResourceId, feedOptions, createRequestFunc, executeRequestFunc, targetRange, collectionLink,
                 createRetryPolicyFunc, resourceType, correlatedActivityId, initialPageSize, initialContinuationToken, top);
         this.consumeComparer = consumeComparer;
     }
@@ -94,6 +96,7 @@ class OrderByDocumentProducer<T extends Resource> extends DocumentProducer<T> {
                 consumeComparer,
                 client,
                 collectionRid,
+                feedOptions,
                 createRequestFunc,
                 executeRequestFuncWithRetries,
                 targetRange,

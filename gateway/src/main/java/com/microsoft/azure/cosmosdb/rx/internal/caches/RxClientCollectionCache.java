@@ -25,6 +25,7 @@ package com.microsoft.azure.cosmosdb.rx.internal.caches;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.HashMap;
+import java.util.Map;
 
 import com.microsoft.azure.cosmosdb.BridgeInternal;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
@@ -64,24 +65,24 @@ public class RxClientCollectionCache extends RxCollectionCache {
         this.retryPolicy = retryPolicy;
     }
 
-    protected Single<DocumentCollection> getByRidAsync(String collectionRid) {
+    protected Single<DocumentCollection> getByRidAsync(String collectionRid, Map<String, Object> properties) {
 
         IDocumentClientRetryPolicy retryPolicyInstance = this.retryPolicy.getRequestPolicy();
 
         return ObservableHelper.inlineIfPossible(
-                () -> this.readCollectionAsync(PathsHelper.generatePath(ResourceType.DocumentCollection, collectionRid, false), retryPolicyInstance)
+                () -> this.readCollectionAsync(PathsHelper.generatePath(ResourceType.DocumentCollection, collectionRid, false), retryPolicyInstance, properties)
                 , retryPolicyInstance);
     }
 
-    protected Single<DocumentCollection> getByNameAsync(String resourceAddress) {
+    protected Single<DocumentCollection> getByNameAsync(String resourceAddress, Map<String, Object> properties) {
 
         IDocumentClientRetryPolicy retryPolicyInstance = this.retryPolicy.getRequestPolicy();
         return ObservableHelper.inlineIfPossible(
-                () -> this.readCollectionAsync(resourceAddress, retryPolicyInstance),
+                () -> this.readCollectionAsync(resourceAddress, retryPolicyInstance, properties),
                 retryPolicyInstance);
     }
 
-    private Single<DocumentCollection> readCollectionAsync(String collectionLink, IDocumentClientRetryPolicy retryPolicyInstance) {
+    private Single<DocumentCollection> readCollectionAsync(String collectionLink, IDocumentClientRetryPolicy retryPolicyInstance, Map<String, Object> properties) {
        
         String path = Utils.joinPath(collectionLink, null);
         RxDocumentServiceRequest request = RxDocumentServiceRequest.create(
@@ -99,7 +100,8 @@ public class RxClientCollectionCache extends RxCollectionCache {
                 request.getResourceType(),
                 HttpConstants.HttpMethods.GET,
                 request.getHeaders(),
-                AuthorizationTokenType.PrimaryMasterKey);
+                AuthorizationTokenType.PrimaryMasterKey,
+                properties);
 
         try {
             authorizationToken = URLEncoder.encode(authorizationToken, "UTF-8");

@@ -346,6 +346,7 @@ public class ParallelDocumentQueryExecutionContext<T extends Resource>
             PartitionKeyRange targetRange,
             String initialContinuationToken,
             int initialPageSize,
+            FeedOptions feedOptions,
             SqlQuerySpec querySpecForInit,
             Map<String, String> commonRequestHeaders,
             Func3<PartitionKeyRange, String, Integer, RxDocumentServiceRequest> createRequestFunc,
@@ -353,6 +354,7 @@ public class ParallelDocumentQueryExecutionContext<T extends Resource>
             Func0<IDocumentClientRetryPolicy> createRetryPolicyFunc) {
         return new DocumentProducer<T>(client,
                 collectionRid,
+                feedOptions,
                 createRequestFunc,
                 executeFunc,
                 targetRange,

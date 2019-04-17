@@ -55,8 +55,8 @@ import com.microsoft.azure.cosmosdb.DocumentCollection;
  */
 public final class Utils {
     private static final ZoneId GMT_ZONE_ID = ZoneId.of("GMT");
-    public static final Base64.Encoder Base64Encoder = java.util.Base64.getEncoder();
-    public static final Base64.Decoder Base64Decoder = java.util.Base64.getDecoder();
+    public static final Base64.Encoder Base64Encoder = Base64.getEncoder();
+    public static final Base64.Decoder Base64Decoder = Base64.getDecoder();
 
     private static final ObjectMapper simpleObjectMapper = new ObjectMapper();
     private static final TimeBasedGenerator TimeUUIDGegerator = 

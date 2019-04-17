@@ -200,7 +200,7 @@ class RxGatewayStoreModel implements RxStoreModel {
 
     private void fillHttpRequestBaseWithHeaders(Map<String, String> headers, HttpClientRequest<ByteBuf> req) {
         // Add default headers.
-        for (Map.Entry<String, String> entry : this.defaultHeaders.entrySet()) {
+        for (Entry<String, String> entry : this.defaultHeaders.entrySet()) {
             if (!headers.containsKey(entry.getKey())) {
                 // populate default header only if there is no overwrite by the request header
                 req.withHeader(entry.getKey(), entry.getValue());
@@ -209,7 +209,7 @@ class RxGatewayStoreModel implements RxStoreModel {
         
         // Add override headers.
         if (headers != null) {
-            for (Map.Entry<String, String> entry : headers.entrySet()) {
+            for (Entry<String, String> entry : headers.entrySet()) {
                 if (entry.getValue() == null) {
                     // netty doesn't allow setting null value in header
                     req.withHeader(entry.getKey(), "");
@@ -276,7 +276,7 @@ class RxGatewayStoreModel implements RxStoreModel {
                                 bb.readBytes(out, bb.readableBytes());
                                 return out;
                             }
-                            catch (java.io.IOException e) {
+                            catch (IOException e) {
                                 throw new RuntimeException(e);
                             }
                         })
@@ -294,7 +294,7 @@ class RxGatewayStoreModel implements RxStoreModel {
                                 bb.readBytes(out, bb.readableBytes());
                                 return out;
                             }
-                            catch (java.io.IOException e) {
+                            catch (IOException e) {
                                 throw new RuntimeException(e);
                             }
                         })

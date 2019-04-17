@@ -76,6 +76,13 @@ public class ClientRetryPolicy implements IDocumentClientRetryPolicy {
 
     @Override
     public Single<ShouldRetryResult> shouldRetry(Exception e) {
+        if (this.locationEndpoint == null) {
+            // on before request is not invoked because Document Service Request creation failed.
+            logger.error("locationEndpoint is null because ClientRetryPolicy::onBeforeRequest(.) is not invoked, " +
+                                 "probably request creation failed due to invalid options, serialization setting, etc.");
+            return Single.just(ShouldRetryResult.error(e));
+        }
+
         if (ConnectionPoolExhaustedRetry.isConnectionPoolExhaustedException(e)) {
             return rxNettyConnectionPoolExhaustedRetry.shouldRetry(e);
         }

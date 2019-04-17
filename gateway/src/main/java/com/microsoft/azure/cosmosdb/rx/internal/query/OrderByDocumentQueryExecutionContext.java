@@ -277,7 +277,7 @@ public class OrderByDocumentQueryExecutionContext<T extends Resource>
                 formattedFilterInfo);
     }
 
-    private OrderByDocumentQueryExecutionContext<T>.FormattedFilterInfo GetFormattedFilters(
+    private FormattedFilterInfo GetFormattedFilters(
             Collection<String> orderByExpressionCollection,
             QueryItem[] orderByItems,
             Collection<SortOrder> sortOrderCollection,
@@ -389,6 +389,7 @@ public class OrderByDocumentQueryExecutionContext<T extends Resource>
             PartitionKeyRange targetRange,
             String continuationToken,
             int initialPageSize,
+            FeedOptions feedOptions,
             SqlQuerySpec querySpecForInit,
             Map<String, String> commonRequestHeaders,
             Func3<PartitionKeyRange, String, Integer, RxDocumentServiceRequest> createRequestFunc,
@@ -397,6 +398,7 @@ public class OrderByDocumentQueryExecutionContext<T extends Resource>
         return new OrderByDocumentProducer<T>(consumeComparer,
                 client,
                 collectionRid,
+                feedOptions,
                 createRequestFunc,
                 executeFunc,
                 targetRange,

@@ -36,6 +36,10 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.microsoft.azure.cosmosdb.DataType;
 import com.microsoft.azure.cosmosdb.DatabaseForTest;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
@@ -48,6 +52,7 @@ import com.microsoft.azure.cosmosdb.Undefined;
 import com.microsoft.azure.cosmosdb.internal.PathParser;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.Protocol;
 import com.microsoft.azure.cosmosdb.rx.internal.Configs;
+import org.apache.commons.lang3.StringUtils;
 import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -81,6 +86,7 @@ import rx.observers.TestSubscriber;
 
 public class TestSuiteBase {
     private static final int DEFAULT_BULK_INSERT_CONCURRENCY_LEVEL = 500;
+    private static final ObjectMapper objectMapper = new ObjectMapper();
     protected static Logger logger = LoggerFactory.getLogger(TestSuiteBase.class.getSimpleName());
     protected static final int TIMEOUT = 8000;
     protected static final int FEED_TIMEOUT = 12000;
@@ -102,24 +108,29 @@ public class TestSuiteBase {
     protected static DocumentCollection SHARED_SINGLE_PARTITION_COLLECTION_WITHOUT_PARTITION_KEY;
     protected static DocumentCollection SHARED_MULTI_PARTITION_COLLECTION_WITH_COMPOSITE_AND_SPATIAL_INDEXES;
 
+
     protected TestSuiteBase() {
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        objectMapper.configure(JsonParser.Feature.ALLOW_SINGLE_QUOTES, true);
+        objectMapper.configure(JsonParser.Feature.ALLOW_TRAILING_COMMA, true);
+        objectMapper.configure(JsonParser.Feature.STRICT_DUPLICATE_DETECTION, true);
         logger.debug("Initializing {} ...", this.getClass().getSimpleName());
     }
 
-    @BeforeMethod(groups = { "simple", "long", "direct", "multi-master", "emulator" })
+    @BeforeMethod(groups = { "simple", "long", "direct", "multi-master", "emulator", "non-emulator" })
     public void beforeMethod(Method method) {
         if (this.clientBuilder != null) {
             logger.info("Starting {}::{} using {} {} mode with {} consistency",
-                method.getDeclaringClass().getSimpleName(), method.getName(),
-                this.clientBuilder.connectionPolicy.getConnectionMode(),
-                this.clientBuilder.configs.getProtocol(),
-                this.clientBuilder.desiredConsistencyLevel);
+                        method.getDeclaringClass().getSimpleName(), method.getName(),
+                        this.clientBuilder.connectionPolicy.getConnectionMode(),
+                        this.clientBuilder.configs.getProtocol(),
+                        this.clientBuilder.desiredConsistencyLevel);
             return;
         }
         logger.info("Starting {}::{}", method.getDeclaringClass().getSimpleName(), method.getName());
     }
 
-    @AfterMethod(groups = { "simple", "long", "direct", "multi-master", "emulator" })
+    @AfterMethod(groups = { "simple", "long", "direct", "multi-master", "emulator", "non-emulator" })
     public void afterMethod(Method m) {
         Test t = m.getAnnotation(Test.class);
         logger.info("Finished {}:{}.", m.getDeclaringClass().getSimpleName(), m.getName());
@@ -153,7 +164,7 @@ public class TestSuiteBase {
         }
     }
 
-    @BeforeSuite(groups = { "simple", "long", "direct", "multi-master", "emulator" }, timeOut = SUITE_SETUP_TIMEOUT)
+    @BeforeSuite(groups = { "simple", "long", "direct", "multi-master", "emulator", "non-emulator" }, timeOut = SUITE_SETUP_TIMEOUT)
     public static void beforeSuite() {
         logger.info("beforeSuite Started");
         AsyncDocumentClient houseKeepingClient = createGatewayHouseKeepingDocumentClient().build();
@@ -171,7 +182,7 @@ public class TestSuiteBase {
         }
     }
 
-    @AfterSuite(groups = { "simple", "long", "direct", "multi-master", "emulator" }, timeOut = SUITE_SHUTDOWN_TIMEOUT)
+    @AfterSuite(groups = { "simple", "long", "direct", "multi-master", "emulator", "non-emulator" }, timeOut = SUITE_SHUTDOWN_TIMEOUT)
     public static void afterSuite() {
         logger.info("afterSuite Started");
         AsyncDocumentClient houseKeepingClient = createGatewayHouseKeepingDocumentClient().build();
@@ -266,7 +277,7 @@ public class TestSuiteBase {
         logger.info("Finished truncating collection {}.", collection.getId());
     }
 
-    protected static void waitIfNeededForReplicasToCatchUp(AsyncDocumentClient.Builder clientBuilder) {
+    protected static void waitIfNeededForReplicasToCatchUp(Builder clientBuilder) {
         switch (clientBuilder.desiredConsistencyLevel) {
             case Eventual:
             case ConsistentPrefix:
@@ -668,7 +679,7 @@ public class TestSuiteBase {
     public static <T extends Resource> void validateSuccess(Observable<ResourceResponse<T>> observable,
                                                             ResourceResponseValidator<T> validator, long timeout) {
 
-    	VerboseTestSubscriber<ResourceResponse<T>> testSubscriber = new VerboseTestSubscriber<ResourceResponse<T>>();
+        VerboseTestSubscriber<ResourceResponse<T>> testSubscriber = new VerboseTestSubscriber<>();
 
         observable.subscribe(testSubscriber);
         testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
@@ -686,7 +697,7 @@ public class TestSuiteBase {
     public static <T extends Resource> void validateFailure(Observable<ResourceResponse<T>> observable,
                                                             FailureValidator validator, long timeout) {
 
-    	VerboseTestSubscriber<ResourceResponse<T>> testSubscriber = new VerboseTestSubscriber<>();
+        VerboseTestSubscriber<ResourceResponse<T>> testSubscriber = new VerboseTestSubscriber<>();
 
         observable.subscribe(testSubscriber);
         testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
@@ -704,7 +715,7 @@ public class TestSuiteBase {
     public static <T extends Resource> void validateQuerySuccess(Observable<FeedResponse<T>> observable,
                                                                  FeedResponseListValidator<T> validator, long timeout) {
 
-    	VerboseTestSubscriber<FeedResponse<T>> testSubscriber = new VerboseTestSubscriber<FeedResponse<T>>();
+        VerboseTestSubscriber<FeedResponse<T>> testSubscriber = new VerboseTestSubscriber<>();
 
         observable.subscribe(testSubscriber);
         testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
@@ -721,7 +732,7 @@ public class TestSuiteBase {
     public static <T extends Resource> void validateQueryFailure(Observable<FeedResponse<T>> observable,
                                                                  FailureValidator validator, long timeout) {
 
-    	VerboseTestSubscriber<FeedResponse<T>> testSubscriber = new VerboseTestSubscriber<>();
+        VerboseTestSubscriber<FeedResponse<T>> testSubscriber = new VerboseTestSubscriber<>();
 
         observable.subscribe(testSubscriber);
         testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
@@ -733,15 +744,15 @@ public class TestSuiteBase {
 
     @DataProvider
     public static Object[][] clientBuilders() {
-        return new Object[][] { { createGatewayRxDocumentClient(ConsistencyLevel.Session) } };
+        return new Object[][] { { createGatewayRxDocumentClient(ConsistencyLevel.Session, false, null) } };
     }
 
     @DataProvider
     public static Object[][] clientBuildersWithSessionConsistency() {
         return new Object[][] {
-                { createGatewayRxDocumentClient(ConsistencyLevel.Session) },
-                { createDirectRxDocumentClient(ConsistencyLevel.Session, Protocol.Https) },
-                { createDirectRxDocumentClient(ConsistencyLevel.Session, Protocol.Tcp) }
+                { createGatewayRxDocumentClient(ConsistencyLevel.Session, false, null) },
+                { createDirectRxDocumentClient(ConsistencyLevel.Session, Protocol.Https, false, null) },
+                { createDirectRxDocumentClient(ConsistencyLevel.Session, Protocol.Tcp, false, null) }
         };
     }
 
@@ -756,6 +767,19 @@ public class TestSuiteBase {
 
         logger.error("Invalid configured test consistency [{}].", consistency);
         throw new IllegalStateException("Invalid configured test consistency " + consistency);
+    }
+
+    private static List<String> parsePreferredLocation(String preferredLocations) {
+        if (StringUtils.isEmpty(preferredLocations)) {
+            return null;
+        }
+
+        try {
+            return objectMapper.readValue(preferredLocations, new TypeReference<List<String>>(){});
+        } catch (Exception e) {
+            logger.error("Invalid configured test preferredLocations [{}].", preferredLocations);
+            throw new IllegalStateException("Invalid configured test preferredLocations " + preferredLocations);
+        }
     }
 
     @DataProvider
@@ -791,17 +815,23 @@ public class TestSuiteBase {
                 throw new IllegalStateException("Invalid configured test consistency " + accountConsistency);
         }
 
-        List<AsyncDocumentClient.Builder> builders = new ArrayList<>();
-        builders.add(createGatewayRxDocumentClient(ConsistencyLevel.Session));
+        List<String> preferredLocation = parsePreferredLocation(TestConfigurations.PREFERRED_LOCATIONS);
+        boolean isMultiMasterEnabled = preferredLocation != null && accountConsistency == ConsistencyLevel.Session;
+
+        List<Builder> builders = new ArrayList<>();
+        builders.add(createGatewayRxDocumentClient(ConsistencyLevel.Session, false, null));
 
         for (Protocol protocol : protocols) {
-            testConsistencies.forEach(consistencyLevel -> builders.add(createDirectRxDocumentClient(consistencyLevel, protocol)));
+            testConsistencies.forEach(consistencyLevel -> builders.add(createDirectRxDocumentClient(consistencyLevel,
+                                                                                                    protocol,
+                                                                                                    isMultiMasterEnabled,
+                                                                                                    preferredLocation)));
         }
 
         builders.forEach(b -> logger.info("Will Use ConnectionMode [{}], Consistency [{}], Protocol [{}]",
-            b.connectionPolicy.getConnectionMode(),
-            b.desiredConsistencyLevel,
-            b.configs.getProtocol()
+                                          b.connectionPolicy.getConnectionMode(),
+                                          b.desiredConsistencyLevel,
+                                          b.configs.getProtocol()
         ));
 
         return builders.stream().map(b -> new Object[]{b}).collect(Collectors.toList()).toArray(new Object[0][]);
@@ -844,56 +874,74 @@ public class TestSuiteBase {
                 throw new IllegalStateException("Invalid configured test consistency " + accountConsistency);
         }
 
-        List<AsyncDocumentClient.Builder> builders = new ArrayList<>();
-        builders.add(createGatewayRxDocumentClient(ConsistencyLevel.Session));
+        List<String> preferredLocation = parsePreferredLocation(TestConfigurations.PREFERRED_LOCATIONS);
+        boolean isMultiMasterEnabled = preferredLocation != null && accountConsistency == ConsistencyLevel.Session;
+
+        List<Builder> builders = new ArrayList<>();
+        builders.add(createGatewayRxDocumentClient(ConsistencyLevel.Session, isMultiMasterEnabled, preferredLocation));
 
         for (Protocol protocol : protocols) {
-            testConsistencies.forEach(consistencyLevel -> builders.add(createDirectRxDocumentClient(consistencyLevel, protocol)));
+            testConsistencies.forEach(consistencyLevel -> builders.add(createDirectRxDocumentClient(consistencyLevel,
+                                                                                                    protocol,
+                                                                                                    isMultiMasterEnabled,
+                                                                                                    preferredLocation)));
         }
 
         builders.forEach(b -> logger.info("Will Use ConnectionMode [{}], Consistency [{}], Protocol [{}]",
-            b.connectionPolicy.getConnectionMode(),
-            b.desiredConsistencyLevel,
-            b.configs.getProtocol()
+                                          b.connectionPolicy.getConnectionMode(),
+                                          b.desiredConsistencyLevel,
+                                          b.configs.getProtocol()
         ));
 
         return builders.stream().map(b -> new Object[]{b}).collect(Collectors.toList()).toArray(new Object[0][]);
     }
 
-    static protected AsyncDocumentClient.Builder createGatewayHouseKeepingDocumentClient() {
+    static protected Builder createGatewayHouseKeepingDocumentClient() {
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
         connectionPolicy.setConnectionMode(ConnectionMode.Gateway);
         RetryOptions options = new RetryOptions();
         options.setMaxRetryWaitTimeInSeconds(SUITE_SETUP_TIMEOUT);
         connectionPolicy.setRetryOptions(options);
-        return new AsyncDocumentClient.Builder().withServiceEndpoint(TestConfigurations.HOST)
+        return new Builder().withServiceEndpoint(TestConfigurations.HOST)
                 .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
                 .withConnectionPolicy(connectionPolicy)
                 .withConsistencyLevel(ConsistencyLevel.Session);
     }
 
-    static protected AsyncDocumentClient.Builder createGatewayRxDocumentClient(ConsistencyLevel consistencyLevel) {
+    static protected Builder createGatewayRxDocumentClient(ConsistencyLevel consistencyLevel, boolean multiMasterEnabled, List<String> preferredLocations) {
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
         connectionPolicy.setConnectionMode(ConnectionMode.Gateway);
-        return new AsyncDocumentClient.Builder().withServiceEndpoint(TestConfigurations.HOST)
+        connectionPolicy.setUsingMultipleWriteLocations(multiMasterEnabled);
+        connectionPolicy.setPreferredLocations(preferredLocations);
+        return new Builder().withServiceEndpoint(TestConfigurations.HOST)
                 .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
                 .withConnectionPolicy(connectionPolicy)
                 .withConsistencyLevel(consistencyLevel);
     }
 
-    static protected AsyncDocumentClient.Builder createGatewayRxDocumentClient() {
-        return createGatewayRxDocumentClient(ConsistencyLevel.Session);
+    static protected Builder createGatewayRxDocumentClient() {
+        return createGatewayRxDocumentClient(ConsistencyLevel.Session, false, null);
     }
 
-    static protected AsyncDocumentClient.Builder createDirectRxDocumentClient(ConsistencyLevel consistencyLevel, Protocol protocol) {
-
+    static protected Builder createDirectRxDocumentClient(ConsistencyLevel consistencyLevel,
+                                                                              Protocol protocol,
+                                                                              boolean multiMasterEnabled,
+                                                                              List<String> preferredLocations) {
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
         connectionPolicy.setConnectionMode(ConnectionMode.Direct);
+
+        if (preferredLocations != null) {
+            connectionPolicy.setPreferredLocations(preferredLocations);
+        }
+
+        if (multiMasterEnabled && consistencyLevel == ConsistencyLevel.Session) {
+            connectionPolicy.setUsingMultipleWriteLocations(true);
+        }
 
         Configs configs = spy(new Configs());
         doAnswer((Answer<Protocol>)invocation -> protocol).when(configs).getProtocol();
 
-        return new AsyncDocumentClient.Builder().withServiceEndpoint(TestConfigurations.HOST)
+        return new Builder().withServiceEndpoint(TestConfigurations.HOST)
                 .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
                 .withConnectionPolicy(connectionPolicy)
                 .withConsistencyLevel(consistencyLevel)
@@ -911,24 +959,24 @@ public class TestSuiteBase {
                 {false},
         };
     }
-    
+
     public static class VerboseTestSubscriber<T> extends TestSubscriber<T> {
-		@Override
-	   	public void assertNoErrors() {
-           List<Throwable> onErrorEvents = getOnErrorEvents();
-           StringBuilder errorMessageBuilder = new StringBuilder();
-           if (!onErrorEvents.isEmpty()) {
-               for(Throwable throwable : onErrorEvents) {
-               	StringWriter sw = new StringWriter();
-               	PrintWriter pw = new PrintWriter(sw);
-               	throwable.printStackTrace(pw);
-               	String sStackTrace = sw.toString(); // stack trace as a string
-               	errorMessageBuilder.append(sStackTrace);
-               }
-               
-               AssertionError ae = new AssertionError(errorMessageBuilder.toString());
-               throw ae;
+        @Override
+        public void assertNoErrors() {
+            List<Throwable> onErrorEvents = getOnErrorEvents();
+            StringBuilder errorMessageBuilder = new StringBuilder();
+            if (!onErrorEvents.isEmpty()) {
+                for(Throwable throwable : onErrorEvents) {
+                    StringWriter sw = new StringWriter();
+                    PrintWriter pw = new PrintWriter(sw);
+                    throwable.printStackTrace(pw);
+                    String sStackTrace = sw.toString(); // stack trace as a string
+                    errorMessageBuilder.append(sStackTrace);
+                }
+
+                AssertionError ae = new AssertionError(errorMessageBuilder.toString());
+                throw ae;
             }
-	    }
-	}
+        }
+    }
 }

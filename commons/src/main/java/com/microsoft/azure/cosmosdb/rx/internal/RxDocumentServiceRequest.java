@@ -32,6 +32,10 @@ import java.util.Map;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.WFConstants;
 import org.apache.commons.lang3.StringUtils;
 
+import com.microsoft.azure.cosmosdb.ChangeFeedOptions;
+import com.microsoft.azure.cosmosdb.FeedOptions;
+import com.microsoft.azure.cosmosdb.FeedOptionsBase;
+import com.microsoft.azure.cosmosdb.RequestOptions;
 import com.microsoft.azure.cosmosdb.Resource;
 import com.microsoft.azure.cosmosdb.SqlQuerySpec;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
@@ -90,6 +94,7 @@ public class RxDocumentServiceRequest {
     public volatile String queryString;
     public volatile boolean isFeed;
     public volatile AuthorizationTokenType authorizationTokenType;
+    public volatile Map<String, Object> properties;
 
     public boolean isReadOnlyRequest() {
         return this.operationType == OperationType.Read
@@ -382,10 +387,32 @@ public class RxDocumentServiceRequest {
             String relativePath,
             Resource resource,
             Map<String, String> headers) {
+        return RxDocumentServiceRequest.create(operation, resourceType, relativePath, resource, headers, (RequestOptions)null);
+    }
+    
+    /**
+     * Creates a DocumentServiceRequest with a resource.
+     *
+     * @param operation    the operation type.
+     * @param resourceType the resource type.
+     * @param relativePath the relative URI path.
+     * @param resource     the resource of the request.
+     * @param headers      the request headers.
+     * @param options      the request/feed/changeFeed options.
+     * @return the created document service request.
+     */
+    public static RxDocumentServiceRequest create(OperationType operation,
+            ResourceType resourceType,
+            String relativePath,
+            Resource resource,
+            Map<String, String> headers,
+            Object options) {
 
-        return new RxDocumentServiceRequest(operation, resourceType, relativePath,
+        RxDocumentServiceRequest request = new RxDocumentServiceRequest(operation, resourceType, relativePath,
                 // TODO: this re-encodes, can we improve performance here?
                 resource.toJson().getBytes(StandardCharsets.UTF_8), headers, AuthorizationTokenType.PrimaryMasterKey);
+        request.properties = getProperties(options);
+        return request;
     }
 
     /**
@@ -396,15 +423,19 @@ public class RxDocumentServiceRequest {
      * @param relativePath the relative URI path.
      * @param query        the query.
      * @param headers      the request headers.
+     * @param options      the request/feed/changeFeed options.
      * @return the created document service request.
      */
     public static RxDocumentServiceRequest create(OperationType operation,
             ResourceType resourceType,
             String relativePath,
             String query,
-            Map<String, String> headers) {
-        return new RxDocumentServiceRequest(operation, resourceType, relativePath,
+            Map<String, String> headers,
+            Object options) {
+        RxDocumentServiceRequest request = new RxDocumentServiceRequest(operation, resourceType, relativePath,
                 query.getBytes(StandardCharsets.UTF_8), headers, AuthorizationTokenType.PrimaryMasterKey);
+        request.properties = getProperties(options);
+        return request;
     }
 
     /**
@@ -482,7 +513,27 @@ public class RxDocumentServiceRequest {
             ResourceType resourceType,
             String relativePath,
             Map<String, String> headers) {
-        return new RxDocumentServiceRequest(operation, resourceType, relativePath, headers, AuthorizationTokenType.PrimaryMasterKey);
+        return RxDocumentServiceRequest.create(operation, resourceType, relativePath, headers, (RequestOptions)null);
+    }
+
+    /**
+     * Creates a DocumentServiceRequest without body.
+     *
+     * @param operation    the operation type.
+     * @param resourceType the resource type.
+     * @param relativePath the relative URI path.
+     * @param headers      the request headers.
+     * @param options      the request/feed/changeFeed options.
+     * @return the created document service request.
+     */
+    public static RxDocumentServiceRequest create(OperationType operation,
+            ResourceType resourceType,
+            String relativePath,
+            Map<String, String> headers,
+            Object options) {
+        RxDocumentServiceRequest request = new RxDocumentServiceRequest(operation, resourceType, relativePath, headers, AuthorizationTokenType.PrimaryMasterKey);
+        request.properties = getProperties(options);
+        return request;
     }
 
     /**
@@ -997,5 +1048,17 @@ public class RxDocumentServiceRequest {
         }
 
         this.isDisposed = true;
+    }
+
+    private static Map<String, Object> getProperties(Object options) {
+        if (options == null) {
+            return null;
+        } else if (options instanceof RequestOptions) {
+            return ((RequestOptions) options).getProperties();
+        } else if (options instanceof FeedOptionsBase) {
+            return ((FeedOptionsBase) options).getProperties();
+        } else {
+            return null;
+        }
     }
 }

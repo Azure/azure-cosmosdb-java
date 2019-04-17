@@ -56,7 +56,7 @@ public class DocumentCrudTest extends TestSuiteBase {
     private AsyncDocumentClient client;
     
     @Factory(dataProvider = "clientBuildersWithDirect")
-    public DocumentCrudTest(AsyncDocumentClient.Builder clientBuilder) {
+    public DocumentCrudTest(Builder clientBuilder) {
         this.clientBuilder = clientBuilder;
     }
 
@@ -154,7 +154,7 @@ public class DocumentCrudTest extends TestSuiteBase {
 
         Observable<ResourceResponse<Document>> createObservable = client
                 .createDocument(getCollectionLink(), docDefinition, null, false)
-                .timeout(1, TimeUnit.MILLISECONDS);
+                .timeout(1, TimeUnit.MICROSECONDS);
 
         FailureValidator validator = new FailureValidator.Builder().instanceOf(TimeoutException.class).build();
 

@@ -58,7 +58,7 @@ class OrderByUtils {
                                                                                                        Map<String, QueryMetrics> queryMetricsMap) {
         return producer
                 .produceAsync()
-                .compose(new OrderByUtils.PageToItemTransformer<T>(klass, tracker, queryMetricsMap));
+                .compose(new PageToItemTransformer<T>(klass, tracker, queryMetricsMap));
     }
 
     private static class PageToItemTransformer<T extends Resource> implements Transformer<DocumentProducer<T>.DocumentProducerFeedResponse, OrderByRowResult<T>> {
