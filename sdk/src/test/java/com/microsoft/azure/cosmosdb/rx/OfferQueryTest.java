@@ -144,7 +144,7 @@ public class OfferQueryTest extends TestSuiteBase {
         d1.setId(databaseId);
         createDatabase(client, d1);
 
-        for(int i = 0; i < 2; i++) {
+        for(int i = 0; i < 3; i++) {
             DocumentCollection collection = new DocumentCollection();
             collection.setId(UUID.randomUUID().toString());
             createdCollections.add(createCollection(client, databaseId, collection));
