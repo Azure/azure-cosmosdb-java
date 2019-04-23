@@ -78,6 +78,7 @@ public class CollectionCrudTest extends TestSuiteBase {
                 .withId(collectionDefinition.getId()).build();
         
         validateSuccess(createObservable, validator);
+        safeDeleteCollection(client, collectionDefinition);
     }
 
     @Test(groups = { "emulator" }, timeOut = TIMEOUT)
@@ -152,6 +153,7 @@ public class CollectionCrudTest extends TestSuiteBase {
                 .build();
         
         validateSuccess(createObservable, validator);
+        safeDeleteCollection(client, collection);
     }
 
     @Test(groups = { "emulator" }, timeOut = TIMEOUT)
@@ -167,6 +169,7 @@ public class CollectionCrudTest extends TestSuiteBase {
         ResourceResponseValidator<DocumentCollection> validator = new ResourceResponseValidator.Builder<DocumentCollection>()
                 .withId(collection.getId()).build();
         validateSuccess(readObservable, validator);
+        safeDeleteCollection(client, collection);
     }
     
     @Test(groups = { "emulator" }, timeOut = TIMEOUT)
@@ -183,6 +186,7 @@ public class CollectionCrudTest extends TestSuiteBase {
         ResourceResponseValidator<DocumentCollection> validator = new ResourceResponseValidator.Builder<DocumentCollection>()
                 .withId(collection.getId()).build();
         validateSuccess(readObservable, validator);
+        safeDeleteCollection(client, collection);
     }
     
     @Test(groups = { "emulator" }, timeOut = TIMEOUT)
@@ -208,6 +212,7 @@ public class CollectionCrudTest extends TestSuiteBase {
         ResourceResponseValidator<DocumentCollection> validator = new ResourceResponseValidator.Builder<DocumentCollection>()
                 .nullResource().build();
         validateSuccess(deleteObservable, validator);
+        safeDeleteCollection(client, collection);
     }
     
     @Test(groups = { "emulator" }, timeOut = TIMEOUT)
@@ -229,6 +234,7 @@ public class CollectionCrudTest extends TestSuiteBase {
         ResourceResponseValidator<DocumentCollection> validator = new ResourceResponseValidator.Builder<DocumentCollection>()
                 .indexingMode(IndexingMode.Lazy).build();
         validateSuccess(readObservable, validator);
+        safeDeleteCollection(client, collection);
     }
 
     @BeforeClass(groups = { "emulator" }, timeOut = SETUP_TIMEOUT)
