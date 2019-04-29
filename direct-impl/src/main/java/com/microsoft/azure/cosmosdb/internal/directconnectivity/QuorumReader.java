@@ -35,7 +35,6 @@ import com.microsoft.azure.cosmosdb.rx.internal.Configs;
 import com.microsoft.azure.cosmosdb.rx.internal.IAuthorizationTokenProvider;
 import com.microsoft.azure.cosmosdb.rx.internal.RMResources;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -284,7 +283,7 @@ public class QuorumReader {
 
                     long readLsn = res.getValue().getValue0();
                     long globalCommittedLSN = res.getValue().getValue1();
-                    StoreReadResult storeResult = res.getValue().getValue2();
+                    StoreResult storeResult = res.getValue().getValue2();
                     List<String> storeResponses = res.getValue().getValue3();
 
                     // ReadBarrier required
@@ -319,10 +318,10 @@ public class QuorumReader {
         );
     }
 
-    private Single<Pair<ReadQuorumResult, Quadruple<Long, Long, StoreReadResult, List<String>>>> ensureQuorumSelectedStoreResponse(RxDocumentServiceRequest entity, int readQuorum, boolean includePrimary, ReadMode readMode) {
+    private Single<Pair<ReadQuorumResult, Quadruple<Long, Long, StoreResult, List<String>>>> ensureQuorumSelectedStoreResponse(RxDocumentServiceRequest entity, int readQuorum, boolean includePrimary, ReadMode readMode) {
 
         if (entity.requestContext.quorumSelectedStoreResponse == null) {
-            Single<List<StoreReadResult>> responseResultObs = this.storeReader.readMultipleReplicaAsync(
+            Single<List<StoreResult>> responseResultObs = this.storeReader.readMultipleReplicaAsync(
                     entity, includePrimary, readQuorum, true /*required valid LSN*/, false, readMode);
 
             return responseResultObs.flatMap(
@@ -342,7 +341,7 @@ public class QuorumReader {
 
                         ValueHolder<Long> readLsn = new ValueHolder(-1);
                         ValueHolder<Long> globalCommittedLSN = new ValueHolder(-1);
-                        ValueHolder<StoreReadResult> storeResult = new ValueHolder(null);
+                        ValueHolder<StoreResult> storeResult = new ValueHolder(null);
 
                         if (this.isQuorumMet(
                                 responseResult,
@@ -365,7 +364,7 @@ public class QuorumReader {
                         // so set to false here to avoid further refrehses for this request.
                         entity.requestContext.forceRefreshAddressCache = false;
 
-                        Quadruple<Long, Long, StoreReadResult, List<String>> state = Quadruple.with(readLsn.v, globalCommittedLSN.v, storeResult.v, storeResponses);
+                        Quadruple<Long, Long, StoreResult, List<String>> state = Quadruple.with(readLsn.v, globalCommittedLSN.v, storeResult.v, storeResponses);
                         return Single.just(Pair.of(null, state));
                     }
             );
@@ -373,9 +372,9 @@ public class QuorumReader {
 
             ValueHolder<Long> readLsn = ValueHolder.initialize(entity.requestContext.quorumSelectedLSN);
             ValueHolder<Long> globalCommittedLSN = ValueHolder.initialize(entity.requestContext.globalCommittedSelectedLSN);
-            ValueHolder<StoreReadResult> storeResult = ValueHolder.initialize(entity.requestContext.quorumSelectedStoreResponse);
+            ValueHolder<StoreResult> storeResult = ValueHolder.initialize(entity.requestContext.quorumSelectedStoreResponse);
             List<String> storeResponses = entity.requestContext.storeResponses;
-            Quadruple<Long, Long, StoreReadResult, List<String>> state = Quadruple.with(readLsn.v, globalCommittedLSN.v, storeResult.v, storeResponses);
+            Quadruple<Long, Long, StoreResult, List<String>> state = Quadruple.with(readLsn.v, globalCommittedLSN.v, storeResult.v, storeResponses);
 
             return Single.just(Pair.of(null, state));
         }
@@ -400,23 +399,23 @@ public class QuorumReader {
         // We would have already refreshed address before reaching here. Avoid performing here.
         entity.requestContext.forceRefreshAddressCache = false;
 
-        Single<StoreReadResult> storeReadResultObs = this.storeReader.readPrimaryAsync(
+        Single<StoreResult> storeResultObs = this.storeReader.readPrimaryAsync(
                 entity, true /*required valid LSN*/, useSessionToken);
 
-        return storeReadResultObs.flatMap(
-                storeReadResult -> {
-                    if (!storeReadResult.isValid) {
+        return storeResultObs.flatMap(
+                storeResult -> {
+                    if (!storeResult.isValid) {
                         try {
-                            return Single.error(storeReadResult.getException());
+                            return Single.error(storeResult.getException());
                         } catch (InternalServerErrorException e) {
                             return Single.error(e);
                         }
                     }
 
-                    if (storeReadResult.currentReplicaSetSize <= 0 || storeReadResult.lsn < 0 || storeReadResult.quorumAckedLSN < 0) {
+                    if (storeResult.currentReplicaSetSize <= 0 || storeResult.lsn < 0 || storeResult.quorumAckedLSN < 0) {
                         String message = String.format(
                                 "Invalid value received from response header. CurrentReplicaSetSize %d, StoreLSN %d, QuorumAckedLSN %d",
-                                storeReadResult.currentReplicaSetSize, storeReadResult.lsn, storeReadResult.quorumAckedLSN);
+                                storeResult.currentReplicaSetSize, storeResult.lsn, storeResult.quorumAckedLSN);
 
                         // might not be returned if primary is still building the secondary replicas (during churn)
                         logger.error(message);
@@ -426,9 +425,9 @@ public class QuorumReader {
 
                     }
 
-                    if (storeReadResult.currentReplicaSetSize > readQuorum) {
+                    if (storeResult.currentReplicaSetSize > readQuorum) {
                         logger.warn(
-                                "Unexpected response. Replica Set size is {} which is greater than min value {}", storeReadResult.currentReplicaSetSize, readQuorum);
+                                "Unexpected response. Replica Set size is {} which is greater than min value {}", storeResult.currentReplicaSetSize, readQuorum);
                         return Single.just(new ReadPrimaryResult(entity.requestContext.requestChargeTracker,  /*isSuccessful */ false,
                                 /* shouldRetryOnSecondary: */ true, /* response: */ null));
                     }
@@ -437,9 +436,9 @@ public class QuorumReader {
                     // In case of sync replication, the store LSN will follow the quorum committed LSN
                     // In case of async replication (if enabled for bounded staleness), the store LSN can be ahead of the quorum committed LSN if the primary is able write to faster than secondary acks.
                     // We pick higher of the 2 LSN and wait for the other to reach that LSN.
-                    if (storeReadResult.lsn != storeReadResult.quorumAckedLSN) {
-                        logger.warn("Store LSN {} and quorum acked LSN {} don't match", storeReadResult.lsn, storeReadResult.quorumAckedLSN);
-                        long higherLsn = storeReadResult.lsn > storeReadResult.quorumAckedLSN ? storeReadResult.lsn : storeReadResult.quorumAckedLSN;
+                    if (storeResult.lsn != storeResult.quorumAckedLSN) {
+                        logger.warn("Store LSN {} and quorum acked LSN {} don't match", storeResult.lsn, storeResult.quorumAckedLSN);
+                        long higherLsn = storeResult.lsn > storeResult.quorumAckedLSN ? storeResult.lsn : storeResult.quorumAckedLSN;
 
                         Single<RxDocumentServiceRequest> waitForLsnRequestObs = BarrierRequestHelper.createAsync(entity, this.authorizationTokenProvider, higherLsn, null);
                         return waitForLsnRequestObs.flatMap(
@@ -457,7 +456,7 @@ public class QuorumReader {
                                                 }
 
                                                 return new ReadPrimaryResult(
-                                                        entity.requestContext.requestChargeTracker, /* isSuccessful: */ true, /* shouldRetryOnSecondary: */ false, /*response: */ storeReadResult);
+                                                        entity.requestContext.requestChargeTracker, /* isSuccessful: */ true, /* shouldRetryOnSecondary: */ false, /*response: */ storeResult);
                                             }
                                     );
                                 }
@@ -466,7 +465,7 @@ public class QuorumReader {
 
                     return Single.just(new ReadPrimaryResult(
                             /* requestChargeTracker: */ entity.requestContext.requestChargeTracker, /* isSuccessful: */ true, /* shouldRetryOnSecondary:*/  false,
-                            /*response: */ storeReadResult));
+                            /*response: */ storeResult));
                 }
         );
     }
@@ -484,28 +483,28 @@ public class QuorumReader {
             // We would have already refreshed address before reaching here. Avoid performing here.
             barrierRequest.requestContext.forceRefreshAddressCache = false;
 
-            Single<StoreReadResult> storeReadResultObs = this.storeReader.readPrimaryAsync(barrierRequest, true /*required valid LSN*/, false);
+            Single<StoreResult> storeResultObs = this.storeReader.readPrimaryAsync(barrierRequest, true /*required valid LSN*/, false);
 
-            return storeReadResultObs.toObservable().flatMap(
-                    storeReadResult -> {
-                        if (!storeReadResult.isValid) {
+            return storeResultObs.toObservable().flatMap(
+                    storeResult -> {
+                        if (!storeResult.isValid) {
                             try {
-                                return Observable.error(storeReadResult.getException());
+                                return Observable.error(storeResult.getException());
                             } catch (InternalServerErrorException e) {
                                 return Observable.error(e);
                             }
                         }
 
-                        if (storeReadResult.currentReplicaSetSize > readQuorum) {
+                        if (storeResult.currentReplicaSetSize > readQuorum) {
                             logger.warn(
-                                    "Unexpected response. Replica Set size is {} which is greater than min value {}", storeReadResult.currentReplicaSetSize, readQuorum);
+                                    "Unexpected response. Replica Set size is {} which is greater than min value {}", storeResult.currentReplicaSetSize, readQuorum);
                             return Observable.just(PrimaryReadOutcome.QuorumInconclusive);
                         }
 
                         // Java this will move to the repeat logic
-                        if (storeReadResult.lsn < lsnToWaitFor || storeReadResult.quorumAckedLSN < lsnToWaitFor) {
+                        if (storeResult.lsn < lsnToWaitFor || storeResult.quorumAckedLSN < lsnToWaitFor) {
                             logger.warn(
-                                    "Store LSN {} or quorum acked LSN {} are lower than expected LSN {}", storeReadResult.lsn, storeReadResult.quorumAckedLSN, lsnToWaitFor);
+                                    "Store LSN {} or quorum acked LSN {} are lower than expected LSN {}", storeResult.lsn, storeResult.quorumAckedLSN, lsnToWaitFor);
 
                             return Observable.timer(delayBetweenReadBarrierCallsInMs, TimeUnit.MILLISECONDS).flatMap(dummy -> Observable.empty());
                         }
@@ -538,7 +537,7 @@ public class QuorumReader {
                 return Observable.error(new GoneException());
             }
 
-            Single<List<StoreReadResult>> responsesObs = this.storeReader.readMultipleReplicaAsync(
+            Single<List<StoreResult>> responsesObs = this.storeReader.readMultipleReplicaAsync(
                     barrierRequest, allowPrimary, readQuorum,
                     true /*required valid LSN*/, false /*useSessionToken*/, readMode, false /*checkMinLSN*/, true /*forceReadAll*/);
 
@@ -594,7 +593,7 @@ public class QuorumReader {
                                         return Observable.error(new GoneException());
                                     }
 
-                                    Single<List<StoreReadResult>> responsesObs = this.storeReader.readMultipleReplicaAsync(
+                                    Single<List<StoreResult>> responsesObs = this.storeReader.readMultipleReplicaAsync(
                                             barrierRequest, allowPrimary, readQuorum,
                                             true /*required valid LSN*/, false /*useSessionToken*/, readMode, false /*checkMinLSN*/, true /*forceReadAll*/);
 
@@ -646,17 +645,17 @@ public class QuorumReader {
     }
 
     private boolean isQuorumMet(
-            List<StoreReadResult> readResponses,
+            List<StoreResult> readResponses,
             int readQuorum,
             boolean isPrimaryIncluded,
             boolean isGlobalStrongRead,
             ValueHolder<Long> readLsn,
             ValueHolder<Long> globalCommittedLSN,
-            ValueHolder<StoreReadResult> selectedResponse) {
+            ValueHolder<StoreResult> selectedResponse) {
         long maxLsn = 0;
         long minLsn = Long.MAX_VALUE;
         int replicaCountMaxLsn = 0;
-        List<StoreReadResult> validReadResponses = readResponses.stream().filter(response -> response.isValid).collect(Collectors.toList());
+        List<StoreResult> validReadResponses = readResponses.stream().filter(response -> response.isValid).collect(Collectors.toList());
         int validResponsesCount = validReadResponses.size();
 
         if (validResponsesCount == 0) {
@@ -672,7 +671,7 @@ public class QuorumReader {
         boolean checkForGlobalStrong = isGlobalStrongRead && numberOfReadRegions > 0;
 
         // Pick any R replicas in the response and check if they are at the same LSN
-        for (StoreReadResult response : validReadResponses) {
+        for (StoreResult response : validReadResponses) {
             if (response.lsn == maxLsn) {
                 replicaCountMaxLsn++;
             } else if (response.lsn > maxLsn) {
@@ -731,10 +730,10 @@ public class QuorumReader {
     }
 
     private abstract class ReadResult {
-        private final StoreReadResult response;
+        private final StoreResult response;
         private final RequestChargeTracker requestChargeTracker;
 
-        protected ReadResult(RequestChargeTracker requestChargeTracker, StoreReadResult response) {
+        protected ReadResult(RequestChargeTracker requestChargeTracker, StoreResult response) {
             this.requestChargeTracker = requestChargeTracker;
             this.response = response;
         }
@@ -757,7 +756,7 @@ public class QuorumReader {
                 ReadQuorumResultKind QuorumResult,
                 long selectedLsn,
                 long globalCommittedSelectedLsn,
-                StoreReadResult selectedResponse,
+                StoreResult selectedResponse,
                 List<String> storeResponses) {
             super(requestChargeTracker, selectedResponse);
 
@@ -773,7 +772,7 @@ public class QuorumReader {
         /**
          * Response selected to lock on the LSN. This is the response with the highest LSN
          */
-        public final StoreReadResult selectedResponse;
+        public final StoreResult selectedResponse;
 
         /**
          * All store responses from Quorum Read.
@@ -793,7 +792,7 @@ public class QuorumReader {
         public final boolean shouldRetryOnSecondary;
         public final boolean isSuccessful;
 
-        public ReadPrimaryResult(RequestChargeTracker requestChargeTracker, boolean isSuccessful, boolean shouldRetryOnSecondary, StoreReadResult response) {
+        public ReadPrimaryResult(RequestChargeTracker requestChargeTracker, boolean isSuccessful, boolean shouldRetryOnSecondary, StoreResult response) {
             super(requestChargeTracker, response);
             this.isSuccessful = isSuccessful;
             this.shouldRetryOnSecondary = shouldRetryOnSecondary;

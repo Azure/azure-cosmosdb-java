@@ -29,16 +29,18 @@ import java.util.Map;
 
 import com.microsoft.azure.cosmosdb.BridgeInternal;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
+import com.microsoft.azure.cosmosdb.ISessionContainer;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.internal.OperationType;
 import com.microsoft.azure.cosmosdb.internal.PathsHelper;
 import com.microsoft.azure.cosmosdb.internal.ResourceType;
 import com.microsoft.azure.cosmosdb.internal.Utils;
 import com.microsoft.azure.cosmosdb.rx.internal.AuthorizationTokenType;
+import com.microsoft.azure.cosmosdb.rx.internal.ClearingSessionContainerClientRetryPolicy;
 import com.microsoft.azure.cosmosdb.rx.internal.IAuthorizationTokenProvider;
 import com.microsoft.azure.cosmosdb.rx.internal.IDocumentClientRetryPolicy;
+import com.microsoft.azure.cosmosdb.rx.internal.IRetryPolicyFactory;
 import com.microsoft.azure.cosmosdb.rx.internal.ObservableHelper;
-import com.microsoft.azure.cosmosdb.rx.internal.RetryPolicy;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceResponse;
 import com.microsoft.azure.cosmosdb.rx.internal.RxStoreModel;
@@ -55,28 +57,28 @@ public class RxClientCollectionCache extends RxCollectionCache {
 
     private RxStoreModel storeModel;
     private final IAuthorizationTokenProvider tokenProvider;
-    private final RetryPolicy retryPolicy;
+    private final IRetryPolicyFactory retryPolicy;
+    private final ISessionContainer sessionContainer;
 
-    public RxClientCollectionCache(RxStoreModel storeModel, 
+    public RxClientCollectionCache(ISessionContainer sessionContainer,
+            RxStoreModel storeModel,
             IAuthorizationTokenProvider tokenProvider, 
-            RetryPolicy retryPolicy) {
+            IRetryPolicyFactory retryPolicy) {
         this.storeModel = storeModel;
         this.tokenProvider = tokenProvider;
         this.retryPolicy = retryPolicy;
+        this.sessionContainer = sessionContainer;
     }
 
     protected Single<DocumentCollection> getByRidAsync(String collectionRid, Map<String, Object> properties) {
-
-        IDocumentClientRetryPolicy retryPolicyInstance = this.retryPolicy.getRequestPolicy();
-
+        IDocumentClientRetryPolicy retryPolicyInstance = new ClearingSessionContainerClientRetryPolicy(this.sessionContainer, this.retryPolicy.getRequestPolicy());
         return ObservableHelper.inlineIfPossible(
                 () -> this.readCollectionAsync(PathsHelper.generatePath(ResourceType.DocumentCollection, collectionRid, false), retryPolicyInstance, properties)
                 , retryPolicyInstance);
     }
 
     protected Single<DocumentCollection> getByNameAsync(String resourceAddress, Map<String, Object> properties) {
-
-        IDocumentClientRetryPolicy retryPolicyInstance = this.retryPolicy.getRequestPolicy();
+        IDocumentClientRetryPolicy retryPolicyInstance = new ClearingSessionContainerClientRetryPolicy(this.sessionContainer, this.retryPolicy.getRequestPolicy());
         return ObservableHelper.inlineIfPossible(
                 () -> this.readCollectionAsync(resourceAddress, retryPolicyInstance, properties),
                 retryPolicyInstance);
@@ -89,7 +91,6 @@ public class RxClientCollectionCache extends RxCollectionCache {
                 OperationType.Read,
                 ResourceType.DocumentCollection,
                 path,
-                // AuthorizationTokenType.PrimaryMasterKey,
                 new HashMap<String, String>());
 
         request.getHeaders().put(HttpConstants.HttpHeaders.X_DATE, Utils.nowAsRFC1123());

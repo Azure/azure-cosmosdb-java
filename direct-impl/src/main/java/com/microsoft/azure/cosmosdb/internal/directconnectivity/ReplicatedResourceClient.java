@@ -25,6 +25,7 @@ package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
 import java.time.Duration;
 
+import com.microsoft.azure.cosmosdb.ClientSideRequestStatistics;
 import com.microsoft.azure.cosmosdb.ConsistencyLevel;
 import com.microsoft.azure.cosmosdb.rx.internal.Configs;
 import com.microsoft.azure.cosmosdb.rx.internal.ReplicatedResourceClientUtils;
@@ -142,16 +143,12 @@ public class ReplicatedResourceClient {
         // 2. enableReadRequestsFallback is set to true. (can only ever be true if
         // direct mode, on client)
         if (request.isReadOnlyRequest() && this.enableReadRequestsFallback) {
+            if (request.requestContext.clientSideRequestStatistics == null) {
+                request.requestContext.clientSideRequestStatistics = new ClientSideRequestStatistics();
+            }
             RxDocumentServiceRequest freshRequest = request.clone();
-
-            // TODO PRODUCT BACKLOG ITEM 258624
-            // ClientSideRequestStatistics sharedStatistics = new
-            // ClientSideRequestStatistics();
-            // request.requestContext.clientRequestStatistics = sharedStatistics;
-            // ClientSideRequestStatistics is yet to implement
             inBackoffFuncDelegate = (Quadruple<Boolean, Boolean, Duration, Integer> forceRefreshAndTimeout) -> {
                 RxDocumentServiceRequest readRequestClone = freshRequest.clone();
-                // readRequestClone.requestContext.clientRequestStatistics = sharedStatistics;
 
                 if (prepareRequestAsyncDelegate != null) {
                     return prepareRequestAsyncDelegate.call(readRequestClone).flatMap(responseReq -> {

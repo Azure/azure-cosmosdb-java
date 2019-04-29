@@ -67,7 +67,6 @@ public class StoreClient implements IStoreClient {
     private final TransportClient transportClient;
     private final String ZERO_PARTITION_KEY_RANGE = "0";
 
-    // TODO: support enableRequestDiagnostics
     public StoreClient(
             Configs configs,
             IAddressResolver addressResolver,
@@ -78,7 +77,6 @@ public class StoreClient implements IStoreClient {
         this.transportClient = transportClient;
         this.sessionContainer = sessionContainer;
         this.serviceConfigurationReader = serviceConfigurationReader;
-
         this.replicatedResourceClient = new ReplicatedResourceClient(
             configs,
             new AddressSelector(addressResolver, configs.getProtocol()),
@@ -110,22 +108,9 @@ public class StoreClient implements IStoreClient {
                         return;
                     }
 
-                    this.updateResponseHeader(request, exception.getResponseHeaders());
+                    exception.setClientSideRequestStatistics(request.requestContext.clientSideRequestStatistics);
 
-                    if (request.getIsNameBased() && exception.getStatusCode() == HttpConstants.StatusCodes.NOTFOUND &&
-                            Exceptions.isSubStatusCode(exception, HttpConstants.SubStatusCodes.READ_SESSION_NOT_AVAILABLE) &&
-                            request.clearSessionTokenOnSessionReadFailure) {
-                        // Clear the session token, because the collection name might be reused.
-                        logger.warn("Clear the the token for named base request {}", request.getResourceAddress());
-
-                        this.sessionContainer.clearToken(null, request.getResourceAddress(), exception.getResponseHeaders());
-                    } else {
-                        if ((!ReplicatedResourceClient.isMasterResource(request.getResourceType())) &&
-                                (exception.getStatusCode() == HttpConstants.StatusCodes.PRECONDITION_FAILED || exception.getStatusCode() == HttpConstants.StatusCodes.CONFLICT
-                                        || (exception.getStatusCode() == HttpConstants.StatusCodes.NOTFOUND && !Exceptions.isSubStatusCode(exception, HttpConstants.SubStatusCodes.READ_SESSION_NOT_AVAILABLE)))) {
-                            this.captureSessionToken(request, exception.getResponseHeaders());
-                        }
-                    }
+                    handleUnsuccessfulStoreResponse(request, exception);
                 } catch (Throwable throwable) {
                     logger.error("Unexpected failure in handling orig [{}]", e.getMessage(), e);
                     logger.error("Unexpected failure in handling orig [{}] : new [{}]", e.getMessage(), throwable.getMessage(), throwable);
@@ -140,6 +125,16 @@ public class StoreClient implements IStoreClient {
                 return Single.error(e);
             }
         });
+    }
+
+    private void handleUnsuccessfulStoreResponse(RxDocumentServiceRequest request, DocumentClientException exception) {
+        this.updateResponseHeader(request, exception.getResponseHeaders());
+        if ((!ReplicatedResourceClient.isMasterResource(request.getResourceType())) &&
+                (Exceptions.isStatusCode(exception, HttpConstants.StatusCodes.PRECONDITION_FAILED) || Exceptions.isStatusCode(exception, HttpConstants.StatusCodes.CONFLICT) ||
+                        (Exceptions.isStatusCode(exception, HttpConstants.StatusCodes.NOTFOUND) &&
+                                !Exceptions.isSubStatusCode(exception, HttpConstants.SubStatusCodes.READ_SESSION_NOT_AVAILABLE)))) {
+            this.captureSessionToken(request, exception.getResponseHeaders());
+        }
     }
 
     private RxDocumentServiceResponse completeResponse(
@@ -159,10 +154,8 @@ public class StoreClient implements IStoreClient {
 
         this.updateResponseHeader(request, headers);
         this.captureSessionToken(request, headers);
-
-        RxDocumentServiceResponse response = new RxDocumentServiceResponse(storeResponse);
-
-        return response;
+        storeResponse.setClientSideRequestStatistics(request.requestContext.clientSideRequestStatistics);
+        return new RxDocumentServiceResponse(storeResponse);
     }
 
     private long getLSN(Map<String, String> headers) {
@@ -222,7 +215,13 @@ public class StoreClient implements IStoreClient {
     private void captureSessionToken(RxDocumentServiceRequest request, Map<String, String> headers) {
         if (request.getResourceType() == ResourceType.DocumentCollection
             && request.getOperationType() == OperationType.Delete) {
-            this.sessionContainer.clearToken(request, headers);
+            String resourceId;
+            if (request.getIsNameBased()) {
+                resourceId = headers.get(HttpConstants.HttpHeaders.OWNER_ID);
+            } else {
+                resourceId = request.getResourceId();
+            }
+            this.sessionContainer.clearTokenByResourceId(resourceId);
         } else {
             this.sessionContainer.setSessionToken(request, headers);
         }

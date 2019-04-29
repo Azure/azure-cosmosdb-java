@@ -73,7 +73,6 @@ import java.net.ConnectException;
 import java.net.URI;
 import java.time.Duration;
 import java.util.Arrays;
-import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
@@ -410,7 +409,7 @@ public class RntbdTransportClientTest {
                     ImmutableMap.of(
                         HttpHeaders.LSN, Integer.toString(lsn),
                         HttpHeaders.PARTITION_KEY_RANGE_ID, partitionKeyRangeId,
-                        HttpHeaders.SUB_STATUS, "0"),
+                        HttpHeaders.SUB_STATUS, String.valueOf(SubStatusCodes.UNKNOWN)),
                     noContent)
             },
             {

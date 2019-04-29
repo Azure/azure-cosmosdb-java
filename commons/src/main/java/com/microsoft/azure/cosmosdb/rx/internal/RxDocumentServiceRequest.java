@@ -87,7 +87,6 @@ public class RxDocumentServiceRequest {
     // so it means most likely the corresponding features are also missing from the main sdk
     // we need to wire this up.
     public boolean UseGatewayMode;
-    public boolean clearSessionTokenOnSessionReadFailure;
 
     private volatile boolean isDisposed = false;
     public volatile String entityId;
@@ -138,12 +137,10 @@ public class RxDocumentServiceRequest {
         this.activityId = Utils.randomUUID().toString();
         this.isFeed = false;
         this.isNameBased = isNameBased;
-        if (isNameBased) {
-            this.resourceAddress = resourceIdOrFullName;
-        } else {
+        if (!isNameBased) {
             this.resourceId = resourceIdOrFullName;
-            this.resourceAddress = resourceIdOrFullName;
         }
+        this.resourceAddress = resourceIdOrFullName;
         this.authorizationTokenType = authorizationTokenType;
         this.requestContext = new DocumentServiceRequestContext();
         if (StringUtils.isNotEmpty(this.headers.get(WFConstants.BackendHeaders.PARTITION_KEY_RANGE_ID)))
@@ -760,7 +757,7 @@ public class RxDocumentServiceRequest {
         // The result of split will be in the form of
         // [[[resourceType], [resourceId] ... ,[resourceType], ""]
         // In the first case, to extract the resourceId it will the element
-        // before last ( at length -2 ) and the the type will before it
+        // before last ( at length -2 ) and the type will before it
         // ( at length -3 )
         // In the second case, to extract the resource type it will the element
         // before last ( at length -2 )
@@ -1033,7 +1030,6 @@ public class RxDocumentServiceRequest {
         rxDocumentServiceRequest.forcePartitionKeyRangeRefresh = this.forcePartitionKeyRangeRefresh;
         rxDocumentServiceRequest.UseGatewayMode = this.UseGatewayMode;
         rxDocumentServiceRequest.queryString = this.queryString;
-        rxDocumentServiceRequest.clearSessionTokenOnSessionReadFailure = this.clearSessionTokenOnSessionReadFailure;
         rxDocumentServiceRequest.requestContext = this.requestContext;
         return rxDocumentServiceRequest;
     }

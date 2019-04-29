@@ -25,6 +25,7 @@ package com.microsoft.azure.cosmosdb.rx;
 import com.microsoft.azure.cosmosdb.BridgeInternal;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.Error;
+import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.WFConstants;
 import com.microsoft.azure.cosmosdb.rx.internal.RMResources;
 
@@ -156,13 +157,13 @@ public interface FailureValidator {
             return this;
         }
 
-        public <T extends Throwable> Builder nullSubStatusCode() {
+        public <T extends Throwable> Builder unknownSubStatusCode() {
             validators.add(new FailureValidator() {
                 @Override
                 public void validate(Throwable t) {
                     assertThat(t).isNotNull();
                     assertThat(t).isInstanceOf(DocumentClientException.class);
-                    assertThat(((DocumentClientException) t).getSubStatusCode()).isNull();
+                    assertThat(((DocumentClientException) t).getSubStatusCode()).isEqualTo(HttpConstants.SubStatusCodes.UNKNOWN);
                 }
             });
             return this;

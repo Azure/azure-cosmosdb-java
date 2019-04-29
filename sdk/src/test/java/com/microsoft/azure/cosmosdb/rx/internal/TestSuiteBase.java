@@ -22,10 +22,55 @@
  */
 package com.microsoft.azure.cosmosdb.rx.internal;
 
-import static com.microsoft.azure.cosmosdb.ConsistencyLevel.*;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.spy;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.microsoft.azure.cosmosdb.CompositePath;
+import com.microsoft.azure.cosmosdb.CompositePathSortOrder;
+import com.microsoft.azure.cosmosdb.ConnectionMode;
+import com.microsoft.azure.cosmosdb.ConnectionPolicy;
+import com.microsoft.azure.cosmosdb.ConsistencyLevel;
+import com.microsoft.azure.cosmosdb.DataType;
+import com.microsoft.azure.cosmosdb.Database;
+import com.microsoft.azure.cosmosdb.DatabaseForTest;
+import com.microsoft.azure.cosmosdb.Document;
+import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.DocumentCollection;
+import com.microsoft.azure.cosmosdb.FeedOptions;
+import com.microsoft.azure.cosmosdb.FeedResponse;
+import com.microsoft.azure.cosmosdb.IncludedPath;
+import com.microsoft.azure.cosmosdb.Index;
+import com.microsoft.azure.cosmosdb.IndexingPolicy;
+import com.microsoft.azure.cosmosdb.PartitionKey;
+import com.microsoft.azure.cosmosdb.PartitionKeyDefinition;
+import com.microsoft.azure.cosmosdb.RequestOptions;
+import com.microsoft.azure.cosmosdb.Resource;
+import com.microsoft.azure.cosmosdb.ResourceResponse;
+import com.microsoft.azure.cosmosdb.RetryOptions;
+import com.microsoft.azure.cosmosdb.SqlQuerySpec;
+import com.microsoft.azure.cosmosdb.Undefined;
+import com.microsoft.azure.cosmosdb.User;
+import com.microsoft.azure.cosmosdb.internal.PathParser;
+import com.microsoft.azure.cosmosdb.internal.directconnectivity.Protocol;
+import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
+import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient.Builder;
+import com.microsoft.azure.cosmosdb.rx.FailureValidator;
+import com.microsoft.azure.cosmosdb.rx.FeedResponseListValidator;
+import com.microsoft.azure.cosmosdb.rx.ResourceResponseValidator;
+import com.microsoft.azure.cosmosdb.rx.TestConfigurations;
+import org.apache.commons.lang3.StringUtils;
+import org.mockito.stubbing.Answer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.AfterSuite;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
+import rx.Observable;
+import rx.observers.TestSubscriber;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -37,53 +82,9 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.microsoft.azure.cosmosdb.DataType;
-import com.microsoft.azure.cosmosdb.DatabaseForTest;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
-import com.microsoft.azure.cosmosdb.IncludedPath;
-import com.microsoft.azure.cosmosdb.Index;
-import com.microsoft.azure.cosmosdb.IndexingPolicy;
-import com.microsoft.azure.cosmosdb.RetryOptions;
-import com.microsoft.azure.cosmosdb.SqlQuerySpec;
-import com.microsoft.azure.cosmosdb.Undefined;
-import com.microsoft.azure.cosmosdb.internal.PathParser;
-import com.microsoft.azure.cosmosdb.internal.directconnectivity.Protocol;
-import com.microsoft.azure.cosmosdb.rx.*;
-import org.apache.commons.lang3.StringUtils;
-import org.mockito.stubbing.Answer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.AfterSuite;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.BeforeSuite;
-import org.testng.annotations.DataProvider;
-
-import com.microsoft.azure.cosmosdb.CompositePath;
-import com.microsoft.azure.cosmosdb.CompositePathSortOrder;
-import com.microsoft.azure.cosmosdb.ConnectionMode;
-import com.microsoft.azure.cosmosdb.ConnectionPolicy;
-import com.microsoft.azure.cosmosdb.ConsistencyLevel;
-import com.microsoft.azure.cosmosdb.Database;
-import com.microsoft.azure.cosmosdb.Document;
-import com.microsoft.azure.cosmosdb.DocumentCollection;
-import com.microsoft.azure.cosmosdb.FeedOptions;
-import com.microsoft.azure.cosmosdb.FeedResponse;
-import com.microsoft.azure.cosmosdb.PartitionKey;
-import com.microsoft.azure.cosmosdb.PartitionKeyDefinition;
-import com.microsoft.azure.cosmosdb.RequestOptions;
-import com.microsoft.azure.cosmosdb.Resource;
-import com.microsoft.azure.cosmosdb.ResourceResponse;
-import com.microsoft.azure.cosmosdb.User;
-import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient.Builder;
-
-import org.testng.annotations.Test;
-import rx.Observable;
-import rx.observers.TestSubscriber;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.spy;
 
 public class TestSuiteBase {
     private static final int DEFAULT_BULK_INSERT_CONCURRENCY_LEVEL = 500;
@@ -100,6 +101,8 @@ public class TestSuiteBase {
     protected static final int WAIT_REPLICA_CATCH_UP_IN_MILLIS = 4000;
 
     protected int subscriberValidationTimeout = TIMEOUT;
+    
+    protected static ConsistencyLevel accountConsistency;
 
     protected Builder clientBuilder;
 
@@ -644,6 +647,20 @@ public class TestSuiteBase {
         }
     }
 
+    static protected void safeDeleteAllCollections(AsyncDocumentClient client, Database database) {
+        if (database != null) {
+            List<DocumentCollection> collections = client.readCollections(database.getSelfLink(), null)
+                    .flatMap(p -> Observable.from(p.getResults()))
+                    .toList()
+                    .toBlocking()
+                    .single();
+
+            for(DocumentCollection collection: collections) {
+                client.deleteCollection(collection.getSelfLink(), null).toBlocking().single().getResource();
+            }
+        }
+    }
+
     static protected void safeDeleteCollection(AsyncDocumentClient client, DocumentCollection collection) {
         if (client != null && collection != null) {
             try {
@@ -745,21 +762,21 @@ public class TestSuiteBase {
 
     @DataProvider
     public static Object[][] clientBuilders() {
-        return new Object[][] { { createGatewayRxDocumentClient(Session, false, null) } };
+        return new Object[][] { { createGatewayRxDocumentClient(ConsistencyLevel.Session, false, null) } };
     }
 
     @DataProvider
     public static Object[][] clientBuildersWithSessionConsistency() {
         return new Object[][] {
-                { createGatewayRxDocumentClient(Session, false, null) },
-                { createDirectRxDocumentClient(Session, Protocol.Https, false, null) },
-                { createDirectRxDocumentClient(Session, Protocol.Tcp, false, null) }
+                { createGatewayRxDocumentClient(ConsistencyLevel.Session, false, null) },
+                { createDirectRxDocumentClient(ConsistencyLevel.Session, Protocol.Https, false, null) },
+                { createDirectRxDocumentClient(ConsistencyLevel.Session, Protocol.Tcp, false, null) }
         };
     }
 
     private static ConsistencyLevel parseConsistency(String consistency) {
         if (consistency != null) {
-            for (ConsistencyLevel consistencyLevel : values()) {
+            for (ConsistencyLevel consistencyLevel : ConsistencyLevel.values()) {
                 if (consistencyLevel.name().toLowerCase().equals(consistency.toLowerCase())) {
                     return consistencyLevel;
                 }
@@ -800,7 +817,7 @@ public class TestSuiteBase {
 
     private static Object[][] simpleClientBuildersWithDirect(Protocol... protocols) {
 
-        ConsistencyLevel accountConsistency = parseConsistency(TestConfigurations.CONSISTENCY);
+        accountConsistency = parseConsistency(TestConfigurations.CONSISTENCY);
         logger.info("Max test consistency to use is [{}]", accountConsistency);
         List<ConsistencyLevel> testConsistencies = new ArrayList<>();
 
@@ -810,17 +827,17 @@ public class TestSuiteBase {
             case Session:
             case ConsistentPrefix:
             case Eventual:
-                testConsistencies.add(Eventual);
+                testConsistencies.add(ConsistencyLevel.Eventual);
                 break;
             default:
                 throw new IllegalStateException("Invalid configured test consistency " + accountConsistency);
         }
 
         List<String> preferredLocation = parsePreferredLocation(TestConfigurations.PREFERRED_LOCATIONS);
-        boolean isMultiMasterEnabled = preferredLocation != null && accountConsistency == Session;
+        boolean isMultiMasterEnabled = preferredLocation != null && accountConsistency == ConsistencyLevel.Session;
 
-        List<AsyncDocumentClient.Builder> builders = new ArrayList<>();
-        builders.add(createGatewayRxDocumentClient(Session, false, null));
+        List<Builder> builders = new ArrayList<>();
+        builders.add(createGatewayRxDocumentClient(ConsistencyLevel.Session, false, null));
 
         for (Protocol protocol : protocols) {
             testConsistencies.forEach(consistencyLevel -> builders.add(createDirectRxDocumentClient(consistencyLevel,
@@ -840,46 +857,58 @@ public class TestSuiteBase {
 
     @DataProvider
     public static Object[][] clientBuildersWithDirect() {
-        return clientBuildersWithDirect(Protocol.Https, Protocol.Tcp);
+        return clientBuildersWithDirectAllConsistencies(Protocol.Https, Protocol.Tcp);
     }
 
     @DataProvider
     public static Object[][] clientBuildersWithDirectHttps() {
-        return clientBuildersWithDirect(Protocol.Https);
+        return clientBuildersWithDirectAllConsistencies(Protocol.Https);
     }
 
     @DataProvider
     public static Object[][] clientBuildersWithDirectTcp() {
-        return clientBuildersWithDirect(Protocol.Tcp);
+        return clientBuildersWithDirectAllConsistencies(Protocol.Tcp);
     }
 
-    private static Object[][] clientBuildersWithDirect(Protocol... protocols) {
+    @DataProvider
+    public static Object[][] clientBuildersWithDirectSession() {
+        return clientBuildersWithDirectSession(Protocol.Https, Protocol.Tcp);
+    }
 
-        ConsistencyLevel accountConsistency = parseConsistency(TestConfigurations.CONSISTENCY);
+    private static Object[][] clientBuildersWithDirectSession(Protocol... protocols) {
+        return clientBuildersWithDirect(new ArrayList<ConsistencyLevel>(){{add(ConsistencyLevel.Session);}} , protocols);
+    }
+
+    private static Object[][] clientBuildersWithDirectAllConsistencies(Protocol... protocols) {
+        accountConsistency = parseConsistency(TestConfigurations.CONSISTENCY);
         logger.info("Max test consistency to use is [{}]", accountConsistency);
         List<ConsistencyLevel> testConsistencies = new ArrayList<>();
 
         switch (accountConsistency) {
             case Strong:
-                testConsistencies.add(Strong);
+                testConsistencies.add(ConsistencyLevel.Strong);
             case BoundedStaleness:
-                testConsistencies.add(BoundedStaleness);
+                testConsistencies.add(ConsistencyLevel.BoundedStaleness);
             case Session:
-                testConsistencies.add(Session);
+                testConsistencies.add(ConsistencyLevel.Session);
             case ConsistentPrefix:
-                testConsistencies.add(ConsistentPrefix);
+                testConsistencies.add(ConsistencyLevel.ConsistentPrefix);
             case Eventual:
-                testConsistencies.add(Eventual);
+                testConsistencies.add(ConsistencyLevel.Eventual);
                 break;
             default:
                 throw new IllegalStateException("Invalid configured test consistency " + accountConsistency);
         }
+        return clientBuildersWithDirect(testConsistencies, protocols);
+    }
+
+    private static Object[][] clientBuildersWithDirect(List<ConsistencyLevel> testConsistencies, Protocol... protocols) {
 
         List<String> preferredLocation = parsePreferredLocation(TestConfigurations.PREFERRED_LOCATIONS);
-        boolean isMultiMasterEnabled = preferredLocation != null && accountConsistency == Session;
+        boolean isMultiMasterEnabled = preferredLocation != null && accountConsistency == ConsistencyLevel.Session;
 
-        List<AsyncDocumentClient.Builder> builders = new ArrayList<>();
-        builders.add(createGatewayRxDocumentClient(Session, isMultiMasterEnabled, preferredLocation));
+        List<Builder> builders = new ArrayList<>();
+        builders.add(createGatewayRxDocumentClient(ConsistencyLevel.Session, isMultiMasterEnabled, preferredLocation));
 
         for (Protocol protocol : protocols) {
             testConsistencies.forEach(consistencyLevel -> builders.add(createDirectRxDocumentClient(consistencyLevel,
@@ -906,7 +935,7 @@ public class TestSuiteBase {
         return new AsyncDocumentClient.Builder().withServiceEndpoint(TestConfigurations.HOST)
                 .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
                 .withConnectionPolicy(connectionPolicy)
-                .withConsistencyLevel(Session);
+                .withConsistencyLevel(ConsistencyLevel.Session);
     }
 
     static protected AsyncDocumentClient.Builder createGatewayRxDocumentClient(ConsistencyLevel consistencyLevel, boolean multiMasterEnabled, List<String> preferredLocations) {
@@ -921,7 +950,7 @@ public class TestSuiteBase {
     }
 
     static protected AsyncDocumentClient.Builder createGatewayRxDocumentClient() {
-        return createGatewayRxDocumentClient(Session, false, null);
+        return createGatewayRxDocumentClient(ConsistencyLevel.Session, false, null);
     }
 
     static protected AsyncDocumentClient.Builder createDirectRxDocumentClient(ConsistencyLevel consistencyLevel,
@@ -935,12 +964,12 @@ public class TestSuiteBase {
             connectionPolicy.setPreferredLocations(preferredLocations);
         }
 
-        if (multiMasterEnabled && consistencyLevel == Session) {
+        if (multiMasterEnabled && consistencyLevel == ConsistencyLevel.Session) {
             connectionPolicy.setUsingMultipleWriteLocations(true);
         }
 
         Configs configs = spy(new Configs());
-        doAnswer((Answer<Protocol>)invocation -> protocol).when(configs).getProtocol();
+        doAnswer((Answer<Protocol>) invocation -> protocol).when(configs).getProtocol();
 
         return new AsyncDocumentClient.Builder().withServiceEndpoint(TestConfigurations.HOST)
                 .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)

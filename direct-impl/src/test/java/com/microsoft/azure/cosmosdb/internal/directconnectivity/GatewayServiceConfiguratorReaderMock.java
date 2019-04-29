@@ -26,9 +26,7 @@ package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 import com.microsoft.azure.cosmosdb.ConsistencyLevel;
 import com.microsoft.azure.cosmosdb.DatabaseAccount;
 import com.microsoft.azure.cosmosdb.ReplicationPolicy;
-import org.mockito.Mock;
 import org.mockito.Mockito;
-import rx.Completable;
 import rx.Single;
 
 public class GatewayServiceConfiguratorReaderMock {
@@ -40,10 +38,10 @@ public class GatewayServiceConfiguratorReaderMock {
     }
 
     public static GatewayServiceConfiguratorReaderMock from(ConsistencyLevel accountConsistencyLevel,
-                                                         int systemMaxReplicaCount,
-                                                         int systemMinReplicaCount,
-                                                         int userMaxReplicaCount,
-                                                         int userMinReplicaCount) {
+                                                            int systemMaxReplicaCount,
+                                                            int systemMinReplicaCount,
+                                                            int userMaxReplicaCount,
+                                                            int userMinReplicaCount) {
         ReplicationPolicy userRP = Mockito.mock(ReplicationPolicy.class);
         Mockito.doReturn(userMaxReplicaCount).when(userRP).getMaxReplicaSetSize();
         Mockito.doReturn(userMinReplicaCount).when(userRP).getMinReplicaSetSize();

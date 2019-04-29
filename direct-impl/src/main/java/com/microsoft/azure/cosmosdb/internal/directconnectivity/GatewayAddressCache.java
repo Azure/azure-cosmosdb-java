@@ -57,6 +57,8 @@ import rx.Observable;
 import rx.Single;
 
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.time.Duration;
 import java.time.Instant;
@@ -163,7 +165,7 @@ public class GatewayAddressCache implements IAddressCache {
                 PartitionKeyRange.MASTER_PARTITION_KEY_RANGE_ID)) {
 
             // if that's master partition return master partition address!
-            return this.resolveMasterAsync(forceRefreshPartitionAddresses, request.properties).map(r -> r.getRight());
+            return this.resolveMasterAsync(request, forceRefreshPartitionAddresses, request.properties).map(r -> r.getRight());
         }
 
         Instant suboptimalServerPartitionTimestamp = this.suboptimalServerPartitionTimestamps.get(partitionKeyRangeIdentity);
@@ -233,7 +235,7 @@ public class GatewayAddressCache implements IAddressCache {
                 if (Exceptions.isStatusCode(dce, HttpConstants.StatusCodes.NOTFOUND) ||
                         Exceptions.isStatusCode(dce, HttpConstants.StatusCodes.GONE) ||
                         Exceptions.isSubStatusCode(dce, HttpConstants.SubStatusCodes.PARTITION_KEY_RANGE_GONE)) {
-                    //remove from suboptimal cache in case the the collection+pKeyRangeId combo is gone.
+                    //remove from suboptimal cache in case the collection+pKeyRangeId combo is gone.
                     this.suboptimalServerPartitionTimestamps.remove(partitionKeyRangeIdentity);
                     return null;
                 }
@@ -287,6 +289,7 @@ public class GatewayAddressCache implements IAddressCache {
         token = HttpUtils.urlEncode(token);
         headers.put(HttpConstants.HttpHeaders.AUTHORIZATION, token);
         URL targetEndpoint = Utils.setQuery(this.addressEndpoint.toString(), Utils.createQuery(addressQuery));
+        String identifier = logAddressResolutionStart(request, targetEndpoint);
         HttpClientRequest<ByteBuf> httpGet = HttpClientRequest.createGet(targetEndpoint.toString());
 
         for (Map.Entry<String, String> entry : headers.entrySet()) {
@@ -300,6 +303,7 @@ public class GatewayAddressCache implements IAddressCache {
                 HttpClientUtils.parseResponseAsync(rsp));
         return dsrObs.map(
                 dsr -> {
+                    logAddressResolutionEnd(request, identifier);
                     List<Address> addresses = dsr.getQueryResponse(Address.class);
                     return addresses;
                 });
@@ -310,7 +314,7 @@ public class GatewayAddressCache implements IAddressCache {
         //https://msdata.visualstudio.com/CosmosDB/_workitems/edit/340842
     }
 
-    private Single<Pair<PartitionKeyRangeIdentity, AddressInformation[]>> resolveMasterAsync(boolean forceRefresh, Map<String, Object> properties) {
+    private Single<Pair<PartitionKeyRangeIdentity, AddressInformation[]>> resolveMasterAsync(RxDocumentServiceRequest request, boolean forceRefresh, Map<String, Object> properties) {
         Pair<PartitionKeyRangeIdentity, AddressInformation[]> masterAddressAndRangeInitial = this.masterPartitionAddressCache;
 
         forceRefresh = forceRefresh ||
@@ -320,6 +324,7 @@ public class GatewayAddressCache implements IAddressCache {
 
         if (forceRefresh || this.masterPartitionAddressCache == null) {
             Single<List<Address>> masterReplicaAddressesObs = this.getMasterAddressesViaGatewayAsync(
+                    request,
                     ResourceType.Database,
                     null,
                     databaseFeedEntryUrl,
@@ -399,6 +404,7 @@ public class GatewayAddressCache implements IAddressCache {
     }
 
     Single<List<Address>> getMasterAddressesViaGatewayAsync(
+            RxDocumentServiceRequest request,
             ResourceType resourceType,
             String resourceAddress,
             String entryUrl,
@@ -429,6 +435,7 @@ public class GatewayAddressCache implements IAddressCache {
 
         headers.put(HttpConstants.HttpHeaders.AUTHORIZATION, HttpUtils.urlEncode(token));
         URL targetEndpoint = Utils.setQuery(this.addressEndpoint.toString(), Utils.createQuery(queryParameters));
+        String identifier = logAddressResolutionStart(request, targetEndpoint);
         HttpClientRequest<ByteBuf> httpGet = HttpClientRequest.createGet(targetEndpoint.toString());
 
         for (Map.Entry<String, String> entry : headers.entrySet()) {
@@ -442,6 +449,7 @@ public class GatewayAddressCache implements IAddressCache {
                 HttpClientUtils.parseResponseAsync(rsp));
         return dsrObs.map(
                 dsr -> {
+                    logAddressResolutionEnd(request, identifier);
                     List<Address> addresses = dsr.getQueryResponse(Address.class);
                     return addresses;
                 });
@@ -507,5 +515,22 @@ public class GatewayAddressCache implements IAddressCache {
 
     private boolean notAllReplicasAvailable(AddressInformation[] addressInformations) {
         return addressInformations.length < this.serviceConfig.userReplicationPolicy.MaxReplicaSetSize;
+    }
+
+    private static String logAddressResolutionStart(RxDocumentServiceRequest request, URL targetEndpointUrl) {
+        try {
+            if (request.requestContext.clientSideRequestStatistics != null) {
+                return request.requestContext.clientSideRequestStatistics.recordAddressResolutionStart(targetEndpointUrl.toURI());
+            }
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException(e);
+        }
+        return null;
+    }
+
+    private static void logAddressResolutionEnd(RxDocumentServiceRequest request, String identifier) {
+        if (request.requestContext.clientSideRequestStatistics != null) {
+            request.requestContext.clientSideRequestStatistics.recordAddressResolutionEnd(identifier);
+        }
     }
 }

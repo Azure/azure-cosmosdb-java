@@ -53,12 +53,12 @@ public final class TestConfigurations {
             System.getProperty("ACCOUNT_HOST",
                     StringUtils.defaultString(Strings.emptyToNull(
                             System.getenv().get("ACCOUNT_HOST")),
-                            "https://localhost:8081"));
+                            "https://localhost:443/"));
 
     public static String CONSISTENCY =
             System.getProperty("ACCOUNT_CONSISTENCY",
                                StringUtils.defaultString(Strings.emptyToNull(
-                                       System.getenv().get("ACCOUNT_CONSISTENCY")), "Session"));
+                                       System.getenv().get("ACCOUNT_CONSISTENCY")), "Strong"));
 
     public static String PREFERRED_LOCATIONS =
             System.getProperty("PREFERRED_LOCATIONS",

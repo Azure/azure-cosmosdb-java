@@ -41,8 +41,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
 
 class ResponseUtils {
     private final static int INITIAL_RESPONSE_BUFFER_SIZE = 1024;
@@ -56,7 +54,7 @@ class ResponseUtils {
                             try {
                                 bb.readBytes(out, bb.readableBytes());
                                 return out;
-                            } catch (java.io.IOException e) {
+                            } catch (IOException e) {
                                 throw new RuntimeException(e);
                             }
                         })
@@ -67,20 +65,6 @@ class ResponseUtils {
 
     public static Single<StoreResponse> toStoreResponse(HttpClientResponse<ByteBuf> clientResponse) {
 
-        // TODO: OWNER_FULL_NAME header value should be unscaped
-        // have proper support for '%', '+', ' ', etc in the owner full name.
-        // https://msdata.visualstudio.com/CosmosDB/SDK/_workitems/edit/305144
-        //if (Strings.areEqual(key, HttpConstants.HttpHeaders.OWNER_FULL_NAME))
-        //{
-        //    // TODO
-        //   // values.add(Uri.UnescapeDataString(kvPair.Value.SingleOrDefault()));
-        //}
-        //else
-        //{
-        //    values.add(value);
-        //}
-
-        // header key/value pairs
         HttpResponseHeaders httpResponseHeaders = clientResponse.getHeaders();
         HttpResponseStatus httpResponseStatus = clientResponse.getStatus();
 
@@ -98,7 +82,7 @@ class ResponseUtils {
                 .flatMap(content -> {
                     try {
                         // transforms to Observable<StoreResponse>
-                        StoreResponse rsp = new StoreResponse(httpResponseStatus.code(), httpResponseHeaders.entries(), content);
+                        StoreResponse rsp = new StoreResponse(httpResponseStatus.code(), HttpUtils.unescape(httpResponseHeaders.entries()), content);
                         return Observable.just(rsp);
                     } catch (Exception e) {
                         return Observable.error(e);
@@ -125,11 +109,6 @@ class ResponseUtils {
                 }
             }
 
-            Map<String, String> responseHeaders = new HashMap<>(headers.entries().size());
-            for (Map.Entry<String, String> header : headers.entries()) {
-                responseHeaders.put(header.getKey(), header.getValue());
-            }
-
             String statusCodeString = status.reasonPhrase() != null
                     ? status.reasonPhrase().replace(" ", "")
                     : "";
@@ -139,7 +118,7 @@ class ResponseUtils {
                     String.format("%s, StatusCode: %s", error.getMessage(), statusCodeString),
                     error.getPartitionedQueryExecutionInfo());
 
-            throw new DocumentClientException(statusCode, error, responseHeaders);
+            throw new DocumentClientException(statusCode, error, HttpUtils.asMap(headers));
         }
     }
 }

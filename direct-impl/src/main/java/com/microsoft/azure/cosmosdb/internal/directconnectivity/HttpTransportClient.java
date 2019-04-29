@@ -68,7 +68,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static com.microsoft.azure.cosmosdb.internal.Utils.trimBeginingAndEndingSlashes;
+import static com.microsoft.azure.cosmosdb.internal.Utils.trimBeginningAndEndingSlashes;
 /*
  * The following code only support Document Write without any error handling support.
  */
@@ -560,7 +560,7 @@ public class HttpTransportClient extends TransportClient {
     }
 
     static URI createURI(URI baseAddress, String resourcePath) {
-        return baseAddress.resolve(trimBeginingAndEndingSlashes(resourcePath));
+        return baseAddress.resolve(HttpUtils.urlEncode(trimBeginningAndEndingSlashes(resourcePath)));
     }
 
     static URI getRootFeedUri(URI baseAddress) {
@@ -981,19 +981,6 @@ public class HttpTransportClient extends TransportClient {
         HttpClientResponse<ByteBuf> responseMessage) {
 
         Single<StoreResponse> storeResponse = ResponseUtils.toStoreResponse(responseMessage);
-        // TODO: OWNER_FULL_NAME header value should be unscaped
-        // have proper support for '%', '+', ' ', etc in the owner full name.
-        // https://msdata.visualstudio.com/CosmosDB/SDK/_workitems/edit/305144
-
-        //if (Strings.areEqual(key, HttpConstants.HttpHeaders.OWNER_FULL_NAME))
-        //{
-        //    // TODO
-        //   // values.add(URI.UnescapeDataString(kvPair.Value.SingleOrDefault()));
-        //}
-        //else
-        //{
-        //    values.add(value);
-        //}
         return storeResponse;
     }
 }

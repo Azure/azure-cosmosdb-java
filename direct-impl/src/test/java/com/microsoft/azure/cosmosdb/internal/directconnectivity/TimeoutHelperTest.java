@@ -23,11 +23,11 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.testng.annotations.Test;
 
 import java.time.Duration;
 
-import org.testng.annotations.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class TimeoutHelperTest {
 

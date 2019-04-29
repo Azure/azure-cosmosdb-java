@@ -41,7 +41,6 @@ import com.microsoft.azure.cosmosdb.internal.routing.PartitionKeyInternal;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import com.microsoft.azure.cosmosdb.rx.FailureValidator;
 import com.microsoft.azure.cosmosdb.rx.TestConfigurations;
-import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentClientImpl;
 import org.apache.commons.lang3.Range;
 import org.testng.annotations.Test;
 import rx.Completable;
@@ -278,7 +277,7 @@ public class ConsistencyTests2 extends ConsistencyTestsBase {
                         logger.info("Session Token = {}, LSN = {}", sessionToken.convertToString(), lsn);
                         assertThat(lsn).isEqualTo(sessionToken.getLSN());
                     } catch (Exception ex) {
-                        DocumentClientException  clientException = (DocumentClientException) ex.getCause();
+                        DocumentClientException clientException = (DocumentClientException) ex.getCause();
                         if (clientException.getStatusCode() != 0) {
                             if (clientException.getStatusCode() == HttpConstants.StatusCodes.REQUEST_TIMEOUT) {
                                 // ignore

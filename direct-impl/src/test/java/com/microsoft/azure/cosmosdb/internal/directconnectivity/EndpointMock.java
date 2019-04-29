@@ -27,7 +27,6 @@ import com.google.common.collect.ImmutableList;
 import com.microsoft.azure.cosmosdb.internal.OperationType;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
 import org.apache.commons.collections.map.HashedMap;
-import rx.Single;
 
 import java.net.URI;
 import java.util.ArrayList;

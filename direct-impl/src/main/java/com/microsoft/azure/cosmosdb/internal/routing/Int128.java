@@ -28,7 +28,7 @@ import java.math.BigInteger;
 
 public class Int128 {
 
-    private final java.math.BigInteger value;
+    private final BigInteger value;
 
     private static final BigInteger MaxBigIntValue =
             new BigInteger(new byte[] {

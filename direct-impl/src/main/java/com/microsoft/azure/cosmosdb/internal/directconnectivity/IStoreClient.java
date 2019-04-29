@@ -32,24 +32,24 @@ import rx.functions.Func1;
 public interface IStoreClient {
 
     Single<RxDocumentServiceResponse> processMessageAsync(
-        RxDocumentServiceRequest request,
-        IRetryPolicy retryPolicy,
-        Func1<RxDocumentServiceRequest, Single<RxDocumentServiceRequest>> prepareRequestAsyncDelegate);
+            RxDocumentServiceRequest request,
+            IRetryPolicy retryPolicy,
+            Func1<RxDocumentServiceRequest, Single<RxDocumentServiceRequest>> prepareRequestAsyncDelegate);
 
     default Single<RxDocumentServiceResponse> processMessageAsync(
-        RxDocumentServiceRequest request,
-        Func1<RxDocumentServiceRequest, Single<RxDocumentServiceRequest>> prepareRequestAsyncDelegate) {
+            RxDocumentServiceRequest request,
+            Func1<RxDocumentServiceRequest, Single<RxDocumentServiceRequest>> prepareRequestAsyncDelegate) {
         return processMessageAsync(request, null, prepareRequestAsyncDelegate);
     }
 
     default Single<RxDocumentServiceResponse> processMessageAsync(
-        RxDocumentServiceRequest request,
-        IRetryPolicy retryPolicy) {
+            RxDocumentServiceRequest request,
+            IRetryPolicy retryPolicy) {
         return processMessageAsync(request, retryPolicy, null);
     }
 
     default Single<RxDocumentServiceResponse> processMessageAsync(
-        RxDocumentServiceRequest request) {
+            RxDocumentServiceRequest request) {
         return processMessageAsync(request, null, null);
     }
 }

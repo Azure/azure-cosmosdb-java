@@ -25,7 +25,6 @@ package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableListMultimap;
 import com.microsoft.azure.cosmosdb.PartitionKeyRange;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
 import org.apache.commons.lang3.tuple.ImmutablePair;

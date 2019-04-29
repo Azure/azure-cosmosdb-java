@@ -37,9 +37,7 @@ import com.microsoft.azure.cosmosdb.rx.internal.IAuthorizationTokenProvider;
 import com.microsoft.azure.cosmosdb.rx.internal.PartitionKeyRangeIsSplittingException;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
 import org.assertj.core.api.Assertions;
-import org.mockito.Matchers;
 import org.mockito.Mockito;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import rx.Single;
@@ -166,14 +164,14 @@ public class ReplicatedResourceClientPartitionSplitTest {
         }
     }
 
-    public static void validateSuccess(Single<List<StoreReadResult>> single,
-                                       MultiStoreReadResultValidator validator) {
+    public static void validateSuccess(Single<List<StoreResult>> single,
+                                       MultiStoreResultValidator validator) {
         validateSuccess(single, validator, TIMEOUT);
     }
 
-    public static void validateSuccess(Single<List<StoreReadResult>> single,
-                                       MultiStoreReadResultValidator validator, long timeout) {
-        TestSubscriber<List<StoreReadResult>> testSubscriber = new TestSubscriber<>();
+    public static void validateSuccess(Single<List<StoreResult>> single,
+                                       MultiStoreResultValidator validator, long timeout) {
+        TestSubscriber<List<StoreResult>> testSubscriber = new TestSubscriber<>();
 
         single.toObservable().subscribe(testSubscriber);
         testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);

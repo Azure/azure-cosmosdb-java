@@ -23,13 +23,13 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
+import com.microsoft.azure.cosmosdb.ClientSideRequestStatistics;
 import com.microsoft.azure.cosmosdb.ConsistencyLevel;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.ISessionContainer;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.internal.Integers;
 import com.microsoft.azure.cosmosdb.internal.RequestChargeTracker;
-import com.microsoft.azure.cosmosdb.internal.SessionContainer;
 import com.microsoft.azure.cosmosdb.internal.SessionTokenHelper;
 import com.microsoft.azure.cosmosdb.rx.internal.IAuthorizationTokenProvider;
 import com.microsoft.azure.cosmosdb.rx.internal.RMResources;
@@ -41,13 +41,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rx.Observable;
 import rx.Single;
-import rx.exceptions.Exceptions;
 import rx.schedulers.Schedulers;
 
+import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /*
@@ -137,21 +139,22 @@ public class ConsistencyWriter {
             request.requestContext.requestChargeTracker = new RequestChargeTracker();
         }
 
-//        TODO: client side statistics
-//        https://msdata.visualstudio.com/CosmosDB/_workitems/edit/258624
-//        if (request.requestContext.ClientRequestStatistics == null)
-//        {
-//            request.requestContext.ClientRequestStatistics = new ClientSideRequestStatistics();
-//        }
+        if (request.requestContext.clientSideRequestStatistics == null) {
+            request.requestContext.clientSideRequestStatistics = new ClientSideRequestStatistics();
+        }
 
         request.requestContext.forceRefreshAddressCache = forceRefresh;
 
         if (request.requestContext.globalStrongWriteResponse == null) {
 
             Single<List<AddressInformation>> replicaAddressesObs = this.addressSelector.resolveAddressesAsync(request, forceRefresh);
+            AtomicReference<URI> primaryURI = new AtomicReference<>();
 
             return replicaAddressesObs.flatMap(replicaAddresses -> {
                 try {
+                    List<URI> contactedReplicas = new ArrayList<>();
+                    replicaAddresses.forEach(replicaAddress -> contactedReplicas.add(HttpUtils.toURI(replicaAddress.getPhysicalUri())));
+                    request.requestContext.clientSideRequestStatistics.setContactedReplicas(contactedReplicas);
                     return Single.just(AddressSelector.getPrimaryUri(request, replicaAddresses));
                 } catch (GoneException e) {
                     // RxJava1 doesn't allow throwing checked exception from Observable operators
@@ -159,6 +162,7 @@ public class ConsistencyWriter {
                 }
             }).flatMap(primaryUri -> {
                 try {
+                    primaryURI.set(primaryUri);
                     if (this.useMultipleWriteLocations &&
                             RequestHelper.GetConsistencyLevelToUse(this.serviceConfigReader, request) == ConsistencyLevel.Session) {
                         // Set session token to ensure session consistency for write requests
@@ -180,6 +184,12 @@ public class ConsistencyWriter {
                                 t -> {
                                     try {
                                         DocumentClientException ex = Utils.as(t, DocumentClientException.class);
+                                        try {
+                                            request.requestContext.clientSideRequestStatistics.recordResponse(request,
+                                                    storeReader.createStoreResult(null, ex, false, false, primaryUri));
+                                        } catch (DocumentClientException e) {
+                                            logger.error("Error occurred while recording response", e);
+                                        }
                                         String value = ex.getResponseHeaders().get(HttpConstants.HttpHeaders.WRITE_REQUEST_TRIGGER_ADDRESS_REFRESH);
                                         if (!Strings.isNullOrWhiteSpace(value)) {
                                             Integer result = Integers.tryParse(value);
@@ -195,6 +205,12 @@ public class ConsistencyWriter {
                         );
 
             }).flatMap(response -> {
+                try {
+                    request.requestContext.clientSideRequestStatistics.recordResponse(request,
+                            storeReader.createStoreResult(response, null, false, false, primaryURI.get()));
+                } catch (DocumentClientException e) {
+                    logger.error("Error occurred while recording response", e);
+                }
                 return barrierForGlobalStrong(request, response);
             });
         } else {
@@ -233,13 +249,11 @@ public class ConsistencyWriter {
 
     Single<StoreResponse> barrierForGlobalStrong(RxDocumentServiceRequest request, StoreResponse response) {
         try {
-            // TODO: client statistics
-            // https://msdata.visualstudio.com/CosmosDB/_workitems/edit/258624
             if (ReplicatedResourceClient.isGlobalStrongEnabled() && this.isGlobalStrongRequest(request, response)) {
                 Utils.ValueHolder<Long> lsn = Utils.ValueHolder.initialize(-1l);
                 Utils.ValueHolder<Long> globalCommittedLsn = Utils.ValueHolder.initialize(-1l);
 
-                this.getLsnAndGlobalCommittedLsn(response, lsn, globalCommittedLsn);
+                getLsnAndGlobalCommittedLsn(response, lsn, globalCommittedLsn);
                 if (lsn.v == -1 || globalCommittedLsn.v == -1) {
                     logger.error("ConsistencyWriter: lsn {} or GlobalCommittedLsn {} is not set for global strong request",
                             lsn, globalCommittedLsn);
@@ -298,7 +312,7 @@ public class ConsistencyWriter {
                 return Observable.error(new RequestTimeoutException());
             }
 
-            Single<List<StoreReadResult>> storeReadResultListObs = this.storeReader.readMultipleReplicaAsync(
+            Single<List<StoreResult>> storeResultListObs = this.storeReader.readMultipleReplicaAsync(
                     barrierRequest,
                     true /*allowPrimary*/,
                     1 /*any replica with correct globalCommittedLsn is good enough*/,
@@ -307,7 +321,7 @@ public class ConsistencyWriter {
                     ReadMode.Strong,
                     false /*checkMinLsn*/,
                     false /*forceReadAll*/);
-            return storeReadResultListObs.flatMap(
+            return storeResultListObs.flatMap(
                     responses -> {
                         if (responses != null && responses.stream().anyMatch(response -> response.globalCommittedLSN >= selectedGlobalCommittedLsn)) {
                             return Single.just(Boolean.TRUE);

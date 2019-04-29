@@ -47,7 +47,7 @@ class RntbdToken {
     private static final int HEADER_LENGTH = Short.BYTES + Byte.BYTES;
 
     static {
-        RntbdObjectMapper.registerPropertyFilter(RntbdToken.class, RntbdToken.PropertyFilter.class);
+        RntbdObjectMapper.registerPropertyFilter(RntbdToken.class, PropertyFilter.class);
     }
 
     private final RntbdHeader header;

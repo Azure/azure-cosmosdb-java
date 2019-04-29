@@ -71,13 +71,13 @@ public class HttpTransportClientTest {
 
     private final long lsn = 5;
     private final String partitionKeyRangeId = "3";
-
+    
     @Test(groups = "unit")
     public void getResourceFeedUri_Document() throws Exception {
         RxDocumentServiceRequest req = RxDocumentServiceRequest.createFromName(
                 OperationType.Create, "dbs/db/colls/col", ResourceType.Document);
         URI res = HttpTransportClient.getResourceFeedUri(req.getResourceType(), physicalAddress, req);
-        assertThat(res.toString()).isEqualTo(physicalAddress.toString() + "dbs/db/colls/col/docs");
+        assertThat(res.toString()).isEqualTo(physicalAddress.toString() + HttpUtils.urlEncode("dbs/db/colls/col/docs"));
     }
 
     @Test(groups = "unit")
@@ -85,7 +85,7 @@ public class HttpTransportClientTest {
         RxDocumentServiceRequest req = RxDocumentServiceRequest.createFromName(
                 OperationType.Create, "dbs/db/colls/col", ResourceType.Attachment);
         URI res = HttpTransportClient.getResourceFeedUri(req.getResourceType(), physicalAddress, req);
-        assertThat(res.toString()).isEqualTo(physicalAddress.toString() + "dbs/db/colls/col/attachments");
+        assertThat(res.toString()).isEqualTo(physicalAddress.toString() + HttpUtils.urlEncode("dbs/db/colls/col/attachments"));
     }
 
     @Test(groups = "unit")
@@ -93,7 +93,7 @@ public class HttpTransportClientTest {
         RxDocumentServiceRequest req = RxDocumentServiceRequest.createFromName(
                 OperationType.Create, "dbs/db", ResourceType.DocumentCollection);
         URI res = HttpTransportClient.getResourceFeedUri(req.getResourceType(), physicalAddress, req);
-        assertThat(res.toString()).isEqualTo(physicalAddress.toString() + "dbs/db/colls");
+        assertThat(res.toString()).isEqualTo(physicalAddress.toString() + HttpUtils.urlEncode("dbs/db/colls"));
     }
 
     @Test(groups = "unit")
@@ -101,7 +101,7 @@ public class HttpTransportClientTest {
         RxDocumentServiceRequest req = RxDocumentServiceRequest.createFromName(
                 OperationType.Create, "/dbs/db/colls/col", ResourceType.Conflict);
         URI res = HttpTransportClient.getResourceFeedUri(req.getResourceType(), physicalAddress, req);
-        assertThat(res.toString()).isEqualTo(physicalAddress.toString() + "dbs/db/colls/col/conflicts");
+        assertThat(res.toString()).isEqualTo(physicalAddress.toString() + HttpUtils.urlEncode("dbs/db/colls/col/conflicts"));
     }
 
     @Test(groups = "unit")
@@ -568,7 +568,7 @@ public class HttpTransportClientTest {
     @Test(groups = "unit", dataProvider = "fromMockedNetworkFailureToExpectedDocumentClientException")
     public void networkFailures(RxDocumentServiceRequest request,
                                 HttpClientMockWrapper.HttpClientBehaviourBuilder mockedResponseBuilder,
-                        FailureValidator.Builder failureValidatorBuilder) {
+                                FailureValidator.Builder failureValidatorBuilder) {
         HttpClientMockWrapper httpClientMockWrapper = new HttpClientMockWrapper(mockedResponseBuilder);
         UserAgentContainer userAgentContainer = new UserAgentContainer();
         HttpTransportClient transportClient = getHttpTransportClientUnderTest(

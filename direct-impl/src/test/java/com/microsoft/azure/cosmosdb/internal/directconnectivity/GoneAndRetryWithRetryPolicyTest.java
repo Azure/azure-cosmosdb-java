@@ -24,9 +24,6 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import org.testng.annotations.Test;
-
 import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.internal.OperationType;
@@ -37,8 +34,10 @@ import com.microsoft.azure.cosmosdb.rx.internal.InvalidPartitionException;
 import com.microsoft.azure.cosmosdb.rx.internal.PartitionIsMigratingException;
 import com.microsoft.azure.cosmosdb.rx.internal.PartitionKeyRangeIsSplittingException;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
-
+import org.testng.annotations.Test;
 import rx.Single;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * This test file will cover various exception on GoneAndRetryWithRetryPolicy.

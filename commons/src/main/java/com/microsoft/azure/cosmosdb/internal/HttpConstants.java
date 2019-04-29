@@ -296,6 +296,9 @@ public class HttpConstants {
     }
 
     public static class SubStatusCodes {
+        //  Unknown SubStatus Code
+        public static final int UNKNOWN = 0;
+
         // 400: Bad Request substatus
         public static final int PARTITION_KEY_MISMATCH = 1001;
         public static final int CROSS_PARTITION_QUERY_NOT_SERVABLE = 1004;

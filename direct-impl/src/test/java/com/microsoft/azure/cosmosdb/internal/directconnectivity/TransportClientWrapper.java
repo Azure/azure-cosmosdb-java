@@ -25,7 +25,6 @@ package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
 import com.microsoft.azure.cosmosdb.internal.OperationType;
 import com.microsoft.azure.cosmosdb.internal.ResourceType;
-import com.microsoft.azure.cosmosdb.rx.DocumentServiceRequestValidator;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
 import com.microsoft.azure.cosmosdb.rx.internal.Utils;
 import org.apache.commons.lang3.tuple.Pair;

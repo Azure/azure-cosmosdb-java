@@ -639,15 +639,15 @@ public class QuorumReaderTest {
         endpointMock.validate(verification);
     }
 
-    public static void validateSuccess(Single<List<StoreReadResult>> single,
-                                       MultiStoreReadResultValidator validator) {
+    public static void validateSuccess(Single<List<StoreResult>> single,
+                                       MultiStoreResultValidator validator) {
         validateSuccess(single, validator, 10000);
     }
 
-    public static void validateSuccess(Single<List<StoreReadResult>> single,
-                                       MultiStoreReadResultValidator validator,
+    public static void validateSuccess(Single<List<StoreResult>> single,
+                                       MultiStoreResultValidator validator,
                                        long timeout) {
-        TestSubscriber<List<StoreReadResult>> testSubscriber = new TestSubscriber<>();
+        TestSubscriber<List<StoreResult>> testSubscriber = new TestSubscriber<>();
 
         single.toObservable().subscribe(testSubscriber);
         testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);

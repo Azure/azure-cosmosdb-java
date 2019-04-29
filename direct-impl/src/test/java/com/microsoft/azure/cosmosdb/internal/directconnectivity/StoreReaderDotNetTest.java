@@ -509,7 +509,7 @@ public class StoreReaderDotNetTest {
         // reads always go to read quorum (2) replicas
         int replicaCountToRead = 2;
 
-        List<StoreReadResult> result = storeReader.readMultipleReplicaAsync(
+        List<StoreResult> result = storeReader.readMultipleReplicaAsync(
                 entity,
                 false /*includePrimary*/,
                 replicaCountToRead,
@@ -521,14 +521,14 @@ public class StoreReaderDotNetTest {
         assertThat(result).hasSize(2);
     }
 
-    public static void validateSuccess(Single<List<StoreReadResult>> single,
-                                       MultiStoreReadResultValidator validator) {
+    public static void validateSuccess(Single<List<StoreResult>> single,
+                                       MultiStoreResultValidator validator) {
         validateSuccess(single, validator, 10000);
     }
 
-    public static void validateSuccess(Single<List<StoreReadResult>> single,
-                                       MultiStoreReadResultValidator validator, long timeout) {
-        TestSubscriber<List<StoreReadResult>> testSubscriber = new TestSubscriber<>();
+    public static void validateSuccess(Single<List<StoreResult>> single,
+                                       MultiStoreResultValidator validator, long timeout) {
+        TestSubscriber<List<StoreResult>> testSubscriber = new TestSubscriber<>();
 
         single.toObservable().subscribe(testSubscriber);
         testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
@@ -538,14 +538,14 @@ public class StoreReaderDotNetTest {
         validator.validate(testSubscriber.getOnNextEvents().get(0));
     }
 
-    public static void validateSuccess(Single<StoreReadResult> single,
-                                       StoreReadResultValidator validator) {
+    public static void validateSuccess(Single<StoreResult> single,
+                                       StoreResultValidator validator) {
         validateSuccess(single, validator, 10000);
     }
 
-    public static void validateSuccess(Single<StoreReadResult> single,
-                                       StoreReadResultValidator validator, long timeout) {
-        TestSubscriber<StoreReadResult> testSubscriber = new TestSubscriber<>();
+    public static void validateSuccess(Single<StoreResult> single,
+                                       StoreResultValidator validator, long timeout) {
+        TestSubscriber<StoreResult> testSubscriber = new TestSubscriber<>();
 
         single.toObservable().subscribe(testSubscriber);
         testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
@@ -555,14 +555,14 @@ public class StoreReaderDotNetTest {
         validator.validate(testSubscriber.getOnNextEvents().get(0));
     }
 
-    public static void validateException(Single<StoreReadResult> single,
+    public static void validateException(Single<StoreResult> single,
                                          FailureValidator validator) {
         validateException(single, validator, 10000);
     }
 
-    public static void validateException(Single<StoreReadResult> single,
+    public static void validateException(Single<StoreResult> single,
                                          FailureValidator validator, long timeout) {
-        TestSubscriber<StoreReadResult> testSubscriber = new TestSubscriber<>();
+        TestSubscriber<StoreResult> testSubscriber = new TestSubscriber<>();
 
         single.toObservable().subscribe(testSubscriber);
         testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);

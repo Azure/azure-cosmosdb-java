@@ -32,9 +32,7 @@ import rx.Single;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class StoreReaderUnderTest extends StoreReader {
 
@@ -45,7 +43,7 @@ public class StoreReaderUnderTest extends StoreReader {
     }
 
     @Override
-    public Single<List<StoreReadResult>> readMultipleReplicaAsync(RxDocumentServiceRequest entity, boolean includePrimary, int replicaCountToRead, boolean requiresValidLsn, boolean useSessionToken, ReadMode readMode) {
+    public Single<List<StoreResult>> readMultipleReplicaAsync(RxDocumentServiceRequest entity, boolean includePrimary, int replicaCountToRead, boolean requiresValidLsn, boolean useSessionToken, ReadMode readMode) {
         Method method = new Object(){}.getClass().getEnclosingMethod();
         ImmutableList<Object> list = ImmutableList.of(entity, includePrimary, replicaCountToRead, requiresValidLsn, useSessionToken, readMode);
         invocations.add(Pair.of(method, list));
@@ -54,7 +52,7 @@ public class StoreReaderUnderTest extends StoreReader {
     }
 
     @Override
-    public Single<List<StoreReadResult>> readMultipleReplicaAsync(RxDocumentServiceRequest entity, boolean includePrimary, int replicaCountToRead, boolean requiresValidLsn, boolean useSessionToken, ReadMode readMode, boolean checkMinLSN, boolean forceReadAll) {
+    public Single<List<StoreResult>> readMultipleReplicaAsync(RxDocumentServiceRequest entity, boolean includePrimary, int replicaCountToRead, boolean requiresValidLsn, boolean useSessionToken, ReadMode readMode, boolean checkMinLSN, boolean forceReadAll) {
         Method method = new Object(){}.getClass().getEnclosingMethod();
         ImmutableList<Object> list = ImmutableList.of(entity, includePrimary, replicaCountToRead, requiresValidLsn, useSessionToken, readMode, checkMinLSN, forceReadAll);
         invocations.add(Pair.of(method, list));
@@ -62,7 +60,7 @@ public class StoreReaderUnderTest extends StoreReader {
     }
 
     @Override
-    public Single<StoreReadResult> readPrimaryAsync(RxDocumentServiceRequest entity, boolean requiresValidLsn, boolean useSessionToken) {
+    public Single<StoreResult> readPrimaryAsync(RxDocumentServiceRequest entity, boolean requiresValidLsn, boolean useSessionToken) {
         Method method = new Object(){}.getClass().getEnclosingMethod();
         ImmutableList<Object> list = ImmutableList.of(entity, requiresValidLsn, useSessionToken);
         invocations.add(Pair.of(method, list));

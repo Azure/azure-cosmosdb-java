@@ -26,7 +26,6 @@ package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 import com.google.common.collect.ImmutableList;
 import com.microsoft.azure.cosmosdb.ConsistencyLevel;
 import com.microsoft.azure.cosmosdb.ISessionContainer;
-import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.rx.FailureValidator;
 import com.microsoft.azure.cosmosdb.rx.internal.DocumentServiceRequestContext;
 import com.microsoft.azure.cosmosdb.rx.internal.IAuthorizationTokenProvider;
@@ -34,11 +33,9 @@ import com.microsoft.azure.cosmosdb.rx.internal.PartitionIsMigratingException;
 import com.microsoft.azure.cosmosdb.rx.internal.PartitionKeyRangeIsSplittingException;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
 import com.microsoft.azure.cosmosdb.rx.internal.Utils;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.omg.CORBA.TIMEOUT;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import rx.Single;
@@ -55,9 +52,10 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 
-import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes.*;
-import static com.microsoft.azure.cosmosdb.internal.HttpConstants.SubStatusCodes.*;
-
+import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes.GONE;
+import static com.microsoft.azure.cosmosdb.internal.HttpConstants.SubStatusCodes.COMPLETING_PARTITION_MIGRATION;
+import static com.microsoft.azure.cosmosdb.internal.HttpConstants.SubStatusCodes.COMPLETING_SPLIT;
+import static com.microsoft.azure.cosmosdb.internal.HttpConstants.SubStatusCodes.PARTITION_KEY_RANGE_GONE;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ConsistencyWriterTest {

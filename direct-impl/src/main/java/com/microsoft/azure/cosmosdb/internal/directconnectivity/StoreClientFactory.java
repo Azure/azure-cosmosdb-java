@@ -66,7 +66,6 @@ public class StoreClientFactory implements AutoCloseable {
     }
 
     // TODO wew don't have support for the following yet
-    // TODO enableRequestDiagnostics ,
     // TODO enableReadRequestsFallback ask Ji
     // TODO useFallbackClient ask Ji
     public StoreClient createStoreClient(

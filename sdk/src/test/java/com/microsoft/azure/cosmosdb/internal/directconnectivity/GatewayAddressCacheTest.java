@@ -32,11 +32,11 @@ import com.microsoft.azure.cosmosdb.PartitionKeyDefinition;
 import com.microsoft.azure.cosmosdb.RequestOptions;
 import com.microsoft.azure.cosmosdb.internal.OperationType;
 import com.microsoft.azure.cosmosdb.internal.ResourceType;
-import com.microsoft.azure.cosmosdb.rx.TestSuiteBase;
 import com.microsoft.azure.cosmosdb.internal.routing.PartitionKeyRangeIdentity;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient.Builder;
 import com.microsoft.azure.cosmosdb.rx.TestConfigurations;
+import com.microsoft.azure.cosmosdb.rx.TestSuiteBase;
 import com.microsoft.azure.cosmosdb.rx.internal.Configs;
 import com.microsoft.azure.cosmosdb.rx.internal.HttpClientFactory;
 import com.microsoft.azure.cosmosdb.rx.internal.IAuthorizationTokenProvider;
@@ -56,7 +56,6 @@ import org.testng.annotations.Test;
 import rx.Single;
 import rx.observers.TestSubscriber;
 
-import javax.net.ssl.SSLException;
 import java.net.URL;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -149,7 +148,12 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
                                                             null,
                                                             getCompositeHttpClient(configs));
 
-        Single<List<Address>> addresses = cache.getMasterAddressesViaGatewayAsync(ResourceType.Database,
+        RxDocumentServiceRequest req =
+                RxDocumentServiceRequest.create(OperationType.Create, ResourceType.Database,
+                        "/dbs",
+                        new Database(), new HashMap<>());
+
+        Single<List<Address>> addresses = cache.getMasterAddressesViaGatewayAsync(req, ResourceType.Database,
                 null, "/dbs/", false, false, null);
 
         PartitionReplicasAddressesValidator validator = new PartitionReplicasAddressesValidator.Builder()
@@ -457,7 +461,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
 
         ArrayList<AddressInformation> addressInfosFromCache = Lists.newArrayList(getSuccessResult(addressesInfosFromCacheObs, TIMEOUT));
 
-        Single<List<Address>> masterAddressFromGatewayObs = cache.getMasterAddressesViaGatewayAsync(ResourceType.Database,
+        Single<List<Address>> masterAddressFromGatewayObs = cache.getMasterAddressesViaGatewayAsync(req, ResourceType.Database,
                 null, "/dbs/", false, false, null);
         List<Address> expectedAddresses = getSuccessResult(masterAddressFromGatewayObs, TIMEOUT);
 
@@ -595,16 +599,18 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
             @Override
             public Single<List<Address>> answer(InvocationOnMock invocationOnMock) throws Throwable {
 
-                ResourceType resourceType = invocationOnMock.getArgumentAt(0, ResourceType.class);
-                String resourceAddress = invocationOnMock.getArgumentAt(1, String.class);
-                String entryUrl = invocationOnMock.getArgumentAt(2, String.class);
-                boolean forceRefresh = invocationOnMock.getArgumentAt(3, Boolean.class);
-                boolean useMasterCollectionResolver = invocationOnMock.getArgumentAt(4, Boolean.class);
+                RxDocumentServiceRequest request = invocationOnMock.getArgumentAt(0, RxDocumentServiceRequest.class);
+                ResourceType resourceType = invocationOnMock.getArgumentAt(1, ResourceType.class);
+                String resourceAddress = invocationOnMock.getArgumentAt(2, String.class);
+                String entryUrl = invocationOnMock.getArgumentAt(3, String.class);
+                boolean forceRefresh = invocationOnMock.getArgumentAt(4, Boolean.class);
+                boolean useMasterCollectionResolver = invocationOnMock.getArgumentAt(5, Boolean.class);
 
                 int cnt = getMasterAddressesViaGatewayAsyncInvocation.getAndIncrement();
 
                 if (cnt == 0) {
                     Single<List<Address>> res = origCache.getMasterAddressesViaGatewayAsync(
+                            request,
                             resourceType,
                             resourceAddress,
                             entryUrl,
@@ -617,6 +623,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
                 }
 
                 return origCache.getMasterAddressesViaGatewayAsync(
+                        request,
                         resourceType,
                         resourceAddress,
                         entryUrl,
@@ -624,7 +631,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
                         useMasterCollectionResolver,
                         null);
                 }
-            }).when(spyCache).getMasterAddressesViaGatewayAsync(Matchers.any(ResourceType.class), Matchers.anyString(),
+            }).when(spyCache).getMasterAddressesViaGatewayAsync(Matchers.any(RxDocumentServiceRequest.class), Matchers.any(ResourceType.class), Matchers.anyString(),
                 Matchers.anyString(), Matchers.anyBoolean(), Matchers.anyBoolean(), Matchers.anyMap());
 
 
@@ -684,16 +691,18 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
 
                 System.out.print("fetch");
 
-                ResourceType resourceType = invocationOnMock.getArgumentAt(0, ResourceType.class);
-                String resourceAddress = invocationOnMock.getArgumentAt(1, String.class);
-                String entryUrl = invocationOnMock.getArgumentAt(2, String.class);
-                boolean forceRefresh = invocationOnMock.getArgumentAt(3, Boolean.class);
-                boolean useMasterCollectionResolver = invocationOnMock.getArgumentAt(4, Boolean.class);
+                RxDocumentServiceRequest request = invocationOnMock.getArgumentAt(0, RxDocumentServiceRequest.class);
+                ResourceType resourceType = invocationOnMock.getArgumentAt(1, ResourceType.class);
+                String resourceAddress = invocationOnMock.getArgumentAt(2, String.class);
+                String entryUrl = invocationOnMock.getArgumentAt(3, String.class);
+                boolean forceRefresh = invocationOnMock.getArgumentAt(4, Boolean.class);
+                boolean useMasterCollectionResolver = invocationOnMock.getArgumentAt(5, Boolean.class);
 
                 int cnt = getMasterAddressesViaGatewayAsyncInvocation.getAndIncrement();
 
                 if (cnt == 0) {
                     Single<List<Address>> res = origCache.getMasterAddressesViaGatewayAsync(
+                            request,
                             resourceType,
                             resourceAddress,
                             entryUrl,
@@ -706,6 +715,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
                 }
 
                 return origCache.getMasterAddressesViaGatewayAsync(
+                        request,
                         resourceType,
                         resourceAddress,
                         entryUrl,
@@ -713,7 +723,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
                         useMasterCollectionResolver,
                         null);
             }
-        }).when(spyCache).getMasterAddressesViaGatewayAsync(Matchers.any(ResourceType.class), Matchers.anyString(),
+        }).when(spyCache).getMasterAddressesViaGatewayAsync(Matchers.any(RxDocumentServiceRequest.class), Matchers.any(ResourceType.class), Matchers.anyString(),
                 Matchers.anyString(), Matchers.anyBoolean(), Matchers.anyBoolean(), Matchers.anyMap());
 
         RxDocumentServiceRequest req =
@@ -751,7 +761,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
         assertThat(getMasterAddressesViaGatewayAsyncInvocation.get()).isEqualTo(2);
         assertThat(actualAddresses).hasSize(ServiceConfig.SystemReplicationPolicy.MaxReplicaSetSize);
 
-        List<Address> fetchedAddresses = origCache.getMasterAddressesViaGatewayAsync(ResourceType.Database,
+        List<Address> fetchedAddresses = origCache.getMasterAddressesViaGatewayAsync(req, ResourceType.Database,
                 null, "/dbs/", false, false, null).toBlocking().value();
 
         assertSameAs(ImmutableList.copyOf(actualAddresses),  fetchedAddresses);

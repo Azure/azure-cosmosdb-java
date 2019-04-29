@@ -26,7 +26,6 @@ package com.microsoft.azure.cosmosdb.rx.internal;
 import org.apache.commons.lang3.Range;
 import rx.Completable;
 import rx.functions.Action1;
-import rx.functions.Func1;
 
 import java.util.ArrayList;
 import java.util.List;

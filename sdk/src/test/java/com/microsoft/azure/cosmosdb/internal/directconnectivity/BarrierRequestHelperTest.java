@@ -36,7 +36,6 @@ import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import javax.net.ssl.SSLException;
 import java.util.Map;
 import java.util.UUID;
 

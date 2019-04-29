@@ -403,7 +403,7 @@ public class OrderByDocumentQueryExecutionContext<T extends Resource>
                 executeFunc,
                 targetRange,
                 collectionRid,
-                () -> client.getRetryPolicyFactory().getRequestPolicy(),
+                () -> client.getResetSessionTokenRetryPolicy().getRequestPolicy(),
                 resourceType,
                 correlatedActivityId,
                 initialPageSize,

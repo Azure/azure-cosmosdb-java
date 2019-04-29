@@ -26,6 +26,7 @@ package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 import java.util.HashMap;
 import java.util.List;
 
+import com.microsoft.azure.cosmosdb.ClientSideRequestStatistics;
 import com.microsoft.azure.cosmosdb.ConsistencyLevel;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.ISessionContainer;
@@ -207,12 +208,9 @@ public class ConsistencyReader {
             entity.requestContext.requestChargeTracker = new RequestChargeTracker();
         }
 
-        // TODO client side statistics
-        // https://msdata.visualstudio.com/CosmosDB/_workitems/edit/258624
-//        if(entity.requestContext.clientRequestStatistics == null)
-//        {
-//            entity.RequestContext.ClientRequestStatistics = new ClientSideRequestStatistics();
-//        }
+        if(entity.requestContext.clientSideRequestStatistics == null) {
+            entity.requestContext.clientSideRequestStatistics = new ClientSideRequestStatistics();
+        }
 
         entity.requestContext.forceRefreshAddressCache = forceRefresh;
 
@@ -265,7 +263,7 @@ public class ConsistencyReader {
     private Single<StoreResponse> readPrimaryAsync(RxDocumentServiceRequest entity,
                                                    boolean useSessionToken) {
 
-        Single<StoreReadResult> responseObs = this.storeReader.readPrimaryAsync(
+        Single<StoreResult> responseObs = this.storeReader.readPrimaryAsync(
                 entity,
                 false /*required valid LSN*/,
                 useSessionToken);
@@ -284,7 +282,7 @@ public class ConsistencyReader {
 
     private Single<StoreResponse> readAnyAsync(RxDocumentServiceRequest entity,
                                                ReadMode readMode) {
-        Single<List<StoreReadResult>> responsesObs = this.storeReader.readMultipleReplicaAsync(
+        Single<List<StoreResult>> responsesObs = this.storeReader.readMultipleReplicaAsync(
                 entity,
                 /* includePrimary */ true,
                 /* replicaCountToRead */ 1,
@@ -318,7 +316,7 @@ public class ConsistencyReader {
             return Single.error(new GoneException());
         }
 
-        Single<List<StoreReadResult>> responsesObs = this.storeReader.readMultipleReplicaAsync(
+        Single<List<StoreResult>> responsesObs = this.storeReader.readMultipleReplicaAsync(
                 entity,
                 /* includePrimary */ true,
                 /* replicaCountToRead */ 1,

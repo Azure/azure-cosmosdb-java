@@ -504,7 +504,7 @@ public class ConsistencyReaderTest {
 
         Single<StoreResponse> storeResponseSingle = consistencyReader.readAsync(dsr, timeoutHelper, false, false);
 
-        FailureValidator failureValidator = FailureValidator.builder().resourceNotFound().instanceOf(NotFoundException.class).nullSubStatusCode().build();
+        FailureValidator failureValidator = FailureValidator.builder().resourceNotFound().instanceOf(NotFoundException.class).unknownSubStatusCode().build();
         validateException(storeResponseSingle, failureValidator);
     }
 
@@ -635,7 +635,7 @@ public class ConsistencyReaderTest {
         Single<StoreResponse> storeResponseSingle = consistencyReader.readAsync(dsr, timeoutHelper, false, false);
 
 
-        FailureValidator failureValidator = FailureValidator.builder().instanceOf(RequestRateTooLargeException.class).nullSubStatusCode().build();
+        FailureValidator failureValidator = FailureValidator.builder().instanceOf(RequestRateTooLargeException.class).unknownSubStatusCode().build();
         validateException(storeResponseSingle, failureValidator);
     }
 
@@ -719,15 +719,15 @@ public class ConsistencyReaderTest {
 
     // TODO: add more mocking tests for when one replica lags behind and we need to do barrier request.
 
-    public static void validateSuccess(Single<List<StoreReadResult>> single,
-                                       MultiStoreReadResultValidator validator) {
+    public static void validateSuccess(Single<List<StoreResult>> single,
+                                       MultiStoreResultValidator validator) {
         validateSuccess(single, validator, 10000);
     }
 
-    public static void validateSuccess(Single<List<StoreReadResult>> single,
-                                       MultiStoreReadResultValidator validator,
+    public static void validateSuccess(Single<List<StoreResult>> single,
+                                       MultiStoreResultValidator validator,
                                        long timeout) {
-        TestSubscriber<List<StoreReadResult>> testSubscriber = new TestSubscriber<>();
+        TestSubscriber<List<StoreResult>> testSubscriber = new TestSubscriber<>();
 
         single.toObservable().subscribe(testSubscriber);
         testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);

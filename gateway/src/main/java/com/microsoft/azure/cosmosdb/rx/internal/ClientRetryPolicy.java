@@ -22,6 +22,7 @@
  */
 package com.microsoft.azure.cosmosdb.rx.internal;
 
+import com.microsoft.azure.cosmosdb.ClientSideRequestStatistics;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.RetryOptions;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
@@ -58,6 +59,7 @@ public class ClientRetryPolicy implements IDocumentClientRetryPolicy {
     private boolean canUseMultipleWriteLocations;
     private URL locationEndpoint;
     private RetryContext retryContext;
+    private ClientSideRequestStatistics clientSideRequestStatistics;
 
     public ClientRetryPolicy(GlobalEndpointManager globalEndpointManager,
                              boolean enableEndpointDiscovery,
@@ -72,6 +74,7 @@ public class ClientRetryPolicy implements IDocumentClientRetryPolicy {
         this.enableEndpointDiscovery = enableEndpointDiscovery;
         this.sessionTokenRetryCount = 0;
         this.canUseMultipleWriteLocations = false;
+        this.clientSideRequestStatistics = new ClientSideRequestStatistics();
     }
 
     @Override
@@ -90,6 +93,9 @@ public class ClientRetryPolicy implements IDocumentClientRetryPolicy {
         this.retryContext = null;
         // Received 403.3 on write region, initiate the endpoint re-discovery
         DocumentClientException clientException = Utils.as(e, DocumentClientException.class);
+        if (clientException != null && clientException.getClientSideRequestStatistics() != null) {
+            this.clientSideRequestStatistics = clientException.getClientSideRequestStatistics();
+        }
         if (clientException != null && 
                 Exceptions.isStatusCode(clientException, HttpConstants.StatusCodes.FORBIDDEN) &&
                 Exceptions.isSubStatusCode(clientException, HttpConstants.SubStatusCodes.FORBIDDEN_WRITEFORBIDDEN))
@@ -138,7 +144,7 @@ public class ClientRetryPolicy implements IDocumentClientRetryPolicy {
                     // on all locations, then don't retry the request
                     return ShouldRetryResult.noRetry();
                 } else {
-                    this.retryContext = new RetryContext(this.sessionTokenRetryCount - 1, this.sessionTokenRetryCount > 1,this.sessionTokenRetryCount == endpoints.size());
+                    this.retryContext = new RetryContext(this.sessionTokenRetryCount - 1, this.sessionTokenRetryCount > 1);
                     return ShouldRetryResult.retryAfter(Duration.ZERO);
                 }
             } else {
@@ -147,7 +153,7 @@ public class ClientRetryPolicy implements IDocumentClientRetryPolicy {
                     // we have already tried this request on the write location
                     return ShouldRetryResult.noRetry();
                 } else {
-                    this.retryContext = new RetryContext(this.sessionTokenRetryCount - 1, false, true);
+                    this.retryContext = new RetryContext(this.sessionTokenRetryCount - 1, false);
                     return ShouldRetryResult.retryAfter(Duration.ZERO);
                 }
             }
@@ -185,7 +191,7 @@ public class ClientRetryPolicy implements IDocumentClientRetryPolicy {
         } else {
             retryDelay = Duration.ofMillis(ClientRetryPolicy.RetryIntervalInMS);
         }
-        this.retryContext = new RetryContext(this.failoverRetryCount, false, false);
+        this.retryContext = new RetryContext(this.failoverRetryCount, false);
         return this.globalEndpointManager.refreshLocationAsync(null)
                 .andThen(Single.just(ShouldRetryResult.retryAfter(retryDelay)));
     }
@@ -194,6 +200,9 @@ public class ClientRetryPolicy implements IDocumentClientRetryPolicy {
     public void onBeforeSendRequest(RxDocumentServiceRequest request) {
         this.isReadRequest = request.isReadOnlyRequest();
         this.canUseMultipleWriteLocations = this.globalEndpointManager.CanUseMultipleWriteLocations(request);
+        if (request.requestContext != null) {
+            request.requestContext.clientSideRequestStatistics = this.clientSideRequestStatistics;
+        }
 
         // clear previous location-based routing directive
         if (request.requestContext != null) {
@@ -202,7 +211,6 @@ public class ClientRetryPolicy implements IDocumentClientRetryPolicy {
         if (this.retryContext != null) {
             // set location-based routing directive based on request retry context
             request.requestContext.RouteToLocation(this.retryContext.retryCount, this.retryContext.retryRequestOnPreferredLocations);
-            request.clearSessionTokenOnSessionReadFailure = this.retryContext.clearSessionTokenOnSessionNotAvailable;
         }
 
         // Resolve the endpoint for the request and pin the resolution to the resolved endpoint
@@ -216,14 +224,11 @@ public class ClientRetryPolicy implements IDocumentClientRetryPolicy {
 
         public int retryCount;
         public boolean retryRequestOnPreferredLocations;
-        public boolean clearSessionTokenOnSessionNotAvailable;
 
         public RetryContext(int retryCount,
-                            boolean retryRequestOnPreferredLocations,
-                            boolean clearSessionTokenOnSessionNotAvailable) {
+                            boolean retryRequestOnPreferredLocations) {
             this.retryCount = retryCount;
             this.retryRequestOnPreferredLocations = retryRequestOnPreferredLocations;
-            this.clearSessionTokenOnSessionNotAvailable = clearSessionTokenOnSessionNotAvailable;
         }
     }
 }

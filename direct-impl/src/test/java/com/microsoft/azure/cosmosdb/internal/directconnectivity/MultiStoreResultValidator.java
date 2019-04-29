@@ -41,37 +41,37 @@ import static org.assertj.core.api.AssertionsForClassTypes.fail;
 /**
  * this is meant to be used when there reading multiple replicas for the same thing
  */
-public interface MultiStoreReadResultValidator {
+public interface MultiStoreResultValidator {
 
     static Builder create() {
         return new Builder();
     }
 
-    void validate(List<StoreReadResult> storeReadResults);
+    void validate(List<StoreResult> storeResults);
 
     class Builder {
-        private List<MultiStoreReadResultValidator> validators = new ArrayList<>();
+        private List<MultiStoreResultValidator> validators = new ArrayList<>();
 
-        public MultiStoreReadResultValidator build() {
-            return new MultiStoreReadResultValidator() {
+        public MultiStoreResultValidator build() {
+            return new MultiStoreResultValidator() {
 
                 @SuppressWarnings({"rawtypes", "unchecked"})
                 @Override
-                public void validate(List<StoreReadResult> storeReadResults) {
-                    for (MultiStoreReadResultValidator validator : validators) {
-                        validator.validate(storeReadResults);
+                public void validate(List<StoreResult> storeResults) {
+                    for (MultiStoreResultValidator validator : validators) {
+                        validator.validate(storeResults);
                     }
                 }
             };
         }
 
-        public Builder validateEachWith(StoreReadResultValidator storeReadResultValidator) {
-            validators.add(new MultiStoreReadResultValidator() {
+        public Builder validateEachWith(StoreResultValidator storeResultValidator) {
+            validators.add(new MultiStoreResultValidator() {
 
                 @Override
-                public void validate(List<StoreReadResult> storeReadResults) {
-                    for(StoreReadResult srr: storeReadResults) {
-                        storeReadResultValidator.validate(srr);
+                public void validate(List<StoreResult> storeResults) {
+                    for(StoreResult srr: storeResults) {
+                        storeResultValidator.validate(srr);
                     }
                 }
             });
@@ -79,11 +79,11 @@ public interface MultiStoreReadResultValidator {
         }
 
         public Builder validateEachWith(StoreResponseValidator storeResponseValidator) {
-            validators.add(new MultiStoreReadResultValidator() {
+            validators.add(new MultiStoreResultValidator() {
 
                 @Override
-                public void validate(List<StoreReadResult> storeReadResults) {
-                    for(StoreReadResult srr: storeReadResults) {
+                public void validate(List<StoreResult> storeResults) {
+                    for(StoreResult srr: storeResults) {
                         try {
                             storeResponseValidator.validate(srr.toResponse());
                         } catch (DocumentClientException e) {
@@ -96,20 +96,20 @@ public interface MultiStoreReadResultValidator {
         }
 
         public Builder withMinimumLSN(long minimumLSN) {
-            this.validateEachWith(StoreReadResultValidator.create().withMinLSN(minimumLSN).build());
+            this.validateEachWith(StoreResultValidator.create().withMinLSN(minimumLSN).build());
             return this;
         }
 
-        public <T> Builder withAggregate(BiFunction<StoreReadResult, T, T> aggregator,
+        public <T> Builder withAggregate(BiFunction<StoreResult, T, T> aggregator,
                                          T initialValue,
                                          Predicate<T> finalValuePredicate,
                                          Description description) {
             MutableObject<T> total = new MutableObject<>(initialValue);
-            validators.add(new MultiStoreReadResultValidator() {
+            validators.add(new MultiStoreResultValidator() {
 
                 @Override
-                public void validate(List<StoreReadResult> storeReadResults) {
-                    for(StoreReadResult srr: storeReadResults) {
+                public void validate(List<StoreResult> storeResults) {
+                    for(StoreResult srr: storeResults) {
                         total.setValue(aggregator.apply(srr, total.getValue()));
                     }
 
@@ -141,11 +141,11 @@ public interface MultiStoreReadResultValidator {
         }
 
         public Builder validateEachWith(FailureValidator failureValidator) {
-            validators.add(new MultiStoreReadResultValidator() {
+            validators.add(new MultiStoreResultValidator() {
 
                 @Override
-                public void validate(List<StoreReadResult> storeReadResults) {
-                    for(StoreReadResult srr: storeReadResults) {
+                public void validate(List<StoreResult> storeResults) {
+                    for(StoreResult srr: storeResults) {
                         try {
                             failureValidator.validate(srr.getException());
                         } catch (DocumentClientException e) {
@@ -158,16 +158,16 @@ public interface MultiStoreReadResultValidator {
         }
 
         public Builder noFailure() {
-            this.validateEachWith(StoreReadResultValidator.create().isValid().noException().build());
+            this.validateEachWith(StoreResultValidator.create().isValid().noException().build());
             return this;
         }
 
         public Builder withSize(int expectedNumber) {
-            validators.add(new MultiStoreReadResultValidator() {
+            validators.add(new MultiStoreResultValidator() {
 
                 @Override
-                public void validate(List<StoreReadResult> storeReadResults) {
-                    assertThat(storeReadResults).hasSize(expectedNumber);
+                public void validate(List<StoreResult> storeResults) {
+                    assertThat(storeResults).hasSize(expectedNumber);
                 }
             });
             return this;

@@ -67,7 +67,7 @@ public abstract class RxCollectionCache {
                 init = completable.andThen(Completable.fromAction(() -> request.setForceNameCacheRefresh(false)));
             }
 
-            Single<DocumentCollection> collectionInfoObs = this.ResolveByPartitionKeyRangeIdentityAsync(
+            Single<DocumentCollection> collectionInfoObs = this.resolveByPartitionKeyRangeIdentityAsync(
                     request.getPartitionKeyRangeIdentity(), request.properties);
 
             if (init != null) {
@@ -100,7 +100,7 @@ public abstract class RxCollectionCache {
                 }                
             });
         } else {
-            return ResolveByPartitionKeyRangeIdentityAsync(request.getPartitionKeyRangeIdentity(),request.properties)
+            return resolveByPartitionKeyRangeIdentityAsync(request.getPartitionKeyRangeIdentity(),request.properties)
                     .flatMap(collection -> {
 
                         if (collection != null) {
@@ -135,7 +135,7 @@ public abstract class RxCollectionCache {
 
     protected abstract Single<DocumentCollection> getByNameAsync(String resourceAddress, Map<String, Object> properties);
 
-    private Single<DocumentCollection> ResolveByPartitionKeyRangeIdentityAsync(PartitionKeyRangeIdentity partitionKeyRangeIdentity, Map<String, Object> properties) {
+    private Single<DocumentCollection> resolveByPartitionKeyRangeIdentityAsync(PartitionKeyRangeIdentity partitionKeyRangeIdentity, Map<String, Object> properties) {
         // if request is targeted at specific partition using x-ms-documentd-partitionkeyrangeid header,
         // which contains value "<collectionrid>,<partitionkeyrangeid>", then resolve to collection rid in this header.
         if (partitionKeyRangeIdentity != null && partitionKeyRangeIdentity.getCollectionRid() != null) {

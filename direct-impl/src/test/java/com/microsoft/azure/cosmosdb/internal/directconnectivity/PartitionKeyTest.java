@@ -29,7 +29,6 @@ import com.microsoft.azure.cosmosdb.PartitionKeyDefinition;
 import com.microsoft.azure.cosmosdb.Undefined;
 import com.microsoft.azure.cosmosdb.internal.routing.PartitionKeyInternalHelper;
 import com.microsoft.azure.cosmosdb.rx.internal.RMResources;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 

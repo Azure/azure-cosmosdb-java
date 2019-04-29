@@ -99,7 +99,7 @@ public abstract class ParallelDocumentQueryExecutionContextBase<T extends Resour
             DocumentProducer<T> dp = createDocumentProducer(collectionRid, targetRange,
                     partitionKeyRangeToContinuationTokenMap.get(targetRange), initialPageSize, feedOptions,
                     querySpecForInit, commonRequestHeaders, createRequestFunc, executeFunc,
-                    () -> client.getRetryPolicyFactory().getRequestPolicy());
+                    () -> client.getResetSessionTokenRetryPolicy().getRequestPolicy());
 
             documentProducers.add(dp);
         }

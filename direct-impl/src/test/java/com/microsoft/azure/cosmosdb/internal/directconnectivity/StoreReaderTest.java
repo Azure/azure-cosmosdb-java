@@ -36,7 +36,6 @@ import com.microsoft.azure.cosmosdb.internal.ResourceType;
 import com.microsoft.azure.cosmosdb.internal.VectorSessionToken;
 import com.microsoft.azure.cosmosdb.rx.FailureValidator;
 import com.microsoft.azure.cosmosdb.rx.internal.DocumentServiceRequestContext;
-import com.microsoft.azure.cosmosdb.rx.internal.IAuthorizationTokenProvider;
 import com.microsoft.azure.cosmosdb.rx.internal.NotFoundException;
 import com.microsoft.azure.cosmosdb.rx.internal.PartitionIsMigratingException;
 import com.microsoft.azure.cosmosdb.rx.internal.PartitionKeyRangeIsSplittingException;
@@ -46,7 +45,6 @@ import org.assertj.core.api.AssertionsForClassTypes;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.omg.CORBA.TIMEOUT;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import rx.Single;
@@ -63,7 +61,6 @@ import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes.GO
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.SubStatusCodes.COMPLETING_PARTITION_MIGRATION;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.SubStatusCodes.COMPLETING_SPLIT;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.SubStatusCodes.PARTITION_KEY_RANGE_GONE;
-import static com.microsoft.azure.cosmosdb.internal.HttpConstants.SubStatusCodes.READ_SESSION_NOT_AVAILABLE;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class StoreReaderTest {
@@ -183,7 +180,7 @@ public class StoreReaderTest {
         dsr.requestContext = Mockito.mock(DocumentServiceRequestContext.class);
         dsr.requestContext.timeoutHelper = timeoutHelper;
         dsr.requestContext.resolvedPartitionKeyRange = partitionKeyRangeWithId("1");
-        Single<List<StoreReadResult>> res = storeReader.readMultipleReplicaAsync(dsr, true, 3, true, true, ReadMode.Strong);
+        Single<List<StoreResult>> res = storeReader.readMultipleReplicaAsync(dsr, true, 3, true, true, ReadMode.Strong);
 
         FailureValidator failureValidator = FailureValidator.builder()
                 .instanceOf(klass)
@@ -191,7 +188,7 @@ public class StoreReaderTest {
                 .subStatusCode(expectedSubStatusCode)
                 .build();
 
-        TestSubscriber<List<StoreReadResult>> subscriber = new TestSubscriber<>();
+        TestSubscriber<List<StoreResult>> subscriber = new TestSubscriber<>();
         res.subscribe(subscriber);
         subscriber.awaitTerminalEvent();
         subscriber.assertNotCompleted();
@@ -261,7 +258,7 @@ public class StoreReaderTest {
 
         Mockito.doReturn(sessionToken.v).when(sessionContainer).resolvePartitionLocalSessionToken(Mockito.eq(dsr), Mockito.anyString());
 
-        Single<List<StoreReadResult>> readResult = storeReader.readMultipleReplicaAsync(
+        Single<List<StoreResult>> readResult = storeReader.readMultipleReplicaAsync(
                 dsr,
                 /* includePrimary */ true,
                 /* replicaCountToRead */ 1,
@@ -271,9 +268,9 @@ public class StoreReaderTest {
                 /* checkMinLsn */ true,
                 /* forceReadAll */ false);
 
-        MultiStoreReadResultValidator validator = MultiStoreReadResultValidator.create()
+        MultiStoreResultValidator validator = MultiStoreResultValidator.create()
                 .withSize(1)
-                .validateEachWith(StoreReadResultValidator.create()
+                .validateEachWith(StoreResultValidator.create()
                                           .isValid()
                                           .noException()
                                           .withStoreResponse(StoreResponseValidator.create()
@@ -338,7 +335,7 @@ public class StoreReaderTest {
 
         Mockito.doReturn(sessionToken.v).when(sessionContainer).resolvePartitionLocalSessionToken(Mockito.eq(dsr), Mockito.anyString());
 
-        Single<List<StoreReadResult>> readResult = storeReader.readMultipleReplicaAsync(
+        Single<List<StoreResult>> readResult = storeReader.readMultipleReplicaAsync(
                 dsr,
                 /* includePrimary */ true,
                 /* replicaCountToRead */ 1,
@@ -348,9 +345,9 @@ public class StoreReaderTest {
                 /* checkMinLsn */ true,
                 /* forceReadAll */ false);
 
-        MultiStoreReadResultValidator validator = MultiStoreReadResultValidator.create()
+        MultiStoreResultValidator validator = MultiStoreResultValidator.create()
                 .withSize(1)
-                .validateEachWith(StoreReadResultValidator.create()
+                .validateEachWith(StoreResultValidator.create()
                                           .isValid()
                                           .withException(FailureValidator.builder().instanceOf(NotFoundException.class).build())
                                           .build())
@@ -407,7 +404,7 @@ public class StoreReaderTest {
 
         Mockito.doReturn(sessionToken.v).when(sessionContainer).resolvePartitionLocalSessionToken(Mockito.eq(dsr), Mockito.anyString());
 
-        Single<List<StoreReadResult>> readResult = storeReader.readMultipleReplicaAsync(
+        Single<List<StoreResult>> readResult = storeReader.readMultipleReplicaAsync(
                 dsr,
                 /* includePrimary */ true,
                 /* replicaCountToRead */ 1,
@@ -417,7 +414,7 @@ public class StoreReaderTest {
                 /* checkMinLsn */ true,
                 /* forceReadAll */ false);
 
-        MultiStoreReadResultValidator validator = MultiStoreReadResultValidator.create()
+        MultiStoreResultValidator validator = MultiStoreResultValidator.create()
                 .withSize(0)
                 .build();
         validateSuccess(readResult, validator);
@@ -469,7 +466,7 @@ public class StoreReaderTest {
 
         Mockito.doReturn(sessionToken.v).when(sessionContainer).resolvePartitionLocalSessionToken(Mockito.eq(dsr), Mockito.anyString());
 
-        Single<List<StoreReadResult>> readResult = storeReader.readMultipleReplicaAsync(
+        Single<List<StoreResult>> readResult = storeReader.readMultipleReplicaAsync(
                 dsr,
                 /* includePrimary */ true,
                 /* replicaCountToRead */ 1,
@@ -479,7 +476,7 @@ public class StoreReaderTest {
                 /* checkMinLsn */ true,
                 /* forceReadAll */ false);
 
-        MultiStoreReadResultValidator validator = MultiStoreReadResultValidator.create()
+        MultiStoreResultValidator validator = MultiStoreResultValidator.create()
                 .withSize(1)
                 .validateEachWith(FailureValidator.builder().instanceOf(RequestRateTooLargeException.class).build())
                 .build();
@@ -510,8 +507,8 @@ public class StoreReaderTest {
 
         StoreReader storeReader = new StoreReader(transportClient, addressSelector, sessionContainer);
 
-        Single<StoreReadResult> readResult = storeReader.readPrimaryAsync(request, true, true);
-        StoreReadResultValidator validator = StoreReadResultValidator.create()
+        Single<StoreResult> readResult = storeReader.readPrimaryAsync(request, true, true);
+        StoreResultValidator validator = StoreResultValidator.create()
                 .withStoreResponse(StoreResponseValidator.create().isSameAs(storeResponse).build())
                 .build();
         validateSuccess(readResult, validator);
@@ -538,7 +535,7 @@ public class StoreReaderTest {
 
         Mockito.doReturn(Single.error(ExceptionBuilder.create().asGoneException())).when(transportClient).invokeResourceOperationAsync(Mockito.eq(primaryURI), Mockito.eq(request));
         StoreReader storeReader = new StoreReader(transportClient, addressSelector, sessionContainer);
-        Single<StoreReadResult> readResult = storeReader.readPrimaryAsync(request, true, true);
+        Single<StoreResult> readResult = storeReader.readPrimaryAsync(request, true, true);
 
         FailureValidator validator = FailureValidator.builder().instanceOf(GoneException.class).build();
         validateException(readResult, validator);
@@ -569,7 +566,7 @@ public class StoreReaderTest {
 
         StoreReader storeReader = new StoreReader(transportClient, addressSelector, sessionContainer);
 
-        Single<StoreReadResult> readResult = storeReader.readPrimaryAsync(request, true, true);
+        Single<StoreResult> readResult = storeReader.readPrimaryAsync(request, true, true);
         FailureValidator validator = FailureValidator.builder().instanceOf(GoneException.class).build();
         validateException(readResult, validator);
     }
@@ -580,8 +577,8 @@ public class StoreReaderTest {
                 // first exception from TransportClient,
                 // performLocalRefreshOnGoneException,
                 // retry with force refresh expected,
-                // validator for expected Exception from Single<StoreReadResult>
-                // StoreReadResult has a successful StoreResponse
+                // validator for expected Exception from Single<StoreResult>
+                // StoreResult has a successful StoreResponse
                 {
                         // partition moved, refresh replica address cache and retry
                         ExceptionBuilder.create().asGoneException(), true, true, null, true
@@ -646,14 +643,14 @@ public class StoreReaderTest {
                 .withPrimaryReplicaMove(primaryURIPriorToRefresh, primaryURIAfterRefresh).build();
         StoreReader storeReader = new StoreReader(transportClientWrapper.transportClient, addressSelectorWrapper.addressSelector, sessionContainer);
 
-        Single<StoreReadResult> readResult = storeReader.readPrimaryAsync(request, true, true);
+        Single<StoreResult> readResult = storeReader.readPrimaryAsync(request, true, true);
 
         if (failureFromSingle == null) {
-            StoreReadResultValidator validator;
+            StoreResultValidator validator;
             if (expectedStoreResponseInStoredReadResult) {
-                validator = StoreReadResultValidator.create().withStoreResponse(StoreResponseValidator.create().isSameAs(response).build()).build();
+                validator = StoreResultValidator.create().withStoreResponse(StoreResponseValidator.create().isSameAs(response).build()).build();
             } else {
-                validator = StoreReadResultValidator.create().withException(FailureValidator.builder().sameAs(firstExceptionFromTransport).build()).build();
+                validator = StoreResultValidator.create().withException(FailureValidator.builder().sameAs(firstExceptionFromTransport).build()).build();
             }
 
            validateSuccess(readResult, validator);
@@ -743,7 +740,7 @@ public class StoreReaderTest {
 
         StoreReader storeReader = new StoreReader(transportClientWrapper.transportClient, addressSelectorWrapper.addressSelector, sessionContainer);
 
-        Single<List<StoreReadResult>> readResult = storeReader.readMultipleReplicaAsync(request, includePrimary, replicaCountToRead, true, true, readMode);
+        Single<List<StoreResult>> readResult = storeReader.readMultipleReplicaAsync(request, includePrimary, replicaCountToRead, true, true, readMode);
 
         long expectedMinLsn =
                 responseList
@@ -759,7 +756,7 @@ public class StoreReaderTest {
                         .min().orElse(-1);
 
 
-        MultiStoreReadResultValidator validator = MultiStoreReadResultValidator.create()
+        MultiStoreResultValidator validator = MultiStoreResultValidator.create()
                 .withSize(replicaCountToRead)
                 .withMinimumLSN(expectedMinLsn)
                 .noFailure()
@@ -775,14 +772,14 @@ public class StoreReaderTest {
                 .verifyTotalInvocations(1);
     }
 
-    public static void validateSuccess(Single<List<StoreReadResult>> single,
-                                       MultiStoreReadResultValidator validator) {
+    public static void validateSuccess(Single<List<StoreResult>> single,
+                                       MultiStoreResultValidator validator) {
         validateSuccess(single, validator, 10000);
     }
 
-    public static void validateSuccess(Single<List<StoreReadResult>> single,
-                                       MultiStoreReadResultValidator validator, long timeout) {
-        TestSubscriber<List<StoreReadResult>> testSubscriber = new TestSubscriber<>();
+    public static void validateSuccess(Single<List<StoreResult>> single,
+                                       MultiStoreResultValidator validator, long timeout) {
+        TestSubscriber<List<StoreResult>> testSubscriber = new TestSubscriber<>();
 
         single.toObservable().subscribe(testSubscriber);
         testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
@@ -792,14 +789,14 @@ public class StoreReaderTest {
         validator.validate(testSubscriber.getOnNextEvents().get(0));
     }
 
-    public static void validateSuccess(Single<StoreReadResult> single,
-                                       StoreReadResultValidator validator) {
+    public static void validateSuccess(Single<StoreResult> single,
+                                       StoreResultValidator validator) {
         validateSuccess(single, validator, 10000);
     }
 
-    public static void validateSuccess(Single<StoreReadResult> single,
-                                       StoreReadResultValidator validator, long timeout) {
-        TestSubscriber<StoreReadResult> testSubscriber = new TestSubscriber<>();
+    public static void validateSuccess(Single<StoreResult> single,
+                                       StoreResultValidator validator, long timeout) {
+        TestSubscriber<StoreResult> testSubscriber = new TestSubscriber<>();
 
         single.toObservable().subscribe(testSubscriber);
         testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
@@ -810,7 +807,7 @@ public class StoreReaderTest {
     }
 
     public static <T> void validateException(Single<T> single,
-                                            FailureValidator validator, long timeout) {
+                                             FailureValidator validator, long timeout) {
         TestSubscriber<T> testSubscriber = new TestSubscriber<>();
 
         single.toObservable().subscribe(testSubscriber);

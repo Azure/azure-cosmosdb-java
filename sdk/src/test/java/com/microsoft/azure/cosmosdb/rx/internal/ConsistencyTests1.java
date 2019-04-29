@@ -39,7 +39,6 @@ import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import com.microsoft.azure.cosmosdb.rx.FailureValidator;
 import com.microsoft.azure.cosmosdb.rx.ResourceResponseValidator;
 import com.microsoft.azure.cosmosdb.rx.TestConfigurations;
-import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentClientImpl;
 import org.testng.SkipException;
 import org.testng.annotations.Test;
 import rx.Observable;
@@ -291,7 +290,7 @@ public class ConsistencyTests1 extends ConsistencyTestsBase {
                     .nullResource().build();
             validateSuccess(deleteObservable, validator);
             Observable<ResourceResponse<Document>> readObservable = client.readDocument(document.getSelfLink(), requestOptions);
-            FailureValidator notFoundValidator = new FailureValidator.Builder().resourceNotFound().nullSubStatusCode().build();
+            FailureValidator notFoundValidator = new FailureValidator.Builder().resourceNotFound().unknownSubStatusCode().build();
             validateFailure(readObservable, notFoundValidator);
 
         } finally {

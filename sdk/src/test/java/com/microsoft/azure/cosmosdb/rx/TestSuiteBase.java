@@ -99,6 +99,8 @@ public class TestSuiteBase {
     protected static final int WAIT_REPLICA_CATCH_UP_IN_MILLIS = 4000;
 
     protected int subscriberValidationTimeout = TIMEOUT;
+    
+    protected static ConsistencyLevel accountConsistency;
 
     protected Builder clientBuilder;
 
@@ -643,6 +645,20 @@ public class TestSuiteBase {
         }
     }
 
+    static protected void safeDeleteAllCollections(AsyncDocumentClient client, Database database) {
+        if (database != null) {
+            List<DocumentCollection> collections = client.readCollections(database.getSelfLink(), null)
+                    .flatMap(p -> Observable.from(p.getResults()))
+                    .toList()
+                    .toBlocking()
+                    .single();
+
+            for(DocumentCollection collection: collections) {
+                client.deleteCollection(collection.getSelfLink(), null).toBlocking().single().getResource();
+            }
+        }
+    }
+
     static protected void safeDeleteCollection(AsyncDocumentClient client, DocumentCollection collection) {
         if (client != null && collection != null) {
             try {
@@ -799,7 +815,7 @@ public class TestSuiteBase {
 
     private static Object[][] simpleClientBuildersWithDirect(Protocol... protocols) {
 
-        ConsistencyLevel accountConsistency = parseConsistency(TestConfigurations.CONSISTENCY);
+        accountConsistency = parseConsistency(TestConfigurations.CONSISTENCY);
         logger.info("Max test consistency to use is [{}]", accountConsistency);
         List<ConsistencyLevel> testConsistencies = new ArrayList<>();
 
@@ -839,22 +855,30 @@ public class TestSuiteBase {
 
     @DataProvider
     public static Object[][] clientBuildersWithDirect() {
-        return clientBuildersWithDirect(Protocol.Https, Protocol.Tcp);
+        return clientBuildersWithDirectAllConsistencies(Protocol.Https, Protocol.Tcp);
     }
 
     @DataProvider
     public static Object[][] clientBuildersWithDirectHttps() {
-        return clientBuildersWithDirect(Protocol.Https);
+        return clientBuildersWithDirectAllConsistencies(Protocol.Https);
     }
 
     @DataProvider
     public static Object[][] clientBuildersWithDirectTcp() {
-        return clientBuildersWithDirect(Protocol.Tcp);
+        return clientBuildersWithDirectAllConsistencies(Protocol.Tcp);
     }
 
-    private static Object[][] clientBuildersWithDirect(Protocol... protocols) {
+    @DataProvider
+    public static Object[][] clientBuildersWithDirectSession() {
+        return clientBuildersWithDirectSession(Protocol.Https, Protocol.Tcp);
+    }
+    
+    private static Object[][] clientBuildersWithDirectSession(Protocol... protocols) {
+        return clientBuildersWithDirect(new ArrayList<ConsistencyLevel>(){{add(ConsistencyLevel.Session);}} , protocols);
+    }
 
-        ConsistencyLevel accountConsistency = parseConsistency(TestConfigurations.CONSISTENCY);
+    private static Object[][] clientBuildersWithDirectAllConsistencies(Protocol... protocols) {
+        accountConsistency = parseConsistency(TestConfigurations.CONSISTENCY);
         logger.info("Max test consistency to use is [{}]", accountConsistency);
         List<ConsistencyLevel> testConsistencies = new ArrayList<>();
 
@@ -873,6 +897,10 @@ public class TestSuiteBase {
             default:
                 throw new IllegalStateException("Invalid configured test consistency " + accountConsistency);
         }
+        return clientBuildersWithDirect(testConsistencies, protocols);
+    }
+    
+    private static Object[][] clientBuildersWithDirect(List<ConsistencyLevel> testConsistencies, Protocol... protocols) {
 
         List<String> preferredLocation = parsePreferredLocation(TestConfigurations.PREFERRED_LOCATIONS);
         boolean isMultiMasterEnabled = preferredLocation != null && accountConsistency == ConsistencyLevel.Session;
