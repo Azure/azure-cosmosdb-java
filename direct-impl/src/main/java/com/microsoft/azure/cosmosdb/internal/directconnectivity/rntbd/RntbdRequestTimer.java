@@ -24,13 +24,31 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd;
 
-import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
+import io.netty.util.HashedWheelTimer;
+import io.netty.util.Timeout;
+import io.netty.util.Timer;
+import io.netty.util.TimerTask;
 
-import java.nio.ByteOrder;
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 
-public final class RntbdRequestFramer extends LengthFieldBasedFrameDecoder {
+public final class RntbdRequestTimer {
 
-    public RntbdRequestFramer() {
-        super(ByteOrder.LITTLE_ENDIAN, Integer.MAX_VALUE, 0, Integer.BYTES, -Integer.BYTES, 0, true);
+    private static final long FIVE_MILLISECONDS = 500000L;
+    private final long requestTimeoutInterval;
+    private final Timer timer;
+
+    public RntbdRequestTimer(final Duration requestTimeoutInterval) {
+
+        // Inspection of the HashWheelTimer code indicates that our choice of a 5 millisecond timer resolution ensures
+        // that a request will timeout within 10 milliseconds of requestTimeoutInterval. This is because cancellation
+        // of a timeout takes two timer resolution units to complete.
+
+        this.timer = new HashedWheelTimer(FIVE_MILLISECONDS, TimeUnit.NANOSECONDS);
+        this.requestTimeoutInterval = requestTimeoutInterval.toNanos();
+    }
+
+    Timeout newTimeout(final TimerTask task) {
+        return this.timer.newTimeout(task, this.requestTimeoutInterval, TimeUnit.NANOSECONDS);
     }
 }

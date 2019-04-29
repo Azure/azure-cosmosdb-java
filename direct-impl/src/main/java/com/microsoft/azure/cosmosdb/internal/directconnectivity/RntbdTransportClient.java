@@ -24,19 +24,15 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
-import com.google.common.collect.ImmutableMap;
+import com.google.common.base.Stopwatch;
+import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.internal.UserAgentContainer;
-import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdClientChannelInitializer;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdRequestArgs;
-import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdRequestManager;
+import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdRequestTimer;
+import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdServiceEndpoint;
 import com.microsoft.azure.cosmosdb.rx.internal.Configs;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
-import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.ssl.SslContext;
 import io.netty.util.concurrent.DefaultThreadFactory;
@@ -44,45 +40,45 @@ import io.netty.util.concurrent.Future;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rx.Single;
+import rx.SingleEmitter;
 
-import java.io.IOException;
 import java.net.URI;
 import java.time.Duration;
-import java.util.Objects;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static com.microsoft.azure.cosmosdb.internal.HttpConstants.HttpHeaders;
+import static com.google.common.base.Preconditions.checkNotNull;
 
-final public class RntbdTransportClient extends TransportClient implements AutoCloseable {
+public final class RntbdTransportClient extends TransportClient implements AutoCloseable {
 
     // region Fields
 
-    final private static String className = RntbdTransportClient.class.getName();
-    final private static AtomicLong counter = new AtomicLong(0L);
-    final private static Logger logger = LoggerFactory.getLogger(className);
+    private static final String className = RntbdTransportClient.class.getCanonicalName();
+    private static final AtomicLong instanceCount = new AtomicLong();
+    private static final Logger logger = LoggerFactory.getLogger(className);
 
-    final private AtomicBoolean closed = new AtomicBoolean(false);
-    final private EndpointFactory endpointFactory;
-    final private String name;
+    private final AtomicBoolean closed = new AtomicBoolean();
+    private final EndpointFactory endpointFactory;
+    private final Metrics metrics;
+    private final String name;
 
     // endregion
 
     // region Constructors
 
-    RntbdTransportClient(EndpointFactory endpointFactory) {
-        this.name = className + '-' + counter.incrementAndGet();
+    RntbdTransportClient(final EndpointFactory endpointFactory) {
+        this.name = RntbdTransportClient.className + '-' + RntbdTransportClient.instanceCount.incrementAndGet();
         this.endpointFactory = endpointFactory;
+        this.metrics = new Metrics();
     }
 
-    RntbdTransportClient(Options options, SslContext sslContext, UserAgentContainer userAgent) {
+    RntbdTransportClient(final Options options, final SslContext sslContext, final UserAgentContainer userAgent) {
         this(new EndpointFactory(options, sslContext, userAgent));
     }
 
-    RntbdTransportClient(Configs configs, int requestTimeoutInSeconds, UserAgentContainer userAgent) {
+    RntbdTransportClient(final Configs configs, final int requestTimeoutInSeconds, final UserAgentContainer userAgent) {
         this(new Options(Duration.ofSeconds((long)requestTimeoutInSeconds)), configs.getSslContext(), userAgent);
     }
 
@@ -96,23 +92,11 @@ final public class RntbdTransportClient extends TransportClient implements AutoC
         if (this.closed.compareAndSet(false, true)) {
 
             this.endpointFactory.close().addListener(future -> {
-
                 if (future.isSuccess()) {
-
-                    // TODO: DANOBLE: Deal with fact that all channels are closed, but each of their sockets are open
-                    //  Links:
-                    //  https://msdata.visualstudio.com/CosmosDB/_workitems/edit/367028
-                    //  Notes:
-                    //  Observation: Closing/shutting down a channel does not cause its underlying socket to be closed
-                    //  Option: Pool SocketChannel instances and manage the SocketChannel used by each NioSocketChannel
-                    //  Option: Inherit from NioSocketChannel to ensure the behavior we'd like (close means close)
-                    //  Option: Recommend that customers increase their system's file descriptor count (e.g., on macOS)
-
-                    logger.info("{} closed", this);
+                    logger.debug("{} closed endpoints", this);
                     return;
                 }
-
-                logger.error("{} close failed: {}", this, future.cause());
+                logger.error("{} failed to close endpoints due to {}", this, future.cause());
             });
 
         } else {
@@ -122,45 +106,49 @@ final public class RntbdTransportClient extends TransportClient implements AutoC
 
     @Override
     public Single<StoreResponse> invokeStoreAsync(
-        URI physicalAddress, ResourceOperation unused, RxDocumentServiceRequest request
+        final URI physicalAddress, final ResourceOperation unused, final RxDocumentServiceRequest request
     ) {
-        Objects.requireNonNull(physicalAddress, "physicalAddress");
-        Objects.requireNonNull(request, "request");
+        checkNotNull(physicalAddress, "physicalAddress");
+        checkNotNull(request, "request");
         this.throwIfClosed();
 
-        final RntbdRequestArgs requestArgs = new RntbdRequestArgs(request, physicalAddress.getPath());
+        final RntbdRequestArgs requestArgs = new RntbdRequestArgs(request, physicalAddress);
+
+        if (logger.isDebugEnabled()) {
+            requestArgs.traceOperation(logger, null, "invokeStoreAsync");
+            logger.debug("\n  {}\n  {}\n  INVOKE_STORE_ASYNC", this, requestArgs);
+        }
+
         final Endpoint endpoint = this.endpointFactory.getEndpoint(physicalAddress);
+        this.metrics.incrementRequestCount();
 
-        final CompletableFuture<StoreResponse> responseFuture = endpoint.write(requestArgs);
+        final CompletableFuture<StoreResponse> future = endpoint.request(requestArgs);
 
-        return Single.fromEmitter(emitter -> responseFuture.whenComplete((response, error) -> {
+        return Single.fromEmitter((SingleEmitter<StoreResponse> emitter) -> {
 
-            requestArgs.traceOperation(logger, null, "emitSingle", response, error);
+            future.whenComplete((response, error) -> {
 
-            if (error == null) {
-                if (logger.isDebugEnabled()) {
-                    logger.debug("{} [physicalAddress: {}, activityId: {}] Request succeeded with response status: {}",
-                        endpoint, physicalAddress, request.getActivityId(), response.getStatus()
-                    );
+                requestArgs.traceOperation(logger, null, "emitSingle", response, error);
+                this.metrics.incrementResponseCount();
+
+                if (error == null) {
+                    assert response != null;
+                    emitter.onSuccess(response);
+                } else {
+                    assert error instanceof DocumentClientException && response == null;
+                    this.metrics.incrementRequestFailureCount();
+                    emitter.onError(error);
                 }
-                emitter.onSuccess(response);
 
-            } else {
-                if (logger.isErrorEnabled()) {
-                    logger.error("{} [physicalAddress: {}, activityId: {}] Request failed: {}",
-                        endpoint, physicalAddress, request.getActivityId(), error.getMessage()
-                    );
-                }
-                emitter.onError(error);
-            }
-
-            requestArgs.traceOperation(logger, null, "completeEmitSingle");
-        }));
+                requestArgs.traceOperation(logger, null, "emitSingleComplete");
+            });
+        });
     }
 
     @Override
     public String toString() {
-        return '[' + name + ", endpointCount: " + this.endpointFactory.endpoints.mappingCount() + ']';
+        final long endpointCount = this.endpointFactory.endpoints.mappingCount();
+        return '[' + this.name + "(endpointCount: " + endpointCount + ", " + this.metrics + ")]";
     }
 
     private void throwIfClosed() {
@@ -173,180 +161,118 @@ final public class RntbdTransportClient extends TransportClient implements AutoC
 
     // region Types
 
-    interface Endpoint {
+    public interface Endpoint {
 
-        Future<?> close();
+        void close();
 
-        CompletableFuture<StoreResponse> write(RntbdRequestArgs requestArgs);
+        CompletableFuture<StoreResponse> request(RntbdRequestArgs requestArgs);
     }
 
-    private static class DefaultEndpoint implements Endpoint {
+    public static final class Config {
 
-        final private ChannelFuture channelFuture;
-        final private RntbdRequestManager requestManager;
+        private final Options options;
+        private final SslContext sslContext;
+        private final UserAgentContainer userAgent;
+        private final LogLevel wireLogLevel;
 
-        DefaultEndpoint(EndpointFactory factory, URI physicalAddress) {
+        Config(final UserAgentContainer userAgent, final SslContext sslContext, final LogLevel wireLogLevel, final Options options) {
 
-            final RntbdClientChannelInitializer clientChannelInitializer = factory.createClientChannelInitializer();
-            this.requestManager = clientChannelInitializer.getRequestManager();
-            final int connectionTimeout = factory.getConnectionTimeout();
+            checkNotNull(sslContext, "sslContext");
+            checkNotNull(userAgent, "userAgent");
+            checkNotNull(options, "options");
 
-            final Bootstrap bootstrap = new Bootstrap()
-                .channel(NioSocketChannel.class)
-                .group(factory.eventLoopGroup)
-                .handler(clientChannelInitializer)
-                .option(ChannelOption.AUTO_READ, true)
-                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectionTimeout)
-                .option(ChannelOption.SO_KEEPALIVE, true);
-
-            this.channelFuture = bootstrap.connect(physicalAddress.getHost(), physicalAddress.getPort());
+            this.sslContext = sslContext;
+            this.userAgent = userAgent;
+            this.wireLogLevel = wireLogLevel;
+            this.options = options;
         }
 
-        public Future<?> close() {
-            return this.channelFuture.channel().close();
+        public int getConnectionTimeout() {
+            final long value = this.options.getOpenTimeout().toMillis();
+            assert value <= Integer.MAX_VALUE;
+            return (int)value;
         }
 
-        @Override
-        public String toString() {
-            return this.channelFuture.channel().toString();
+        public int getMaxChannels() {
+            return this.options.getMaxChannels();
         }
 
-        public CompletableFuture<StoreResponse> write(RntbdRequestArgs requestArgs) {
-
-            Objects.requireNonNull(requestArgs, "requestArgs");
-
-            final CompletableFuture<StoreResponse> responseFuture = this.requestManager.createStoreResponseFuture(requestArgs);
-
-            this.channelFuture.addListener((ChannelFuture future) -> {
-
-                if (future.isSuccess()) {
-                    requestArgs.traceOperation(logger, null, "doWrite");
-                    logger.debug("{} connected", future.channel());
-                    doWrite(future.channel(), requestArgs);
-                    return;
-                }
-
-                UUID activityId = requestArgs.getActivityId();
-
-                if (future.isCancelled()) {
-
-                    this.requestManager.cancelStoreResponseFuture(activityId);
-
-                    logger.debug("{}{} request cancelled: ", future.channel(), requestArgs, future.cause());
-
-                } else {
-
-                    final Channel channel = future.channel();
-                    Throwable cause = future.cause();
-
-                    logger.error("{}{} request failed: ", channel, requestArgs, cause);
-
-                    GoneException goneException = new GoneException(
-                        String.format("failed to establish connection to %s: %s",
-                            channel.remoteAddress(), cause.getMessage()
-                        ),
-                        cause instanceof Exception ? (Exception)cause : new IOException(cause.getMessage(), cause),
-                        ImmutableMap.of(HttpHeaders.ACTIVITY_ID, activityId.toString()),
-                        requestArgs.getReplicaPath()
-                    );
-
-                    logger.debug("{}{} {} mapped to GoneException: ",
-                        channel, requestArgs, cause.getClass(), goneException
-                    );
-
-                    this.requestManager.completeStoreResponseFutureExceptionally(activityId, goneException);
-                }
-
-            });
-
-            return responseFuture;
+        public int getMaxRequestsPerChannel() {
+            return this.options.getMaxRequestsPerChannel();
         }
 
-        private static void doWrite(Channel channel, RntbdRequestArgs requestArgs) {
+        public Options getOptions() {
+            return this.options;
+        }
 
-            channel.write(requestArgs).addListener((ChannelFuture future) -> {
+        public long getReceiveHangDetectionTime() {
+            return this.options.getReceiveHangDetectionTime().toNanos();
 
-                requestArgs.traceOperation(logger, null, "writeComplete", future.channel());
+        }
 
-                if (future.isSuccess()) {
+        public long getSendHangDetectionTime() {
+            return this.options.getSendHangDetectionTime().toNanos();
+        }
 
-                    logger.debug("{} request sent: {}", future.channel(), requestArgs);
+        public SslContext getSslContext() {
+            return this.sslContext;
+        }
 
-                } else if (future.isCancelled()) {
+        public UserAgentContainer getUserAgent() {
+            return this.userAgent;
+        }
 
-                    logger.debug("{}{} request cancelled: {}",
-                        future.channel(), requestArgs, future.cause().getMessage()
-                    );
-
-                } else {
-                    Throwable cause = future.cause();
-                    logger.error("{}{} request failed due to {}: {}",
-                        future.channel(), requestArgs, cause.getClass(), cause.getMessage()
-                    );
-                }
-            });
+        public LogLevel getWireLogLevel() {
+            return this.wireLogLevel;
         }
     }
 
     static class EndpointFactory {
 
-        final private ConcurrentHashMap<String, Endpoint> endpoints = new ConcurrentHashMap<>();
-        final private NioEventLoopGroup eventLoopGroup;
-        final private Options options;
-        final private SslContext sslContext;
-        final private UserAgentContainer userAgent;
+        private final ConcurrentHashMap<String, Endpoint> endpoints = new ConcurrentHashMap<>();
+        private final NioEventLoopGroup eventLoopGroup;
+        private final Config pipelineConfig;
+        private final RntbdRequestTimer requestTimer;
 
-        EndpointFactory(Options options, SslContext sslContext, UserAgentContainer userAgent) {
+        EndpointFactory(final Options options, final SslContext sslContext, final UserAgentContainer userAgent) {
 
-            Objects.requireNonNull(options, "options");
-            Objects.requireNonNull(sslContext, "sslContext");
-            Objects.requireNonNull(userAgent, "userAgent");
+            checkNotNull(options, "options");
+            checkNotNull(sslContext, "sslContext");
+            checkNotNull(userAgent, "userAgent");
 
             final DefaultThreadFactory threadFactory = new DefaultThreadFactory("CosmosEventLoop", true);
             final int threadCount = Runtime.getRuntime().availableProcessors();
+            final LogLevel wireLogLevel;
 
+            if (RntbdTransportClient.logger.isTraceEnabled()) {
+                wireLogLevel = LogLevel.TRACE;
+            } else if (RntbdTransportClient.logger.isDebugEnabled()) {
+                wireLogLevel = LogLevel.DEBUG;
+            } else {
+                wireLogLevel = null;
+            }
+
+            this.requestTimer = new RntbdRequestTimer(options.getRequestTimeout());
             this.eventLoopGroup = new NioEventLoopGroup(threadCount, threadFactory);
-            this.options = options;
-            this.sslContext = sslContext;
-            this.userAgent = userAgent;
+            this.pipelineConfig = new Config(userAgent, sslContext, wireLogLevel, options);
         }
 
-        int getConnectionTimeout() {
-            return (int)this.options.getOpenTimeout().toMillis();
-        }
-
-        Options getOptions() {
-            return this.options;
-        }
-
-        UserAgentContainer getUserAgent() {
-            return this.userAgent;
+        Config getPipelineConfig() {
+            return this.pipelineConfig;
         }
 
         Future<?> close() {
+            for (final Endpoint endpoint : this.endpoints.values()) {
+                endpoint.close();
+            }
             return this.eventLoopGroup.shutdownGracefully();
         }
 
-        RntbdClientChannelInitializer createClientChannelInitializer() {
-
-            final LogLevel logLevel;
-
-            if (RntbdTransportClient.logger.isTraceEnabled()) {
-                logLevel = LogLevel.TRACE;
-            } else if (RntbdTransportClient.logger.isDebugEnabled()) {
-                logLevel = LogLevel.DEBUG;
-            } else {
-                logLevel = null;
-            }
-
-            return new RntbdClientChannelInitializer(this.userAgent, this.sslContext, logLevel, this.options);
+        Endpoint createEndpoint(final URI physicalAddress) {
+            return new RntbdServiceEndpoint(this.pipelineConfig, this.eventLoopGroup, this.requestTimer, physicalAddress);
         }
 
-        Endpoint createEndpoint(URI physicalAddress) {
-            return new DefaultEndpoint(this, physicalAddress);
-        }
-
-        void deleteEndpoint(URI physicalAddress) {
+        void deleteEndpoint(final URI physicalAddress) {
 
             // TODO: DANOBLE: Utilize this method of tearing down unhealthy endpoints
             //  Links:
@@ -360,25 +286,59 @@ final public class RntbdTransportClient extends TransportClient implements AutoC
                 throw new IllegalArgumentException(String.format("physicalAddress: %s", physicalAddress));
             }
 
-            endpoint.close().addListener(future -> {
-
-                if (future.isSuccess()) {
-                    logger.info("{} closed channel of communication with {}", endpoint, authority);
-                    return;
-                }
-
-                logger.error("{} failed to close channel of communication with {}: {}", endpoint, authority, future.cause());
-            });
+            endpoint.close();
         }
 
-        Endpoint getEndpoint(URI physicalAddress) {
+        Endpoint getEndpoint(final URI physicalAddress) {
             return this.endpoints.computeIfAbsent(
                 physicalAddress.getAuthority(), authority -> this.createEndpoint(physicalAddress)
             );
         }
     }
 
-    final public static class Options {
+    public static final class Metrics {
+
+        private final Stopwatch lifetime = Stopwatch.createStarted();
+        private final AtomicLong requestCount = new AtomicLong();
+        private final AtomicLong responseCount = new AtomicLong();
+        private final AtomicLong requestFailureCount = new AtomicLong();
+
+        public final Stopwatch getLifetime() {
+            return this.lifetime;
+        }
+
+        public final long getRequestCount() {
+            return this.requestCount.get();
+        }
+
+        public final double getRequestsPerSecond() {
+            return this.responseCount.get() / (1E-9 * this.lifetime.elapsed().toNanos());
+        }
+
+        public final long getResponseCount() {
+            return this.responseCount.get();
+        }
+
+        public final void incrementRequestCount() {
+            this.requestCount.incrementAndGet();
+        }
+
+        public final void incrementRequestFailureCount() {
+            this.requestFailureCount.incrementAndGet();
+        }
+
+        public final void incrementResponseCount() {
+            this.responseCount.incrementAndGet();
+        }
+
+        @Override
+        public String toString() {
+            return "lifetime: " + this.lifetime + ", requestCount: " + this.requestCount + ", responseCount: "
+                + this.responseCount + ", requestFailureCount: " + this.requestFailureCount;
+        }
+    }
+
+    public static final class Options {
 
         // region Fields
 
@@ -397,16 +357,16 @@ final public class RntbdTransportClient extends TransportClient implements AutoC
 
         // region Constructors
 
-        public Options(int requestTimeoutInSeconds) {
+        public Options(final int requestTimeoutInSeconds) {
             this(Duration.ofSeconds((long)requestTimeoutInSeconds));
         }
 
-        public Options(Duration requestTimeout) {
+        public Options(final Duration requestTimeout) {
 
-            Objects.requireNonNull(requestTimeout);
+            checkNotNull(requestTimeout, "requestTimeoutInterval");
 
             if (requestTimeout.compareTo(Duration.ZERO) <= 0) {
-                throw new IllegalArgumentException("requestTimeout");
+                throw new IllegalArgumentException("requestTimeoutInterval");
             }
 
             this.maxChannels = 0xFFFF;
@@ -422,10 +382,10 @@ final public class RntbdTransportClient extends TransportClient implements AutoC
         // region Property accessors
 
         public String getCertificateHostNameOverride() {
-            return certificateHostNameOverride;
+            return this.certificateHostNameOverride;
         }
 
-        public void setCertificateHostNameOverride(String value) {
+        public void setCertificateHostNameOverride(final String value) {
             this.certificateHostNameOverride = value;
         }
 
@@ -433,7 +393,7 @@ final public class RntbdTransportClient extends TransportClient implements AutoC
             return this.maxChannels;
         }
 
-        public void setMaxChannels(int value) {
+        public void setMaxChannels(final int value) {
             this.maxChannels = value;
         }
 
@@ -441,7 +401,7 @@ final public class RntbdTransportClient extends TransportClient implements AutoC
             return this.maxRequestsPerChannel;
         }
 
-        public void setMaxRequestsPerChannel(int maxRequestsPerChannel) {
+        public void setMaxRequestsPerChannel(final int maxRequestsPerChannel) {
             this.maxRequestsPerChannel = maxRequestsPerChannel;
         }
 
@@ -449,7 +409,7 @@ final public class RntbdTransportClient extends TransportClient implements AutoC
             return this.openTimeout.isNegative() || this.openTimeout.isZero() ? this.requestTimeout : this.openTimeout;
         }
 
-        public void setOpenTimeout(Duration value) {
+        public void setOpenTimeout(final Duration value) {
             this.openTimeout = value;
         }
 
@@ -457,7 +417,7 @@ final public class RntbdTransportClient extends TransportClient implements AutoC
             return this.partitionCount;
         }
 
-        public void setPartitionCount(int value) {
+        public void setPartitionCount(final int value) {
             this.partitionCount = value;
         }
 
@@ -465,7 +425,7 @@ final public class RntbdTransportClient extends TransportClient implements AutoC
             return this.receiveHangDetectionTime;
         }
 
-        public void setReceiveHangDetectionTime(Duration value) {
+        public void setReceiveHangDetectionTime(final Duration value) {
             this.receiveHangDetectionTime = value;
         }
 
@@ -477,7 +437,7 @@ final public class RntbdTransportClient extends TransportClient implements AutoC
             return this.sendHangDetectionTime;
         }
 
-        public void setSendHangDetectionTime(Duration value) {
+        public void setSendHangDetectionTime(final Duration value) {
             this.sendHangDetectionTime = value;
         }
 
@@ -485,7 +445,7 @@ final public class RntbdTransportClient extends TransportClient implements AutoC
             return calculateTimerPoolResolutionSeconds(this.timerPoolResolution, this.requestTimeout, this.openTimeout);
         }
 
-        public void setTimerPoolResolution(Duration value) {
+        public void setTimerPoolResolution(final Duration value) {
             this.timerPoolResolution = value;
         }
 
@@ -499,7 +459,7 @@ final public class RntbdTransportClient extends TransportClient implements AutoC
             return this.userAgent;
         }
 
-        public void setUserAgent(UserAgentContainer value) {
+        public void setUserAgent(final UserAgentContainer value) {
             this.userAgent = value;
         }
 
@@ -508,14 +468,14 @@ final public class RntbdTransportClient extends TransportClient implements AutoC
         // region Methods
 
         private static Duration calculateTimerPoolResolutionSeconds(
+            final Duration timerPoolResolution,
+            final Duration requestTimeout,
+            final Duration openTimeout
+        ) {
 
-            Duration timerPoolResolution,
-            Duration requestTimeout,
-            Duration openTimeout) {
-
-            Objects.requireNonNull(timerPoolResolution, "timerPoolResolution");
-            Objects.requireNonNull(requestTimeout, "requestTimeout");
-            Objects.requireNonNull(openTimeout, "openTimeout");
+            checkNotNull(timerPoolResolution, "timerPoolResolution");
+            checkNotNull(requestTimeout, "requestTimeoutInterval");
+            checkNotNull(openTimeout, "openTimeout");
 
             if (timerPoolResolution.compareTo(Duration.ZERO) <= 0 && requestTimeout.compareTo(Duration.ZERO) <= 0 &&
                 openTimeout.compareTo(Duration.ZERO) <= 0) {

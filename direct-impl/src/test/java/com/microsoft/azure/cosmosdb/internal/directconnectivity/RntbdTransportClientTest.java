@@ -89,18 +89,17 @@ import static org.testng.Assert.fail;
 
 public class RntbdTransportClientTest {
 
-    final private static Logger logger = LoggerFactory.getLogger(RntbdTransportClientTest.class);
-    final private static int lsn = 5;
-    final private static ByteBuf noContent = Unpooled.wrappedBuffer(new byte[0]);
-    final private static String partitionKeyRangeId = "3";
-    final private static URI physicalAddress = URI.create("rntbd://host:10251/replica-path/");
-    final private static Duration requestTimeout = Duration.ofSeconds(1000);
+    private static final Logger logger = LoggerFactory.getLogger(RntbdTransportClientTest.class);
+    private static final int lsn = 5;
+    private static final ByteBuf noContent = Unpooled.wrappedBuffer(new byte[0]);
+    private static final String partitionKeyRangeId = "3";
+    private static final URI physicalAddress = URI.create("rntbd://host:10251/replica-path/");
+    private static final Duration requestTimeout = Duration.ofSeconds(1000);
 
     @DataProvider(name = "fromMockedNetworkFailureToExpectedDocumentClientException")
     public Object[][] fromMockedNetworkFailureToExpectedDocumentClientException() {
 
         return new Object[][] {
-            // TODO: DANOBLE: add network failure exception test cases
         };
     }
 
@@ -623,13 +622,13 @@ public class RntbdTransportClientTest {
 
             builder.put(HttpHeaders.AUTHORIZATION, token);
 
-            RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.Read,
+            final RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.Read,
                 ResourceType.DatabaseAccount,
                 Paths.DATABASE_ACCOUNT_PATH_SEGMENT,
                 builder.build()
             );
 
-            Single<StoreResponse> responseSingle = transportClient.invokeStoreAsync(physicalAddress, null, request);
+            final Single<StoreResponse> responseSingle = transportClient.invokeStoreAsync(physicalAddress, null, request);
 
             responseSingle.toObservable().toBlocking().subscribe(new Subscriber<StoreResponse>() {
                 @Override
@@ -637,24 +636,24 @@ public class RntbdTransportClientTest {
                 }
 
                 @Override
-                public void onError(Throwable error) {
-                    String cs = "Expected %s, not %s";
-                    assertTrue(error instanceof GoneException, String.format(cs, GoneException.class, error.getClass()));
-                    Throwable cause = error.getCause();
+                public void onError(final Throwable error) {
+                    final String format = "Expected %s, not %s";
+                    assertTrue(error instanceof GoneException, String.format(format, GoneException.class, error.getClass()));
+                    final Throwable cause = error.getCause();
                     if (cause != null) {
                         // assumption: cosmos isn't listening on 10251
-                        assertTrue(cause instanceof ConnectException, String.format(cs, ConnectException.class, error.getClass()));
+                        assertTrue(cause instanceof ConnectException, String.format(format, ConnectException.class, error.getClass()));
                     }
                 }
 
                 @Override
-                public void onNext(StoreResponse response) {
+                public void onNext(final StoreResponse response) {
                     fail(String.format("Expected GoneException, not a StoreResponse: %s", response));
                 }
             });
 
-        } catch (Exception error) {
-            String message = String.format("%s: %s", error.getClass(), error.getMessage());
+        } catch (final Exception error) {
+            final String message = String.format("%s: %s", error.getClass(), error.getMessage());
             fail(message, error);
         }
     }
@@ -671,10 +670,13 @@ public class RntbdTransportClientTest {
      */
     @Test(enabled = false, groups = "unit", dataProvider = "fromMockedNetworkFailureToExpectedDocumentClientException")
     public void verifyNetworkFailure(
-        FailureValidator.Builder builder,
-        RxDocumentServiceRequest request,
-        DocumentClientException exception
+        final FailureValidator.Builder builder,
+        final RxDocumentServiceRequest request,
+        final DocumentClientException exception
     ) {
+        // TODO: DANOBLE: Implement RntbdTransportClientTest.verifyNetworkFailure
+        //  Links:
+        //  https://msdata.visualstudio.com/CosmosDB/_workitems/edit/378750
         throw new UnsupportedOperationException("TODO: DANOBLE: Implement this test");
     }
 
@@ -687,33 +689,33 @@ public class RntbdTransportClientTest {
      */
     @Test(enabled = true, groups = "unit", dataProvider = "fromMockedRntbdResponseToExpectedDocumentClientException")
     public void verifyRequestFailures(
-        FailureValidator.Builder builder,
-        RxDocumentServiceRequest request,
-        RntbdResponse response
+        final FailureValidator.Builder builder,
+        final RxDocumentServiceRequest request,
+        final RntbdResponse response
     ) {
         final UserAgentContainer userAgent = new UserAgentContainer();
         final Duration timeout = Duration.ofMillis(100);
 
         try (final RntbdTransportClient client = getRntbdTransportClientUnderTest(userAgent, timeout, response)) {
 
-            Single<StoreResponse> responseSingle;
+            final Single<StoreResponse> responseSingle;
 
             try {
                 responseSingle = client.invokeStoreAsync(
                     physicalAddress, new ResourceOperation(request.getOperationType(), request.getResourceType()), request
                 );
-            } catch (Exception error) {
+            } catch (final Exception error) {
                 throw new AssertionError(String.format("%s: %s", error.getClass(), error.getMessage()));
             }
 
-            validateFailure(responseSingle, builder.build());
+            this.validateFailure(responseSingle, builder.build());
         }
     }
 
     private static RntbdTransportClient getRntbdTransportClientUnderTest(
-            UserAgentContainer userAgent,
-            Duration requestTimeout,
-            RntbdResponse expected
+        final UserAgentContainer userAgent,
+        final Duration requestTimeout,
+        final RntbdResponse expected
     ) {
 
         final RntbdTransportClient.Options options = new RntbdTransportClient.Options(requestTimeout);
@@ -721,7 +723,7 @@ public class RntbdTransportClientTest {
 
         try {
             sslContext = SslContextBuilder.forClient().build();
-        } catch (Exception error) {
+        } catch (final Exception error) {
             throw new AssertionError(String.format("%s: %s", error.getClass(), error.getMessage()));
         }
 
@@ -731,7 +733,7 @@ public class RntbdTransportClientTest {
 
         final RntbdTransportClient client = new RntbdTransportClient(endpointFactory);
 
-        doAnswer((Answer) invocation -> {
+        doAnswer(invocation -> {
 
             RntbdTransportClient.EndpointFactory factory = (RntbdTransportClient.EndpointFactory) invocation.getMock();
             URI physicalAddress = invocation.getArgumentAt(0, URI.class);
@@ -742,13 +744,15 @@ public class RntbdTransportClientTest {
         return client;
     }
 
-    private void validateFailure(Single<StoreResponse> single, FailureValidator validator) {
+    private void validateFailure(final Single<? extends StoreResponse> single, final FailureValidator validator) {
         validateFailure(single, validator, requestTimeout.toMillis());
     }
 
-    private static void validateFailure(Single<StoreResponse> single, FailureValidator validator, long timeout) {
+    private static void validateFailure(
+        final Single<? extends StoreResponse> single, final FailureValidator validator, final long timeout
+    ) {
 
-        TestSubscriber<StoreResponse> testSubscriber = new TestSubscriber<>();
+        final TestSubscriber<StoreResponse> testSubscriber = new TestSubscriber<>();
         single.toObservable().subscribe(testSubscriber);
         testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
         testSubscriber.assertNotCompleted();
@@ -759,24 +763,24 @@ public class RntbdTransportClientTest {
 
     // region Types
 
-    final private static class FakeChannel extends EmbeddedChannel {
+    private static final class FakeChannel extends EmbeddedChannel {
 
-        final private static ServerProperties serverProperties = new ServerProperties("agent", "3.0.0");
-        final private BlockingQueue<RntbdResponse> responses;
+        private static final ServerProperties serverProperties = new ServerProperties("agent", "3.0.0");
+        private final BlockingQueue<RntbdResponse> responses;
 
-        FakeChannel(BlockingQueue<RntbdResponse> responses, ChannelHandler... handlers) {
+        FakeChannel(final BlockingQueue<RntbdResponse> responses, final ChannelHandler... handlers) {
             super(handlers);
             this.responses = responses;
         }
 
         @Override
-        protected void handleInboundMessage(Object message) {
+        protected void handleInboundMessage(final Object message) {
             super.handleInboundMessage(message);
             assertTrue(message instanceof ByteBuf);
         }
 
         @Override
-        protected void handleOutboundMessage(Object message) {
+        protected void handleOutboundMessage(final Object message) {
 
             assertTrue(message instanceof ByteBuf);
 
@@ -787,18 +791,18 @@ public class RntbdTransportClientTest {
 
             if (in.getUnsignedIntLE(4) == 0) {
 
-                RntbdContextRequest request = RntbdContextRequest.decode(in.copy());
-                RntbdContext rntbdContext = RntbdContext.from(request, serverProperties, HttpResponseStatus.OK);
+                final RntbdContextRequest request = RntbdContextRequest.decode(in.copy());
+                final RntbdContext rntbdContext = RntbdContext.from(request, serverProperties, HttpResponseStatus.OK);
 
                 rntbdContext.encode(out);
 
             } else {
 
-                RntbdResponse rntbdResponse;
+                final RntbdResponse rntbdResponse;
 
                 try {
                     rntbdResponse = this.responses.take();
-                } catch (Exception error) {
+                } catch (final Exception error) {
                     throw new AssertionError(String.format("%s: %s", error.getClass(), error.getMessage()));
                 }
 
@@ -810,19 +814,19 @@ public class RntbdTransportClientTest {
         }
     }
 
-    final private static class FakeEndpoint implements RntbdTransportClient.Endpoint {
+    private static final class FakeEndpoint implements RntbdTransportClient.Endpoint {
 
         final FakeChannel fakeChannel;
         final URI physicalAddress;
         final RntbdRequestManager requestManager;
 
         FakeEndpoint(
-            RntbdTransportClient.EndpointFactory factory,
-            URI physicalAddress,
-            RntbdResponse... expected
+            final RntbdTransportClient.EndpointFactory factory,
+            final URI physicalAddress,
+            final RntbdResponse... expected
         ) {
 
-            ArrayBlockingQueue<RntbdResponse> responses = new ArrayBlockingQueue<RntbdResponse>(
+            final ArrayBlockingQueue<RntbdResponse> responses = new ArrayBlockingQueue<RntbdResponse>(
                 expected.length, true, Arrays.asList(expected)
             );
 
@@ -830,7 +834,7 @@ public class RntbdTransportClientTest {
             this.physicalAddress = physicalAddress;
 
             this.fakeChannel = new FakeChannel(responses,
-                new RntbdContextNegotiator(this.requestManager, factory.getUserAgent()),
+                new RntbdContextNegotiator(this.requestManager, factory.getPipelineConfig().getUserAgent()),
                 new RntbdRequestEncoder(),
                 new RntbdResponseDecoder(),
                 this.requestManager
@@ -838,22 +842,24 @@ public class RntbdTransportClientTest {
         }
 
         @Override
-        public Future<?> close() {
-            DefaultEventExecutor executor = new DefaultEventExecutor();
-            Future<?> future = executor.newSucceededFuture(true);
+        public void close() {
+            final DefaultEventExecutor executor = new DefaultEventExecutor();
             this.fakeChannel.close().syncUninterruptibly();
-            return future;
         }
 
         @Override
-        public CompletableFuture<StoreResponse> write(RntbdRequestArgs requestArgs) {
-            final CompletableFuture<StoreResponse> responseFuture = this.requestManager.createStoreResponseFuture(requestArgs);
+        public CompletableFuture<StoreResponse> request(final RntbdRequestArgs requestArgs) {
+
+            final CompletableFuture<StoreResponse> responseFuture = new CompletableFuture<>();
+
+            this.requestManager.createPendingRequest(requestArgs, null, responseFuture);
             this.fakeChannel.writeOutbound(requestArgs);
+
             return responseFuture;
         }
     }
 
-    final private static class RntbdTestConfiguration {
+    private static final class RntbdTestConfiguration {
 
         static String AccountHost = System.getProperty("ACCOUNT_HOST",
             StringUtils.defaultString(
