@@ -48,32 +48,36 @@ import rx.functions.Func3;
 
 class OrderByDocumentProducer<T extends Resource> extends DocumentProducer<T> {
     private final OrderbyRowComparer<T> consumeComparer;
+    private final Map<String, OrderByContinuationToken> targetRangeToOrderByContinuationTokenMap;
 
     OrderByDocumentProducer(
             OrderbyRowComparer<T> consumeComparer,
-            IDocumentQueryClient client, 
+            IDocumentQueryClient client,
             String collectionResourceId,
             FeedOptions feedOptions,
             Func3<PartitionKeyRange, String, Integer, RxDocumentServiceRequest> createRequestFunc,
             Func1<RxDocumentServiceRequest, Observable<FeedResponse<T>>> executeRequestFunc,
-            PartitionKeyRange targetRange, 
+            PartitionKeyRange targetRange,
             String collectionLink,
-            Func0<IDocumentClientRetryPolicy> createRetryPolicyFunc, 
+            Func0<IDocumentClientRetryPolicy> createRetryPolicyFunc,
             Class<T> resourceType, 
             UUID correlatedActivityId,
             int initialPageSize, 
             String initialContinuationToken, 
-            int top) {
+            int top,
+            Map<String, OrderByContinuationToken> targetRangeToOrderByContinuationTokenMap) {
         super(client, collectionResourceId, feedOptions, createRequestFunc, executeRequestFunc, targetRange, collectionLink,
                 createRetryPolicyFunc, resourceType, correlatedActivityId, initialPageSize, initialContinuationToken, top);
         this.consumeComparer = consumeComparer;
+        this.targetRangeToOrderByContinuationTokenMap = targetRangeToOrderByContinuationTokenMap;
     }
 
     protected Observable<DocumentProducerFeedResponse> produceOnSplit(Observable<DocumentProducer<T>> replacementProducers) {
         Observable<DocumentProducerFeedResponse> res = replacementProducers.toList().single().flatMap(documentProducers -> {
             RequestChargeTracker tracker = new RequestChargeTracker();
             Map<String, QueryMetrics> queryMetricsMap = new HashMap<>();
-            return OrderByUtils.orderedMerge(resourceType, consumeComparer, tracker, documentProducers, queryMetricsMap)
+            return OrderByUtils.orderedMerge(resourceType, consumeComparer, tracker, documentProducers, queryMetricsMap,
+                    targetRangeToOrderByContinuationTokenMap)
                     .map(orderByQueryResult -> resultPageFrom(tracker, orderByQueryResult));
         });
 
@@ -106,7 +110,8 @@ class OrderByDocumentProducer<T extends Resource> extends DocumentProducer<T> {
                 correlatedActivityId,
                 pageSize,
                 initialContinuationToken,
-                top);
+                top,
+                this.targetRangeToOrderByContinuationTokenMap);
     }
 
 }
