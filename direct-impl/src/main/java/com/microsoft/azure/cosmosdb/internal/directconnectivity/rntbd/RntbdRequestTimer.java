@@ -28,13 +28,18 @@ import io.netty.util.HashedWheelTimer;
 import io.netty.util.Timeout;
 import io.netty.util.Timer;
 import io.netty.util.TimerTask;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
-public final class RntbdRequestTimer {
 
-    private static final long FIVE_MILLISECONDS = 500000L;
+public final class RntbdRequestTimer implements AutoCloseable {
+
+    private static final long FIVE_MILLISECONDS = 5000000L;
+
+    private static final Logger logger = LoggerFactory.getLogger(RntbdRequestTimer.class);
     private final long requestTimeoutInterval;
     private final Timer timer;
 
@@ -46,6 +51,14 @@ public final class RntbdRequestTimer {
 
         this.timer = new HashedWheelTimer(FIVE_MILLISECONDS, TimeUnit.NANOSECONDS);
         this.requestTimeoutInterval = requestTimeoutInterval.toNanos();
+    }
+
+    /**
+     * Closes this resource by stopping its underlying @{link Timer}
+     */
+    @Override
+    public void close() {
+        this.timer.stop();
     }
 
     Timeout newTimeout(final TimerTask task) {

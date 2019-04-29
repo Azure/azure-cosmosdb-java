@@ -262,9 +262,13 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
         }
 
         Future<?> close() {
+        
+            this.requestTimer.close();
+            
             for (final Endpoint endpoint : this.endpoints.values()) {
                 endpoint.close();
             }
+            
             return this.eventLoopGroup.shutdownGracefully();
         }
 
