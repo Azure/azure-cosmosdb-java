@@ -28,18 +28,13 @@ import io.netty.util.HashedWheelTimer;
 import io.netty.util.Timeout;
 import io.netty.util.Timer;
 import io.netty.util.TimerTask;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
-
 public final class RntbdRequestTimer implements AutoCloseable {
 
     private static final long FIVE_MILLISECONDS = 5000000L;
-
-    private static final Logger logger = LoggerFactory.getLogger(RntbdRequestTimer.class);
     private final long requestTimeoutInterval;
     private final Timer timer;
 
