@@ -54,6 +54,7 @@ public class RntbdServiceEndpoint implements Endpoint {
     private static final String className = RntbdServiceEndpoint.class.getCanonicalName();
     private static final AtomicLong instanceCount = new AtomicLong();
     private static final Logger logger = LoggerFactory.getLogger(RntbdServiceEndpoint.className);
+
     private final RntbdClientChannelPool channelPool;
     private final Metrics metrics;
     private final String name;
