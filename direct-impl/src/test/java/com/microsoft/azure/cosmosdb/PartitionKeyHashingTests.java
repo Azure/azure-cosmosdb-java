@@ -13,8 +13,8 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 public class PartitionKeyHashingTests {
 
-    @Test
-    public void TestEffectivePartitionKeyHashV1() {
+    @Test(groups = "unit")
+    public void effectivePartitionKeyHashV1() {
         HashMap<Object, String> keyToEffectivePartitionKeyString = new HashMap<Object, String>() {{
             put("", "05C1CF33970FF80800");
             put("partitionKey", "05C1E1B3D9CD2608716273756A756A706F4C667A00");
@@ -43,8 +43,8 @@ public class PartitionKeyHashingTests {
         }
     }
 
-    @Test
-    public void TestEffectivePartitionKeyHashV2() {
+    @Test(groups = "unit")
+    public void effectivePartitionKeyHashV2() {
         HashMap<Object, String> keyToEffectivePartitionKeyString = new HashMap<Object, String>() {{
             put("", "32E9366E637A71B4E710384B2F4970A0");
             put("partitionKey", "013AEFCF77FA271571CF665A58C933F1");
@@ -74,21 +74,21 @@ public class PartitionKeyHashingTests {
         }
     }
 
-    @Test
-    public void TestHashV2PartitionKeyDeserialization() {
+    @Test(groups = "unit")
+    public void hashV2PartitionKeyDeserialization() {
         String partitionKeyDefinitionStr = "{\"paths\":[\"/pk\"],\"kind\":\"Hash\",\"version\":2}";
         PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition(partitionKeyDefinitionStr);
-        assertThat(PartitionKeyDefinitionVersion.V2).isEqualTo(partitionKeyDef.getVersion());
-        assertThat(PartitionKind.Hash).isEqualTo(partitionKeyDef.getKind());
-        assertThat("/pk").isEqualTo(partitionKeyDef.getPaths().toArray()[0]);
+        assertThat(partitionKeyDef.getVersion()).isEqualTo(PartitionKeyDefinitionVersion.V2);
+        assertThat(partitionKeyDef.getKind()).isEqualTo(PartitionKind.Hash);
+        assertThat(partitionKeyDef.getPaths().toArray()[0]).isEqualTo("/pk");
     }
 
-    @Test
-    public void TestHashV1PartitionKeyDeserialization() {
+    @Test(groups = "unit")
+    public void hashV1PartitionKeyDeserialization() {
         String partitionKeyDefinitionStr = "{\"paths\":[\"/pk\"],\"kind\":\"Hash\"}";
         PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition(partitionKeyDefinitionStr);
         assertThat(partitionKeyDef.getVersion()).isNull();
-        assertThat(PartitionKind.Hash).isEqualTo(partitionKeyDef.getKind());
-        assertThat("/pk").isEqualTo(partitionKeyDef.getPaths().toArray()[0]);
+        assertThat(partitionKeyDef.getKind()).isEqualTo(PartitionKind.Hash);
+        assertThat(partitionKeyDef.getPaths().toArray()[0]).isEqualTo("/pk");
     }
 }
