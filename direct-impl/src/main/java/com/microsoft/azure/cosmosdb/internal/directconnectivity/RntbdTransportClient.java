@@ -261,6 +261,10 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
             return this.pipelineConfig;
         }
 
+        RntbdRequestTimer getRequestTimer() {
+            return this.requestTimer;
+        }
+
         Future<?> close() {
         
             this.requestTimer.close();

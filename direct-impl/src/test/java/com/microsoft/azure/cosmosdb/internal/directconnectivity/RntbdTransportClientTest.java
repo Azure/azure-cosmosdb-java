@@ -816,6 +816,7 @@ public class RntbdTransportClientTest {
 
     private static final class FakeEndpoint implements RntbdTransportClient.Endpoint {
 
+        final RntbdTransportClient.EndpointFactory factory;
         final FakeChannel fakeChannel;
         final URI physicalAddress;
         final RntbdRequestManager requestManager;
@@ -826,7 +827,7 @@ public class RntbdTransportClientTest {
             final RntbdResponse... expected
         ) {
 
-            final ArrayBlockingQueue<RntbdResponse> responses = new ArrayBlockingQueue<RntbdResponse>(
+            final ArrayBlockingQueue<RntbdResponse> responses = new ArrayBlockingQueue<>(
                 expected.length, true, Arrays.asList(expected)
             );
 
@@ -839,11 +840,12 @@ public class RntbdTransportClientTest {
                 new RntbdResponseDecoder(),
                 this.requestManager
             );
+
+            this.factory = factory;
         }
 
         @Override
         public void close() {
-            final DefaultEventExecutor executor = new DefaultEventExecutor();
             this.fakeChannel.close().syncUninterruptibly();
         }
 
@@ -852,7 +854,7 @@ public class RntbdTransportClientTest {
 
             final CompletableFuture<StoreResponse> responseFuture = new CompletableFuture<>();
 
-            this.requestManager.createPendingRequest(requestArgs, null, responseFuture);
+            this.requestManager.createPendingRequest(requestArgs, this.factory.getRequestTimer(), responseFuture);
             this.fakeChannel.writeOutbound(requestArgs);
 
             return responseFuture;
