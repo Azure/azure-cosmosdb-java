@@ -29,6 +29,7 @@ import com.microsoft.azure.cosmosdb.BridgeInternal;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.GoneException;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.RntbdTransportClient.Config;
+import com.microsoft.azure.cosmosdb.internal.directconnectivity.ServiceUnavailableException;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.StoreResponse;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -70,7 +71,7 @@ public class RntbdServiceEndpoint implements Endpoint {
             .group(group)
             .option(ChannelOption.AUTO_READ, true)
             .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, config.getConnectionTimeout())
-            .option(ChannelOption.SO_KEEPALIVE, false)
+            .option(ChannelOption.SO_KEEPALIVE, true)
             .remoteAddress(physicalAddress.getHost(), physicalAddress.getPort());
 
         this.name = RntbdServiceEndpoint.className + '-' + instanceCount.incrementAndGet();
@@ -149,6 +150,14 @@ public class RntbdServiceEndpoint implements Endpoint {
 
                 final Channel channel = (Channel)connected.get();
                 this.releaseToPool(channel);
+
+                if (!channel.isOpen()) {
+                    String message = String.format("%s request failed because channel closed unexpectedly", requestArgs);
+                    GoneException error = new GoneException(message, null, null, requestArgs.getPhysicalAddress());
+                    this.metrics.incrementRequestFailureCount();
+                    responseFuture.completeExceptionally(error);
+                    return;
+                }
 
                 final RntbdRequestManager requestManager = channel.pipeline().get(RntbdRequestManager.class);
                 requestManager.createPendingRequest(requestArgs, this.requestTimer, responseFuture);

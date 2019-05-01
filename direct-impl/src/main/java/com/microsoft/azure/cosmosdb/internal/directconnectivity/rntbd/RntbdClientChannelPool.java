@@ -50,20 +50,20 @@ public class RntbdClientChannelPool extends FixedChannelPool {
     RntbdClientChannelPool(final Bootstrap bootstrap, final RntbdTransportClient.Config config) {
 
         super(bootstrap, new RntbdClientChannelHandler(config), ChannelHealthChecker.ACTIVE, null,
-            -1L, config.getMaxChannels(), Integer.MAX_VALUE, true
+            -1L, config.getMaxChannelsPerEndpoint(), Integer.MAX_VALUE, true
         );
+
         this.maxRequestsPerChannel = config.getMaxRequestsPerChannel();
         this.atCapacity = new ConcurrentHashMap<>();
     }
 
     /**
-     * Offer a {@link Channel} back to the internal storage. This will return {@code true} if the {@link Channel}
-     * could be added, {@code false} otherwise.
+     * Offer a {@link Channel} back to the internal storage
      * <p>
      * Maintainers: Implementations of this method needs must be thread-safe.
      *
      * @param channel the {@link Channel} to return to internal storage
-     * @return a value of {@code true}, if the {@link Channel} could be added to internal storage
+     * @return {@code true}, if the {@link Channel} could be added to internal storage; otherwise {@code false}
      */
     @Override
     protected boolean offerChannel(final Channel channel) {
