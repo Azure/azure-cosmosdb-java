@@ -87,7 +87,7 @@ public class DocumentCrudTest extends TestSuiteBase {
         validateSuccess(createObservable, validator);
     }
 
-    @Test(groups = { "simple" }, timeOut = TIMEOUT, dataProvider = "documentCrudArgProvider")
+    @Test(groups = { "simple" }, timeOut = TIMEOUT * 2, dataProvider = "documentCrudArgProvider")
     public void createLargeDocument(String documentId, boolean isNameBased) {
         Document docDefinition = getDocumentDefinition(documentId);
 
