@@ -39,6 +39,7 @@ import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdConte
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdRequestArgs;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdRequestEncoder;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdRequestManager;
+import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdRequestRecord;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdResponse;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdResponseDecoder;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdUUID;
@@ -850,14 +851,10 @@ public class RntbdTransportClientTest {
         }
 
         @Override
-        public CompletableFuture<StoreResponse> request(final RntbdRequestArgs requestArgs) {
-
-            final CompletableFuture<StoreResponse> responseFuture = new CompletableFuture<>();
-
-            this.requestManager.createPendingRequest(requestArgs, this.factory.getRequestTimer(), responseFuture);
-            this.fakeChannel.writeOutbound(requestArgs);
-
-            return responseFuture;
+        public RntbdRequestRecord request(final RntbdRequestArgs requestArgs) {
+            final RntbdRequestRecord requestRecord = new RntbdRequestRecord(requestArgs, this.factory.getRequestTimer());
+            this.fakeChannel.writeOutbound(requestRecord);
+            return requestRecord;
         }
     }
 

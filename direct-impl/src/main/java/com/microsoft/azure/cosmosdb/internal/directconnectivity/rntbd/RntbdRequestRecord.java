@@ -1,3 +1,26 @@
+/*
+ * The MIT License (MIT)
+ * Copyright (c) 2018 Microsoft Corporation
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 package com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd;
 
 import com.microsoft.azure.cosmosdb.BridgeInternal;
@@ -6,52 +29,54 @@ import com.microsoft.azure.cosmosdb.internal.directconnectivity.RequestTimeoutEx
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.StoreResponse;
 
 import java.time.Duration;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
-class RntbdRequestRecord {
+public class RntbdRequestRecord extends CompletableFuture<StoreResponse> {
 
     private final RntbdRequestArgs args;
-    private final CompletableFuture<? super StoreResponse> future;
+    private final RntbdRequestTimer timer;
 
-    RntbdRequestRecord(final RntbdRequestArgs args, final CompletableFuture<? super StoreResponse> future) {
+    public RntbdRequestRecord(final RntbdRequestArgs args, final RntbdRequestTimer timer) {
+
+        checkNotNull(args, "args");
+        checkNotNull(timer, "timer");
+
         this.args = args;
-        this.future = future;
+        this.timer = timer;
     }
 
-    RntbdRequestArgs getArgs() {
+    public UUID getActivityId() {
+        return this.args.getActivityId();
+    }
+
+    public RntbdRequestArgs getArgs() {
         return this.args;
     }
 
-    long getBirthTime() {
+    public long getBirthTime() {
         return this.args.getBirthTime();
     }
 
-    Duration getLifetime() {
+    public Duration getLifetime() {
         return this.args.getLifetime();
     }
 
-    boolean isDone() {
-        return this.future.isDone();
+    public RntbdRequestTimer getTimer() {
+        return this.timer;
     }
 
-    void cancel() {
-        this.future.cancel(true);
+    public boolean completeExceptionally(final Throwable throwable) {
+        checkArgument(throwable instanceof DocumentClientException, "throwable: %s", throwable);
+        return super.completeExceptionally(throwable);
     }
 
-    void complete(final StoreResponse response) {
-        this.future.complete(response);
-    }
-
-    void completeExceptionally(final Throwable throwable) {
-        checkArgument(throwable instanceof DocumentClientException, "throwable");
-        this.future.completeExceptionally(throwable);
-    }
-
-    void expire() {
-        final RequestTimeoutException error = new RequestTimeoutException(
-            "Request timeout interval elapsed", this.args.getPhysicalAddress());
+    public void expire() {
+        final RequestTimeoutException error = new RequestTimeoutException("Request timeout interval elapsed",
+            this.args.getPhysicalAddress());
         BridgeInternal.setRequestHeaders(error, this.args.getServiceRequest().getHeaders());
         this.completeExceptionally(error);
     }

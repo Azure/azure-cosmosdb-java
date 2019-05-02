@@ -139,27 +139,20 @@ public class RntbdServiceEndpoint implements Endpoint {
         });
     }
 
-    private CompletableFuture<StoreResponse> write(final RntbdRequestArgs requestArgs) {
+    private RntbdRequestRecord write(final RntbdRequestArgs requestArgs) {
 
-        final CompletableFuture<StoreResponse> responseFuture = new CompletableFuture<>();
+        final RntbdRequestRecord requestRecord = new RntbdRequestRecord(requestArgs, this.requestTimer);
         logger.debug("\n  {}\n  {}\n  WRITE", this, requestArgs);
 
         this.channelPool.acquire().addListener(connected -> {
 
             if (connected.isSuccess()) {
 
+                requestArgs.traceOperation(logger, null, "write");
                 final Channel channel = (Channel)connected.get();
                 this.releaseToPool(channel);
 
-                // TODO: DANOBLE: Consider moving the next three lines of code into RntbdRequestManager.write
-                //  Possibility: write a message of type RntbdRequestManager.PendingRequest
-                //  Recommendation: un-nest and publicize RntbdRequestManager.PendingRequest as RntbdRequestRecord
-
-                final RntbdRequestManager requestManager = channel.pipeline().get(RntbdRequestManager.class);
-                requestManager.createPendingRequest(requestArgs, this.requestTimer, responseFuture);
-                requestArgs.traceOperation(logger, null, "write");
-
-                channel.write(requestArgs).addListener((ChannelFuture future) -> {
+                channel.write(requestRecord).addListener((ChannelFuture future) -> {
                     requestArgs.traceOperation(logger, null, "writeComplete", channel);
                     if (!future.isSuccess()) {
                         this.metrics.incrementRequestFailureCount();
@@ -175,7 +168,7 @@ public class RntbdServiceEndpoint implements Endpoint {
             if (connected.isCancelled()) {
 
                 logger.debug("\n  {}\n  {}\n  write cancelled: {}", this, requestArgs, cause);
-                responseFuture.cancel(true);
+                requestRecord.cancel(true);
 
             } else {
 
@@ -190,10 +183,10 @@ public class RntbdServiceEndpoint implements Endpoint {
                 );
 
                 BridgeInternal.setRequestHeaders(goneException, requestArgs.getServiceRequest().getHeaders());
-                responseFuture.completeExceptionally(goneException);
+                requestRecord.completeExceptionally(goneException);
             }
         });
 
-        return responseFuture;
+        return requestRecord;
     }
 }

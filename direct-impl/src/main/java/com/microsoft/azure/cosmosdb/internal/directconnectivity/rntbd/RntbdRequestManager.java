@@ -102,49 +102,6 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
     // region Request management methods
 
-    /**
-     * Creates a {@link CompletableFuture} of a {@link StoreResponse} for the message identified by {@code activityId}
-     *
-     * @param args   specifies a request message to be sent
-     * @param timer  a timer for creating a request {@link Timeout}
-     * @param future a future to be completed when a response is received
-     */
-    public void createPendingRequest(
-        final RntbdRequestArgs args, final RntbdRequestTimer timer, final CompletableFuture<? super StoreResponse> future
-    ) {
-
-        // TODO: DANOBLE: Consider revising the implementation of RntbdRequestManager.createPendingRequest
-        //  At a minimum consider these issues:
-        //  * Does this code do the right thing during retries?
-        //  * Should we replace or renew existing pending requests?
-        //  Links:
-        //  https://msdata.visualstudio.com/CosmosDB/_workitems/edit/378801
-
-        checkNotNull(args, "args");
-        checkNotNull(timer, "timer");
-        checkNotNull(future, "future");
-
-        this.pendingRequest = this.pendingRequests.compute(args.getActivityId(), (activityId, current) -> {
-
-            checkArgument(current == null, "expected null pendingRequest, not %s", current);
-            final RntbdRequestRecord pendingRequest = new RntbdRequestRecord(args, future);
-
-            final Timeout pendingTimeout = timer.newTimeout(timeout -> {
-                if (this.pendingRequests.remove(activityId) != null) {
-                    pendingRequest.expire();
-                }
-            });
-
-            future.whenComplete((response, error) -> {
-                pendingTimeout.cancel();
-            });
-
-            return pendingRequest;
-        });
-
-        this.traceOperation(this.context, "createPendingRequest");
-    }
-
     // endregion
 
     // region ChannelHandler methods
@@ -448,9 +405,12 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
         this.traceOperation(context, "write", message);
 
-        if (message instanceof RntbdRequestArgs) {
+        if (message instanceof RntbdRequestRecord) {
 
-            context.write(message, promise).addListener(future -> {
+            final RntbdRequestRecord requestRecord = (RntbdRequestRecord)message;
+            this.createPendingRequest(requestRecord);
+
+            context.write(requestRecord.getArgs(), promise).addListener(future -> {
 
                 if (future.isSuccess()) {
                     return;
@@ -458,20 +418,19 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
                 // TODO: DANOBLE: Ensure that all write errors are reported with a root cause of type EncoderException
 
-                final RntbdRequestArgs requestArgs = (RntbdRequestArgs)message;
                 final Throwable throwable = future.cause();
                 final String reason;
 
                 if (throwable instanceof ClosedChannelException) {
-                    reason = String.format("%s request failed because channel closed unexpectedly", requestArgs);
+                    reason = String.format("%s request failed because channel closed unexpectedly", requestRecord);
                 } else if (throwable instanceof EncoderException) {
-                    reason = String.format("%s request failed due to an encoding error", requestArgs);
+                    reason = String.format("%s request failed due to an encoding error", requestRecord);
                 } else {
-                    reason = String.format("%s request failed due to an unexpected error", requestArgs);
+                    reason = String.format("%s request failed due to an unexpected error", requestRecord);
                 }
 
                 final Exception error = throwable instanceof Exception ? (Exception)throwable : new RuntimeException(throwable);
-                final GoneException cause = new GoneException(reason, error, null, requestArgs.getPhysicalAddress());
+                final GoneException cause = new GoneException(reason, error, null, requestRecord.getArgs().getPhysicalAddress());
                 this.exceptionCaught(context, cause);
             });
 
@@ -506,6 +465,33 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         }
 
         this.pendingWrites.add(out, promise);
+    }
+
+    private void createPendingRequest(final RntbdRequestRecord requestRecord) {
+
+        // TODO: DANOBLE: Consider revising the implementation of RntbdRequestManager.createPendingRequest
+        //  At a minimum consider these issues:
+        //  * Does this code do the right thing during retries?
+        //  * Should we replace or renew existing pending requests?
+        //  Links:
+        //  https://msdata.visualstudio.com/CosmosDB/_workitems/edit/378801
+
+        this.pendingRequest = this.pendingRequests.compute(requestRecord.getActivityId(), (activityId, current) -> {
+
+            checkArgument(current == null, "expected null pendingRequest, not %s", current);
+
+            final Timeout pendingTimeout = requestRecord.getTimer().newTimeout(timeout -> {
+                RntbdRequestRecord record = this.pendingRequests.remove(activityId);
+                if (record != null) {
+                    record.expire();
+                }
+            });
+
+            requestRecord.whenComplete((response, error) -> pendingTimeout.cancel());
+            return requestRecord;
+        });
+
+        this.traceOperation(this.context, "createPendingRequest");
     }
 
     private Optional<RntbdContext> getRntbdContext() {
