@@ -59,6 +59,7 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.CoalescingBufferQueue;
 import io.netty.channel.EventLoop;
+import io.netty.handler.codec.EncoderException;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.Timeout;
@@ -67,7 +68,7 @@ import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.net.SocketAddress;
-import java.time.Duration;
+import java.nio.channels.ClosedChannelException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -90,11 +91,11 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
     private final CompletableFuture<RntbdContext> contextFuture = new CompletableFuture<>();
     private final CompletableFuture<RntbdContextRequest> contextRequestFuture = new CompletableFuture<>();
-    private final ConcurrentHashMap<UUID, PendingRequest> pendingRequests = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UUID, RntbdRequestRecord> pendingRequests = new ConcurrentHashMap<>();
 
     private boolean closingExceptionally = false;
     private ChannelHandlerContext context;
-    private PendingRequest pendingRequest;
+    private RntbdRequestRecord pendingRequest;
     private CoalescingBufferQueue pendingWrites;
 
     // endregion
@@ -126,7 +127,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         this.pendingRequest = this.pendingRequests.compute(args.getActivityId(), (activityId, current) -> {
 
             checkArgument(current == null, "expected null pendingRequest, not %s", current);
-            final PendingRequest pendingRequest = new PendingRequest(args, future);
+            final RntbdRequestRecord pendingRequest = new RntbdRequestRecord(args, future);
 
             final Timeout pendingTimeout = timer.newTimeout(timeout -> {
                 if (this.pendingRequests.remove(activityId) != null) {
@@ -213,7 +214,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
             return;
         }
 
-        final String reason = String.format("Expected message of type %s, not %s", RntbdResponse.class, message.getClass());
+        final String reason = String.format("expected message of type %s, not %s", RntbdResponse.class, message.getClass());
         throw new IllegalStateException(reason);
     }
 
@@ -448,13 +449,34 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         this.traceOperation(context, "write", message);
 
         if (message instanceof RntbdRequestArgs) {
+
             context.write(message, promise).addListener(future -> {
-                if (!future.isSuccess()) {
-                    this.exceptionCaught(context, future.cause());
+
+                if (future.isSuccess()) {
+                    return;
                 }
+
+                // TODO: DANOBLE: Ensure that all write errors are reported with a root cause of type EncoderException
+
+                final RntbdRequestArgs requestArgs = (RntbdRequestArgs)message;
+                final Throwable throwable = future.cause();
+                final String reason;
+
+                if (throwable instanceof ClosedChannelException) {
+                    reason = String.format("%s request failed because channel closed unexpectedly", requestArgs);
+                } else if (throwable instanceof EncoderException) {
+                    reason = String.format("%s request failed due to an encoding error", requestArgs);
+                } else {
+                    reason = String.format("%s request failed due to an unexpected error", requestArgs);
+                }
+
+                final Exception error = throwable instanceof Exception ? (Exception)throwable : new RuntimeException(throwable);
+                final GoneException cause = new GoneException(reason, error, null, requestArgs.getPhysicalAddress());
+                this.exceptionCaught(context, cause);
             });
+
         } else {
-            final String reason = String.format("Expected message of type %s, not %s", RntbdRequestArgs.class, message.getClass());
+            final String reason = String.format("expected message of type %s, not %s", RntbdRequestArgs.class, message.getClass());
             this.exceptionCaught(context, new IllegalStateException(reason));
         }
     }
@@ -490,7 +512,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         return Optional.of(this.contextFuture.getNow(null));
     }
 
-    private PendingRequest checkPendingRequest(final UUID activityId, final PendingRequest pendingRequest) {
+    private RntbdRequestRecord checkPendingRequest(final UUID activityId, final RntbdRequestRecord pendingRequest) {
 
         checkNotNull(pendingRequest, "Pending request not found: %s", activityId);
         checkArgument(!pendingRequest.isDone(), "Request is complete, not pending: %s", activityId);
@@ -569,7 +591,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
                 reason = throwable instanceof Exception ? (Exception)throwable : new ChannelException(throwable);
             }
 
-            for (final PendingRequest request : this.pendingRequests.values()) {
+            for (final RntbdRequestRecord request : this.pendingRequests.values()) {
 
                 final RntbdRequestArgs args = request.getArgs();
                 final String requestUri = origin + args.getReplicaPath();
@@ -604,7 +626,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         }
     }
 
-    private PendingRequest getPendingRequest(final RntbdRequestArgs args) {
+    private RntbdRequestRecord getPendingRequest(final RntbdRequestArgs args) {
         final UUID activityId = args.getActivityId();
         return this.checkPendingRequest(activityId, this.pendingRequests.get(activityId));
     }
@@ -618,7 +640,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
     private void messageReceived(final ChannelHandlerContext context, final RntbdResponse response) {
 
         final UUID activityId = response.getActivityId();
-        final PendingRequest pendingRequest = this.pendingRequests.remove(activityId);
+        final RntbdRequestRecord pendingRequest = this.pendingRequests.remove(activityId);
 
         if (pendingRequest == null) {
             logger.warn("[activityId: {}] no request pending", activityId);
@@ -795,58 +817,6 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         //  https://msdata.visualstudio.com/CosmosDB/_workitems/edit/388987
 
         private ClosedWithPendingRequestsException() {
-        }
-    }
-
-    private static class PendingRequest {
-
-        private final RntbdRequestArgs args;
-        private final CompletableFuture<? super StoreResponse> future;
-
-        PendingRequest(final RntbdRequestArgs args, final CompletableFuture<? super StoreResponse> future) {
-            this.args = args;
-            this.future = future;
-        }
-
-        RntbdRequestArgs getArgs() {
-            return this.args;
-        }
-
-        long getBirthTime() {
-            return this.args.getBirthTime();
-        }
-
-        Duration getLifetime() {
-            return this.args.getLifetime();
-        }
-
-        boolean isDone() {
-            return this.future.isDone();
-        }
-
-        void cancel() {
-            this.future.cancel(true);
-        }
-
-        void complete(final StoreResponse response) {
-            this.future.complete(response);
-        }
-
-        void completeExceptionally(final Throwable throwable) {
-            checkArgument(throwable instanceof DocumentClientException, "throwable");
-            this.future.completeExceptionally(throwable);
-        }
-
-        void expire() {
-            final RequestTimeoutException error = new RequestTimeoutException(
-                "Request timeout interval elapsed", this.args.getPhysicalAddress());
-            BridgeInternal.setRequestHeaders(error, this.args.getServiceRequest().getHeaders());
-            this.completeExceptionally(error);
-        }
-
-        @Override
-        public String toString() {
-            return this.args.toString();
         }
     }
 

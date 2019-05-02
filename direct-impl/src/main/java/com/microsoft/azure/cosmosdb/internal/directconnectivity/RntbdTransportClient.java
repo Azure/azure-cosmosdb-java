@@ -290,10 +290,7 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
             final String authority = physicalAddress.getAuthority();
             final Endpoint endpoint = this.endpoints.remove(authority);
 
-            if (endpoint == null) {
-                throw new IllegalArgumentException(String.format("physicalAddress: %s", physicalAddress));
-            }
-
+            checkNotNull(endpoint, "physicalAddress: %s", physicalAddress);
             endpoint.close();
         }
 

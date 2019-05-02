@@ -151,23 +151,19 @@ public class RntbdServiceEndpoint implements Endpoint {
                 final Channel channel = (Channel)connected.get();
                 this.releaseToPool(channel);
 
-                if (!channel.isOpen()) {
-                    String message = String.format("%s request failed because channel closed unexpectedly", requestArgs);
-                    GoneException error = new GoneException(message, null, null, requestArgs.getPhysicalAddress());
-                    this.metrics.incrementRequestFailureCount();
-                    responseFuture.completeExceptionally(error);
-                    return;
-                }
+                // TODO: DANOBLE: Consider moving the next three lines of code into RntbdRequestManager.write
+                //  Possibility: write a message of type RntbdRequestManager.PendingRequest
+                //  Recommendation: un-nest and publicize RntbdRequestManager.PendingRequest as RntbdRequestRecord
 
                 final RntbdRequestManager requestManager = channel.pipeline().get(RntbdRequestManager.class);
                 requestManager.createPendingRequest(requestArgs, this.requestTimer, responseFuture);
                 requestArgs.traceOperation(logger, null, "write");
 
                 channel.write(requestArgs).addListener((ChannelFuture future) -> {
+                    requestArgs.traceOperation(logger, null, "writeComplete", channel);
                     if (!future.isSuccess()) {
                         this.metrics.incrementRequestFailureCount();
                     }
-                    requestArgs.traceOperation(logger, null, "writeComplete", channel);
                 });
 
                 return;
