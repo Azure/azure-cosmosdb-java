@@ -64,7 +64,6 @@ public class PartitionKeyHashingTests {
             put(Double.MAX_VALUE, "31424D996457102634591FF245DBCC4D");
         }};
 
-        
         for (Map.Entry<Object, String> entry : keyToEffectivePartitionKeyString.entrySet()) {
             PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition();
             partitionKeyDef.setKind(PartitionKind.Hash);
