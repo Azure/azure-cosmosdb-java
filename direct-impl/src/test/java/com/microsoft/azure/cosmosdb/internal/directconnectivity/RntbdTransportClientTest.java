@@ -598,9 +598,8 @@ public class RntbdTransportClientTest {
 
         final RntbdTransportClient.Options options = new RntbdTransportClient.Options(requestTimeout);
         final SslContext sslContext = SslContextBuilder.forClient().build();
-        final UserAgentContainer userAgent = new UserAgentContainer();
 
-        try (final RntbdTransportClient transportClient = new RntbdTransportClient(options, sslContext, userAgent)) {
+        try (final RntbdTransportClient transportClient = new RntbdTransportClient(options, sslContext)) {
 
             final BaseAuthorizationTokenProvider authorizationTokenProvider = new BaseAuthorizationTokenProvider(
                 RntbdTestConfiguration.AccountKey
@@ -729,7 +728,7 @@ public class RntbdTransportClientTest {
         }
 
         final RntbdTransportClient.EndpointFactory endpointFactory = spy(new RntbdTransportClient.EndpointFactory(
-            options, sslContext, userAgent
+            options, sslContext
         ));
 
         final RntbdTransportClient client = new RntbdTransportClient(endpointFactory);
