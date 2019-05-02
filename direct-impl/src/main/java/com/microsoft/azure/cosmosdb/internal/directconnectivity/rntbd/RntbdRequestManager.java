@@ -471,27 +471,28 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
         // TODO: DANOBLE: Consider revising the implementation of RntbdRequestManager.createPendingRequest
         //  At a minimum consider these issues:
-        //  * Does this code do the right thing during retries?
-        //  * Should we replace or renew existing pending requests?
+        //  * Do we have a requirement to support multiple concurrent operations for a single activityId?
+        //  * Should we replace, renew, or maintain a list of pending requests for each activityId?
+        //  We currently fail when we find an existing request record.
         //  Links:
         //  https://msdata.visualstudio.com/CosmosDB/_workitems/edit/378801
 
         this.pendingRequest = this.pendingRequests.compute(requestRecord.getActivityId(), (activityId, current) -> {
 
-            checkArgument(current == null, "expected null pendingRequest, not %s", current);
+            checkArgument(current == null, "current: expected no request record, not %s", current);
 
-            final Timeout pendingTimeout = requestRecord.getTimer().newTimeout(timeout -> {
-                RntbdRequestRecord record = this.pendingRequests.remove(activityId);
-                if (record != null) {
-                    record.expire();
-                }
+            final Timeout pendingRequestTimeout = requestRecord.newTimeout(timeout -> {
+                this.pendingRequests.remove(activityId);
+                requestRecord.expire();
             });
 
-            requestRecord.whenComplete((response, error) -> pendingTimeout.cancel());
+            requestRecord.whenComplete((response, error) -> {
+                this.pendingRequests.remove(activityId);
+                pendingRequestTimeout.cancel();
+            });
+
             return requestRecord;
         });
-
-        this.traceOperation(this.context, "createPendingRequest");
     }
 
     private Optional<RntbdContext> getRntbdContext() {
@@ -626,7 +627,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
     private void messageReceived(final ChannelHandlerContext context, final RntbdResponse response) {
 
         final UUID activityId = response.getActivityId();
-        final RntbdRequestRecord pendingRequest = this.pendingRequests.remove(activityId);
+        final RntbdRequestRecord pendingRequest = this.pendingRequests.get(activityId);
 
         if (pendingRequest == null) {
             logger.warn("[activityId: {}] no request pending", activityId);

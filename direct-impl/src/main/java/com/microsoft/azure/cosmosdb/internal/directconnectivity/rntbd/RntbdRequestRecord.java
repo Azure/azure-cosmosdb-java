@@ -27,6 +27,8 @@ import com.microsoft.azure.cosmosdb.BridgeInternal;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.RequestTimeoutException;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.StoreResponse;
+import io.netty.util.Timeout;
+import io.netty.util.TimerTask;
 
 import java.time.Duration;
 import java.util.UUID;
@@ -65,10 +67,6 @@ public class RntbdRequestRecord extends CompletableFuture<StoreResponse> {
         return this.args.getLifetime();
     }
 
-    public RntbdRequestTimer getTimer() {
-        return this.timer;
-    }
-
     public boolean completeExceptionally(final Throwable throwable) {
         checkArgument(throwable instanceof DocumentClientException, "throwable: %s", throwable);
         return super.completeExceptionally(throwable);
@@ -79,6 +77,10 @@ public class RntbdRequestRecord extends CompletableFuture<StoreResponse> {
             this.args.getPhysicalAddress());
         BridgeInternal.setRequestHeaders(error, this.args.getServiceRequest().getHeaders());
         this.completeExceptionally(error);
+    }
+
+    public Timeout newTimeout(final TimerTask task) {
+        return this.timer.newTimeout(task);
     }
 
     @Override
