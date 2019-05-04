@@ -24,6 +24,7 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -34,13 +35,14 @@ import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.handler.codec.CorruptedFrameException;
+import io.netty.handler.codec.EncoderException;
 
 import java.io.IOException;
 import java.io.InputStream;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-final class RntbdObjectMapper {
+public final class RntbdObjectMapper {
 
     private static final SimpleFilterProvider filterProvider;
     private static final ObjectMapper objectMapper;
@@ -90,7 +92,15 @@ final class RntbdObjectMapper {
         }
     }
 
-    static ObjectWriter writer() {
+    public static String toJson(Object value) {
+        try {
+            return objectWriter.writeValueAsString(value);
+        } catch (final JsonProcessingException error) {
+            throw new EncoderException(error);
+        }
+    }
+
+    public static ObjectWriter writer() {
         return objectWriter;
     }
 }

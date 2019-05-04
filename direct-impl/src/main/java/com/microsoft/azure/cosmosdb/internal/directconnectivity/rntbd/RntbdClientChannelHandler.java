@@ -24,7 +24,6 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd;
 
-import com.microsoft.azure.cosmosdb.internal.directconnectivity.RntbdTransportClient;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
@@ -46,9 +45,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class RntbdClientChannelHandler extends ChannelInitializer<Channel> implements ChannelPoolHandler {
 
     private static Logger logger = LoggerFactory.getLogger(RntbdClientChannelHandler.class);
-    private final RntbdTransportClient.Config config;
+    private final RntbdEndpoint.Config config;
 
-    RntbdClientChannelHandler(final RntbdTransportClient.Config config) {
+    RntbdClientChannelHandler(final RntbdEndpoint.Config config) {
         checkNotNull(config, "config");
         this.config = config;
     }

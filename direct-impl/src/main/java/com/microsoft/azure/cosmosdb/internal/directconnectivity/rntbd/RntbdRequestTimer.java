@@ -29,23 +29,22 @@ import io.netty.util.Timeout;
 import io.netty.util.Timer;
 import io.netty.util.TimerTask;
 
-import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 public final class RntbdRequestTimer implements AutoCloseable {
 
     private static final long FIVE_MILLISECONDS = 5000000L;
-    private final long requestTimeoutInterval;
+    private final long requestTimeout;
     private final Timer timer;
 
-    public RntbdRequestTimer(final Duration requestTimeoutInterval) {
+    public RntbdRequestTimer(final long requestTimeout) {
 
         // Inspection of the HashWheelTimer code indicates that our choice of a 5 millisecond timer resolution ensures
-        // a request will timeout within 10 milliseconds of the specified requestTimeoutInterval. This is because
+        // a request will timeout within 10 milliseconds of the specified requestTimeout interval. This is because
         // cancellation of a timeout takes two timer resolution units to complete.
 
         this.timer = new HashedWheelTimer(FIVE_MILLISECONDS, TimeUnit.NANOSECONDS);
-        this.requestTimeoutInterval = requestTimeoutInterval.toNanos();
+        this.requestTimeout = requestTimeout;
     }
 
     /**
@@ -57,6 +56,6 @@ public final class RntbdRequestTimer implements AutoCloseable {
     }
 
     Timeout newTimeout(final TimerTask task) {
-        return this.timer.newTimeout(task, this.requestTimeoutInterval, TimeUnit.NANOSECONDS);
+        return this.timer.newTimeout(task, this.requestTimeout, TimeUnit.NANOSECONDS);
     }
 }

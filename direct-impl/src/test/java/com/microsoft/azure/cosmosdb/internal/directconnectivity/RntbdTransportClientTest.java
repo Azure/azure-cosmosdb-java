@@ -36,10 +36,12 @@ import com.microsoft.azure.cosmosdb.internal.Utils;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdContext;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdContextNegotiator;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdContextRequest;
+import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdEndpoint;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdRequestArgs;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdRequestEncoder;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdRequestManager;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdRequestRecord;
+import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdRequestTimer;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdResponse;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdResponseDecoder;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdUUID;
@@ -55,13 +57,11 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.embedded.EmbeddedChannel;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.logging.LogLevel;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
-import io.netty.util.concurrent.DefaultEventExecutor;
-import io.netty.util.concurrent.Future;
 import org.apache.commons.lang3.StringUtils;
 import org.assertj.core.api.Assertions;
-import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.DataProvider;
@@ -76,15 +76,12 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.HttpHeaders;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.HttpMethods;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.SubStatusCodes;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
@@ -596,7 +593,7 @@ public class RntbdTransportClientTest {
     @Test(enabled = false, groups = "direct")
     public void verifyGoneResponseMapsToGoneException() throws Exception {
 
-        final RntbdTransportClient.Options options = new RntbdTransportClient.Options(requestTimeout);
+        final RntbdTransportClient.Options options = new RntbdTransportClient.Options.Builder(requestTimeout).build();
         final SslContext sslContext = SslContextBuilder.forClient().build();
 
         try (final RntbdTransportClient transportClient = new RntbdTransportClient(options, sslContext)) {
@@ -718,7 +715,10 @@ public class RntbdTransportClientTest {
         final RntbdResponse expected
     ) {
 
-        final RntbdTransportClient.Options options = new RntbdTransportClient.Options(requestTimeout);
+        final RntbdTransportClient.Options options = new RntbdTransportClient.Options.Builder(requestTimeout)
+            .userAgent(userAgent)
+            .build();
+
         final SslContext sslContext;
 
         try {
@@ -727,21 +727,7 @@ public class RntbdTransportClientTest {
             throw new AssertionError(String.format("%s: %s", error.getClass(), error.getMessage()));
         }
 
-        final RntbdTransportClient.EndpointFactory endpointFactory = spy(new RntbdTransportClient.EndpointFactory(
-            options, sslContext
-        ));
-
-        final RntbdTransportClient client = new RntbdTransportClient(endpointFactory);
-
-        doAnswer(invocation -> {
-
-            RntbdTransportClient.EndpointFactory factory = (RntbdTransportClient.EndpointFactory) invocation.getMock();
-            URI physicalAddress = invocation.getArgumentAt(0, URI.class);
-            return new FakeEndpoint(factory, physicalAddress, expected);
-
-        }).when(endpointFactory).createEndpoint(any());
-
-        return client;
+        return new RntbdTransportClient(new FakeEndpoint.Provider(options, sslContext, expected));
     }
 
     private void validateFailure(final Single<? extends StoreResponse> single, final FailureValidator validator) {
@@ -814,16 +800,14 @@ public class RntbdTransportClientTest {
         }
     }
 
-    private static final class FakeEndpoint implements RntbdTransportClient.Endpoint {
+    private static final class FakeEndpoint implements RntbdEndpoint {
 
-        final RntbdTransportClient.EndpointFactory factory;
+        final RntbdRequestTimer requestTimer;
         final FakeChannel fakeChannel;
         final URI physicalAddress;
-        final RntbdRequestManager requestManager;
 
-        FakeEndpoint(
-            final RntbdTransportClient.EndpointFactory factory,
-            final URI physicalAddress,
+        private FakeEndpoint(
+            final Config config, final RntbdRequestTimer timer, final URI physicalAddress,
             final RntbdResponse... expected
         ) {
 
@@ -831,17 +815,16 @@ public class RntbdTransportClientTest {
                 expected.length, true, Arrays.asList(expected)
             );
 
-            this.requestManager = new RntbdRequestManager();
+            RntbdRequestManager requestManager = new RntbdRequestManager();
             this.physicalAddress = physicalAddress;
+            this.requestTimer = timer;
 
             this.fakeChannel = new FakeChannel(responses,
-                new RntbdContextNegotiator(this.requestManager, factory.getPipelineConfig().getUserAgent()),
+                new RntbdContextNegotiator(requestManager, config.getUserAgent()),
                 new RntbdRequestEncoder(),
                 new RntbdResponseDecoder(),
-                this.requestManager
+                requestManager
             );
-
-            this.factory = factory;
         }
 
         @Override
@@ -851,9 +834,42 @@ public class RntbdTransportClientTest {
 
         @Override
         public RntbdRequestRecord request(final RntbdRequestArgs requestArgs) {
-            final RntbdRequestRecord requestRecord = new RntbdRequestRecord(requestArgs, this.factory.getRequestTimer());
+            final RntbdRequestRecord requestRecord = new RntbdRequestRecord(requestArgs, this.requestTimer);
             this.fakeChannel.writeOutbound(requestRecord);
             return requestRecord;
+        }
+
+        static class Provider implements RntbdEndpoint.Provider {
+
+            final Config config;
+            final RntbdResponse expected;
+            final RntbdRequestTimer timer;
+
+            Provider(RntbdTransportClient.Options options, SslContext sslContext, RntbdResponse expected) {
+                this.config = new Config(options, sslContext, LogLevel.WARN);
+                this.timer = new RntbdRequestTimer(config.getRequestTimeout());
+                this.expected = expected;
+            }
+
+            @Override
+            public void close() {
+                this.timer.close();
+            }
+
+            @Override
+            public int count() {
+                return 1;
+            }
+
+            @Override
+            public RntbdEndpoint get(URI physicalAddress) {
+                return new FakeEndpoint(config, timer, physicalAddress, expected);
+            }
+
+            @Override
+            public Stream<RntbdEndpoint> list() {
+                return Stream.empty();
+            }
         }
     }
 

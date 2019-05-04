@@ -24,7 +24,6 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd;
 
-import com.microsoft.azure.cosmosdb.internal.directconnectivity.RntbdTransportClient;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelId;
@@ -45,9 +44,9 @@ public class RntbdClientChannelPool extends FixedChannelPool {
      * Creates a new instance using the {@link ChannelHealthChecker#ACTIVE}
      *
      * @param bootstrap the {@link Bootstrap} that is used for connections
-     * @param config    the {@link RntbdTransportClient.Config} that is used for the channel pool instance created
+     * @param config    the {@link RntbdEndpoint.Config} that is used for the channel pool instance created
      */
-    RntbdClientChannelPool(final Bootstrap bootstrap, final RntbdTransportClient.Config config) {
+    RntbdClientChannelPool(final Bootstrap bootstrap, final RntbdEndpoint.Config config) {
 
         super(bootstrap, new RntbdClientChannelHandler(config), ChannelHealthChecker.ACTIVE, null,
             -1L, config.getMaxChannelsPerEndpoint(), Integer.MAX_VALUE, true
@@ -104,4 +103,5 @@ public class RntbdClientChannelPool extends FixedChannelPool {
     private static int pendingRequestCount(final Channel channel) {
         return channel.pipeline().get(RntbdRequestManager.class).getPendingRequestCount();
     }
+
 }
