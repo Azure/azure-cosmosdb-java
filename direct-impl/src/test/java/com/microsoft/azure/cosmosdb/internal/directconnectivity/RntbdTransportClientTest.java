@@ -85,7 +85,7 @@ import static com.microsoft.azure.cosmosdb.internal.HttpConstants.SubStatusCodes
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
-public class RntbdTransportClientTest {
+public final class RntbdTransportClientTest {
 
     private static final Logger logger = LoggerFactory.getLogger(RntbdTransportClientTest.class);
     private static final int lsn = 5;

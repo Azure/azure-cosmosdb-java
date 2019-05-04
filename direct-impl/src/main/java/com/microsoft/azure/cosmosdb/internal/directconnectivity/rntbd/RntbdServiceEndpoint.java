@@ -55,7 +55,7 @@ import java.util.stream.Stream;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.microsoft.azure.cosmosdb.internal.directconnectivity.RntbdTransportClient.Metrics;
 
-public class RntbdServiceEndpoint implements RntbdEndpoint {
+public final class RntbdServiceEndpoint implements RntbdEndpoint {
 
     private static final String className = RntbdServiceEndpoint.class.getCanonicalName();
     private static final AtomicLong instanceCount = new AtomicLong();
