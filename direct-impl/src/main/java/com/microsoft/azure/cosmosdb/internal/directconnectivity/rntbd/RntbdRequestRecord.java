@@ -33,6 +33,7 @@ import io.netty.util.TimerTask;
 import java.time.Duration;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -73,8 +74,9 @@ public class RntbdRequestRecord extends CompletableFuture<StoreResponse> {
     }
 
     public void expire() {
-        final RequestTimeoutException error = new RequestTimeoutException("Request timeout interval elapsed",
-            this.args.getPhysicalAddress());
+        final String message = String.format("Request timeout interval (%,d ms) elapsed", this.timer.getRequestTimeout(
+            TimeUnit.MILLISECONDS));
+        final RequestTimeoutException error = new RequestTimeoutException(message, this.args.getPhysicalAddress());
         BridgeInternal.setRequestHeaders(error, this.args.getServiceRequest().getHeaders());
         this.completeExceptionally(error);
     }

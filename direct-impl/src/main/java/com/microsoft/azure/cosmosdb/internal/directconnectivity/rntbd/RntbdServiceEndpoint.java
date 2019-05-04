@@ -93,7 +93,7 @@ public class RntbdServiceEndpoint implements RntbdEndpoint {
     // region Methods
 
     @Override
-    public void close() {
+    public void close() throws RuntimeException {
         this.channelPool.close();
     }
 
@@ -240,7 +240,7 @@ public class RntbdServiceEndpoint implements RntbdEndpoint {
         }
 
         @Override
-        public void close() {
+        public void close() throws RuntimeException {
 
             if (this.closed.compareAndSet(false, true)) {
 

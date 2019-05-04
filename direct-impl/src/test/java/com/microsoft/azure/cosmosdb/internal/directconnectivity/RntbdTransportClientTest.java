@@ -852,7 +852,7 @@ public class RntbdTransportClientTest {
             }
 
             @Override
-            public void close() {
+            public void close() throws RuntimeException {
                 this.timer.close();
             }
 

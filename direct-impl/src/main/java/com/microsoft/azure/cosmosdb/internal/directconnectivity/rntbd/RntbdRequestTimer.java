@@ -47,15 +47,16 @@ public final class RntbdRequestTimer implements AutoCloseable {
         this.requestTimeout = requestTimeout;
     }
 
-    /**
-     * Closes this resource by stopping its underlying @{link Timer}
-     */
+    public long getRequestTimeout(TimeUnit unit) {
+        return unit.convert(requestTimeout, TimeUnit.NANOSECONDS);
+    }
+
     @Override
-    public void close() {
+    public void close() throws RuntimeException {
         this.timer.stop();
     }
 
-    Timeout newTimeout(final TimerTask task) {
+    public Timeout newTimeout(final TimerTask task) {
         return this.timer.newTimeout(task, this.requestTimeout, TimeUnit.NANOSECONDS);
     }
 }
