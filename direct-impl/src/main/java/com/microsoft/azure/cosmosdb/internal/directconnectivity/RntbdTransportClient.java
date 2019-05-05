@@ -24,10 +24,14 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
-import com.google.common.base.Stopwatch;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.internal.UserAgentContainer;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdEndpoint;
+import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdMetrics;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdObjectMapper;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdRequestArgs;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdServiceEndpoint;
@@ -39,6 +43,7 @@ import org.slf4j.LoggerFactory;
 import rx.Single;
 import rx.SingleEmitter;
 
+import java.io.IOException;
 import java.net.URI;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
@@ -48,17 +53,18 @@ import java.util.concurrent.atomic.AtomicLong;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+@JsonSerialize(using = RntbdTransportClient.JsonSerializer.class)
 public final class RntbdTransportClient extends TransportClient implements AutoCloseable {
 
     // region Fields
 
-    private static final String className = RntbdTransportClient.class.getCanonicalName();
     private static final AtomicLong instanceCount = new AtomicLong();
-    private static final Logger logger = LoggerFactory.getLogger(className);
+    private static final Logger logger = LoggerFactory.getLogger(RntbdTransportClient.class);
+    private static final String namePrefix = RntbdTransportClient.class.getSimpleName() + '-';
 
     private final AtomicBoolean closed = new AtomicBoolean();
     private final RntbdEndpoint.Provider endpointProvider;
-    private final Metrics metrics;
+    private final RntbdMetrics metrics;
     private final String name;
 
     // endregion
@@ -66,9 +72,9 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
     // region Constructors
 
     RntbdTransportClient(final RntbdEndpoint.Provider endpointProvider) {
-        this.name = RntbdTransportClient.className + '-' + RntbdTransportClient.instanceCount.incrementAndGet();
+        this.name = RntbdTransportClient.namePrefix + RntbdTransportClient.instanceCount.incrementAndGet();
         this.endpointProvider = endpointProvider;
-        this.metrics = new Metrics();
+        this.metrics = new RntbdMetrics();
     }
 
     RntbdTransportClient(final Options options, final SslContext sslContext) {
@@ -85,11 +91,15 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
 
     @Override
     public void close() throws RuntimeException {
+
+        logger.debug("\n  [{}] CLOSE", this);
+
         if (this.closed.compareAndSet(false, true)) {
             this.endpointProvider.close();
             return;
         }
-        logger.debug("{} already closed", this);
+
+        logger.debug("\n  [{}]\n  already closed", this);
     }
 
     @Override
@@ -104,7 +114,7 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
 
         if (logger.isDebugEnabled()) {
             requestArgs.traceOperation(logger, null, "invokeStoreAsync");
-            logger.debug("\n  {}\n  {}\n  INVOKE_STORE_ASYNC", this, requestArgs);
+            logger.debug("\n  [{}]\n  {}\n  INVOKE_STORE_ASYNC", this, requestArgs);
         }
 
         final RntbdEndpoint endpoint = this.endpointProvider.get(physicalAddress);
@@ -124,7 +134,7 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
                     emitter.onSuccess(response);
                 } else {
                     assert error instanceof DocumentClientException && response == null;
-                    this.metrics.incrementRequestFailureCount();
+                    this.metrics.incrementErrorResponseCount();
                     emitter.onError(error);
                 }
 
@@ -135,7 +145,7 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
 
     @Override
     public String toString() {
-        return '[' + this.name + "(endpointCount: " + this.endpointProvider.count() + ", " + this.metrics + ")]";
+        return RntbdObjectMapper.toJson(this);
     }
 
     private void throwIfClosed() {
@@ -148,69 +158,36 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
 
     // region Types
 
-    public static final class Metrics {
+    public static final class JsonSerializer extends StdSerializer<RntbdTransportClient> {
 
-        // region Fields
-
-        private final AtomicLong errorResponseCount = new AtomicLong();
-        private final Stopwatch lifetime = Stopwatch.createStarted();
-        private final AtomicLong requestCount = new AtomicLong();
-        private final AtomicLong responseCount = new AtomicLong();
-
-        // endregion
-
-        // region Accessors
-
-        public double getFailureRate() {
-            return this.errorResponseCount.get() / this.requestCount.get();
+        public JsonSerializer() {
+            this(null);
         }
 
-        public Stopwatch getLifetime() {
-            return this.lifetime;
-        }
-
-        public long getPendingRequestCount() {
-            return this.requestCount.get() - this.responseCount.get();
-        }
-
-        public long getRequestCount() {
-            return this.requestCount.get();
-        }
-
-        public long getResponseCount() {
-            return this.responseCount.get();
-        }
-
-        public double getSuccessRate() {
-            return (this.responseCount.get() - this.errorResponseCount.get()) / this.requestCount.get();
-        }
-
-        public double getThroughput() {
-            return this.responseCount.get() / (1E-9 * this.lifetime.elapsed().toNanos());
-        }
-
-        // endregion
-
-        // region Methods
-
-        public final void incrementRequestCount() {
-            this.requestCount.incrementAndGet();
-        }
-
-        public final void incrementRequestFailureCount() {
-            this.errorResponseCount.incrementAndGet();
-        }
-
-        public final void incrementResponseCount() {
-            this.responseCount.incrementAndGet();
+        public JsonSerializer(Class<RntbdTransportClient> type) {
+            super(type);
         }
 
         @Override
-        public String toString() {
-            return RntbdObjectMapper.toJson(this);
-        }
+        public void serialize(RntbdTransportClient value, JsonGenerator generator, SerializerProvider provider) throws IOException {
 
-        // endregion
+            generator.writeStartObject();
+
+            generator.writeArrayFieldStart(value.name);
+
+            value.endpointProvider.list().forEach(endpoint -> {
+                try {
+                    generator.writeObject(endpoint);
+                } catch (IOException error) {
+                    logger.error("failed to serialize {} due to ", endpoint.getName(), error);
+                }
+            });
+
+            generator.writeEndArray();
+
+            generator.writeObjectField("metrics", value.metrics);
+            generator.writeEndObject();
+        }
     }
 
     public static final class Options {

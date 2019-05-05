@@ -24,6 +24,10 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import com.google.common.collect.ImmutableMap;
 import com.microsoft.azure.cosmosdb.BridgeInternal;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
@@ -53,16 +57,16 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.microsoft.azure.cosmosdb.internal.directconnectivity.RntbdTransportClient.Metrics;
 
+@JsonSerialize(using = RntbdServiceEndpoint.JsonSerializer.class)
 public final class RntbdServiceEndpoint implements RntbdEndpoint {
 
-    private static final String className = RntbdServiceEndpoint.class.getCanonicalName();
     private static final AtomicLong instanceCount = new AtomicLong();
-    private static final Logger logger = LoggerFactory.getLogger(RntbdServiceEndpoint.className);
+    private static final Logger logger = LoggerFactory.getLogger(RntbdServiceEndpoint.class);
+    private static final String namePrefix = RntbdServiceEndpoint.class.getSimpleName() + '-';
 
     private final RntbdClientChannelPool channelPool;
-    private final Metrics metrics;
+    private final RntbdMetrics metrics;
     private final String name;
     private final SocketAddress remoteAddress;
     private final RntbdRequestTimer requestTimer;
@@ -81,11 +85,20 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
             .option(ChannelOption.SO_KEEPALIVE, true)
             .remoteAddress(physicalAddress.getHost(), physicalAddress.getPort());
 
-        this.name = RntbdServiceEndpoint.className + '-' + instanceCount.incrementAndGet();
+        this.name = RntbdServiceEndpoint.namePrefix + instanceCount.incrementAndGet();
         this.channelPool = new RntbdClientChannelPool(bootstrap, config);
         this.remoteAddress = bootstrap.config().remoteAddress();
-        this.metrics = new Metrics();
+        this.metrics = new RntbdMetrics();
         this.requestTimer = timer;
+    }
+
+    // endregion
+
+    // region Accessors
+
+    @Override
+    public String getName() {
+        return this.name;
     }
 
     // endregion
@@ -110,19 +123,18 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
         return requestRecord.whenComplete((response, error) -> {
 
             args.traceOperation(logger, null, "requestComplete", response, error);
-            assert (response == null && error != null) || (response != null && error == null);
             this.metrics.incrementResponseCount();
 
             if (error != null) {
-                this.metrics.incrementRequestFailureCount();
+                this.metrics.incrementErrorResponseCount();
             }
 
             if (logger.isDebugEnabled()) {
                 if (error == null) {
                     final int status = response.getStatus();
-                    logger.debug("\n  {}\n  {}\n  request succeeded with response status: {}", this, args, status);
+                    logger.debug("\n  [{}]\n  {}\n  request succeeded with response status: {}", this, args, status);
                 } else {
-                    logger.debug("\n  {}\n  {}\n  request failed due to {}", this, args, error);
+                    logger.debug("\n  [{}]\n  {}\n  request failed due to {}", this, args, error);
                 }
             }
         });
@@ -130,7 +142,7 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
 
     @Override
     public String toString() {
-        return '[' + this.name + "(remoteAddress: " + this.remoteAddress + ", " + this.metrics + ")]";
+        return RntbdObjectMapper.toJson(this);
     }
 
     // endregion
@@ -139,14 +151,14 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
 
     private void releaseToPool(final Channel channel) {
 
-        logger.debug("\n  {}\n  {}\n  RELEASE", this, channel);
+        logger.debug("\n  [{}]\n  {}\n  RELEASE", this, channel);
 
         this.channelPool.release(channel).addListener(future -> {
             if (logger.isDebugEnabled()) {
                 if (future.isSuccess()) {
-                    logger.debug("\n  {}\n  {}\n  release succeeded", this, channel);
+                    logger.debug("\n  [{}]\n  {}\n  release succeeded", this, channel);
                 } else {
-                    logger.debug("\n  {}\n  {}\n  release failed due to {}", this, channel, future.cause());
+                    logger.debug("\n  [{}]\n  {}\n  release failed due to {}", this, channel, future.cause());
                 }
             }
         });
@@ -155,7 +167,7 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
     private RntbdRequestRecord write(final RntbdRequestArgs requestArgs) {
 
         final RntbdRequestRecord requestRecord = new RntbdRequestRecord(requestArgs, this.requestTimer);
-        logger.debug("\n  {}\n  {}\n  WRITE", this, requestArgs);
+        logger.debug("\n  [{}]\n  {}\n  WRITE", this, requestArgs);
 
         this.channelPool.acquire().addListener(connected -> {
 
@@ -168,7 +180,7 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
                 channel.write(requestRecord).addListener((ChannelFuture future) -> {
                     requestArgs.traceOperation(logger, null, "writeComplete", channel);
                     if (!future.isSuccess()) {
-                        this.metrics.incrementRequestFailureCount();
+                        this.metrics.incrementErrorResponseCount();
                     }
                 });
 
@@ -180,12 +192,12 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
 
             if (connected.isCancelled()) {
 
-                logger.debug("\n  {}\n  {}\n  write cancelled: {}", this, requestArgs, cause);
+                logger.debug("\n  [{}]\n  {}\n  write cancelled: {}", this, requestArgs, cause);
                 requestRecord.cancel(true);
 
             } else {
 
-                logger.debug("\n  {}\n  {}\n  write failed due to {} ", this, requestArgs, cause);
+                logger.debug("\n  [{}]\n  {}\n  write failed due to {} ", this, requestArgs, cause);
                 final String reason = cause.getMessage();
 
                 final GoneException goneException = new GoneException(
@@ -207,7 +219,28 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
 
     // region Types
 
-    public static class Provider implements RntbdEndpoint.Provider {
+    public static final class JsonSerializer extends StdSerializer<RntbdServiceEndpoint> {
+
+        public JsonSerializer() {
+            this(null);
+        }
+
+        public JsonSerializer(Class<RntbdServiceEndpoint> type) {
+            super(type);
+        }
+
+        @Override
+        public void serialize(RntbdServiceEndpoint value, JsonGenerator generator, SerializerProvider provider)
+            throws IOException {
+
+            generator.writeStartObject();
+            generator.writeStringField(value.name, value.remoteAddress.toString());
+            generator.writeObjectField("metrics", value.metrics);
+            generator.writeEndObject();
+        }
+    }
+
+    public static final class Provider implements RntbdEndpoint.Provider {
 
         private static final Logger logger = LoggerFactory.getLogger(Provider.class);
 
@@ -252,15 +285,15 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
 
                 this.eventLoopGroup.shutdownGracefully().addListener(future -> {
                     if (future.isSuccess()) {
-                        logger.debug("{} closed endpoints", this);
+                        logger.debug("\n  [{}]\n  closed endpoints", this);
                         return;
                     }
-                    logger.error("{} failed to close endpoints due to {}", this, future.cause());
+                    logger.error("\n  [{}]\n  failed to close endpoints due to ", this, future.cause());
                 });
                 return;
             }
 
-            logger.debug("{} already closed", this);
+            logger.debug("\n  [{}]\n  already closed", this);
         }
 
         @Override
@@ -283,15 +316,20 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
         private void deleteEndpoint(final URI physicalAddress) {
 
             // TODO: DANOBLE: Utilize this method of tearing down unhealthy endpoints
+            //  Specifically, ensure that this method is called when a Read/WriteTimeoutException occurs or a health
+            //  check request fails. This perhaps likely requires a change to RntbdClientChannelPool.
             //  Links:
             //  https://msdata.visualstudio.com/CosmosDB/_workitems/edit/331552
             //  https://msdata.visualstudio.com/CosmosDB/_workitems/edit/331593
 
+            checkNotNull(physicalAddress, "physicalAddress: %s", physicalAddress);
+
             final String authority = physicalAddress.getAuthority();
             final RntbdEndpoint endpoint = this.endpoints.remove(authority);
 
-            checkNotNull(endpoint, "physicalAddress: %s", physicalAddress);
-            endpoint.close();
+            if (endpoint != null) {
+                endpoint.close();
+            }
         }
     }
 

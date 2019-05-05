@@ -828,6 +828,11 @@ public final class RntbdTransportClientTest {
         }
 
         @Override
+        public String getName() {
+            return "FakeEndpoint";
+        }
+
+        @Override
         public void close() {
             this.fakeChannel.close().syncUninterruptibly();
         }

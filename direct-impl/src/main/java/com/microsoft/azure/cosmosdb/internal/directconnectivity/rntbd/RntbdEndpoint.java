@@ -38,6 +38,8 @@ import static com.microsoft.azure.cosmosdb.internal.directconnectivity.RntbdTran
 
 public interface RntbdEndpoint extends AutoCloseable {
 
+    String getName();
+
     @Override
     void close() throws RuntimeException;
 
