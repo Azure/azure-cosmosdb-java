@@ -275,7 +275,7 @@ public class OrderByDocumentQueryExecutionContext<T extends Resource>
                 formattedFilterInfo);
     }
 
-    private FormattedFilterInfo GetFormattedFilters(
+    private OrderByDocumentQueryExecutionContext<T>.FormattedFilterInfo GetFormattedFilters(
             Collection<String> orderByExpressionCollection,
             QueryItem[] orderByItems,
             Collection<SortOrder> sortOrderCollection,
