@@ -67,7 +67,7 @@
     <reactor-bom.version>Bismuth-RELEASE</reactor-bom.version>
     <test.groups>unit</test.groups>
     <cosmosdb-sdk-direct-impl.version>3.0.0-beta-3</cosmosdb-sdk-direct-impl.version>
-    <sdk-version>2.3.2-SNAPSHOT</sdk-version>
+    <sdk-version>3.0.0-beta-3</sdk-version>
     <collectedArtifactsForReleaseLocation>${project.basedir}/target/collectedArtifactsForRelease</collectedArtifactsForReleaseLocation>
     <javadoc.opts/>
   </properties>
