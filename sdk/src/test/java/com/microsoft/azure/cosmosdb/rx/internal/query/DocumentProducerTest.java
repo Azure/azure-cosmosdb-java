@@ -77,13 +77,12 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 
-public class DocumentProducerTest  {
+public class DocumentProducerTest {
     private final static Logger logger = LoggerFactory.getLogger(DocumentProducerTest.class);
     private static final long TIMEOUT = 10000;
     private final static String OrderByPayloadFieldName = "payload";
@@ -281,7 +280,8 @@ public class DocumentProducerTest  {
                 null,
                 initialPageSize,
                 initialContinuationToken,
-                top);
+                top,
+                /*targetRangeToOrderByContinuationTokenMap*/new HashMap<>());
 
         TestSubscriber<DocumentProducer<Document>.DocumentProducerFeedResponse> subscriber = new TestSubscriber<>();
 
