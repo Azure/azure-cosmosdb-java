@@ -36,6 +36,7 @@ SOFTWARE.
     <test.groups>unit</test.groups>
     <cosmosdb-sdk.version>2.4.5-SNAPSHOT</cosmosdb-sdk.version>
     <guava.version>27.0.1-jre</guava.version>
+    <metrics.version>4.0.5</metrics.version>
   </properties>
   <profiles>
     <profile>

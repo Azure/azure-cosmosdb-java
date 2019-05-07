@@ -24,81 +24,101 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.codahale.metrics.Gauge;
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricFilter;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.RatioGauge;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.google.common.base.Stopwatch;
 
 import java.time.Duration;
-import java.util.concurrent.atomic.AtomicLong;
 
 @JsonPropertyOrder({
-    "elapsedTime", "requestCount", "responseCount", "errorResponseCount", "responseRate", "completionRate", "throughput"
+    "lifetime", "requests", "responses", "errorResponses", "responseRate", "completionRate", "throughput"
 })
-public final class RntbdMetrics {
+public final class RntbdMetrics implements AutoCloseable {
 
     // region Fields
 
-    private final AtomicLong errorResponseCount = new AtomicLong();
-    private final Stopwatch lifetime = Stopwatch.createStarted();
-    private final AtomicLong requestCount = new AtomicLong();
-    private final AtomicLong responseCount = new AtomicLong();
+    private static final MetricRegistry registry = new MetricRegistry();
+
+    private final Gauge<Double> completionRate;
+    private final Meter errorResponses;
+    private final Stopwatch lifetime;
+    private final String prefix;
+    private final Meter requests;
+    private final Gauge<Double> responseRate;
+    private final Meter responses;
+
+    // endregion
+
+    // region Constructors
+
+    public RntbdMetrics(final String name) {
+
+        this.lifetime = Stopwatch.createStarted();
+        this.prefix = name + '.';
+
+        this.requests = registry.register(this.prefix + "requests", new Meter());
+        this.responses = registry.register(this.prefix + "responses", new Meter());
+        this.errorResponses = registry.register(this.prefix + "errorResponses", new Meter());
+        this.responseRate = registry.register(this.prefix + "responseRate", new ResponseRate(this));
+        this.completionRate = registry.register(this.prefix + "completionRate", new CompletionRate(this));
+    }
 
     // endregion
 
     // region Accessors
 
     public double getCompletionRate() {
-        return (this.responseCount.get() - this.errorResponseCount.get()) / this.requestCount.get();
+        return this.completionRate.getValue();
     }
 
-    public double getElapsedTime() {
+    public long getErrorResponses() {
+        return this.errorResponses.getCount();
+    }
 
+    public double getLifetime() {
         final Duration elapsed = this.lifetime.elapsed();
-        final long seconds = elapsed.getSeconds();
-        final int fraction = elapsed.getNano();
-
-        return Double.longBitsToDouble(seconds) + (1E-9D * fraction);
+        return Double.longBitsToDouble(elapsed.getSeconds()) + (1E-9D * elapsed.getNano());
     }
 
-    public long getErrorResponseCount() {
-        return this.errorResponseCount.get();
-    }
-
-    @JsonIgnore()
-    public Stopwatch getLifetime() {
-        return this.lifetime;
-    }
-
-    public long getRequestCount() {
-        return this.requestCount.get();
-    }
-
-    public long getResponseCount() {
-        return this.responseCount.get();
+    public long getRequests() {
+        return this.requests.getCount();
     }
 
     public double getResponseRate() {
-        return this.responseCount.get() / this.requestCount.get();
+        return this.responseRate.getValue();
+    }
+
+    public long getResponses() {
+        return this.responses.getCount();
     }
 
     public double getThroughput() {
-        return this.responseCount.get() / this.getElapsedTime();
+        return this.responses.getMeanRate();
     }
 
     // endregion
 
     // region Methods
 
+    @Override
+    public void close() throws Exception {
+        registry.removeMatching(MetricFilter.startsWith(this.prefix));
+    }
+
     public final void incrementErrorResponseCount() {
-        this.errorResponseCount.incrementAndGet();
+        this.errorResponses.mark();
     }
 
     public final void incrementRequestCount() {
-        this.requestCount.incrementAndGet();
+        this.requests.mark();
     }
 
     public final void incrementResponseCount() {
-        this.responseCount.incrementAndGet();
+        this.responses.mark();
     }
 
     @Override
@@ -107,4 +127,33 @@ public final class RntbdMetrics {
     }
 
     // endregion
+
+    private static final class CompletionRate extends RatioGauge {
+
+        private final RntbdMetrics metrics;
+
+        private CompletionRate(RntbdMetrics metrics) {
+            this.metrics = metrics;
+        }
+
+        @Override
+        protected Ratio getRatio() {
+            return Ratio.of(this.metrics.responses.getCount() - this.metrics.errorResponses.getCount(),
+                this.metrics.requests.getCount());
+        }
+    }
+
+    private static final class ResponseRate extends RatioGauge {
+
+        private final RntbdMetrics metrics;
+
+        private ResponseRate(RntbdMetrics metrics) {
+            this.metrics = metrics;
+        }
+
+        @Override
+        protected Ratio getRatio() {
+            return Ratio.of(this.metrics.responses.getCount(), this.metrics.requests.getCount());
+        }
+    }
 }

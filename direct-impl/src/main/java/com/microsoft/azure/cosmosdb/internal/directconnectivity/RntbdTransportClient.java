@@ -74,7 +74,7 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
     RntbdTransportClient(final RntbdEndpoint.Provider endpointProvider) {
         this.name = RntbdTransportClient.namePrefix + RntbdTransportClient.instanceCount.incrementAndGet();
         this.endpointProvider = endpointProvider;
-        this.metrics = new RntbdMetrics();
+        this.metrics = new RntbdMetrics(this.name);
     }
 
     RntbdTransportClient(final Options options, final SslContext sslContext) {

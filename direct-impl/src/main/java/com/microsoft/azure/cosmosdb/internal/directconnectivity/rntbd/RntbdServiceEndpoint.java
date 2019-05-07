@@ -88,7 +88,7 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
         this.name = RntbdServiceEndpoint.namePrefix + instanceCount.incrementAndGet();
         this.channelPool = new RntbdClientChannelPool(bootstrap, config);
         this.remoteAddress = bootstrap.config().remoteAddress();
-        this.metrics = new RntbdMetrics();
+        this.metrics = new RntbdMetrics(this.name);
         this.requestTimer = timer;
     }
 
@@ -235,7 +235,8 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
 
             generator.writeStartObject();
             generator.writeStringField(value.name, value.remoteAddress.toString());
-            generator.writeObjectField("metrics", value.metrics);
+            generator.writeNumberField("acquiredChannelCount", value.channelPool.acquiredChannelCount());
+            generator.writeNumberField("availableChannelCount", value.channelPool.availableChannelCount());
             generator.writeEndObject();
         }
     }
