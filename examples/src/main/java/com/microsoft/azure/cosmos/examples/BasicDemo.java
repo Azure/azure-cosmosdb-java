@@ -20,7 +20,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.microsoft.azure.cosmosdb.rx.examples.cosmosclient;
+package com.microsoft.azure.cosmos.examples;
 
 import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.FeedOptions;

@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-package com.microsoft.azure.cosmosdb.rx.examples.cosmosclient;
+package com.microsoft.azure.cosmos.examples;
 
 import org.apache.commons.lang3.StringUtils;
 
