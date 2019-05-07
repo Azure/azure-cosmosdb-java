@@ -50,6 +50,8 @@ public interface RntbdEndpoint extends AutoCloseable {
         @Override
         void close() throws RuntimeException;
 
+        Config config();
+
         int count();
 
         RntbdEndpoint get(URI physicalAddress);

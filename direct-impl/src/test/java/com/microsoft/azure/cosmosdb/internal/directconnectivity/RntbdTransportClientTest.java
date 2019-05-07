@@ -862,6 +862,11 @@ public final class RntbdTransportClientTest {
             }
 
             @Override
+            public Config config() {
+                return this.config;
+            }
+
+            @Override
             public int count() {
                 return 1;
             }

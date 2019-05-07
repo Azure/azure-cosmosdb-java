@@ -57,6 +57,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 @JsonSerialize(using = RntbdServiceEndpoint.JsonSerializer.class)
 public final class RntbdServiceEndpoint implements RntbdEndpoint {
@@ -66,6 +67,7 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
     private static final String namePrefix = RntbdServiceEndpoint.class.getSimpleName() + '-';
 
     private final RntbdClientChannelPool channelPool;
+    private final AtomicBoolean closed;
     private final RntbdMetrics metrics;
     private final String name;
     private final SocketAddress remoteAddress;
@@ -89,6 +91,7 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
         this.channelPool = new RntbdClientChannelPool(bootstrap, config);
         this.remoteAddress = bootstrap.config().remoteAddress();
         this.metrics = new RntbdMetrics(this.name);
+        this.closed = new AtomicBoolean();
         this.requestTimer = timer;
     }
 
@@ -106,11 +109,16 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
     // region Methods
 
     @Override
-    public void close() throws RuntimeException {
-        this.channelPool.close();
+    public void close() {
+        if (this.closed.compareAndSet(false, true)) {
+            this.channelPool.close();
+            this.metrics.close();
+        }
     }
 
     public CompletableFuture<StoreResponse> request(final RntbdRequestArgs args) {
+
+        this.throwIfClosed();
 
         if (logger.isDebugEnabled()) {
             args.traceOperation(logger, null, "request");
@@ -162,6 +170,10 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
                 }
             }
         });
+    }
+
+    private void throwIfClosed() {
+        checkState(!this.closed.get(), "%s is closed", this);
     }
 
     private RntbdRequestRecord write(final RntbdRequestArgs requestArgs) {
@@ -219,7 +231,7 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
 
     // region Types
 
-    public static final class JsonSerializer extends StdSerializer<RntbdServiceEndpoint> {
+    static final class JsonSerializer extends StdSerializer<RntbdServiceEndpoint> {
 
         public JsonSerializer() {
             this(null);
@@ -235,8 +247,7 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
 
             generator.writeStartObject();
             generator.writeStringField(value.name, value.remoteAddress.toString());
-            generator.writeNumberField("acquiredChannelCount", value.channelPool.acquiredChannelCount());
-            generator.writeNumberField("availableChannelCount", value.channelPool.availableChannelCount());
+            generator.writeObjectField("channelPool", value.channelPool);
             generator.writeEndObject();
         }
     }
@@ -295,6 +306,11 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
             }
 
             logger.debug("\n  [{}]\n  already closed", this);
+        }
+
+        @Override
+        public Config config() {
+            return this.config;
         }
 
         @Override

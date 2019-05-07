@@ -52,6 +52,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 @JsonSerialize(using = RntbdTransportClient.JsonSerializer.class)
 public final class RntbdTransportClient extends TransportClient implements AutoCloseable {
@@ -90,12 +91,13 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
     // region Methods
 
     @Override
-    public void close() throws RuntimeException {
+    public void close() {
 
         logger.debug("\n  [{}] CLOSE", this);
 
         if (this.closed.compareAndSet(false, true)) {
             this.endpointProvider.close();
+            this.metrics.close();
             return;
         }
 
@@ -149,16 +151,14 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
     }
 
     private void throwIfClosed() {
-        if (this.closed.get()) {
-            throw new IllegalStateException(String.format("%s is closed", this));
-        }
+        checkState(!this.closed.get(), "%s is closed", this);
     }
 
     // endregion
 
     // region Types
 
-    public static final class JsonSerializer extends StdSerializer<RntbdTransportClient> {
+    static final class JsonSerializer extends StdSerializer<RntbdTransportClient> {
 
         public JsonSerializer() {
             this(null);
@@ -185,6 +185,7 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
 
             generator.writeEndArray();
 
+            generator.writeObjectField("config", value.endpointProvider.config());
             generator.writeObjectField("metrics", value.metrics);
             generator.writeEndObject();
         }

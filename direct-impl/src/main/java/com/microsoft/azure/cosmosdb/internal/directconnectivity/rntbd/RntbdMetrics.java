@@ -81,7 +81,7 @@ public final class RntbdMetrics implements AutoCloseable {
 
     public double getLifetime() {
         final Duration elapsed = this.lifetime.elapsed();
-        return Double.longBitsToDouble(elapsed.getSeconds()) + (1E-9D * elapsed.getNano());
+        return elapsed.getSeconds() + (1E-9D * elapsed.getNano());
     }
 
     public long getRequests() {
@@ -105,7 +105,7 @@ public final class RntbdMetrics implements AutoCloseable {
     // region Methods
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         registry.removeMatching(MetricFilter.startsWith(this.prefix));
     }
 
