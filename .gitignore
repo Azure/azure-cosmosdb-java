@@ -19,4 +19,6 @@ hs_err_pid*
 
 doc
 docs
-sdk/test-output/*
+target
+bin
+test-output
