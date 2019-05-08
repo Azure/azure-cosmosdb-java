@@ -179,6 +179,7 @@ public class CosmosContainer extends CosmosResource {
     }
 
     /**
+<<<<<<< HEAD
      * Upserts an item.
      *
      * After subscription the operation will be performed. 
@@ -208,6 +209,8 @@ public class CosmosContainer extends CosmosResource {
     }
 
     /**
+=======
+>>>>>>> v3
      * Upserts a cosmos item.
      *
      * After subscription the operation will be performed. 
@@ -316,6 +319,7 @@ public class CosmosContainer extends CosmosResource {
      * In case of failure the {@link Mono} will error.
      *
      * @param settings  the cosmos stored procedure settings.
+<<<<<<< HEAD
      * @return an {@link Mono} containing the single cosmos stored procedure resource response or an error.
      */
     public Mono<CosmosStoredProcedureResponse> createStoredProcedure(CosmosStoredProcedureSettings settings){
@@ -331,6 +335,8 @@ public class CosmosContainer extends CosmosResource {
      * In case of failure the {@link Mono} will error.
      *
      * @param settings  the cosmos stored procedure settings.
+=======
+>>>>>>> v3
      * @param options the stored procedure request options.
      * @return an {@link Mono} containing the single cosmos stored procedure resource response or an error.
      */

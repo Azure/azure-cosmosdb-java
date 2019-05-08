@@ -98,19 +98,6 @@ public class CosmosConfiguration {
         }
 
         /**
-         * NOTE: This is experimental and internal only.
-         * If sets, modifies the event loop size and the computation pool size.
-         *
-         * @param eventLoopSize the size of the event loop (the number of event loop threads).
-         * @return current Builder.
-         */
-        Builder withWorkers(int eventLoopSize) {
-            ifThrowIllegalArgException(eventLoopSize <= 0, "invalid event loop size");
-            this.eventLoopSize = eventLoopSize;
-            return this;
-        }
-
-        /**
          * The (@link ConnectionPolicy) to be used
          * @param connectionPolicy
          * @return
@@ -168,9 +155,5 @@ public class CosmosConfiguration {
      */
     public List<Permission> getPermissions() {
         return permissions;
-    }
-
-    int getEventLoopSize() {
-        return -1;
     }
 }
