@@ -98,7 +98,6 @@ public class CosmosItem extends Resource {
      * In case of failure the {@link Mono} will error.
      *
      * @param item the item to replace (containing the document id).
-<<<<<<< HEAD
      * @return an {@link Mono} containing the  cosmos item resource response with the replaced item or an error.
      */
     public Mono<CosmosItemResponse> replace(Object item){
@@ -113,8 +112,6 @@ public class CosmosItem extends Resource {
      * In case of failure the {@link Mono} will error.
      *
      * @param item the item to replace (containing the document id).
-=======
->>>>>>> v3
      * @param partitionKey the partition key
      * @return an {@link Mono} containing the  cosmos item resource response with the replaced item or an error.
      */
