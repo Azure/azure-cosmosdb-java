@@ -72,7 +72,7 @@ public interface FeedResponseListValidator<T extends Resource> {
             return this;
         }
 
-        public Builder<T> containsExactly(List<String> expectedIds) {
+        public Builder<T> containsExactly(List<String> expectedRids) {
             validators.add(new FeedResponseListValidator<T>() {
                 @Override
                 public void validate(List<FeedResponse<T>> feedList) {
@@ -83,6 +83,23 @@ public interface FeedResponseListValidator<T extends Resource> {
                             .collect(Collectors.toList());
                     assertThat(actualIds)
                     .describedAs("Resource IDs of results")
+                    .containsExactlyElementsOf(expectedRids);
+                }
+            });
+            return this;
+        }
+
+        public Builder<T> containsExactlyIds(List<String> expectedIds) {
+            validators.add(new FeedResponseListValidator<T>() {
+                @Override
+                public void validate(List<FeedResponse<T>> feedList) {
+                    List<String> actualIds = feedList
+                            .stream()
+                            .flatMap(f -> f.getResults().stream())
+                            .map(r -> r.getId())
+                            .collect(Collectors.toList());
+                    assertThat(actualIds)
+                    .describedAs("IDs of results")
                     .containsExactlyElementsOf(expectedIds);
                 }
             });

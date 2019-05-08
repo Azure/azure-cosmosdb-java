@@ -59,7 +59,7 @@ public class CosmosItemRequestOptions extends CosmosRequestOptions {
             setPartitionKey(new PartitionKey(partitionKey));
         }
     }
-    
+
     /**
      * Gets the consistency level required for the request.
      *

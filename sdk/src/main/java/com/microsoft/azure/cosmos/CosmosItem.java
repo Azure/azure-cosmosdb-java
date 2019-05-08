@@ -98,6 +98,20 @@ public class CosmosItem extends Resource {
      * In case of failure the {@link Mono} will error.
      *
      * @param item the item to replace (containing the document id).
+     * @return an {@link Mono} containing the  cosmos item resource response with the replaced item or an error.
+     */
+    public Mono<CosmosItemResponse> replace(Object item){
+        return replace(item, new CosmosItemRequestOptions());
+    }
+
+    /**
+     * Replaces an item with the passed in item.
+     *
+     * After subscription the operation will be performed. 
+     * The {@link Mono} upon successful completion will contain a single cosmos item response with the replaced item.
+     * In case of failure the {@link Mono} will error.
+     *
+     * @param item the item to replace (containing the document id).
      * @param partitionKey the partition key
      * @return an {@link Mono} containing the  cosmos item resource response with the replaced item or an error.
      */

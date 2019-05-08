@@ -25,10 +25,12 @@ package com.microsoft.azure.cosmos;
 import com.microsoft.azure.cosmosdb.ConnectionMode;
 import com.microsoft.azure.cosmosdb.ConnectionPolicy;
 import com.microsoft.azure.cosmosdb.ConsistencyLevel;
+import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.PartitionKeyDefinition;
 import com.microsoft.azure.cosmosdb.Resource;
 import com.microsoft.azure.cosmosdb.RetryOptions;
 import com.microsoft.azure.cosmosdb.rx.FailureValidator;
+import com.microsoft.azure.cosmosdb.rx.FeedResponseListValidator;
 import com.microsoft.azure.cosmosdb.rx.TestConfigurations;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentClientImpl;
 import io.reactivex.subscribers.TestSubscriber;
@@ -41,6 +43,7 @@ import reactor.core.publisher.Mono;
 import java.util.ArrayList;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -91,6 +94,41 @@ public class CosmosTestSuiteBase {
         testSubscriber.assertNotComplete();
         testSubscriber.assertTerminated();
         assertThat(testSubscriber.errors()).hasSize(1);
+        validator.validate((Throwable) testSubscriber.getEvents().get(1).get(0));
+    }
+
+    public <T extends Resource> void validateQuerySuccess(Flux<FeedResponse<T>> flowable,
+            FeedResponseListValidator<T> validator) {
+        validateQuerySuccess(flowable, validator, subscriberValidationTimeout);
+    }
+
+    public static <T extends Resource> void validateQuerySuccess(Flux<FeedResponse<T>> flowable,
+            FeedResponseListValidator<T> validator, long timeout) {
+
+        TestSubscriber<FeedResponse<T>> testSubscriber = new TestSubscriber<>();
+
+        flowable.subscribe(testSubscriber);
+        testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertComplete();
+        validator.validate(testSubscriber.getEvents().get(0).stream().map(object -> (FeedResponse<T>) object).collect(Collectors.toList()));
+    }
+
+    public <T extends Resource> void validateQueryFailure(Flux<FeedResponse<T>> flowable,
+            FailureValidator validator) {
+        validateQueryFailure(flowable, validator, subscriberValidationTimeout);
+    }
+
+    public static <T extends Resource> void validateQueryFailure(Flux<FeedResponse<T>> flowable,
+            FailureValidator validator, long timeout) {
+
+        TestSubscriber<FeedResponse<T>> testSubscriber = new TestSubscriber<>();
+
+        flowable.subscribe(testSubscriber);
+        testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
+        testSubscriber.assertNotComplete();
+        testSubscriber.assertTerminated();
+        assertThat(testSubscriber.getEvents().get(1)).hasSize(1);
         validator.validate((Throwable) testSubscriber.getEvents().get(1).get(0));
     }
 

@@ -34,7 +34,7 @@ public class PartitionKey {
 
     private PartitionKeyInternal internalPartitionKey;
 
-    PartitionKey(PartitionKeyInternal partitionKeyInternal) {
+    public PartitionKey(PartitionKeyInternal partitionKeyInternal) {
         this.internalPartitionKey = partitionKeyInternal;
     }
 
@@ -57,6 +57,8 @@ public class PartitionKey {
     public static PartitionKey FromJsonString(String jsonString) {
         return new PartitionKey(PartitionKeyInternal.fromJsonString(jsonString));
     }
+
+    public static PartitionKey None = new PartitionKey(PartitionKeyInternal.None);
 
     /**
      * Serialize the PartitionKey object to a JSON string.

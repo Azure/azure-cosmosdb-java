@@ -27,6 +27,7 @@ import java.util.UUID;
 
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.FeedOptions;
+import com.microsoft.azure.cosmosdb.PartitionKey;
 import com.microsoft.azure.cosmosdb.PartitionKeyRange;
 import com.microsoft.azure.cosmosdb.Resource;
 import com.microsoft.azure.cosmosdb.SqlQuerySpec;
@@ -86,17 +87,21 @@ public class DocumentQueryExecutionContextFactory {
         // PipelinedDocumentQueryExecutionContext by providing the partition query execution info that's needed(which we get from the exception returned from Gateway).
 
         Observable<ProxyDocumentQueryExecutionContext<T>> proxyQueryExecutionContext =
-                collectionObs.flatMap(collection -> 
-                ProxyDocumentQueryExecutionContext.createAsync(
-                        client,
-                        resourceTypeEnum,
-                        resourceType,
-                        query,
-                        feedOptions,
-                        resourceLink,
-                        collection,
-                        isContinuationExpected,
-                        correlatedActivityId));
+                collectionObs.flatMap(collection -> {
+                    if (feedOptions != null && feedOptions.getPartitionKey() != null && feedOptions.getPartitionKey().equals(PartitionKey.None)) {
+                        feedOptions.setPartitionKey(new PartitionKey(collection.getPartitionKey().getNonePartitionKeyValue()));
+                    }
+                    return ProxyDocumentQueryExecutionContext.createAsync(
+                            client,
+                            resourceTypeEnum,
+                            resourceType,
+                            query,
+                            feedOptions,
+                            resourceLink,
+                            collection,
+                            isContinuationExpected,
+                            correlatedActivityId);
+                    });
 
         return proxyQueryExecutionContext;
     }
