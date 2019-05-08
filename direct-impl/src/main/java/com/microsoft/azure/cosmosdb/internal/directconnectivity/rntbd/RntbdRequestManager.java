@@ -82,6 +82,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.SubStatusCodes;
+import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdReporter.reportIssueUnless;
 
 public final class RntbdRequestManager implements ChannelHandler, ChannelInboundHandler, ChannelOutboundHandler {
 
@@ -97,10 +98,6 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
     private ChannelHandlerContext context;
     private RntbdRequestRecord pendingRequest;
     private CoalescingBufferQueue pendingWrites;
-
-    // endregion
-
-    // region Request management methods
 
     // endregion
 
@@ -268,7 +265,8 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         this.traceOperation(context, "exceptionCaught", cause);
 
         if (!this.closingExceptionally) {
-            assert cause != ClosedWithPendingRequestsException.INSTANCE;
+            reportIssueUnless(cause == ClosedWithPendingRequestsException.INSTANCE, logger, context.channel(),
+                "expected an exception other than {}", ClosedWithPendingRequestsException.INSTANCE);
             this.completeAllPendingRequestsExceptionally(context, cause);
             context.close();
         }
@@ -284,11 +282,14 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
      */
     @Override
     public void userEventTriggered(final ChannelHandlerContext context, final Object event) throws Exception {
+
         this.traceOperation(context, "userEventTriggered", event);
+
         if (event instanceof RntbdContext) {
             this.completeRntbdContextFuture(context, (RntbdContext)event);
             return;
         }
+
         context.fireUserEventTriggered(event);
     }
 
