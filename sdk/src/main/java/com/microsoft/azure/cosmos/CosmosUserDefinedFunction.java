@@ -49,7 +49,7 @@ public class CosmosUserDefinedFunction extends CosmosResource{
      * @return an {@link Mono} containing the single resource response for the read user defined function or an error.
      */
     public Mono<CosmosUserDefinedFunctionResponse> read(RequestOptions options){
-        return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(container.getDatabase().getDocClientWrapper().readUserDefinedFunction(getLink(), options)
+        return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(container.getDatabase().getCosmosClientInternalWrapper().readUserDefinedFunction(getLink(), options)
                 .map(response -> new CosmosUserDefinedFunctionResponse(response, container)).toSingle()));
     }
 
@@ -70,7 +70,7 @@ public class CosmosUserDefinedFunction extends CosmosResource{
             RequestOptions options){
         return RxJava2Adapter.singleToMono(
                 RxJavaInterop.toV2Single(container.getDatabase()
-                                                 .getDocClientWrapper()
+                                                 .getCosmosClientInternalWrapper()
                                                  .replaceUserDefinedFunction(new UserDefinedFunction(udfSettings.toJson())
                                                          , options)
                                                  .map(response -> new CosmosUserDefinedFunctionResponse(response, container))
@@ -91,7 +91,7 @@ public class CosmosUserDefinedFunction extends CosmosResource{
     public Mono<CosmosResponse> delete(CosmosRequestOptions options){
         return RxJava2Adapter.singleToMono(
                 RxJavaInterop.toV2Single(container.getDatabase()
-                                                 .getDocClientWrapper()
+                                                 .getCosmosClientInternalWrapper()
                                                  .deleteUserDefinedFunction(this.getLink(), options.toRequestOptions())
                                                  .map(response -> new CosmosResponse(response.getResource()))
                                                  .toSingle()));

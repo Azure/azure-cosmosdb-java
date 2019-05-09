@@ -22,6 +22,7 @@
  */
 package com.microsoft.azure.cosmos;
 
+import com.microsoft.azure.cosmos.internal.CosmosClientInternal;
 import com.microsoft.azure.cosmosdb.BridgeInternal;
 import com.microsoft.azure.cosmosdb.Database;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
@@ -29,7 +30,6 @@ import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.SqlQuerySpec;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
-import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import hu.akarnokd.rxjava.interop.RxJavaInterop;
 import reactor.adapter.rxjava.RxJava2Adapter;
 import reactor.core.publisher.Flux;
@@ -43,7 +43,7 @@ import reactor.core.publisher.Mono;
  public class CosmosClient {
 
     //Document client wrapper
-    private AsyncDocumentClient asyncDocumentClient;
+    private CosmosClientInternal cosmosClientInternal;
 
     /**
      * Creates a cosmos client with given cosmosConfiguration
@@ -72,7 +72,7 @@ import reactor.core.publisher.Mono;
      * @param cosmosConfiguration the cosmos configuration
      */
     private CosmosClient(CosmosConfiguration cosmosConfiguration) {
-        this.asyncDocumentClient = new AsyncDocumentClient.Builder()
+        this.cosmosClientInternal = new CosmosClientInternal.Builder()
                 .withServiceEndpoint(cosmosConfiguration.getServiceEndpoint().toString())
                 .withMasterKeyOrResourceToken(cosmosConfiguration.getKeyOrResourceToken())
                 .withConnectionPolicy(cosmosConfiguration.getConnectionPolicy())
@@ -80,8 +80,8 @@ import reactor.core.publisher.Mono;
                 .build();
     }
 
-    AsyncDocumentClient getDocClientWrapper(){
-        return asyncDocumentClient;
+    CosmosClientInternal getCosmosClientInternalWrapper(){
+        return cosmosClientInternal;
     }
 
     /**
@@ -137,7 +137,7 @@ import reactor.core.publisher.Mono;
             CosmosDatabaseRequestOptions options) {
         Database wrappedDatabase = new Database();
         wrappedDatabase.setId(databaseSettings.getId());
-        return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(asyncDocumentClient.createDatabase(wrappedDatabase, options.toRequestOptions()).map(databaseResourceResponse ->
+        return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(cosmosClientInternal.createDatabase(wrappedDatabase, options.toRequestOptions()).map(databaseResourceResponse ->
                 new CosmosDatabaseResponse(databaseResourceResponse, this)).toSingle()));
     }
 
@@ -182,7 +182,7 @@ import reactor.core.publisher.Mono;
      * @return a {@link Flux} containing one or several feed response pages of read databases or an error.
      */
     public Flux<FeedResponse<CosmosDatabaseSettings>> listDatabases(FeedOptions options) {
-        return RxJava2Adapter.flowableToFlux(RxJavaInterop.toV2Flowable(getDocClientWrapper().readDatabases(options)
+        return RxJava2Adapter.flowableToFlux(RxJavaInterop.toV2Flowable(getCosmosClientInternalWrapper().readDatabases(options)
                 .map(response-> BridgeInternal.createFeedResponse(CosmosDatabaseSettings.getFromV2Results(response.getResults()),
                         response.getResponseHeaders()))));
     }
@@ -228,7 +228,7 @@ import reactor.core.publisher.Mono;
      * @return an {@link Flux} containing one or several feed response pages of read databases or an error.
      */
     public Flux<FeedResponse<CosmosDatabaseSettings>> queryDatabases(SqlQuerySpec querySpec, FeedOptions options){
-        return RxJava2Adapter.flowableToFlux(RxJavaInterop.toV2Flowable(getDocClientWrapper().queryDatabases(querySpec, options)
+        return RxJava2Adapter.flowableToFlux(RxJavaInterop.toV2Flowable(getCosmosClientInternalWrapper().queryDatabases(querySpec, options)
                 .map(response-> BridgeInternal.createFeedResponse(
                         CosmosDatabaseSettings.getFromV2Results(response.getResults()),
                         response.getResponseHeaders()))));
@@ -247,6 +247,6 @@ import reactor.core.publisher.Mono;
      * Close this {@link CosmosClient} instance and cleans up the resources.
      */
     public void close() {
-        asyncDocumentClient.close();
+        cosmosClientInternal.close();
     }
 }

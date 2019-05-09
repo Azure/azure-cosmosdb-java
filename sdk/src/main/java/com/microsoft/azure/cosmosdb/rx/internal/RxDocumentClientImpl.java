@@ -319,7 +319,9 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
         this.collectionCache = new RxClientCollectionCache(this.sessionContainer, this.gatewayProxy, this, this.retryPolicy);
         this.resetSessionTokenRetryPolicy = new ResetSessionTokenRetryPolicyFactory(this.sessionContainer, this.collectionCache, this.retryPolicy);
 
-        this.partitionKeyRangeCache = new RxPartitionKeyRangeCache(RxDocumentClientImpl.this,
+        Func2<String, FeedOptions, Observable<FeedResponse<PartitionKeyRange>>> readPartitionKeyRangesFunction = 
+                (collLink, feedOptions) -> this.readPartitionKeyRanges(collLink, feedOptions);
+        this.partitionKeyRangeCache = new RxPartitionKeyRangeCache(readPartitionKeyRangesFunction,
                 collectionCache);
 
         if (this.connectionPolicy.getConnectionMode() == ConnectionMode.Gateway) {

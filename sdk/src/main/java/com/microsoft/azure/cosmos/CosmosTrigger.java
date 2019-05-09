@@ -61,7 +61,7 @@ public class CosmosTrigger extends CosmosResource{
     public Mono<CosmosTriggerResponse> read(RequestOptions options){
         return RxJava2Adapter.singleToMono(
                 RxJavaInterop.toV2Single(container.getDatabase()
-                                                 .getDocClientWrapper()
+                                                 .getCosmosClientInternalWrapper()
                                                  .readTrigger(getLink(), options)
                                                  .map(response -> new CosmosTriggerResponse(response, container))
                                                  .toSingle()));
@@ -82,7 +82,7 @@ public class CosmosTrigger extends CosmosResource{
     public Mono<CosmosTriggerResponse> replace(CosmosTriggerSettings triggerSettings, RequestOptions options){
         return RxJava2Adapter.singleToMono(
                 RxJavaInterop.toV2Single(container.getDatabase()
-                                                 .getDocClientWrapper()
+                                                 .getCosmosClientInternalWrapper()
                                                  .replaceTrigger(new Trigger(triggerSettings.toJson()), options)
                                                  .map(response -> new CosmosTriggerResponse(response, container))
                                                  .toSingle()));
@@ -101,7 +101,7 @@ public class CosmosTrigger extends CosmosResource{
     public Mono<CosmosResponse> delete(CosmosRequestOptions options){
         return RxJava2Adapter.singleToMono(
                 RxJavaInterop.toV2Single(container.getDatabase()
-                                                 .getDocClientWrapper()
+                                                 .getCosmosClientInternalWrapper()
                                                  .deleteTrigger(getLink(), options.toRequestOptions())
                                                  .map(response -> new CosmosResponse(response.getResource()))
                                                  .toSingle()));

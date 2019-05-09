@@ -30,7 +30,6 @@ import com.microsoft.azure.cosmosdb.Resource;
 import com.microsoft.azure.cosmosdb.RetryOptions;
 import com.microsoft.azure.cosmosdb.rx.FailureValidator;
 import com.microsoft.azure.cosmosdb.rx.TestConfigurations;
-import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentClientImpl;
 import io.reactivex.subscribers.TestSubscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,7 +49,7 @@ public class CosmosTestSuiteBase {
     protected static final int SETUP_TIMEOUT = 30000;
     protected static final int SHUTDOWN_TIMEOUT = 12000;
     protected static final int SUITE_SETUP_TIMEOUT = 120000;
-    private static final Logger logger = LoggerFactory.getLogger(RxDocumentClientImpl.class);
+    private static final Logger logger = LoggerFactory.getLogger(CosmosTestSuiteBase.class);
     
     protected int subscriberValidationTimeout = TIMEOUT;
 

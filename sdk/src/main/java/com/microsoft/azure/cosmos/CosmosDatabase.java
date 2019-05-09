@@ -22,6 +22,7 @@
  */
 package com.microsoft.azure.cosmos;
 
+import com.microsoft.azure.cosmos.internal.CosmosClientInternal;
 import com.microsoft.azure.cosmosdb.BridgeInternal;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.FeedOptions;
@@ -30,7 +31,6 @@ import com.microsoft.azure.cosmosdb.RequestOptions;
 import com.microsoft.azure.cosmosdb.SqlQuerySpec;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.internal.Paths;
-import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 
 import hu.akarnokd.rxjava.interop.RxJavaInterop;
 import org.apache.commons.lang3.StringUtils;
@@ -73,7 +73,7 @@ public class CosmosDatabase extends CosmosResource {
      * @return an {@link Mono} containing the single cosmos database response with the read database or an error.
      */
     public Mono<CosmosDatabaseResponse> read(CosmosDatabaseRequestOptions options) {
-        return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(getDocClientWrapper().readDatabase(getLink(),
+        return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(getCosmosClientInternalWrapper().readDatabase(getLink(),
                                                                                           options.toRequestOptions())
                 .map(response -> new CosmosDatabaseResponse(response, getClient())).toSingle()));
     }
@@ -102,7 +102,7 @@ public class CosmosDatabase extends CosmosResource {
      */
     public Mono<CosmosDatabaseResponse> delete(CosmosRequestOptions options) {
         return RxJava2Adapter.singleToMono(
-                RxJavaInterop.toV2Single(getDocClientWrapper()
+                RxJavaInterop.toV2Single(getCosmosClientInternalWrapper()
                                                  .deleteDatabase(getLink(), options.toRequestOptions())
                                                  .map(response -> new CosmosDatabaseResponse(response, getClient()))
                                                  .toSingle()));
@@ -140,7 +140,7 @@ public class CosmosDatabase extends CosmosResource {
      */
     public Mono<CosmosContainerResponse> createContainer(CosmosContainerSettings containerSettings,
             CosmosContainerRequestOptions options) {
-        return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(getDocClientWrapper().createCollection(this.getLink(),
+        return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(getCosmosClientInternalWrapper().createCollection(this.getLink(),
                 containerSettings.getV2Collection(), options.toRequestOptions()).map(response ->
                 new CosmosContainerResponse(response, this)).toSingle()));
     }
@@ -220,7 +220,7 @@ public class CosmosDatabase extends CosmosResource {
      */
     public Flux<FeedResponse<CosmosContainerSettings>> listContainers(FeedOptions options) {
         //TODO:
-        return RxJava2Adapter.flowableToFlux(RxJavaInterop.toV2Flowable(getDocClientWrapper().readCollections(getLink(), options)
+        return RxJava2Adapter.flowableToFlux(RxJavaInterop.toV2Flowable(getCosmosClientInternalWrapper().readCollections(getLink(), options)
                 .map(response-> BridgeInternal.createFeedResponse(CosmosContainerSettings.getFromV2Results(response.getResults()),
                         response.getResponseHeaders()))));
     }
@@ -265,7 +265,7 @@ public class CosmosDatabase extends CosmosResource {
      * @return an {@link Flux} containing one or several feed response pages of the obtained containers or an error.
      */
     public Flux<FeedResponse<CosmosContainerSettings>> queryContainers(SqlQuerySpec querySpec, FeedOptions options){
-        return RxJava2Adapter.flowableToFlux(RxJavaInterop.toV2Flowable(getDocClientWrapper().queryCollections(getLink(), querySpec,
+        return RxJava2Adapter.flowableToFlux(RxJavaInterop.toV2Flowable(getCosmosClientInternalWrapper().queryCollections(getLink(), querySpec,
                                                                                                 options)
                 .map(response-> BridgeInternal.createFeedResponse(
                         CosmosContainerSettings.getFromV2Results(response.getResults()),
@@ -285,8 +285,8 @@ public class CosmosDatabase extends CosmosResource {
         return client;
     }
 
-    AsyncDocumentClient getDocClientWrapper(){
-        return client.getDocClientWrapper();
+    CosmosClientInternal getCosmosClientInternalWrapper(){
+        return client.getCosmosClientInternalWrapper();
     }
 
     @Override

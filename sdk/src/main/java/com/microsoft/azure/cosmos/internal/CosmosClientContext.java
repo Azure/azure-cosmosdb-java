@@ -20,7 +20,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.microsoft.azure.cosmos;
+package com.microsoft.azure.cosmos.internal;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -84,7 +84,6 @@ import com.microsoft.azure.cosmosdb.internal.directconnectivity.StoreClient;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.StoreClientFactory;
 import com.microsoft.azure.cosmosdb.internal.routing.PartitionKeyAndResourceTokenPair;
 import com.microsoft.azure.cosmosdb.internal.routing.PartitionKeyInternal;
-import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import com.microsoft.azure.cosmosdb.rx.internal.AuthorizationTokenType;
 import com.microsoft.azure.cosmosdb.rx.internal.ChangeFeedQueryImpl;
 import com.microsoft.azure.cosmosdb.rx.internal.Configs;
@@ -145,7 +144,7 @@ import static com.microsoft.azure.cosmosdb.BridgeInternal.toStoredProcedureRespo
  * While this class is public, but it is not part of our published public APIs.
  * This is meant to be internally used only by our sdk.
  */
-public class CosmosClientContext implements AsyncDocumentClient, IAuthorizationTokenProvider {
+public class CosmosClientContext implements CosmosClientInternal, IAuthorizationTokenProvider {
     private final static ObjectMapper mapper = Utils.getSimpleObjectMapper();
     private final Logger logger = LoggerFactory.getLogger(CosmosClientContext.class);
     private final String masterKeyOrResourceToken;
@@ -336,7 +335,9 @@ public class CosmosClientContext implements AsyncDocumentClient, IAuthorizationT
         this.collectionCache = new RxClientCollectionCache(this.sessionContainer, this.gatewayProxy, this, this.retryPolicy);
         this.resetSessionTokenRetryPolicy = new ResetSessionTokenRetryPolicyFactory(this.sessionContainer, this.collectionCache, this.retryPolicy);
 
-        this.partitionKeyRangeCache = new RxPartitionKeyRangeCache(CosmosClientContext.this,
+        Func2<String, FeedOptions, Observable<FeedResponse<PartitionKeyRange>>> readPartitionKeyRangesFunction = 
+                (collLink, feedOptions) -> this.readPartitionKeyRanges(collLink, feedOptions);
+        this.partitionKeyRangeCache = new RxPartitionKeyRangeCache(readPartitionKeyRangesFunction,
                 collectionCache);
 
         if (this.connectionPolicy.getConnectionMode() == ConnectionMode.Gateway) {

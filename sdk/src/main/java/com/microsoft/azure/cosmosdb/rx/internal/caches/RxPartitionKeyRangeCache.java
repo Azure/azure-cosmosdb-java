@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.microsoft.azure.cosmosdb.FeedOptions;
+import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.internal.routing.IServerIdentity;
 import com.microsoft.azure.cosmosdb.rx.internal.NotFoundException;
 import org.apache.commons.collections4.CollectionUtils;
@@ -54,6 +55,7 @@ import com.microsoft.azure.cosmosdb.rx.internal.Utils;
 
 import rx.Observable;
 import rx.Single;
+import rx.functions.Func2;
 
 /**
  * While this class is public, but it is not part of our published public APIs.
@@ -63,12 +65,13 @@ public class RxPartitionKeyRangeCache implements IPartitionKeyRangeCache {
     private final Logger logger = LoggerFactory.getLogger(RxPartitionKeyRangeCache.class);
 
     private final AsyncCache<String, CollectionRoutingMap> routingMapCache;
-    private final AsyncDocumentClient client;
+    private final Func2<String, FeedOptions, Observable<FeedResponse<PartitionKeyRange>>> readPartitionKeyRangesFunction;
     private final RxCollectionCache collectionCache;
 
-    public RxPartitionKeyRangeCache(AsyncDocumentClient client, RxCollectionCache collectionCache) {
+    public RxPartitionKeyRangeCache(Func2<String, FeedOptions, Observable<FeedResponse<PartitionKeyRange>>> readPartitionKeyRangesFunction,
+            RxCollectionCache collectionCache) {
         this.routingMapCache = new AsyncCache<>();
-        this.client = client;
+        this.readPartitionKeyRangesFunction = readPartitionKeyRangesFunction;
         this.collectionCache = collectionCache;
     }
 
@@ -237,7 +240,7 @@ public class RxPartitionKeyRangeCache implements IPartitionKeyRangeCache {
             if (properties != null) {
                 feedOptions.setProperties(properties);
             }
-            Observable<List<PartitionKeyRange>> rs = client.readPartitionKeyRanges(coll.getSelfLink(), feedOptions)
+            Observable<List<PartitionKeyRange>> rs = this.readPartitionKeyRangesFunction.call(coll.getSelfLink(), feedOptions)
                     // maxConcurrent = 1 to makes it in the right order
                     .flatMap(p -> Observable.from(p.getResults()), 1).toList();
             return rs.toSingle();

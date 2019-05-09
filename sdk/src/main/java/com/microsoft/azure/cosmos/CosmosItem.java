@@ -85,7 +85,7 @@ public class CosmosItem extends Resource {
      * @return an {@link Mono} containing the cosmos item response with the read item or an error
      */
     public Mono<CosmosItemResponse> read(CosmosItemRequestOptions requestOptions) {
-        return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(container.getDatabase().getDocClientWrapper()
+        return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(container.getDatabase().getCosmosClientInternalWrapper()
                 .readDocument(getLink(), requestOptions.toRequestOptions())
                 .map(response -> new CosmosItemResponse(response, container)).toSingle()));
     }
@@ -119,7 +119,7 @@ public class CosmosItem extends Resource {
     public Mono<CosmosItemResponse> replace(Object item, CosmosItemRequestOptions requestOptions){
         Document doc = CosmosItem.fromObject(item);
         return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(container.getDatabase()
-                .getDocClientWrapper()
+                .getCosmosClientInternalWrapper()
                 .replaceDocument(doc, requestOptions.toRequestOptions())
                 .map(response -> new CosmosItemResponse(response, container)).toSingle()));
     }
@@ -150,7 +150,7 @@ public class CosmosItem extends Resource {
     public Mono<CosmosItemResponse> delete(CosmosItemRequestOptions options){
         return RxJava2Adapter.singleToMono(
                 RxJavaInterop.toV2Single(container.getDatabase()
-                                                 .getDocClientWrapper()
+                                                 .getCosmosClientInternalWrapper()
                                                  .deleteDocument(getLink(),options.toRequestOptions())
                                                  .map(response -> new CosmosItemResponse(response, container))
                                                  .toSingle()));

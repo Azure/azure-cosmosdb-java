@@ -60,7 +60,7 @@ public class CosmosStoredProcedure extends CosmosResource {
      * @return an {@link Mono} containing the single resource response with the read stored procedure or an error.
      */
     public Mono<CosmosStoredProcedureResponse> read(RequestOptions options){
-        return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(cosmosContainer.getDatabase().getDocClientWrapper().readStoredProcedure(getLink(), options)
+        return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(cosmosContainer.getDatabase().getCosmosClientInternalWrapper().readStoredProcedure(getLink(), options)
         .map(response -> new CosmosStoredProcedureResponse(response, cosmosContainer)).toSingle()));
     }
 
@@ -77,7 +77,7 @@ public class CosmosStoredProcedure extends CosmosResource {
     public Mono<CosmosResponse> delete(CosmosRequestOptions options){
         return RxJava2Adapter.singleToMono(
                 RxJavaInterop.toV2Single(cosmosContainer.getDatabase()
-                                                 .getDocClientWrapper()
+                                                 .getCosmosClientInternalWrapper()
                                                  .deleteStoredProcedure(getLink(), options.toRequestOptions())
                                                  .map(response -> new CosmosResponse(response.getResource()))
                                                  .toSingle()));
@@ -97,7 +97,7 @@ public class CosmosStoredProcedure extends CosmosResource {
     public Mono<CosmosStoredProcedureResponse> execute(Object[] procedureParams, RequestOptions options){
         return RxJava2Adapter.singleToMono(
                 RxJavaInterop.toV2Single(cosmosContainer.getDatabase()
-                                                 .getDocClientWrapper()
+                                                 .getCosmosClientInternalWrapper()
                                                  .executeStoredProcedure(getLink(), options, procedureParams)
                                                  .map(response -> new CosmosStoredProcedureResponse(response, cosmosContainer))
                                                  .toSingle()));
@@ -118,7 +118,7 @@ public class CosmosStoredProcedure extends CosmosResource {
                                                          RequestOptions options){
         return RxJava2Adapter.singleToMono(
                 RxJavaInterop.toV2Single(cosmosContainer.getDatabase()
-                                                 .getDocClientWrapper()
+                                                 .getCosmosClientInternalWrapper()
                                                  .replaceStoredProcedure(new StoredProcedure(storedProcedureSettings.toJson()), options)
                                                  .map(response -> new CosmosStoredProcedureResponse(response, cosmosContainer))
                                                  .toSingle()));
