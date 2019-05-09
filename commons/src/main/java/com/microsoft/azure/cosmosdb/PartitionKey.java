@@ -34,10 +34,6 @@ public class PartitionKey {
 
     private PartitionKeyInternal internalPartitionKey;
 
-    public PartitionKey(PartitionKeyInternal partitionKeyInternal) {
-        this.internalPartitionKey = partitionKeyInternal;
-    }
-
     /**
      * Constructor. Create a new instance of the PartitionKey object.
      *
@@ -45,7 +41,11 @@ public class PartitionKey {
      */
     @SuppressWarnings("serial")
     public PartitionKey(final Object key) {
-        this.internalPartitionKey = PartitionKeyInternal.fromObjectArray(new Object[] {key}, true);
+        if (key instanceof PartitionKeyInternal) {
+            this.internalPartitionKey = (PartitionKeyInternal) key;
+        } else {
+            this.internalPartitionKey = PartitionKeyInternal.fromObjectArray(new Object[] {key}, true);
+        }
     }
 
     /**
