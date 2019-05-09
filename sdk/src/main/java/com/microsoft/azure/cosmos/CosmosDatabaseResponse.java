@@ -40,7 +40,7 @@ public class CosmosDatabaseResponse extends CosmosResponse<CosmosDatabaseSetting
 
     /**
      * Gets the CosmosDatabase object
-     * @return
+     * @return an instance of CosmosDatabase
      */
     public CosmosDatabase getDatabase() {
         return database;

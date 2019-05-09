@@ -90,7 +90,7 @@ public class CosmosConfiguration {
         /**
          * This method accepts the (@link ConsistencyLevel) to be used
          * @param desiredConsistencyLevel (@link ConsistencyLevel)
-         * @return
+         * @return current Builder
          */
         public Builder withConsistencyLevel(ConsistencyLevel desiredConsistencyLevel) {
             this.desiredConsistencyLevel = desiredConsistencyLevel;
@@ -99,8 +99,8 @@ public class CosmosConfiguration {
 
         /**
          * The (@link ConnectionPolicy) to be used
-         * @param connectionPolicy
-         * @return
+         * @param connectionPolicy (@link ConnectionPolicy)
+         * @return current Builder
          */
         public Builder withConnectionPolicy(ConnectionPolicy connectionPolicy) {
             this.connectionPolicy = connectionPolicy;

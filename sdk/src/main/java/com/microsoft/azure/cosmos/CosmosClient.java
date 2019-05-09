@@ -237,7 +237,7 @@ import reactor.core.publisher.Mono;
     /**
      * Gets a database object without making a service call.
      * @param id name of the database
-     * @return
+     * @return instance of CosmosDatabase
      */
     public CosmosDatabase getDatabase(String id) {
         return new CosmosDatabase(id, this);

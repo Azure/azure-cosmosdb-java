@@ -26,7 +26,6 @@ import com.microsoft.azure.cosmosdb.BridgeInternal;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
-import com.microsoft.azure.cosmosdb.RequestOptions;
 import com.microsoft.azure.cosmosdb.SqlQuerySpec;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.internal.Paths;
@@ -98,6 +97,7 @@ public class CosmosDatabase extends CosmosResource {
      * The {@link Mono} upon successful completion will contain a cosmos database response with the deleted database.
      * In case of failure the {@link Mono} will error.
      *
+     * @param options the cosmos request options                           
      * @return an {@link Mono} containing the single cosmos database response
      */
     public Mono<CosmosDatabaseResponse> delete(CosmosRequestOptions options) {
@@ -169,6 +169,7 @@ public class CosmosDatabase extends CosmosResource {
      * or existing collection.
      * In case of failure the {@link Mono} will error.
      *
+     * @param containerSettings the container settings.
      * @return a {@link Mono} containing the cosmos container response with the created or existing container or
      * an error.
      */
