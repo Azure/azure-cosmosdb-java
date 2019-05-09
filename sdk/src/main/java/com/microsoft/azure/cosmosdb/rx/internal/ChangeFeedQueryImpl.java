@@ -43,22 +43,22 @@ import rx.Single;
 import rx.functions.Func1;
 import rx.functions.Func2;
 
-class ChangeFeedQueryImpl<T extends Resource> {
+public class ChangeFeedQueryImpl<T extends Resource> {
 
     private static final String IfNonMatchAllHeaderValue = "*";
-    private final RxDocumentClientImpl client;
+    private final Func1<RxDocumentServiceRequest, Observable<RxDocumentServiceResponse>> readFeedFunction;
     private final ResourceType resourceType;
     private final Class<T> klass;
     private final String documentsLink;
     private final ChangeFeedOptions options;
 
-    public ChangeFeedQueryImpl(RxDocumentClientImpl client, 
+    public ChangeFeedQueryImpl(Func1<RxDocumentServiceRequest, Observable<RxDocumentServiceResponse>> readFeedFunction, 
             ResourceType resourceType, 
             Class<T> klass,
             String collectionLink,
             ChangeFeedOptions changeFeedOptions) {
 
-        this.client = client;
+        this.readFeedFunction = readFeedFunction;
         this.resourceType = resourceType;
         this.klass = klass;
         this.documentsLink = Utils.joinPath(collectionLink, Paths.DOCUMENTS_PATH_SEGMENT);
@@ -150,8 +150,8 @@ class ChangeFeedQueryImpl<T extends Resource> {
         return Paginator.getPaginatedChangeFeedQueryResultAsObservable(options, createRequestFunc, executeFunc, klass, options.getMaxItemCount() != null ? options.getMaxItemCount(): -1);
     }
 
-    private Single<FeedResponse<T>> executeRequestAsync(RxDocumentServiceRequest request) {
-        return client.readFeed(request).toSingle()
+    private Single<FeedResponse<T>> executeRequestAsync(RxDocumentServiceRequest request) {        
+        return readFeedFunction.call(request).toSingle()
                 .map( rsp -> BridgeInternal.toChaneFeedResponsePage(rsp, klass));
     }
 }

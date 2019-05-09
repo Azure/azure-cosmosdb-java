@@ -20,7 +20,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.microsoft.azure.cosmosdb.rx.internal;
+package com.microsoft.azure.cosmos;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -85,6 +85,23 @@ import com.microsoft.azure.cosmosdb.internal.directconnectivity.StoreClientFacto
 import com.microsoft.azure.cosmosdb.internal.routing.PartitionKeyAndResourceTokenPair;
 import com.microsoft.azure.cosmosdb.internal.routing.PartitionKeyInternal;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
+import com.microsoft.azure.cosmosdb.rx.internal.AuthorizationTokenType;
+import com.microsoft.azure.cosmosdb.rx.internal.ChangeFeedQueryImpl;
+import com.microsoft.azure.cosmosdb.rx.internal.Configs;
+import com.microsoft.azure.cosmosdb.rx.internal.GlobalEndpointManager;
+import com.microsoft.azure.cosmosdb.rx.internal.RxGatewayStoreModel;
+import com.microsoft.azure.cosmosdb.rx.internal.HttpClientFactory;
+import com.microsoft.azure.cosmosdb.rx.internal.IAuthorizationTokenProvider;
+import com.microsoft.azure.cosmosdb.rx.internal.IDocumentClientRetryPolicy;
+import com.microsoft.azure.cosmosdb.rx.internal.IRetryPolicyFactory;
+import com.microsoft.azure.cosmosdb.rx.internal.ObservableHelper;
+import com.microsoft.azure.cosmosdb.rx.internal.PartitionKeyMismatchRetryPolicy;
+import com.microsoft.azure.cosmosdb.rx.internal.ResetSessionTokenRetryPolicyFactory;
+import com.microsoft.azure.cosmosdb.rx.internal.RetryPolicy;
+import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
+import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceResponse;
+import com.microsoft.azure.cosmosdb.rx.internal.RxStoreModel;
+import com.microsoft.azure.cosmosdb.rx.internal.Strings;
 import com.microsoft.azure.cosmosdb.rx.internal.caches.RxClientCollectionCache;
 import com.microsoft.azure.cosmosdb.rx.internal.caches.RxCollectionCache;
 import com.microsoft.azure.cosmosdb.rx.internal.caches.RxPartitionKeyRangeCache;
@@ -128,9 +145,9 @@ import static com.microsoft.azure.cosmosdb.BridgeInternal.toStoredProcedureRespo
  * While this class is public, but it is not part of our published public APIs.
  * This is meant to be internally used only by our sdk.
  */
-public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorizationTokenProvider {
+public class CosmosClientContext implements AsyncDocumentClient, IAuthorizationTokenProvider {
     private final static ObjectMapper mapper = Utils.getSimpleObjectMapper();
-    private final Logger logger = LoggerFactory.getLogger(RxDocumentClientImpl.class);
+    private final Logger logger = LoggerFactory.getLogger(CosmosClientContext.class);
     private final String masterKeyOrResourceToken;
     private final URI serviceEndpoint;
     private final ConnectionPolicy connectionPolicy;
@@ -172,7 +189,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
 
     private GatewayServiceConfigurationReader gatewayConfigurationReader;
 
-    public RxDocumentClientImpl(URI serviceEndpoint,
+    public CosmosClientContext(URI serviceEndpoint,
                                 String masterKeyOrResourceToken,
                                 List<Permission> permissionFeed,
                                 ConnectionPolicy connectionPolicy,
@@ -183,7 +200,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
         this.tokenResolver = tokenResolver;
     }
 
-    public RxDocumentClientImpl(URI serviceEndpoint,
+    public CosmosClientContext(URI serviceEndpoint,
                                 String masterKeyOrResourceToken,
                                 List<Permission> permissionFeed,
                                 ConnectionPolicy connectionPolicy,
@@ -232,7 +249,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
         }
     }
 
-    public RxDocumentClientImpl(URI serviceEndpoint, String masterKeyOrResourceToken, ConnectionPolicy connectionPolicy,
+    public CosmosClientContext(URI serviceEndpoint, String masterKeyOrResourceToken, ConnectionPolicy connectionPolicy,
                                 ConsistencyLevel consistencyLevel, Configs configs) {
 
         logger.info(
@@ -319,7 +336,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
         this.collectionCache = new RxClientCollectionCache(this.sessionContainer, this.gatewayProxy, this, this.retryPolicy);
         this.resetSessionTokenRetryPolicy = new ResetSessionTokenRetryPolicyFactory(this.sessionContainer, this.collectionCache, this.retryPolicy);
 
-        this.partitionKeyRangeCache = new RxPartitionKeyRangeCache(RxDocumentClientImpl.this,
+        this.partitionKeyRangeCache = new RxPartitionKeyRangeCache(CosmosClientContext.this,
                 collectionCache);
 
         if (this.connectionPolicy.getConnectionMode() == ConnectionMode.Gateway) {
@@ -360,18 +377,18 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
 
             @Override
             public URI getServiceEndpoint() {
-                return RxDocumentClientImpl.this.getServiceEndpoint();
+                return CosmosClientContext.this.getServiceEndpoint();
             }
 
             @Override
             public Observable<DatabaseAccount> getDatabaseAccountFromEndpoint(URI endpoint) {
                 logger.info("Getting database account endpoint from {}", endpoint);
-                return RxDocumentClientImpl.this.getDatabaseAccountFromEndpoint(endpoint);
+                return CosmosClientContext.this.getDatabaseAccountFromEndpoint(endpoint);
             }
 
             @Override
             public ConnectionPolicy getConnectionPolicy() {
-                return RxDocumentClientImpl.this.getConnectionPolicy();
+                return CosmosClientContext.this.getConnectionPolicy();
             }
         };
     }
@@ -590,7 +607,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
         String queryResourceLink = parentResourceLinkToQueryLink(parentResourceLink, resourceTypeEnum);
 
         UUID activityId = Utils.randomUUID();
-        IDocumentQueryClient queryClient = DocumentQueryClientImpl(RxDocumentClientImpl.this);
+        IDocumentQueryClient queryClient = DocumentQueryClientImpl(CosmosClientContext.this);
         Observable<? extends IDocumentQueryExecutionContext<T>> executionContext =
                 DocumentQueryExecutionContextFactory.createDocumentQueryExecutionContextAsync(queryClient, resourceTypeEnum, klass, sqlQuery , options, queryResourceLink, false, activityId);
         return executionContext.single().flatMap(ex -> {
@@ -1031,7 +1048,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
 
         Document typedDocument = documentFromObject(document, mapper);
 
-        RxDocumentClientImpl.validateResource(typedDocument);
+        CosmosClientContext.validateResource(typedDocument);
 
         if (typedDocument.getId() == null && !disableAutomaticIdGeneration) {
             // We are supposed to use GUID. Basically UUID is the same as GUID
@@ -1398,39 +1415,39 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
         return queryDocuments(collectionLink, new SqlQuerySpec(query), options);
     }
 
-    private IDocumentQueryClient DocumentQueryClientImpl(RxDocumentClientImpl rxDocumentClientImpl) {
+    private IDocumentQueryClient DocumentQueryClientImpl(CosmosClientContext rxDocumentClientImpl) {
 
         return new IDocumentQueryClient () {
 
             @Override
             public RxCollectionCache getCollectionCache() {
-                return RxDocumentClientImpl.this.collectionCache;
+                return CosmosClientContext.this.collectionCache;
             }
 
             @Override
             public RxPartitionKeyRangeCache getPartitionKeyRangeCache() {
-                return RxDocumentClientImpl.this.partitionKeyRangeCache;
+                return CosmosClientContext.this.partitionKeyRangeCache;
             }
 
             @Override
             public IRetryPolicyFactory getResetSessionTokenRetryPolicy() {
-                return RxDocumentClientImpl.this.resetSessionTokenRetryPolicy;
+                return CosmosClientContext.this.resetSessionTokenRetryPolicy;
             }
 
             @Override
             public ConsistencyLevel getDefaultConsistencyLevelAsync() {
-                return RxDocumentClientImpl.this.gatewayConfigurationReader.getDefaultConsistencyLevel();
+                return CosmosClientContext.this.gatewayConfigurationReader.getDefaultConsistencyLevel();
             }
 
             @Override
             public ConsistencyLevel getDesiredConsistencyLevelAsync() {
                 // TODO Auto-generated method stub
-                return RxDocumentClientImpl.this.consistencyLevel;
+                return CosmosClientContext.this.consistencyLevel;
             }
 
             @Override
             public Single<RxDocumentServiceResponse> executeQueryAsync(RxDocumentServiceRequest request) {
-                return RxDocumentClientImpl.this.query(request).toSingle();
+                return CosmosClientContext.this.query(request).toSingle();
             }
 
             @Override
@@ -1598,7 +1615,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
             }
             logger.debug("Replacing a StoredProcedure. storedProcedure id [{}]", storedProcedure.getId());
 
-            RxDocumentClientImpl.validateResource(storedProcedure);
+            CosmosClientContext.validateResource(storedProcedure);
 
             String path = Utils.joinPath(storedProcedure.getSelfLink(), null);
             Map<String, String> requestHeaders = getRequestHeaders(options);
@@ -1742,7 +1759,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
 
             RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.ExecuteJavaScript,
                     ResourceType.StoredProcedure, path,
-                    procedureParams != null ? RxDocumentClientImpl.serializeProcedureParams(procedureParams) : "",
+                    procedureParams != null ? CosmosClientContext.serializeProcedureParams(procedureParams) : "",
                     requestHeaders, options);
 
             Observable<RxDocumentServiceRequest> reqObs = addPartitionKeyInformation(request, null, options).toObservable();
@@ -1821,7 +1838,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
             throw new IllegalArgumentException("trigger");
         }
 
-        RxDocumentClientImpl.validateResource(trigger);
+        CosmosClientContext.validateResource(trigger);
 
         String path = Utils.joinPath(collectionLink, Paths.TRIGGERS_PATH_SEGMENT);
         Map<String, String> requestHeaders = getRequestHeaders(options);
@@ -1846,7 +1863,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
             }
 
             logger.debug("Replacing a Trigger. trigger id [{}]", trigger.getId());
-            RxDocumentClientImpl.validateResource(trigger);
+            CosmosClientContext.validateResource(trigger);
 
             String path = Utils.joinPath(trigger.getSelfLink(), null);
             Map<String, String> requestHeaders = getRequestHeaders(options);
@@ -2222,7 +2239,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
             }
 
             logger.debug("Replacing a Attachment. attachment id [{}]", attachment.getId());
-            RxDocumentClientImpl.validateResource(attachment);
+            CosmosClientContext.validateResource(attachment);
 
             String path = Utils.joinPath(attachment.getSelfLink(), null);
             Map<String, String> requestHeaders = getRequestHeaders(options);
@@ -2394,7 +2411,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
             throw new IllegalArgumentException("attachment");
         }
 
-        RxDocumentClientImpl.validateResource(attachment);
+        CosmosClientContext.validateResource(attachment);
 
         String path = Utils.joinPath(documentLink, Paths.ATTACHMENTS_PATH_SEGMENT);
         Map<String, String> requestHeaders = getRequestHeaders(options);
@@ -2617,7 +2634,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
             throw new IllegalArgumentException("user");
         }
 
-        RxDocumentClientImpl.validateResource(user);
+        CosmosClientContext.validateResource(user);
 
         String path = Utils.joinPath(databaseLink, Paths.USERS_PATH_SEGMENT);
         Map<String, String> requestHeaders = getRequestHeaders(options);
@@ -2639,7 +2656,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
                 throw new IllegalArgumentException("user");
             }
             logger.debug("Replacing a User. user id [{}]", user.getId());
-            RxDocumentClientImpl.validateResource(user);
+            CosmosClientContext.validateResource(user);
 
             String path = Utils.joinPath(user.getSelfLink(), null);
             Map<String, String> requestHeaders = getRequestHeaders(options);
@@ -2793,7 +2810,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
             throw new IllegalArgumentException("permission");
         }
 
-        RxDocumentClientImpl.validateResource(permission);
+        CosmosClientContext.validateResource(permission);
 
         String path = Utils.joinPath(userLink, Paths.PERMISSIONS_PATH_SEGMENT);
         Map<String, String> requestHeaders = getRequestHeaders(options);
@@ -2815,7 +2832,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
                 throw new IllegalArgumentException("permission");
             }
             logger.debug("Replacing a Permission. permission id [{}]", permission.getId());
-            RxDocumentClientImpl.validateResource(permission);
+            CosmosClientContext.validateResource(permission);
 
             String path = Utils.joinPath(permission.getSelfLink(), null);
             Map<String, String> requestHeaders = getRequestHeaders(options);
@@ -2927,7 +2944,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
                 throw new IllegalArgumentException("offer");
             }
             logger.debug("Replacing an Offer. offer id [{}]", offer.getId());
-            RxDocumentClientImpl.validateResource(offer);
+            CosmosClientContext.validateResource(offer);
 
             String path = Utils.joinPath(offer.getSelfLink(), null);
             RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.Replace,

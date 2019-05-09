@@ -72,7 +72,7 @@ import java.util.Map.Entry;
  * 
  * Used internally to provide functionality to communicate and process response from Gateway in the Azure Cosmos DB database service.
  */
-class RxGatewayStoreModel implements RxStoreModel {
+public class RxGatewayStoreModel implements RxStoreModel {
 
     private final static int INITIAL_RESPONSE_BUFFER_SIZE = 1024;
     private final Logger logger = LoggerFactory.getLogger(RxGatewayStoreModel.class);
