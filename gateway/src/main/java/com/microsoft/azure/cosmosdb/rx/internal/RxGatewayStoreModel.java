@@ -41,7 +41,6 @@ import hu.akarnokd.rxjava.interop.RxJavaInterop;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
-import io.netty.handler.codec.http.EmptyHttpHeaders;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -55,6 +54,7 @@ import rx.Observable;
 import rx.Single;
 import rx.functions.Func0;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -284,7 +284,7 @@ class RxGatewayStoreModel implements RxStoreModel {
 
                 if (request.getOperationType() == OperationType.Delete) {
                     // for delete we don't expect any body
-                    inputStreamObservable = Flux.just();
+                    inputStreamObservable = Flux.just(IOUtils.toInputStream("", StandardCharsets.UTF_8));
                 } else {
                     // transforms the ByteBufFlux to Flux<InputStream>
                     inputStreamObservable = byteBufFlux.asInputStream();
@@ -344,7 +344,7 @@ class RxGatewayStoreModel implements RxStoreModel {
                         if (!(throwable instanceof Exception)) {
                             // fatal error
                             logger.error("Unexpected failure {}", throwable.getMessage(), throwable);
-                            return Flux.error(throwable);
+                            return Flux.error(reactor.core.Exceptions.propagate(throwable));
                         }
 
                         Exception exception = (Exception) throwable;
@@ -353,10 +353,10 @@ class RxGatewayStoreModel implements RxStoreModel {
                             logger.error("Network failure", exception);
                             DocumentClientException dce = new DocumentClientException(0, exception);
                             BridgeInternal.setRequestHeaders(dce, request.getHeaders());
-                            return Flux.error(dce);
+                            return Flux.error(reactor.core.Exceptions.propagate(dce));
                         }
 
-                        return Flux.error(exception);
+                        return Flux.error(reactor.core.Exceptions.propagate(exception));
                     }));
         }
     }

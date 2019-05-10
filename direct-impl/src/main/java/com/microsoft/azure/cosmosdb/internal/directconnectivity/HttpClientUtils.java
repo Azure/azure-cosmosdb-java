@@ -27,12 +27,14 @@ import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.Error;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceResponse;
+import hu.akarnokd.rxjava.interop.RxJavaInterop;
 import io.netty.buffer.ByteBuf;
 import io.reactivex.netty.protocol.http.client.HttpClientResponse;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.netty.ByteBufFlux;
 import reactor.netty.http.client.HttpClient;
+import rx.Observable;
 import rx.Single;
 
 import java.nio.charset.StandardCharsets;
@@ -56,19 +58,21 @@ public class HttpClientUtils {
         }
     }
 
-    static Mono<RxDocumentServiceResponse> parseResponseAsync(reactor.netty.http.client.HttpClientResponse httpClientResponse, ByteBufFlux byteBufFlux) {
+    static Single<RxDocumentServiceResponse> parseResponseAsync(HttpClient.ResponseReceiver<?> responseReceiver) {
+        Observable<RxDocumentServiceResponse> rxDocumentServiceResponseObservable = RxJavaInterop.toV1Observable(responseReceiver.response().flatMap(httpClientResponse -> {
+            if (httpClientResponse.status().code() < HttpConstants.StatusCodes.MINIMUM_STATUSCODE_AS_ERROR_GATEWAY) {
 
-        if (httpClientResponse.status().code() < HttpConstants.StatusCodes.MINIMUM_STATUSCODE_AS_ERROR_GATEWAY) {
+                Mono<StoreResponse> storeResponse = ResponseUtils.toStoreResponse(httpClientResponse, responseReceiver.responseContent());
+                return storeResponse.map(RxDocumentServiceResponse::new);
 
-            Mono<StoreResponse> storeResponse = ResponseUtils.toStoreResponse(httpClientResponse, byteBufFlux);
-            return storeResponse.map(RxDocumentServiceResponse::new);
+                // TODO: to break the dependency between RxDocumentServiceResponse and StoreResponse
+                // we should factor out the  RxDocumentServiceResponse(StoreResponse) constructor to a helper class
 
-            // TODO: to break the dependency between RxDocumentServiceResponse and StoreResponse
-            // we should factor out the  RxDocumentServiceResponse(StoreResponse) constructor to a helper class
-
-        } else {
-            return HttpClientUtils.createDocumentClientException(httpClientResponse, byteBufFlux).flatMap(Mono::error);
-        }
+            } else {
+                return HttpClientUtils.createDocumentClientException(httpClientResponse, responseReceiver.responseContent()).flatMap(Mono::error);
+            }
+        }));
+        return rxDocumentServiceResponseObservable.toSingle();
     }
 
     private static Single<DocumentClientException> createDocumentClientException(HttpClientResponse<ByteBuf> responseMessage) {

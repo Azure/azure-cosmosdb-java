@@ -91,7 +91,7 @@ public class CollectionCrudTest extends TestSuiteBase {
         return collectionDefinition;
     }
 
-    @Test(groups = { "emulator" }, dataProvider = "collectionCrudArgProvider")
+    @Test(groups = { "emulator" }, timeOut = TIMEOUT, dataProvider = "collectionCrudArgProvider")
     public void createCollection(String collectionName, boolean isNameBased) {
         DocumentCollection collectionDefinition = getCollectionDefinition(collectionName);
         
@@ -262,7 +262,6 @@ public class CollectionCrudTest extends TestSuiteBase {
 
     @Test(groups = { "emulator" }, timeOut = TIMEOUT)
     public void sessionTokenConsistencyCollectionDeleteCreateSameName() {
-        Hooks.onOperatorDebug();
         AsyncDocumentClient client1 = clientBuilder.build();
         AsyncDocumentClient client2 = clientBuilder.build();
 
@@ -316,7 +315,7 @@ public class CollectionCrudTest extends TestSuiteBase {
         }
     }
 
-    @BeforeClass(groups = { "emulator" })
+    @BeforeClass(groups = { "emulator" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
         client = clientBuilder.build();
         database = createDatabase(client, databaseId);

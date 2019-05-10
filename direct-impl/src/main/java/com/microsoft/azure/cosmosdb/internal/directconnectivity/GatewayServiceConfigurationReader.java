@@ -184,12 +184,8 @@ public class GatewayServiceConfigurationReader {
     private Single<DatabaseAccount> toDatabaseAccountObservable(
             HttpClient.ResponseReceiver<?> responseReceiver) {
 
-        Mono<DatabaseAccount> single = responseReceiver.response(HttpClientUtils::parseResponseAsync)
-                .map(rxDocumentServiceResponse -> rxDocumentServiceResponse.getResource(DatabaseAccount.class))
-                .single();
-
-        io.reactivex.Single<DatabaseAccount> single1 = RxJava2Adapter.monoToSingle(single);
-        return RxJavaInterop.toV1Single(single1);
+        return HttpClientUtils.parseResponseAsync(responseReceiver)
+                .map(rxDocumentServiceResponse -> rxDocumentServiceResponse.getResource(DatabaseAccount.class));
     }
 
     private void throwIfNotInitialized() {

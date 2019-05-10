@@ -237,13 +237,12 @@ public class GatewayAddressCache implements IAddressCache {
                 }
                 return Single.error(ex);
             } else {
-                assert dce != null;
                 if (Exceptions.isStatusCode(dce, HttpConstants.StatusCodes.NOTFOUND) ||
                         Exceptions.isStatusCode(dce, HttpConstants.StatusCodes.GONE) ||
                         Exceptions.isSubStatusCode(dce, HttpConstants.SubStatusCodes.PARTITION_KEY_RANGE_GONE)) {
                     //remove from suboptimal cache in case the collection+pKeyRangeId combo is gone.
                     this.suboptimalServerPartitionTimestamps.remove(partitionKeyRangeIdentity);
-                    return null;
+                    return Single.just(new AddressInformation[0]);
                 }
                 return Single.error(ex);
             }
@@ -308,11 +307,7 @@ public class GatewayAddressCache implements IAddressCache {
                 .baseUrl(targetEndpoint.toString())
                 .request(HttpMethod.GET);
 
-        Single<RxDocumentServiceResponse> dsrObs = RxJavaInterop
-                .toV1Single(RxJava2Adapter
-                        .monoToSingle(responseReceiver
-                                .response(HttpClientUtils::parseResponseAsync)
-                                .single()));
+        Single<RxDocumentServiceResponse> dsrObs = HttpClientUtils.parseResponseAsync(responseReceiver);
         return dsrObs.map(
                 dsr -> {
                     logAddressResolutionEnd(request, identifier);
@@ -453,17 +448,13 @@ public class GatewayAddressCache implements IAddressCache {
             defaultHttpHeaders.add(entry.getKey(), entry.getValue());
         }
 
-        HttpClient.ResponseReceiver<?> responseObs = this.httpClient
+        HttpClient.ResponseReceiver<?> responseReceiver = this.httpClient
                 .headers(httpHeaders ->  httpHeaders.set(defaultHttpHeaders))
                 .port(targetEndpoint.getPort())
                 .baseUrl(targetEndpoint.toString())
                 .request(HttpMethod.GET);
 
-        Single<RxDocumentServiceResponse> dsrObs = RxJavaInterop
-                .toV1Single(RxJava2Adapter
-                        .monoToSingle(responseObs
-                                .response(HttpClientUtils::parseResponseAsync)
-                                .single()));
+        Single<RxDocumentServiceResponse> dsrObs = HttpClientUtils.parseResponseAsync(responseReceiver);
 
         return dsrObs.map(
                 dsr -> {

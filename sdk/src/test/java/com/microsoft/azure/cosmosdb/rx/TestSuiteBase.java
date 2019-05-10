@@ -167,7 +167,7 @@ public class TestSuiteBase {
         }
     }
 
-    @BeforeSuite(groups = { "simple", "long", "direct", "multi-master", "emulator", "non-emulator" })
+    @BeforeSuite(groups = { "simple", "long", "direct", "multi-master", "emulator", "non-emulator" }, timeOut = SUITE_SETUP_TIMEOUT)
     public static void beforeSuite() {
         Hooks.onOperatorDebug();
         logger.info("beforeSuite Started");
@@ -656,7 +656,7 @@ public class TestSuiteBase {
                     .single();
 
             for(DocumentCollection collection: collections) {
-                client.deleteCollection(collection.getSelfLink(), null).toBlocking().single().getResource();
+                safeDeleteCollection(client, collection);
             }
         }
     }
@@ -910,12 +910,12 @@ public class TestSuiteBase {
         List<Builder> builders = new ArrayList<>();
         builders.add(createGatewayRxDocumentClient(ConsistencyLevel.Session, isMultiMasterEnabled, preferredLocation));
 
-//        for (Protocol protocol : protocols) {
-//            testConsistencies.forEach(consistencyLevel -> builders.add(createDirectRxDocumentClient(consistencyLevel,
-//                                                                                                    protocol,
-//                                                                                                    isMultiMasterEnabled,
-//                                                                                                    preferredLocation)));
-//        }
+        for (Protocol protocol : protocols) {
+            testConsistencies.forEach(consistencyLevel -> builders.add(createDirectRxDocumentClient(consistencyLevel,
+                                                                                                    protocol,
+                                                                                                    isMultiMasterEnabled,
+                                                                                                    preferredLocation)));
+        }
 
         builders.forEach(b -> logger.info("Will Use ConnectionMode [{}], Consistency [{}], Protocol [{}]",
                                           b.connectionPolicy.getConnectionMode(),
