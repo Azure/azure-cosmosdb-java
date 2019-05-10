@@ -81,6 +81,7 @@ import com.microsoft.azure.cosmosdb.User;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient.Builder;
 
 import org.testng.annotations.Test;
+import reactor.core.publisher.Hooks;
 import rx.Observable;
 import rx.observers.TestSubscriber;
 
@@ -166,8 +167,9 @@ public class TestSuiteBase {
         }
     }
 
-    @BeforeSuite(groups = { "simple", "long", "direct", "multi-master", "emulator", "non-emulator" }, timeOut = SUITE_SETUP_TIMEOUT)
+    @BeforeSuite(groups = { "simple", "long", "direct", "multi-master", "emulator", "non-emulator" })
     public static void beforeSuite() {
+        Hooks.onOperatorDebug();
         logger.info("beforeSuite Started");
         AsyncDocumentClient houseKeepingClient = createGatewayHouseKeepingDocumentClient().build();
         try {
@@ -908,12 +910,12 @@ public class TestSuiteBase {
         List<Builder> builders = new ArrayList<>();
         builders.add(createGatewayRxDocumentClient(ConsistencyLevel.Session, isMultiMasterEnabled, preferredLocation));
 
-        for (Protocol protocol : protocols) {
-            testConsistencies.forEach(consistencyLevel -> builders.add(createDirectRxDocumentClient(consistencyLevel,
-                                                                                                    protocol,
-                                                                                                    isMultiMasterEnabled,
-                                                                                                    preferredLocation)));
-        }
+//        for (Protocol protocol : protocols) {
+//            testConsistencies.forEach(consistencyLevel -> builders.add(createDirectRxDocumentClient(consistencyLevel,
+//                                                                                                    protocol,
+//                                                                                                    isMultiMasterEnabled,
+//                                                                                                    preferredLocation)));
+//        }
 
         builders.forEach(b -> logger.info("Will Use ConnectionMode [{}], Consistency [{}], Protocol [{}]",
                                           b.connectionPolicy.getConnectionMode(),

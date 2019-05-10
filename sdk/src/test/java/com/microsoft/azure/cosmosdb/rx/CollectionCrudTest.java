@@ -47,6 +47,7 @@ import com.microsoft.azure.cosmosdb.ResourceResponse;
 import com.microsoft.azure.cosmosdb.SpatialSpec;
 import com.microsoft.azure.cosmosdb.SpatialType;
 
+import reactor.core.publisher.Hooks;
 import rx.Observable;
 
 public class CollectionCrudTest extends TestSuiteBase {
@@ -62,6 +63,7 @@ public class CollectionCrudTest extends TestSuiteBase {
     public CollectionCrudTest(AsyncDocumentClient.Builder clientBuilder) {
         this.clientBuilder = clientBuilder;
         this.subscriberValidationTimeout = TIMEOUT;
+        Hooks.onOperatorDebug();
     }
 
     @DataProvider(name = "collectionCrudArgProvider")
@@ -89,7 +91,7 @@ public class CollectionCrudTest extends TestSuiteBase {
         return collectionDefinition;
     }
 
-    @Test(groups = { "emulator" }, timeOut = TIMEOUT, dataProvider = "collectionCrudArgProvider")
+    @Test(groups = { "emulator" }, dataProvider = "collectionCrudArgProvider")
     public void createCollection(String collectionName, boolean isNameBased) {
         DocumentCollection collectionDefinition = getCollectionDefinition(collectionName);
         
@@ -260,6 +262,7 @@ public class CollectionCrudTest extends TestSuiteBase {
 
     @Test(groups = { "emulator" }, timeOut = TIMEOUT)
     public void sessionTokenConsistencyCollectionDeleteCreateSameName() {
+        Hooks.onOperatorDebug();
         AsyncDocumentClient client1 = clientBuilder.build();
         AsyncDocumentClient client2 = clientBuilder.build();
 
@@ -313,13 +316,13 @@ public class CollectionCrudTest extends TestSuiteBase {
         }
     }
 
-    @BeforeClass(groups = { "emulator" }, timeOut = SETUP_TIMEOUT)
+    @BeforeClass(groups = { "emulator" })
     public void beforeClass() {
         client = clientBuilder.build();
         database = createDatabase(client, databaseId);
     }
 
-    @AfterClass(groups = { "emulator" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)
+    @AfterClass(groups = { "emulator" }, alwaysRun = true)
     public void afterClass() {
         safeDeleteDatabase(client, databaseId);
         safeClose(client);

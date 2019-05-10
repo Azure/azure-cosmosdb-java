@@ -23,21 +23,6 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.net.URI;
-import java.util.concurrent.TimeUnit;
-
-import org.apache.commons.io.IOUtils;
-import org.mockito.Matchers;
-import org.mockito.Mockito;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Factory;
-import org.testng.annotations.Test;
-
 import com.microsoft.azure.cosmosdb.BridgeInternal;
 import com.microsoft.azure.cosmosdb.ConnectionPolicy;
 import com.microsoft.azure.cosmosdb.DatabaseAccount;
@@ -48,29 +33,34 @@ import com.microsoft.azure.cosmosdb.rx.TestConfigurations;
 import com.microsoft.azure.cosmosdb.rx.TestSuiteBase;
 import com.microsoft.azure.cosmosdb.rx.internal.SpyClientUnderTestFactory;
 import com.microsoft.azure.cosmosdb.rx.internal.SpyClientUnderTestFactory.ClientUnderTest;
-
-import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.ByteBufUtil;
-import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.DefaultHttpResponse;
+import io.netty.handler.codec.http.EmptyHttpHeaders;
 import io.netty.handler.codec.http.HttpHeaders;
-import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
-import io.reactivex.netty.client.RxClient;
-import io.reactivex.netty.protocol.http.client.CompositeHttpClient;
-import io.reactivex.netty.protocol.http.client.HttpClientResponse;
-import io.reactivex.netty.protocol.http.client.HttpResponseHeaders;
+import org.apache.commons.io.IOUtils;
+import org.mockito.Mockito;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Factory;
+import org.testng.annotations.Test;
+import reactor.netty.http.client.HttpClient;
 import rx.Observable;
 import rx.Single;
 import rx.observers.TestSubscriber;
 
+import java.net.URI;
+import java.util.concurrent.TimeUnit;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
 public class GatewayServiceConfigurationReaderTest extends TestSuiteBase {
 
     private static final int TIMEOUT = 8000;
-    private CompositeHttpClient<ByteBuf, ByteBuf> mockHttpClient;
-    private CompositeHttpClient<ByteBuf, ByteBuf> httpClient;
+    private HttpClient mockHttpClient;
+    private HttpClient httpClient;
     private BaseAuthorizationTokenProvider baseAuthorizationTokenProvider;
     private ConnectionPolicy connectionPolicy;
     private GatewayServiceConfigurationReader mockGatewayServiceConfigurationReader;
@@ -87,7 +77,7 @@ public class GatewayServiceConfigurationReaderTest extends TestSuiteBase {
     @BeforeClass(groups = "simple")
     public void setup() throws Exception {
         client = clientBuilder.build();
-        mockHttpClient = (CompositeHttpClient<ByteBuf, ByteBuf>) Mockito.mock(CompositeHttpClient.class);
+        mockHttpClient = Mockito.mock(HttpClient.class);
 
         ClientUnderTest clientUnderTest = SpyClientUnderTestFactory.createClientUnderTest(this.clientBuilder);
         httpClient = clientUnderTest.getSpyHttpClient();
@@ -115,10 +105,10 @@ public class GatewayServiceConfigurationReaderTest extends TestSuiteBase {
     @Test(groups = "simple")
     public void mockInitializeReaderAsync() throws Exception {
 
-        HttpClientResponse<ByteBuf> mockedResponse = getMockResponse(databaseAccountJson);
+        HttpClient.ResponseReceiver mockedResponse = getMockResponse(databaseAccountJson);
 
-        Mockito.when(mockHttpClient.submit(Matchers.any(RxClient.ServerInfo.class), Matchers.any()))
-                .thenReturn(Observable.just(mockedResponse));
+        Mockito.when(mockHttpClient.get())
+                .thenReturn(mockedResponse);
 
         Single<DatabaseAccount> databaseAccount = mockGatewayServiceConfigurationReader.initializeReaderAsync();
         validateSuccess(databaseAccount, expectedDatabaseAccount);
@@ -129,10 +119,10 @@ public class GatewayServiceConfigurationReaderTest extends TestSuiteBase {
         mockGatewayServiceConfigurationReader = new GatewayServiceConfigurationReader(new URI(TestConfigurations.HOST),
                 true, "SampleResourceToken", connectionPolicy, baseAuthorizationTokenProvider, mockHttpClient);
 
-        HttpClientResponse<ByteBuf> mockedResponse = getMockResponse(databaseAccountJson);
+        HttpClient.ResponseReceiver mockedResponse = getMockResponse(databaseAccountJson);
 
-        Mockito.when(mockHttpClient.submit(Matchers.any(RxClient.ServerInfo.class), Matchers.any()))
-                .thenReturn(Observable.just(mockedResponse));
+        Mockito.when(mockHttpClient.get())
+                .thenReturn(mockedResponse);
 
         Single<DatabaseAccount> databaseAccount = mockGatewayServiceConfigurationReader.initializeReaderAsync();
         validateSuccess(databaseAccount, expectedDatabaseAccount);
@@ -179,25 +169,20 @@ public class GatewayServiceConfigurationReaderTest extends TestSuiteBase {
                 .isEqualTo(BridgeInternal.getQueryEngineConfiuration(expectedDatabaseAccount));
     }
 
-    private HttpClientResponse<ByteBuf> getMockResponse(String databaseAccountJson) {
-        HttpClientResponse<ByteBuf> resp = Mockito.mock(HttpClientResponse.class);
-        Mockito.doReturn(HttpResponseStatus.valueOf(200)).when(resp).getStatus();
+    private HttpClient.ResponseReceiver<?> getMockResponse(String databaseAccountJson) {
+        HttpClient.ResponseReceiver<?> resp = Mockito.mock(HttpClient.ResponseReceiver.class);
+        Mockito.doReturn(HttpResponseStatus.valueOf(200)).when(resp.response().block().status());
         Mockito.doReturn(Observable.just(ByteBufUtil.writeUtf8(ByteBufAllocator.DEFAULT, databaseAccountJson)))
-                .when(resp).getContent();
+                .when(resp).responseContent();
 
-        HttpHeaders httpHeaders = new DefaultHttpHeaders();
         DefaultHttpResponse httpResponse = new DefaultHttpResponse(HttpVersion.HTTP_1_1,
-                HttpResponseStatus.valueOf(200), httpHeaders);
+                HttpResponseStatus.valueOf(200), EmptyHttpHeaders.INSTANCE);
 
         try {
-            Constructor<HttpResponseHeaders> constructor = HttpResponseHeaders.class
-                    .getDeclaredConstructor(HttpResponse.class);
-            constructor.setAccessible(true);
-            HttpResponseHeaders httpResponseHeaders = constructor.newInstance(httpResponse);
-            Mockito.doReturn(httpResponseHeaders).when(resp).getHeaders();
+            HttpHeaders httpResponseHeaders = EmptyHttpHeaders.INSTANCE;
+            Mockito.doReturn(httpResponseHeaders).when(httpResponse).status();
 
-        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
-                | NoSuchMethodException | SecurityException e) {
+        } catch (IllegalArgumentException | SecurityException e) {
             throw new IllegalStateException("Failed to instantiate class object.", e);
         }
         return resp;

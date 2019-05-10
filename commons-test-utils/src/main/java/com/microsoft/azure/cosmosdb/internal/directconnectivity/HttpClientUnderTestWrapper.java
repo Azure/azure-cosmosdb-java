@@ -23,13 +23,9 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
-import io.netty.buffer.ByteBuf;
-import io.reactivex.netty.client.RxClient;
-import io.reactivex.netty.protocol.http.client.CompositeHttpClient;
-import io.reactivex.netty.protocol.http.client.HttpClientRequest;
+import io.netty.handler.codec.http.HttpMethod;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
+import reactor.netty.http.client.HttpClient;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -41,32 +37,28 @@ import static org.mockito.Mockito.doAnswer;
  * This is a helper class for capturing requests sent over a httpClient.
  */
 public class HttpClientUnderTestWrapper {
-    final private CompositeHttpClient<ByteBuf, ByteBuf> origHttpClient;
-    final private CompositeHttpClient<ByteBuf, ByteBuf> spyHttpClient;
+    final private HttpClient origHttpClient;
+    final private HttpClient spyHttpClient;
 
-    public final List<HttpClientRequest<ByteBuf>> capturedRequest = Collections.synchronizedList(new ArrayList<>());
+    public final List<HttpClient.RequestSender> capturedRequestSender = Collections.synchronizedList(new ArrayList<>());
 
-    public HttpClientUnderTestWrapper(CompositeHttpClient<ByteBuf, ByteBuf> origHttpClient) {
+    public HttpClientUnderTestWrapper(HttpClient origHttpClient) {
         this.origHttpClient = origHttpClient;
         this.spyHttpClient = Mockito.spy(origHttpClient);
 
         initRequestCapture(spyHttpClient);
     }
 
-    public CompositeHttpClient<ByteBuf, ByteBuf> getSpyHttpClient() {
+    public HttpClient getSpyHttpClient() {
         return spyHttpClient;
     }
 
-    void initRequestCapture(CompositeHttpClient<ByteBuf, ByteBuf> spyClient) {
+    private void initRequestCapture(HttpClient spyClient) {
 
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                RxClient.ServerInfo serverInfo = invocationOnMock.getArgumentAt(0, RxClient.ServerInfo.class);
-                HttpClientRequest<ByteBuf> httpReq = invocationOnMock.getArgumentAt(1, HttpClientRequest.class);
-                capturedRequest.add(httpReq);
-                return origHttpClient.submit(serverInfo, httpReq);
-            }
-        }).when(spyClient).submit(Mockito.any(RxClient.ServerInfo.class), Mockito.any(HttpClientRequest.class));
+        doAnswer(invocationOnMock -> {
+            HttpClient.RequestSender httpRequestSender = invocationOnMock.getArgumentAt(0, HttpClient.RequestSender.class);
+            capturedRequestSender.add(httpRequestSender);
+            return origHttpClient.request(Mockito.any(HttpMethod.class));
+        }).when(spyClient).request(Mockito.any(HttpMethod.class));
     }
 }

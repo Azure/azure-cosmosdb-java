@@ -183,11 +183,6 @@ SOFTWARE.
     </dependency>
     <dependency>
       <groupId>io.reactivex</groupId>
-      <artifactId>rxjava</artifactId>
-      <version>${rxjava.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>io.reactivex</groupId>
       <artifactId>rxjava-string</artifactId>
       <version>${rxjava-string.version}</version>
     </dependency>

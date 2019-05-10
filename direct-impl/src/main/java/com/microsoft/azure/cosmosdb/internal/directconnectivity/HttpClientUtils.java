@@ -29,7 +29,15 @@ import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceResponse;
 import io.netty.buffer.ByteBuf;
 import io.reactivex.netty.protocol.http.client.HttpClientResponse;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.netty.ByteBufFlux;
+import reactor.netty.http.client.HttpClient;
 import rx.Single;
+
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Map;
 
 public class HttpClientUtils {
 
@@ -48,6 +56,21 @@ public class HttpClientUtils {
         }
     }
 
+    static Mono<RxDocumentServiceResponse> parseResponseAsync(reactor.netty.http.client.HttpClientResponse httpClientResponse, ByteBufFlux byteBufFlux) {
+
+        if (httpClientResponse.status().code() < HttpConstants.StatusCodes.MINIMUM_STATUSCODE_AS_ERROR_GATEWAY) {
+
+            Mono<StoreResponse> storeResponse = ResponseUtils.toStoreResponse(httpClientResponse, byteBufFlux);
+            return storeResponse.map(RxDocumentServiceResponse::new);
+
+            // TODO: to break the dependency between RxDocumentServiceResponse and StoreResponse
+            // we should factor out the  RxDocumentServiceResponse(StoreResponse) constructor to a helper class
+
+        } else {
+            return HttpClientUtils.createDocumentClientException(httpClientResponse, byteBufFlux).flatMap(Mono::error);
+        }
+    }
+
     private static Single<DocumentClientException> createDocumentClientException(HttpClientResponse<ByteBuf> responseMessage) {
         Single<String> readStream = ResponseUtils.toString(responseMessage.getContent()).toSingle();
 
@@ -58,6 +81,18 @@ public class HttpClientUtils {
 
             return new DocumentClientException(responseMessage.getStatus().code(), error,
                     HttpUtils.asMap(responseMessage.getHeaders()));
+        });
+    }
+
+    private static Mono<DocumentClientException> createDocumentClientException(reactor.netty.http.client.HttpClientResponse httpClientResponse, ByteBufFlux byteBufFlux) {
+        Mono<String> readStream = byteBufFlux.asString(StandardCharsets.UTF_8).single();
+
+        return readStream.map(body -> {
+            Error error = new Error(body);
+
+            // TODO: we should set resource address in the Document Client Exception
+            return new DocumentClientException(httpClientResponse.status().code(), error,
+                    HttpUtils.asMap(httpClientResponse.responseHeaders()));
         });
     }
 }

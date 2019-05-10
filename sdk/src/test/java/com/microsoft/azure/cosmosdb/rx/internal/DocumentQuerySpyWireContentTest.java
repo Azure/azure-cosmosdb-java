@@ -57,7 +57,7 @@ import com.microsoft.azure.cosmosdb.rx.TestSuiteBase;
 import com.microsoft.azure.cosmosdb.rx.Utils;
 
 import io.netty.buffer.ByteBuf;
-import io.reactivex.netty.protocol.http.client.HttpClientRequest;
+import reactor.netty.http.client.HttpClientRequest;
 import rx.Observable;
 
 public class DocumentQuerySpyWireContentTest extends TestSuiteBase {
@@ -139,23 +139,23 @@ public class DocumentQuerySpyWireContentTest extends TestSuiteBase {
 
         assertThat(results.size()).describedAs("total results").isGreaterThanOrEqualTo(1);
         
-        List<HttpClientRequest<ByteBuf>> requests = client.getCapturedRequests();
+        List<reactor.netty.http.client.HttpClientRequest> requests = client.getCapturedRequests();
 
-        for(HttpClientRequest<ByteBuf> req: requests) {
+        for(reactor.netty.http.client.HttpClientRequest req: requests) {
             validateRequestHasContinuationTokenLimit(req, options.getResponseContinuationTokenLimitInKb());
         }
     }
 
-    private void validateRequestHasContinuationTokenLimit(HttpClientRequest<ByteBuf> request, Integer expectedValue) {
+    private void validateRequestHasContinuationTokenLimit(HttpClientRequest request, Integer expectedValue) {
         if (expectedValue != null && expectedValue > 0) {
-            assertThat(request.getHeaders()
+            assertThat(request.requestHeaders()
                     .contains(HttpConstants.HttpHeaders.RESPONSE_CONTINUATION_TOKEN_LIMIT_IN_KB))
                     .isTrue();
-            assertThat(request.getHeaders()
+            assertThat(request.requestHeaders()
                     .get("x-ms-documentdb-responsecontinuationtokenlimitinkb"))
                     .isEqualTo(Integer.toString(expectedValue));
         } else {
-            assertThat(request.getHeaders()
+            assertThat(request.requestHeaders()
                     .contains(HttpConstants.HttpHeaders.RESPONSE_CONTINUATION_TOKEN_LIMIT_IN_KB))
                     .isFalse();
         }

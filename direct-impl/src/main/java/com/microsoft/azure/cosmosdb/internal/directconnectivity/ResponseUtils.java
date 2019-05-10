@@ -28,18 +28,26 @@ import com.microsoft.azure.cosmosdb.Error;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
 import io.netty.buffer.ByteBuf;
+import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import io.reactivex.internal.operators.observable.ObservableFromPublisher;
 import io.reactivex.netty.protocol.http.client.HttpClientResponse;
 import io.reactivex.netty.protocol.http.client.HttpResponseHeaders;
 import org.apache.commons.io.IOUtils;
+import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.netty.ByteBufFlux;
+import reactor.netty.http.client.HttpClient;
 import rx.Observable;
 import rx.Single;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
 class ResponseUtils {
@@ -62,6 +70,7 @@ class ResponseUtils {
                     return new String(out.toByteArray(), StandardCharsets.UTF_8);
                 });
     }
+
 
     public static Single<StoreResponse> toStoreResponse(HttpClientResponse<ByteBuf> clientResponse) {
 
@@ -90,6 +99,34 @@ class ResponseUtils {
                 });
 
         return storeResponseObservable.toSingle();
+    }
+
+    public static Mono<StoreResponse> toStoreResponse(reactor.netty.http.client.HttpClientResponse httpClientResponse, ByteBufFlux byteBufFlux) {
+
+        HttpHeaders httpResponseHeaders = httpClientResponse.responseHeaders();
+        HttpResponseStatus httpResponseStatus = httpClientResponse.status();
+
+        Flux<String> contentObservable;
+
+        if (byteBufFlux == null) {
+            // for delete we don't expect any body
+            contentObservable = Flux.empty();
+        } else {
+            // transforms the ByteBufFlux to Flux<String>
+            contentObservable = byteBufFlux.asString(StandardCharsets.UTF_8);
+        }
+
+        Flux<StoreResponse> storeResponseFlux = contentObservable.flatMap(content -> {
+            try {
+                // transforms to Observable<StoreResponse>
+                StoreResponse rsp = new StoreResponse(httpResponseStatus.code(), HttpUtils.unescape(httpResponseHeaders.entries()), content);
+                return Flux.just(rsp);
+            } catch (Exception e) {
+                return Flux.error(e);
+            }
+        });
+
+        return storeResponseFlux.single();
     }
 
     private static void validateOrThrow(RxDocumentServiceRequest request, HttpResponseStatus status, HttpResponseHeaders headers, String body,

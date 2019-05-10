@@ -26,6 +26,7 @@ package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 import com.microsoft.azure.cosmosdb.internal.Constants.UrlEncodingInfo;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.rx.internal.Strings;
+import io.netty.handler.codec.http.HttpHeaders;
 import io.reactivex.netty.protocol.http.client.HttpRequestHeaders;
 import io.reactivex.netty.protocol.http.client.HttpResponseHeaders;
 import org.apache.commons.lang3.StringUtils;
@@ -97,6 +98,21 @@ public class HttpUtils {
         }
         for (Entry<String, String> entry : headers.entries()) {
             map.put(entry.getKey(), entry.getValue());
+        }
+        return map;
+    }
+
+    public static Map<String, String> asMap(HttpHeaders headers) {
+        HashMap<String, String> map = new HashMap<>();
+        if (headers == null) {
+            return map;
+        }
+        for (Entry<String, String> entry : headers.entries()) {
+            if (entry.getKey().equals(HttpConstants.HttpHeaders.OWNER_FULL_NAME)) {
+                map.put(entry.getKey(), HttpUtils.urlDecode(entry.getValue()));
+            } else {
+                map.put(entry.getKey(), entry.getValue());
+            }
         }
         return map;
     }

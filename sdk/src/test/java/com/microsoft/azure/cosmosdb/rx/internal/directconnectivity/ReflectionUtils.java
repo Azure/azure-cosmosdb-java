@@ -31,6 +31,7 @@ import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentClientImpl;
 import io.netty.buffer.ByteBuf;
 import io.reactivex.netty.protocol.http.client.CompositeHttpClient;
 import org.apache.commons.lang3.reflect.FieldUtils;
+import reactor.netty.http.client.HttpClient;
 
 /**
  *
@@ -78,13 +79,13 @@ public class ReflectionUtils {
         set(storeClient, transportClient, "transportClient");
     }
 
-    public static CompositeHttpClient<ByteBuf, ByteBuf> getDirectHttpsHttpClient(RxDocumentClientImpl client) {
+    public static HttpClient getDirectHttpsHttpClient(RxDocumentClientImpl client) {
         TransportClient transportClient = getTransportClient(client);
         assert transportClient instanceof HttpTransportClient;
-        return get(CompositeHttpClient.class, transportClient, "httpClient");
+        return get(HttpClient.class, transportClient, "httpClient");
     }
 
-    public static void setDirectHttpsHttpClient(RxDocumentClientImpl client, CompositeHttpClient<ByteBuf, ByteBuf> newHttpClient) {
+    public static void setDirectHttpsHttpClient(RxDocumentClientImpl client, HttpClient newHttpClient) {
         TransportClient transportClient = getTransportClient(client);
         assert transportClient instanceof HttpTransportClient;
         set(transportClient, newHttpClient, "httpClient");

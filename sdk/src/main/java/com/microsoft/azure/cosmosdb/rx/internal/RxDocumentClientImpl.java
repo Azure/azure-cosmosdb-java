@@ -95,10 +95,10 @@ import com.microsoft.azure.cosmosdb.rx.internal.query.IDocumentQueryExecutionCon
 import com.microsoft.azure.cosmosdb.rx.internal.query.Paginator;
 import io.netty.buffer.ByteBuf;
 import io.reactivex.netty.protocol.http.client.CompositeHttpClient;
-import io.reactivex.netty.protocol.http.client.CompositeHttpClientBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.netty.http.client.HttpClient;
 import rx.Observable;
 import rx.Single;
 import rx.functions.Func1;
@@ -162,7 +162,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
      * supported.
      */
     private final QueryCompatibilityMode queryCompatibilityMode = QueryCompatibilityMode.Default;
-    private final CompositeHttpClient<ByteBuf, ByteBuf> rxClient;
+    private final HttpClient reactorHttpClient;
     private final GlobalEndpointManager globalEndpointManager;
     private final RetryPolicy retryPolicy;
     private volatile boolean useMultipleWriteLocations;
@@ -271,7 +271,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
             userAgentContainer.setSuffix(userAgentSuffix);
         }
 
-        this.rxClient = httpClientBuilder().build();
+        this.reactorHttpClient = httpClient();
         this.globalEndpointManager = new GlobalEndpointManager(asDatabaseAccountManagerInternal(), this.connectionPolicy, /**/configs);
         this.retryPolicy = new RetryPolicy(this.globalEndpointManager, this.connectionPolicy);
         this.resetSessionTokenRetryPolicy = retryPolicy;
@@ -293,7 +293,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
                 resourceToken,
                 this.connectionPolicy,
                 this.authorizationTokenProvider,
-                this.rxClient);
+                this.reactorHttpClient);
 
         DatabaseAccount databaseAccount = this.gatewayConfigurationReader.initializeReaderAsync().toBlocking().value();
         this.useMultipleWriteLocations = this.connectionPolicy.isUsingMultipleWriteLocations() && BridgeInternal.isEnableMultipleWriteLocations(databaseAccount);
@@ -312,7 +312,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
                 this.queryCompatibilityMode,
                 this.userAgentContainer,
                 this.globalEndpointManager,
-                this.rxClient);
+                this.reactorHttpClient);
         this.globalEndpointManager.init();
         this.initializeGatewayConfigurationReader();
 
@@ -340,7 +340,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
         );
 
         this.addressResolver = new GlobalAddressResolver(
-            this.rxClient,
+            this.reactorHttpClient,
             this.globalEndpointManager,
             this.configs.getProtocol(),
             this,
@@ -381,24 +381,24 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
                                              QueryCompatibilityMode queryCompatibilityMode,
                                              UserAgentContainer userAgentContainer,
                                              GlobalEndpointManager globalEndpointManager,
-                                             CompositeHttpClient<ByteBuf, ByteBuf> rxClient) {
+                                             HttpClient httpClient) {
         return new RxGatewayStoreModel(sessionContainer,
                 consistencyLevel,
                 queryCompatibilityMode,
                 userAgentContainer,
                 globalEndpointManager,
-                rxClient);
+                httpClient);
     }
 
-    private CompositeHttpClientBuilder<ByteBuf, ByteBuf> httpClientBuilder() {
+    private HttpClient httpClient() {
 
-        HttpClientFactory factory = new HttpClientFactory(this.configs)
+        ReactorHttpClientFactory factory = new ReactorHttpClientFactory(this.configs)
                 .withMaxIdleConnectionTimeoutInMillis(this.connectionPolicy.getIdleConnectionTimeoutInMillis())
                 .withPoolSize(this.connectionPolicy.getMaxPoolSize())
                 .withHttpProxy(this.connectionPolicy.getProxy())
                 .withRequestTimeoutInMillis(this.connectionPolicy.getRequestTimeoutInMillis());
 
-        return factory.toHttpClientBuilder();
+        return factory.toHttpClient();
     }
 
     private void createStoreModel(boolean subscribeRntbdStatus) {
@@ -3168,9 +3168,9 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
         LifeCycleUtils.closeQuietly(this.storeClientFactory);
 
         try {
-            this.rxClient.shutdown();
+            //  this.reactorHttpClient.shutdown();
         } catch (Exception e) {
-            logger.warn("Failure in shutting down rxClient", e);
+            logger.warn("Failure in shutting down reactorHttpClient", e);
         }
     }
 }

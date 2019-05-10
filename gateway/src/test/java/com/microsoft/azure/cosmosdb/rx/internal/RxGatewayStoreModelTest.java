@@ -31,13 +31,12 @@ import com.microsoft.azure.cosmosdb.internal.QueryCompatibilityMode;
 import com.microsoft.azure.cosmosdb.internal.ResourceType;
 import com.microsoft.azure.cosmosdb.internal.UserAgentContainer;
 import com.microsoft.azure.cosmosdb.rx.FailureValidator;
-import io.netty.buffer.ByteBuf;
+import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.timeout.ReadTimeoutException;
-import io.reactivex.netty.client.RxClient;
-import io.reactivex.netty.protocol.http.client.CompositeHttpClient;
-import io.reactivex.netty.protocol.http.client.HttpClientRequest;
 import org.mockito.Mockito;
 import org.testng.annotations.Test;
+import reactor.core.publisher.Mono;
+import reactor.netty.http.client.HttpClient;
 import rx.Observable;
 import rx.observers.TestSubscriber;
 
@@ -57,9 +56,9 @@ public class RxGatewayStoreModelTest {
         GlobalEndpointManager globalEndpointManager = Mockito.mock(GlobalEndpointManager.class);
         Mockito.doReturn(new URL("https://localhost"))
                 .when(globalEndpointManager).resolveServiceEndpoint(Mockito.any());
-        CompositeHttpClient<ByteBuf, ByteBuf> httpClient = Mockito.mock(CompositeHttpClient.class);
-        Mockito.doReturn(Observable.error(ReadTimeoutException.INSTANCE))
-                .when(httpClient).submit(Mockito.any(RxClient.ServerInfo.class), Mockito.any(HttpClientRequest.class));
+        HttpClient httpClient = Mockito.mock(HttpClient.class);
+        Mockito.doReturn(Mono.error(ReadTimeoutException.INSTANCE))
+                .when(httpClient.request(Mockito.any(HttpMethod.class))).response().thenReturn(Mono.error(ReadTimeoutException.INSTANCE));
 
         RxGatewayStoreModel storeModel = new RxGatewayStoreModel(
                 sessionContainer,

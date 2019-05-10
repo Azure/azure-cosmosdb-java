@@ -61,7 +61,7 @@
     <assertj.version>3.11.1</assertj.version>
     <mockito.version>1.10.19</mockito.version>
     <guava.version>27.0.1-jre</guava.version>
-    <rxjava2interop.verison>0.13.3</rxjava2interop.verison>
+    <rxjava2interop.verison>0.13.4</rxjava2interop.verison>
     <rxjava2.version>2.2.4</rxjava2.version>
     <commons-validator-version>1.6</commons-validator-version>
     <reactor-bom.version>Californium-SR7</reactor-bom.version>

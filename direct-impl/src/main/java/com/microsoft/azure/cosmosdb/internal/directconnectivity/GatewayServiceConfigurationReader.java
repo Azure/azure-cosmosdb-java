@@ -23,15 +23,6 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-
-import org.apache.commons.lang3.StringUtils;
-
 import com.microsoft.azure.cosmosdb.BridgeInternal;
 import com.microsoft.azure.cosmosdb.ConnectionPolicy;
 import com.microsoft.azure.cosmosdb.ConsistencyLevel;
@@ -43,16 +34,23 @@ import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.internal.UserAgentContainer;
 import com.microsoft.azure.cosmosdb.internal.Utils;
 import com.microsoft.azure.cosmosdb.rx.internal.GlobalEndpointManager;
-
-import io.netty.buffer.ByteBuf;
+import hu.akarnokd.rxjava.interop.RxJavaInterop;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
+import io.netty.handler.codec.http.EmptyHttpHeaders;
+import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
-import io.reactivex.netty.client.RxClient;
-import io.reactivex.netty.protocol.http.client.CompositeHttpClient;
-import io.reactivex.netty.protocol.http.client.HttpClientRequest;
-import io.reactivex.netty.protocol.http.client.HttpClientResponse;
-import rx.Observable;
+import reactor.adapter.rxjava.RxJava2Adapter;
+import reactor.core.publisher.Mono;
+import reactor.netty.http.client.HttpClient;
 import rx.Single;
 import rx.functions.Action1;
+
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * This class will read the service configuration from the gateway.
@@ -79,11 +77,11 @@ public class GatewayServiceConfigurationReader {
     private final BaseAuthorizationTokenProvider baseAuthorizationTokenProvider;
     private final boolean hasAuthKeyResourceToken;
     private final String authKeyResourceToken;
-    private CompositeHttpClient<ByteBuf, ByteBuf> httpClient;
+    private HttpClient httpClient;
 
     public GatewayServiceConfigurationReader(URI serviceEndpoint, boolean hasResourceToken, String resourceToken,
             ConnectionPolicy connectionPolicy, BaseAuthorizationTokenProvider baseAuthorizationTokenProvider,
-            CompositeHttpClient<ByteBuf, ByteBuf> httpClient) {
+            HttpClient httpClient) {
         this.serviceEndpoint = serviceEndpoint;
         this.baseAuthorizationTokenProvider = baseAuthorizationTokenProvider;
         this.hasAuthKeyResourceToken = hasResourceToken;
@@ -122,10 +120,9 @@ public class GatewayServiceConfigurationReader {
     }
 
     private Single<DatabaseAccount> getDatabaseAccountAsync(URI serviceEndpoint) {
-        HttpClientRequest<ByteBuf> httpRequest = HttpClientRequest.create(HttpMethod.GET,
-                this.serviceEndpoint.toString());
 
-        httpRequest.withHeader(HttpConstants.HttpHeaders.VERSION, HttpConstants.Versions.CURRENT_VERSION);
+        DefaultHttpHeaders httpHeaders = new DefaultHttpHeaders();
+        httpHeaders.add(HttpConstants.HttpHeaders.VERSION, HttpConstants.Versions.CURRENT_VERSION);
 
         UserAgentContainer userAgentContainer = new UserAgentContainer();
         String userAgentSuffix = this.connectionPolicy.getUserAgentSuffix();
@@ -133,27 +130,29 @@ public class GatewayServiceConfigurationReader {
             userAgentContainer.setSuffix(userAgentSuffix);
         }
 
-        httpRequest.withHeader(HttpConstants.HttpHeaders.USER_AGENT, userAgentContainer.getUserAgent());
-        httpRequest.withHeader(HttpConstants.HttpHeaders.API_TYPE, Constants.Properties.SQL_API_TYPE);
-        String authorizationToken = StringUtils.EMPTY;
+        httpHeaders.add(HttpConstants.HttpHeaders.USER_AGENT, userAgentContainer.getUserAgent());
+        httpHeaders.add(HttpConstants.HttpHeaders.API_TYPE, Constants.Properties.SQL_API_TYPE);
+        String authorizationToken;
         if (this.hasAuthKeyResourceToken || baseAuthorizationTokenProvider == null) {
             authorizationToken = HttpUtils.urlEncode(this.authKeyResourceToken);
         } else {
             // Retrieve the document service properties.
             String xDate = Utils.nowAsRFC1123();
-            httpRequest.withHeader(HttpConstants.HttpHeaders.X_DATE, xDate);
+            httpHeaders.add(HttpConstants.HttpHeaders.X_DATE, xDate);
             Map<String, String> header = new HashMap<>();
             header.put(HttpConstants.HttpHeaders.X_DATE, xDate);
             authorizationToken = baseAuthorizationTokenProvider
                     .generateKeyAuthorizationSignature(HttpConstants.HttpMethods.GET, serviceEndpoint, header);
         }
 
-        httpRequest.withHeader(HttpConstants.HttpHeaders.AUTHORIZATION, authorizationToken);
-        RxClient.ServerInfo serverInfo = new RxClient.ServerInfo(serviceEndpoint.getHost(), serviceEndpoint.getPort());
+        httpHeaders.add(HttpConstants.HttpHeaders.AUTHORIZATION, authorizationToken);
 
-        Observable<HttpClientResponse<ByteBuf>> clientResponseObservable = this.httpClient.submit(serverInfo,
-                httpRequest);
-        return toDatabaseAccountObservable(clientResponseObservable.toSingle());
+        HttpClient client = this.httpClient.headers((headers) -> headers.set(httpHeaders));
+        HttpClient.ResponseReceiver<?> responseReceiver = client
+                .port(serviceEndpoint.getPort())
+                .baseUrl(serviceEndpoint.toString())
+                .request(HttpMethod.GET);
+        return toDatabaseAccountObservable(responseReceiver);
     }
 
     public Single<DatabaseAccount> initializeReaderAsync() {
@@ -183,11 +182,14 @@ public class GatewayServiceConfigurationReader {
     }
 
     private Single<DatabaseAccount> toDatabaseAccountObservable(
-            Single<HttpClientResponse<ByteBuf>> clientResponseObservable) {
-        return clientResponseObservable.flatMap(clientResponse -> {
-            return HttpClientUtils.parseResponseAsync(clientResponse)
-                    .map(rxDocumentServiceResponse -> rxDocumentServiceResponse.getResource(DatabaseAccount.class));
-        });
+            HttpClient.ResponseReceiver<?> responseReceiver) {
+
+        Mono<DatabaseAccount> single = responseReceiver.response(HttpClientUtils::parseResponseAsync)
+                .map(rxDocumentServiceResponse -> rxDocumentServiceResponse.getResource(DatabaseAccount.class))
+                .single();
+
+        io.reactivex.Single<DatabaseAccount> single1 = RxJava2Adapter.monoToSingle(single);
+        return RxJavaInterop.toV1Single(single1);
     }
 
     private void throwIfNotInitialized() {

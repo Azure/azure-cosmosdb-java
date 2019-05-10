@@ -41,13 +41,12 @@ import com.microsoft.azure.cosmosdb.rx.internal.IAuthorizationTokenProvider;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
 import com.microsoft.azure.cosmosdb.rx.internal.caches.RxCollectionCache;
 import com.microsoft.azure.cosmosdb.rx.internal.caches.RxPartitionKeyRangeCache;
-import io.netty.buffer.ByteBuf;
-import io.reactivex.netty.protocol.http.client.CompositeHttpClient;
 import org.apache.commons.collections4.list.UnmodifiableList;
 import org.mockito.Matchers;
 import org.mockito.Mockito;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import reactor.netty.http.client.HttpClient;
 import rx.Completable;
 import rx.Single;
 import rx.functions.Action0;
@@ -64,7 +63,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class GlobalAddressResolverTest {
 
-    private CompositeHttpClient<ByteBuf, ByteBuf> httpClient;
+    private HttpClient httpClient;
     private GlobalEndpointManager endpointManager;
     private IAuthorizationTokenProvider authorizationTokenProvider;
     private UserAgentContainer userAgentContainer;
@@ -91,7 +90,7 @@ public class GlobalAddressResolverTest {
 
         connectionPolicy = new ConnectionPolicy();
         connectionPolicy.setEnableReadRequestsFallback(true);
-        httpClient = Mockito.mock(CompositeHttpClient.class);
+        httpClient = Mockito.mock(HttpClient.class);
         endpointManager = Mockito.mock(GlobalEndpointManager.class);
 
         List<URL> readEndPointList = new ArrayList<>();

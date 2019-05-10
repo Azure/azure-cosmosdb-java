@@ -38,12 +38,10 @@ import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient.Builder;
 import com.microsoft.azure.cosmosdb.rx.TestConfigurations;
 import com.microsoft.azure.cosmosdb.rx.TestSuiteBase;
 import com.microsoft.azure.cosmosdb.rx.internal.Configs;
-import com.microsoft.azure.cosmosdb.rx.internal.HttpClientFactory;
 import com.microsoft.azure.cosmosdb.rx.internal.IAuthorizationTokenProvider;
+import com.microsoft.azure.cosmosdb.rx.internal.ReactorHttpClientFactory;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentClientImpl;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
-import io.netty.buffer.ByteBuf;
-import io.reactivex.netty.protocol.http.client.CompositeHttpClient;
 import org.mockito.Matchers;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -53,6 +51,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
+import reactor.netty.http.client.HttpClient;
 import rx.Single;
 import rx.observers.TestSubscriber;
 
@@ -117,7 +116,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
                 protocol,
                 authorizationTokenProvider,
                 null,
-                getCompositeHttpClient(configs));
+                getHttpClient(configs));
 
         RxDocumentServiceRequest req =
                 RxDocumentServiceRequest.create(OperationType.Create, ResourceType.Document,
@@ -146,7 +145,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
                                                             protocol,
                                                             authorizationTokenProvider,
                                                             null,
-                                                            getCompositeHttpClient(configs));
+                                                            getHttpClient(configs));
 
         RxDocumentServiceRequest req =
                 RxDocumentServiceRequest.create(OperationType.Create, ResourceType.Database,
@@ -187,7 +186,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
                                                             protocol,
                                                             authorizationTokenProvider,
                                                             null,
-                                                            getCompositeHttpClient(configs));
+                                                            getHttpClient(configs));
 
         RxDocumentServiceRequest req =
                 RxDocumentServiceRequest.create(OperationType.Create, ResourceType.Document,
@@ -244,8 +243,8 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
 
         cache.openAsync(createdCollection, pkriList).await();
 
-        assertThat(httpClientWrapper.capturedRequest).asList().hasSize(1);
-        httpClientWrapper.capturedRequest.clear();
+        assertThat(httpClientWrapper.capturedRequestSender).asList().hasSize(1);
+        httpClientWrapper.capturedRequestSender.clear();
 
         RxDocumentServiceRequest req =
                 RxDocumentServiceRequest.create(OperationType.Create, ResourceType.Document,
@@ -258,7 +257,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
         ArrayList<AddressInformation> addressInfosFromCache = Lists.newArrayList(getSuccessResult(addressesInfosFromCacheObs, TIMEOUT));
 
         // no new request is made
-        assertThat(httpClientWrapper.capturedRequest)
+        assertThat(httpClientWrapper.capturedRequestSender)
                 .describedAs("no http request: addresses already cached by openAsync")
                 .asList().hasSize(0);
 
@@ -266,7 +265,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
                 collectionRid, ImmutableList.of(partitionKeyRangeId), false);
         List<Address> expectedAddresses = getSuccessResult(masterAddressFromGatewayObs, TIMEOUT);
 
-        assertThat(httpClientWrapper.capturedRequest)
+        assertThat(httpClientWrapper.capturedRequestSender)
                 .describedAs("getServerAddressesViaGatewayAsync will read addresses from gateway")
                 .asList().hasSize(1);
 
@@ -299,8 +298,8 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
 
         cache.openAsync(createdCollection, pkriList).await();
 
-        assertThat(httpClientWrapper.capturedRequest).asList().hasSize(1);
-        httpClientWrapper.capturedRequest.clear();
+        assertThat(httpClientWrapper.capturedRequestSender).asList().hasSize(1);
+        httpClientWrapper.capturedRequestSender.clear();
 
         RxDocumentServiceRequest req =
                 RxDocumentServiceRequest.create(OperationType.Create, ResourceType.Document,
@@ -312,7 +311,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
         ArrayList<AddressInformation> addressInfosFromCache = Lists.newArrayList(getSuccessResult(addressesInfosFromCacheObs, TIMEOUT));
 
         // no new request is made
-        assertThat(httpClientWrapper.capturedRequest)
+        assertThat(httpClientWrapper.capturedRequestSender)
                 .describedAs("force refresh fetched from gateway")
                 .asList().hasSize(1);
 
@@ -320,7 +319,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
                 collectionRid, ImmutableList.of(partitionKeyRangeId), false);
         List<Address> expectedAddresses = getSuccessResult(masterAddressFromGatewayObs, TIMEOUT);
 
-        assertThat(httpClientWrapper.capturedRequest)
+        assertThat(httpClientWrapper.capturedRequestSender)
                 .describedAs("getServerAddressesViaGatewayAsync will read addresses from gateway")
                 .asList().hasSize(2);
 
@@ -356,8 +355,8 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
 
         origCache.openAsync(createdCollection, pkriList).await();
 
-        assertThat(httpClientWrapper.capturedRequest).asList().hasSize(1);
-        httpClientWrapper.capturedRequest.clear();
+        assertThat(httpClientWrapper.capturedRequestSender).asList().hasSize(1);
+        httpClientWrapper.capturedRequestSender.clear();
 
         RxDocumentServiceRequest req =
                 RxDocumentServiceRequest.create(OperationType.Create, ResourceType.Document,
@@ -369,7 +368,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
         ArrayList<AddressInformation> addressInfosFromCache = Lists.newArrayList(getSuccessResult(addressesInfosFromCacheObs, TIMEOUT));
 
         // no new request is made
-        assertThat(httpClientWrapper.capturedRequest)
+        assertThat(httpClientWrapper.capturedRequestSender)
                 .describedAs("force refresh fetched from gateway")
                 .asList().hasSize(1);
 
@@ -405,22 +404,22 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
         }).when(spyCache).getServerAddressesViaGatewayAsync(Matchers.any(RxDocumentServiceRequest.class), Matchers.anyString(),
                 Matchers.anyList(), Matchers.anyBoolean());
 
-        httpClientWrapper.capturedRequest.clear();
+        httpClientWrapper.capturedRequestSender.clear();
 
         // force refresh to replace existing with sub-optimal addresses
         addressesInfosFromCacheObs = spyCache.tryGetAddresses(req, partitionKeyRangeIdentity, true);
         AddressInformation[] suboptimalAddresses = getSuccessResult(addressesInfosFromCacheObs, TIMEOUT);
-        assertThat(httpClientWrapper.capturedRequest)
+        assertThat(httpClientWrapper.capturedRequestSender)
                 .describedAs("getServerAddressesViaGatewayAsync will read addresses from gateway")
                 .asList().hasSize(1);
-        httpClientWrapper.capturedRequest.clear();
+        httpClientWrapper.capturedRequestSender.clear();
         assertThat(suboptimalAddresses).hasSize(ServiceConfig.SystemReplicationPolicy.MaxReplicaSetSize - 1);
         assertThat(fetchCounter.get()).isEqualTo(1);
 
         // no refresh, use cache
         addressesInfosFromCacheObs = spyCache.tryGetAddresses(req, partitionKeyRangeIdentity, false);
         suboptimalAddresses = getSuccessResult(addressesInfosFromCacheObs, TIMEOUT);
-        assertThat(httpClientWrapper.capturedRequest)
+        assertThat(httpClientWrapper.capturedRequestSender)
                 .describedAs("getServerAddressesViaGatewayAsync will read addresses from gateway")
                 .asList().hasSize(0);
         assertThat(suboptimalAddresses).hasSize(ServiceConfig.SystemReplicationPolicy.MaxReplicaSetSize - 1);
@@ -432,7 +431,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
         addressesInfosFromCacheObs = spyCache.tryGetAddresses(req, partitionKeyRangeIdentity, false);
         AddressInformation[] addresses = getSuccessResult(addressesInfosFromCacheObs, TIMEOUT);
         assertThat(addresses).hasSize(ServiceConfig.SystemReplicationPolicy.MaxReplicaSetSize);
-        assertThat(httpClientWrapper.capturedRequest)
+        assertThat(httpClientWrapper.capturedRequestSender)
                 .describedAs("getServerAddressesViaGatewayAsync will read addresses from gateway")
                 .asList().hasSize(1);
         assertThat(fetchCounter.get()).isEqualTo(2);
@@ -448,7 +447,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
                                                             protocol,
                                                             authorizationTokenProvider,
                                                             null,
-                                                            getCompositeHttpClient(configs));
+                                                            getHttpClient(configs));
 
         RxDocumentServiceRequest req =
                 RxDocumentServiceRequest.create(OperationType.Create, ResourceType.Database,
@@ -510,8 +509,8 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
                 forceRefreshPartitionAddresses)
                 .toBlocking().value();
 
-        assertThat(clientWrapper.capturedRequest).asList().hasSize(1);
-        clientWrapper.capturedRequest.clear();
+        assertThat(clientWrapper.capturedRequestSender).asList().hasSize(1);
+        clientWrapper.capturedRequestSender.clear();
 
 
         TimeUnit.SECONDS.sleep(waitTimeInBetweenAttemptsInSeconds);
@@ -525,7 +524,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
         assertExactlyEqual(actualAddresses, expectedAddresses);
 
         // the cache address is used. no new http request is sent
-        assertThat(clientWrapper.capturedRequest).asList().hasSize(0);
+        assertThat(clientWrapper.capturedRequestSender).asList().hasSize(0);
     }
 
     @Test(groups = { "direct" }, timeOut = TIMEOUT)
@@ -555,8 +554,8 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
                 false)
                 .toBlocking().value();
 
-        assertThat(clientWrapper.capturedRequest).asList().hasSize(1);
-        clientWrapper.capturedRequest.clear();
+        assertThat(clientWrapper.capturedRequestSender).asList().hasSize(1);
+        clientWrapper.capturedRequestSender.clear();
 
         Single<AddressInformation[]> addressesObs = cache.tryGetAddresses(req,
                 partitionKeyRangeIdentity,
@@ -567,7 +566,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
         assertExactlyEqual(actualAddresses, expectedAddresses);
 
         // the cache address is used. no new http request is sent
-        assertThat(clientWrapper.capturedRequest).asList().hasSize(1);
+        assertThat(clientWrapper.capturedRequestSender).asList().hasSize(1);
     }
 
     private static List<Address> removeOneReplica(List<Address> addresses) {
@@ -648,8 +647,8 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
                 false)
                 .toBlocking().value();
 
-        assertThat(clientWrapper.capturedRequest).asList().hasSize(1);
-        clientWrapper.capturedRequest.clear();
+        assertThat(clientWrapper.capturedRequestSender).asList().hasSize(1);
+        clientWrapper.capturedRequestSender.clear();
 
         Single<AddressInformation[]> addressesObs = spyCache.tryGetAddresses(req,
                 partitionKeyRangeIdentity,
@@ -660,7 +659,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
         assertExactlyEqual(actualAddresses, expectedAddresses);
 
         // the cache address is used. no new http request is sent
-        assertThat(clientWrapper.capturedRequest).asList().hasSize(0);
+        assertThat(clientWrapper.capturedRequestSender).asList().hasSize(0);
 
         Instant end = Instant.now();
         assertThat(end.minusSeconds(refreshPeriodInSeconds)).isBefore(start);
@@ -747,8 +746,8 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
         Instant end = Instant.now();
         assertThat(end.minusSeconds(refreshPeriodInSeconds)).isAfter(start);
 
-        assertThat(clientWrapper.capturedRequest).asList().hasSize(1);
-        clientWrapper.capturedRequest.clear();
+        assertThat(clientWrapper.capturedRequestSender).asList().hasSize(1);
+        clientWrapper.capturedRequestSender.clear();
 
         Single<AddressInformation[]> addressesObs = spyCache.tryGetAddresses(req,
                 partitionKeyRangeIdentity,
@@ -757,7 +756,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
 
         AddressInformation[] actualAddresses = getSuccessResult(addressesObs, TIMEOUT);
         // the cache address is used. no new http request is sent
-        assertThat(clientWrapper.capturedRequest).asList().hasSize(1);
+        assertThat(clientWrapper.capturedRequestSender).asList().hasSize(1);
         assertThat(getMasterAddressesViaGatewayAsyncInvocation.get()).isEqualTo(2);
         assertThat(actualAddresses).hasSize(ServiceConfig.SystemReplicationPolicy.MaxReplicaSetSize);
 
@@ -848,14 +847,13 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
         return collectionDefinition;
     }
 
-    private CompositeHttpClient getCompositeHttpClient(Configs configs) {
-        CompositeHttpClient<ByteBuf, ByteBuf> httpClient = new HttpClientFactory(configs)
-                .toHttpClientBuilder().build();
-        return httpClient;
+    private HttpClient getHttpClient(Configs configs) {
+        return new ReactorHttpClientFactory(configs)
+                .toHttpClient();
     }
 
     private HttpClientUnderTestWrapper getHttpClientUnderTestWrapper(Configs configs) {
-        CompositeHttpClient<ByteBuf, ByteBuf> origHttpClient = getCompositeHttpClient(configs);
+        HttpClient origHttpClient = getHttpClient(configs);
         return new HttpClientUnderTestWrapper(origHttpClient);
     }
 

@@ -43,15 +43,21 @@ import com.microsoft.azure.cosmosdb.rx.internal.RMResources;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceResponse;
 import com.microsoft.azure.cosmosdb.rx.internal.caches.AsyncCache;
+import hu.akarnokd.rxjava.interop.RxJavaInterop;
 import io.netty.buffer.ByteBuf;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
+import io.netty.handler.codec.http.HttpMethod;
 import io.reactivex.netty.client.RxClient;
 import io.reactivex.netty.protocol.http.client.CompositeHttpClient;
 import io.reactivex.netty.protocol.http.client.HttpClientRequest;
-import io.reactivex.netty.protocol.http.client.HttpClientResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.adapter.rxjava.RxJava2Adapter;
+import reactor.core.publisher.Mono;
+import reactor.netty.http.client.HttpClient;
+import reactor.netty.http.client.HttpClientResponse;
 import rx.Completable;
 import rx.Observable;
 import rx.Single;
@@ -90,7 +96,7 @@ public class GatewayAddressCache implements IAddressCache {
     private final String protocolFilter;
     private final IAuthorizationTokenProvider tokenProvider;
     private final HashMap<String, String> defaultRequestHeaders;
-    private final CompositeHttpClient<ByteBuf, ByteBuf> httpClient;
+    private final HttpClient httpClient;
 
     private volatile Pair<PartitionKeyRangeIdentity, AddressInformation[]> masterPartitionAddressCache;
     private volatile Instant suboptimalMasterPartitionTimestamp;
@@ -100,7 +106,7 @@ public class GatewayAddressCache implements IAddressCache {
             Protocol protocol,
             IAuthorizationTokenProvider tokenProvider,
             UserAgentContainer userAgent,
-            CompositeHttpClient<ByteBuf, ByteBuf> httpClient,
+            HttpClient httpClient,
             long suboptimalPartitionForceRefreshIntervalInSeconds) {
         try {
             this.addressEndpoint = new URL(serviceEndpoint, Paths.ADDRESS_PATH_SEGMENT);
@@ -140,7 +146,7 @@ public class GatewayAddressCache implements IAddressCache {
             Protocol protocol,
             IAuthorizationTokenProvider tokenProvider,
             UserAgentContainer userAgent,
-            CompositeHttpClient<ByteBuf, ByteBuf> httpClient) {
+            HttpClient httpClient) {
         this(serviceEndpoint,
              protocol,
              tokenProvider,
@@ -264,7 +270,7 @@ public class GatewayAddressCache implements IAddressCache {
 
         addressQuery.put(HttpConstants.QueryStrings.PARTITION_KEY_RANGE_IDS, String.join(",", partitionKeyRangeIds));
         headers.put(HttpConstants.HttpHeaders.X_DATE, Utils.nowAsRFC1123());
-        String token = null;
+        String token;
 
         token = this.tokenProvider.getUserAuthorizationToken(
                 collectionRid,
@@ -290,22 +296,27 @@ public class GatewayAddressCache implements IAddressCache {
         headers.put(HttpConstants.HttpHeaders.AUTHORIZATION, token);
         URL targetEndpoint = Utils.setQuery(this.addressEndpoint.toString(), Utils.createQuery(addressQuery));
         String identifier = logAddressResolutionStart(request, targetEndpoint);
-        HttpClientRequest<ByteBuf> httpGet = HttpClientRequest.createGet(targetEndpoint.toString());
 
+        DefaultHttpHeaders httpHeaders = new DefaultHttpHeaders();
         for (Map.Entry<String, String> entry : headers.entrySet()) {
-            httpGet.withHeader(entry.getKey(), entry.getValue());
+            httpHeaders.add(entry.getKey(), entry.getValue());
         }
 
-        RxClient.ServerInfo serverInfo = new RxClient.ServerInfo(targetEndpoint.getHost(), targetEndpoint.getPort());
-        Observable<HttpClientResponse<ByteBuf>> responseObs = this.httpClient.submit(serverInfo, httpGet);
+        HttpClient.ResponseReceiver<?> responseReceiver = this.httpClient
+                .headers(defaultHttpHeaders -> defaultHttpHeaders.set(httpHeaders))
+                .port(targetEndpoint.getPort())
+                .baseUrl(targetEndpoint.toString())
+                .request(HttpMethod.GET);
 
-        Single<RxDocumentServiceResponse> dsrObs = responseObs.toSingle().flatMap(rsp ->
-                HttpClientUtils.parseResponseAsync(rsp));
+        Single<RxDocumentServiceResponse> dsrObs = RxJavaInterop
+                .toV1Single(RxJava2Adapter
+                        .monoToSingle(responseReceiver
+                                .response(HttpClientUtils::parseResponseAsync)
+                                .single()));
         return dsrObs.map(
                 dsr -> {
                     logAddressResolutionEnd(request, identifier);
-                    List<Address> addresses = dsr.getQueryResponse(Address.class);
-                    return addresses;
+                    return dsr.getQueryResponse(Address.class);
                 });
     }
 
@@ -436,22 +447,28 @@ public class GatewayAddressCache implements IAddressCache {
         headers.put(HttpConstants.HttpHeaders.AUTHORIZATION, HttpUtils.urlEncode(token));
         URL targetEndpoint = Utils.setQuery(this.addressEndpoint.toString(), Utils.createQuery(queryParameters));
         String identifier = logAddressResolutionStart(request, targetEndpoint);
-        HttpClientRequest<ByteBuf> httpGet = HttpClientRequest.createGet(targetEndpoint.toString());
 
+        DefaultHttpHeaders defaultHttpHeaders = new DefaultHttpHeaders();
         for (Map.Entry<String, String> entry : headers.entrySet()) {
-            httpGet.withHeader(entry.getKey(), entry.getValue());
+            defaultHttpHeaders.add(entry.getKey(), entry.getValue());
         }
 
-        RxClient.ServerInfo serverInfo = new RxClient.ServerInfo(targetEndpoint.getHost(), targetEndpoint.getPort());
-        Observable<HttpClientResponse<ByteBuf>> responseObs = this.httpClient.submit(serverInfo, httpGet);
+        HttpClient.ResponseReceiver<?> responseObs = this.httpClient
+                .headers(httpHeaders ->  httpHeaders.set(defaultHttpHeaders))
+                .port(targetEndpoint.getPort())
+                .baseUrl(targetEndpoint.toString())
+                .request(HttpMethod.GET);
 
-        Single<RxDocumentServiceResponse> dsrObs = responseObs.toSingle().flatMap(rsp ->
-                HttpClientUtils.parseResponseAsync(rsp));
+        Single<RxDocumentServiceResponse> dsrObs = RxJavaInterop
+                .toV1Single(RxJava2Adapter
+                        .monoToSingle(responseObs
+                                .response(HttpClientUtils::parseResponseAsync)
+                                .single()));
+
         return dsrObs.map(
                 dsr -> {
                     logAddressResolutionEnd(request, identifier);
-                    List<Address> addresses = dsr.getQueryResponse(Address.class);
-                    return addresses;
+                    return dsr.getQueryResponse(Address.class);
                 });
     }
 

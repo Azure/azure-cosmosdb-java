@@ -199,6 +199,10 @@ SOFTWARE.
       <artifactId>guava</artifactId>
       <version>${guava.version}</version>
       <scope>test</scope>
-    </dependency>   
+    </dependency>
+    <dependency>
+      <groupId>io.projectreactor.netty</groupId>
+      <artifactId>reactor-netty</artifactId>
+    </dependency>
   </dependencies>
 </project>

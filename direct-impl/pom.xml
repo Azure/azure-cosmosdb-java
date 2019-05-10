@@ -24,7 +24,11 @@ SOFTWARE.
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.microsoft.azure</groupId>
+  <parent>
+    <groupId>com.microsoft.azure</groupId>
+    <artifactId>azure-cosmosdb-parent</artifactId>
+    <version>3.0.0-SNAPSHOT</version>
+  </parent>
   <artifactId>azure-cosmosdb-direct</artifactId>
   <name>Azure Cosmos DB Async SDK Direct Internal Implementation</name>
   <version>3.0.0-SNAPSHOT</version>
@@ -298,6 +302,20 @@ SOFTWARE.
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
       <version>${guava.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.reactivex.rxjava2</groupId>
+      <artifactId>rxjava</artifactId>
+      <version>${rxjava2.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.github.akarnokd</groupId>
+      <artifactId>rxjava2-interop</artifactId>
+      <version>${rxjava2interop.verison}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.projectreactor.addons</groupId>
+      <artifactId>reactor-adapter</artifactId>
     </dependency>
   </dependencies>
   <licenses>
