@@ -52,6 +52,7 @@ public class BackPressureTest extends TestSuiteBase {
 
     private static final int TIMEOUT = 200000;
     private static final int SETUP_TIMEOUT = 60000;
+    private static final int THRESHOLD = 5;
 
     private Database createdDatabase;
     private DocumentCollection createdCollection;
@@ -101,7 +102,7 @@ public class BackPressureTest extends TestSuiteBase {
             // validate that the difference between the number of requests to backend
             // and the number of returned results is always less than a fixed threshold
             assertThat(client.httpRequests.size() - subscriber.getOnNextEvents().size())
-                .isLessThanOrEqualTo(RxRingBuffer.SIZE);
+                .isLessThanOrEqualTo(RxRingBuffer.SIZE + THRESHOLD);
 
             subscriber.requestMore(1);
             i++;
@@ -138,7 +139,7 @@ public class BackPressureTest extends TestSuiteBase {
             // validate that the difference between the number of requests to backend
             // and the number of returned results is always less than a fixed threshold
             assertThat(client.httpRequests.size() - subscriber.getValueCount())
-                    .isLessThanOrEqualTo(RxRingBuffer.SIZE);
+                    .isLessThanOrEqualTo(RxRingBuffer.SIZE + THRESHOLD);
 
             subscriber.requestMore(1);
             i++;

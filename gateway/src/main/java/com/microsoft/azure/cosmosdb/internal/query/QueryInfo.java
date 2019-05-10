@@ -35,6 +35,7 @@ import com.microsoft.azure.cosmosdb.internal.query.aggregation.AggregateOperator
  * Used internally to encapsulates a query's information in the Azure Cosmos DB database service.
  */
 public final class QueryInfo extends JsonSerializable {
+    private static final String HAS_SELECT_VALUE = "hasSelectValue";
     private Integer top;
     private List<SortOrder> orderBy;
     private Collection<AggregateOperator> aggregates;
@@ -88,5 +89,9 @@ public final class QueryInfo extends JsonSerializable {
         return this.orderByExpressions != null
                 ? this.orderByExpressions
                 : (this.orderByExpressions = super.getCollection("orderByExpressions", String.class));
+    }
+    
+    public boolean hasSelectValue(){
+        return super.has(HAS_SELECT_VALUE) && super.getBoolean(HAS_SELECT_VALUE);
     }
 }

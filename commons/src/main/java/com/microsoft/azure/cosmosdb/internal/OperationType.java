@@ -56,6 +56,7 @@ public enum OperationType {
     Replace,
     Resume,
     SqlQuery,
+    QueryPlan,
     Stop,
     Throttle,
     Update,

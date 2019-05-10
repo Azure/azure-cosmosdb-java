@@ -36,6 +36,7 @@ import com.microsoft.azure.cosmosdb.internal.query.PartitionedQueryExecutionInfo
 import com.microsoft.azure.cosmosdb.internal.query.QueryInfo;
 import com.microsoft.azure.cosmosdb.rx.internal.BadRequestException;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
+import com.microsoft.azure.cosmosdb.rx.internal.Strings;
 import com.microsoft.azure.cosmosdb.rx.internal.Utils;
 import com.microsoft.azure.cosmosdb.rx.internal.caches.RxCollectionCache;
 
@@ -74,31 +75,52 @@ public class DocumentQueryExecutionContextFactory {
             boolean isContinuationExpected,
             UUID correlatedActivityId) {
 
-        // return proxy
         Observable<DocumentCollection> collectionObs = Observable.just(null);
         
         if (resourceTypeEnum.isCollectionChild()) {
             collectionObs = resolveCollection(client, query, resourceTypeEnum, resourceLink).toObservable();
         }
 
-        // We create a ProxyDocumentQueryExecutionContext that will be initialized with DefaultDocumentQueryExecutionContext
-        // which will be used to send the query to Gateway and on getting 400(bad request) with 1004(cross parition query not servable), we initialize it with
-        // PipelinedDocumentQueryExecutionContext by providing the partition query execution info that's needed(which we get from the exception returned from Gateway).
+        DefaultDocumentQueryExecutionContext<T> queryExecutionContext =  new DefaultDocumentQueryExecutionContext<T>(
+                client,
+                resourceTypeEnum,
+                resourceType,
+                query,
+                feedOptions,
+                resourceLink,
+                correlatedActivityId,
+                isContinuationExpected);
 
-        Observable<ProxyDocumentQueryExecutionContext<T>> proxyQueryExecutionContext =
-                collectionObs.flatMap(collection -> 
-                ProxyDocumentQueryExecutionContext.createAsync(
-                        client,
-                        resourceTypeEnum,
-                        resourceType,
-                        query,
-                        feedOptions,
-                        resourceLink,
-                        collection,
-                        isContinuationExpected,
-                        correlatedActivityId));
+        if (ResourceType.Document != resourceTypeEnum
+                || (feedOptions != null && feedOptions.getPartitionKey() != null)
+                || (feedOptions != null && feedOptions.getPartitionKeyRangeIdInternal() != null)) {
+            return Observable.just(queryExecutionContext);
+        }
 
-        return proxyQueryExecutionContext;
+        Single<PartitionedQueryExecutionInfo> queryExecutionInfoSingle =
+                QueryPlanRetriever.getQueryPlanThroughGatewayAsync(client, query, resourceLink);
+
+        return collectionObs.flatMap(collection -> queryExecutionInfoSingle.toObservable()
+                .flatMap(partitionedQueryExecutionInfo -> {
+                    Single<List<PartitionKeyRange>> partitionKeyRanges = queryExecutionContext
+                            .getTargetPartitionKeyRanges(collection.getResourceId(), partitionedQueryExecutionInfo.getQueryRanges());
+
+                    Observable<IDocumentQueryExecutionContext<T>> exContext = partitionKeyRanges
+                            .toObservable()
+                            .flatMap(pkranges -> createSpecializedDocumentQueryExecutionContextAsync(client,
+                                                                                                     resourceTypeEnum,
+                                                                                                     resourceType,
+                                                                                                     query,
+                                                                                                     feedOptions,
+                                                                                                     resourceLink,
+                                                                                                     isContinuationExpected,
+                                                                                                     partitionedQueryExecutionInfo,
+                                                                                                     pkranges,
+                                                                                                     collection.getResourceId(),
+                                                                                                     correlatedActivityId));
+
+                    return exContext;
+                }));
     }
 
 	public static <T extends Resource> Observable<? extends IDocumentQueryExecutionContext<T>> createSpecializedDocumentQueryExecutionContextAsync(
@@ -114,6 +136,10 @@ public class DocumentQueryExecutionContextFactory {
             String collectionRid,
             UUID correlatedActivityId) {
 
+        if(feedOptions == null){
+            feedOptions = new FeedOptions();
+        }
+        
         int initialPageSize = Utils.getValueOrDefault(feedOptions.getMaxItemCount(), ParallelQueryConfig.ClientInternalPageSize);
 
         BadRequestException validationError = Utils.checkRequestOrReturnException
@@ -123,6 +149,23 @@ public class DocumentQueryExecutionContextFactory {
         }
 
         QueryInfo queryInfo = partitionedQueryExecutionInfo.getQueryInfo();
+
+        // non value aggregates must go through DefaultDocumentQueryExecutionContext
+        if(queryInfo.hasAggregates() && !queryInfo.hasSelectValue()){
+            return Observable.just( new DefaultDocumentQueryExecutionContext<T>(
+                    client,
+                    resourceTypeEnum,
+                    resourceType,
+                    query,
+                    feedOptions,
+                    resourceLink,
+                    correlatedActivityId,
+                    isContinuationExpected));
+        }
+        
+        if (!Strings.isNullOrEmpty(queryInfo.getRewrittenQuery())) {
+                query = new SqlQuerySpec(queryInfo.getRewrittenQuery(), query.getParameters());
+        }
 
         boolean getLazyFeedResponse = queryInfo.hasTop();
 
