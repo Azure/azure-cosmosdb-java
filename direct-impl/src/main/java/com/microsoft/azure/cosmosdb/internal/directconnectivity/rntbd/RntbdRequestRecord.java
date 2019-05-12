@@ -24,21 +24,24 @@
 package com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd;
 
 import com.microsoft.azure.cosmosdb.BridgeInternal;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.RequestTimeoutException;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.StoreResponse;
 import io.netty.util.Timeout;
 import io.netty.util.TimerTask;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdReporter.reportIssueUnless;
 
 public final class RntbdRequestRecord extends CompletableFuture<StoreResponse> {
+
+    private static final Logger logger = LoggerFactory.getLogger(RntbdRequestRecord.class);
 
     private final RntbdRequestArgs args;
     private final RntbdRequestTimer timer;
@@ -68,15 +71,31 @@ public final class RntbdRequestRecord extends CompletableFuture<StoreResponse> {
         return this.args.getLifetime();
     }
 
-    public boolean completeExceptionally(final Throwable throwable) {
-        checkArgument(throwable instanceof DocumentClientException, "throwable: %s", throwable);
-        return super.completeExceptionally(throwable);
+    @Override
+    public boolean cancel(boolean mayInterruptIfRunning) {
+        reportIssueUnless(!this.isDone(), logger, this, "failed to cancel request because it is already done");
+        return super.cancel(mayInterruptIfRunning);
+    }
+
+    @Override
+    public boolean complete(StoreResponse value) {
+        reportIssueUnless(!this.isDone(), logger, this, "failed to complete request because it is already done");
+        return super.complete(value);
+    }
+
+    @Override
+    public boolean completeExceptionally(final Throwable error) {
+        reportIssueUnless(!this.isDone(), logger, this, "failed to complete request exceptionally because it is already done");
+        return super.completeExceptionally(error);
     }
 
     public void expire() {
-        final String message = String.format("Request timeout interval (%,d ms) elapsed", this.timer.getRequestTimeout(
-            TimeUnit.MILLISECONDS));
-        final RequestTimeoutException error = new RequestTimeoutException(message, this.args.getPhysicalAddress());
+
+        final RequestTimeoutException error = new RequestTimeoutException(
+            String.format("Request timeout interval (%,d ms) elapsed",
+                this.timer.getRequestTimeout(TimeUnit.MILLISECONDS)),
+            this.args.getPhysicalAddress());
+
         BridgeInternal.setRequestHeaders(error, this.args.getServiceRequest().getHeaders());
         this.completeExceptionally(error);
     }

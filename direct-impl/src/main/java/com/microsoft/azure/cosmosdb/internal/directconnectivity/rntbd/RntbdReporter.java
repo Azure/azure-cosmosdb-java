@@ -24,7 +24,9 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
+import org.slf4j.helpers.FormattingTuple;
 import org.slf4j.helpers.MessageFormatter;
 
 import java.nio.file.Paths;
@@ -37,17 +39,34 @@ public final class RntbdReporter {
     private RntbdReporter() {
     }
 
-    public static void reportIssueUnless(
-        boolean predicate, Logger logger, Object subject, String format, Object... arguments) {
-
-        if (predicate) {
-            return;
-        }
-
+    public static void reportIssue(Logger logger, Object subject, String format, Object... arguments) {
         if (logger.isErrorEnabled()) {
-            StackTraceElement[] stackTraceElements = new Exception().getStackTrace();
-            logger.error("Report this {} issue to ensure it will be addressed:\n  [{}]\n  [{}]\n  [{}]",
-                codeSource, subject, stackTraceElements[1], MessageFormatter.arrayFormat(format, arguments).getMessage()
+            doReportIssue(logger, subject, format, arguments);
+        }
+    }
+
+    public static void reportIssueUnless(
+        boolean predicate, Logger logger, Object subject, String format, Object... arguments
+    ) {
+        if (!predicate && logger.isErrorEnabled()) {
+            doReportIssue(logger, subject, format, arguments);
+        }
+    }
+
+    private static void doReportIssue(Logger logger, Object subject, String format, Object[] arguments) {
+
+        FormattingTuple formattingTuple = MessageFormatter.arrayFormat(format, arguments);
+        StackTraceElement[] stackTraceElements = new Exception().getStackTrace();
+        Throwable throwable = formattingTuple.getThrowable();
+
+        if (throwable == null) {
+            logger.error("Report this {} issue to ensure it is addressed:\n[{}]\n[{}]\n[{}]",
+                codeSource, subject, stackTraceElements[2], formattingTuple.getMessage()
+            );
+        } else {
+            logger.error("Report this {} issue to ensure it is addressed:\n[{}]\n[{}]\n[{}{}{}]",
+                codeSource, subject, stackTraceElements[2], formattingTuple.getMessage(),
+                throwable, ExceptionUtils.getStackTrace(throwable)
             );
         }
     }

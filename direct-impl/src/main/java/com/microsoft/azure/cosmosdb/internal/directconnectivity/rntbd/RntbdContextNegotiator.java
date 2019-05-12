@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.CompletableFuture;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class RntbdContextNegotiator extends CombinedChannelDuplexHandler<RntbdContextDecoder, RntbdContextRequestEncoder> {
@@ -70,12 +71,11 @@ public final class RntbdContextNegotiator extends CombinedChannelDuplexHandler<R
      * @throws Exception thrown if an error occurs
      */
     @Override
-    public void write(final ChannelHandlerContext context, final Object message, final ChannelPromise promise) throws Exception {
+    public void write(
+        final ChannelHandlerContext context, final Object message, final ChannelPromise promise
+    ) throws Exception {
 
-        if (!(message instanceof ByteBuf)) {
-            throw new IllegalArgumentException(String.format("message: %s", message.getClass()));
-        }
-
+        checkArgument(message instanceof ByteBuf, "message: %s", message.getClass());
         final ByteBuf out = (ByteBuf)message;
 
         if (this.manager.hasRntbdContext()) {

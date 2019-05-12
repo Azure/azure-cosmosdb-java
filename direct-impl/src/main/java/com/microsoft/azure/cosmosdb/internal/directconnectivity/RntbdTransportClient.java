@@ -47,6 +47,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -136,9 +137,10 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
                     emitter.onSuccess(response);
                 } else {
                     reportIssueUnless(error instanceof DocumentClientException, logger, this,
-                        "expected {}, not {}\n{}", DocumentClientException.class, error, error.getStackTrace());
+                        "Expected failure of type {}, not ", DocumentClientException.class.getCanonicalName(),
+                        error);
                     this.metrics.incrementErrorResponseCount();
-                    emitter.onError(error);
+                    emitter.onError(error instanceof CompletionException ? error.getCause() : error);
                 }
 
                 requestArgs.traceOperation(logger, null, "emitSingleComplete");

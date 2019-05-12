@@ -41,10 +41,9 @@ final class RntbdContextRequestEncoder extends MessageToByteEncoder {
      *
      * @param message the message to encode
      * @return @{code true}, if the given message is an an @{link RntbdContextRequest} instance; otherwise @{false}
-     * @throws Exception thrown if an error occurs
      */
     @Override
-    public boolean acceptOutboundMessage(final Object message) throws Exception {
+    public boolean acceptOutboundMessage(final Object message) {
         return message instanceof RntbdContextRequest;
     }
 
