@@ -23,6 +23,7 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpRequest;
 import io.netty.handler.codec.http.HttpMethod;
 import org.mockito.Mockito;
 import reactor.netty.http.client.HttpClient;
@@ -37,28 +38,28 @@ import static org.mockito.Mockito.doAnswer;
  * This is a helper class for capturing requests sent over a httpClient.
  */
 public class HttpClientUnderTestWrapper {
-    final private HttpClient origHttpClient;
-    final private HttpClient spyHttpClient;
+    final private com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient origHttpClient;
+    final private com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient spyHttpClient;
 
     public final List<HttpClient.RequestSender> capturedRequestSender = Collections.synchronizedList(new ArrayList<>());
 
-    public HttpClientUnderTestWrapper(HttpClient origHttpClient) {
+    public HttpClientUnderTestWrapper(com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient origHttpClient) {
         this.origHttpClient = origHttpClient;
         this.spyHttpClient = Mockito.spy(origHttpClient);
 
         initRequestCapture(spyHttpClient);
     }
 
-    public HttpClient getSpyHttpClient() {
+    public com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient getSpyHttpClient() {
         return spyHttpClient;
     }
 
-    private void initRequestCapture(HttpClient spyClient) {
+    private void initRequestCapture(com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient spyClient) {
 
         doAnswer(invocationOnMock -> {
             HttpClient.RequestSender httpRequestSender = invocationOnMock.getArgumentAt(0, HttpClient.RequestSender.class);
             capturedRequestSender.add(httpRequestSender);
-            return origHttpClient.request(Mockito.any(HttpMethod.class));
-        }).when(spyClient).request(Mockito.any(HttpMethod.class));
+            return origHttpClient.send(Mockito.any(HttpRequest.class));
+        }).when(spyClient).send(Mockito.any(HttpRequest.class));
     }
 }

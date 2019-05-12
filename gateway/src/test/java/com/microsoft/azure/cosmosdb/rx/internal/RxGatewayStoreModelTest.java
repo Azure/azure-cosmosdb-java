@@ -31,12 +31,12 @@ import com.microsoft.azure.cosmosdb.internal.QueryCompatibilityMode;
 import com.microsoft.azure.cosmosdb.internal.ResourceType;
 import com.microsoft.azure.cosmosdb.internal.UserAgentContainer;
 import com.microsoft.azure.cosmosdb.rx.FailureValidator;
-import io.netty.handler.codec.http.HttpMethod;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpRequest;
 import io.netty.handler.timeout.ReadTimeoutException;
 import org.mockito.Mockito;
 import org.testng.annotations.Test;
 import reactor.core.publisher.Mono;
-import reactor.netty.http.client.HttpClient;
 import rx.Observable;
 import rx.observers.TestSubscriber;
 
@@ -58,7 +58,7 @@ public class RxGatewayStoreModelTest {
                 .when(globalEndpointManager).resolveServiceEndpoint(Mockito.any());
         HttpClient httpClient = Mockito.mock(HttpClient.class);
         Mockito.doReturn(Mono.error(ReadTimeoutException.INSTANCE))
-                .when(httpClient.request(Mockito.any(HttpMethod.class))).response().thenReturn(Mono.error(ReadTimeoutException.INSTANCE));
+                .when(httpClient).send(Mockito.any(HttpRequest.class));
 
         RxGatewayStoreModel storeModel = new RxGatewayStoreModel(
                 sessionContainer,

@@ -34,10 +34,13 @@ import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.internal.UserAgentContainer;
 import com.microsoft.azure.cosmosdb.internal.Utils;
 import com.microsoft.azure.cosmosdb.rx.internal.GlobalEndpointManager;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeader;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpRequest;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpResponse;
 import hu.akarnokd.rxjava.interop.RxJavaInterop;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.EmptyHttpHeaders;
-import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import reactor.adapter.rxjava.RxJava2Adapter;
 import reactor.core.publisher.Mono;
@@ -48,6 +51,7 @@ import rx.functions.Action1;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -77,11 +81,11 @@ public class GatewayServiceConfigurationReader {
     private final BaseAuthorizationTokenProvider baseAuthorizationTokenProvider;
     private final boolean hasAuthKeyResourceToken;
     private final String authKeyResourceToken;
-    private HttpClient httpClient;
+    private com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient httpClient;
 
     public GatewayServiceConfigurationReader(URI serviceEndpoint, boolean hasResourceToken, String resourceToken,
             ConnectionPolicy connectionPolicy, BaseAuthorizationTokenProvider baseAuthorizationTokenProvider,
-            HttpClient httpClient) {
+            com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient httpClient) {
         this.serviceEndpoint = serviceEndpoint;
         this.baseAuthorizationTokenProvider = baseAuthorizationTokenProvider;
         this.hasAuthKeyResourceToken = hasResourceToken;
@@ -119,10 +123,10 @@ public class GatewayServiceConfigurationReader {
         return this.queryEngineConfiguration;
     }
 
-    private Single<DatabaseAccount> getDatabaseAccountAsync(URI serviceEndpoint) {
+    private Single<DatabaseAccount> getDatabaseAccountAsync(URL serviceEndpoint) {
 
-        DefaultHttpHeaders httpHeaders = new DefaultHttpHeaders();
-        httpHeaders.add(HttpConstants.HttpHeaders.VERSION, HttpConstants.Versions.CURRENT_VERSION);
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.set(HttpConstants.HttpHeaders.VERSION, HttpConstants.Versions.CURRENT_VERSION);
 
         UserAgentContainer userAgentContainer = new UserAgentContainer();
         String userAgentSuffix = this.connectionPolicy.getUserAgentSuffix();
@@ -130,42 +134,39 @@ public class GatewayServiceConfigurationReader {
             userAgentContainer.setSuffix(userAgentSuffix);
         }
 
-        httpHeaders.add(HttpConstants.HttpHeaders.USER_AGENT, userAgentContainer.getUserAgent());
-        httpHeaders.add(HttpConstants.HttpHeaders.API_TYPE, Constants.Properties.SQL_API_TYPE);
+        httpHeaders.set(HttpConstants.HttpHeaders.USER_AGENT, userAgentContainer.getUserAgent());
+        httpHeaders.set(HttpConstants.HttpHeaders.API_TYPE, Constants.Properties.SQL_API_TYPE);
         String authorizationToken;
         if (this.hasAuthKeyResourceToken || baseAuthorizationTokenProvider == null) {
             authorizationToken = HttpUtils.urlEncode(this.authKeyResourceToken);
         } else {
             // Retrieve the document service properties.
             String xDate = Utils.nowAsRFC1123();
-            httpHeaders.add(HttpConstants.HttpHeaders.X_DATE, xDate);
+            httpHeaders.set(HttpConstants.HttpHeaders.X_DATE, xDate);
             Map<String, String> header = new HashMap<>();
             header.put(HttpConstants.HttpHeaders.X_DATE, xDate);
-            authorizationToken = baseAuthorizationTokenProvider
-                    .generateKeyAuthorizationSignature(HttpConstants.HttpMethods.GET, serviceEndpoint, header);
+            try {
+                authorizationToken = baseAuthorizationTokenProvider
+                        .generateKeyAuthorizationSignature(HttpConstants.HttpMethods.GET, serviceEndpoint.toURI(), header);
+                httpHeaders.set(HttpConstants.HttpHeaders.AUTHORIZATION, authorizationToken);
+            } catch (URISyntaxException e) {
+                e.printStackTrace();
+            }
         }
 
-        httpHeaders.add(HttpConstants.HttpHeaders.AUTHORIZATION, authorizationToken);
-
-        HttpClient client = this.httpClient.headers((headers) -> headers.set(httpHeaders));
-        HttpClient.ResponseReceiver<?> responseReceiver = client
+        HttpRequest httpRequest = new HttpRequest(com.microsoft.azure.cosmosdb.rx.internal.http.HttpMethod.GET, serviceEndpoint)
+                .withHeaders(httpHeaders);
+        Mono<HttpResponse> httpResponse = httpClient
                 .port(serviceEndpoint.getPort())
-                .baseUrl(serviceEndpoint.toString())
-                .request(HttpMethod.GET);
-        return toDatabaseAccountObservable(responseReceiver);
+                .send(httpRequest);
+        return toDatabaseAccountObservable(httpResponse);
     }
 
     public Single<DatabaseAccount> initializeReaderAsync() {
         try {
             return GlobalEndpointManager.getDatabaseAccountFromAnyLocationsAsync(this.serviceEndpoint.toURL(),
 
-                    new ArrayList<>(this.connectionPolicy.getPreferredLocations()), url -> {
-                        try {
-                            return getDatabaseAccountAsync(url.toURI());
-                        } catch (URISyntaxException e) {
-                            throw new IllegalArgumentException("URI " + url);
-                        }
-                    }).doOnSuccess(new Action1<DatabaseAccount>() {
+                    new ArrayList<>(this.connectionPolicy.getPreferredLocations()), this::getDatabaseAccountAsync).doOnSuccess(new Action1<DatabaseAccount>() {
 
                         @Override
                         public void call(DatabaseAccount databaseAccount) {
@@ -181,10 +182,9 @@ public class GatewayServiceConfigurationReader {
         }
     }
 
-    private Single<DatabaseAccount> toDatabaseAccountObservable(
-            HttpClient.ResponseReceiver<?> responseReceiver) {
+    private Single<DatabaseAccount> toDatabaseAccountObservable(Mono<HttpResponse> httpResponse) {
 
-        return HttpClientUtils.parseResponseAsync(responseReceiver)
+        return HttpClientUtils.parseResponseAsync(httpResponse)
                 .map(rxDocumentServiceResponse -> rxDocumentServiceResponse.getResource(DatabaseAccount.class));
     }
 

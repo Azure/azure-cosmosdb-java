@@ -31,6 +31,7 @@ import com.microsoft.azure.cosmosdb.internal.UserAgentContainer;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import com.microsoft.azure.cosmosdb.rx.SpyClientBuilder;
 import com.microsoft.azure.cosmosdb.rx.internal.directconnectivity.ReflectionUtils;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpRequest;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import org.apache.commons.lang3.reflect.FieldUtils;
@@ -43,6 +44,7 @@ import reactor.netty.http.client.HttpClient;
 import reactor.netty.http.client.HttpClientRequest;
 
 import java.net.URI;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -89,7 +91,7 @@ public class SpyClientUnderTestFactory {
                                                  QueryCompatibilityMode queryCompatibilityMode,
                                                  UserAgentContainer userAgentContainer,
                                                  GlobalEndpointManager globalEndpointManager,
-                                                 HttpClient rxClient) {
+                                                 com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient rxClient) {
             this.origRxGatewayStoreModel = super.createRxGatewayProxy(
                     sessionContainer,
                     consistencyLevel,
@@ -130,8 +132,8 @@ public class SpyClientUnderTestFactory {
 
     public static class ClientUnderTest extends SpyBaseClass<HttpClientRequest> {
 
-        HttpClient origHttpClient;
-        HttpClient spyHttpClient;
+        com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient origHttpClient;
+        com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient spyHttpClient;
         List<Pair<HttpClientRequest, Future<HttpHeaders>>> requestsResponsePairs =
                 Collections.synchronizedList(new ArrayList<>());
 
@@ -149,20 +151,20 @@ public class SpyClientUnderTestFactory {
             return requestsResponsePairs.stream().map(Pair::getLeft).collect(Collectors.toList());
         }
 
-        void initRequestCapture(HttpClient spyClient) {
+        void initRequestCapture(com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient spyClient) {
 
             doAnswer(invocationOnMock -> {
-                HttpMethod httpMethod = invocationOnMock.getArgumentAt(0, HttpMethod.class);
-                ByteBufFlux byteBufFlux = invocationOnMock.getArgumentAt(1, ByteBufFlux.class);
+                com.microsoft.azure.cosmosdb.rx.internal.http.HttpMethod httpMethod = invocationOnMock.getArgumentAt(0, com.microsoft.azure.cosmosdb.rx.internal.http.HttpMethod.class);
+                URL url = invocationOnMock.getArgumentAt(1, URL.class);
 
-                CompletableFuture<HttpHeaders> f = new CompletableFuture<>();
-                HttpClient httpClient = origHttpClient.doOnRequest((httpClientRequest, connection) -> requestsResponsePairs.add(Pair.of(httpClientRequest, f)));
+                CompletableFuture<com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders> f = new CompletableFuture<>();
+                HttpRequest httpRequest = new HttpRequest(httpMethod, url);
 
-                return httpClient.request(httpMethod).send(byteBufFlux).response()
-                        .doOnNext(res -> f.complete(res.responseHeaders()))
+                return origHttpClient.send(httpRequest)
+                        .doOnNext(httpResponse -> f.complete(httpResponse.headers()))
                         .doOnError(f::completeExceptionally);
 
-            }).when(spyClient.request(Mockito.any(HttpMethod.class)));
+            }).when(spyClient.send(Mockito.any(HttpRequest.class)));
         }
 
         @Override
@@ -178,7 +180,7 @@ public class SpyClientUnderTestFactory {
             }
         }
 
-        public HttpClient getSpyHttpClient() {
+        public com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient getSpyHttpClient() {
             return spyHttpClient;
         }
     }
@@ -282,9 +284,9 @@ public class SpyClientUnderTestFactory {
                                                      QueryCompatibilityMode queryCompatibilityMode,
                                                      UserAgentContainer userAgentContainer,
                                                      GlobalEndpointManager globalEndpointManager,
-                                                     HttpClient rxClient) {
+                                                     com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient rxClient) {
 
-                HttpClient spyClient = Mockito.spy(rxClient);
+                com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient spyClient = Mockito.spy(rxClient);
 
                 this.origHttpClient = rxClient;
                 this.spyHttpClient = spyClient;

@@ -41,12 +41,12 @@ import com.microsoft.azure.cosmosdb.rx.internal.IAuthorizationTokenProvider;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
 import com.microsoft.azure.cosmosdb.rx.internal.caches.RxCollectionCache;
 import com.microsoft.azure.cosmosdb.rx.internal.caches.RxPartitionKeyRangeCache;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient;
 import org.apache.commons.collections4.list.UnmodifiableList;
 import org.mockito.Matchers;
 import org.mockito.Mockito;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-import reactor.netty.http.client.HttpClient;
 import rx.Completable;
 import rx.Single;
 import rx.functions.Action0;
@@ -63,7 +63,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class GlobalAddressResolverTest {
 
-    private HttpClient httpClient;
+    private com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient httpClient;
     private GlobalEndpointManager endpointManager;
     private IAuthorizationTokenProvider authorizationTokenProvider;
     private UserAgentContainer userAgentContainer;

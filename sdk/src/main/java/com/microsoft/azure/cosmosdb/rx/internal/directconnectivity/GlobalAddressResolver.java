@@ -41,7 +41,7 @@ import com.microsoft.azure.cosmosdb.rx.internal.IAuthorizationTokenProvider;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
 import com.microsoft.azure.cosmosdb.rx.internal.caches.RxCollectionCache;
 import com.microsoft.azure.cosmosdb.rx.internal.caches.RxPartitionKeyRangeCache;
-import reactor.netty.http.client.HttpClient;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient;
 import rx.Completable;
 import rx.Single;
 
@@ -69,7 +69,7 @@ public class GlobalAddressResolver implements IAddressResolver {
 
     private GatewayAddressCache gatewayAddressCache;
     private AddressResolver addressResolver;
-    private HttpClient httpClient;
+    private com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient httpClient;
 
     public GlobalAddressResolver(
             HttpClient httpClient,

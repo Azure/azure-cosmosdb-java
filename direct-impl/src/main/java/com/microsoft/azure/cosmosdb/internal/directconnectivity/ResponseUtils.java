@@ -27,8 +27,9 @@ import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.Error;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpResponse;
 import io.netty.buffer.ByteBuf;
-import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.reactivex.internal.operators.observable.ObservableFromPublisher;
 import io.reactivex.netty.protocol.http.client.HttpClientResponse;
@@ -37,6 +38,7 @@ import org.apache.commons.io.IOUtils;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.adapter.rxjava.RxJava2Adapter;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.netty.ByteBufFlux;
@@ -49,6 +51,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 
 class ResponseUtils {
     private final static int INITIAL_RESPONSE_BUFFER_SIZE = 1024;
@@ -71,6 +74,23 @@ class ResponseUtils {
                 });
     }
 
+    public static Flux<String> toString(Flux<ByteBuf> contentObservable) {
+        return contentObservable
+                .reduce(
+                        new ByteArrayOutputStream(INITIAL_RESPONSE_BUFFER_SIZE),
+                        (out, bb) -> {
+                            try {
+                                bb.readBytes(out, bb.readableBytes());
+                                return out;
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
+                        })
+                .map(out -> {
+                    return new String(out.toByteArray(), StandardCharsets.UTF_8);
+                }).flux();
+    }
+
 
     public static Single<StoreResponse> toStoreResponse(HttpClientResponse<ByteBuf> clientResponse) {
 
@@ -83,7 +103,7 @@ class ResponseUtils {
             // for delete we don't expect any body
             contentObservable = Observable.just(null);
         } else {
-            // transforms the observable<ByteBuf> to Observable<InputStream>
+            // transforms the observable<ByteBuf> to Observable<String>
             contentObservable = toString(clientResponse.getContent());
         }
 
@@ -101,10 +121,9 @@ class ResponseUtils {
         return storeResponseObservable.toSingle();
     }
 
-    public static Mono<StoreResponse> toStoreResponse(reactor.netty.http.client.HttpClientResponse httpClientResponse, ByteBufFlux byteBufFlux) {
+    public static Mono<StoreResponse> toStoreResponse(HttpResponse httpClientResponse, Flux<ByteBuf> byteBufFlux) {
 
-        HttpHeaders httpResponseHeaders = httpClientResponse.responseHeaders();
-        HttpResponseStatus httpResponseStatus = httpClientResponse.status();
+        HttpHeaders httpResponseHeaders = httpClientResponse.headers();
 
         Flux<String> contentObservable;
 
@@ -113,13 +132,13 @@ class ResponseUtils {
             contentObservable = Flux.empty();
         } else {
             // transforms the ByteBufFlux to Flux<String>
-            contentObservable = byteBufFlux.asString(StandardCharsets.UTF_8);
+            contentObservable = toString(byteBufFlux);
         }
 
         Flux<StoreResponse> storeResponseFlux = contentObservable.flatMap(content -> {
             try {
                 // transforms to Observable<StoreResponse>
-                StoreResponse rsp = new StoreResponse(httpResponseStatus.code(), HttpUtils.unescape(httpResponseHeaders.entries()), content);
+                StoreResponse rsp = new StoreResponse(httpClientResponse.statusCode(), HttpUtils.unescape(new ArrayList<>(httpResponseHeaders.toMap().entrySet())), content);
                 return Flux.just(rsp);
             } catch (Exception e) {
                 return Flux.error(e);

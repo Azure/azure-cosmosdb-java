@@ -37,11 +37,13 @@ import com.microsoft.azure.cosmosdb.internal.RuntimeConstants;
 import com.microsoft.azure.cosmosdb.internal.UserAgentContainer;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.HttpUtils;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.StoreResponse;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpRequest;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpResponse;
 import hu.akarnokd.rxjava.interop.RxJavaInterop;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
-import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.commons.io.IOUtils;
@@ -49,17 +51,20 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 import rx.Observable;
 import rx.Single;
 import rx.functions.Func0;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -75,7 +80,7 @@ class RxGatewayStoreModel implements RxStoreModel {
     private final static int INITIAL_RESPONSE_BUFFER_SIZE = 1024;
     private final Logger logger = LoggerFactory.getLogger(RxGatewayStoreModel.class);
     private final Map<String, String> defaultHeaders;
-    private final HttpClient httpClient;
+    private final com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient httpClient;
     private final QueryCompatibilityMode queryCompatibilityMode;
     private final GlobalEndpointManager globalEndpointManager;
     private ConsistencyLevel defaultConsistencyLevel;
@@ -87,7 +92,7 @@ class RxGatewayStoreModel implements RxStoreModel {
             QueryCompatibilityMode queryCompatibilityMode,
             UserAgentContainer userAgentContainer,
             GlobalEndpointManager globalEndpointManager,
-            HttpClient httpClient) {
+            com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient httpClient) {
         this.defaultHeaders = new HashMap<>();
         this.defaultHeaders.put(HttpConstants.HttpHeaders.CACHE_CONTROL,
                 "no-cache");
@@ -171,7 +176,7 @@ class RxGatewayStoreModel implements RxStoreModel {
         try {
             URI uri = getUri(request);
 
-            HttpHeaders httpHeaders = this.getHttpRequestHeaders(request.getHeaders());
+            com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders httpHeaders = this.getHttpRequestHeaders(request.getHeaders());
 
             Flux<ByteBuf> byteBufObservable = Flux.empty();
 
@@ -182,27 +187,30 @@ class RxGatewayStoreModel implements RxStoreModel {
                 byteBufObservable = Flux.just(Unpooled.wrappedBuffer(request.getContent()));
             }
 
-            HttpClient.ResponseReceiver<?> responseReceiver = this.httpClient
-                    .baseUrl(uri.toString())
-                    .port(uri.getPort())
-                    .headers((headers) -> headers.set(httpHeaders))
-                    .request(method)
-                    .send(byteBufObservable);
 
-            return toDocumentServiceResponse(responseReceiver, request);
+            HttpRequest httpRequest = new HttpRequest(com.microsoft.azure.cosmosdb.rx.internal.http.HttpMethod.valueOf(method.name()),
+                    uri.toURL(),
+                    httpHeaders,
+                    byteBufObservable);
+
+            Mono<HttpResponse> httpResponseMono = this.httpClient
+                    .port(uri.getPort())
+                    .send(httpRequest);
+
+            return toDocumentServiceResponse(httpResponseMono, request);
 
         } catch (Exception e) {
             return Observable.error(e);
         }
     }
 
-    private HttpHeaders getHttpRequestHeaders(Map<String, String> headers) {
-        DefaultHttpHeaders httpHeaders = new DefaultHttpHeaders();
+    private com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders getHttpRequestHeaders(Map<String, String> headers) {
+        com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders httpHeaders = new com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders();
         // Add default headers.
         for (Entry<String, String> entry : this.defaultHeaders.entrySet()) {
             if (!headers.containsKey(entry.getKey())) {
                 // populate default header only if there is no overwrite by the request header
-                httpHeaders.add(entry.getKey(), entry.getValue());
+                httpHeaders.set(entry.getKey(), entry.getValue());
             }
         }
 
@@ -211,9 +219,9 @@ class RxGatewayStoreModel implements RxStoreModel {
             for (Entry<String, String> entry : headers.entrySet()) {
                 if (entry.getValue() == null) {
                     // netty doesn't allow setting null value in header
-                    httpHeaders.add(entry.getKey(), "");
+                    httpHeaders.set(entry.getKey(), "");
                 } else {
-                    httpHeaders.add(entry.getKey(), entry.getValue());
+                    httpHeaders.set(entry.getKey(), entry.getValue());
                 }
             }
         }
@@ -266,19 +274,19 @@ class RxGatewayStoreModel implements RxStoreModel {
      * Once the customer code subscribes to the observable returned by the CRUD APIs,
      * the subscription goes up till it reaches the source reactor netty's observable, and at that point the HTTP invocation will be made.
      *
-     * @param responseReceiver
+     * @param httpResponseMono
      * @param request
      * @return {@link Observable}
      */
-    private Observable<RxDocumentServiceResponse> toDocumentServiceResponse(HttpClient.ResponseReceiver<?> responseReceiver,
+    private Observable<RxDocumentServiceResponse> toDocumentServiceResponse(Mono<HttpResponse> httpResponseMono,
                                                                             RxDocumentServiceRequest request) {
 
         if (request.getIsMedia()) {
-            return RxJavaInterop.toV1Observable(responseReceiver.response((clientResponse, byteBufFlux) -> {
+            return RxJavaInterop.toV1Observable(httpResponseMono.flatMap(httpResponse -> {
 
                 // header key/value pairs
-                HttpHeaders httpResponseHeaders = clientResponse.responseHeaders();
-                HttpResponseStatus httpResponseStatus = clientResponse.status();
+                com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders httpResponseHeaders = httpResponse.headers();
+                int httpResponseStatus = httpResponse.statusCode();
 
                 Flux<InputStream> inputStreamObservable;
 
@@ -287,7 +295,10 @@ class RxGatewayStoreModel implements RxStoreModel {
                     inputStreamObservable = Flux.just(IOUtils.toInputStream("", StandardCharsets.UTF_8));
                 } else {
                     // transforms the ByteBufFlux to Flux<InputStream>
-                    inputStreamObservable = byteBufFlux.asInputStream();
+                    inputStreamObservable = httpResponse
+                            .body()
+                            .flatMap(byteBuf ->
+                                    Flux.just(IOUtils.toInputStream(byteBuf.toString(StandardCharsets.UTF_8), StandardCharsets.UTF_8)));
                 }
 
                 return inputStreamObservable
@@ -295,24 +306,29 @@ class RxGatewayStoreModel implements RxStoreModel {
                             try {
                                 // If there is any error in the header response this throws exception
                                 // TODO: potential performance improvement: return Observable.error(exception) on failure instead of throwing Exception
-                                validateOrThrow(request, httpResponseStatus, httpResponseHeaders, null, contentInputStream);
+                                validateOrThrow(request,
+                                        HttpResponseStatus.valueOf(httpResponseStatus),
+                                        httpResponseHeaders,
+                                        null,
+                                        contentInputStream);
 
                                 // transforms to Observable<StoreResponse>
-                                StoreResponse rsp = new StoreResponse(httpResponseStatus.code(), HttpUtils.unescape(httpResponseHeaders.entries()), contentInputStream);
+                                StoreResponse rsp = new StoreResponse(httpResponseStatus, HttpUtils
+                                        .unescape(new ArrayList<>(httpResponseHeaders.toMap().entrySet())), contentInputStream);
                                 return Flux.just(rsp);
                             } catch (Exception e) {
-                                return Flux.error(e);
+                                return Flux.error(reactor.core.Exceptions.propagate(e));
                             }
-                        });
+                        }).single();
 
             }).map(RxDocumentServiceResponse::new));
 
         } else {
-            return RxJavaInterop.toV1Observable(responseReceiver.response((clientResponse, byteBufFlux) -> {
+            return RxJavaInterop.toV1Observable(httpResponseMono.flatMap(httpResponse ->  {
 
                 // header key/value pairs
-                HttpHeaders httpResponseHeaders = clientResponse.responseHeaders();
-                HttpResponseStatus httpResponseStatus = clientResponse.status();
+                HttpHeaders httpResponseHeaders = httpResponse.headers();
+                int httpResponseStatus = httpResponse.statusCode();
 
                 Flux<String> contentObservable;
 
@@ -321,7 +337,7 @@ class RxGatewayStoreModel implements RxStoreModel {
                     contentObservable = Flux.just("");
                 } else {
                     // transforms the ByteBufFlux to Flux<String>
-                    contentObservable = byteBufFlux.asString(StandardCharsets.UTF_8);
+                    contentObservable = toString(httpResponse.body());
                 }
 
                 return contentObservable
@@ -329,22 +345,23 @@ class RxGatewayStoreModel implements RxStoreModel {
                             try {
                                 // If there is any error in the header response this throws exception
                                 // TODO: potential performance improvement: return Observable.error(exception) on failure instead of throwing Exception
-                                validateOrThrow(request, httpResponseStatus, httpResponseHeaders, content, null);
+                                validateOrThrow(request, HttpResponseStatus.valueOf(httpResponseStatus), httpResponseHeaders, content, null);
 
                                 // transforms to Observable<StoreResponse>
-                                StoreResponse rsp = new StoreResponse(httpResponseStatus.code(), HttpUtils.unescape(httpResponseHeaders.entries()), content);
+                                StoreResponse rsp = new StoreResponse(httpResponseStatus, HttpUtils.unescape(
+                                        new ArrayList<>(httpResponseHeaders.toMap().entrySet())), content);
                                 return Flux.just(rsp);
                             } catch (Exception e) {
-                                return Flux.error(e);
+                                return Flux.error(reactor.core.Exceptions.propagate(e));
                             }
-                        });
+                        }).single();
 
             }).map(RxDocumentServiceResponse::new)
                     .onErrorResume(throwable -> {
                         if (!(throwable instanceof Exception)) {
                             // fatal error
                             logger.error("Unexpected failure {}", throwable.getMessage(), throwable);
-                            return Flux.error(reactor.core.Exceptions.propagate(throwable));
+                            return Mono.error(reactor.core.Exceptions.propagate(throwable));
                         }
 
                         Exception exception = (Exception) throwable;
@@ -353,15 +370,15 @@ class RxGatewayStoreModel implements RxStoreModel {
                             logger.error("Network failure", exception);
                             DocumentClientException dce = new DocumentClientException(0, exception);
                             BridgeInternal.setRequestHeaders(dce, request.getHeaders());
-                            return Flux.error(reactor.core.Exceptions.propagate(dce));
+                            return Mono.error(reactor.core.Exceptions.propagate(dce));
                         }
 
-                        return Flux.error(reactor.core.Exceptions.propagate(exception));
+                        return Mono.error(reactor.core.Exceptions.propagate(exception));
                     }));
         }
     }
 
-    private void validateOrThrow(RxDocumentServiceRequest request, HttpResponseStatus status, HttpHeaders headers, String body,
+    private void validateOrThrow(RxDocumentServiceRequest request, HttpResponseStatus status, com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders headers, String body,
                                  InputStream inputStream) throws DocumentClientException {
 
         int statusCode = status.code();
@@ -389,7 +406,7 @@ class RxGatewayStoreModel implements RxStoreModel {
                     String.format("%s, StatusCode: %s", error.getMessage(), statusCodeString),
                     error.getPartitionedQueryExecutionInfo());
 
-            DocumentClientException dce = new DocumentClientException(statusCode, error, HttpUtils.asMap(headers));
+            DocumentClientException dce = new DocumentClientException(statusCode, error, headers.toMap());
             BridgeInternal.setRequestHeaders(dce, request.getHeaders());
             throw dce;
         }
@@ -501,5 +518,22 @@ class RxGatewayStoreModel implements RxStoreModel {
         if (!Strings.isNullOrEmpty(sessionToken)) {
             headers.put(HttpConstants.HttpHeaders.SESSION_TOKEN, sessionToken);
         }
+    }
+
+    private static Flux<String> toString(Flux<ByteBuf> contentObservable) {
+        return contentObservable
+                .reduce(
+                        new ByteArrayOutputStream(INITIAL_RESPONSE_BUFFER_SIZE),
+                        (out, bb) -> {
+                            try {
+                                bb.readBytes(out, bb.readableBytes());
+                                return out;
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
+                        })
+                .map(out -> {
+                    return new String(out.toByteArray(), StandardCharsets.UTF_8);
+                }).flux();
     }
 }

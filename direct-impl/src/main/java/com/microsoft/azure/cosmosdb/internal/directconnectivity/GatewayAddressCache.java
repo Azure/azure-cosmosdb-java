@@ -43,6 +43,9 @@ import com.microsoft.azure.cosmosdb.rx.internal.RMResources;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceResponse;
 import com.microsoft.azure.cosmosdb.rx.internal.caches.AsyncCache;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpRequest;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpResponse;
 import hu.akarnokd.rxjava.interop.RxJavaInterop;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
@@ -96,7 +99,7 @@ public class GatewayAddressCache implements IAddressCache {
     private final String protocolFilter;
     private final IAuthorizationTokenProvider tokenProvider;
     private final HashMap<String, String> defaultRequestHeaders;
-    private final HttpClient httpClient;
+    private final com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient httpClient;
 
     private volatile Pair<PartitionKeyRangeIdentity, AddressInformation[]> masterPartitionAddressCache;
     private volatile Instant suboptimalMasterPartitionTimestamp;
@@ -106,7 +109,7 @@ public class GatewayAddressCache implements IAddressCache {
             Protocol protocol,
             IAuthorizationTokenProvider tokenProvider,
             UserAgentContainer userAgent,
-            HttpClient httpClient,
+            com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient httpClient,
             long suboptimalPartitionForceRefreshIntervalInSeconds) {
         try {
             this.addressEndpoint = new URL(serviceEndpoint, Paths.ADDRESS_PATH_SEGMENT);
@@ -146,7 +149,7 @@ public class GatewayAddressCache implements IAddressCache {
             Protocol protocol,
             IAuthorizationTokenProvider tokenProvider,
             UserAgentContainer userAgent,
-            HttpClient httpClient) {
+            com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient httpClient) {
         this(serviceEndpoint,
              protocol,
              tokenProvider,
@@ -296,18 +299,18 @@ public class GatewayAddressCache implements IAddressCache {
         URL targetEndpoint = Utils.setQuery(this.addressEndpoint.toString(), Utils.createQuery(addressQuery));
         String identifier = logAddressResolutionStart(request, targetEndpoint);
 
-        DefaultHttpHeaders httpHeaders = new DefaultHttpHeaders();
+        HttpHeaders httpHeaders = new HttpHeaders();
         for (Map.Entry<String, String> entry : headers.entrySet()) {
-            httpHeaders.add(entry.getKey(), entry.getValue());
+            httpHeaders.set(entry.getKey(), entry.getValue());
         }
 
-        HttpClient.ResponseReceiver<?> responseReceiver = this.httpClient
-                .headers(defaultHttpHeaders -> defaultHttpHeaders.set(httpHeaders))
+        HttpRequest httpRequest = new HttpRequest(com.microsoft.azure.cosmosdb.rx.internal.http.HttpMethod.GET, targetEndpoint)
+                .withHeaders(httpHeaders);
+        Mono<HttpResponse> httpResponseMono = this.httpClient
                 .port(targetEndpoint.getPort())
-                .baseUrl(targetEndpoint.toString())
-                .request(HttpMethod.GET);
+                .send(httpRequest);
 
-        Single<RxDocumentServiceResponse> dsrObs = HttpClientUtils.parseResponseAsync(responseReceiver);
+        Single<RxDocumentServiceResponse> dsrObs = HttpClientUtils.parseResponseAsync(httpResponseMono);
         return dsrObs.map(
                 dsr -> {
                     logAddressResolutionEnd(request, identifier);
@@ -443,18 +446,18 @@ public class GatewayAddressCache implements IAddressCache {
         URL targetEndpoint = Utils.setQuery(this.addressEndpoint.toString(), Utils.createQuery(queryParameters));
         String identifier = logAddressResolutionStart(request, targetEndpoint);
 
-        DefaultHttpHeaders defaultHttpHeaders = new DefaultHttpHeaders();
+        HttpHeaders defaultHttpHeaders = new HttpHeaders();
         for (Map.Entry<String, String> entry : headers.entrySet()) {
-            defaultHttpHeaders.add(entry.getKey(), entry.getValue());
+            defaultHttpHeaders.set(entry.getKey(), entry.getValue());
         }
 
-        HttpClient.ResponseReceiver<?> responseReceiver = this.httpClient
-                .headers(httpHeaders ->  httpHeaders.set(defaultHttpHeaders))
+        HttpRequest httpRequest = new HttpRequest(com.microsoft.azure.cosmosdb.rx.internal.http.HttpMethod.GET, targetEndpoint)
+                .withHeaders(defaultHttpHeaders);
+        Mono<HttpResponse> httpResponseMono = this.httpClient
                 .port(targetEndpoint.getPort())
-                .baseUrl(targetEndpoint.toString())
-                .request(HttpMethod.GET);
+                .send(httpRequest);
 
-        Single<RxDocumentServiceResponse> dsrObs = HttpClientUtils.parseResponseAsync(responseReceiver);
+        Single<RxDocumentServiceResponse> dsrObs = HttpClientUtils.parseResponseAsync(httpResponseMono);
 
         return dsrObs.map(
                 dsr -> {

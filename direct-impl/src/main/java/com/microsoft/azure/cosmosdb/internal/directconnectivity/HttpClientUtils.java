@@ -27,9 +27,11 @@ import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.Error;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceResponse;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpResponse;
 import hu.akarnokd.rxjava.interop.RxJavaInterop;
 import io.netty.buffer.ByteBuf;
 import io.reactivex.netty.protocol.http.client.HttpClientResponse;
+import reactor.adapter.rxjava.RxJava2Adapter;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.netty.ByteBufFlux;
@@ -58,21 +60,37 @@ public class HttpClientUtils {
         }
     }
 
-    static Single<RxDocumentServiceResponse> parseResponseAsync(HttpClient.ResponseReceiver<?> responseReceiver) {
-        Observable<RxDocumentServiceResponse> rxDocumentServiceResponseObservable = RxJavaInterop.toV1Observable(responseReceiver.response().flatMap(httpClientResponse -> {
-            if (httpClientResponse.status().code() < HttpConstants.StatusCodes.MINIMUM_STATUSCODE_AS_ERROR_GATEWAY) {
+//    static Single<RxDocumentServiceResponse> parseResponseAsync(HttpClient.ResponseReceiver<?> responseReceiver) {
+//        Observable<RxDocumentServiceResponse> rxDocumentServiceResponseObservable = RxJavaInterop.toV1Observable(responseReceiver.response().flatMap(httpClientResponse -> {
+//            if (httpClientResponse.status().code() < HttpConstants.StatusCodes.MINIMUM_STATUSCODE_AS_ERROR_GATEWAY) {
+//
+//                Mono<StoreResponse> storeResponse = ResponseUtils.toStoreResponse(httpClientResponse, responseReceiver.responseContent());
+//                return storeResponse.map(RxDocumentServiceResponse::new);
+//
+//                // TODO: to break the dependency between RxDocumentServiceResponse and StoreResponse
+//                // we should factor out the  RxDocumentServiceResponse(StoreResponse) constructor to a helper class
+//
+//            } else {
+//                return HttpClientUtils.createDocumentClientException(httpClientResponse, responseReceiver.responseContent()).flatMap(Mono::error);
+//            }
+//        }));
+//        return rxDocumentServiceResponseObservable.toSingle();
+//    }
 
-                Mono<StoreResponse> storeResponse = ResponseUtils.toStoreResponse(httpClientResponse, responseReceiver.responseContent());
-                return storeResponse.map(RxDocumentServiceResponse::new);
+    static Single<RxDocumentServiceResponse> parseResponseAsync(Mono<HttpResponse> httpResponse) {
+        return RxJavaInterop.toV1Single(RxJava2Adapter.monoToSingle(httpResponse.flatMap(response -> {
+            if (response.statusCode() < HttpConstants.StatusCodes.MINIMUM_STATUSCODE_AS_ERROR_GATEWAY) {
+
+                return ResponseUtils.toStoreResponse(response, response.body()).map(RxDocumentServiceResponse::new);
 
                 // TODO: to break the dependency between RxDocumentServiceResponse and StoreResponse
                 // we should factor out the  RxDocumentServiceResponse(StoreResponse) constructor to a helper class
 
             } else {
-                return HttpClientUtils.createDocumentClientException(httpClientResponse, responseReceiver.responseContent()).flatMap(Mono::error);
+                return HttpClientUtils
+                        .createDocumentClientException(response).flatMap(Mono::error);
             }
-        }));
-        return rxDocumentServiceResponseObservable.toSingle();
+        })));
     }
 
     private static Single<DocumentClientException> createDocumentClientException(HttpClientResponse<ByteBuf> responseMessage) {
@@ -88,15 +106,15 @@ public class HttpClientUtils {
         });
     }
 
-    private static Mono<DocumentClientException> createDocumentClientException(reactor.netty.http.client.HttpClientResponse httpClientResponse, ByteBufFlux byteBufFlux) {
-        Mono<String> readStream = byteBufFlux.asString(StandardCharsets.UTF_8).single();
+    private static Mono<DocumentClientException> createDocumentClientException(HttpResponse httpResponse) {
+        Mono<String> readStream = ResponseUtils.toString(httpResponse.body()).single();
 
         return readStream.map(body -> {
             Error error = new Error(body);
 
             // TODO: we should set resource address in the Document Client Exception
-            return new DocumentClientException(httpClientResponse.status().code(), error,
-                    HttpUtils.asMap(httpClientResponse.responseHeaders()));
+            return new DocumentClientException(httpResponse.statusCode(), error,
+                    httpResponse.headers().toMap());
         });
     }
 }

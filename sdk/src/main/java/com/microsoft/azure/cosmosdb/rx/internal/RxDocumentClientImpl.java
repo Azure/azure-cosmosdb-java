@@ -93,8 +93,6 @@ import com.microsoft.azure.cosmosdb.rx.internal.query.DocumentQueryExecutionCont
 import com.microsoft.azure.cosmosdb.rx.internal.query.IDocumentQueryClient;
 import com.microsoft.azure.cosmosdb.rx.internal.query.IDocumentQueryExecutionContext;
 import com.microsoft.azure.cosmosdb.rx.internal.query.Paginator;
-import io.netty.buffer.ByteBuf;
-import io.reactivex.netty.protocol.http.client.CompositeHttpClient;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -162,7 +160,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
      * supported.
      */
     private final QueryCompatibilityMode queryCompatibilityMode = QueryCompatibilityMode.Default;
-    private final HttpClient reactorHttpClient;
+    private final com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient reactorHttpClient;
     private final GlobalEndpointManager globalEndpointManager;
     private final RetryPolicy retryPolicy;
     private volatile boolean useMultipleWriteLocations;
@@ -271,7 +269,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
             userAgentContainer.setSuffix(userAgentSuffix);
         }
 
-        this.reactorHttpClient = httpClient();
+        this.reactorHttpClient = com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient.createDefault();
         this.globalEndpointManager = new GlobalEndpointManager(asDatabaseAccountManagerInternal(), this.connectionPolicy, /**/configs);
         this.retryPolicy = new RetryPolicy(this.globalEndpointManager, this.connectionPolicy);
         this.resetSessionTokenRetryPolicy = retryPolicy;
@@ -381,7 +379,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
                                              QueryCompatibilityMode queryCompatibilityMode,
                                              UserAgentContainer userAgentContainer,
                                              GlobalEndpointManager globalEndpointManager,
-                                             HttpClient httpClient) {
+                                             com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient httpClient) {
         return new RxGatewayStoreModel(sessionContainer,
                 consistencyLevel,
                 queryCompatibilityMode,

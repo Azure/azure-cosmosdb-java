@@ -39,9 +39,9 @@ import com.microsoft.azure.cosmosdb.rx.TestConfigurations;
 import com.microsoft.azure.cosmosdb.rx.TestSuiteBase;
 import com.microsoft.azure.cosmosdb.rx.internal.Configs;
 import com.microsoft.azure.cosmosdb.rx.internal.IAuthorizationTokenProvider;
-import com.microsoft.azure.cosmosdb.rx.internal.ReactorHttpClientFactory;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentClientImpl;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient;
 import org.mockito.Matchers;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -51,7 +51,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
-import reactor.netty.http.client.HttpClient;
 import rx.Single;
 import rx.observers.TestSubscriber;
 
@@ -847,9 +846,8 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
         return collectionDefinition;
     }
 
-    private HttpClient getHttpClient(Configs configs) {
-        return new ReactorHttpClientFactory(configs)
-                .toHttpClient();
+    private com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient getHttpClient(Configs configs) {
+        return com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient.createDefault();
     }
 
     private HttpClientUnderTestWrapper getHttpClientUnderTestWrapper(Configs configs) {

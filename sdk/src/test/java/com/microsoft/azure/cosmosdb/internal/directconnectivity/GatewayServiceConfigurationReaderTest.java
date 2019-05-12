@@ -33,6 +33,8 @@ import com.microsoft.azure.cosmosdb.rx.TestConfigurations;
 import com.microsoft.azure.cosmosdb.rx.TestSuiteBase;
 import com.microsoft.azure.cosmosdb.rx.internal.SpyClientUnderTestFactory;
 import com.microsoft.azure.cosmosdb.rx.internal.SpyClientUnderTestFactory.ClientUnderTest;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpRequest;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpResponse;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.handler.codec.http.DefaultHttpResponse;
@@ -46,6 +48,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
+import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 import rx.Observable;
 import rx.Single;
@@ -59,8 +62,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class GatewayServiceConfigurationReaderTest extends TestSuiteBase {
 
     private static final int TIMEOUT = 8000;
-    private HttpClient mockHttpClient;
-    private HttpClient httpClient;
+    private com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient mockHttpClient;
+    private com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient httpClient;
     private BaseAuthorizationTokenProvider baseAuthorizationTokenProvider;
     private ConnectionPolicy connectionPolicy;
     private GatewayServiceConfigurationReader mockGatewayServiceConfigurationReader;
@@ -77,7 +80,7 @@ public class GatewayServiceConfigurationReaderTest extends TestSuiteBase {
     @BeforeClass(groups = "simple")
     public void setup() throws Exception {
         client = clientBuilder.build();
-        mockHttpClient = Mockito.mock(HttpClient.class);
+        mockHttpClient = Mockito.mock(com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient.class);
 
         ClientUnderTest clientUnderTest = SpyClientUnderTestFactory.createClientUnderTest(this.clientBuilder);
         httpClient = clientUnderTest.getSpyHttpClient();
@@ -105,10 +108,9 @@ public class GatewayServiceConfigurationReaderTest extends TestSuiteBase {
     @Test(groups = "simple")
     public void mockInitializeReaderAsync() throws Exception {
 
-        HttpClient.ResponseReceiver mockedResponse = getMockResponse(databaseAccountJson);
+        HttpResponse mockResponse = getMockResponse(databaseAccountJson);
 
-        Mockito.when(mockHttpClient.get())
-                .thenReturn(mockedResponse);
+        Mockito.when(mockHttpClient.send(Mockito.any(HttpRequest.class))).thenReturn(Mono.just(mockResponse));
 
         Single<DatabaseAccount> databaseAccount = mockGatewayServiceConfigurationReader.initializeReaderAsync();
         validateSuccess(databaseAccount, expectedDatabaseAccount);
@@ -119,10 +121,9 @@ public class GatewayServiceConfigurationReaderTest extends TestSuiteBase {
         mockGatewayServiceConfigurationReader = new GatewayServiceConfigurationReader(new URI(TestConfigurations.HOST),
                 true, "SampleResourceToken", connectionPolicy, baseAuthorizationTokenProvider, mockHttpClient);
 
-        HttpClient.ResponseReceiver mockedResponse = getMockResponse(databaseAccountJson);
+        HttpResponse mockedResponse = getMockResponse(databaseAccountJson);
 
-        Mockito.when(mockHttpClient.get())
-                .thenReturn(mockedResponse);
+        Mockito.when(mockHttpClient.send(Mockito.any(HttpRequest.class))).thenReturn(Mono.just(mockedResponse));
 
         Single<DatabaseAccount> databaseAccount = mockGatewayServiceConfigurationReader.initializeReaderAsync();
         validateSuccess(databaseAccount, expectedDatabaseAccount);
@@ -169,11 +170,11 @@ public class GatewayServiceConfigurationReaderTest extends TestSuiteBase {
                 .isEqualTo(BridgeInternal.getQueryEngineConfiuration(expectedDatabaseAccount));
     }
 
-    private HttpClient.ResponseReceiver<?> getMockResponse(String databaseAccountJson) {
-        HttpClient.ResponseReceiver<?> resp = Mockito.mock(HttpClient.ResponseReceiver.class);
-        Mockito.doReturn(HttpResponseStatus.valueOf(200)).when(resp.response().block().status());
+    private HttpResponse getMockResponse(String databaseAccountJson) {
+        HttpResponse mock = Mockito.mock(HttpResponse.class);
+        Mockito.doReturn(HttpResponseStatus.valueOf(200)).when(mock.statusCode());
         Mockito.doReturn(Observable.just(ByteBufUtil.writeUtf8(ByteBufAllocator.DEFAULT, databaseAccountJson)))
-                .when(resp).responseContent();
+                .when(mock).body();
 
         DefaultHttpResponse httpResponse = new DefaultHttpResponse(HttpVersion.HTTP_1_1,
                 HttpResponseStatus.valueOf(200), EmptyHttpHeaders.INSTANCE);
@@ -185,6 +186,6 @@ public class GatewayServiceConfigurationReaderTest extends TestSuiteBase {
         } catch (IllegalArgumentException | SecurityException e) {
             throw new IllegalStateException("Failed to instantiate class object.", e);
         }
-        return resp;
+        return mock;
     }
 }
