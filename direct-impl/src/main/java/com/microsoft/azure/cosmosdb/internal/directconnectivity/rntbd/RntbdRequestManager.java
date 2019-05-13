@@ -463,12 +463,8 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
             });
 
             requestRecord.whenComplete((response, error) -> {
-                try {
-                    this.pendingRequests.remove(activityId);
-                    pendingRequestTimeout.cancel();
-                } catch (Throwable throwable) {
-                    reportIssue(logger, requestRecord, "{}", throwable);
-                }
+                this.pendingRequests.remove(activityId);
+                pendingRequestTimeout.cancel();
             });
 
             return requestRecord;

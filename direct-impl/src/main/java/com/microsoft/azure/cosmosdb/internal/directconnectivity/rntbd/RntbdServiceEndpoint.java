@@ -131,24 +131,20 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
 
         return requestRecord.whenComplete((response, error) -> {
 
-            try {
-                args.traceOperation(logger, null, "requestComplete", response, error);
-                this.metrics.incrementResponseCount();
+            args.traceOperation(logger, null, "requestComplete", response, error);
+            this.metrics.incrementResponseCount();
 
-                if (error != null) {
-                    this.metrics.incrementErrorResponseCount();
-                }
+            if (error != null) {
+                this.metrics.incrementErrorResponseCount();
+            }
 
-                if (logger.isDebugEnabled()) {
-                    if (error == null) {
-                        final int status = response.getStatus();
-                        logger.debug("\n  [{}]\n  {}\n  request succeeded with response status: {}", this, args, status);
-                    } else {
-                        logger.debug("\n  [{}]\n  {}\n  request failed due to ", this, args, error);
-                    }
+            if (logger.isDebugEnabled()) {
+                if (error == null) {
+                    final int status = response.getStatus();
+                    logger.debug("\n  [{}]\n  {}\n  request succeeded with response status: {}", this, args, status);
+                } else {
+                    logger.debug("\n  [{}]\n  {}\n  request failed due to ", this, args, error);
                 }
-            } catch (Throwable throwable) {
-                reportIssue(logger, requestRecord, "{}", throwable);
             }
         });
     }
