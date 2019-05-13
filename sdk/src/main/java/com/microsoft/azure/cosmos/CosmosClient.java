@@ -45,6 +45,14 @@ import reactor.core.publisher.Mono;
     //Document client wrapper
     private AsyncDocumentClient asyncDocumentClient;
 
+    AsyncDocumentClient getContexClient() {
+        return this.asyncDocumentClient;
+    }
+
+    static AsyncDocumentClient getContexClient(CosmosClient cosmosClient) {
+        return cosmosClient.asyncDocumentClient;
+    }
+
     /**
      * Creates a cosmos client with given cosmosConfiguration
      * @param cosmosConfiguration the cosmosConfiguration
