@@ -83,6 +83,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.SubStatusCodes;
+import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdReporter.reportIssue;
 import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdReporter.reportIssueUnless;
 
 public final class RntbdRequestManager implements ChannelHandler, ChannelInboundHandler, ChannelOutboundHandler {
@@ -462,8 +463,12 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
             });
 
             requestRecord.whenComplete((response, error) -> {
-                this.pendingRequests.remove(activityId);
-                pendingRequestTimeout.cancel();
+                try {
+                    this.pendingRequests.remove(activityId);
+                    pendingRequestTimeout.cancel();
+                } catch (Throwable throwable) {
+                    reportIssue(logger, requestRecord, "{}", throwable);
+                }
             });
 
             return requestRecord;

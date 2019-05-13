@@ -58,6 +58,7 @@ import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdReporter.reportIssue;
 
 @JsonSerialize(using = RntbdServiceEndpoint.JsonSerializer.class)
 public final class RntbdServiceEndpoint implements RntbdEndpoint {
@@ -130,20 +131,24 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
 
         return requestRecord.whenComplete((response, error) -> {
 
-            args.traceOperation(logger, null, "requestComplete", response, error);
-            this.metrics.incrementResponseCount();
+            try {
+                args.traceOperation(logger, null, "requestComplete", response, error);
+                this.metrics.incrementResponseCount();
 
-            if (error != null) {
-                this.metrics.incrementErrorResponseCount();
-            }
-
-            if (logger.isDebugEnabled()) {
-                if (error == null) {
-                    final int status = response.getStatus();
-                    logger.debug("\n  [{}]\n  {}\n  request succeeded with response status: {}", this, args, status);
-                } else {
-                    logger.debug("\n  [{}]\n  {}\n  request failed due to {}", this, args, error);
+                if (error != null) {
+                    this.metrics.incrementErrorResponseCount();
                 }
+
+                if (logger.isDebugEnabled()) {
+                    if (error == null) {
+                        final int status = response.getStatus();
+                        logger.debug("\n  [{}]\n  {}\n  request succeeded with response status: {}", this, args, status);
+                    } else {
+                        logger.debug("\n  [{}]\n  {}\n  request failed due to ", this, args, error);
+                    }
+                }
+            } catch (Throwable throwable) {
+                reportIssue(logger, requestRecord, "{}", throwable);
             }
         });
     }

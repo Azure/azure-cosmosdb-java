@@ -34,11 +34,9 @@ import org.slf4j.LoggerFactory;
 import java.time.Duration;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdReporter.reportIssueUnless;
 
 public final class RntbdRequestRecord extends CompletableFuture<StoreResponse> {
 
@@ -70,39 +68,6 @@ public final class RntbdRequestRecord extends CompletableFuture<StoreResponse> {
 
     public Duration getLifetime() {
         return this.args.getLifetime();
-    }
-
-    @Override
-    public boolean cancel(boolean mayInterruptIfRunning) {
-        logger.warn("{} CANCEL", this);
-        try {
-            return super.cancel(mayInterruptIfRunning);
-        } catch (CompletionException completionException) {
-            logger.warn("{} already completed", this, completionException);
-        }
-        return this.isCancelled();
-    }
-
-    @Override
-    public boolean complete(StoreResponse value) {
-        logger.warn("{} COMPLETE", this);
-        try {
-            return super.complete(value);
-        } catch (CompletionException completionException) {
-            logger.warn("{} already completed: ", this, completionException);
-        }
-        return this.isDone() && !this.isCompletedExceptionally();
-    }
-
-    @Override
-    public boolean completeExceptionally(final Throwable error) {
-        logger.warn("{} COMPLETE EXCEPTIONALLY: ", this, error);
-        try {
-            return super.completeExceptionally(error);
-        } catch (CompletionException completionException) {
-            logger.warn("{} already completed: ", this, completionException);
-        }
-        return this.isCompletedExceptionally();
     }
 
     public void expire() {
