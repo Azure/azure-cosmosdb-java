@@ -73,6 +73,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -475,20 +476,12 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         return Optional.of(this.contextFuture.getNow(null));
     }
 
-    private RntbdRequestRecord checkPendingRequest(final UUID activityId, final RntbdRequestRecord pendingRequest) {
-
-        checkNotNull(pendingRequest, "Pending request not found: %s", activityId);
-        checkArgument(!pendingRequest.isDone(), "Request is complete, not pending: %s", activityId);
-
-        return pendingRequest;
-    }
-
     private void completeAllPendingRequestsExceptionally(final ChannelHandlerContext context, final Throwable throwable) {
 
         checkNotNull(throwable, "throwable: null");
 
         if (this.closingExceptionally) {
-            assert throwable == ClosedWithPendingRequestsException.INSTANCE;
+            checkArgument(throwable == ClosedWithPendingRequestsException.INSTANCE, "throwable: %s", throwable);
             return;
         }
 

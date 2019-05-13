@@ -137,7 +137,7 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
                     emitter.onSuccess(response);
                 } else {
                     reportIssueUnless(error instanceof DocumentClientException, logger, this,
-                        "Expected failure of type {}, not ", DocumentClientException.class.getCanonicalName(),
+                        "Expected failure of {}, not ", DocumentClientException.class,
                         error);
                     this.metrics.incrementErrorResponseCount();
                     emitter.onError(error instanceof CompletionException ? error.getCause() : error);

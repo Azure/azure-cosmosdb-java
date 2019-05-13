@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
 import java.time.Duration;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -73,29 +74,42 @@ public final class RntbdRequestRecord extends CompletableFuture<StoreResponse> {
 
     @Override
     public boolean cancel(boolean mayInterruptIfRunning) {
-        reportIssueUnless(!this.isDone(), logger, this, "failed to cancel request because it is already done");
-        return super.cancel(mayInterruptIfRunning);
+        logger.warn("{} CANCEL", this);
+        try {
+            return super.cancel(mayInterruptIfRunning);
+        } catch (CompletionException completionException) {
+            logger.warn("{} already completed", this, completionException);
+        }
+        return this.isCancelled();
     }
 
     @Override
     public boolean complete(StoreResponse value) {
-        reportIssueUnless(!this.isDone(), logger, this, "failed to complete request because it is already done");
-        return super.complete(value);
+        logger.warn("{} COMPLETE", this);
+        try {
+            return super.complete(value);
+        } catch (CompletionException completionException) {
+            logger.warn("{} already completed: ", this, completionException);
+        }
+        return this.isDone() && !this.isCompletedExceptionally();
     }
 
     @Override
     public boolean completeExceptionally(final Throwable error) {
-        reportIssueUnless(!this.isDone(), logger, this, "failed to complete request exceptionally because it is already done");
-        return super.completeExceptionally(error);
+        logger.warn("{} COMPLETE EXCEPTIONALLY: ", this, error);
+        try {
+            return super.completeExceptionally(error);
+        } catch (CompletionException completionException) {
+            logger.warn("{} already completed: ", this, completionException);
+        }
+        return this.isCompletedExceptionally();
     }
 
     public void expire() {
-
         final RequestTimeoutException error = new RequestTimeoutException(
             String.format("Request timeout interval (%,d ms) elapsed",
                 this.timer.getRequestTimeout(TimeUnit.MILLISECONDS)),
             this.args.getPhysicalAddress());
-
         BridgeInternal.setRequestHeaders(error, this.args.getServiceRequest().getHeaders());
         this.completeExceptionally(error);
     }
