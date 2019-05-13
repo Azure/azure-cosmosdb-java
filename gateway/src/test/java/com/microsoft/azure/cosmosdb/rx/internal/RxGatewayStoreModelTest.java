@@ -57,6 +57,7 @@ public class RxGatewayStoreModelTest {
         Mockito.doReturn(new URL("https://localhost"))
                 .when(globalEndpointManager).resolveServiceEndpoint(Mockito.any());
         HttpClient httpClient = Mockito.mock(HttpClient.class);
+        Mockito.doReturn(httpClient).when(httpClient).port(Mockito.anyInt());
         Mockito.doReturn(Mono.error(ReadTimeoutException.INSTANCE))
                 .when(httpClient).send(Mockito.any(HttpRequest.class));
 

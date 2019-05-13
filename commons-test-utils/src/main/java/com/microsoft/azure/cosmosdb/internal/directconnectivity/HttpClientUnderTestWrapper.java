@@ -23,10 +23,9 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpRequest;
-import io.netty.handler.codec.http.HttpMethod;
 import org.mockito.Mockito;
-import reactor.netty.http.client.HttpClient;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -38,28 +37,28 @@ import static org.mockito.Mockito.doAnswer;
  * This is a helper class for capturing requests sent over a httpClient.
  */
 public class HttpClientUnderTestWrapper {
-    final private com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient origHttpClient;
-    final private com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient spyHttpClient;
+    final private HttpClient origHttpClient;
+    final private HttpClient spyHttpClient;
 
-    public final List<HttpClient.RequestSender> capturedRequestSender = Collections.synchronizedList(new ArrayList<>());
+    public final List<HttpRequest> capturedRequests = Collections.synchronizedList(new ArrayList<>());
 
-    public HttpClientUnderTestWrapper(com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient origHttpClient) {
+    public HttpClientUnderTestWrapper(HttpClient origHttpClient) {
         this.origHttpClient = origHttpClient;
         this.spyHttpClient = Mockito.spy(origHttpClient);
 
         initRequestCapture(spyHttpClient);
     }
 
-    public com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient getSpyHttpClient() {
+    public HttpClient getSpyHttpClient() {
         return spyHttpClient;
     }
 
-    private void initRequestCapture(com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient spyClient) {
+    private void initRequestCapture(HttpClient spyClient) {
 
         doAnswer(invocationOnMock -> {
-            HttpClient.RequestSender httpRequestSender = invocationOnMock.getArgumentAt(0, HttpClient.RequestSender.class);
-            capturedRequestSender.add(httpRequestSender);
-            return origHttpClient.send(Mockito.any(HttpRequest.class));
+            HttpRequest httpRequest = invocationOnMock.getArgumentAt(0, HttpRequest.class);
+            capturedRequests.add(httpRequest);
+            return origHttpClient.send(httpRequest);
         }).when(spyClient).send(Mockito.any(HttpRequest.class));
     }
 }
