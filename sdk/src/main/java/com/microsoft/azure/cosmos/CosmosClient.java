@@ -45,11 +45,11 @@ import reactor.core.publisher.Mono;
     //Document client wrapper
     private AsyncDocumentClient asyncDocumentClient;
 
-    AsyncDocumentClient getContexClient() {
+    AsyncDocumentClient getContextClient() {
         return this.asyncDocumentClient;
     }
 
-    static AsyncDocumentClient getContexClient(CosmosClient cosmosClient) {
+    static AsyncDocumentClient getContextClient(CosmosClient cosmosClient) {
         return cosmosClient.asyncDocumentClient;
     }
 
