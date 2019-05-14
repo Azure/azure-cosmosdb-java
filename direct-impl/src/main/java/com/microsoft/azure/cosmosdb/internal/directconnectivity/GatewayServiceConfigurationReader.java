@@ -154,7 +154,7 @@ public class GatewayServiceConfigurationReader {
             }
         }
 
-        HttpRequest httpRequest = new HttpRequest(com.microsoft.azure.cosmosdb.rx.internal.http.HttpMethod.GET, serviceEndpoint)
+        HttpRequest httpRequest = new HttpRequest(HttpMethod.GET, serviceEndpoint)
                 .withHeaders(httpHeaders);
         Mono<HttpResponse> httpResponse = httpClient
                 .port(serviceEndpoint.getPort())

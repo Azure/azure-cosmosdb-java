@@ -304,7 +304,7 @@ public class GatewayAddressCache implements IAddressCache {
             httpHeaders.set(entry.getKey(), entry.getValue());
         }
 
-        HttpRequest httpRequest = new HttpRequest(com.microsoft.azure.cosmosdb.rx.internal.http.HttpMethod.GET, targetEndpoint)
+        HttpRequest httpRequest = new HttpRequest(HttpMethod.GET, targetEndpoint)
                 .withHeaders(httpHeaders);
         Mono<HttpResponse> httpResponseMono = this.httpClient
                 .port(targetEndpoint.getPort())
@@ -451,7 +451,7 @@ public class GatewayAddressCache implements IAddressCache {
             defaultHttpHeaders.set(entry.getKey(), entry.getValue());
         }
 
-        HttpRequest httpRequest = new HttpRequest(com.microsoft.azure.cosmosdb.rx.internal.http.HttpMethod.GET, targetEndpoint)
+        HttpRequest httpRequest = new HttpRequest(HttpMethod.GET, targetEndpoint)
                 .withHeaders(defaultHttpHeaders);
         Mono<HttpResponse> httpResponseMono = this.httpClient
                 .port(targetEndpoint.getPort())

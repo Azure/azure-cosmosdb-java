@@ -188,7 +188,7 @@ class RxGatewayStoreModel implements RxStoreModel {
             }
 
 
-            HttpRequest httpRequest = new HttpRequest(com.microsoft.azure.cosmosdb.rx.internal.http.HttpMethod.valueOf(method.name()),
+            HttpRequest httpRequest = new HttpRequest(method,
                     uri.toURL(),
                     httpHeaders,
                     byteBufObservable);

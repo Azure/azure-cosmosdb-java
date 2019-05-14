@@ -27,16 +27,12 @@ import com.microsoft.azure.cosmosdb.ConsistencyLevel;
 import com.microsoft.azure.cosmosdb.ISessionContainer;
 import com.microsoft.azure.cosmosdb.internal.QueryCompatibilityMode;
 import com.microsoft.azure.cosmosdb.internal.UserAgentContainer;
-import com.microsoft.azure.cosmosdb.rx.internal.http.HttpMethod;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpRequest;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpResponse;
-import io.netty.buffer.ByteBuf;
+import io.netty.handler.codec.http.HttpMethod;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.netty.http.client.HttpClient;
-import rx.Observable;
 
 import java.net.URI;
 import java.net.URL;

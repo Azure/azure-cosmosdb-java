@@ -20,70 +20,21 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
 package com.microsoft.azure.cosmosdb.rx.internal.http;
 
-import reactor.netty.tcp.ProxyProvider.Proxy;
-
-import java.net.InetSocketAddress;
+import reactor.core.publisher.Mono;
 
 /**
- * proxy configuration.
+ * Pipeline policy.
  */
-public class ProxyOptions {
-    private final InetSocketAddress address;
-    private final Type type;
-
+@FunctionalInterface
+public interface HttpPipelinePolicy {
     /**
-     * Creates ProxyOptions.
+     * Process provided request context and invokes the next policy.
      *
-     * @param type the proxy type
-     * @param address the proxy address (ip and port number)
+     * @param context request context
+     * @param next the next policy to invoke
+     * @return publisher that initiate the request upon subscription and emits response on completion.
      */
-    public ProxyOptions(Type type, InetSocketAddress address) {
-        this.type = type;
-        this.address = address;
-    }
-
-    /**
-     * @return the address of the proxy.
-     */
-    public InetSocketAddress address() {
-        return address;
-    }
-
-    /**
-     * @return the type of the proxy.
-     */
-    public Type type() {
-        return type;
-    }
-
-    /**
-     * The type of the proxy.
-     */
-    public enum Type {
-        /**
-         * HTTP proxy type.
-         */
-        HTTP(Proxy.HTTP),
-        /**
-         * SOCKS4 proxy type.
-         */
-        SOCKS4(Proxy.SOCKS4),
-        /**
-         * SOCKS5 proxy type.
-         */
-        SOCKS5(Proxy.SOCKS5);
-
-        private final Proxy value;
-
-        Type(Proxy reactorProxyType) {
-            this.value = reactorProxyType;
-        }
-
-        Proxy value() {
-            return value;
-        }
-    }
+    Mono<HttpResponse> process(HttpPipelineCallContext context, HttpPipelineNextPolicy next);
 }

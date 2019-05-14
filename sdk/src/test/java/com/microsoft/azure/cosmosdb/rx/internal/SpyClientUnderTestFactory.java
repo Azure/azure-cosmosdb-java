@@ -154,7 +154,7 @@ public class SpyClientUnderTestFactory {
         void initRequestCapture(com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient spyClient) {
 
             doAnswer(invocationOnMock -> {
-                com.microsoft.azure.cosmosdb.rx.internal.http.HttpMethod httpMethod = invocationOnMock.getArgumentAt(0, com.microsoft.azure.cosmosdb.rx.internal.http.HttpMethod.class);
+                HttpMethod httpMethod = invocationOnMock.getArgumentAt(0, HttpMethod.class);
                 URL url = invocationOnMock.getArgumentAt(1, URL.class);
 
                 CompletableFuture<com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders> f = new CompletableFuture<>();

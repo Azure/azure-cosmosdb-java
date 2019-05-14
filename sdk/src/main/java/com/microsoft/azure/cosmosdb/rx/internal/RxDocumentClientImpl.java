@@ -89,6 +89,8 @@ import com.microsoft.azure.cosmosdb.rx.internal.caches.RxClientCollectionCache;
 import com.microsoft.azure.cosmosdb.rx.internal.caches.RxCollectionCache;
 import com.microsoft.azure.cosmosdb.rx.internal.caches.RxPartitionKeyRangeCache;
 import com.microsoft.azure.cosmosdb.rx.internal.directconnectivity.GlobalAddressResolver;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpClientConfig;
 import com.microsoft.azure.cosmosdb.rx.internal.query.DocumentQueryExecutionContextFactory;
 import com.microsoft.azure.cosmosdb.rx.internal.query.IDocumentQueryClient;
 import com.microsoft.azure.cosmosdb.rx.internal.query.IDocumentQueryExecutionContext;
@@ -96,7 +98,6 @@ import com.microsoft.azure.cosmosdb.rx.internal.query.Paginator;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import reactor.netty.http.client.HttpClient;
 import rx.Observable;
 import rx.Single;
 import rx.functions.Func1;
@@ -269,7 +270,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
             userAgentContainer.setSuffix(userAgentSuffix);
         }
 
-        this.reactorHttpClient = com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient.createDefault();
+        this.reactorHttpClient = httpClient();
         this.globalEndpointManager = new GlobalEndpointManager(asDatabaseAccountManagerInternal(), this.connectionPolicy, /**/configs);
         this.retryPolicy = new RetryPolicy(this.globalEndpointManager, this.connectionPolicy);
         this.resetSessionTokenRetryPolicy = retryPolicy;
@@ -390,13 +391,13 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
 
     private HttpClient httpClient() {
 
-        ReactorHttpClientFactory factory = new ReactorHttpClientFactory(this.configs)
+        HttpClientConfig httpClientConfig = new HttpClientConfig(this.configs)
                 .withMaxIdleConnectionTimeoutInMillis(this.connectionPolicy.getIdleConnectionTimeoutInMillis())
                 .withPoolSize(this.connectionPolicy.getMaxPoolSize())
                 .withHttpProxy(this.connectionPolicy.getProxy())
                 .withRequestTimeoutInMillis(this.connectionPolicy.getRequestTimeoutInMillis());
 
-        return factory.toHttpClient();
+        return com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient.createFixed(httpClientConfig);
     }
 
     private void createStoreModel(boolean subscribeRntbdStatus) {
