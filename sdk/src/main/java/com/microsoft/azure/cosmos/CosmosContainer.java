@@ -282,7 +282,7 @@ public class CosmosContainer extends CosmosResource {
      * @param id id of the item
      * @return a cosmos item
      */
-    public CosmosItem getItem(String id, PartitionKey partitionKey){
+    public CosmosItem getItem(String id, Object partitionKey){
         return new CosmosItem(id, partitionKey, this);
     }
 
