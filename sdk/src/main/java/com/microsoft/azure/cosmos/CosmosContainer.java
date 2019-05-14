@@ -25,6 +25,7 @@ package com.microsoft.azure.cosmos;
 import com.microsoft.azure.cosmosdb.BridgeInternal;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
+import com.microsoft.azure.cosmosdb.PartitionKey;
 import com.microsoft.azure.cosmosdb.SqlQuerySpec;
 import com.microsoft.azure.cosmosdb.StoredProcedure;
 import com.microsoft.azure.cosmosdb.Trigger;
@@ -173,8 +174,13 @@ public class CosmosContainer extends CosmosResource {
     public Mono<CosmosItemResponse> createItem(Object item, CosmosItemRequestOptions options) {
         return RxJava2Adapter.singleToMono(
                 RxJavaInterop.toV2Single(database.getDocClientWrapper()
-                                                 .createDocument(getLink(),CosmosItem.fromObject(item),options.toRequestOptions(), true)
-                                                 .map(response -> new CosmosItemResponse(response, this))
+                                                 .createDocument(getLink(),
+                                                         CosmosItemSettings.fromObject(item),
+                                                         options.toRequestOptions(),
+                                                         true)
+                                                 .map(response -> new CosmosItemResponse(response,
+                                                         options.getPartitionKey(),
+                                                         this))
                                                  .toSingle()));
     }
 
@@ -196,7 +202,9 @@ public class CosmosContainer extends CosmosResource {
                                                                                             item,
                                                                                             options.toRequestOptions(),
                                                                                             true)
-                                                                            .map(response -> new CosmosItemResponse(response, this))
+                                                                            .map(response -> new CosmosItemResponse(response,
+                                                                                    options.getPartitionKey(),
+                                                                                    this))
                                                                             .toSingle()));
     }
 
@@ -209,7 +217,7 @@ public class CosmosContainer extends CosmosResource {
      *
      * @return an {@link Flux} containing one or several feed response pages of the read cosmos items or an error.
      */
-    public Flux<FeedResponse<CosmosItem>> listItems() {
+    public Flux<FeedResponse<CosmosItemSettings>> listItems() {
         return listItems(new FeedOptions());
     }
 
@@ -223,12 +231,13 @@ public class CosmosContainer extends CosmosResource {
      * @param options        the feed options.
      * @return an {@link Flux} containing one or several feed response pages of the read cosmos items or an error.
      */
-    public Flux<FeedResponse<CosmosItem>> listItems(FeedOptions options) {
+    public Flux<FeedResponse<CosmosItemSettings>> listItems(FeedOptions options) {
         return RxJava2Adapter.flowableToFlux(
                 RxJavaInterop.toV2Flowable(getDatabase().getDocClientWrapper()
                                                    .readDocuments(getLink(), options)
-                                                   .map(response-> BridgeInternal.createFeedResponse(CosmosItem.getFromV2Results(response.getResults(),this),
-                                                                                                     response.getResponseHeaders()))));
+                                                   .map(response-> BridgeInternal.createFeedResponse(CosmosItemSettings.getFromV2Results(response.getResults(),
+                                                           this),
+                                                           response.getResponseHeaders()))));
     }
 
     /**
@@ -242,7 +251,7 @@ public class CosmosContainer extends CosmosResource {
      * @param options        the feed options.
      * @return an {@link Flux} containing one or several feed response pages of the obtained items or an error.
      */
-    public Flux<FeedResponse<CosmosItem>> queryItems(String query, FeedOptions options){
+    public Flux<FeedResponse<CosmosItemSettings>> queryItems(String query, FeedOptions options){
         return queryItems(new SqlQuerySpec(query), options);
     }
 
@@ -257,14 +266,15 @@ public class CosmosContainer extends CosmosResource {
      * @param options        the feed options.
      * @return an {@link Flux} containing one or several feed response pages of the obtained items or an error.
      */
-    public Flux<FeedResponse<CosmosItem>> queryItems(SqlQuerySpec querySpec, FeedOptions options){
+    public Flux<FeedResponse<CosmosItemSettings>> queryItems(SqlQuerySpec querySpec, FeedOptions options){
         return RxJava2Adapter.flowableToFlux(
                 RxJavaInterop.toV2Flowable(getDatabase()
                                                    .getDocClientWrapper()
                                                    .queryDocuments(getLink(), querySpec, options)
                                                    .map(response-> BridgeInternal.createFeedResponseWithQueryMetrics(
-                                                           CosmosItem.getFromV2Results(response.getResults(), this),
-                                                            response.getResponseHeaders(), response.getQueryMetrics()))));
+                                                           CosmosItemSettings.getFromV2Results(response.getResults(), this),
+                                                           response.getResponseHeaders(),
+                                                           response.getQueryMetrics()))));
     }
 
     /**
@@ -272,8 +282,8 @@ public class CosmosContainer extends CosmosResource {
      * @param id id of the item
      * @return a cosmos item
      */
-    public CosmosItem getItem(String id){
-        return new CosmosItem(id, this);
+    public CosmosItem getItem(String id, PartitionKey partitionKey){
+        return new CosmosItem(id, partitionKey, this);
     }
 
     /* CosmosStoredProcedure operations */
