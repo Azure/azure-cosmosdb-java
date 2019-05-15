@@ -22,40 +22,31 @@
  */
 package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import com.microsoft.azure.cosmosdb.internal.HttpConstants;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpResponse;
+import org.mockito.Mockito;
+import org.testng.annotations.Test;
+import org.testng.collections.Lists;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.testng.annotations.Test;
-
-import com.microsoft.azure.cosmosdb.internal.HttpConstants;
-
-import io.netty.handler.codec.http.DefaultHttpHeaders;
-import io.netty.handler.codec.http.DefaultHttpResponse;
-import io.netty.handler.codec.http.HttpHeaders;
-import io.netty.handler.codec.http.HttpResponse;
-import io.netty.handler.codec.http.HttpResponseStatus;
-import io.netty.handler.codec.http.HttpVersion;
-import io.reactivex.netty.protocol.http.client.HttpClientResponse;
-import io.reactivex.netty.protocol.http.client.HttpResponseHeaders;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class HttpUtilsTest {
 
     private static final String OWNER_FULL_NAME_VALUE = "dbs/RxJava.SDKTest.SharedDatabase_20190304T121302_iZc/colls/+%20-_,:.%7C~b2d67001-9000-454e-a140-abceb1756c48%20+-_,:.%7C~";
     
     @Test(groups = { "unit" })
-    public void verifyConversionOfHttpResponseHeadersToMap() throws UnsupportedEncodingException {
-        HttpHeaders headersMap = new DefaultHttpHeaders();
-        headersMap.add(HttpConstants.HttpHeaders.OWNER_FULL_NAME, OWNER_FULL_NAME_VALUE);
+    public void verifyConversionOfHttpResponseHeadersToMap() {
+        com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders headersMap = new com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders();
+        headersMap.set(HttpConstants.HttpHeaders.OWNER_FULL_NAME, OWNER_FULL_NAME_VALUE);
 
-        HttpResponse httpResponse = new DefaultHttpResponse(HttpVersion.HTTP_1_0,
-                HttpResponseStatus.ACCEPTED,
-                headersMap);
-        HttpResponseHeaders httpResponseHeaders = new HttpClientResponse(httpResponse, null).getHeaders();
+        HttpResponse httpResponse = Mockito.mock(HttpResponse.class);
+        Mockito.when(httpResponse.headers()).thenReturn(headersMap);
+        HttpHeaders httpResponseHeaders = httpResponse.headers();
         Set<Entry<String, String>> resultHeadersSet = HttpUtils.asMap(httpResponseHeaders).entrySet();
         
         assertThat(resultHeadersSet.size()).isEqualTo(1);
@@ -63,7 +54,7 @@ public class HttpUtilsTest {
         assertThat(entry.getKey()).isEqualTo(HttpConstants.HttpHeaders.OWNER_FULL_NAME);
         assertThat(entry.getValue()).isEqualTo(HttpUtils.urlDecode(OWNER_FULL_NAME_VALUE));
         
-        List<Entry<String, String>> resultHeadersList = HttpUtils.unescape(httpResponseHeaders.entries());
+        List<Entry<String, String>> resultHeadersList = HttpUtils.unescape(Lists.newArrayList(httpResponseHeaders.toMap().entrySet()));
         assertThat(resultHeadersList.size()).isEqualTo(1);
         entry = resultHeadersSet.iterator().next();
         assertThat(entry.getKey()).isEqualTo(HttpConstants.HttpHeaders.OWNER_FULL_NAME);

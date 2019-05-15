@@ -27,8 +27,6 @@ import com.microsoft.azure.cosmosdb.internal.Constants.UrlEncodingInfo;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.rx.internal.Strings;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders;
-import io.reactivex.netty.protocol.http.client.HttpRequestHeaders;
-import io.reactivex.netty.protocol.http.client.HttpResponseHeaders;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,33 +73,6 @@ public class HttpUtils {
         }
     }
 
-    public static Map<String, String> asMap(HttpResponseHeaders headers) {
-        if (headers == null) {
-            return new HashMap<>();
-        }
-
-        HashMap<String, String> map = new HashMap<>(headers.names().size());
-        for (Entry<String, String> entry : headers.entries()) {
-            if (entry.getKey().equals(HttpConstants.HttpHeaders.OWNER_FULL_NAME)) {
-                map.put(entry.getKey(), HttpUtils.urlDecode(entry.getValue()));
-            } else {
-                map.put(entry.getKey(), entry.getValue());
-            }
-        }
-        return map;
-    }
-
-    public static Map<String, String> asMap(HttpRequestHeaders headers) {
-        HashMap<String, String> map = new HashMap<>();
-        if (headers == null) {
-            return map;
-        }
-        for (Entry<String, String> entry : headers.entries()) {
-            map.put(entry.getKey(), entry.getValue());
-        }
-        return map;
-    }
-
     public static Map<String, String> asMap(HttpHeaders headers) {
         HashMap<String, String> map = new HashMap<>();
         if (headers == null) {
@@ -133,11 +104,11 @@ public class HttpUtils {
     }
 
     public static List<Entry<String, String>> unescape(List<Entry<String, String>> headers) {
-        List<Entry<String, String>> result = new ArrayList<Entry<String, String>>();
+        List<Entry<String, String>> result = new ArrayList<>();
         for (Entry<String, String> entry : headers) {
             if (entry.getKey().equals(HttpConstants.HttpHeaders.OWNER_FULL_NAME)) {
                 String unescapedUrl = HttpUtils.urlDecode(entry.getValue());
-                entry = new AbstractMap.SimpleEntry<String, String>(entry.getKey(), unescapedUrl);
+                entry = new AbstractMap.SimpleEntry<>(entry.getKey(), unescapedUrl);
             }
             result.add(entry);
         }

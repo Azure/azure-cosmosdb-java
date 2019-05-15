@@ -28,7 +28,6 @@ import com.microsoft.azure.cosmosdb.Error;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.rx.internal.RMResources;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders;
-import io.reactivex.netty.protocol.http.client.HttpResponseHeaders;
 
 import java.util.Map;
 
