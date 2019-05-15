@@ -27,6 +27,8 @@ import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.HttpMethod;
 import reactor.core.publisher.Flux;
 
+import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
@@ -48,6 +50,18 @@ public class HttpRequest {
     public HttpRequest(HttpMethod httpMethod, URL url) {
         this.httpMethod = httpMethod;
         this.url = url;
+        this.headers = new HttpHeaders();
+    }
+
+    /**
+     * Create a new HttpRequest instance.
+     *
+     * @param httpMethod the HTTP request method
+     * @param url the target address to send the request to
+     */
+    public HttpRequest(HttpMethod httpMethod, String url) throws MalformedURLException {
+        this.httpMethod = httpMethod;
+        this.url = new URL(url);
         this.headers = new HttpHeaders();
     }
 

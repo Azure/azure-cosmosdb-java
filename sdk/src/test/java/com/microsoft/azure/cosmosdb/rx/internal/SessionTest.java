@@ -30,6 +30,7 @@ import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import com.microsoft.azure.cosmosdb.rx.TestSuiteBase;
 
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpRequest;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.HttpMethod;
 
@@ -58,7 +59,7 @@ public class SessionTest extends TestSuiteBase {
     private Database createdDatabase;
     private DocumentCollection createdCollection;
     private String collectionId = "+ -_,:.|~" + UUID.randomUUID().toString() + " +-_,:.|~";
-    private SpyClientUnderTestFactory.SpyBaseClass<reactor.netty.http.client.HttpClientRequest> spyClient;
+    private SpyClientUnderTestFactory.SpyBaseClass<HttpRequest> spyClient;
     private AsyncDocumentClient houseKeepingClient;
     private ConnectionMode connectionMode;
 
@@ -111,7 +112,7 @@ public class SessionTest extends TestSuiteBase {
 
     private List<String> getSessionTokensInRequests() {
         return spyClient.getCapturedRequests().stream()
-                .map(r -> r.requestHeaders().get(HttpConstants.HttpHeaders.SESSION_TOKEN)).collect(Collectors.toList());
+                .map(r -> r.headers().value(HttpConstants.HttpHeaders.SESSION_TOKEN)).collect(Collectors.toList());
     }
     
     @Test(groups = { "simple" }, timeOut = TIMEOUT, dataProvider = "sessionTestArgProvider")
@@ -155,11 +156,11 @@ public class SessionTest extends TestSuiteBase {
         spyClient.readDocument(documentLink, null).toBlocking().single()
                 .getResource();
 
-        List<reactor.netty.http.client.HttpClientRequest> documentReadHttpRequests = spyClient.getCapturedRequests().stream()
-                .filter(r -> r.method() == HttpMethod.GET)
+        List<HttpRequest> documentReadHttpRequests = spyClient.getCapturedRequests().stream()
+                .filter(r -> r.httpMethod() == HttpMethod.GET)
                 .filter(r -> {
                     try {
-                        return URLDecoder.decode(r.uri().replaceAll("\\+", "%2b"), "UTF-8").contains(
+                        return URLDecoder.decode(r.url().toString().replaceAll("\\+", "%2b"), "UTF-8").contains(
                                 StringUtils.removeEnd(documentLink, "/"));
                     } catch (UnsupportedEncodingException e) {
                         return false;
@@ -168,7 +169,7 @@ public class SessionTest extends TestSuiteBase {
 
         // Direct mode may make more than one call (multiple replicas)
         assertThat(documentReadHttpRequests.size() >= 1).isTrue();
-        assertThat(documentReadHttpRequests.get(0).requestHeaders().get(HttpConstants.HttpHeaders.SESSION_TOKEN)).isNotEmpty();
+        assertThat(documentReadHttpRequests.get(0).headers().value(HttpConstants.HttpHeaders.SESSION_TOKEN)).isNotEmpty();
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT, dataProvider = "sessionTestArgProvider")
@@ -179,11 +180,11 @@ public class SessionTest extends TestSuiteBase {
         String collectionLink = getCollectionLink(isNameBased);
         spyClient.readCollection(collectionLink, null).toBlocking().single();
 
-        List<HttpClientRequest> collectionReadHttpRequests = spyClient.getCapturedRequests().stream()
-                .filter(r -> r.method() == HttpMethod.GET)
+        List<HttpRequest> collectionReadHttpRequests = spyClient.getCapturedRequests().stream()
+                .filter(r -> r.httpMethod() == HttpMethod.GET)
                 .filter(r -> {
                     try {
-                        return URLDecoder.decode(r.uri().replaceAll("\\+", "%2b"), "UTF-8").contains(
+                        return URLDecoder.decode(r.url().toString().replaceAll("\\+", "%2b"), "UTF-8").contains(
                                 StringUtils.removeEnd(collectionLink, "/"));
                     } catch (UnsupportedEncodingException e) {
                         return false;
@@ -192,7 +193,7 @@ public class SessionTest extends TestSuiteBase {
                 .collect(Collectors.toList());
 
         assertThat(collectionReadHttpRequests).hasSize(1);
-        assertThat(collectionReadHttpRequests.get(0).requestHeaders().get(HttpConstants.HttpHeaders.SESSION_TOKEN)).isNull();
+        assertThat(collectionReadHttpRequests.get(0).headers().value(HttpConstants.HttpHeaders.SESSION_TOKEN)).isNull();
     }
 
     private String getCollectionLink(boolean isNameBased) {

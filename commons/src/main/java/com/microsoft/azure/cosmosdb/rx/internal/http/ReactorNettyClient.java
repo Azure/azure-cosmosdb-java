@@ -143,7 +143,7 @@ class ReactorNettyClient implements HttpClient {
     }
 
     @Override
-    public final HttpClient proxy(Supplier<ProxyOptions> proxyOptionsSupplier) {
+    public HttpClient proxy(Supplier<ProxyOptions> proxyOptionsSupplier) {
         return new ReactorNettyClient(this.httpClient, client -> client.tcpConfiguration(c -> {
             ProxyOptions options = proxyOptionsSupplier.get();
             return c.proxy(ts -> ts.type(options.type().value()).address(options.address()));
@@ -182,12 +182,12 @@ class ReactorNettyClient implements HttpClient {
     }
 
     @Override
-    public final HttpClient wiretap(boolean enableWiretap) {
+    public HttpClient wiretap(boolean enableWiretap) {
         return new ReactorNettyClient(this.httpClient, client -> client.wiretap(enableWiretap));
     }
 
     @Override
-    public final HttpClient port(int port) {
+    public HttpClient port(int port) {
         return new ReactorNettyClient(this.httpClient, client -> client.port(port));
     }
 

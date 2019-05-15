@@ -28,7 +28,7 @@ import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.Error;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.HttpUtils;
 import com.microsoft.azure.cosmosdb.rx.internal.RMResources;
-import io.reactivex.netty.protocol.http.client.HttpResponseHeaders;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders;
 
 import java.net.URI;
 import java.net.URL;
@@ -59,30 +59,30 @@ public class InternalServerErrorException extends DocumentClientException {
 
 
     public InternalServerErrorException(String message, Exception innerException) {
-        this(message, innerException, (HttpResponseHeaders) null, (String) null);
+        this(message, innerException, (HttpHeaders) null, (String) null);
     }
 
     public InternalServerErrorException(Exception innerException) {
-        this(RMResources.InternalServerError, innerException, (HttpResponseHeaders) null, (String) null);
+        this(RMResources.InternalServerError, innerException, (HttpHeaders) null, (String) null);
     }
     
-    public InternalServerErrorException(String message, HttpResponseHeaders headers, URI requestUri) {
+    public InternalServerErrorException(String message, HttpHeaders headers, URI requestUri) {
         super(message, null, HttpUtils.asMap(headers), HttpConstants.StatusCodes.INTERNAL_SERVER_ERROR, requestUri != null ? requestUri.toString() : null);
     }
 
-    public InternalServerErrorException(String message, HttpResponseHeaders headers, String requestUri) {
+    public InternalServerErrorException(String message, HttpHeaders headers, String requestUri) {
         super(message, null, HttpUtils.asMap(headers), HttpConstants.StatusCodes.INTERNAL_SERVER_ERROR, requestUri);
     }
 
-    public InternalServerErrorException(String message, HttpResponseHeaders headers, URL requestUri) {
+    public InternalServerErrorException(String message, HttpHeaders headers, URL requestUri) {
         super(message, null, HttpUtils.asMap(headers), HttpConstants.StatusCodes.INTERNAL_SERVER_ERROR, requestUri != null ? requestUri.toString() : null);
     }
 
-    public InternalServerErrorException(String message, Exception innerException, HttpResponseHeaders headers, URI requestUri) {
+    public InternalServerErrorException(String message, Exception innerException, HttpHeaders headers, URI requestUri) {
         super(message, innerException, HttpUtils.asMap(headers), HttpConstants.StatusCodes.INTERNAL_SERVER_ERROR, requestUri != null ? requestUri.toString() : null);
     }
 
-    public InternalServerErrorException(String message, Exception innerException, HttpResponseHeaders headers, String requestUri) {
+    public InternalServerErrorException(String message, Exception innerException, HttpHeaders headers, String requestUri) {
         super(message, innerException, HttpUtils.asMap(headers), HttpConstants.StatusCodes.INTERNAL_SERVER_ERROR, requestUri);
     }
 

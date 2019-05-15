@@ -34,17 +34,12 @@ import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.internal.UserAgentContainer;
 import com.microsoft.azure.cosmosdb.internal.Utils;
 import com.microsoft.azure.cosmosdb.rx.internal.GlobalEndpointManager;
-import com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeader;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpRequest;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpResponse;
-import hu.akarnokd.rxjava.interop.RxJavaInterop;
-import io.netty.handler.codec.http.DefaultHttpHeaders;
-import io.netty.handler.codec.http.EmptyHttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
-import reactor.adapter.rxjava.RxJava2Adapter;
+import org.apache.commons.lang3.StringUtils;
 import reactor.core.publisher.Mono;
-import reactor.netty.http.client.HttpClient;
 import rx.Single;
 import rx.functions.Action1;
 
@@ -136,7 +131,7 @@ public class GatewayServiceConfigurationReader {
 
         httpHeaders.set(HttpConstants.HttpHeaders.USER_AGENT, userAgentContainer.getUserAgent());
         httpHeaders.set(HttpConstants.HttpHeaders.API_TYPE, Constants.Properties.SQL_API_TYPE);
-        String authorizationToken;
+        String authorizationToken = StringUtils.EMPTY;
         if (this.hasAuthKeyResourceToken || baseAuthorizationTokenProvider == null) {
             authorizationToken = HttpUtils.urlEncode(this.authKeyResourceToken);
         } else {
@@ -148,11 +143,11 @@ public class GatewayServiceConfigurationReader {
             try {
                 authorizationToken = baseAuthorizationTokenProvider
                         .generateKeyAuthorizationSignature(HttpConstants.HttpMethods.GET, serviceEndpoint.toURI(), header);
-                httpHeaders.set(HttpConstants.HttpHeaders.AUTHORIZATION, authorizationToken);
             } catch (URISyntaxException e) {
                 e.printStackTrace();
             }
         }
+        httpHeaders.set(HttpConstants.HttpHeaders.AUTHORIZATION, authorizationToken);
 
         HttpRequest httpRequest = new HttpRequest(HttpMethod.GET, serviceEndpoint)
                 .withHeaders(httpHeaders);

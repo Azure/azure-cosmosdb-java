@@ -36,14 +36,11 @@ import com.microsoft.azure.cosmosdb.rx.internal.NotFoundException;
 import com.microsoft.azure.cosmosdb.rx.internal.PartitionIsMigratingException;
 import com.microsoft.azure.cosmosdb.rx.internal.PartitionKeyRangeIsSplittingException;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
-import io.netty.buffer.ByteBuf;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpRequest;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpResponse;
 import io.netty.channel.ConnectTimeoutException;
-import io.netty.handler.codec.http.EmptyHttpHeaders;
-import io.reactivex.netty.client.RxClient;
-import io.reactivex.netty.protocol.http.client.CompositeHttpClient;
-import io.reactivex.netty.protocol.http.client.HttpClientRequest;
-import io.reactivex.netty.protocol.http.client.HttpClientResponse;
-import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.assertj.core.api.Assertions;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -114,14 +111,14 @@ public class HttpTransportClientTest {
 
     public static HttpTransportClient getHttpTransportClientUnderTest(int requestTimeout,
                                                                       UserAgentContainer userAgent,
-                                                                      CompositeHttpClient<ByteBuf, ByteBuf> httpClient) {
+                                                                      HttpClient httpClient) {
         class HttpTransportClientUnderTest extends HttpTransportClient {
             public HttpTransportClientUnderTest(int requestTimeout, UserAgentContainer userAgent) {
                 super(configs, requestTimeout, userAgent);
             }
 
             @Override
-            CompositeHttpClient<ByteBuf, ByteBuf> createHttpClient(int requestTimeout) {
+            HttpClient createHttpClient(int requestTimeout) {
                 return httpClient;
             }
         }
@@ -131,9 +128,9 @@ public class HttpTransportClientTest {
 
     @Test(groups = "unit")
     public void validateDefaultHeaders() {
-        HttpClientResponse<ByteBuf> mockedResponse = new HttpClientMockWrapper.HttpClientBehaviourBuilder()
+        HttpResponse mockedResponse = new HttpClientMockWrapper.HttpClientBehaviourBuilder()
                 .withContent("").withStatus(200)
-                .withHeaders(EmptyHttpHeaders.INSTANCE)
+                .withHeaders(new HttpHeaders())
                 .asHttpClientResponse();
         HttpClientMockWrapper httpClientMockWrapper = new HttpClientMockWrapper(mockedResponse);
 
@@ -153,15 +150,18 @@ public class HttpTransportClientTest {
                 request).toBlocking().value();
 
         assertThat(httpClientMockWrapper.getCapturedInvocation()).asList().hasSize(1);
-        ImmutablePair<HttpClientRequest<ByteBuf>, RxClient.ServerInfo> httpClientInvocation = httpClientMockWrapper.getCapturedInvocation().get(0);
+        HttpRequest httpRequest = httpClientMockWrapper.getCapturedInvocation().get(0);
 
-        assertThat(httpClientInvocation.left.getHeaders().get(HttpConstants.HttpHeaders.USER_AGENT)).endsWith("i am suffix");
-        assertThat(httpClientInvocation.left.getHeaders().get(HttpConstants.HttpHeaders.CACHE_CONTROL)).isEqualTo("no-cache");
-        assertThat(httpClientInvocation.left.getHeaders().get(HttpConstants.HttpHeaders.ACCEPT)).isEqualTo("application/json");
-        assertThat(httpClientInvocation.left.getHeaders().get(HttpConstants.HttpHeaders.VERSION)).isEqualTo(HttpConstants.Versions.CURRENT_VERSION);
+        assertThat(httpRequest.headers().value(HttpConstants.HttpHeaders.USER_AGENT)).endsWith("i am suffix");
+        assertThat(httpRequest.headers().value(HttpConstants.HttpHeaders.CACHE_CONTROL)).isEqualTo("no-cache");
+        assertThat(httpRequest.headers().value(HttpConstants.HttpHeaders.ACCEPT)).isEqualTo("application/json");
+        assertThat(httpRequest.headers().value(HttpConstants.HttpHeaders.VERSION)).isEqualTo(HttpConstants.Versions.CURRENT_VERSION);
 
     }
 
+    /**
+     * @return
+     */
     @DataProvider(name = "fromMockedHttpResponseToExpectedDocumentClientException")
     public Object[][] fromMockedHttpResponseToExpectedDocumentClientException() {
         return new Object[][]{

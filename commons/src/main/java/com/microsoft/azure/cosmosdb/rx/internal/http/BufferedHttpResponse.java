@@ -33,7 +33,7 @@ import java.nio.charset.StandardCharsets;
 /**
  * HTTP response which will buffer the response's body when/if it is read.
  */
-public final class BufferedHttpResponse extends HttpResponse {
+public class BufferedHttpResponse extends HttpResponse {
     private final HttpResponse innerHttpResponse;
     private final Mono<byte[]> cachedBody;
 

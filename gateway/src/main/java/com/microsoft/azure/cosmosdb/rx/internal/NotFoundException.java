@@ -27,9 +27,11 @@ import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.Error;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.HttpUtils;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders;
 import io.reactivex.netty.protocol.http.client.HttpResponseHeaders;
 
 import java.net.URI;
+import java.net.URL;
 import java.util.Map;
 
 /**
@@ -50,19 +52,19 @@ public class NotFoundException extends DocumentClientException {
     }
 
     public NotFoundException(String message) {
-        this(message, (Exception) null, (HttpResponseHeaders) null, null);
+        this(message, (Exception) null, (HttpHeaders) null, null);
     }
 
     public NotFoundException(String message, Map<String, String> headers, String requestUri) {
         this(message, null, headers, requestUri);
     }
 
-    public NotFoundException(String message, HttpResponseHeaders headers, String requestUri) {
+    public NotFoundException(String message, HttpHeaders headers, String requestUri) {
         this(message, null, headers, requestUri);
     }
 
-    public NotFoundException(String message, HttpResponseHeaders headers, URI requestUri) {
-        this(message, headers, requestUri != null ? requestUri.toString() : null);
+    public NotFoundException(String message, HttpHeaders headers, URL requestUrl) {
+        this(message, headers, requestUrl != null ? requestUrl.toString() : null);
     }
 
     public NotFoundException(Exception innerException) {
@@ -71,7 +73,7 @@ public class NotFoundException extends DocumentClientException {
 
     public NotFoundException(String message,
                                  Exception innerException,
-                                 HttpResponseHeaders headers,
+                                 HttpHeaders headers,
                                  String requestUri) {
         this(message, innerException, HttpUtils.asMap(headers), requestUri);
     }

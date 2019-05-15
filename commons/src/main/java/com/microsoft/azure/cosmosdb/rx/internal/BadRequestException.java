@@ -27,9 +27,9 @@ import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.Error;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.HttpUtils;
-import io.reactivex.netty.protocol.http.client.HttpResponseHeaders;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders;
 
-import java.net.URI;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -55,15 +55,15 @@ public class BadRequestException extends DocumentClientException {
     }
 
     public BadRequestException(String message) {
-        this(message, (Exception) null, (HttpResponseHeaders) null, null);
+        this(message, (Exception) null, (HttpHeaders) null, null);
     }
 
-    public BadRequestException(String message, HttpResponseHeaders headers, String requestUri) {
-        this(message, null, headers, requestUri);
+    public BadRequestException(String message, HttpHeaders headers, String requestUrl) {
+        this(message, null, headers, requestUrl);
     }
 
-    public BadRequestException(String message, HttpResponseHeaders headers, URI requestUri) {
-        this(message, headers, requestUri != null ? requestUri.toString() : null);
+    public BadRequestException(String message, HttpHeaders headers, URL requestUrl) {
+        this(message, headers, requestUrl != null ? requestUrl.toString() : null);
     }
 
     public BadRequestException(Exception innerException) {
@@ -72,12 +72,12 @@ public class BadRequestException extends DocumentClientException {
 
     public BadRequestException(String message,
                              Exception innerException,
-                             HttpResponseHeaders headers,
-                             String requestUri) {
+                             HttpHeaders headers,
+                             String requestUrl) {
         super(String.format("%s: %s", RMResources.BadRequest, message),
                 innerException,
                 HttpUtils.asMap(headers),
                 HttpConstants.StatusCodes.BADREQUEST,
-                requestUri != null ? requestUri.toString() : null);
+                requestUrl != null ? requestUrl.toString() : null);
     }
 }

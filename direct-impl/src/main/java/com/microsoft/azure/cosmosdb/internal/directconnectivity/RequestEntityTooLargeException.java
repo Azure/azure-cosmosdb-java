@@ -27,7 +27,7 @@ import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.Error;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.rx.internal.RMResources;
-import io.reactivex.netty.protocol.http.client.HttpResponseHeaders;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders;
 
 import java.util.Map;
 
@@ -56,7 +56,7 @@ public class RequestEntityTooLargeException extends DocumentClientException {
         super(msg, null, null, HttpConstants.StatusCodes.REQUEST_ENTITY_TOO_LARGE, resourceAddress);
     }
 
-    public RequestEntityTooLargeException(String message, HttpResponseHeaders headers, String requestUri) {
+    public RequestEntityTooLargeException(String message, HttpHeaders headers, String requestUri) {
         this(message, null, headers, requestUri);
     }
 
@@ -66,7 +66,7 @@ public class RequestEntityTooLargeException extends DocumentClientException {
 
     public RequestEntityTooLargeException(String message,
                                           Exception innerException,
-                                          HttpResponseHeaders headers,
+                                          HttpHeaders headers,
                                           String requestUri) {
         super(String.format(RMResources.RequestEntityTooLarge, message),
                 innerException,

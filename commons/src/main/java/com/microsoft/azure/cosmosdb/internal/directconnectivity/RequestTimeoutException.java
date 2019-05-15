@@ -29,9 +29,9 @@ import com.microsoft.azure.cosmosdb.Error;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.rx.internal.RMResources;
 import com.microsoft.azure.cosmosdb.rx.internal.Strings;
-import io.reactivex.netty.protocol.http.client.HttpResponseHeaders;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders;
 
-import java.net.URI;
+import java.net.URL;
 import java.util.Map;
 
 public class RequestTimeoutException extends DocumentClientException {
@@ -46,33 +46,33 @@ public class RequestTimeoutException extends DocumentClientException {
         BridgeInternal.setPartitionKeyRangeId(this, partitionKeyRangeId);
     }
 
-    public RequestTimeoutException(String message, URI requestUri) {
-        this(message, (Exception) null, (HttpResponseHeaders) null, requestUri);
+    public RequestTimeoutException(String message, URL requestUri) {
+        this(message, (Exception) null, (HttpHeaders) null, requestUri);
     }
 
     public RequestTimeoutException(String message,
                                    Exception innerException,
-                                   URI requestUri,
+                                   URL requestUri,
                                    String localIpAddress) {
-        this(message(localIpAddress, message), innerException, (HttpResponseHeaders) null, requestUri);
+        this(message(localIpAddress, message), innerException, (HttpHeaders) null, requestUri);
     }
 
     public RequestTimeoutException(Exception innerException) {
-        this(RMResources.Gone, innerException, (HttpResponseHeaders) null, null);
+        this(RMResources.Gone, innerException, (HttpHeaders) null, null);
     }
 
-    public RequestTimeoutException(String message, HttpResponseHeaders headers, URI requestUri) {
+    public RequestTimeoutException(String message, HttpHeaders headers, URL requestUri) {
         super(message, null, HttpUtils.asMap(headers), HttpConstants.StatusCodes.REQUEST_TIMEOUT, requestUri != null ? requestUri.toString() : null);
     }
 
-    public RequestTimeoutException(String message, HttpResponseHeaders headers, String requestUri) {
+    public RequestTimeoutException(String message, HttpHeaders headers, String requestUri) {
         super(message, null, HttpUtils.asMap(headers), HttpConstants.StatusCodes.REQUEST_TIMEOUT, requestUri);
     }
 
     public RequestTimeoutException(String message,
                                    Exception innerException,
-                                   HttpResponseHeaders headers,
-                                   URI requestUri) {
+                                   HttpHeaders headers,
+                                   URL requestUri) {
         super(message, innerException, HttpUtils.asMap(headers), HttpConstants.StatusCodes.REQUEST_TIMEOUT, requestUri != null ? requestUri.toString() : null);
     }
 

@@ -28,11 +28,8 @@ import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.Error;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.rx.internal.RMResources;
-import io.reactivex.netty.protocol.http.client.HttpResponseHeaders;
-import org.apache.commons.collections4.CollectionUtils;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders;
 
-import java.net.URL;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -60,20 +57,20 @@ public class PartitionKeyRangeGoneException extends DocumentClientException {
     }
 
     public PartitionKeyRangeGoneException(String message, Exception innerException) {
-        this(message, innerException, (HttpResponseHeaders) null, null);
+        this(message, innerException, (HttpHeaders) null, null);
     }
 
     public PartitionKeyRangeGoneException(Exception innerException) {
-        this(RMResources.Gone, innerException, (HttpResponseHeaders) null, null);
+        this(RMResources.Gone, innerException, (HttpHeaders) null, null);
     }
 
 
-    public PartitionKeyRangeGoneException(String message, HttpResponseHeaders headers, String requestUri) {
+    public PartitionKeyRangeGoneException(String message, HttpHeaders headers, String requestUri) {
         super(message, null, HttpUtils.asMap(headers), HttpConstants.StatusCodes.GONE, requestUri);
         this.setSubstatus();
     }
 
-    public PartitionKeyRangeGoneException(String message, Exception innerException, HttpResponseHeaders headers, String requestUri) {
+    public PartitionKeyRangeGoneException(String message, Exception innerException, HttpHeaders headers, String requestUri) {
         super(message, innerException, HttpUtils.asMap(headers), HttpConstants.StatusCodes.GONE, requestUri);
         this.setSubstatus();
     }

@@ -42,6 +42,7 @@ import com.microsoft.azure.cosmosdb.rx.internal.IAuthorizationTokenProvider;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentClientImpl;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpClientConfig;
 import org.mockito.Matchers;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -847,7 +848,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
     }
 
     private com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient getHttpClient(Configs configs) {
-        return com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient.createDefault();
+        return com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient.createFixed(new HttpClientConfig(configs));
     }
 
     private HttpClientUnderTestWrapper getHttpClientUnderTestWrapper(Configs configs) {

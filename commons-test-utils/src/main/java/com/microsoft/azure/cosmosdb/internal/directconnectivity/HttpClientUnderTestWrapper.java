@@ -55,10 +55,12 @@ public class HttpClientUnderTestWrapper {
 
     private void initRequestCapture(HttpClient spyClient) {
 
+        spyClient = Mockito.when(spyClient.port(Mockito.anyInt())).thenReturn(spyClient).getMock();
+
         doAnswer(invocationOnMock -> {
             HttpRequest httpRequest = invocationOnMock.getArgumentAt(0, HttpRequest.class);
             capturedRequests.add(httpRequest);
-            return origHttpClient.send(httpRequest);
+            return origHttpClient.port(Mockito.anyInt()).send(httpRequest);
         }).when(spyClient).send(Mockito.any(HttpRequest.class));
     }
 }

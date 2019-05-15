@@ -28,10 +28,10 @@ import com.microsoft.azure.cosmosdb.internal.directconnectivity.ServerStoreModel
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.StoreClient;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.TransportClient;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentClientImpl;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient;
 import io.netty.buffer.ByteBuf;
 import io.reactivex.netty.protocol.http.client.CompositeHttpClient;
 import org.apache.commons.lang3.reflect.FieldUtils;
-import reactor.netty.http.client.HttpClient;
 
 /**
  *
@@ -79,13 +79,13 @@ public class ReflectionUtils {
         set(storeClient, transportClient, "transportClient");
     }
 
-    public static HttpClient getDirectHttpsHttpClient(RxDocumentClientImpl client) {
+    public static com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient getDirectHttpsHttpClient(RxDocumentClientImpl client) {
         TransportClient transportClient = getTransportClient(client);
         assert transportClient instanceof HttpTransportClient;
         return get(HttpClient.class, transportClient, "httpClient");
     }
 
-    public static void setDirectHttpsHttpClient(RxDocumentClientImpl client, HttpClient newHttpClient) {
+    public static void setDirectHttpsHttpClient(RxDocumentClientImpl client, com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient newHttpClient) {
         TransportClient transportClient = getTransportClient(client);
         assert transportClient instanceof HttpTransportClient;
         set(transportClient, newHttpClient, "httpClient");

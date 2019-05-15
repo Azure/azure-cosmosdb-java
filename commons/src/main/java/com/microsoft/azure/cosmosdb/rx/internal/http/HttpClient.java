@@ -68,8 +68,7 @@ public interface HttpClient {
         //  TODO: maxIdleConnectionTimeoutInMillis is not supported in reactor netty
 
         ConnectionProvider fixed = ConnectionProvider.fixed("reactor-netty-connection-pool", maxPoolSize);
-        ReactorNettyClient reactorNettyClient = new ReactorNettyClient(fixed, httpClientConfig);
-        return reactorNettyClient;
+        return new ReactorNettyClient(fixed, httpClientConfig);
     }
 
     /**

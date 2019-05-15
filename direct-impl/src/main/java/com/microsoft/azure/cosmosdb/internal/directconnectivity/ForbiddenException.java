@@ -11,7 +11,7 @@
  *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- *  
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -28,9 +28,9 @@ import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.Error;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.rx.internal.RMResources;
-import io.reactivex.netty.protocol.http.client.HttpResponseHeaders;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders;
 
-import java.net.URI;
+import java.net.URL;
 import java.util.Map;
 
 public class ForbiddenException extends DocumentClientException {
@@ -45,15 +45,15 @@ public class ForbiddenException extends DocumentClientException {
     }
 
     public ForbiddenException(String message) {
-        this(message, (Exception) null, (HttpResponseHeaders) null, null);
+        this(message, (Exception) null, (HttpHeaders) null, null);
     }
 
-    public ForbiddenException(String message, HttpResponseHeaders headers, String requestUri) {
-        this(message, null, headers, requestUri);
+    public ForbiddenException(String message, HttpHeaders headers, String requestUrl) {
+        this(message, null, headers, requestUrl);
     }
 
-    public ForbiddenException(String message, HttpResponseHeaders headers, URI requestUri) {
-        this(message, headers, requestUri != null ? requestUri.toString() : null);
+    public ForbiddenException(String message, HttpHeaders headers, URL requestUrl) {
+        this(message, headers, requestUrl != null ? requestUrl.toString() : null);
     }
 
     public ForbiddenException(Exception innerException) {
@@ -61,13 +61,13 @@ public class ForbiddenException extends DocumentClientException {
     }
 
     public ForbiddenException(String message,
-                                 Exception innerException,
-                                 HttpResponseHeaders headers,
-                                 String requestUri) {
+                              Exception innerException,
+                              HttpHeaders headers,
+                              String requestUrl) {
         super(String.format("%s: %s", RMResources.Forbidden, message),
                 innerException,
                 HttpUtils.asMap(headers),
                 HttpConstants.StatusCodes.FORBIDDEN,
-                requestUri != null ? requestUri.toString() : null);
+                requestUrl != null ? requestUrl.toString() : null);
     }
 }

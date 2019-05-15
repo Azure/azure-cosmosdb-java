@@ -29,9 +29,9 @@ import com.microsoft.azure.cosmosdb.Error;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.rx.internal.RMResources;
 import com.microsoft.azure.cosmosdb.rx.internal.Strings;
-import io.reactivex.netty.protocol.http.client.HttpResponseHeaders;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders;
 
-import java.net.URI;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -56,28 +56,28 @@ public class GoneException extends DocumentClientException {
 
     public GoneException(String message,
                          Exception innerException,
-                         URI requestUri,
+                         URL requestUrl,
                          String localIpAddress) {
-        this(message(localIpAddress, message), innerException, (HttpResponseHeaders) null, requestUri);
+        this(message(localIpAddress, message), innerException, (HttpHeaders) null, requestUrl);
     }
 
     public GoneException(Exception innerException) {
         this(RMResources.Gone, innerException, new HashMap<>(), (String) null);
     }
 
-    public GoneException(String message, HttpResponseHeaders headers, URI requestUri) {
-        super(message, null, HttpUtils.asMap(headers), HttpConstants.StatusCodes.GONE, requestUri != null ? requestUri.toString() : null);
+    public GoneException(String message, HttpHeaders headers, URL requestUrl) {
+        super(message, null, HttpUtils.asMap(headers), HttpConstants.StatusCodes.GONE, requestUrl != null ? requestUrl.toString() : null);
     }
 
-    public GoneException(String message, HttpResponseHeaders headers, String requestUri) {
+    public GoneException(String message, HttpHeaders headers, String requestUri) {
         super(message, null, HttpUtils.asMap(headers), HttpConstants.StatusCodes.GONE, requestUri);
     }
 
     public GoneException(String message,
                          Exception innerException,
-                         HttpResponseHeaders headers,
-                         URI requestUri) {
-        super(message, innerException, HttpUtils.asMap(headers), HttpConstants.StatusCodes.GONE, requestUri != null ? requestUri.toString() : null);
+                         HttpHeaders headers,
+                         URL requestUrl) {
+        super(message, innerException, HttpUtils.asMap(headers), HttpConstants.StatusCodes.GONE, requestUrl != null ? requestUrl.toString() : null);
     }
 
     public GoneException(String message,

@@ -28,9 +28,9 @@ import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.Error;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.rx.internal.RMResources;
-import io.reactivex.netty.protocol.http.client.HttpResponseHeaders;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders;
 
-import java.net.URI;
+import java.net.URL;
 import java.util.Map;
 
 public class ServiceUnavailableException extends DocumentClientException {
@@ -45,14 +45,14 @@ public class ServiceUnavailableException extends DocumentClientException {
     }
 
     public ServiceUnavailableException(String message) {
-        this(message, (Exception) null, (HttpResponseHeaders) null, null);
+        this(message, (Exception) null, (HttpHeaders) null, null);
     }
 
-    public ServiceUnavailableException(String message, HttpResponseHeaders headers, String requestUri) {
+    public ServiceUnavailableException(String message, HttpHeaders headers, String requestUri) {
         this(message, null, headers, requestUri);
     }
 
-    public ServiceUnavailableException(String message, HttpResponseHeaders headers, URI requestUri) {
+    public ServiceUnavailableException(String message, HttpHeaders headers, URL requestUri) {
         this(message, headers, requestUri != null ? requestUri.toString() : null);
     }
 
@@ -62,7 +62,7 @@ public class ServiceUnavailableException extends DocumentClientException {
 
     public ServiceUnavailableException(String message,
                                        Exception innerException,
-                                       HttpResponseHeaders headers,
+                                       HttpHeaders headers,
                                        String requestUri) {
         super(String.format("%s: %s", RMResources.ServiceUnavailable, message),
                 innerException,

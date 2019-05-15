@@ -28,7 +28,7 @@ import com.microsoft.azure.cosmosdb.Error;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.HttpUtils;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.WFConstants;
-import io.reactivex.netty.protocol.http.client.HttpResponseHeaders;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders;
 
 import java.util.Map;
 
@@ -60,7 +60,7 @@ public class PartitionIsMigratingException extends DocumentClientException {
         setSubStatus();
     }
 
-    public PartitionIsMigratingException(String message, HttpResponseHeaders headers, String requestUri) {
+    public PartitionIsMigratingException(String message, HttpHeaders headers, String requestUri) {
         this(message, null, headers, requestUri);
     }
 
@@ -70,7 +70,7 @@ public class PartitionIsMigratingException extends DocumentClientException {
 
     public PartitionIsMigratingException(String message,
                                          Exception innerException,
-                                         HttpResponseHeaders headers,
+                                         HttpHeaders headers,
                                          String requestUri) {
         super(String.format("%s: %s", RMResources.Gone, message),
                 innerException,

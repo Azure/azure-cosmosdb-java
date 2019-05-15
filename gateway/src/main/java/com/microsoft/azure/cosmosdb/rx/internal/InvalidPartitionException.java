@@ -28,9 +28,8 @@ import com.microsoft.azure.cosmosdb.Error;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.HttpUtils;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.WFConstants;
-import io.reactivex.netty.protocol.http.client.HttpResponseHeaders;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders;
 
-import java.net.URI;
 import java.util.Map;
 
 /**
@@ -61,7 +60,7 @@ public class InvalidPartitionException extends DocumentClientException {
         setSubStatus();
     }
 
-    public InvalidPartitionException(String message, HttpResponseHeaders headers, String requestUri) {
+    public InvalidPartitionException(String message, HttpHeaders headers, String requestUri) {
         this(message, null, headers, requestUri);
     }
 
@@ -71,7 +70,7 @@ public class InvalidPartitionException extends DocumentClientException {
 
     public InvalidPartitionException(String message,
                              Exception innerException,
-                             HttpResponseHeaders headers,
+                             HttpHeaders headers,
                              String requestUri) {
         super(String.format("%s: %s", RMResources.Gone, message),
                 innerException,

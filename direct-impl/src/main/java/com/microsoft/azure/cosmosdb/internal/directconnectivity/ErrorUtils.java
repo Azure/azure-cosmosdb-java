@@ -23,33 +23,34 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpResponse;
+import hu.akarnokd.rxjava.interop.RxJavaInterop;
 import io.netty.buffer.ByteBuf;
-import io.reactivex.netty.protocol.http.client.HttpClientResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import rx.Observable;
+import reactor.adapter.rxjava.RxJava2Adapter;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import rx.Single;
 
-import java.net.URI;
+import java.net.URL;
 
 public class ErrorUtils {
     private static final Logger logger = LoggerFactory.getLogger(TransportClient.class);
 
-    protected static Single<String> getErrorResponseAsync(HttpClientResponse<ByteBuf> responseMessage) {
-
-        if (responseMessage.getContent() == null) {
-            return Single.just(StringUtils.EMPTY);
+    protected static Mono<String> getErrorResponseAsync(HttpResponse responseMessage) {
+        if (responseMessage.body() == null) {
+            return Mono.just(StringUtils.EMPTY);
         }
-
-        return getErrorFromStream(responseMessage.getContent());
+        return getErrorFromStream(responseMessage.body());
     }
 
-    protected static Single<String> getErrorFromStream(Observable<ByteBuf> stream) {
-        return ResponseUtils.toString(stream).toSingle();
+    protected static Mono<String> getErrorFromStream(Flux<ByteBuf> stream) {
+        return ResponseUtils.toString(stream).single();
     }
 
-    protected static void logGoneException(URI physicalAddress, String activityId) {
+    protected static void logGoneException(URL physicalAddress, String activityId) {
         logger.trace("Listener not found. Store Physical Address {} ActivityId {}",
                 physicalAddress, activityId);
     }
@@ -59,7 +60,7 @@ public class ErrorUtils {
                 physicalAddress, activityId);
     }
 
-    protected static void logException(URI physicalAddress, String activityId) {
+    protected static void logException(URL physicalAddress, String activityId) {
         logger.trace("Store Request Failed. Store Physical Address {} ActivityId {}",
                 physicalAddress, activityId);
     }

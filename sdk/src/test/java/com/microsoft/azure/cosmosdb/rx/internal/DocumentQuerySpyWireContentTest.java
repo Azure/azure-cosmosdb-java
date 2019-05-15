@@ -27,9 +27,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpRequest;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -139,24 +141,25 @@ public class DocumentQuerySpyWireContentTest extends TestSuiteBase {
 
         assertThat(results.size()).describedAs("total results").isGreaterThanOrEqualTo(1);
         
-        List<reactor.netty.http.client.HttpClientRequest> requests = client.getCapturedRequests();
+        List<HttpRequest> requests = client.getCapturedRequests();
 
-        for(reactor.netty.http.client.HttpClientRequest req: requests) {
+        for(HttpRequest req: requests) {
             validateRequestHasContinuationTokenLimit(req, options.getResponseContinuationTokenLimitInKb());
         }
     }
 
-    private void validateRequestHasContinuationTokenLimit(HttpClientRequest request, Integer expectedValue) {
+    private void validateRequestHasContinuationTokenLimit(HttpRequest request, Integer expectedValue) {
+        Map<String, String> headers = request.headers().toMap();
         if (expectedValue != null && expectedValue > 0) {
-            assertThat(request.requestHeaders()
-                    .contains(HttpConstants.HttpHeaders.RESPONSE_CONTINUATION_TOKEN_LIMIT_IN_KB))
+            assertThat(headers
+                    .containsKey(HttpConstants.HttpHeaders.RESPONSE_CONTINUATION_TOKEN_LIMIT_IN_KB))
                     .isTrue();
-            assertThat(request.requestHeaders()
+            assertThat(headers
                     .get("x-ms-documentdb-responsecontinuationtokenlimitinkb"))
                     .isEqualTo(Integer.toString(expectedValue));
         } else {
-            assertThat(request.requestHeaders()
-                    .contains(HttpConstants.HttpHeaders.RESPONSE_CONTINUATION_TOKEN_LIMIT_IN_KB))
+            assertThat(headers
+                    .containsKey(HttpConstants.HttpHeaders.RESPONSE_CONTINUATION_TOKEN_LIMIT_IN_KB))
                     .isFalse();
         }
     }
