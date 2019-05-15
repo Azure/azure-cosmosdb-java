@@ -102,12 +102,11 @@ public class HttpClientMockWrapper {
             }
 
             HttpResponse resp = Mockito.mock(HttpResponse.class);
-            Mockito.doReturn(status).when(resp).statusCode();
-            Mockito.doReturn(Flux.just(ByteBufUtil.writeUtf8(ByteBufAllocator.DEFAULT, content))).when(resp).body();
+            Mockito.doReturn(this.status).when(resp).statusCode();
+            Mockito.doReturn(Flux.just(ByteBufUtil.writeUtf8(ByteBufAllocator.DEFAULT, this.content))).when(resp).body();
 
             try {
-                HttpHeaders httpResponseHeaders = new HttpHeaders();
-                Mockito.doReturn(httpResponseHeaders).when(resp).headers();
+                Mockito.doReturn(this.httpHeaders).when(resp).headers();
 
             } catch (IllegalArgumentException | SecurityException e) {
                 throw new IllegalStateException("Failed to instantiate class object.", e);

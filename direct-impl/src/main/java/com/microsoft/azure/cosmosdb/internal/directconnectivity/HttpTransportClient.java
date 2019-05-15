@@ -134,107 +134,103 @@ public class HttpTransportClient extends TransportClient {
 
             MutableVolatile<Instant> sendTimeUtc = new MutableVolatile<>();
 
-            Mono<HttpResponse> responseMessage = this.httpClient
+            Mono<HttpResponse> httpResponseMono = this.httpClient
                     .port(physicalAddress.getPort())
-                    .send(httpRequest);
+                    .send(httpRequest)
+                    .doOnSubscribe(subscription -> {
+                        sendTimeUtc.v = Instant.now();
+                        this.beforeRequest(
+                                activityId,
+                                httpRequest.url(),
+                                request.getResourceType(),
+                                httpRequest.headers());
+                    })
+                    .onErrorResume(t -> {
+                        Exception exception = Utils.as(t, Exception.class);
+                        if (exception == null) {
+                            logger.error("critical failure", t);
+                            t.printStackTrace();
+                            assert false : "critical failure";
+                            return Mono.error(t);
+                        }
 
-            responseMessage.doOnSubscribe(subscription -> {
-                sendTimeUtc.v = Instant.now();
-                this.beforeRequest(
-                        activityId,
-                        httpRequest.url(),
-                        request.getResourceType(),
-                        httpRequest.headers());
-            });
+                        //Trace.CorrelationManager.ActivityId = activityId;
+                        if (WebExceptionUtility.isWebExceptionRetriable(exception)) {
+                            logger.debug("Received retriable exception {} " +
+                                            "sending the request to {}, will re-resolve the address " +
+                                            "send time UTC: {}",
+                                    exception,
+                                    physicalAddress,
+                                    sendTimeUtc);
 
-            responseMessage = responseMessage.onErrorResume(t -> {
+                            GoneException goneException = new GoneException(
+                                    String.format(
+                                            RMResources.ExceptionMessage,
+                                            RMResources.Gone),
+                                    exception,
+                                    null,
+                                    physicalAddressUrl);
 
-                Exception exception = Utils.as(t, Exception.class);
-                if (exception == null) {
-                    logger.error("critical failure", t);
-                    t.printStackTrace();
-                    assert false : "critical failure";
-                    return Mono.error(t);
-                }
+                            return Mono.error(goneException);
+                        } else if (request.isReadOnlyRequest()) {
+                            logger.trace("Received exception {} on readonly request" +
+                                            "sending the request to {}, will reresolve the address " +
+                                            "send time UTC: {}",
+                                    exception,
+                                    physicalAddress,
+                                    sendTimeUtc);
 
-                //Trace.CorrelationManager.ActivityId = activityId;
-                if (WebExceptionUtility.isWebExceptionRetriable(exception)) {
-                    logger.debug("Received retriable exception {} " +
-                                    "sending the request to {}, will re-resolve the address " +
-                                    "send time UTC: {}",
-                            exception,
-                            physicalAddress,
-                            sendTimeUtc);
+                            GoneException goneException = new GoneException(
+                                    String.format(
+                                            RMResources.ExceptionMessage,
+                                            RMResources.Gone),
+                                    exception,
+                                    null,
+                                    physicalAddressUrl);
 
-                    GoneException goneException = new GoneException(
-                            String.format(
-                                    RMResources.ExceptionMessage,
-                                    RMResources.Gone),
-                            exception,
-                            null,
-                            physicalAddressUrl);
-
-                    return Mono.error(goneException);
-                } else if (request.isReadOnlyRequest()) {
-                    logger.trace("Received exception {} on readonly request" +
-                                    "sending the request to {}, will reresolve the address " +
-                                    "send time UTC: {}",
-                            exception,
-                            physicalAddress,
-                            sendTimeUtc);
-
-                    GoneException goneException = new GoneException(
-                            String.format(
-                                    RMResources.ExceptionMessage,
-                                    RMResources.Gone),
-                            exception,
-                            null,
-                            physicalAddressUrl);
-
-                    return Mono.error(goneException);
-                } else {
-                    // We can't throw a GoneException here because it will cause retry and we don't
-                    // know if the request failed before or after the message got sent to the server.
-                    // So in order to avoid duplicating the request we will not retry.
-                    // TODO: a possible solution for this is to add the ability to send a request to the server
-                    // to check if the previous request was received or not and act accordingly.
-                    ServiceUnavailableException serviceUnavailableException = new ServiceUnavailableException(
-                            String.format(
-                                    RMResources.ExceptionMessage,
-                                    RMResources.ServiceUnavailable),
-                            exception,
-                            null,
-                            physicalAddress.toString());
-                    serviceUnavailableException.getResponseHeaders().put(HttpConstants.HttpHeaders.REQUEST_VALIDATION_FAILURE, "1");
-                    serviceUnavailableException.getResponseHeaders().put(HttpConstants.HttpHeaders.WRITE_REQUEST_TRIGGER_ADDRESS_REFRESH, "1");
-                    return Mono.error(serviceUnavailableException);
-                }
-            }).doOnSuccess(httpClientResponse -> {
-                Instant receivedTimeUtc = Instant.now();
-                double durationInMilliSeconds = (receivedTimeUtc.toEpochMilli() - sendTimeUtc.v.toEpochMilli());
-                this.afterRequest(
-                        activityId,
-                        httpClientResponse.statusCode() ,
-                        durationInMilliSeconds,
-                        httpClientResponse.headers());
-            }).doOnError( e -> {
-                Instant receivedTimeUtc = Instant.now();
-                double durationInMilliSeconds = (receivedTimeUtc.toEpochMilli() - sendTimeUtc.v.toEpochMilli());
-                this.afterRequest(
-                        activityId,
-                        0,
-                        durationInMilliSeconds,
-                        null);
-            });
+                            return Mono.error(goneException);
+                        } else {
+                            // We can't throw a GoneException here because it will cause retry and we don't
+                            // know if the request failed before or after the message got sent to the server.
+                            // So in order to avoid duplicating the request we will not retry.
+                            // TODO: a possible solution for this is to add the ability to send a request to the server
+                            // to check if the previous request was received or not and act accordingly.
+                            ServiceUnavailableException serviceUnavailableException = new ServiceUnavailableException(
+                                    String.format(
+                                            RMResources.ExceptionMessage,
+                                            RMResources.ServiceUnavailable),
+                                    exception,
+                                    null,
+                                    physicalAddress.toString());
+                            serviceUnavailableException.getResponseHeaders().put(HttpConstants.HttpHeaders.REQUEST_VALIDATION_FAILURE, "1");
+                            serviceUnavailableException.getResponseHeaders().put(HttpConstants.HttpHeaders.WRITE_REQUEST_TRIGGER_ADDRESS_REFRESH, "1");
+                            return Mono.error(serviceUnavailableException);
+                        }})
+                    .doOnSuccess(httpClientResponse -> {
+                        Instant receivedTimeUtc = Instant.now();
+                        double durationInMilliSeconds = (receivedTimeUtc.toEpochMilli() - sendTimeUtc.v.toEpochMilli());
+                        this.afterRequest(
+                                activityId,
+                                httpClientResponse.statusCode(),
+                                durationInMilliSeconds,
+                                httpClientResponse.headers());})
+                    .doOnError(e -> {
+                        Instant receivedTimeUtc = Instant.now();
+                        double durationInMilliSeconds = (receivedTimeUtc.toEpochMilli() - sendTimeUtc.v.toEpochMilli());
+                        this.afterRequest(
+                                activityId,
+                                0,
+                                durationInMilliSeconds,
+                                null);
+                    });
 
             return RxJavaInterop
                     .toV1Single(RxJava2Adapter
-                            .monoToSingle(responseMessage
-                                    .flatMap(rsp -> processHttpResponse(request.getResourceAddress(),
-                                            httpRequest,
-                                            activityId.toString(),
-                                            rsp,
-                                            physicalAddress))));
+                            .monoToSingle(httpResponseMono.flatMap(rsp -> processHttpResponse(request.getResourceAddress(),
+                                httpRequest,
+                                activityId.toString(),
+                                rsp,
+                                physicalAddress))));
 
         } catch (Exception e) {
             // TODO improve on exception catching
@@ -820,9 +816,7 @@ public class HttpTransportClient extends TransportClient {
                             ErrorUtils.logGoneException(request.url(), activityId);
 
                             Integer nSubStatus = 0;
-                            String valueSubStatus = null;
-
-                            valueSubStatus = response.headers().value(WFConstants.BackendHeaders.SUB_STATUS);
+                            String valueSubStatus = response.headers().value(WFConstants.BackendHeaders.SUB_STATUS);
                             if (!Strings.isNullOrEmpty(valueSubStatus)) {
                                 if ((nSubStatus = Integers.tryParse(valueSubStatus)) == null) {
                                     exception = new InternalServerErrorException(
