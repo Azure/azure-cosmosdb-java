@@ -22,6 +22,8 @@
  */
 package com.microsoft.azure.cosmos.changefeed;
 
+import com.microsoft.azure.cosmos.ChangeFeedProcessorOptions;
+
 import java.util.List;
 
 /**

@@ -31,7 +31,7 @@ import java.net.URISyntaxException;
 /**
  * Holds information specifying how to get the Cosmos container.
  */
-public class ContainerInfo {
+public class ContainerConnectionInfo {
     private ConnectionPolicy connectionPolicy;
     private ConsistencyLevel consistencyLevel;
     private String serviceEndpointUri;
@@ -40,25 +40,25 @@ public class ContainerInfo {
     private String containerName;
 
     /**
-     * Initializes a new instance of the {@link ContainerInfo} class.
+     * Initializes a new instance of the {@link ContainerConnectionInfo} class.
      */
-    public ContainerInfo() {
+    public ContainerConnectionInfo() {
         this.connectionPolicy = new ConnectionPolicy();
         this.consistencyLevel = ConsistencyLevel.Session;
     }
 
     /**
-     * Initializes a new instance of the {@link ContainerInfo} class.
+     * Initializes a new instance of the {@link ContainerConnectionInfo} class.
      *
-     * @param containerInfo the {@link ContainerInfo} instance to copy the settings from.
+     * @param containerConnectionInfo the {@link ContainerConnectionInfo} instance to copy the settings from.
      */
-    public ContainerInfo(ContainerInfo containerInfo) {
-        this.connectionPolicy = containerInfo.connectionPolicy;
-        this.consistencyLevel = containerInfo.consistencyLevel;
-        this.serviceEndpointUri = containerInfo.serviceEndpointUri;
-        this.keyOrResourceToken = containerInfo.keyOrResourceToken;
-        this.databaseName = containerInfo.databaseName;
-        this.containerName = containerInfo.containerName;
+    public ContainerConnectionInfo(ContainerConnectionInfo containerConnectionInfo) {
+        this.connectionPolicy = containerConnectionInfo.connectionPolicy;
+        this.consistencyLevel = containerConnectionInfo.consistencyLevel;
+        this.serviceEndpointUri = containerConnectionInfo.serviceEndpointUri;
+        this.keyOrResourceToken = containerConnectionInfo.keyOrResourceToken;
+        this.databaseName = containerConnectionInfo.databaseName;
+        this.containerName = containerConnectionInfo.containerName;
     }
 
     /**
@@ -118,9 +118,9 @@ public class ContainerInfo {
      * Sets the connection policy to connect to Cosmos service.
      *
      * @param connectionPolicy the connection policy to connect to Cosmos service.
-     * @return current instance of {@link ContainerInfo}
+     * @return current instance of {@link ContainerConnectionInfo}
      */
-    public ContainerInfo withConnectionPolicy(ConnectionPolicy connectionPolicy) {
+    public ContainerConnectionInfo withConnectionPolicy(ConnectionPolicy connectionPolicy) {
         this.connectionPolicy = connectionPolicy;
         return this;
     }
@@ -129,9 +129,9 @@ public class ContainerInfo {
      * Sets the consistency level.
      *
      * @param consistencyLevel the consistency level.
-     * @return current instance of {@link ContainerInfo}
+     * @return current instance of {@link ContainerConnectionInfo}
      */
-    public ContainerInfo withConsistencyLevel(ConsistencyLevel consistencyLevel) {
+    public ContainerConnectionInfo withConsistencyLevel(ConsistencyLevel consistencyLevel) {
         this.consistencyLevel = consistencyLevel;
         return this;
     }
@@ -139,9 +139,9 @@ public class ContainerInfo {
     /**
      * Sets the URI of the Document service.
      * @param serviceEndpoint the URI of the Cosmos service.
-     * @return current instance of {@link ContainerInfo}
+     * @return current instance of {@link ContainerConnectionInfo}
      */
-    public ContainerInfo withServiceEndpointUri(String serviceEndpoint) {
+    public ContainerConnectionInfo withServiceEndpointUri(String serviceEndpoint) {
         try {
             new URI(serviceEndpoint);
         } catch (URISyntaxException ex) {
@@ -155,9 +155,9 @@ public class ContainerInfo {
     /**
      * Sets the secret master key to connect to the Cosmos service.
      * @param keyOrResourceToken the secret master key to connect to the Cosmos service.
-     * @return current instance of {@link ContainerInfo}
+     * @return current instance of {@link ContainerConnectionInfo}
      */
-    public ContainerInfo withKeyOrResourceToken(String keyOrResourceToken) {
+    public ContainerConnectionInfo withKeyOrResourceToken(String keyOrResourceToken) {
         this.keyOrResourceToken = keyOrResourceToken;
         return this;
     }
@@ -166,9 +166,9 @@ public class ContainerInfo {
      * Sets the name of the database the container resides in.
      *
      * @param databaseName the name of the database the container resides in.
-     * @return current instance of {@link ContainerInfo}
+     * @return current instance of {@link ContainerConnectionInfo}
      */
-    public ContainerInfo withDatabaseName(String databaseName) {
+    public ContainerConnectionInfo withDatabaseName(String databaseName) {
         this.databaseName = databaseName;
         return this;
     }
@@ -177,9 +177,9 @@ public class ContainerInfo {
      * Sets the name of the Cosmos container.
      *
      * @param containerName the name of the Cosmos container.
-     * @return current instance of {@link ContainerInfo}
+     * @return current instance of {@link ContainerConnectionInfo}
      */
-    public ContainerInfo withContainerName(String containerName) {
+    public ContainerConnectionInfo withContainerName(String containerName) {
         this.containerName = containerName;
         return this;
     }

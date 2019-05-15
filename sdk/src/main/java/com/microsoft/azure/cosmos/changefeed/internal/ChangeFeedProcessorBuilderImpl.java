@@ -23,11 +23,10 @@
 package com.microsoft.azure.cosmos.changefeed.internal;
 
 import com.microsoft.azure.cosmos.CosmosContainer;
-import com.microsoft.azure.cosmos.changefeed.ChangeFeedObserver;
-import com.microsoft.azure.cosmos.changefeed.ChangeFeedObserverFactory;
-import com.microsoft.azure.cosmos.changefeed.ChangeFeedProcessor;
-import com.microsoft.azure.cosmos.changefeed.ChangeFeedProcessorOptions;
-import com.microsoft.azure.cosmos.changefeed.ContainerInfo;
+import com.microsoft.azure.cosmos.ChangeFeedObserver;
+import com.microsoft.azure.cosmos.ChangeFeedObserverFactory;
+import com.microsoft.azure.cosmos.ChangeFeedProcessor;
+import com.microsoft.azure.cosmos.ChangeFeedProcessorOptions;
 import com.microsoft.azure.cosmos.changefeed.HealthMonitor;
 import com.microsoft.azure.cosmos.changefeed.LeaseStoreManager;
 import com.microsoft.azure.cosmos.changefeed.PartitionLoadBalancingStrategy;
@@ -68,11 +67,6 @@ public class ChangeFeedProcessorBuilderImpl implements ChangeFeedProcessor.Build
     }
 
     @Override
-    public ChangeFeedProcessor.BuilderDefinition withFeedCollection(ContainerInfo feedCollectionLocation) {
-        return null;
-    }
-
-    @Override
     public ChangeFeedProcessor.BuilderDefinition withFeedContainerClient(CosmosContainer feedContainerClient) {
         return null;
     }
@@ -103,11 +97,6 @@ public class ChangeFeedProcessorBuilderImpl implements ChangeFeedProcessor.Build
     }
 
     @Override
-    public ChangeFeedProcessor.BuilderDefinition withLeaseCollection(ContainerInfo leaseCollectionLocation) {
-        return null;
-    }
-
-    @Override
     public ChangeFeedProcessor.BuilderDefinition withLeaseDocumentClient(CosmosContainer leaseCosmosClient) {
         return null;
     }
@@ -133,7 +122,7 @@ public class ChangeFeedProcessorBuilderImpl implements ChangeFeedProcessor.Build
     }
 
     @Override
-    public ChangeFeedProcessor.BuilderDefinition withHealthMonitor(ExecutorService executorService) {
+    public ChangeFeedProcessor.BuilderDefinition withExecutorService(ExecutorService executorService) {
         return null;
     }
 

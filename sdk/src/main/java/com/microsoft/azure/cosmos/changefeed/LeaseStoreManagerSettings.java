@@ -26,7 +26,7 @@ package com.microsoft.azure.cosmos.changefeed;
  * Captures LeaseStoreManager settings.
  */
 public class LeaseStoreManagerSettings {
-    private ContainerInfo leaseCollectionInfo;
+    private ContainerConnectionInfo leaseCollectionInfo;
 
     String containerNamePrefix;
 
@@ -34,11 +34,11 @@ public class LeaseStoreManagerSettings {
 
     String hostName;
 
-    public ContainerInfo getLeaseCollectionInfo() {
+    public ContainerConnectionInfo getLeaseCollectionInfo() {
         return this.leaseCollectionInfo;
     }
 
-    public LeaseStoreManagerSettings withLeaseCollectionInfo(ContainerInfo collectionInfo) {
+    public LeaseStoreManagerSettings withLeaseCollectionInfo(ContainerConnectionInfo collectionInfo) {
         this.leaseCollectionInfo = collectionInfo;
         return this;
     }

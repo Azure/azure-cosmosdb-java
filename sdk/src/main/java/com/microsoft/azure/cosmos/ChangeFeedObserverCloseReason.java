@@ -20,16 +20,39 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.microsoft.azure.cosmos.changefeed;
+package com.microsoft.azure.cosmos;
 
 /**
- * Factory class used to create instance(s) of {@link ChangeFeedObserver}.
+ * The reason for the {@link ChangeFeedObserver} to close.
  */
-public interface ChangeFeedObserverFactory {
+public enum ChangeFeedObserverCloseReason {
     /**
-     * Creates an instance of a {@link ChangeFeedObserver}.
-     *
-     * @return an instance of a {@link ChangeFeedObserver}.
+     * UNKNOWN failure. This should never be sent to observers.
      */
-    ChangeFeedObserver createObserver();
+    UNKNOWN,
+
+    /**
+     * The ChangeFeedEventProcessor is shutting down.
+     */
+    SHUTDOWN,
+
+    /**
+     * The resource, such as database or collection was removed.
+     */
+    RESOURCE_GONE,
+
+    /**
+     * Lease was lost due to expiration or load-balancing.
+     */
+    LEASE_LOST,
+
+    /**
+     * ChangeFeedObserver threw an exception.
+     */
+    OBSERVER_ERROR,
+
+    /**
+     * The lease is gone. This can be due to partition split.
+     */
+    LEASE_GONE,
 }

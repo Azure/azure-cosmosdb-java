@@ -20,32 +20,23 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.microsoft.azure.cosmos.changefeed;
+package com.microsoft.azure.cosmos.changefeed.internal;
 
-import com.microsoft.azure.cosmos.ChangeFeedObserver;
-import com.microsoft.azure.cosmos.ChangeFeedObserverContext;
+import com.microsoft.azure.cosmos.changefeed.HealthMonitor;
+import com.microsoft.azure.cosmos.changefeed.HealthMonitoringRecord;
 import reactor.core.publisher.Mono;
 
 /**
- * Provides an API to run continious processing on a single partition of some resource.
- * <p>
- * Created by {@link PartitionProcessorFactory}.create() after some lease is acquired by the current host.
- *  Processing can perform the following tasks in a loop:
- *    1. Read some data from the resource partition.
- *    2. Handle possible problems with the read.
- *    3. Pass the obtained data to an observer by calling {@link ChangeFeedObserver}.processChangesAsync{} with the context {@link ChangeFeedObserverContext}.
+ * Implementation for trace health monitor.
  */
-public interface PartitionProcessor {
-    /**
-     * Perform partition processing.
-     *
-     * @param cancellationToken the cancellation token.
-     * @return a representation of the deferred computation of this call.
-     */
-    Mono<Void> run(CancellationToken cancellationToken);
-
-    /**
-     * @return the inner exception if any, otherwise null.
-     */
-    RuntimeException getResultException();
+public class TraceHealthMonitor implements HealthMonitor {
+    @Override
+    public Mono<Void> inspect(HealthMonitoringRecord record) {
+        return Mono.fromRunnable(() -> {
+            if (record.getSeverity() == HealthMonitoringRecord.HealthSeverity.ERROR) {
+                // TODO: Add logging.
+                // Logger.ErrorException($"Unhealthiness detected in the operation {record.Operation} for {record.Lease}. ", record.Exception);
+            }
+        });
+    }
 }

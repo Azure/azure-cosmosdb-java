@@ -38,7 +38,7 @@ public interface LeaseStoreManager extends LeaseContainer, LeaseManager, LeaseSt
      * For the actual creation of lease manager instance, delegates to lease manager factory.
      */
     interface LeaseStoreManagerBuilderDefinition {
-        LeaseStoreManagerBuilderDefinition withLeaseCollection(ContainerInfo leaseCollectionLocation);
+        LeaseStoreManagerBuilderDefinition withLeaseCollection(ContainerConnectionInfo leaseCollectionLocation);
 
         LeaseStoreManagerBuilderDefinition withLeaseDocumentClient(ChangeFeedContextClient leaseDocumentClient);
 

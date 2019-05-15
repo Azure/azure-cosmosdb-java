@@ -20,9 +20,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.microsoft.azure.cosmos.changefeed;
+package com.microsoft.azure.cosmos;
 
-import com.microsoft.azure.cosmos.CosmosContainer;
+import com.microsoft.azure.cosmos.changefeed.HealthMonitor;
+import com.microsoft.azure.cosmos.changefeed.LeaseStoreManager;
+import com.microsoft.azure.cosmos.changefeed.PartitionLoadBalancingStrategy;
+import com.microsoft.azure.cosmos.changefeed.PartitionProcessor;
+import com.microsoft.azure.cosmos.changefeed.PartitionProcessorFactory;
 import com.microsoft.azure.cosmos.changefeed.internal.ChangeFeedProcessorBuilderImpl;
 
 import reactor.core.publisher.Mono;
@@ -118,14 +122,6 @@ public interface ChangeFeedProcessor {
         BuilderDefinition withHostName(String hostName);
 
         /**
-         * Sets the {@link ContainerInfo} of the collection to listen for changes.
-         *
-         * @param feedCollectionLocation the {@link ContainerInfo} of the collection to listen for changes.
-         * @return current Builder.
-         */
-        BuilderDefinition withFeedCollection(ContainerInfo feedCollectionLocation);
-
-        /**
          * Sets and existing {@link CosmosContainer} to be used to read from the monitored collection.
          *
          * @param feedContainerClient the instance of {@link CosmosContainer} to be used.
@@ -174,14 +170,6 @@ public interface ChangeFeedProcessor {
         BuilderDefinition withCollectionResourceId(String collectionResourceId);
 
         /**
-         * Sets the {@link ContainerInfo} of the collection to use for leases.
-         *
-         * @param leaseCollectionLocation the {@link ContainerInfo} of the collection to use for leases.
-         * @return current Builder.
-         */
-        BuilderDefinition withLeaseCollection(ContainerInfo leaseCollectionLocation);
-
-        /**
          * Sets an existing {@link CosmosContainer} to be used to read from the leases collection.
          *
          * @param leaseCosmosClient the instance of {@link CosmosContainer} to use.
@@ -227,7 +215,7 @@ public interface ChangeFeedProcessor {
          * @param executorService The instance of {@link ExecutorService} to use.
          * @return current Builder.
          */
-        BuilderDefinition withHealthMonitor(ExecutorService executorService);
+        BuilderDefinition withExecutorService(ExecutorService executorService);
 
         /**
          * Builds a new instance of the {@link ChangeFeedProcessor} with the specified configuration asynchronously.

@@ -22,6 +22,8 @@
  */
 package com.microsoft.azure.cosmos.changefeed;
 
+import com.microsoft.azure.cosmos.ChangeFeedProcessor;
+
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Date;

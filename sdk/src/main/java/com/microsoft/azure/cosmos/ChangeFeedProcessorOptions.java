@@ -20,7 +20,9 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.microsoft.azure.cosmos.changefeed;
+package com.microsoft.azure.cosmos;
+
+import com.microsoft.azure.cosmos.changefeed.CheckpointFrequency;
 
 import java.time.Duration;
 import java.time.ZoneId;

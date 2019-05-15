@@ -22,6 +22,8 @@
  */
 package com.microsoft.azure.cosmos.changefeed;
 
+import com.microsoft.azure.cosmos.ChangeFeedObserver;
+
 /**
  * Factory class used to create instance(s) of {@link PartitionProcessor}.
  */

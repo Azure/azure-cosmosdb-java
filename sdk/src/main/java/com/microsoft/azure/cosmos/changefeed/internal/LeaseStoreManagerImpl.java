@@ -23,7 +23,7 @@
 package com.microsoft.azure.cosmos.changefeed.internal;
 
 import com.microsoft.azure.cosmos.changefeed.ChangeFeedContextClient;
-import com.microsoft.azure.cosmos.changefeed.ContainerInfo;
+import com.microsoft.azure.cosmos.changefeed.ContainerConnectionInfo;
 import com.microsoft.azure.cosmos.changefeed.Lease;
 import com.microsoft.azure.cosmos.changefeed.LeaseStoreManager;
 import com.microsoft.azure.cosmos.changefeed.RequestOptionsFactory;
@@ -38,7 +38,7 @@ import java.time.Duration;
  */
 public class LeaseStoreManagerImpl implements LeaseStoreManager, LeaseStoreManager.LeaseStoreManagerBuilderDefinition {
     @Override
-    public LeaseStoreManagerBuilderDefinition withLeaseCollection(ContainerInfo leaseCollectionLocation) {
+    public LeaseStoreManagerBuilderDefinition withLeaseCollection(ContainerConnectionInfo leaseCollectionLocation) {
         return null;
     }
 

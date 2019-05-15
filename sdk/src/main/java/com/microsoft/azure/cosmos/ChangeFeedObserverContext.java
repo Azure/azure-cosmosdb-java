@@ -20,9 +20,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.microsoft.azure.cosmos.changefeed;
+package com.microsoft.azure.cosmos;
 
-import com.microsoft.azure.cosmos.CosmosItem;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import reactor.core.publisher.Mono;
 
