@@ -92,7 +92,6 @@ public class DocumentQueryExecutionContextFactory {
                 isContinuationExpected);
 
         if (ResourceType.Document != resourceTypeEnum
-                || (feedOptions != null && feedOptions.getPartitionKey() != null)
                 || (feedOptions != null && feedOptions.getPartitionKeyRangeIdInternal() != null)) {
             return Observable.just(queryExecutionContext);
         }
@@ -102,6 +101,19 @@ public class DocumentQueryExecutionContextFactory {
 
         return collectionObs.flatMap(collection -> queryExecutionInfoSingle.toObservable()
                 .flatMap(partitionedQueryExecutionInfo -> {
+                    QueryInfo queryInfo = partitionedQueryExecutionInfo.getQueryInfo();
+                    
+                    // Non value aggregates must go through DefaultDocumentQueryExecutionContext
+                    // Single partition query can serve queries like SELECT AVG(c.age) FROM c
+                    // SELECT MIN(c.age) + 5 FROM c
+                    // SELECT MIN(c.age), MAX(c.age) FROM c
+                    // while pipelined queries can only serve
+                    // SELECT VALUE <AGGREGATE>. So we send the query down the old pipeline to avoid a breaking change.
+                    // We will skip this in V3 SDK
+                    if(queryInfo.hasAggregates() && !queryInfo.hasSelectValue()){
+                        return Observable.just( queryExecutionContext);
+                    }
+                    
                     Single<List<PartitionKeyRange>> partitionKeyRanges = queryExecutionContext
                             .getTargetPartitionKeyRanges(collection.getResourceId(), partitionedQueryExecutionInfo.getQueryRanges());
 
@@ -136,11 +148,12 @@ public class DocumentQueryExecutionContextFactory {
             String collectionRid,
             UUID correlatedActivityId) {
 
-        if(feedOptions == null){
+        if (feedOptions == null) {
             feedOptions = new FeedOptions();
         }
-        
-        int initialPageSize = Utils.getValueOrDefault(feedOptions.getMaxItemCount(), ParallelQueryConfig.ClientInternalPageSize);
+
+        int initialPageSize = Utils.getValueOrDefault(feedOptions.getMaxItemCount(),
+                                                      ParallelQueryConfig.ClientInternalPageSize);
 
         BadRequestException validationError = Utils.checkRequestOrReturnException
                 (initialPageSize > 0, "MaxItemCount", "Invalid MaxItemCount %s", initialPageSize);
@@ -149,19 +162,6 @@ public class DocumentQueryExecutionContextFactory {
         }
 
         QueryInfo queryInfo = partitionedQueryExecutionInfo.getQueryInfo();
-
-        // non value aggregates must go through DefaultDocumentQueryExecutionContext
-        if(queryInfo.hasAggregates() && !queryInfo.hasSelectValue()){
-            return Observable.just( new DefaultDocumentQueryExecutionContext<T>(
-                    client,
-                    resourceTypeEnum,
-                    resourceType,
-                    query,
-                    feedOptions,
-                    resourceLink,
-                    correlatedActivityId,
-                    isContinuationExpected));
-        }
         
         if (!Strings.isNullOrEmpty(queryInfo.getRewrittenQuery())) {
                 query = new SqlQuerySpec(queryInfo.getRewrittenQuery(), query.getParameters());
