@@ -17,6 +17,7 @@ class QueryPlanRetriever {
     private static final String TRUE = "True";
     private static final String QUERY_VERSION = "1.0";
     private static final String SUPPORTED_QUERY_FEATURES = QueryFeature.Aggregate.name() + ", " +
+            QueryFeature.CompositeAggregate.name() + ", " +
             QueryFeature.Distinct.name() + ", " +
             QueryFeature.MultipleOrderBy.name() + ", " +
             QueryFeature.OffsetAndLimit.name() + ", " +

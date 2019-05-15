@@ -463,9 +463,6 @@ public class ParallelDocumentQueryTest extends TestSuiteBase {
         FailureValidator validator = new FailureValidator.Builder()
                 .instanceOf(DocumentClientException.class)
                 .statusCode(400)
-                .notNullActivityId()
-                .errorMessageContains("Query contains 1 or more unsupported features. Upgrade your SDK to a " +
-                                                     "version that does support the requested features:")
                 .build();
         validateQueryFailure(queryObservable, validator);
     }
