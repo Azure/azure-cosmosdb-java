@@ -87,7 +87,7 @@ public class SpyClientUnderTestFactory {
                                                  QueryCompatibilityMode queryCompatibilityMode,
                                                  UserAgentContainer userAgentContainer,
                                                  GlobalEndpointManager globalEndpointManager,
-                                                 com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient rxClient) {
+                                                 HttpClient rxClient) {
             this.origRxGatewayStoreModel = super.createRxGatewayProxy(
                     sessionContainer,
                     consistencyLevel,
@@ -128,9 +128,9 @@ public class SpyClientUnderTestFactory {
 
     public static class ClientUnderTest extends SpyBaseClass<HttpRequest> {
 
-        com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient origHttpClient;
-        com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient spyHttpClient;
-        List<Pair<HttpRequest, Future<com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders>>> requestsResponsePairs =
+        HttpClient origHttpClient;
+        HttpClient spyHttpClient;
+        List<Pair<HttpRequest, Future<HttpHeaders>>> requestsResponsePairs =
                 Collections.synchronizedList(new ArrayList<>());
 
         ClientUnderTest(URI serviceEndpoint, String masterKey, ConnectionPolicy connectionPolicy, ConsistencyLevel consistencyLevel, Configs configs) {
@@ -138,7 +138,7 @@ public class SpyClientUnderTestFactory {
             init();
         }
 
-        public List<Pair<HttpRequest, Future<com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders>>> capturedRequestResponseHeaderPairs() {
+        public List<Pair<HttpRequest, Future<HttpHeaders>>> capturedRequestResponseHeaderPairs() {
             return requestsResponsePairs;
         }
 

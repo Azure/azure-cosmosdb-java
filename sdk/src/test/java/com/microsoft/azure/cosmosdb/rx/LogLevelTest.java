@@ -35,17 +35,14 @@ import org.apache.log4j.PropertyConfigurator;
 import org.apache.log4j.WriterAppender;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 import com.microsoft.azure.cosmosdb.Database;
 import com.microsoft.azure.cosmosdb.Document;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.ResourceResponse;
-import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient.Builder;
 
 import rx.Observable;
 
@@ -53,7 +50,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class LogLevelTest extends TestSuiteBase {
     public final static String COSMOS_DB_LOGGING_CATEGORY = "com.microsoft.azure.cosmosdb";
-    public final static String NETWORK_LOGGING_CATEGORY = "com.microsoft.azure.cosmosdb.netty-network";
+    public final static String REACTOR_NETWORK_LOG_CATEGORY = "com.microsoft.azure.cosmosdb.reactor-netty-network";
     public final static String LOG_PATTERN_1 = "HTTP/1.1 200 Ok.";
     public final static String LOG_PATTERN_2 = "|  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |";
     public final static String LOG_PATTERN_3 = "USER_EVENT: SslHandshakeCompletionEvent(SUCCESS)";
@@ -79,10 +76,10 @@ public class LogLevelTest extends TestSuiteBase {
      */
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
     public void createDocumentWithDebugLevel() throws Exception {
-        LogManager.getLogger(NETWORK_LOGGING_CATEGORY).setLevel(Level.DEBUG);
+        LogManager.getLogger(REACTOR_NETWORK_LOG_CATEGORY).setLevel(Level.DEBUG);
         StringWriter consoleWriter = new StringWriter();
         WriterAppender appender = new WriterAppender(new PatternLayout(), consoleWriter);
-        LogManager.getLogger(NETWORK_LOGGING_CATEGORY).addAppender(appender);
+        LogManager.getLogger(REACTOR_NETWORK_LOG_CATEGORY).addAppender(appender);
 
         AsyncDocumentClient client = clientBuilder.build();
         try {
@@ -109,10 +106,10 @@ public class LogLevelTest extends TestSuiteBase {
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
     public void createDocumentWithWarningLevel() throws Exception {
         LogManager.getRootLogger().setLevel(Level.INFO);
-        LogManager.getLogger(NETWORK_LOGGING_CATEGORY).setLevel(Level.WARN);
+        LogManager.getLogger(REACTOR_NETWORK_LOG_CATEGORY).setLevel(Level.WARN);
         StringWriter consoleWriter = new StringWriter();
         WriterAppender appender = new WriterAppender(new PatternLayout(), consoleWriter);
-        Logger.getLogger(NETWORK_LOGGING_CATEGORY).addAppender(appender);
+        Logger.getLogger(REACTOR_NETWORK_LOG_CATEGORY).addAppender(appender);
 
         AsyncDocumentClient client = clientBuilder.build();
         try {
@@ -138,10 +135,10 @@ public class LogLevelTest extends TestSuiteBase {
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
     public void createDocumentWithTraceLevel() throws Exception {
         LogManager.getRootLogger().setLevel(Level.INFO);
-        LogManager.getLogger(NETWORK_LOGGING_CATEGORY).setLevel(Level.TRACE);
+        LogManager.getLogger(REACTOR_NETWORK_LOG_CATEGORY).setLevel(Level.TRACE);
         StringWriter consoleWriter = new StringWriter();
         WriterAppender appender = new WriterAppender(new PatternLayout(), consoleWriter);
-        Logger.getLogger(NETWORK_LOGGING_CATEGORY).addAppender(appender);
+        Logger.getLogger(REACTOR_NETWORK_LOG_CATEGORY).addAppender(appender);
 
         AsyncDocumentClient client = clientBuilder.build();
         try {
@@ -169,7 +166,7 @@ public class LogLevelTest extends TestSuiteBase {
         LogManager.getLogger(COSMOS_DB_LOGGING_CATEGORY).setLevel(Level.TRACE);
         StringWriter consoleWriter = new StringWriter();
         WriterAppender appender = new WriterAppender(new PatternLayout(), consoleWriter);
-        Logger.getLogger(NETWORK_LOGGING_CATEGORY).addAppender(appender);
+        Logger.getLogger(REACTOR_NETWORK_LOG_CATEGORY).addAppender(appender);
 
         AsyncDocumentClient client = clientBuilder.build();
         try {
@@ -196,7 +193,7 @@ public class LogLevelTest extends TestSuiteBase {
         LogManager.getLogger(COSMOS_DB_LOGGING_CATEGORY).setLevel(Level.DEBUG);
         StringWriter consoleWriter = new StringWriter();
         WriterAppender appender = new WriterAppender(new PatternLayout(), consoleWriter);
-        Logger.getLogger(NETWORK_LOGGING_CATEGORY).addAppender(appender);
+        Logger.getLogger(REACTOR_NETWORK_LOG_CATEGORY).addAppender(appender);
 
         AsyncDocumentClient client = clientBuilder.build();
         try {
@@ -222,10 +219,10 @@ public class LogLevelTest extends TestSuiteBase {
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
     public void createDocumentWithErrorClient() throws Exception {
         LogManager.getRootLogger().setLevel(Level.INFO);
-        LogManager.getLogger(NETWORK_LOGGING_CATEGORY).setLevel(Level.ERROR);
+        LogManager.getLogger(REACTOR_NETWORK_LOG_CATEGORY).setLevel(Level.ERROR);
         StringWriter consoleWriter = new StringWriter();
         WriterAppender appender = new WriterAppender(new PatternLayout(), consoleWriter);
-        Logger.getLogger(NETWORK_LOGGING_CATEGORY).addAppender(appender);
+        Logger.getLogger(REACTOR_NETWORK_LOG_CATEGORY).addAppender(appender);
 
         AsyncDocumentClient client = clientBuilder.build();
         try {
@@ -251,10 +248,10 @@ public class LogLevelTest extends TestSuiteBase {
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
     public void createDocumentWithInfoLevel() throws Exception {
         LogManager.getRootLogger().setLevel(Level.INFO);
-        LogManager.getLogger(NETWORK_LOGGING_CATEGORY).setLevel(Level.INFO);
+        LogManager.getLogger(REACTOR_NETWORK_LOG_CATEGORY).setLevel(Level.INFO);
         StringWriter consoleWriter = new StringWriter();
         WriterAppender appender = new WriterAppender(new PatternLayout(), consoleWriter);
-        Logger.getLogger(NETWORK_LOGGING_CATEGORY).addAppender(appender);
+        Logger.getLogger(REACTOR_NETWORK_LOG_CATEGORY).addAppender(appender);
 
         AsyncDocumentClient client = clientBuilder.build();
         try {

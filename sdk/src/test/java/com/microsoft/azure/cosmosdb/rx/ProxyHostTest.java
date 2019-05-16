@@ -33,19 +33,13 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.log4j.WriterAppender;
-import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 import com.microsoft.azure.cosmosdb.rx.proxy.HttpProxyServer;
-
-import io.netty.handler.logging.LogLevel;
-import io.netty.handler.logging.LoggingHandler;
 
 import com.microsoft.azure.cosmosdb.ConnectionPolicy;
 import com.microsoft.azure.cosmosdb.ConsistencyLevel;
@@ -125,12 +119,12 @@ public class ProxyHostTest extends TestSuiteBase {
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
     public void createDocumentWithValidHttpProxyWithNettyWireLogging() throws Exception {
         LogManager.getRootLogger().setLevel(Level.INFO);
-        LogManager.getLogger(LogLevelTest.NETWORK_LOGGING_CATEGORY).setLevel(Level.TRACE);
+        LogManager.getLogger(LogLevelTest.REACTOR_NETWORK_LOG_CATEGORY).setLevel(Level.TRACE);
         AsyncDocumentClient clientWithRightProxy = null;
         try {
             StringWriter consoleWriter = new StringWriter();
             WriterAppender appender = new WriterAppender(new PatternLayout(), consoleWriter);
-            Logger.getLogger(LogLevelTest.NETWORK_LOGGING_CATEGORY).addAppender(appender);
+            Logger.getLogger(LogLevelTest.REACTOR_NETWORK_LOG_CATEGORY).addAppender(appender);
 
             ConnectionPolicy connectionPolicy =new ConnectionPolicy();
             connectionPolicy.setProxy(PROXY_HOST, PROXY_PORT);

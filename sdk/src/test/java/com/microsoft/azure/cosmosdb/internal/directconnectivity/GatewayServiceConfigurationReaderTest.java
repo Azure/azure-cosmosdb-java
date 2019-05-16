@@ -33,6 +33,7 @@ import com.microsoft.azure.cosmosdb.rx.TestConfigurations;
 import com.microsoft.azure.cosmosdb.rx.TestSuiteBase;
 import com.microsoft.azure.cosmosdb.rx.internal.SpyClientUnderTestFactory;
 import com.microsoft.azure.cosmosdb.rx.internal.SpyClientUnderTestFactory.ClientUnderTest;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpRequest;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpResponse;
@@ -57,7 +58,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class GatewayServiceConfigurationReaderTest extends TestSuiteBase {
 
     private static final int TIMEOUT = 8000;
-    private com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient mockHttpClient;
+    private HttpClient mockHttpClient;
     private BaseAuthorizationTokenProvider baseAuthorizationTokenProvider;
     private ConnectionPolicy connectionPolicy;
     private GatewayServiceConfigurationReader mockGatewayServiceConfigurationReader;
@@ -74,10 +75,10 @@ public class GatewayServiceConfigurationReaderTest extends TestSuiteBase {
     @BeforeClass(groups = "simple")
     public void setup() throws Exception {
         client = clientBuilder.build();
-        mockHttpClient = Mockito.mock(com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient.class);
+        mockHttpClient = Mockito.mock(HttpClient.class);
 
         ClientUnderTest clientUnderTest = SpyClientUnderTestFactory.createClientUnderTest(this.clientBuilder);
-        com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient httpClient = clientUnderTest.getSpyHttpClient();
+        HttpClient httpClient = clientUnderTest.getSpyHttpClient();
         baseAuthorizationTokenProvider = new BaseAuthorizationTokenProvider(TestConfigurations.MASTER_KEY);
         connectionPolicy = ConnectionPolicy.GetDefault();
         mockGatewayServiceConfigurationReader = new GatewayServiceConfigurationReader(new URI(TestConfigurations.HOST),
@@ -104,7 +105,7 @@ public class GatewayServiceConfigurationReaderTest extends TestSuiteBase {
         HttpResponse mockResponse = getMockResponse(databaseAccountJson);
 
         Mockito.when(mockHttpClient.port(Mockito.anyInt())).thenReturn(mockHttpClient);
-        Mockito.when(mockHttpClient.port(Mockito.anyInt()).send(Mockito.any(HttpRequest.class))).thenReturn(Mono.just(mockResponse));
+        Mockito.when(mockHttpClient.send(Mockito.any(HttpRequest.class))).thenReturn(Mono.just(mockResponse));
 
         Single<DatabaseAccount> databaseAccount = mockGatewayServiceConfigurationReader.initializeReaderAsync();
         validateSuccess(databaseAccount, expectedDatabaseAccount);
@@ -118,7 +119,7 @@ public class GatewayServiceConfigurationReaderTest extends TestSuiteBase {
         HttpResponse mockedResponse = getMockResponse(databaseAccountJson);
 
         Mockito.when(mockHttpClient.port(Mockito.anyInt())).thenReturn(mockHttpClient);
-        Mockito.when(mockHttpClient.port(Mockito.anyInt()).send(Mockito.any(HttpRequest.class))).thenReturn(Mono.just(mockedResponse));
+        Mockito.when(mockHttpClient.send(Mockito.any(HttpRequest.class))).thenReturn(Mono.just(mockedResponse));
 
         Single<DatabaseAccount> databaseAccount = mockGatewayServiceConfigurationReader.initializeReaderAsync();
         validateSuccess(databaseAccount, expectedDatabaseAccount);
@@ -165,12 +166,12 @@ public class GatewayServiceConfigurationReaderTest extends TestSuiteBase {
     }
 
     private HttpResponse getMockResponse(String databaseAccountJson) {
-        HttpResponse mock = Mockito.mock(HttpResponse.class);
-        Mockito.doReturn(200).when(mock).statusCode();
+        HttpResponse httpResponse = Mockito.mock(HttpResponse.class);
+        Mockito.doReturn(200).when(httpResponse).statusCode();
         Mockito.doReturn(Flux.just(ByteBufUtil.writeUtf8(ByteBufAllocator.DEFAULT, databaseAccountJson)))
-                .when(mock).body();
+                .when(httpResponse).body();
 
-        Mockito.doReturn(new HttpHeaders()).when(mock).headers();
-        return mock;
+        Mockito.doReturn(new HttpHeaders()).when(httpResponse).headers();
+        return httpResponse;
     }
 }
