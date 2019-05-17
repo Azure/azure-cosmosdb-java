@@ -20,18 +20,37 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.microsoft.azure.cosmos.changefeed;
+package com.microsoft.azure.cosmos.examples.ChangeFeed;
 
+import com.microsoft.azure.cosmos.ChangeFeedObserver;
+import com.microsoft.azure.cosmos.ChangeFeedObserverCloseReason;
+import com.microsoft.azure.cosmos.ChangeFeedObserverContext;
 import com.microsoft.azure.cosmos.CosmosItem;
-import com.microsoft.azure.cosmos.CosmosItemRequestOptions;
-import com.microsoft.azure.cosmosdb.RequestOptions;
-import reactor.core.publisher.Mono;
+import com.microsoft.azure.cosmosdb.SerializationFormattingPolicy;
 
-import java.util.function.Function;
+import java.util.List;
 
 /**
- * Interface for service lease updater.
+ * Sample ChangeFeedObserver.
  */
-public interface ServiceItemLeaseUpdater {
-    Mono<Lease> updateLease(Lease cachedLease, CosmosItem itemLink, CosmosItemRequestOptions requestOptions, Function<Lease, Lease> updateLease);
+public class SampleObserverImpl implements ChangeFeedObserver {
+    @Override
+    public void open(ChangeFeedObserverContext context) {
+        System.out.println("--->SampleObserverImpl::open()");
+    }
+
+    @Override
+    public void close(ChangeFeedObserverContext context, ChangeFeedObserverCloseReason reason) {
+        System.out.println("--->SampleObserverImpl::close() -> " + reason.name());
+    }
+
+    @Override
+    public void processChanges(ChangeFeedObserverContext context, List<CosmosItem> docs) {
+        System.out.println("--->SampleObserverImpl::processChanges() START");
+
+        for (CosmosItem document : docs) {
+            System.out.println("---->DOCUMENT RECEIVED: " + document.toJson(SerializationFormattingPolicy.Indented));
+        }
+        System.out.println("--->SampleObserverImpl::processChanges() END");
+    }
 }

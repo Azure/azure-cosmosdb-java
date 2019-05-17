@@ -23,6 +23,7 @@
 package com.microsoft.azure.cosmos;
 
 import com.microsoft.azure.cosmosdb.BridgeInternal;
+import com.microsoft.azure.cosmosdb.ChangeFeedOptions;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.SqlQuerySpec;
@@ -30,6 +31,7 @@ import com.microsoft.azure.cosmosdb.StoredProcedure;
 import com.microsoft.azure.cosmosdb.Trigger;
 import com.microsoft.azure.cosmosdb.UserDefinedFunction;
 import com.microsoft.azure.cosmosdb.internal.Paths;
+import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import hu.akarnokd.rxjava.interop.RxJavaInterop;
 import reactor.adapter.rxjava.RxJava2Adapter;
 import reactor.core.publisher.Flux;
@@ -42,6 +44,42 @@ public class CosmosContainer extends CosmosResource {
     CosmosContainer(String id, CosmosDatabase database) {
         super(id);
         this.database = database;
+    }
+
+    AsyncDocumentClient getContextClient() {
+        if(this.database == null || this.database.getClient() == null) {
+            return null;
+        }
+
+        return this.database.getClient().getContextClient();
+    }
+
+    /**
+     * Gets the context client.
+     *
+     * @param cosmosContainer the container client.
+     * @return the context client.
+     */
+    public static AsyncDocumentClient getContextClient(CosmosContainer cosmosContainer) {
+        if(cosmosContainer == null) {
+            return null;
+        }
+
+        return cosmosContainer.getContextClient();
+    }
+
+    /**
+     * Gets the self link to the container.
+     *
+     * @param cosmosContainer the container client.
+     * @return the self link.
+     */
+    public static String getSelfLink(CosmosContainer cosmosContainer) {
+        if(cosmosContainer == null) {
+            return null;
+        }
+
+        return cosmosContainer.getLink();
     }
 
     /**
@@ -265,6 +303,26 @@ public class CosmosContainer extends CosmosResource {
                                                    .map(response-> BridgeInternal.createFeedResponseWithQueryMetrics(
                                                            CosmosItem.getFromV2Results(response.getResults(), this),
                                                             response.getResponseHeaders(), response.getQueryMetrics()))));
+    }
+
+    /**
+     * Query for documents in a items in a container
+     *
+     * After subscription the operation will be performed.
+     * The {@link Flux} will contain one or several feed response of the obtained items.
+     * In case of failure the {@link Flux} will error.
+     *
+     * @param changeFeedOptions        the feed options.
+     * @return an {@link Flux} containing one or several feed response pages of the obtained items or an error.
+     */
+    public Flux<FeedResponse<CosmosItem>> queryChangeFeedItems(ChangeFeedOptions changeFeedOptions){
+        return RxJava2Adapter.flowableToFlux(
+            RxJavaInterop.toV2Flowable(getDatabase()
+                .getDocClientWrapper()
+                .queryDocumentChangeFeed(getLink(), changeFeedOptions)
+                .map(response-> BridgeInternal.createFeedResponseWithQueryMetrics(
+                    CosmosItem.getFromV2Results(response.getResults(), this),
+                    response.getResponseHeaders(), response.getQueryMetrics()))));
     }
 
     /**
@@ -514,6 +572,7 @@ public class CosmosContainer extends CosmosResource {
 
     /**
      * Gets the parent Database
+     *
      * @return the (@link CosmosDatabase)
      */
     public CosmosDatabase getDatabase() {

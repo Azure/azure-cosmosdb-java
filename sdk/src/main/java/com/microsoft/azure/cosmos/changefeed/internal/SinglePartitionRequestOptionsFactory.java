@@ -20,18 +20,25 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.microsoft.azure.cosmos.changefeed;
+package com.microsoft.azure.cosmos.changefeed.internal;
 
 import com.microsoft.azure.cosmos.CosmosItemRequestOptions;
+import com.microsoft.azure.cosmos.changefeed.Lease;
+import com.microsoft.azure.cosmos.changefeed.RequestOptionsFactory;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.RequestOptions;
 
 /**
- * Defines request options for lease requests to use with {@link LeaseStoreManager}.
+ * Used to create request options for non-partitioned lease collections.
  */
-public interface RequestOptionsFactory {
+public class SinglePartitionRequestOptionsFactory implements RequestOptionsFactory {
+    @Override
+    public CosmosItemRequestOptions createRequestOptions(Lease lease) {
+        return null;
+    }
 
-    CosmosItemRequestOptions createRequestOptions(Lease lease);
-
-    FeedOptions createFeedOptions();
+    @Override
+    public FeedOptions createFeedOptions() {
+        return null;
+    }
 }

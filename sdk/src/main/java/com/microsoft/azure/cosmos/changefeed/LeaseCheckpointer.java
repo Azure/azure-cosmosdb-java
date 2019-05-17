@@ -22,7 +22,7 @@
  */
 package com.microsoft.azure.cosmos.changefeed;
 
-import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * Interface for check-pointing the lease.
@@ -45,5 +45,5 @@ public interface LeaseCheckpointer {
      * @param continuationToken the continuation token.
      * @return the updated renewed lease.
      */
-    Flux<Lease> checkpoint(Lease lease, String continuationToken);
+    Mono<Lease> checkpoint(Lease lease, String continuationToken);
 }

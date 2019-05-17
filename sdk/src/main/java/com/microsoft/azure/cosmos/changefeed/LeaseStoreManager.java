@@ -22,6 +22,7 @@
  */
 package com.microsoft.azure.cosmos.changefeed;
 
+import com.microsoft.azure.cosmos.CosmosContainer;
 import com.microsoft.azure.cosmos.changefeed.internal.LeaseStoreManagerImpl;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -38,19 +39,17 @@ public interface LeaseStoreManager extends LeaseContainer, LeaseManager, LeaseSt
      * For the actual creation of lease manager instance, delegates to lease manager factory.
      */
     interface LeaseStoreManagerBuilderDefinition {
-        LeaseStoreManagerBuilderDefinition withLeaseCollection(ContainerConnectionInfo leaseCollectionLocation);
-
-        LeaseStoreManagerBuilderDefinition withLeaseDocumentClient(ChangeFeedContextClient leaseDocumentClient);
+        LeaseStoreManagerBuilderDefinition withLeaseContextClient(ChangeFeedContextClient leaseContextClient);
 
         LeaseStoreManagerBuilderDefinition withLeasePrefix(String leasePrefix);
 
-        LeaseStoreManagerBuilderDefinition withLeaseCollectionLink(String leaseCollectionLink);
+        LeaseStoreManagerBuilderDefinition withLeaseCollectionLink(CosmosContainer leaseCollectionLink);
 
         LeaseStoreManagerBuilderDefinition withRequestOptionsFactory(RequestOptionsFactory requestOptionsFactory);
 
         LeaseStoreManagerBuilderDefinition withHostName(String hostName);
 
-        Flux<LeaseStoreManager> build();
+        Mono<LeaseStoreManager> build();
     }
 
     static LeaseStoreManagerBuilderDefinition Builder() {
@@ -74,7 +73,7 @@ public interface LeaseStoreManager extends LeaseContainer, LeaseManager, LeaseSt
      * @param continuationToken the continuation token if it exists.
      * @return the lease.
      */
-    Flux<Lease> createLeaseIfNotExist(String leaseToken, String continuationToken);
+    Mono<Lease> createLeaseIfNotExist(String leaseToken, String continuationToken);
 
     /**
      * Delete the lease.
@@ -90,7 +89,7 @@ public interface LeaseStoreManager extends LeaseContainer, LeaseManager, LeaseSt
      * @param lease the Lease to acquire.
      * @return the updated acquired lease.
      */
-    Flux<Lease> acquire(Lease lease);
+    Mono<Lease> acquire(Lease lease);
 
     /**
      * Release ownership of the lease.
@@ -106,7 +105,7 @@ public interface LeaseStoreManager extends LeaseContainer, LeaseManager, LeaseSt
      * @param lease the Lease to renew.
      * @return the updated renewed lease.
      */
-    Flux<Lease> renew(Lease lease);
+    Mono<Lease> renew(Lease lease);
 
     /**
      * Replace properties from the specified lease.
@@ -114,7 +113,7 @@ public interface LeaseStoreManager extends LeaseContainer, LeaseManager, LeaseSt
      * @param leaseToUpdatePropertiesFrom the Lease containing new properties.
      * @return the updated lease.
      */
-    Flux<Lease> updateProperties(Lease leaseToUpdatePropertiesFrom);
+    Mono<Lease> updateProperties(Lease leaseToUpdatePropertiesFrom);
 
     /**
      * Checkpoint the lease.
@@ -123,7 +122,7 @@ public interface LeaseStoreManager extends LeaseContainer, LeaseManager, LeaseSt
      * @param continuationToken the continuation token.
      * @return the updated renewed lease.
      */
-    Flux<Lease> checkpoint(Lease lease, String continuationToken);
+    Mono<Lease> checkpoint(Lease lease, String continuationToken);
 
     /**
      * @return true if the lease store is initialized.
@@ -133,9 +132,9 @@ public interface LeaseStoreManager extends LeaseContainer, LeaseManager, LeaseSt
     /**
      * Mark the store as initialized.
      *
-     * @return a representation of the deferred computation of this call.
+     * @return true if marked as initialized.
      */
-    Mono<Void> markInitialized();
+    Mono<Boolean> markInitialized();
 
     /**
      * Places a lock on the lease store for initialization. Only one process may own the store for the lock time.

@@ -22,23 +22,35 @@
  */
 package com.microsoft.azure.cosmos.changefeed.internal;
 
-import com.microsoft.azure.cosmos.changefeed.HealthMonitor;
-import com.microsoft.azure.cosmos.changefeed.HealthMonitoringRecord;
+import com.microsoft.azure.cosmos.changefeed.Lease;
+import com.microsoft.azure.cosmos.changefeed.LeaseCheckpointer;
+import com.microsoft.azure.cosmos.changefeed.PartitionCheckpointer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
 /**
- * Implementation for trace health monitor.
+ * Checkpoint the given partition up to the given continuation token.
  */
-public class TraceHealthMonitor implements HealthMonitor {
-    private final Logger logger = LoggerFactory.getLogger(TraceHealthMonitor.class);
+public class PartitionCheckpointerImpl implements PartitionCheckpointer {
+    private final Logger logger = LoggerFactory.getLogger(PartitionCheckpointerImpl.class);
+    private final LeaseCheckpointer leaseCheckpointer;
+    private Lease lease;
+
+    public PartitionCheckpointerImpl(LeaseCheckpointer leaseCheckpointer, Lease lease) {
+        this.leaseCheckpointer = leaseCheckpointer;
+        this.lease = lease;
+    }
+
     @Override
-    public Mono<Void> inspect(HealthMonitoringRecord record) {
-        return Mono.fromRunnable(() -> {
-            if (record.getSeverity() == HealthMonitoringRecord.HealthSeverity.ERROR) {
-                logger.error(String.format("Unhealthiness detected in the operation %s for %s.", record.operation.name(), record.lease.getId()), record.throwable);
-            }
-        });
+    public Mono<Void> checkpointPartition(String сontinuationToken) {
+        PartitionCheckpointerImpl self = this;
+        return this.leaseCheckpointer.checkpoint(this.lease, сontinuationToken)
+            .map(lease1 -> {
+                self.lease = lease1;
+                logger.info(String.format("Checkpoint: partition %s, new continuation %s", self.lease.getLeaseToken(), self.lease.getContinuationToken()));
+                return lease1;
+            })
+            .then();
     }
 }

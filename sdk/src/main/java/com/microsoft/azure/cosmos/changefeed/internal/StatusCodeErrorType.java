@@ -20,18 +20,15 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.microsoft.azure.cosmos.changefeed;
-
-import com.microsoft.azure.cosmos.CosmosItemRequestOptions;
-import com.microsoft.azure.cosmosdb.FeedOptions;
-import com.microsoft.azure.cosmosdb.RequestOptions;
+package com.microsoft.azure.cosmos.changefeed.internal;
 
 /**
- * Defines request options for lease requests to use with {@link LeaseStoreManager}.
+ * Groups types of status code errors returned while processing the change feeds.
  */
-public interface RequestOptionsFactory {
-
-    CosmosItemRequestOptions createRequestOptions(Lease lease);
-
-    FeedOptions createFeedOptions();
+public enum StatusCodeErrorType {
+    UNDEFINED,
+    PARTITION_NOT_FOUND,
+    PARTITION_SPLIT,
+    TRANSIENT_ERROR,
+    MAX_ITEM_COUNT_TOO_LARGE
 }

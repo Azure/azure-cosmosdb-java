@@ -175,7 +175,7 @@ public interface ChangeFeedProcessor {
          * @param leaseCosmosClient the instance of {@link CosmosContainer} to use.
          * @return current Builder.
          */
-        BuilderDefinition withLeaseDocumentClient(CosmosContainer leaseCosmosClient);
+        BuilderDefinition withLeaseContainerClient(CosmosContainer leaseCosmosClient);
 
         /**
          * Sets the {@link PartitionLoadBalancingStrategy} to be used for partition load balancing.

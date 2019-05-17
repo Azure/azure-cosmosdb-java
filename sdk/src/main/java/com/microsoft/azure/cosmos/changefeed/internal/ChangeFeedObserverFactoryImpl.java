@@ -20,18 +20,27 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.microsoft.azure.cosmos.changefeed;
+package com.microsoft.azure.cosmos.changefeed.internal;
 
-import com.microsoft.azure.cosmos.CosmosItemRequestOptions;
-import com.microsoft.azure.cosmosdb.FeedOptions;
-import com.microsoft.azure.cosmosdb.RequestOptions;
+import com.microsoft.azure.cosmos.ChangeFeedObserver;
+import com.microsoft.azure.cosmos.ChangeFeedObserverFactory;
 
 /**
- * Defines request options for lease requests to use with {@link LeaseStoreManager}.
+ * Default implementation for {@link ChangeFeedObserverFactory}.
  */
-public interface RequestOptionsFactory {
+public class ChangeFeedObserverFactoryImpl implements ChangeFeedObserverFactory {
+    private final Class observerType;
 
-    CosmosItemRequestOptions createRequestOptions(Lease lease);
+    public ChangeFeedObserverFactoryImpl(Class observerType) {
+        this.observerType = observerType;
+    }
 
-    FeedOptions createFeedOptions();
+    @Override
+    public ChangeFeedObserver createObserver() {
+        try {
+            return (ChangeFeedObserver) observerType.newInstance();
+        } catch (IllegalAccessException | InstantiationException ex) {
+            return null;
+        }
+    }
 }

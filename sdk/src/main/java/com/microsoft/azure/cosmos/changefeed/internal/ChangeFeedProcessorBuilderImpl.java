@@ -22,18 +22,36 @@
  */
 package com.microsoft.azure.cosmos.changefeed.internal;
 
+import com.microsoft.azure.cosmos.CosmosClient;
 import com.microsoft.azure.cosmos.CosmosContainer;
 import com.microsoft.azure.cosmos.ChangeFeedObserver;
 import com.microsoft.azure.cosmos.ChangeFeedObserverFactory;
 import com.microsoft.azure.cosmos.ChangeFeedProcessor;
 import com.microsoft.azure.cosmos.ChangeFeedProcessorOptions;
+import com.microsoft.azure.cosmos.CosmosDatabase;
+import com.microsoft.azure.cosmos.changefeed.Bootstrapper;
+import com.microsoft.azure.cosmos.changefeed.ChangeFeedContextClient;
+import com.microsoft.azure.cosmos.changefeed.ContainerConnectionInfo;
 import com.microsoft.azure.cosmos.changefeed.HealthMonitor;
 import com.microsoft.azure.cosmos.changefeed.LeaseStoreManager;
+import com.microsoft.azure.cosmos.changefeed.PartitionController;
+import com.microsoft.azure.cosmos.changefeed.PartitionLoadBalancer;
 import com.microsoft.azure.cosmos.changefeed.PartitionLoadBalancingStrategy;
+import com.microsoft.azure.cosmos.changefeed.PartitionManager;
+import com.microsoft.azure.cosmos.changefeed.PartitionProcessor;
 import com.microsoft.azure.cosmos.changefeed.PartitionProcessorFactory;
+import com.microsoft.azure.cosmos.changefeed.PartitionSupervisorFactory;
+import com.microsoft.azure.cosmos.changefeed.RequestOptionsFactory;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.time.Duration;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import static com.microsoft.azure.cosmos.changefeed.internal.ChangeFeedHelper.getCollectionSelfLink;
 
 /**
  * Helper class to build {@link ChangeFeedProcessor} instances
@@ -60,75 +78,457 @@ import java.util.concurrent.ExecutorService;
  * }
  * </pre>
  */
-public class ChangeFeedProcessorBuilderImpl implements ChangeFeedProcessor.BuilderDefinition {
+public class ChangeFeedProcessorBuilderImpl implements ChangeFeedProcessor.BuilderDefinition, ChangeFeedProcessor, AutoCloseable {
+    private static final long DefaultUnhealthinessDuration = Duration.ofMinutes(15).toMillis();
+    private final Duration sleepTime = Duration.ofSeconds(15);
+    private final Duration lockTime = Duration.ofSeconds(30);
+
+    private String hostName;
+    // private ContainerConnectionInfo feedCollectionLocation;
+    private ChangeFeedContextClient feedContextClient;
+    private boolean closeFeedDocumentClient;
+    private ChangeFeedProcessorOptions changeFeedProcessorOptions;
+    private ChangeFeedObserverFactory observerFactory;
+    private String databaseResourceId;
+    private String collectionResourceId;
+    // private ContainerConnectionInfo leaseCollectionLocation;
+    private ChangeFeedContextClient leaseContextClient;
+    private boolean closeLeaseDocumentClient;
+    private PartitionLoadBalancingStrategy loadBalancingStrategy;
+    private PartitionProcessorFactory partitionProcessorFactory;
+    private LeaseStoreManager leaseStoreManager;
+    private HealthMonitor healthMonitor;
+    private PartitionManager partitionManager;
+
+    private ExecutorService executorService;
+
+    /**
+     * Start listening for changes asynchronously.
+     *
+     *  @return a representation of the deferred computation of this call.
+     */
     @Override
-    public ChangeFeedProcessor.BuilderDefinition withHostName(String hostName) {
-        return null;
+    public Mono<Void> start() {
+        return partitionManager.start();
     }
 
+    /**
+     * Stops listening for changes asynchronously.
+     *
+     * @return a representation of the deferred computation of this call.
+     */
     @Override
-    public ChangeFeedProcessor.BuilderDefinition withFeedContainerClient(CosmosContainer feedContainerClient) {
-        return null;
+    public Mono<Void> stop() {
+        return partitionManager.stop();
     }
 
+    /**
+     * Sets the host name.
+     *
+     * @param hostName the name to be used for the host. When using multiple hosts, each host must have a unique name.
+     * @return current Builder.
+     */
     @Override
-    public ChangeFeedProcessor.BuilderDefinition withProcessorOptions(ChangeFeedProcessorOptions changeFeedProcessorOptions) {
-        return null;
+    public ChangeFeedProcessorBuilderImpl withHostName(String hostName) {
+        this.hostName = hostName;
+        return this;
     }
 
+//    /**
+//     * Sets the {@link ContainerConnectionInfo} of the collection to listen for changes.
+//     *
+//     * @param feedCollectionLocation the {@link ContainerConnectionInfo} of the collection to listen for changes.
+//     * @return current Builder.
+//     */
+//    @Override
+//    public ChangeFeedProcessorBuilderImpl withFeedCollection(ContainerConnectionInfo feedCollectionLocation) {
+//        this.feedCollectionLocation = feedCollectionLocation;
+//        if (feedCollectionLocation == null || feedCollectionLocation.getConnectionPolicy() == null) {
+//            throw new IllegalArgumentException("feedCollectionLocation");
+//        }
+//        if (feedCollectionLocation.getConnectionPolicy().getUserAgentSuffix() == null
+//            || feedCollectionLocation.getConnectionPolicy().getUserAgentSuffix().isEmpty()) {
+//            this.feedCollectionLocation = new ContainerConnectionInfo(feedCollectionLocation);
+//            this.feedCollectionLocation.getConnectionPolicy().setUserAgentSuffix("changefeed-2.2.6");
+//        }
+//        return this;
+//    }
+
+    /**
+     * Sets and existing {@link CosmosContainer} to be used to read from the monitored collection.
+     *
+     * @param feedDocumentClient the instance of {@link CosmosContainer} to be used.
+     * @return current Builder.
+     */
     @Override
-    public ChangeFeedProcessor.BuilderDefinition withChangeFeedObserverFactory(ChangeFeedObserverFactory observerFactory) {
-        return null;
+    public ChangeFeedProcessorBuilderImpl withFeedContainerClient(CosmosContainer feedDocumentClient) {
+        if (feedDocumentClient == null) {
+            throw new IllegalArgumentException("feedContextClient");
+        }
+
+        this.feedContextClient = new ChangeFeedContextClientImpl(feedDocumentClient);
+        return this;
     }
 
+    /**
+     * Sets the {@link ChangeFeedProcessorOptions} to be used.
+     *
+     * @param changeFeedProcessorOptions the change feed processor options to use.
+     * @return current Builder.
+     */
     @Override
-    public ChangeFeedProcessor.BuilderDefinition withChangeFeedObserver(Class<? extends ChangeFeedObserver> type) {
-        return null;
+    public ChangeFeedProcessorBuilderImpl withProcessorOptions(ChangeFeedProcessorOptions changeFeedProcessorOptions) {
+        if (changeFeedProcessorOptions == null) {
+            throw new IllegalArgumentException("changeFeedProcessorOptions");
+        }
+
+        this.changeFeedProcessorOptions = changeFeedProcessorOptions;
+        return this;
     }
 
+    /**
+     * Sets the {@link ChangeFeedObserverFactory} to be used to generate {@link ChangeFeedObserver}
+     *
+     * @param observerFactory The instance of {@link ChangeFeedObserverFactory} to use.
+     * @return current Builder.
+     */
     @Override
-    public ChangeFeedProcessor.BuilderDefinition withDatabaseResourceId(String databaseResourceId) {
-        return null;
+    public ChangeFeedProcessorBuilderImpl withChangeFeedObserverFactory(ChangeFeedObserverFactory observerFactory) {
+        if (observerFactory == null) {
+            throw new IllegalArgumentException("observerFactory");
+        }
+
+        this.observerFactory = observerFactory;
+        return this;
     }
 
+    /**
+     * Sets an existing {@link ChangeFeedObserver} type to be used by a {@link ChangeFeedObserverFactory} to process changes.
+     * @param type the type of {@link ChangeFeedObserver} to be used.
+     * @return current Builder.
+     */
     @Override
-    public ChangeFeedProcessor.BuilderDefinition withCollectionResourceId(String collectionResourceId) {
-        return null;
+    public ChangeFeedProcessorBuilderImpl withChangeFeedObserver(Class<? extends ChangeFeedObserver> type) {
+        if (type == null) {
+            throw new IllegalArgumentException("type");
+        }
+
+//        this.observerType = type;
+        this.observerFactory = new ChangeFeedObserverFactoryImpl(type);
+
+        return this;
     }
 
+    /**
+     * Sets the database resource ID of the monitored collection.
+     *
+     * @param databaseResourceId the database resource ID of the monitored collection.
+     * @return current Builder.
+     */
     @Override
-    public ChangeFeedProcessor.BuilderDefinition withLeaseDocumentClient(CosmosContainer leaseCosmosClient) {
-        return null;
+    public ChangeFeedProcessorBuilderImpl withDatabaseResourceId(String databaseResourceId) {
+        this.databaseResourceId = databaseResourceId;
+        return this;
     }
 
+    /**
+     * Sets the collection resource ID of the monitored collection.
+     * @param collectionResourceId the collection resource ID of the monitored collection.
+     * @return current Builder.
+     */
     @Override
-    public ChangeFeedProcessor.BuilderDefinition withPartitionLoadBalancingStrategy(PartitionLoadBalancingStrategy loadBalancingStrategy) {
-        return null;
+    public ChangeFeedProcessorBuilderImpl withCollectionResourceId(String collectionResourceId) {
+        this.collectionResourceId = collectionResourceId;
+        return this;
     }
 
+//    /**
+//     * Sets the {@link ContainerConnectionInfo} of the collection to use for leases.
+//     * @param leaseCollectionLocation the {@link ContainerConnectionInfo} of the collection to use for leases.
+//     * @return current Builder.
+//     */
+//    @Override
+//    public ChangeFeedProcessorBuilderImpl withLeaseCollection(ContainerConnectionInfo leaseCollectionLocation) {
+//        this.leaseCollectionLocation = ChangeFeedHelper.canonicalize(leaseCollectionLocation);
+//        return this;
+//    }
+
+    /**
+     * Sets an existing {@link CosmosContainer} to be used to read from the leases collection.
+     *
+     * @param leaseDocumentClient the instance of {@link CosmosContainer} to use.
+     * @return current Builder.
+     */
     @Override
-    public ChangeFeedProcessor.BuilderDefinition withPartitionProcessorFactory(PartitionProcessorFactory partitionProcessorFactory) {
-        return null;
+    public ChangeFeedProcessorBuilderImpl withLeaseContainerClient(CosmosContainer leaseDocumentClient) {
+        if (leaseDocumentClient == null) {
+            throw new IllegalArgumentException("leaseContextClient");
+        }
+
+        this.leaseContextClient = new ChangeFeedContextClientImpl(leaseDocumentClient);
+        return this;
     }
 
-    @Override
-    public ChangeFeedProcessor.BuilderDefinition withLeaseStoreManager(LeaseStoreManager leaseStoreManager) {
-        return null;
+    /**
+     * Sets the {@link PartitionLoadBalancingStrategy} to be used for partition load balancing.
+     *
+     * @param loadBalancingStrategy the {@link PartitionLoadBalancingStrategy} to be used for partition load balancing.
+     * @return current Builder.
+     */
+    public ChangeFeedProcessorBuilderImpl withPartitionLoadBalancingStrategy(PartitionLoadBalancingStrategy loadBalancingStrategy) {
+        if (loadBalancingStrategy == null) {
+            throw new IllegalArgumentException("loadBalancingStrategy");
+        }
+
+        this.loadBalancingStrategy = loadBalancingStrategy;
+        return this;
     }
 
+    /**
+     * Sets the {@link PartitionProcessorFactory} to be used to create {@link PartitionProcessor} for partition processing.
+     *
+     * @param partitionProcessorFactory the instance of {@link PartitionProcessorFactory} to use.
+     * @return current Builder.
+     */
     @Override
-    public ChangeFeedProcessor.BuilderDefinition withHealthMonitor(HealthMonitor healthMonitor) {
-        return null;
+    public ChangeFeedProcessorBuilderImpl withPartitionProcessorFactory(PartitionProcessorFactory partitionProcessorFactory) {
+        if (partitionProcessorFactory == null) {
+            throw new IllegalArgumentException("partitionProcessorFactory");
+        }
+
+        this.partitionProcessorFactory = partitionProcessorFactory;
+        return this;
+    }
+
+    /**
+     * Sets the {@link LeaseStoreManager} to be used to manage leases.
+     *
+     * @param leaseStoreManager the instance of {@link LeaseStoreManager} to use.
+     * @return current Builder.
+     */
+    @Override
+    public ChangeFeedProcessorBuilderImpl withLeaseStoreManager(LeaseStoreManager leaseStoreManager) {
+        if (leaseStoreManager == null) {
+            throw new IllegalArgumentException("leaseStoreManager");
+        }
+
+        this.leaseStoreManager = leaseStoreManager;
+        return this;
+    }
+
+    /**
+     * Sets the {@link HealthMonitor} to be used to monitor unhealthiness situation.
+     *
+     * @param healthMonitor The instance of {@link HealthMonitor} to use.
+     * @return current Builder.
+     */
+    @Override
+    public ChangeFeedProcessorBuilderImpl withHealthMonitor(HealthMonitor healthMonitor) {
+        if (healthMonitor == null) {
+            throw new IllegalArgumentException("healthMonitor");
+        }
+
+        this.healthMonitor = healthMonitor;
+        return this;
     }
 
     @Override
     public ChangeFeedProcessor.BuilderDefinition withExecutorService(ExecutorService executorService) {
-        return null;
+        this.executorService = executorService;
+        return this;
+    }
+
+    /**
+     * Builds a new instance of the {@link ChangeFeedProcessor} with the specified configuration asynchronously.
+     *
+     * @return an instance of {@link ChangeFeedProcessor}.
+     */
+    @Override
+    public Mono<ChangeFeedProcessor> build() {
+        ChangeFeedProcessorBuilderImpl self = this;
+
+        if (this.hostName == null)
+        {
+            throw new IllegalArgumentException("Host name was not specified");
+        }
+
+        if (this.observerFactory == null)
+        {
+            throw new IllegalArgumentException("Observer was not specified");
+        }
+
+        this.initializeCollectionPropertiesForBuild().block();
+        LeaseStoreManager leaseStoreManager = this.getLeaseStoreManager(true).block();
+        this.partitionManager = this.buildPartitionManager(leaseStoreManager).block();
+
+        return Mono.just(this);
+    }
+
+    public ChangeFeedProcessorBuilderImpl() {
+    }
+
+    public ChangeFeedProcessorBuilderImpl(PartitionManager partitionManager) {
+        this.closeLeaseDocumentClient = true;
+        this.partitionManager = partitionManager;
+    }
+
+    private Mono<Void> initializeCollectionPropertiesForBuild() {
+        ChangeFeedProcessorBuilderImpl self = this;
+
+        if (this.changeFeedProcessorOptions == null) {
+            this.changeFeedProcessorOptions = new ChangeFeedProcessorOptions();
+        }
+
+        if (this.databaseResourceId == null) {
+            this.feedContextClient
+                .readDatabase(this.feedContextClient.getDatabaseClient(), null)
+                .map( databaseResourceResponse -> {
+                    self.databaseResourceId = databaseResourceResponse.getDatabase().getId();
+                    return self.databaseResourceId;
+                })
+                .subscribeOn(Schedulers.elastic())
+                .then()
+                .block();
+        }
+
+        if (this.collectionResourceId == null) {
+            self.feedContextClient
+                .readContainer(self.feedContextClient.getContainerClient(), null)
+                .map(documentCollectionResourceResponse -> {
+                    self.collectionResourceId = documentCollectionResourceResponse.getContainer().getId();
+                    return self.collectionResourceId;
+                })
+                .subscribeOn(Schedulers.elastic())
+                .then()
+                .block();
+        }
+
+        return Mono.empty();
+    }
+
+    private Mono<LeaseStoreManager> getLeaseStoreManager(boolean isPartitionKeyByIdRequiredIfPartitioned) {
+        ChangeFeedProcessorBuilderImpl self = this;
+
+        if (this.leaseStoreManager == null) {
+
+            return this.leaseContextClient.readContainerSettings(this.leaseContextClient.getContainerClient(), null)
+                .map( collectionSettings -> {
+                    boolean isPartitioned =
+                        collectionSettings.getPartitionKey() != null &&
+                            collectionSettings.getPartitionKey().getPaths() != null &&
+                            collectionSettings.getPartitionKey().getPaths().size() > 0;
+                    if (isPartitioned && isPartitionKeyByIdRequiredIfPartitioned &&
+                        (collectionSettings.getPartitionKey().getPaths().size() != 1 || !collectionSettings.getPartitionKey().getPaths().get(0).equals("/id"))) {
+//                        throw new IllegalArgumentException("The lease collection, if partitioned, must have partition key equal to id.");
+                        Mono.error(new IllegalArgumentException("The lease collection, if partitioned, must have partition key equal to id."));
+                    }
+
+                    RequestOptionsFactory requestOptionsFactory = isPartitioned ?
+                        new PartitionedByIdCollectionRequestOptionsFactory() :
+                        new SinglePartitionRequestOptionsFactory();
+
+                    String leasePrefix = self.getLeasePrefix();
+
+                    self.leaseStoreManager = LeaseStoreManager.Builder()
+                        .withLeasePrefix(leasePrefix)
+                        .withLeaseContextClient(self.leaseContextClient)
+                        .withRequestOptionsFactory(requestOptionsFactory)
+                        .withHostName(self.hostName)
+                        .build()
+                        .block();
+
+                    return self.leaseStoreManager;
+                });
+        }
+
+        return Mono.just(this.leaseStoreManager);
+    }
+
+    private String getLeasePrefix() {
+        String optionsPrefix = this.changeFeedProcessorOptions.getLeasePrefix();
+
+        if (optionsPrefix == null) {
+            optionsPrefix = "";
+        }
+
+        URI uri = this.feedContextClient.getServiceEndpoint();
+
+        return String.format(
+            "%s%s_%s_%s",
+            optionsPrefix,
+            uri.getHost(),
+            this.databaseResourceId,
+            this.collectionResourceId);
+    }
+
+    private Mono<PartitionManager> buildPartitionManager(LeaseStoreManager leaseStoreManager) {
+        ChangeFeedProcessorBuilderImpl self = this;
+
+        if (this.executorService == null) {
+            this.executorService = Executors.newCachedThreadPool();
+        }
+
+        CheckpointerObserverFactory factory = new CheckpointerObserverFactory(this.observerFactory, this.changeFeedProcessorOptions.getCheckpointFrequency());
+
+        PartitionSynchronizerImpl synchronizer = new PartitionSynchronizerImpl(
+            this.feedContextClient,
+            this.feedContextClient.getContainerClient(),
+            leaseStoreManager,
+            leaseStoreManager,
+            this.changeFeedProcessorOptions.getDegreeOfParallelism(),
+            this.changeFeedProcessorOptions.getQueryPartitionsMaxBatchSize()
+        );
+
+        Bootstrapper bootstrapper = new BootstrapperImpl(synchronizer, leaseStoreManager, this.lockTime, this.sleepTime);
+        PartitionSupervisorFactory partitionSupervisorFactory = new PartitionSupervisorFactoryImpl(
+            factory,
+            leaseStoreManager,
+            this.partitionProcessorFactory != null ? this.partitionProcessorFactory : new PartitionProcessorFactoryImpl(
+                this.feedContextClient,
+                this.changeFeedProcessorOptions,
+                leaseStoreManager,
+                this.feedContextClient.getContainerClient()),
+            this.changeFeedProcessorOptions,
+            executorService
+        );
+
+        if (this.loadBalancingStrategy == null) {
+            this.loadBalancingStrategy = new EqualPartitionsBalancingStrategy(
+                this.hostName,
+                this.changeFeedProcessorOptions.getMinPartitionCount(),
+                this.changeFeedProcessorOptions.getMaxPartitionCount(),
+                this.changeFeedProcessorOptions.getLeaseExpirationInterval());
+        }
+
+        PartitionController partitionController = new PartitionControllerImpl(leaseStoreManager, leaseStoreManager, partitionSupervisorFactory, synchronizer, executorService);
+
+        if (this.healthMonitor == null) {
+            this.healthMonitor = new TraceHealthMonitor();
+        }
+
+        PartitionController partitionController2 = new HealthMonitoringPartitionControllerDecorator(partitionController, this.healthMonitor);
+
+        PartitionLoadBalancer partitionLoadBalancer = new PartitionLoadBalancerImpl(
+            partitionController2,
+            leaseStoreManager,
+            this.loadBalancingStrategy,
+            this.changeFeedProcessorOptions.getLeaseAcquireInterval(),
+            this.executorService
+        );
+
+        PartitionManager partitionManager = new PartitionManagerImpl(bootstrapper, partitionController, partitionLoadBalancer);
+
+        return Mono.just(partitionManager);
     }
 
     @Override
-    public Mono<ChangeFeedProcessor> build() {
-        return null;
-    }
+    public void close() throws Exception {
+        if (this.closeLeaseDocumentClient) {
+            this.leaseContextClient.close();
+        }
 
+        if (this.closeFeedDocumentClient) {
+            this.feedContextClient.close();
+        }
+    }
 }

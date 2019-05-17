@@ -38,7 +38,7 @@ public interface LeaseManager {
      * @param continuationToken the continuation token if it exists.
      * @return the lease.
      */
-    Flux<Lease> createLeaseIfNotExist(String leaseToken, String continuationToken);
+    Mono<Lease> createLeaseIfNotExist(String leaseToken, String continuationToken);
 
     /**
      * Deletes the lease.
@@ -55,7 +55,7 @@ public interface LeaseManager {
      * @param lease the lease to acquire.
      * @return the updated lease.
      */
-    Flux<Lease> acquire(Lease lease);
+    Mono<Lease> acquire(Lease lease);
 
     /**
      * It releases ownership of the lease.
@@ -73,7 +73,7 @@ public interface LeaseManager {
      * @param lease the lease to renew.
      * @return the updated lease.
      */
-    Flux<Lease> renew(Lease lease);
+    Mono<Lease> renew(Lease lease);
 
     /**
      * Replace properties from the specified lease.
@@ -82,5 +82,5 @@ public interface LeaseManager {
      * @param leaseToUpdatePropertiesFrom the new properties.
      * @return updated lease.
      */
-    Flux<Lease> updateProperties(Lease leaseToUpdatePropertiesFrom);
+    Mono<Lease> updateProperties(Lease leaseToUpdatePropertiesFrom);
 }

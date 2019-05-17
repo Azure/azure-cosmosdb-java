@@ -22,26 +22,17 @@
  */
 package com.microsoft.azure.cosmos.changefeed;
 
+import com.microsoft.azure.cosmos.CosmosContainer;
+
 /**
  * Captures LeaseStoreManager settings.
  */
 public class LeaseStoreManagerSettings {
-    private ContainerConnectionInfo leaseCollectionInfo;
-
     String containerNamePrefix;
 
-    String leaseCollectionLink;
+    CosmosContainer leaseCollectionLink;
 
     String hostName;
-
-    public ContainerConnectionInfo getLeaseCollectionInfo() {
-        return this.leaseCollectionInfo;
-    }
-
-    public LeaseStoreManagerSettings withLeaseCollectionInfo(ContainerConnectionInfo collectionInfo) {
-        this.leaseCollectionInfo = collectionInfo;
-        return this;
-    }
 
     public String getContainerNamePrefix() {
         return this.containerNamePrefix;
@@ -52,11 +43,11 @@ public class LeaseStoreManagerSettings {
         return this;
     }
 
-    public String getLeaseCollectionLink() {
+    public CosmosContainer getLeaseCollectionLink() {
         return this.leaseCollectionLink;
     }
 
-    public LeaseStoreManagerSettings withLeaseCollectionLink(String collectionLink) {
+    public LeaseStoreManagerSettings withLeaseCollectionLink(CosmosContainer collectionLink) {
         this.leaseCollectionLink = collectionLink;
         return this;
     }

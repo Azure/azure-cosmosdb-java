@@ -25,13 +25,14 @@ package com.microsoft.azure.cosmos.changefeed;
 import com.microsoft.azure.cosmos.CosmosContainer;
 import com.microsoft.azure.cosmos.CosmosContainerRequestOptions;
 import com.microsoft.azure.cosmos.CosmosContainerResponse;
+import com.microsoft.azure.cosmos.CosmosContainerSettings;
+import com.microsoft.azure.cosmos.CosmosDatabase;
 import com.microsoft.azure.cosmos.CosmosDatabaseRequestOptions;
 import com.microsoft.azure.cosmos.CosmosDatabaseResponse;
 import com.microsoft.azure.cosmos.CosmosItem;
 import com.microsoft.azure.cosmos.CosmosItemRequestOptions;
 import com.microsoft.azure.cosmos.CosmosItemResponse;
 import com.microsoft.azure.cosmosdb.ChangeFeedOptions;
-import com.microsoft.azure.cosmosdb.Document;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.PartitionKeyRange;
@@ -39,6 +40,8 @@ import com.microsoft.azure.cosmosdb.RequestOptions;
 import com.microsoft.azure.cosmosdb.SqlQuerySpec;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.net.URI;
 
 /**
  * The interface that captures the APIs required to handle change feed processing logic.
@@ -60,27 +63,25 @@ public interface ChangeFeedContextClient {
      * @param feedOptions The options for processing the query results feed.
      * @return an {@link Flux} containing one or several feed response pages of the obtained items or an error.
      */
-    Flux<FeedResponse<CosmosItem>> createDocumentChangeFeedQuery(String collectionLink, ChangeFeedOptions feedOptions);
+    Flux<FeedResponse<CosmosItem>> createDocumentChangeFeedQuery(CosmosContainer collectionLink, ChangeFeedOptions feedOptions);
 
     /**
      * Reads a database.
      *
-     * @param databaseUri a reference to the database.
-     * @param options the {@link RequestOptions} for this request; it can be set as null.
+     * @param database a reference to the database.
+     * @param options the {@link CosmosContainerRequestOptions} for this request; it can be set as null.
      * @return an {@link Mono} containing the single cosmos database response with the read database or an error.
      */
-//    Observable<ResourceResponse<Database>> readDatabaseAsync(String databaseUri, RequestOptions options);
-    Mono<CosmosDatabaseResponse> readDatabase(String databaseUri, CosmosDatabaseRequestOptions options);
+    Mono<CosmosDatabaseResponse> readDatabase(CosmosDatabase database, CosmosDatabaseRequestOptions options);
 
     /**
      * Reads a {@link CosmosContainer}.
      *
      * @param containerLink   a reference to the container.
-     * @param options         the {@link RequestOptions} for this request; it can be set as null.
+     * @param options         the {@link CosmosContainerRequestOptions} for this request; it can be set as null.
      * @return an {@link Mono} containing the single cosmos container response with the read container or an error.
      */
-//    Observable<ResourceResponse<DocumentCollection>> readDocumentCollectionAsync(String documentCollectionUri, RequestOptions options);
-    Mono<CosmosContainerResponse> readContainer(String containerLink, CosmosContainerRequestOptions options);
+    Mono<CosmosContainerResponse> readContainer(CosmosContainer containerLink, CosmosContainerRequestOptions options);
 
     /**
      * Creates a {@link CosmosItem}.
@@ -93,7 +94,7 @@ public interface ChangeFeedContextClient {
      */
 //    Observable<ResourceResponse<Document>> createDocument(String collectionLink, Object document, RequestOptions options,
 //                                                          boolean disableAutomaticIdGeneration);
-    Mono<CosmosItemResponse> createItem(String containerLink, Object document, CosmosItemRequestOptions options,
+    Mono<CosmosItemResponse> createItem(CosmosContainer containerLink, Object document, CosmosItemRequestOptions options,
                                         boolean disableAutomaticIdGeneration);
 
     /**
@@ -103,8 +104,7 @@ public interface ChangeFeedContextClient {
      * @param options   the request options.
      * @return an {@link Mono} containing the  cosmos item resource response with the deleted item or an error.
      */
-//    Observable<ResourceResponse<Document>> deleteDocument(String documentLink, RequestOptions options);
-    Mono<CosmosItemResponse> deleteItem(String itemLink, CosmosItemRequestOptions options);
+    Mono<CosmosItemResponse> deleteItem(CosmosItem itemLink, CosmosItemRequestOptions options);
 
     /**
      * Replaces a {@link CosmosItem}.
@@ -114,8 +114,7 @@ public interface ChangeFeedContextClient {
      * @param options      the request options.
      * @return an {@link Mono} containing the  cosmos item resource response with the replaced item or an error.
      */
-//    Observable<ResourceResponse<Document>> replaceDocument(String documentLink, Object document, RequestOptions options);
-    Mono<CosmosItemResponse> replaceItem(String itemLink, Object document, CosmosItemRequestOptions options);
+    Mono<CosmosItemResponse> replaceItem(CosmosItem itemLink, Object document, CosmosItemRequestOptions options);
 
     /**
      * Reads a {@link CosmosItem}
@@ -124,8 +123,7 @@ public interface ChangeFeedContextClient {
      * @param options      the request options.
      * @return an {@link Mono} containing the  cosmos item resource response with the read item or an error.
      */
-//    Observable<ResourceResponse<Document>> readDocument(String documentLink, RequestOptions options);
-    Mono<CosmosItemResponse> readItem(String itemLink, CosmosItemRequestOptions options);
+    Mono<CosmosItemResponse> readItem(CosmosItem itemLink, CosmosItemRequestOptions options);
 
     /**
      * Query for items in a document container.
@@ -136,7 +134,31 @@ public interface ChangeFeedContextClient {
      * @return an {@link Flux} containing one or several feed response pages of the obtained items or an error.
      */
     //Observable<FeedResponse<Document>> queryDocuments(String collectionLink, SqlQuerySpec querySpec, FeedOptions options);
-    Flux<FeedResponse<CosmosItem>> queryItems(String containerLink, SqlQuerySpec querySpec, FeedOptions options);
+    Flux<FeedResponse<CosmosItem>> queryItems(CosmosContainer containerLink, SqlQuerySpec querySpec, FeedOptions options);
+
+    /**
+     * @return the Cosmos client's service endpoint.
+     */
+    URI getServiceEndpoint();
+
+    /**
+     * Reads and returns the container settings.
+     *
+     * @param containerLink   a reference to the container.
+     * @param options         the {@link CosmosContainerRequestOptions} for this request; it can be set as null.
+     * @return an {@link Mono} containing the read container settings.
+     */
+    Mono<CosmosContainerSettings> readContainerSettings(CosmosContainer containerLink, CosmosContainerRequestOptions options);
+
+    /**
+     * @return the Cosmos container client.
+     */
+    CosmosContainer getContainerClient();
+
+    /**
+     * @return the Cosmos database client.
+     */
+    CosmosDatabase getDatabaseClient();
 
     /**
      * Closes the document client instance and cleans up the resources.

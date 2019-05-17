@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * The interface used to deliver change events to document feed observers.
  */
-public interface ChangeFeedObserver<T> {
+public interface ChangeFeedObserver {
     /**
      * This is called when change feed observer is opened.
      *
@@ -49,5 +49,5 @@ public interface ChangeFeedObserver<T> {
      * @param context the context specifying partition for this observer, etc.
      * @param docs the documents changed.
      */
-    void processChanges(ChangeFeedObserverContext context, List<T> docs);
+    void processChanges(ChangeFeedObserverContext context, List<CosmosItem> docs);
 }

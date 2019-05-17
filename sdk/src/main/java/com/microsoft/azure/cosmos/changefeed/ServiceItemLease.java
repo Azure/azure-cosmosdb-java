@@ -24,6 +24,7 @@ package com.microsoft.azure.cosmos.changefeed;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.microsoft.azure.cosmos.CosmosItem;
 import com.microsoft.azure.cosmosdb.Document;
 import com.microsoft.azure.cosmos.changefeed.internal.Constants;
 
@@ -211,6 +212,16 @@ public class ServiceItemLease implements Lease {
     }
 
     public static ServiceItemLease fromDocument(Document document) {
+        return new ServiceItemLease()
+            .withId(document.getId())
+            .withEtag(document.getETag())
+            .withTs(document.getString(Constants.Properties.LAST_MODIFIED))
+            .withOwner(document.getString("Owner"))
+            .withLeaseToken(document.getString("LeaseToken"))
+            .withContinuationToken(document.getString("ContinuationToken"));
+    }
+
+    public static ServiceItemLease fromDocument(CosmosItem document) {
         return new ServiceItemLease()
             .withId(document.getId())
             .withEtag(document.getETag())

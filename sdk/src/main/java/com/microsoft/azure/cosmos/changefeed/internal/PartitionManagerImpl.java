@@ -22,23 +22,38 @@
  */
 package com.microsoft.azure.cosmos.changefeed.internal;
 
-import com.microsoft.azure.cosmos.changefeed.HealthMonitor;
-import com.microsoft.azure.cosmos.changefeed.HealthMonitoringRecord;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.microsoft.azure.cosmos.changefeed.Bootstrapper;
+import com.microsoft.azure.cosmos.changefeed.PartitionController;
+import com.microsoft.azure.cosmos.changefeed.PartitionLoadBalancer;
+import com.microsoft.azure.cosmos.changefeed.PartitionManager;
 import reactor.core.publisher.Mono;
 
 /**
- * Implementation for trace health monitor.
+ * Implementation for {@link PartitionManager}.
  */
-public class TraceHealthMonitor implements HealthMonitor {
-    private final Logger logger = LoggerFactory.getLogger(TraceHealthMonitor.class);
+public class PartitionManagerImpl implements PartitionManager {
+    private final Bootstrapper bootstrapper;
+    private final PartitionController partitionController;
+    private final PartitionLoadBalancer partitionLoadBalancer;
+
+    public PartitionManagerImpl(Bootstrapper bootstrapper, PartitionController partitionController, PartitionLoadBalancer partitionLoadBalancer) {
+        this.bootstrapper = bootstrapper;
+        this.partitionController = partitionController;
+        this.partitionLoadBalancer = partitionLoadBalancer;
+    }
+
     @Override
-    public Mono<Void> inspect(HealthMonitoringRecord record) {
-        return Mono.fromRunnable(() -> {
-            if (record.getSeverity() == HealthMonitoringRecord.HealthSeverity.ERROR) {
-                logger.error(String.format("Unhealthiness detected in the operation %s for %s.", record.operation.name(), record.lease.getId()), record.throwable);
-            }
-        });
+    public Mono<Void> start() {
+        PartitionManagerImpl self = this;
+
+        return this.bootstrapper.initialize()
+            .then(this.partitionController.initialize())
+            .then(Mono.fromRunnable(self.partitionLoadBalancer::start));
+    }
+
+    @Override
+    public Mono<Void> stop() {
+        PartitionManagerImpl self = this;
+        return Mono.fromRunnable(self.partitionLoadBalancer::stop);
     }
 }

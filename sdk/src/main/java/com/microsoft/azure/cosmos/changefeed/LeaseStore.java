@@ -42,7 +42,7 @@ public interface LeaseStore {
      *
      * @return a deferred computation of this operation call.
      */
-    Mono<Void> markInitialized();
+    Mono<Boolean> markInitialized();
 
     /**
      * Places a lock on the lease store for initialization. Only one process may own the store for the lock time.

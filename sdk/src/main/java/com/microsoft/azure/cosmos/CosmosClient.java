@@ -49,7 +49,7 @@ import reactor.core.publisher.Mono;
         return this.asyncDocumentClient;
     }
 
-    static AsyncDocumentClient getContextClient(CosmosClient cosmosClient) {
+    public static AsyncDocumentClient getContextClient(CosmosClient cosmosClient) {
         return cosmosClient.asyncDocumentClient;
     }
 

@@ -20,18 +20,32 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.microsoft.azure.cosmos.changefeed;
+package com.microsoft.azure.cosmos.changefeed.internal;
 
 import com.microsoft.azure.cosmos.CosmosItemRequestOptions;
+import com.microsoft.azure.cosmos.changefeed.Lease;
+import com.microsoft.azure.cosmos.changefeed.RequestOptionsFactory;
 import com.microsoft.azure.cosmosdb.FeedOptions;
+import com.microsoft.azure.cosmosdb.PartitionKey;
 import com.microsoft.azure.cosmosdb.RequestOptions;
 
 /**
- * Defines request options for lease requests to use with {@link LeaseStoreManager}.
+ * Used to create request options for partitioned lease collections, when partition key is defined as /id.
  */
-public interface RequestOptionsFactory {
+public class PartitionedByIdCollectionRequestOptionsFactory implements RequestOptionsFactory {
+    @Override
+    public CosmosItemRequestOptions createRequestOptions(Lease lease) {
+        CosmosItemRequestOptions requestOptions = new CosmosItemRequestOptions();
+        requestOptions.setPartitionKey(new PartitionKey(lease.getId()));
 
-    CosmosItemRequestOptions createRequestOptions(Lease lease);
+        return requestOptions;
+    }
 
-    FeedOptions createFeedOptions();
+    @Override
+    public FeedOptions createFeedOptions() {
+        FeedOptions feedOptions = new FeedOptions();
+        feedOptions.setEnableCrossPartitionQuery(true);
+
+        return feedOptions;
+    }
 }

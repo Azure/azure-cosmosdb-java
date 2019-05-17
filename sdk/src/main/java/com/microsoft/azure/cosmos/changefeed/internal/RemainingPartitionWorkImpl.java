@@ -20,18 +20,38 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.microsoft.azure.cosmos.changefeed;
+package com.microsoft.azure.cosmos.changefeed.internal;
 
-import com.microsoft.azure.cosmos.CosmosItemRequestOptions;
-import com.microsoft.azure.cosmosdb.FeedOptions;
-import com.microsoft.azure.cosmosdb.RequestOptions;
+import com.microsoft.azure.cosmos.changefeed.RemainingPartitionWork;
 
 /**
- * Defines request options for lease requests to use with {@link LeaseStoreManager}.
+ * Implements the {@link RemainingPartitionWork} interface.
  */
-public interface RequestOptionsFactory {
+public class RemainingPartitionWorkImpl implements RemainingPartitionWork {
+    private final String partitionKeyRangeId;
+    private final long remainingWork;
 
-    CosmosItemRequestOptions createRequestOptions(Lease lease);
+    /**
+     * Initializes a new instance of the {@link RemainingPartitionWork} object.
+     *
+     * @param partitionKeyRangeId the partition key range ID for which the remaining work is calculated.
+     * @param remainingWork the amount of documents remaining to be processed.
+     */
+    public RemainingPartitionWorkImpl(String partitionKeyRangeId, long remainingWork) {
+        if (partitionKeyRangeId == null || partitionKeyRangeId.isEmpty()) throw new IllegalArgumentException("partitionKeyRangeId");
 
-    FeedOptions createFeedOptions();
+        this.partitionKeyRangeId = partitionKeyRangeId;
+        this.remainingWork = remainingWork;
+    }
+
+
+    @Override
+    public String getPartitionKeyRangeId() {
+        return this.partitionKeyRangeId;
+    }
+
+    @Override
+    public long getRemainingWork() {
+        return this.remainingWork;
+    }
 }

@@ -23,6 +23,7 @@
 package com.microsoft.azure.cosmos.changefeed;
 
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * Used to estimate the pending work remaining to be read in the Change Feed. Calculates the sum of pending work
@@ -34,7 +35,7 @@ public interface RemainingWorkEstimator {
      *
      * @return an estimation of pending work in amount of documents.
      */
-    Flux<Long> getEstimatedRemainingWork();
+    Mono<Long> getEstimatedRemainingWork();
 
     /**
      * Calculates an estimate of the pending work remaining to be read in the Change Feed in amount of documents per partition.

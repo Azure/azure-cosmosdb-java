@@ -34,7 +34,7 @@ public interface PartitionController {
      *
      * @return a representation of the deferred computation of this call.
      */
-    Flux<Lease> addOrUpdateLeaseAsync(Lease lease);
+    Mono<Lease> addOrUpdateLease(Lease lease);
 
     /**
      * Initialize and start the partition controller thread.

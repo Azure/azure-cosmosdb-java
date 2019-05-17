@@ -22,6 +22,8 @@
  */
 package com.microsoft.azure.cosmos.changefeed;
 
+import com.microsoft.azure.cosmos.CosmosContainer;
+
 import java.time.Duration;
 import java.time.ZonedDateTime;
 
@@ -29,7 +31,7 @@ import java.time.ZonedDateTime;
  * Implementation for the partition processor settings.
  */
 public class ProcessorSettings {
-    private String collectionSelfLink;
+    private CosmosContainer collectionSelfLink;
     private String partitionKeyRangeId;
     private Integer maxItemCount;
     private Duration feedPollDelay;
@@ -37,12 +39,12 @@ public class ProcessorSettings {
     private ZonedDateTime startTime;
 //    private String sessionToken;
 
-    public String getCollectionSelfLink() {
+    public CosmosContainer getCollectionSelfLink() {
         return this.collectionSelfLink;
     }
 
-    public ProcessorSettings withCollectionSelfLink(String collectionSelfLink) {
-        this.collectionSelfLink = collectionSelfLink;
+    public ProcessorSettings withCollectionLink(CosmosContainer collectionLink) {
+        this.collectionSelfLink = collectionLink;
         return this;
     }
 
