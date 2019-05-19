@@ -26,8 +26,10 @@ import com.microsoft.azure.cosmosdb.rx.internal.Configs;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.Unpooled;
+import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpObjectAggregator;
+import io.netty.handler.codec.http.HttpResponseDecoder;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.ssl.SslHandler;
 import org.reactivestreams.Publisher;
@@ -111,14 +113,13 @@ class ReactorNettyClient implements HttpClient {
         });
 
         return this.httpClient.tcpConfiguration(client -> client.bootstrap(bootstrap -> {
-//            BootstrapHandlers.updateConfiguration(bootstrap,
-//                    NettyPipeline.HttpCodec,
-//                    (connectionObserver, channel) ->
-//                            channel.pipeline().addLast(new HttpClientCodec(configs.getMaxHttpInitialLineLength(),
-//                                    configs.getMaxHttpHeaderSize(),
-//                                    configs.getMaxHttpChunkSize(),
-//                                    true,
-//                                    true)));
+            BootstrapHandlers.updateConfiguration(bootstrap,
+                    NettyPipeline.HttpCodec,
+                    (connectionObserver, channel) ->
+                            channel.pipeline().addLast(new HttpResponseDecoder(configs.getMaxHttpInitialLineLength(),
+                                    configs.getMaxHttpHeaderSize(),
+                                    configs.getMaxHttpChunkSize(),
+                                    true)));
             BootstrapHandlers.updateConfiguration(bootstrap,
                     NettyPipeline.HttpAggregator,
                     ((connectionObserver, channel) ->

@@ -62,7 +62,6 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -315,7 +314,7 @@ class RxGatewayStoreModel implements RxStoreModel {
                                         .unescape(httpResponseHeaders.toMap().entrySet()), contentInputStream);
                                 return Flux.just(rsp);
                             } catch (Exception e) {
-                                return Flux.error(reactor.core.Exceptions.propagate(e));
+                                return Flux.error(e);
                             }
                         }).single();
 
@@ -351,7 +350,7 @@ class RxGatewayStoreModel implements RxStoreModel {
                                         content);
                                 return Flux.just(rsp);
                             } catch (Exception e) {
-                                return Flux.error(reactor.core.Exceptions.propagate(e));
+                                return Flux.error(e);
                             }
                         }).single();
 
@@ -360,7 +359,7 @@ class RxGatewayStoreModel implements RxStoreModel {
                         if (!(throwable instanceof Exception)) {
                             // fatal error
                             logger.error("Unexpected failure {}", throwable.getMessage(), throwable);
-                            return Mono.error(reactor.core.Exceptions.propagate(throwable));
+                            return Mono.error(throwable);
                         }
 
                         Exception exception = (Exception) throwable;
@@ -369,10 +368,10 @@ class RxGatewayStoreModel implements RxStoreModel {
                             logger.error("Network failure", exception);
                             DocumentClientException dce = new DocumentClientException(0, exception);
                             BridgeInternal.setRequestHeaders(dce, request.getHeaders());
-                            return Mono.error(reactor.core.Exceptions.propagate(dce));
+                            return Mono.error(dce);
                         }
 
-                        return Mono.error(reactor.core.Exceptions.propagate(exception));
+                        return Mono.error(exception);
                     }));
         }
     }
