@@ -32,6 +32,9 @@ import java.util.function.Supplier;
  * A generic interface for sending HTTP requests and getting responses.
  */
 public interface HttpClient {
+
+    String REACTOR_NETTY_CONNECTION_POOL = "reactor-netty-connection-pool";
+
     /**
      * Send the provided request asynchronously.
      *
@@ -67,7 +70,7 @@ public interface HttpClient {
         }
         //  TODO: maxIdleConnectionTimeoutInMillis is not supported in reactor netty
 
-        ConnectionProvider fixed = ConnectionProvider.fixed("reactor-netty-connection-pool", maxPoolSize);
+        ConnectionProvider fixed = ConnectionProvider.fixed(REACTOR_NETTY_CONNECTION_POOL, maxPoolSize);
         return new ReactorNettyClient(fixed, httpClientConfig);
     }
 
@@ -94,4 +97,9 @@ public interface HttpClient {
      * @return a HttpClient with port applied
      */
     HttpClient port(int port);
+
+    /**
+     * Shutdown the Http Client and clean up resources
+     */
+    void shutdown();
 }

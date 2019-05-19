@@ -26,7 +26,6 @@ import com.microsoft.azure.cosmosdb.rx.internal.Configs;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.Unpooled;
-import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpResponseDecoder;
@@ -41,6 +40,7 @@ import reactor.netty.Connection;
 import reactor.netty.NettyOutbound;
 import reactor.netty.NettyPipeline;
 import reactor.netty.channel.BootstrapHandlers;
+import reactor.netty.http.HttpResources;
 import reactor.netty.http.client.HttpClientRequest;
 import reactor.netty.http.client.HttpClientResponse;
 import reactor.netty.resources.ConnectionProvider;
@@ -59,30 +59,25 @@ import static com.microsoft.azure.cosmosdb.rx.internal.http.HttpClientConfig.REA
  * HttpClient that is implemented using reactor-netty.
  */
 class ReactorNettyClient implements HttpClient {
+
     private reactor.netty.http.client.HttpClient httpClient;
+    private ConnectionProvider connectionProvider;
 
     /**
      * Creates default ReactorNettyClient.
      */
     ReactorNettyClient() {
-        this(reactor.netty.http.client.HttpClient.create());
+        this.connectionProvider = ConnectionProvider.elastic(REACTOR_NETTY_CONNECTION_POOL);
+        this.httpClient = reactor.netty.http.client.HttpClient.create(connectionProvider);
     }
 
     /**
      * Creates ReactorNettyClient with {@link ConnectionProvider}.
      */
     ReactorNettyClient(ConnectionProvider connectionProvider, HttpClientConfig httpClientConfig) {
-        this(reactor.netty.http.client.HttpClient.create(connectionProvider));
+        this.connectionProvider = connectionProvider;
+        this.httpClient = reactor.netty.http.client.HttpClient.create(connectionProvider);
         this.httpClient = configureChannelPipelineHandlers(httpClientConfig);
-    }
-
-    /**
-     * Creates ReactorNettyClient with provided http client.
-     *
-     * @param httpClient the reactor http client
-     */
-    private ReactorNettyClient(reactor.netty.http.client.HttpClient httpClient) {
-        this.httpClient = httpClient;
     }
 
     /**
@@ -190,6 +185,12 @@ class ReactorNettyClient implements HttpClient {
     @Override
     public HttpClient port(int port) {
         return new ReactorNettyClient(this.httpClient, client -> client.port(port));
+    }
+
+    @Override
+    public void shutdown() {
+        this.connectionProvider.dispose();
+        HttpResources.disposeLoopsAndConnections();
     }
 
     private static class ReactorNettyHttpResponse extends HttpResponse {
