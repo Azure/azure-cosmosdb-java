@@ -131,7 +131,7 @@ public class HttpTransportClientTest {
         HttpResponse mockedResponse = new HttpClientMockWrapper.HttpClientBehaviourBuilder()
                 .withContent("").withStatus(200)
                 .withHeaders(new HttpHeaders())
-                .asHttpClientResponse();
+                .asHttpResponse();
         HttpClientMockWrapper httpClientMockWrapper = new HttpClientMockWrapper(mockedResponse);
 
         UserAgentContainer userAgentContainer = new UserAgentContainer();
@@ -159,9 +159,6 @@ public class HttpTransportClientTest {
 
     }
 
-    /**
-     * @return
-     */
     @DataProvider(name = "fromMockedHttpResponseToExpectedDocumentClientException")
     public Object[][] fromMockedHttpResponseToExpectedDocumentClientException() {
         return new Object[][]{

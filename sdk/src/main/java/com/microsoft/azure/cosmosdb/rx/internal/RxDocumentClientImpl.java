@@ -161,7 +161,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
      * supported.
      */
     private final QueryCompatibilityMode queryCompatibilityMode = QueryCompatibilityMode.Default;
-    private final com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient reactorHttpClient;
+    private final HttpClient reactorHttpClient;
     private final GlobalEndpointManager globalEndpointManager;
     private final RetryPolicy retryPolicy;
     private volatile boolean useMultipleWriteLocations;
@@ -380,7 +380,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
                                              QueryCompatibilityMode queryCompatibilityMode,
                                              UserAgentContainer userAgentContainer,
                                              GlobalEndpointManager globalEndpointManager,
-                                             com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient httpClient) {
+                                             HttpClient httpClient) {
         return new RxGatewayStoreModel(sessionContainer,
                 consistencyLevel,
                 queryCompatibilityMode,
@@ -397,7 +397,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
                 .withHttpProxy(this.connectionPolicy.getProxy())
                 .withRequestTimeoutInMillis(this.connectionPolicy.getRequestTimeoutInMillis());
 
-        return com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient.createFixed(httpClientConfig);
+        return HttpClient.createFixed(httpClientConfig);
     }
 
     private void createStoreModel(boolean subscribeRntbdStatus) {

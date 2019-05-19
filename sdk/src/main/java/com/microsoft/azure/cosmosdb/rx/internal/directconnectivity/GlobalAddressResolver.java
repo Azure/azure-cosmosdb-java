@@ -69,7 +69,7 @@ public class GlobalAddressResolver implements IAddressResolver {
 
     private GatewayAddressCache gatewayAddressCache;
     private AddressResolver addressResolver;
-    private com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient httpClient;
+    private HttpClient httpClient;
 
     public GlobalAddressResolver(
             HttpClient httpClient,

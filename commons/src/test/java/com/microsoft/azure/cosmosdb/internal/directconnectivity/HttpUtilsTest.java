@@ -27,7 +27,6 @@ import com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpResponse;
 import org.mockito.Mockito;
 import org.testng.annotations.Test;
-import org.testng.collections.Lists;
 
 import java.util.List;
 import java.util.Map.Entry;
@@ -41,7 +40,7 @@ public class HttpUtilsTest {
     
     @Test(groups = { "unit" })
     public void verifyConversionOfHttpResponseHeadersToMap() {
-        com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders headersMap = new com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders();
+        HttpHeaders headersMap = new HttpHeaders();
         headersMap.set(HttpConstants.HttpHeaders.OWNER_FULL_NAME, OWNER_FULL_NAME_VALUE);
 
         HttpResponse httpResponse = Mockito.mock(HttpResponse.class);
@@ -54,7 +53,7 @@ public class HttpUtilsTest {
         assertThat(entry.getKey()).isEqualTo(HttpConstants.HttpHeaders.OWNER_FULL_NAME);
         assertThat(entry.getValue()).isEqualTo(HttpUtils.urlDecode(OWNER_FULL_NAME_VALUE));
         
-        List<Entry<String, String>> resultHeadersList = HttpUtils.unescape(Lists.newArrayList(httpResponseHeaders.toMap().entrySet()));
+        List<Entry<String, String>> resultHeadersList = HttpUtils.unescape(httpResponseHeaders.toMap().entrySet());
         assertThat(resultHeadersList.size()).isEqualTo(1);
         entry = resultHeadersSet.iterator().next();
         assertThat(entry.getKey()).isEqualTo(HttpConstants.HttpHeaders.OWNER_FULL_NAME);

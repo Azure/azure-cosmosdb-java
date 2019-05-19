@@ -57,8 +57,8 @@ public class PreconditionFailedException extends DocumentClientException {
         super(msg, null, null, HttpConstants.StatusCodes.PRECONDITION_FAILED, resourceAddress);
     }
 
-    public PreconditionFailedException(String message, HttpHeaders headers, String requestUri) {
-        this(message, null, headers, requestUri);
+    public PreconditionFailedException(String message, HttpHeaders headers, String requestUriString) {
+        this(message, null, headers, requestUriString);
     }
 
     public PreconditionFailedException(Exception innerException) {
@@ -68,11 +68,11 @@ public class PreconditionFailedException extends DocumentClientException {
     public PreconditionFailedException(String message,
                                        Exception innerException,
                                        HttpHeaders headers,
-                                       String requestUri) {
+                                       String requestUriString) {
         super(String.format("%s: %s", RMResources.PreconditionFailed, message),
                 innerException,
                 HttpUtils.asMap(headers),
                 HttpConstants.StatusCodes.PRECONDITION_FAILED,
-                requestUri);
+                requestUriString);
     }
 }

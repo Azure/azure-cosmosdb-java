@@ -96,7 +96,7 @@ public class HttpClientMockWrapper {
             return this;
         }
 
-        public HttpResponse asHttpClientResponse() {
+        public HttpResponse asHttpResponse() {
             if (this.networkFailure != null) {
                 return null;
             }
@@ -104,14 +104,7 @@ public class HttpClientMockWrapper {
             HttpResponse resp = Mockito.mock(HttpResponse.class);
             Mockito.doReturn(this.status).when(resp).statusCode();
             Mockito.doReturn(Flux.just(ByteBufUtil.writeUtf8(ByteBufAllocator.DEFAULT, this.content))).when(resp).body();
-
-            try {
-                Mockito.doReturn(this.httpHeaders).when(resp).headers();
-
-            } catch (IllegalArgumentException | SecurityException e) {
-                throw new IllegalStateException("Failed to instantiate class object.", e);
-            }
-
+            Mockito.doReturn(this.httpHeaders).when(resp).headers();
             return resp;
         }
 
@@ -133,21 +126,21 @@ public class HttpClientMockWrapper {
     private final HttpClient httpClient;
     private final List<HttpRequest> requests = Collections.synchronizedList(new ArrayList<>());
 
-    public HttpClientMockWrapper(long responseAfterMillis, HttpResponse httpClientResponse) {
-        this(responseAfterMillis, httpClientResponse, null);
+    public HttpClientMockWrapper(long responseAfterMillis, HttpResponse httpResponse) {
+        this(responseAfterMillis, httpResponse, null);
     }
 
-    private static Mono<HttpResponse> httpClientResponseOrException(HttpResponse httpClientResponse, Exception e) {
-        assert ((httpClientResponse != null && e == null) || (httpClientResponse == null && e != null));
-        return httpClientResponse != null ? Mono.just(httpClientResponse) : Mono.error(e);
+    private static Mono<HttpResponse> httpResponseOrException(HttpResponse httpResponse, Exception e) {
+        assert ((httpResponse != null && e == null) || (httpResponse == null && e != null));
+        return httpResponse != null ? Mono.just(httpResponse) : Mono.error(e);
     }
 
     public HttpClientMockWrapper(long responseAfterMillis, Exception e) {
         this(responseAfterMillis, null, e);
     }
 
-    public HttpClientMockWrapper(HttpResponse httpClientResponse) {
-        this(0, httpClientResponse);
+    public HttpClientMockWrapper(HttpResponse httpResponse) {
+        this(0, httpResponse);
     }
 
     private HttpClientMockWrapper(long responseAfterMillis, final HttpResponse httpResponse, final Exception e) {
@@ -160,15 +153,15 @@ public class HttpClientMockWrapper {
             HttpRequest httpRequest = invocationOnMock.getArgumentAt(0, HttpRequest.class);
             requests.add(httpRequest);
             if (responseAfterMillis <= 0) {
-                return httpClientResponseOrException(httpResponse, e);
+                return httpResponseOrException(httpResponse, e);
             } else {
-                return Mono.delay(Duration.ofMillis(responseAfterMillis)).flatMap(t -> httpClientResponseOrException(httpResponse, e));
+                return Mono.delay(Duration.ofMillis(responseAfterMillis)).flatMap(t -> httpResponseOrException(httpResponse, e));
             }
         }).when(httpClient).send(Mockito.any(HttpRequest.class));
     }
 
     public HttpClientMockWrapper(HttpClientBehaviourBuilder builder) {
-        this(0, builder.asHttpClientResponse(), builder.asNetworkFailure());
+        this(0, builder.asHttpResponse(), builder.asNetworkFailure());
     }
 
     public HttpClientMockWrapper(Exception e) {

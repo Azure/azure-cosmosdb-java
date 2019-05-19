@@ -47,33 +47,33 @@ public class RequestTimeoutException extends DocumentClientException {
     }
 
     public RequestTimeoutException(String message, URL requestUri) {
-        this(message, (Exception) null, (HttpHeaders) null, requestUri);
+        this(message, null, null, requestUri);
     }
 
     public RequestTimeoutException(String message,
                                    Exception innerException,
                                    URL requestUri,
                                    String localIpAddress) {
-        this(message(localIpAddress, message), innerException, (HttpHeaders) null, requestUri);
+        this(message(localIpAddress, message), innerException, null, requestUri);
     }
 
     public RequestTimeoutException(Exception innerException) {
         this(RMResources.Gone, innerException, (HttpHeaders) null, null);
     }
 
-    public RequestTimeoutException(String message, HttpHeaders headers, URL requestUri) {
-        super(message, null, HttpUtils.asMap(headers), HttpConstants.StatusCodes.REQUEST_TIMEOUT, requestUri != null ? requestUri.toString() : null);
+    public RequestTimeoutException(String message, HttpHeaders headers, URL requestUrl) {
+        super(message, null, HttpUtils.asMap(headers), HttpConstants.StatusCodes.REQUEST_TIMEOUT, requestUrl != null ? requestUrl.toString() : null);
     }
 
-    public RequestTimeoutException(String message, HttpHeaders headers, String requestUri) {
-        super(message, null, HttpUtils.asMap(headers), HttpConstants.StatusCodes.REQUEST_TIMEOUT, requestUri);
+    public RequestTimeoutException(String message, HttpHeaders headers, String requestUriString) {
+        super(message, null, HttpUtils.asMap(headers), HttpConstants.StatusCodes.REQUEST_TIMEOUT, requestUriString);
     }
 
     public RequestTimeoutException(String message,
                                    Exception innerException,
                                    HttpHeaders headers,
-                                   URL requestUri) {
-        super(message, innerException, HttpUtils.asMap(headers), HttpConstants.StatusCodes.REQUEST_TIMEOUT, requestUri != null ? requestUri.toString() : null);
+                                   URL requestUrl) {
+        super(message, innerException, HttpUtils.asMap(headers), HttpConstants.StatusCodes.REQUEST_TIMEOUT, requestUrl != null ? requestUrl.toString() : null);
     }
 
     private static String message(String localIP, String baseMessage) {

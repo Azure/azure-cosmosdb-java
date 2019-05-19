@@ -847,8 +847,8 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
         return collectionDefinition;
     }
 
-    private com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient getHttpClient(Configs configs) {
-        return com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient.createFixed(new HttpClientConfig(configs));
+    private HttpClient getHttpClient(Configs configs) {
+        return HttpClient.createFixed(new HttpClientConfig(configs));
     }
 
     private HttpClientUnderTestWrapper getHttpClientUnderTestWrapper(Configs configs) {

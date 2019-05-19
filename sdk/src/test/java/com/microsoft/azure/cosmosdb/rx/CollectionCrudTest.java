@@ -47,7 +47,6 @@ import com.microsoft.azure.cosmosdb.ResourceResponse;
 import com.microsoft.azure.cosmosdb.SpatialSpec;
 import com.microsoft.azure.cosmosdb.SpatialType;
 
-import reactor.core.publisher.Hooks;
 import rx.Observable;
 
 public class CollectionCrudTest extends TestSuiteBase {
@@ -63,7 +62,6 @@ public class CollectionCrudTest extends TestSuiteBase {
     public CollectionCrudTest(AsyncDocumentClient.Builder clientBuilder) {
         this.clientBuilder = clientBuilder;
         this.subscriberValidationTimeout = TIMEOUT;
-        Hooks.onOperatorDebug();
     }
 
     @DataProvider(name = "collectionCrudArgProvider")
@@ -321,7 +319,7 @@ public class CollectionCrudTest extends TestSuiteBase {
         database = createDatabase(client, databaseId);
     }
 
-    @AfterClass(groups = { "emulator" }, alwaysRun = true)
+    @AfterClass(groups = { "emulator" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)
     public void afterClass() {
         safeDeleteDatabase(client, databaseId);
         safeClose(client);

@@ -45,11 +45,11 @@ public class MethodNotAllowedException extends DocumentClientException {
     }
 
     public MethodNotAllowedException(String message) {
-        this(message, (Exception) null, (HttpHeaders) null, null);
+        this(message, null, null, null);
     }
 
-    public MethodNotAllowedException(String message, HttpHeaders headers, String requestUrl) {
-        this(message, null, headers, requestUrl);
+    public MethodNotAllowedException(String message, HttpHeaders headers, String requestUriString) {
+        this(message, null, headers, requestUriString);
     }
 
     public MethodNotAllowedException(String message, HttpHeaders headers, URL requestUrl) {
@@ -63,11 +63,11 @@ public class MethodNotAllowedException extends DocumentClientException {
     public MethodNotAllowedException(String message,
                                  Exception innerException,
                                      HttpHeaders headers,
-                                 String requestUrl) {
+                                 String requestUriString) {
         super(String.format("%s: %s", RMResources.MethodNotAllowed, message),
                 innerException,
                 HttpUtils.asMap(headers),
                 HttpConstants.StatusCodes.METHOD_NOT_ALLOWED,
-                requestUrl != null ? requestUrl.toString() : null);
+                requestUriString);
     }
 }

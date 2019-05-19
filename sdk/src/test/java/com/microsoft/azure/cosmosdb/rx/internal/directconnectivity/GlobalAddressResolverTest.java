@@ -63,7 +63,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class GlobalAddressResolverTest {
 
-    private com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient httpClient;
+    private HttpClient httpClient;
     private GlobalEndpointManager endpointManager;
     private IAuthorizationTokenProvider authorizationTokenProvider;
     private UserAgentContainer userAgentContainer;

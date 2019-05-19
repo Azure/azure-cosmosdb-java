@@ -45,32 +45,32 @@ public class RequestRateTooLargeException extends DocumentClientException {
         BridgeInternal.setPartitionKeyRangeId(this, partitionKeyRangeId);
     }
 
-    public RequestRateTooLargeException(String message, URL requestUri) {
-        this(message, (Exception) null, (HttpHeaders) null, requestUri);
+    public RequestRateTooLargeException(String message, URL requestUrl) {
+        this(message, null, null, requestUrl);
     }
 
     public RequestRateTooLargeException(String message,
                                         Exception innerException,
-                                        URL requestUri) {
-        this(message, innerException, (HttpHeaders) null, requestUri);
+                                        URL requestUrl) {
+        this(message, innerException, null, requestUrl);
     }
 
     public RequestRateTooLargeException(Exception innerException) {
-        this(RMResources.TooManyRequests, innerException, (HttpHeaders) null, null);
+        this(RMResources.TooManyRequests, innerException, null, null);
     }
 
-    public RequestRateTooLargeException(String message, HttpHeaders headers, URL requestUri) {
-        super(message, null, HttpUtils.asMap(headers), HttpConstants.StatusCodes.TOO_MANY_REQUESTS, requestUri != null ? requestUri.toString() : null);
+    public RequestRateTooLargeException(String message, HttpHeaders headers, URL requestUrl) {
+        super(message, null, HttpUtils.asMap(headers), HttpConstants.StatusCodes.TOO_MANY_REQUESTS, requestUrl != null ? requestUrl.toString() : null);
     }
 
-    public RequestRateTooLargeException(String message, HttpHeaders headers, String requestUri) {
-        super(message, null, HttpUtils.asMap(headers), HttpConstants.StatusCodes.TOO_MANY_REQUESTS, requestUri);
+    public RequestRateTooLargeException(String message, HttpHeaders headers, String requestUriString) {
+        super(message, null, HttpUtils.asMap(headers), HttpConstants.StatusCodes.TOO_MANY_REQUESTS, requestUriString);
     }
 
     public RequestRateTooLargeException(String message,
                                         Exception innerException,
                                         HttpHeaders headers,
-                                        URL requestUri) {
-        super(message, innerException, HttpUtils.asMap(headers), HttpConstants.StatusCodes.TOO_MANY_REQUESTS, requestUri != null ? requestUri.toString() : null);
+                                        URL requestUrl) {
+        super(message, innerException, HttpUtils.asMap(headers), HttpConstants.StatusCodes.TOO_MANY_REQUESTS, requestUrl != null ? requestUrl.toString() : null);
     }
 }

@@ -55,11 +55,11 @@ public class BadRequestException extends DocumentClientException {
     }
 
     public BadRequestException(String message) {
-        this(message, (Exception) null, (HttpHeaders) null, null);
+        this(message, null, null, null);
     }
 
-    public BadRequestException(String message, HttpHeaders headers, String requestUrl) {
-        this(message, null, headers, requestUrl);
+    public BadRequestException(String message, HttpHeaders headers, String requestUrlString) {
+        this(message, null, headers, requestUrlString);
     }
 
     public BadRequestException(String message, HttpHeaders headers, URL requestUrl) {
@@ -73,11 +73,11 @@ public class BadRequestException extends DocumentClientException {
     public BadRequestException(String message,
                              Exception innerException,
                              HttpHeaders headers,
-                             String requestUrl) {
+                             String requestUrlString) {
         super(String.format("%s: %s", RMResources.BadRequest, message),
                 innerException,
                 HttpUtils.asMap(headers),
                 HttpConstants.StatusCodes.BADREQUEST,
-                requestUrl != null ? requestUrl.toString() : null);
+                requestUrlString);
     }
 }

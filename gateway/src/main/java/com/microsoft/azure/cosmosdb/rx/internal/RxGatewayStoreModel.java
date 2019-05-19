@@ -37,13 +37,13 @@ import com.microsoft.azure.cosmosdb.internal.RuntimeConstants;
 import com.microsoft.azure.cosmosdb.internal.UserAgentContainer;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.HttpUtils;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.StoreResponse;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpRequest;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpResponse;
 import hu.akarnokd.rxjava.interop.RxJavaInterop;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.commons.io.IOUtils;
@@ -52,12 +52,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.netty.http.client.HttpClient;
 import rx.Observable;
 import rx.Single;
 import rx.functions.Func0;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -80,7 +78,7 @@ class RxGatewayStoreModel implements RxStoreModel {
     private final static int INITIAL_RESPONSE_BUFFER_SIZE = 1024;
     private final Logger logger = LoggerFactory.getLogger(RxGatewayStoreModel.class);
     private final Map<String, String> defaultHeaders;
-    private final com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient httpClient;
+    private final HttpClient httpClient;
     private final QueryCompatibilityMode queryCompatibilityMode;
     private final GlobalEndpointManager globalEndpointManager;
     private ConsistencyLevel defaultConsistencyLevel;
@@ -92,7 +90,7 @@ class RxGatewayStoreModel implements RxStoreModel {
             QueryCompatibilityMode queryCompatibilityMode,
             UserAgentContainer userAgentContainer,
             GlobalEndpointManager globalEndpointManager,
-            com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient httpClient) {
+            HttpClient httpClient) {
         this.defaultHeaders = new HashMap<>();
         this.defaultHeaders.put(HttpConstants.HttpHeaders.CACHE_CONTROL,
                 "no-cache");
@@ -176,7 +174,7 @@ class RxGatewayStoreModel implements RxStoreModel {
         try {
             URI uri = getUri(request);
 
-            com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders httpHeaders = this.getHttpRequestHeaders(request.getHeaders());
+            HttpHeaders httpHeaders = this.getHttpRequestHeaders(request.getHeaders());
 
             Flux<ByteBuf> byteBufObservable = Flux.empty();
 
@@ -204,8 +202,8 @@ class RxGatewayStoreModel implements RxStoreModel {
         }
     }
 
-    private com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders getHttpRequestHeaders(Map<String, String> headers) {
-        com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders httpHeaders = new com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders();
+    private HttpHeaders getHttpRequestHeaders(Map<String, String> headers) {
+        HttpHeaders httpHeaders = new HttpHeaders();
         // Add default headers.
         for (Entry<String, String> entry : this.defaultHeaders.entrySet()) {
             if (!headers.containsKey(entry.getKey())) {
@@ -285,7 +283,7 @@ class RxGatewayStoreModel implements RxStoreModel {
             return RxJavaInterop.toV1Observable(httpResponseMono.flatMap(httpResponse -> {
 
                 // header key/value pairs
-                com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders httpResponseHeaders = httpResponse.headers();
+                HttpHeaders httpResponseHeaders = httpResponse.headers();
                 int httpResponseStatus = httpResponse.statusCode();
 
                 Flux<InputStream> inputStreamObservable;
@@ -314,7 +312,7 @@ class RxGatewayStoreModel implements RxStoreModel {
 
                                 // transforms to Observable<StoreResponse>
                                 StoreResponse rsp = new StoreResponse(httpResponseStatus, HttpUtils
-                                        .unescape(new ArrayList<>(httpResponseHeaders.toMap().entrySet())), contentInputStream);
+                                        .unescape(httpResponseHeaders.toMap().entrySet()), contentInputStream);
                                 return Flux.just(rsp);
                             } catch (Exception e) {
                                 return Flux.error(reactor.core.Exceptions.propagate(e));
@@ -348,8 +346,9 @@ class RxGatewayStoreModel implements RxStoreModel {
                                 validateOrThrow(request, HttpResponseStatus.valueOf(httpResponseStatus), httpResponseHeaders, content, null);
 
                                 // transforms to Observable<StoreResponse>
-                                StoreResponse rsp = new StoreResponse(httpResponseStatus, HttpUtils.unescape(
-                                        new ArrayList<>(httpResponseHeaders.toMap().entrySet())), content);
+                                StoreResponse rsp = new StoreResponse(httpResponseStatus,
+                                        HttpUtils.unescape(httpResponseHeaders.toMap().entrySet()),
+                                        content);
                                 return Flux.just(rsp);
                             } catch (Exception e) {
                                 return Flux.error(reactor.core.Exceptions.propagate(e));
@@ -378,7 +377,7 @@ class RxGatewayStoreModel implements RxStoreModel {
         }
     }
 
-    private void validateOrThrow(RxDocumentServiceRequest request, HttpResponseStatus status, com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders headers, String body,
+    private void validateOrThrow(RxDocumentServiceRequest request, HttpResponseStatus status, HttpHeaders headers, String body,
                                  InputStream inputStream) throws DocumentClientException {
 
         int statusCode = status.code();

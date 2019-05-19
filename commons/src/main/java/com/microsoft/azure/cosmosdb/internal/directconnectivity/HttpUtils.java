@@ -41,6 +41,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 public class HttpUtils {
 
@@ -103,7 +104,7 @@ public class HttpUtils {
         return date != null ? date : StringUtils.EMPTY;
     }
 
-    public static List<Entry<String, String>> unescape(List<Entry<String, String>> headers) {
+    public static List<Entry<String, String>> unescape(Set<Entry<String, String>> headers) {
         List<Entry<String, String>> result = new ArrayList<>();
         for (Entry<String, String> entry : headers) {
             if (entry.getKey().equals(HttpConstants.HttpHeaders.OWNER_FULL_NAME)) {

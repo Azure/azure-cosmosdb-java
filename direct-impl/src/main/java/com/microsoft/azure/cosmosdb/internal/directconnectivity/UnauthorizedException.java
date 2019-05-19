@@ -47,11 +47,11 @@ public class UnauthorizedException extends DocumentClientException {
     }
 
     public UnauthorizedException(String message) {
-        this(message, (Exception) null, (HttpHeaders) null, null);
+        this(message, null, null, null);
     }
 
-    public UnauthorizedException(String message, HttpHeaders headers, String requestUri) {
-        this(message, null, headers, requestUri);
+    public UnauthorizedException(String message, HttpHeaders headers, String requestUriString) {
+        this(message, null, headers, requestUriString);
     }
 
     public UnauthorizedException(String message, HttpHeaders headers, URI requestUri) {
@@ -74,6 +74,6 @@ public class UnauthorizedException extends DocumentClientException {
                 innerException,
                 HttpUtils.asMap(headers),
                 HttpConstants.StatusCodes.UNAUTHORIZED,
-                requestUri != null ? requestUri.toString() : null);
+                requestUri);
     }
 }

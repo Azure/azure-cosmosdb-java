@@ -75,12 +75,11 @@ public class GatewayServiceConfigurationReaderTest extends TestSuiteBase {
     @BeforeClass(groups = "simple")
     public void setup() throws Exception {
         client = clientBuilder.build();
-        mockHttpClient = Mockito.mock(HttpClient.class);
-
         ClientUnderTest clientUnderTest = SpyClientUnderTestFactory.createClientUnderTest(this.clientBuilder);
         HttpClient httpClient = clientUnderTest.getSpyHttpClient();
         baseAuthorizationTokenProvider = new BaseAuthorizationTokenProvider(TestConfigurations.MASTER_KEY);
         connectionPolicy = ConnectionPolicy.GetDefault();
+        mockHttpClient = Mockito.mock(HttpClient.class);
         mockGatewayServiceConfigurationReader = new GatewayServiceConfigurationReader(new URI(TestConfigurations.HOST),
                 false, TestConfigurations.MASTER_KEY, connectionPolicy, baseAuthorizationTokenProvider, mockHttpClient);
 
@@ -93,6 +92,9 @@ public class GatewayServiceConfigurationReaderTest extends TestSuiteBase {
         databaseAccountJson = IOUtils
                 .toString(getClass().getClassLoader().getResourceAsStream("databaseAccount.json"), "UTF-8");
         expectedDatabaseAccount = new DatabaseAccount(databaseAccountJson);
+        HttpResponse mockResponse = getMockResponse(databaseAccountJson);
+        mockHttpClient = Mockito.when(mockHttpClient.port(Mockito.anyInt())).thenReturn(mockHttpClient).getMock();
+        Mockito.when(mockHttpClient.send(Mockito.any(HttpRequest.class))).thenReturn(Mono.just(mockResponse));
     }
 
     @AfterClass(groups = { "simple" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)
@@ -102,24 +104,18 @@ public class GatewayServiceConfigurationReaderTest extends TestSuiteBase {
 
     @Test(groups = "simple")
     public void mockInitializeReaderAsync() {
-        HttpResponse mockResponse = getMockResponse(databaseAccountJson);
-
-        Mockito.when(mockHttpClient.port(Mockito.anyInt())).thenReturn(mockHttpClient);
-        Mockito.when(mockHttpClient.send(Mockito.any(HttpRequest.class))).thenReturn(Mono.just(mockResponse));
-
         Single<DatabaseAccount> databaseAccount = mockGatewayServiceConfigurationReader.initializeReaderAsync();
         validateSuccess(databaseAccount, expectedDatabaseAccount);
     }
 
     @Test(groups = "simple")
     public void mockInitializeReaderAsyncWithResourceToken() throws Exception {
+        HttpResponse mockResponse = getMockResponse(databaseAccountJson);
+        mockHttpClient = Mockito.when(mockHttpClient.port(Mockito.anyInt())).thenReturn(mockHttpClient).getMock();
+        Mockito.when(mockHttpClient.send(Mockito.any(HttpRequest.class))).thenReturn(Mono.just(mockResponse));
+
         mockGatewayServiceConfigurationReader = new GatewayServiceConfigurationReader(new URI(TestConfigurations.HOST),
                 true, "SampleResourceToken", connectionPolicy, baseAuthorizationTokenProvider, mockHttpClient);
-
-        HttpResponse mockedResponse = getMockResponse(databaseAccountJson);
-
-        Mockito.when(mockHttpClient.port(Mockito.anyInt())).thenReturn(mockHttpClient);
-        Mockito.when(mockHttpClient.send(Mockito.any(HttpRequest.class))).thenReturn(Mono.just(mockedResponse));
 
         Single<DatabaseAccount> databaseAccount = mockGatewayServiceConfigurationReader.initializeReaderAsync();
         validateSuccess(databaseAccount, expectedDatabaseAccount);

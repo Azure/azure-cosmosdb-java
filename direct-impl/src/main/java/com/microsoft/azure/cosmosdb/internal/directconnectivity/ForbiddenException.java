@@ -45,11 +45,11 @@ public class ForbiddenException extends DocumentClientException {
     }
 
     public ForbiddenException(String message) {
-        this(message, (Exception) null, (HttpHeaders) null, null);
+        this(message, null, null, null);
     }
 
-    public ForbiddenException(String message, HttpHeaders headers, String requestUrl) {
-        this(message, null, headers, requestUrl);
+    public ForbiddenException(String message, HttpHeaders headers, String requestUrlString) {
+        this(message, null, headers, requestUrlString);
     }
 
     public ForbiddenException(String message, HttpHeaders headers, URL requestUrl) {
@@ -63,11 +63,11 @@ public class ForbiddenException extends DocumentClientException {
     public ForbiddenException(String message,
                               Exception innerException,
                               HttpHeaders headers,
-                              String requestUrl) {
+                              String requestUrlString) {
         super(String.format("%s: %s", RMResources.Forbidden, message),
                 innerException,
                 HttpUtils.asMap(headers),
                 HttpConstants.StatusCodes.FORBIDDEN,
-                requestUrl != null ? requestUrl.toString() : null);
+                requestUrlString);
     }
 }

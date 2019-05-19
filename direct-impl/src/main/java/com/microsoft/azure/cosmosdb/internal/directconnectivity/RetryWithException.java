@@ -41,27 +41,27 @@ public class RetryWithException extends DocumentClientException {
     }
 
     public RetryWithException(String message, URL requestUri) {
-        this(message, (Exception) null, (HttpHeaders) null, requestUri);
+        this(message, null, null, requestUri);
     }
 
     public RetryWithException(String message,
                               Exception innerException,
-                              URL requestUri) {
-        this(message, innerException, (HttpHeaders) null, requestUri);
+                              URL requestUrl) {
+        this(message, innerException, null, requestUrl);
     }
 
-    public RetryWithException(String message, HttpHeaders headers, URL requestUri) {
-        super(message, null, HttpUtils.asMap(headers), HttpConstants.StatusCodes.RETRY_WITH, requestUri != null ? requestUri.toString() : null);
+    public RetryWithException(String message, HttpHeaders headers, URL requestUrl) {
+        super(message, null, HttpUtils.asMap(headers), HttpConstants.StatusCodes.RETRY_WITH, requestUrl != null ? requestUrl.toString() : null);
     }
 
-    public RetryWithException(String message, HttpHeaders headers, String requestUri) {
-        super(message, null, HttpUtils.asMap(headers), HttpConstants.StatusCodes.RETRY_WITH, requestUri);
+    public RetryWithException(String message, HttpHeaders headers, String requestUriString) {
+        super(message, null, HttpUtils.asMap(headers), HttpConstants.StatusCodes.RETRY_WITH, requestUriString);
     }
 
     public RetryWithException(String message,
                               Exception innerException,
                               HttpHeaders headers,
-                              URL requestUri) {
-        super(message, innerException, HttpUtils.asMap(headers), HttpConstants.StatusCodes.RETRY_WITH, requestUri != null ? requestUri.toString() : null);
+                              URL requestUrl) {
+        super(message, innerException, HttpUtils.asMap(headers), HttpConstants.StatusCodes.RETRY_WITH, requestUrl != null ? requestUrl.toString() : null);
     }
 }

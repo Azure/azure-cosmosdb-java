@@ -56,8 +56,8 @@ public class RequestEntityTooLargeException extends DocumentClientException {
         super(msg, null, null, HttpConstants.StatusCodes.REQUEST_ENTITY_TOO_LARGE, resourceAddress);
     }
 
-    public RequestEntityTooLargeException(String message, HttpHeaders headers, String requestUri) {
-        this(message, null, headers, requestUri);
+    public RequestEntityTooLargeException(String message, HttpHeaders headers, String requestUriString) {
+        this(message, null, headers, requestUriString);
     }
 
     public RequestEntityTooLargeException(Exception innerException) {
@@ -67,11 +67,11 @@ public class RequestEntityTooLargeException extends DocumentClientException {
     public RequestEntityTooLargeException(String message,
                                           Exception innerException,
                                           HttpHeaders headers,
-                                          String requestUri) {
+                                          String requestUriString) {
         super(String.format(RMResources.RequestEntityTooLarge, message),
                 innerException,
                 HttpUtils.asMap(headers),
                 HttpConstants.StatusCodes.REQUEST_ENTITY_TOO_LARGE,
-                requestUri);
+                requestUriString);
     }
 }

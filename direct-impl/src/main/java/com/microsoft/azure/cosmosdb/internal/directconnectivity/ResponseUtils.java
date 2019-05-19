@@ -52,12 +52,10 @@ class ResponseUtils {
                                 throw new RuntimeException(e);
                             }
                         })
-                .map(out -> {
-                    return new String(out.toByteArray(), StandardCharsets.UTF_8);
-                }).flux();
+                .map(out -> new String(out.toByteArray(), StandardCharsets.UTF_8)).flux();
     }
 
-    public static Mono<StoreResponse> toStoreResponse(HttpResponse httpClientResponse, Flux<ByteBuf> byteBufFlux) {
+    static Mono<StoreResponse> toStoreResponse(HttpResponse httpClientResponse, Flux<ByteBuf> byteBufFlux) {
 
         HttpHeaders httpResponseHeaders = httpClientResponse.headers();
 
@@ -74,7 +72,7 @@ class ResponseUtils {
         Flux<StoreResponse> storeResponseFlux = contentObservable.flatMap(content -> {
             try {
                 // transforms to Observable<StoreResponse>
-                StoreResponse rsp = new StoreResponse(httpClientResponse.statusCode(), HttpUtils.unescape(new ArrayList<>(httpResponseHeaders.toMap().entrySet())), content);
+                StoreResponse rsp = new StoreResponse(httpClientResponse.statusCode(), HttpUtils.unescape(httpResponseHeaders.toMap().entrySet()), content);
                 return Flux.just(rsp);
             } catch (Exception e) {
                 return Flux.error(e);

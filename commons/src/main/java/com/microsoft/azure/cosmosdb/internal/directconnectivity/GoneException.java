@@ -41,7 +41,7 @@ public class GoneException extends DocumentClientException {
         this(msg, null);
     }
     public GoneException() {
-        this(RMResources.Gone, (String) null);
+        this(RMResources.Gone, null);
     }
 
     public GoneException(Error error, long lsn, String partitionKeyRangeId, Map<String, String> responseHeaders) {
@@ -51,26 +51,26 @@ public class GoneException extends DocumentClientException {
     }
 
     public GoneException(String message, String requestUri) {
-        this(message, (Exception) null, new HashMap<>(), requestUri);
+        this(message, null, new HashMap<>(), requestUri);
     }
 
     public GoneException(String message,
                          Exception innerException,
                          URL requestUrl,
                          String localIpAddress) {
-        this(message(localIpAddress, message), innerException, (HttpHeaders) null, requestUrl);
+        this(message(localIpAddress, message), innerException, null, requestUrl);
     }
 
     public GoneException(Exception innerException) {
-        this(RMResources.Gone, innerException, new HashMap<>(), (String) null);
+        this(RMResources.Gone, innerException, new HashMap<>(), null);
     }
 
     public GoneException(String message, HttpHeaders headers, URL requestUrl) {
         super(message, null, HttpUtils.asMap(headers), HttpConstants.StatusCodes.GONE, requestUrl != null ? requestUrl.toString() : null);
     }
 
-    public GoneException(String message, HttpHeaders headers, String requestUri) {
-        super(message, null, HttpUtils.asMap(headers), HttpConstants.StatusCodes.GONE, requestUri);
+    public GoneException(String message, HttpHeaders headers, String requestUriString) {
+        super(message, null, HttpUtils.asMap(headers), HttpConstants.StatusCodes.GONE, requestUriString);
     }
 
     public GoneException(String message,
@@ -83,8 +83,8 @@ public class GoneException extends DocumentClientException {
     public GoneException(String message,
                          Exception innerException,
                          Map<String, String> headers,
-                         String requestUri) {
-        super(message, innerException, headers, HttpConstants.StatusCodes.GONE, requestUri);
+                         String requestUriString) {
+        super(message, innerException, headers, HttpConstants.StatusCodes.GONE, requestUriString);
     }
 
     public GoneException(Error error, Map<String, String> headers) {

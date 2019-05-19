@@ -43,6 +43,7 @@ import com.microsoft.azure.cosmosdb.rx.internal.RMResources;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceResponse;
 import com.microsoft.azure.cosmosdb.rx.internal.caches.AsyncCache;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpRequest;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpResponse;
@@ -89,7 +90,7 @@ public class GatewayAddressCache implements IAddressCache {
     private final String protocolFilter;
     private final IAuthorizationTokenProvider tokenProvider;
     private final HashMap<String, String> defaultRequestHeaders;
-    private final com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient httpClient;
+    private final HttpClient httpClient;
 
     private volatile Pair<PartitionKeyRangeIdentity, AddressInformation[]> masterPartitionAddressCache;
     private volatile Instant suboptimalMasterPartitionTimestamp;
@@ -99,7 +100,7 @@ public class GatewayAddressCache implements IAddressCache {
             Protocol protocol,
             IAuthorizationTokenProvider tokenProvider,
             UserAgentContainer userAgent,
-            com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient httpClient,
+            HttpClient httpClient,
             long suboptimalPartitionForceRefreshIntervalInSeconds) {
         try {
             this.addressEndpoint = new URL(serviceEndpoint, Paths.ADDRESS_PATH_SEGMENT);
@@ -139,7 +140,7 @@ public class GatewayAddressCache implements IAddressCache {
             Protocol protocol,
             IAuthorizationTokenProvider tokenProvider,
             UserAgentContainer userAgent,
-            com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient httpClient) {
+            HttpClient httpClient) {
         this(serviceEndpoint,
              protocol,
              tokenProvider,

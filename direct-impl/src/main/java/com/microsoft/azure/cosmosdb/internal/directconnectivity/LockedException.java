@@ -56,8 +56,8 @@ public class LockedException extends DocumentClientException {
         super(msg, null, null, HttpConstants.StatusCodes.LOCKED, resourceAddress);
     }
 
-    public LockedException(String message, HttpHeaders headers, String requestUri) {
-        this(message, null, headers, requestUri);
+    public LockedException(String message, HttpHeaders headers, String requestUriString) {
+        this(message, null, headers, requestUriString);
     }
 
     public LockedException(Exception innerException) {
@@ -67,11 +67,11 @@ public class LockedException extends DocumentClientException {
     public LockedException(String message,
                            Exception innerException,
                            HttpHeaders headers,
-                           String requestUri) {
+                           String requestUriString) {
         super(String.format("%s: %s", RMResources.Locked, message),
                 innerException,
                 HttpUtils.asMap(headers),
                 HttpConstants.StatusCodes.LOCKED,
-                requestUri);
+                requestUriString);
     }
 }

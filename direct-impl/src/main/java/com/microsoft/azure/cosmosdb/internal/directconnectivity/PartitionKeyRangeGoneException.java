@@ -53,25 +53,25 @@ public class PartitionKeyRangeGoneException extends DocumentClientException {
     }
 
     public PartitionKeyRangeGoneException(String message) {
-        this(message, (Exception) null, null, null);
+        this(message, null, null, null);
     }
 
     public PartitionKeyRangeGoneException(String message, Exception innerException) {
-        this(message, innerException, (HttpHeaders) null, null);
+        this(message, innerException, null, null);
     }
 
     public PartitionKeyRangeGoneException(Exception innerException) {
-        this(RMResources.Gone, innerException, (HttpHeaders) null, null);
+        this(RMResources.Gone, innerException, null, null);
     }
 
 
-    public PartitionKeyRangeGoneException(String message, HttpHeaders headers, String requestUri) {
-        super(message, null, HttpUtils.asMap(headers), HttpConstants.StatusCodes.GONE, requestUri);
+    public PartitionKeyRangeGoneException(String message, HttpHeaders headers, String requestUriString) {
+        super(message, null, HttpUtils.asMap(headers), HttpConstants.StatusCodes.GONE, requestUriString);
         this.setSubstatus();
     }
 
-    public PartitionKeyRangeGoneException(String message, Exception innerException, HttpHeaders headers, String requestUri) {
-        super(message, innerException, HttpUtils.asMap(headers), HttpConstants.StatusCodes.GONE, requestUri);
+    public PartitionKeyRangeGoneException(String message, Exception innerException, HttpHeaders headers, String requestUriString) {
+        super(message, innerException, HttpUtils.asMap(headers), HttpConstants.StatusCodes.GONE, requestUriString);
         this.setSubstatus();
     }
 

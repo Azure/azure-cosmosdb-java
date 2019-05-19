@@ -45,15 +45,15 @@ public class ServiceUnavailableException extends DocumentClientException {
     }
 
     public ServiceUnavailableException(String message) {
-        this(message, (Exception) null, (HttpHeaders) null, null);
+        this(message, null, null, null);
     }
 
-    public ServiceUnavailableException(String message, HttpHeaders headers, String requestUri) {
-        this(message, null, headers, requestUri);
+    public ServiceUnavailableException(String message, HttpHeaders headers, String requestUriString) {
+        this(message, null, headers, requestUriString);
     }
 
-    public ServiceUnavailableException(String message, HttpHeaders headers, URL requestUri) {
-        this(message, headers, requestUri != null ? requestUri.toString() : null);
+    public ServiceUnavailableException(String message, HttpHeaders headers, URL requestUrl) {
+        this(message, headers, requestUrl != null ? requestUrl.toString() : null);
     }
 
     public ServiceUnavailableException(Exception innerException) {
@@ -63,11 +63,11 @@ public class ServiceUnavailableException extends DocumentClientException {
     public ServiceUnavailableException(String message,
                                        Exception innerException,
                                        HttpHeaders headers,
-                                       String requestUri) {
+                                       String requestUriString) {
         super(String.format("%s: %s", RMResources.ServiceUnavailable, message),
                 innerException,
                 HttpUtils.asMap(headers),
                 HttpConstants.StatusCodes.SERVICE_UNAVAILABLE,
-                requestUri != null ? requestUri.toString() : null);
+                requestUriString);
     }
 }

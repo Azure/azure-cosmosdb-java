@@ -34,6 +34,7 @@ import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.internal.UserAgentContainer;
 import com.microsoft.azure.cosmosdb.internal.Utils;
 import com.microsoft.azure.cosmosdb.rx.internal.GlobalEndpointManager;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpRequest;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpResponse;
@@ -76,11 +77,11 @@ public class GatewayServiceConfigurationReader {
     private final BaseAuthorizationTokenProvider baseAuthorizationTokenProvider;
     private final boolean hasAuthKeyResourceToken;
     private final String authKeyResourceToken;
-    private com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient httpClient;
+    private HttpClient httpClient;
 
     public GatewayServiceConfigurationReader(URI serviceEndpoint, boolean hasResourceToken, String resourceToken,
             ConnectionPolicy connectionPolicy, BaseAuthorizationTokenProvider baseAuthorizationTokenProvider,
-            com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient httpClient) {
+            HttpClient httpClient) {
         this.serviceEndpoint = serviceEndpoint;
         this.baseAuthorizationTokenProvider = baseAuthorizationTokenProvider;
         this.hasAuthKeyResourceToken = hasResourceToken;
@@ -161,16 +162,12 @@ public class GatewayServiceConfigurationReader {
         try {
             return GlobalEndpointManager.getDatabaseAccountFromAnyLocationsAsync(this.serviceEndpoint.toURL(),
 
-                    new ArrayList<>(this.connectionPolicy.getPreferredLocations()), this::getDatabaseAccountAsync).doOnSuccess(new Action1<DatabaseAccount>() {
-
-                        @Override
-                        public void call(DatabaseAccount databaseAccount) {
-                            userReplicationPolicy = BridgeInternal.getReplicationPolicy(databaseAccount);
-                            systemReplicationPolicy = BridgeInternal.getSystemReplicationPolicy(databaseAccount);
-                            queryEngineConfiguration = BridgeInternal.getQueryEngineConfiuration(databaseAccount);
-                            consistencyLevel = BridgeInternal.getConsistencyPolicy(databaseAccount).getDefaultConsistencyLevel();
-                            initialized = true;
-                        }
+                    new ArrayList<>(this.connectionPolicy.getPreferredLocations()), this::getDatabaseAccountAsync).doOnSuccess(databaseAccount -> {
+                        userReplicationPolicy = BridgeInternal.getReplicationPolicy(databaseAccount);
+                        systemReplicationPolicy = BridgeInternal.getSystemReplicationPolicy(databaseAccount);
+                        queryEngineConfiguration = BridgeInternal.getQueryEngineConfiuration(databaseAccount);
+                        consistencyLevel = BridgeInternal.getConsistencyPolicy(databaseAccount).getDefaultConsistencyLevel();
+                        initialized = true;
                     });
         } catch (MalformedURLException e) {
             throw new IllegalArgumentException(this.serviceEndpoint.toString(), e);

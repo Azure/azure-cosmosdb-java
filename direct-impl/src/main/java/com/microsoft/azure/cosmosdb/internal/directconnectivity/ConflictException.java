@@ -28,7 +28,6 @@ import com.microsoft.azure.cosmosdb.Error;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.rx.internal.RMResources;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders;
-import io.reactivex.netty.protocol.http.client.HttpResponseHeaders;
 
 import java.util.Map;
 
@@ -58,8 +57,8 @@ public class ConflictException extends DocumentClientException {
         super(msg, null, null, HttpConstants.StatusCodes.CONFLICT, resourceAddress);
     }
 
-    public ConflictException(String message, HttpHeaders headers, String requestUri) {
-        this(message, null, headers, requestUri);
+    public ConflictException(String message, HttpHeaders headers, String requestUriString) {
+        this(message, null, headers, requestUriString);
     }
 
     public ConflictException(Exception innerException) {
@@ -73,11 +72,11 @@ public class ConflictException extends DocumentClientException {
     public ConflictException(String message,
                              Exception innerException,
                              HttpHeaders headers,
-                             String requestUri) {
+                             String requestUriString) {
         super(String.format("%s: %s", RMResources.EntityAlreadyExists, message),
                 innerException,
                 HttpUtils.asMap(headers),
                 HttpConstants.StatusCodes.CONFLICT,
-                requestUri);
+                requestUriString);
     }
 }

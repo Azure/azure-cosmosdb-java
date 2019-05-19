@@ -54,7 +54,7 @@ public class InternalServerErrorException extends DocumentClientException {
     }
 
     public InternalServerErrorException(String message) {
-        this(message, (Exception) null, (Map<String, String>) null, (String) null);
+        this(message, null, (Map<String, String>) null, null);
     }
 
 
@@ -70,23 +70,23 @@ public class InternalServerErrorException extends DocumentClientException {
         super(message, null, HttpUtils.asMap(headers), HttpConstants.StatusCodes.INTERNAL_SERVER_ERROR, requestUri != null ? requestUri.toString() : null);
     }
 
-    public InternalServerErrorException(String message, HttpHeaders headers, String requestUri) {
-        super(message, null, HttpUtils.asMap(headers), HttpConstants.StatusCodes.INTERNAL_SERVER_ERROR, requestUri);
+    public InternalServerErrorException(String message, HttpHeaders headers, String requestUriString) {
+        super(message, null, HttpUtils.asMap(headers), HttpConstants.StatusCodes.INTERNAL_SERVER_ERROR, requestUriString);
     }
 
-    public InternalServerErrorException(String message, HttpHeaders headers, URL requestUri) {
-        super(message, null, HttpUtils.asMap(headers), HttpConstants.StatusCodes.INTERNAL_SERVER_ERROR, requestUri != null ? requestUri.toString() : null);
+    public InternalServerErrorException(String message, HttpHeaders headers, URL requestUrl) {
+        super(message, null, HttpUtils.asMap(headers), HttpConstants.StatusCodes.INTERNAL_SERVER_ERROR, requestUrl != null ? requestUrl.toString() : null);
     }
 
     public InternalServerErrorException(String message, Exception innerException, HttpHeaders headers, URI requestUri) {
         super(message, innerException, HttpUtils.asMap(headers), HttpConstants.StatusCodes.INTERNAL_SERVER_ERROR, requestUri != null ? requestUri.toString() : null);
     }
 
-    public InternalServerErrorException(String message, Exception innerException, HttpHeaders headers, String requestUri) {
-        super(message, innerException, HttpUtils.asMap(headers), HttpConstants.StatusCodes.INTERNAL_SERVER_ERROR, requestUri);
+    public InternalServerErrorException(String message, Exception innerException, HttpHeaders headers, String requestUriString) {
+        super(message, innerException, HttpUtils.asMap(headers), HttpConstants.StatusCodes.INTERNAL_SERVER_ERROR, requestUriString);
     }
 
-    public InternalServerErrorException(String message, Exception innerException, Map<String, String> headers, String requestUri) {
-        super(message, innerException, headers, HttpConstants.StatusCodes.INTERNAL_SERVER_ERROR, requestUri);
+    public InternalServerErrorException(String message, Exception innerException, Map<String, String> headers, String requestUriString) {
+        super(message, innerException, headers, HttpConstants.StatusCodes.INTERNAL_SERVER_ERROR, requestUriString);
     }
 }
