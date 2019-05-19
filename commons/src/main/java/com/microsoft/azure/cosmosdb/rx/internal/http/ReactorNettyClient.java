@@ -40,12 +40,12 @@ import reactor.netty.Connection;
 import reactor.netty.NettyOutbound;
 import reactor.netty.NettyPipeline;
 import reactor.netty.channel.BootstrapHandlers;
-import reactor.netty.http.HttpResources;
 import reactor.netty.http.client.HttpClientRequest;
 import reactor.netty.http.client.HttpClientResponse;
 import reactor.netty.resources.ConnectionProvider;
 import reactor.netty.tcp.ProxyProvider;
 import reactor.netty.tcp.SslProvider;
+import reactor.netty.tcp.TcpResources;
 
 import java.nio.charset.Charset;
 import java.util.Objects;
@@ -189,8 +189,8 @@ class ReactorNettyClient implements HttpClient {
 
     @Override
     public void shutdown() {
+        TcpResources.disposeLoopsAndConnections();
         this.connectionProvider.dispose();
-        HttpResources.disposeLoopsAndConnections();
     }
 
     private static class ReactorNettyHttpResponse extends HttpResponse {
