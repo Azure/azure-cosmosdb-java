@@ -398,8 +398,8 @@ class RxGatewayStoreModel implements RxStoreModel {
             String statusCodeString = status.reasonPhrase() != null
                     ? status.reasonPhrase().replace(" ", "")
                     : "";
-            Error error = null;
-            error = (body != null) ? new Error(body) : new Error();
+            Error error;
+            error = (StringUtils.isNotEmpty(body)) ? new Error(body) : new Error();
             error = new Error(statusCodeString,
                     String.format("%s, StatusCode: %s", error.getMessage(), statusCodeString),
                     error.getPartitionedQueryExecutionInfo());
