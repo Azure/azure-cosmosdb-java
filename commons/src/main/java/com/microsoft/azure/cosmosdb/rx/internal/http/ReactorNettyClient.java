@@ -190,7 +190,6 @@ class ReactorNettyClient implements HttpClient {
     @Override
     public void shutdown() {
         this.connectionProvider.dispose();
-        HttpResources.disposeLoopsAndConnections();
     }
 
     private static class ReactorNettyHttpResponse extends HttpResponse {
