@@ -61,6 +61,7 @@ import io.netty.channel.ChannelPromise;
 import io.netty.channel.CoalescingBufferQueue;
 import io.netty.channel.EventLoop;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.ssl.SslHandler;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.Timeout;
 import org.slf4j.Logger;
@@ -250,7 +251,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
      */
     @Override
     @SuppressWarnings("deprecation")
-    public void exceptionCaught(final ChannelHandlerContext context, final Throwable cause) throws Exception {
+    public void exceptionCaught(final ChannelHandlerContext context, final Throwable cause) {
 
         // TODO: DANOBLE: replace RntbdRequestManager.exceptionCaught with read/write listeners
         //  Notes:
@@ -265,10 +266,22 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         this.traceOperation(context, "exceptionCaught", cause);
 
         if (!this.closingExceptionally) {
+
             reportIssueUnless(cause != ClosedWithPendingRequestsException.INSTANCE, logger, context,
                 "expected an exception other than ", ClosedWithPendingRequestsException.INSTANCE);
+
             this.completeAllPendingRequestsExceptionally(context, cause);
-            context.close();
+            final ChannelPipeline pipeline = context.pipeline();
+            final SslHandler sslHandler = pipeline.get(SslHandler.class);
+
+            if (sslHandler != null) {
+                // Netty 4.1.36.Final: SslHandler.closeOutbound must be called before closing the pipeline
+                // This ensures that all SSL engine and ByteBuf resources are released
+                // This is something that does not occur in the call to ChannelPipeline.close that follows
+                sslHandler.closeOutbound();
+            }
+
+            pipeline.close();
         }
     }
 
@@ -448,8 +461,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         //  * Do we have a requirement to support multiple concurrent operations for a single activityId?
         //  * Should we replace, renew, or maintain a list of pending requests for each activityId?
         //  We currently fail when we find an existing request record.
-        //  Links:
-        //  https://msdata.visualstudio.com/CosmosDB/_workitems/edit/378801
+        //  Links:https://github.com/Azure/azure-cosmosdb-java/issues/130
 
         this.pendingRequest = this.pendingRequests.compute(requestRecord.getActivityId(), (activityId, current) -> {
 
