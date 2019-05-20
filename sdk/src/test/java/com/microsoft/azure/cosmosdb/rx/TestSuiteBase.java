@@ -656,7 +656,7 @@ public class TestSuiteBase {
                     .single();
 
             for(DocumentCollection collection: collections) {
-                safeDeleteCollection(client, collection);
+                client.deleteCollection(collection.getSelfLink(), null).toBlocking().single();
             }
         }
     }

@@ -48,7 +48,6 @@ import reactor.netty.tcp.SslProvider;
 import reactor.netty.tcp.TcpResources;
 
 import java.nio.charset.Charset;
-import java.time.Duration;
 import java.util.Objects;
 import java.util.function.BiFunction;
 
@@ -130,19 +129,12 @@ class ReactorNettyClient implements HttpClient {
         Objects.requireNonNull(request.url());
         Objects.requireNonNull(request.url().getProtocol());
 
-        Duration requestTimeoutInMillisDuration = Duration.ofMillis(60 * 1000);
-
-        if (this.httpClientConfig.getRequestTimeoutInMillis() != null) {
-            requestTimeoutInMillisDuration = Duration.ofMillis(this.httpClientConfig.getRequestTimeoutInMillis());
-        }
-
         return httpClient
                 .tcpConfiguration(tcpClient -> tcpClient.port(request.port()))
                 .request(HttpMethod.valueOf(request.httpMethod().toString()))
                 .uri(request.url().toString())
                 .send(bodySendDelegate(request))
                 .responseConnection(responseDelegate(request))
-                .timeout(requestTimeoutInMillisDuration)
                 .single();
     }
 
@@ -159,9 +151,9 @@ class ReactorNettyClient implements HttpClient {
             }
             if (restRequest.body() != null) {
                 Flux<ByteBuf> nettyByteBufFlux = restRequest.body().map(Unpooled::wrappedBuffer);
-                return reactorNettyOutbound.send(nettyByteBufFlux);
+                return reactorNettyOutbound.options(sendOptions -> sendOptions.flushOnEach(false)).send(nettyByteBufFlux);
             } else {
-                return reactorNettyOutbound;
+                return reactorNettyOutbound.options(sendOptions -> sendOptions.flushOnEach(false));
             }
         };
     }
