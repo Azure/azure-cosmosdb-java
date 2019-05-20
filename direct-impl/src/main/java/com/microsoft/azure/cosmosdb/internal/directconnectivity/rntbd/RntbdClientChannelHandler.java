@@ -60,7 +60,7 @@ public class RntbdClientChannelHandler extends ChannelInitializer<Channel> imple
      * @param channel a channel that was just acquired
      */
     @Override
-    public void channelAcquired(final Channel channel) throws Exception {
+    public void channelAcquired(final Channel channel) {
         logger.trace("{} CHANNEL ACQUIRED", channel);
     }
 
@@ -72,7 +72,7 @@ public class RntbdClientChannelHandler extends ChannelInitializer<Channel> imple
      * @param channel a channel that was just created
      */
     @Override
-    public void channelCreated(final Channel channel) throws Exception {
+    public void channelCreated(final Channel channel) {
         logger.trace("{} CHANNEL CREATED", channel);
         this.initChannel(channel);
     }
@@ -85,7 +85,7 @@ public class RntbdClientChannelHandler extends ChannelInitializer<Channel> imple
      * @param channel a channel that was just released
      */
     @Override
-    public void channelReleased(final Channel channel) throws Exception {
+    public void channelReleased(final Channel channel) {
         logger.trace("{} CHANNEL RELEASED", channel);
     }
 
@@ -111,10 +111,6 @@ public class RntbdClientChannelHandler extends ChannelInitializer<Channel> imple
     protected void initChannel(final Channel channel) {
 
         checkNotNull(channel);
-
-        assert channel.isRegistered();
-        assert channel.isOpen();
-        assert !channel.isActive();
 
         final RntbdRequestManager requestManager = new RntbdRequestManager();
         final long readerIdleTime = this.config.getReceiveHangDetectionTime();
