@@ -248,7 +248,7 @@ public final class RntbdClientChannelPool extends FixedChannelPool {
         final ChannelPipeline pipeline = channel.pipeline();
 
         if (pipeline == null) {
-            reportIssue(logger, this, "{} pipeline is null", channel);
+            reportIssue(logger, this, "{} pipeline: null", channel);
             return Integer.MAX_VALUE;
         }
 
@@ -256,10 +256,10 @@ public final class RntbdClientChannelPool extends FixedChannelPool {
 
         if (requestManager == null) {
             if (channel.isActive()) {
-                reportIssue(logger, this, "{} active and pipeline.requestManager is null", channel);
+                reportIssue(logger, this, "{} active and pipeline.requestManager: null", channel);
                 channel.close();
             } else {
-                logger.warn("\n  [{}]\n  {} closed", this, channel);
+                logger.debug("\n  [{}]\n  {} closed", this, channel);
             }
             return Integer.MAX_VALUE;
         }
