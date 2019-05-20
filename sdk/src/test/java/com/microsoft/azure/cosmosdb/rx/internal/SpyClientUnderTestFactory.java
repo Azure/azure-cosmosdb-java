@@ -272,8 +272,10 @@ public class SpyClientUnderTestFactory {
                                                      GlobalEndpointManager globalEndpointManager,
                                                      HttpClient rxClient) {
 
+                HttpClient spy = Mockito.spy(rxClient);
+
                 this.origHttpClient = rxClient;
-                this.spyHttpClient = Mockito.spy(rxClient);
+                this.spyHttpClient = spy;
 
                 this.initRequestCapture(spyHttpClient);
 
@@ -283,7 +285,7 @@ public class SpyClientUnderTestFactory {
                         queryCompatibilityMode,
                         userAgentContainer,
                         globalEndpointManager,
-                        this.spyHttpClient);
+                        spy);
             }
         };
     }
