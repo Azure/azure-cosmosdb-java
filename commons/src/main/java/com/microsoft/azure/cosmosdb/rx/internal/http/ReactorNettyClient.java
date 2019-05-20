@@ -31,7 +31,6 @@ import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpResponseDecoder;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.ssl.SslHandler;
-import io.netty.handler.timeout.IdleStateHandler;
 import org.reactivestreams.Publisher;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
@@ -99,19 +98,22 @@ class ReactorNettyClient implements HttpClient {
                                     configs.getMaxHttpChunkSize(),
                                     true)));
 
-            Integer maxIdleConnectionTimeoutInMillis;
+            //  NOTE: Pooled connection time-out is not supported in reactor-netty
+            //  https://github.com/reactor/reactor-netty/issues/612
 
-            if (this.httpClientConfig.getMaxIdleConnectionTimeoutInMillis() != null) {
-                maxIdleConnectionTimeoutInMillis = this.httpClientConfig.getMaxIdleConnectionTimeoutInMillis();
-            } else {
-                maxIdleConnectionTimeoutInMillis = MAX_IDLE_CONNECTION_TIMEOUT_IN_MILLIS;
-            }
-
-            BootstrapHandlers.updateConfiguration(bootstrap,
-                    "idleStateHandler",
-                    ((connectionObserver, channel) ->
-                            channel.pipeline().addLast(
-                                    new IdleStateHandler(0, 0, maxIdleConnectionTimeoutInMillis))));
+//            Integer maxIdleConnectionTimeoutInMillis;
+//
+//            if (this.httpClientConfig.getMaxIdleConnectionTimeoutInMillis() != null) {
+//                maxIdleConnectionTimeoutInMillis = this.httpClientConfig.getMaxIdleConnectionTimeoutInMillis();
+//            } else {
+//                maxIdleConnectionTimeoutInMillis = MAX_IDLE_CONNECTION_TIMEOUT_IN_MILLIS;
+//            }
+//
+//            BootstrapHandlers.updateConfiguration(bootstrap,
+//                    "idleStateHandler",
+//                    ((connectionObserver, channel) ->
+//                            channel.pipeline().addLast(
+//                                    new IdleStateHandler(0, 0, maxIdleConnectionTimeoutInMillis))));
 
             BootstrapHandlers.updateConfiguration(bootstrap,
                     NettyPipeline.HttpAggregator,
