@@ -28,7 +28,6 @@ import io.netty.handler.codec.http.HttpMethod;
 import reactor.core.publisher.Flux;
 
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
@@ -38,6 +37,7 @@ import java.nio.charset.StandardCharsets;
 public class HttpRequest {
     private HttpMethod httpMethod;
     private URL url;
+    private int port;
     private HttpHeaders headers;
     private Flux<ByteBuf> body;
 
@@ -47,9 +47,10 @@ public class HttpRequest {
      * @param httpMethod the HTTP request method
      * @param url the target address to send the request to
      */
-    public HttpRequest(HttpMethod httpMethod, URL url) {
+    public HttpRequest(HttpMethod httpMethod, URL url, int port) {
         this.httpMethod = httpMethod;
         this.url = url;
+        this.port = port;
         this.headers = new HttpHeaders();
     }
 
@@ -59,9 +60,10 @@ public class HttpRequest {
      * @param httpMethod the HTTP request method
      * @param url the target address to send the request to
      */
-    public HttpRequest(HttpMethod httpMethod, String url) throws MalformedURLException {
+    public HttpRequest(HttpMethod httpMethod, String url, int port) throws MalformedURLException {
         this.httpMethod = httpMethod;
         this.url = new URL(url);
+        this.port = port;
         this.headers = new HttpHeaders();
     }
 
@@ -73,9 +75,10 @@ public class HttpRequest {
      * @param headers the HTTP headers to use with this request
      * @param body the request content
      */
-    public HttpRequest(HttpMethod httpMethod, URL url, HttpHeaders headers, Flux<ByteBuf> body) {
+    public HttpRequest(HttpMethod httpMethod, URL url, int port, HttpHeaders headers, Flux<ByteBuf> body) {
         this.httpMethod = httpMethod;
         this.url = url;
+        this.port = port;
         this.headers = headers;
         this.body = body;
     }
@@ -97,6 +100,26 @@ public class HttpRequest {
      */
     public HttpRequest withHttpMethod(HttpMethod httpMethod) {
         this.httpMethod = httpMethod;
+        return this;
+    }
+
+    /**
+     * Get the target port.
+     *
+     * @return the target port
+     */
+    public int port() {
+        return port;
+    }
+
+    /**
+     * Set the target port to send the request to.
+     *
+     * @param port target port
+     * @return this HttpRequest
+     */
+    public HttpRequest withPort(int port) {
+        this.port = port;
         return this;
     }
 
@@ -211,6 +234,6 @@ public class HttpRequest {
      */
     public HttpRequest buffer() {
         final HttpHeaders bufferedHeaders = new HttpHeaders(headers);
-        return new HttpRequest(httpMethod, url, bufferedHeaders, body);
+        return new HttpRequest(httpMethod, url, port, bufferedHeaders, body);
     }
 }

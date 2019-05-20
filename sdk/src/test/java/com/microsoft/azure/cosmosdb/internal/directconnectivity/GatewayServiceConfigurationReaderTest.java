@@ -93,7 +93,6 @@ public class GatewayServiceConfigurationReaderTest extends TestSuiteBase {
                 .toString(getClass().getClassLoader().getResourceAsStream("databaseAccount.json"), "UTF-8");
         expectedDatabaseAccount = new DatabaseAccount(databaseAccountJson);
         HttpResponse mockResponse = getMockResponse(databaseAccountJson);
-        mockHttpClient = Mockito.when(mockHttpClient.port(Mockito.anyInt())).thenReturn(mockHttpClient).getMock();
         Mockito.when(mockHttpClient.send(Mockito.any(HttpRequest.class))).thenReturn(Mono.just(mockResponse));
     }
 
@@ -111,7 +110,6 @@ public class GatewayServiceConfigurationReaderTest extends TestSuiteBase {
     @Test(groups = "simple")
     public void mockInitializeReaderAsyncWithResourceToken() throws Exception {
         HttpResponse mockResponse = getMockResponse(databaseAccountJson);
-        mockHttpClient = Mockito.when(mockHttpClient.port(Mockito.anyInt())).thenReturn(mockHttpClient).getMock();
         Mockito.when(mockHttpClient.send(Mockito.any(HttpRequest.class))).thenReturn(Mono.just(mockResponse));
 
         mockGatewayServiceConfigurationReader = new GatewayServiceConfigurationReader(new URI(TestConfigurations.HOST),

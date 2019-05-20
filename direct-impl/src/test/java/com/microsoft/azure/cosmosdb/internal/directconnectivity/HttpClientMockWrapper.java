@@ -147,8 +147,6 @@ public class HttpClientMockWrapper {
         httpClient = Mockito.mock(HttpClient.class);
         assert httpResponse == null || e == null;
 
-        Mockito.when(httpClient.port(Mockito.anyInt())).thenReturn(httpClient);
-
         Mockito.doAnswer(invocationOnMock -> {
             HttpRequest httpRequest = invocationOnMock.getArgumentAt(0, HttpRequest.class);
             requests.add(httpRequest);

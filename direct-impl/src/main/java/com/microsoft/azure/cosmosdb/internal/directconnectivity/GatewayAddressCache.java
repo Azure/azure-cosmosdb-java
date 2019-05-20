@@ -295,11 +295,9 @@ public class GatewayAddressCache implements IAddressCache {
             httpHeaders.set(entry.getKey(), entry.getValue());
         }
 
-        HttpRequest httpRequest = new HttpRequest(HttpMethod.GET, targetEndpoint)
+        HttpRequest httpRequest = new HttpRequest(HttpMethod.GET, targetEndpoint, targetEndpoint.getPort())
                 .withHeaders(httpHeaders);
-        Mono<HttpResponse> httpResponseMono = this.httpClient
-                .port(targetEndpoint.getPort())
-                .send(httpRequest);
+        Mono<HttpResponse> httpResponseMono = this.httpClient.send(httpRequest);
 
         Single<RxDocumentServiceResponse> dsrObs = HttpClientUtils.parseResponseAsync(httpResponseMono);
         return dsrObs.map(
@@ -442,11 +440,9 @@ public class GatewayAddressCache implements IAddressCache {
             defaultHttpHeaders.set(entry.getKey(), entry.getValue());
         }
 
-        HttpRequest httpRequest = new HttpRequest(HttpMethod.GET, targetEndpoint)
+        HttpRequest httpRequest = new HttpRequest(HttpMethod.GET, targetEndpoint, targetEndpoint.getPort())
                 .withHeaders(defaultHttpHeaders);
-        Mono<HttpResponse> httpResponseMono = this.httpClient
-                .port(targetEndpoint.getPort())
-                .send(httpRequest);
+        Mono<HttpResponse> httpResponseMono = this.httpClient.send(httpRequest);
 
         Single<RxDocumentServiceResponse> dsrObs = HttpClientUtils.parseResponseAsync(httpResponseMono);
 

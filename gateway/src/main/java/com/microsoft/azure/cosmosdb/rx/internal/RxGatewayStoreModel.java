@@ -187,12 +187,11 @@ class RxGatewayStoreModel implements RxStoreModel {
 
             HttpRequest httpRequest = new HttpRequest(method,
                     uri.toURL(),
+                    uri.getPort(),
                     httpHeaders,
                     byteBufObservable);
 
-            Mono<HttpResponse> httpResponseMono = this.httpClient
-                    .port(uri.getPort())
-                    .send(httpRequest);
+            Mono<HttpResponse> httpResponseMono = this.httpClient.send(httpRequest);
 
             return toDocumentServiceResponse(httpResponseMono, request);
 

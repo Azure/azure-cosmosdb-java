@@ -150,11 +150,9 @@ public class GatewayServiceConfigurationReader {
         }
         httpHeaders.set(HttpConstants.HttpHeaders.AUTHORIZATION, authorizationToken);
 
-        HttpRequest httpRequest = new HttpRequest(HttpMethod.GET, serviceEndpoint)
+        HttpRequest httpRequest = new HttpRequest(HttpMethod.GET, serviceEndpoint, serviceEndpoint.getPort())
                 .withHeaders(httpHeaders);
-        Mono<HttpResponse> httpResponse = httpClient
-                .port(serviceEndpoint.getPort())
-                .send(httpRequest);
+        Mono<HttpResponse> httpResponse = httpClient.send(httpRequest);
         return toDatabaseAccountObservable(httpResponse);
     }
 

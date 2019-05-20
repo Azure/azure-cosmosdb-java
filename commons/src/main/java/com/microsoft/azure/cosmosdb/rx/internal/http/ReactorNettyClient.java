@@ -31,6 +31,8 @@ import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpResponseDecoder;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.ssl.SslHandler;
+import io.netty.handler.timeout.ReadTimeoutHandler;
+import io.netty.handler.timeout.WriteTimeoutHandler;
 import org.reactivestreams.Publisher;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
@@ -48,10 +50,10 @@ import reactor.netty.tcp.SslProvider;
 import reactor.netty.tcp.TcpResources;
 
 import java.nio.charset.Charset;
+import java.time.Duration;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 import static com.microsoft.azure.cosmosdb.rx.internal.http.HttpClientConfig.REACTOR_NETWORK_LOG_CATEGORY;
 
@@ -60,54 +62,37 @@ import static com.microsoft.azure.cosmosdb.rx.internal.http.HttpClientConfig.REA
  */
 class ReactorNettyClient implements HttpClient {
 
+    private HttpClientConfig httpClientConfig;
     private reactor.netty.http.client.HttpClient httpClient;
     private ConnectionProvider connectionProvider;
-
-    /**
-     * Creates default ReactorNettyClient.
-     */
-    ReactorNettyClient() {
-        this.connectionProvider = ConnectionProvider.elastic(REACTOR_NETTY_CONNECTION_POOL);
-        this.httpClient = reactor.netty.http.client.HttpClient.create(connectionProvider);
-    }
 
     /**
      * Creates ReactorNettyClient with {@link ConnectionProvider}.
      */
     ReactorNettyClient(ConnectionProvider connectionProvider, HttpClientConfig httpClientConfig) {
         this.connectionProvider = connectionProvider;
-        this.httpClient = reactor.netty.http.client.HttpClient.create(connectionProvider);
-        this.httpClient = configureChannelPipelineHandlers(httpClientConfig);
+        this.httpClientConfig = httpClientConfig;
+        this.httpClient = configureChannelPipelineHandlers(reactor.netty.http.client.HttpClient.create(connectionProvider));
     }
 
-    /**
-     * Creates ReactorNettyClient with provided http client with configuration applied.
-     *
-     * @param httpClient the reactor http client
-     * @param config     the configuration to apply on the http client
-     */
-    private ReactorNettyClient(reactor.netty.http.client.HttpClient httpClient, Function<reactor.netty.http.client.HttpClient, reactor.netty.http.client.HttpClient> config) {
-        this.httpClient = config.apply(httpClient);
-    }
-
-    private reactor.netty.http.client.HttpClient configureChannelPipelineHandlers(HttpClientConfig httpClientConfig) {
-        Configs configs = httpClientConfig.getConfigs();
+    private reactor.netty.http.client.HttpClient configureChannelPipelineHandlers(reactor.netty.http.client.HttpClient httpClient) {
+        Configs configs = this.httpClientConfig.getConfigs();
         if (LoggerFactory.getLogger(REACTOR_NETWORK_LOG_CATEGORY).isTraceEnabled()) {
-            this.httpClient = this.httpClient.tcpConfiguration(tcpClient -> tcpClient.wiretap(REACTOR_NETWORK_LOG_CATEGORY, LogLevel.TRACE));
+            httpClient = httpClient.tcpConfiguration(tcpClient -> tcpClient.wiretap(REACTOR_NETWORK_LOG_CATEGORY, LogLevel.TRACE));
         }
-        if (httpClientConfig.getProxy() != null) {
-            this.httpClient = this.httpClient.tcpConfiguration(tcpClient ->
-                    tcpClient.proxy(typeSpec -> typeSpec.type(ProxyProvider.Proxy.HTTP).address(httpClientConfig.getProxy())));
+        if (this.httpClientConfig.getProxy() != null) {
+            httpClient = httpClient.tcpConfiguration(tcpClient ->
+                    tcpClient.proxy(typeSpec -> typeSpec.type(ProxyProvider.Proxy.HTTP).address(this.httpClientConfig.getProxy())));
         }
 
-        this.httpClient = this.httpClient.tcpConfiguration(tcpClient -> {
+        httpClient = httpClient.tcpConfiguration(tcpClient -> {
             tcpClient = tcpClient.secure(SslProvider.defaultClientProvider());
             Objects.requireNonNull(tcpClient.sslProvider())
                     .configure(new SslHandler(configs.getSslContext().newEngine(ByteBufAllocator.DEFAULT)));
             return tcpClient;
         });
 
-        return this.httpClient.tcpConfiguration(client -> client.bootstrap(bootstrap -> {
+        return httpClient.tcpConfiguration(client -> client.bootstrap(bootstrap -> {
             BootstrapHandlers.updateConfiguration(bootstrap,
                     NettyPipeline.HttpCodec,
                     (connectionObserver, channel) ->
@@ -115,6 +100,21 @@ class ReactorNettyClient implements HttpClient {
                                     configs.getMaxHttpHeaderSize(),
                                     configs.getMaxHttpChunkSize(),
                                     true)));
+
+            Integer maxIdleConnectionTimeoutInMillis;
+
+            if (this.httpClientConfig.getMaxIdleConnectionTimeoutInMillis() != null) {
+                maxIdleConnectionTimeoutInMillis = this.httpClientConfig.getMaxIdleConnectionTimeoutInMillis();
+            } else {
+                maxIdleConnectionTimeoutInMillis = 60 * 1000;
+            }
+
+            BootstrapHandlers.updateConfiguration(bootstrap,
+                    NettyPipeline.OnChannelReadIdle,
+                    ((connectionObserver, channel) ->
+                            channel.pipeline().addLast(
+                                    new ReadTimeoutHandler(maxIdleConnectionTimeoutInMillis, TimeUnit.MILLISECONDS))));
+
             BootstrapHandlers.updateConfiguration(bootstrap,
                     NettyPipeline.HttpAggregator,
                     ((connectionObserver, channel) ->
@@ -130,20 +130,20 @@ class ReactorNettyClient implements HttpClient {
         Objects.requireNonNull(request.url());
         Objects.requireNonNull(request.url().getProtocol());
 
+        Duration requestTimeoutInMillisDuration = Duration.ofMillis(60 * 1000);
+
+        if (this.httpClientConfig.getRequestTimeoutInMillis() != null) {
+            requestTimeoutInMillisDuration = Duration.ofMillis(this.httpClientConfig.getRequestTimeoutInMillis());
+        }
+
         return httpClient
+                .tcpConfiguration(tcpClient -> tcpClient.port(request.port()))
                 .request(HttpMethod.valueOf(request.httpMethod().toString()))
                 .uri(request.url().toString())
                 .send(bodySendDelegate(request))
                 .responseConnection(responseDelegate(request))
+                .timeout(requestTimeoutInMillisDuration)
                 .single();
-    }
-
-    @Override
-    public HttpClient proxy(Supplier<ProxyOptions> proxyOptionsSupplier) {
-        return new ReactorNettyClient(this.httpClient, client -> client.tcpConfiguration(c -> {
-            ProxyOptions options = proxyOptionsSupplier.get();
-            return c.proxy(ts -> ts.type(options.type().value()).address(options.address()));
-        }));
     }
 
     /**
@@ -175,16 +175,6 @@ class ReactorNettyClient implements HttpClient {
     private static BiFunction<HttpClientResponse, Connection, Publisher<HttpResponse>> responseDelegate(final HttpRequest restRequest) {
         return (reactorNettyResponse, reactorNettyConnection) ->
                 Mono.just(new ReactorNettyHttpResponse(reactorNettyResponse, reactorNettyConnection).withRequest(restRequest));
-    }
-
-    @Override
-    public HttpClient wiretap(boolean enableWiretap) {
-        return new ReactorNettyClient(this.httpClient, client -> client.wiretap(enableWiretap));
-    }
-
-    @Override
-    public HttpClient port(int port) {
-        return new ReactorNettyClient(this.httpClient, client -> client.port(port));
     }
 
     @Override

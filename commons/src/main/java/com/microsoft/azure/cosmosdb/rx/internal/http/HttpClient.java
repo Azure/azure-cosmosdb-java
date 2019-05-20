@@ -23,10 +23,7 @@
 package com.microsoft.azure.cosmosdb.rx.internal.http;
 
 import reactor.core.publisher.Mono;
-import reactor.netty.ReactorNetty;
 import reactor.netty.resources.ConnectionProvider;
-
-import java.util.function.Supplier;
 
 /**
  * A generic interface for sending HTTP requests and getting responses.
@@ -44,15 +41,6 @@ public interface HttpClient {
     Mono<HttpResponse> send(HttpRequest request);
 
     /**
-     * Create default HttpClient instance.
-     *
-     * @return the HttpClient
-     */
-    static HttpClient createDefault() {
-        return new ReactorNettyClient();
-    }
-
-    /**
      * Create fixed HttpClient with {@link HttpClientConfig}
      *
      * @return the HttpClient
@@ -62,41 +50,11 @@ public interface HttpClient {
             throw new IllegalArgumentException("HttpClientConfig is null");
         }
 
-        Integer maxPoolSize = httpClientConfig.getMaxPoolSize();
-        if (maxPoolSize == null) {
-            maxPoolSize = Integer.parseInt(System.getProperty(ReactorNetty.POOL_MAX_CONNECTIONS,
-                    "" + Math.max(Runtime.getRuntime()
-                            .availableProcessors(), 8) * 2));
+        if (httpClientConfig.getMaxPoolSize() == null) {
+            return new ReactorNettyClient(ConnectionProvider.fixed(REACTOR_NETTY_CONNECTION_POOL), httpClientConfig);
         }
-        //  TODO: maxIdleConnectionTimeoutInMillis is not supported in reactor netty
-
-        ConnectionProvider fixed = ConnectionProvider.fixed(REACTOR_NETTY_CONNECTION_POOL, maxPoolSize);
-        return new ReactorNettyClient(fixed, httpClientConfig);
+        return new ReactorNettyClient(ConnectionProvider.fixed(REACTOR_NETTY_CONNECTION_POOL, httpClientConfig.getMaxPoolSize()), httpClientConfig);
     }
-
-    /**
-     * Apply the provided proxy configuration to the HttpClient.
-     *
-     * @param proxyOptions the proxy configuration supplier
-     * @return a HttpClient with proxy applied
-     */
-    HttpClient proxy(Supplier<ProxyOptions> proxyOptions);
-
-    /**
-     * Apply or remove a wire logger configuration.
-     *
-     * @param enableWiretap wiretap config
-     * @return a HttpClient with wire logging enabled or disabled
-     */
-    HttpClient wiretap(boolean enableWiretap);
-
-    /**
-     * Set the port that client should connect to.
-     *
-     * @param port the port
-     * @return a HttpClient with port applied
-     */
-    HttpClient port(int port);
 
     /**
      * Shutdown the Http Client and clean up resources

@@ -74,15 +74,8 @@ public class RxDocumentClientUnderTest extends RxDocumentClientImpl {
         spyHttpClient = Mockito.spy(rxOrigClient);
 
         doAnswer((Answer<Mono<HttpResponse>>) invocationOnMock -> {
-
-            HttpMethod httpMethod =
-                    invocationOnMock.getArgumentAt(0, HttpMethod.class);
-            URL url = invocationOnMock.getArgumentAt(1, URL.class);
-
-            HttpRequest httpRequest = new HttpRequest(httpMethod, url);
-
+            HttpRequest httpRequest = invocationOnMock.getArgumentAt(0, HttpRequest.class);
             httpRequests.add(httpRequest);
-
             return origHttpClient.send(httpRequest);
         }).when(spyHttpClient).send(Mockito.any(HttpRequest.class));
 

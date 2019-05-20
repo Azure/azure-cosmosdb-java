@@ -148,16 +148,12 @@ public class SpyClientUnderTestFactory {
         }
 
         void initRequestCapture(HttpClient spyClient) {
-
-            spyClient = Mockito.when(spyClient.port(Mockito.anyInt())).thenReturn(spyClient).getMock();
-
             doAnswer(invocationOnMock -> {
                 HttpRequest httpRequest = invocationOnMock.getArgumentAt(0, HttpRequest.class);
                 CompletableFuture<HttpHeaders> f = new CompletableFuture<>();
                 requestsResponsePairs.add(Pair.of(httpRequest, f));
 
                 return origHttpClient
-                        .port(Mockito.anyInt())
                         .send(httpRequest)
                         .doOnNext(httpResponse -> f.complete(httpResponse.headers()))
                         .doOnError(f::completeExceptionally);
@@ -210,16 +206,12 @@ public class SpyClientUnderTestFactory {
         }
 
         void initRequestCapture(HttpClient spyClient) {
-
-            spyClient = Mockito.when(spyClient.port(Mockito.anyInt())).thenReturn(spyClient).getMock();
-
             doAnswer(invocationOnMock -> {
                 HttpRequest httpRequest = invocationOnMock.getArgumentAt(0, HttpRequest.class);
                 CompletableFuture<HttpHeaders> f = new CompletableFuture<>();
                 requestsResponsePairs.add(Pair.of(httpRequest, f));
 
                 return origHttpClient
-                        .port(Mockito.anyInt())
                         .send(httpRequest)
                         .doOnNext(httpResponse -> f.complete(httpResponse.headers()))
                         .doOnError(f::completeExceptionally);

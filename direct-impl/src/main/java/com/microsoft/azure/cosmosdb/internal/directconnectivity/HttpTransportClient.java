@@ -135,7 +135,6 @@ public class HttpTransportClient extends TransportClient {
             MutableVolatile<Instant> sendTimeUtc = new MutableVolatile<>();
 
             Mono<HttpResponse> httpResponseMono = this.httpClient
-                    .port(physicalAddress.getPort())
                     .send(httpRequest)
                     .doOnSubscribe(subscription -> {
                         sendTimeUtc.v = Instant.now();
@@ -300,7 +299,7 @@ public class HttpTransportClient extends TransportClient {
                 requestUri = this.getResourceFeedUri(resourceOperation.resourceType, physicalAddress, request);
                 method = HttpMethod.POST;
                 assert request.getContent() != null;
-                httpRequestMessage = new HttpRequest(method, requestUri.toString());
+                httpRequestMessage = new HttpRequest(method, requestUri.toString(), physicalAddress.getPort());
                 httpRequestMessage.withBody(request.getContent());
                 break;
 
@@ -308,33 +307,33 @@ public class HttpTransportClient extends TransportClient {
                 requestUri = this.getResourceEntryUri(resourceOperation.resourceType, physicalAddress, request);
                 method = HttpMethod.POST;
                 assert request.getContent() != null;
-                httpRequestMessage = new HttpRequest(method, requestUri.toString());
+                httpRequestMessage = new HttpRequest(method, requestUri.toString(), physicalAddress.getPort());
                 httpRequestMessage.withBody(request.getContent());
                 break;
 
             case Delete:
                 requestUri = this.getResourceEntryUri(resourceOperation.resourceType, physicalAddress, request);
                 method = HttpMethod.DELETE;
-                httpRequestMessage = new HttpRequest(method, requestUri.toString());
+                httpRequestMessage = new HttpRequest(method, requestUri.toString(), physicalAddress.getPort());
                 break;
 
             case Read:
                 requestUri = this.getResourceEntryUri(resourceOperation.resourceType, physicalAddress, request);
                 method = HttpMethod.GET;
-                httpRequestMessage = new HttpRequest(method, requestUri.toString());
+                httpRequestMessage = new HttpRequest(method, requestUri.toString(), physicalAddress.getPort());
                 break;
 
             case ReadFeed:
                 requestUri = this.getResourceFeedUri(resourceOperation.resourceType, physicalAddress, request);
                 method = HttpMethod.GET;
-                httpRequestMessage = new HttpRequest(method, requestUri.toString());
+                httpRequestMessage = new HttpRequest(method, requestUri.toString(), physicalAddress.getPort());
                 break;
 
             case Replace:
                 requestUri = this.getResourceEntryUri(resourceOperation.resourceType, physicalAddress, request);
                 method = HttpMethod.PUT;
                 assert request.getContent() != null;
-                httpRequestMessage = new HttpRequest(method, requestUri.toString());
+                httpRequestMessage = new HttpRequest(method, requestUri.toString(), physicalAddress.getPort());
                 httpRequestMessage.withBody(request.getContent());
                 break;
 
@@ -342,7 +341,7 @@ public class HttpTransportClient extends TransportClient {
                 requestUri = this.getResourceEntryUri(resourceOperation.resourceType, physicalAddress, request);
                 method = new HttpMethod("PATCH");
                 assert request.getContent() != null;
-                httpRequestMessage = new HttpRequest(method, requestUri.toString());
+                httpRequestMessage = new HttpRequest(method, requestUri.toString(), physicalAddress.getPort());
                 httpRequestMessage.withBody(request.getContent());
                 break;
 
@@ -351,7 +350,7 @@ public class HttpTransportClient extends TransportClient {
                 requestUri = this.getResourceFeedUri(resourceOperation.resourceType, physicalAddress, request);
                 method = HttpMethod.POST;
                 assert request.getContent() != null;
-                httpRequestMessage = new HttpRequest(method, requestUri.toString());
+                httpRequestMessage = new HttpRequest(method, requestUri.toString(), physicalAddress.getPort());
                 httpRequestMessage.withBody(request.getContent());
                 HttpTransportClient.addHeader(httpRequestMessage.headers(), HttpConstants.HttpHeaders.CONTENT_TYPE, request);
                 break;
@@ -360,20 +359,20 @@ public class HttpTransportClient extends TransportClient {
                 requestUri = this.getResourceFeedUri(resourceOperation.resourceType, physicalAddress, request);
                 method = HttpMethod.POST;
                 assert request.getContent() != null;
-                httpRequestMessage = new HttpRequest(method, requestUri.toString());
+                httpRequestMessage = new HttpRequest(method, requestUri.toString(), physicalAddress.getPort());
                 httpRequestMessage.withBody(request.getContent());
                 break;
 
             case Head:
                 requestUri = this.getResourceEntryUri(resourceOperation.resourceType, physicalAddress, request);
                 method = HttpMethod.HEAD;
-                httpRequestMessage = new HttpRequest(method, requestUri.toString());
+                httpRequestMessage = new HttpRequest(method, requestUri.toString(), physicalAddress.getPort());
                 break;
 
             case HeadFeed:
                 requestUri = this.getResourceFeedUri(resourceOperation.resourceType, physicalAddress, request);
                 method = HttpMethod.HEAD;
-                httpRequestMessage = new HttpRequest(method, requestUri.toString());
+                httpRequestMessage = new HttpRequest(method, requestUri.toString(), physicalAddress.getPort());
                 break;
 
             default:
