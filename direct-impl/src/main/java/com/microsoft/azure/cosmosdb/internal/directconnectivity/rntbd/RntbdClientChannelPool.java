@@ -31,6 +31,7 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelId;
+import io.netty.channel.ChannelPipeline;
 import io.netty.channel.pool.ChannelHealthChecker;
 import io.netty.channel.pool.FixedChannelPool;
 import io.netty.util.concurrent.Future;
@@ -41,13 +42,14 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.net.SocketAddress;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
+import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdReporter.reportIssue;
 
 @JsonSerialize(using = RntbdClientChannelPool.JsonSerializer.class)
 public final class RntbdClientChannelPool extends FixedChannelPool {
@@ -58,6 +60,8 @@ public final class RntbdClientChannelPool extends FixedChannelPool {
     private final ConcurrentHashMap<ChannelId, Channel> atCapacity;
     private final AtomicInteger availableChannelCount;
     private final AtomicBoolean closed;
+
+    private final int maxChannels;
     private final int maxRequestsPerChannel;
 
     /**
@@ -73,6 +77,7 @@ public final class RntbdClientChannelPool extends FixedChannelPool {
         );
 
         this.maxRequestsPerChannel = config.getMaxRequestsPerChannel();
+        this.maxChannels = config.getMaxChannelsPerEndpoint();
         this.availableChannelCount = new AtomicInteger();
         this.atCapacity = new ConcurrentHashMap<>();
         this.closed = new AtomicBoolean();
@@ -113,7 +118,15 @@ public final class RntbdClientChannelPool extends FixedChannelPool {
         return this.availableChannelCount.get();
     }
 
-    public int pendingAcquireCount() {
+    public int maxChannels() {
+        return this.maxChannels;
+    }
+
+    public int maxRequestsPerChannel() {
+        return this.maxRequestsPerChannel;
+    }
+
+    public int pendingAcquisitionCount() {
 
         Field field = pendingAcquireCount.get();
 
@@ -149,7 +162,7 @@ public final class RntbdClientChannelPool extends FixedChannelPool {
     @Override
     protected synchronized Channel pollChannel() {
 
-        final Channel channel = super.pollChannel();
+        Channel channel = super.pollChannel();
 
         if (channel != null) {
             this.availableChannelCount.decrementAndGet();
@@ -160,14 +173,29 @@ public final class RntbdClientChannelPool extends FixedChannelPool {
             return null;
         }
 
-        return this.atCapacity.search(Long.MAX_VALUE, (id, value) -> {
+        channel = this.atCapacity.reduce(Long.MAX_VALUE, (id, value) -> {
+
             if (pendingRequestCount(value) < this.maxRequestsPerChannel) {
+                // Channel has drained sufficiently for us to send a new request on it
                 this.availableChannelCount.decrementAndGet();
                 this.atCapacity.remove(id);
                 return value;
             }
+
+            if (!value.isActive()) {
+                // Channel closed while we were waiting for it to drain and we'll let our super deal with it later
+                super.offerChannel(this.atCapacity.remove(id));
+            }
+
             return null;
-        });
+
+        }, (other, value) -> pendingRequestCount(other) < pendingRequestCount(value) ? other : value);
+
+        if (channel == null) {
+            logger.warn("\n  [RntbdClientChannelPool({})]\n  no channels are available", this);
+        }
+
+        return channel;
     }
 
     /**
@@ -181,7 +209,6 @@ public final class RntbdClientChannelPool extends FixedChannelPool {
     @Override
     protected synchronized boolean offerChannel(final Channel channel) {
 
-        checkArgument(channel.isActive(), "%s inactive", channel);
         final boolean offered;
 
         if (pendingRequestCount(channel) >= this.maxRequestsPerChannel) {
@@ -198,13 +225,46 @@ public final class RntbdClientChannelPool extends FixedChannelPool {
         return offered;
     }
 
-    @Override
-    public String toString() {
-        return RntbdObjectMapper.toJson(this);
+    public SocketAddress remoteAddress() {
+        return this.bootstrap().config().remoteAddress();
     }
 
-    private static int pendingRequestCount(final Channel channel) {
-        return channel.pipeline().get(RntbdRequestManager.class).getPendingRequestCount();
+    public int saturatedChannelCount() {
+        return this.atCapacity.size();
+    }
+
+    @Override
+    public String toString() {
+        return "RntbdClientChannelPool(" + RntbdObjectMapper.toJson(this) + ")";
+    }
+
+    private int pendingRequestCount(final Channel channel) {
+
+        if (channel == null) {
+            reportIssue(logger, this, "channel: null");
+            return Integer.MAX_VALUE;
+        }
+
+        final ChannelPipeline pipeline = channel.pipeline();
+
+        if (pipeline == null) {
+            reportIssue(logger, this, "{} pipeline is null", channel);
+            return Integer.MAX_VALUE;
+        }
+
+        final RntbdRequestManager requestManager = pipeline.get(RntbdRequestManager.class);
+
+        if (requestManager == null) {
+            if (channel.isActive()) {
+                reportIssue(logger, this, "{} active and pipeline.requestManager is null", channel);
+                channel.close();
+            } else {
+                logger.warn("\n  [{}]\n  {} closed", this, channel);
+            }
+            return Integer.MAX_VALUE;
+        }
+
+        return requestManager.getPendingRequestCount();
     }
 
     private void throwIfClosed() {
@@ -225,13 +285,17 @@ public final class RntbdClientChannelPool extends FixedChannelPool {
 
         @Override
         public void serialize(RntbdClientChannelPool value, JsonGenerator generator, SerializerProvider provider) throws IOException {
-
             generator.writeStartObject();
+            generator.writeStringField("remoteAddress", value.remoteAddress().toString());
+            generator.writeNumberField("maxChannels", value.maxChannels);
+            generator.writeNumberField("maxRequestsPerChannel", value.maxRequestsPerChannel);
+            generator.writeObjectFieldStart("state");
+            generator.writeBooleanField("isClosed", value.closed.get());
             generator.writeNumberField("acquiredChannelCount", value.acquiredChannelCount());
             generator.writeNumberField("availableChannelCount", value.availableChannelCount());
-            generator.writeNumberField("maxRequestsPerChannel", value.maxRequestsPerChannel);
-            generator.writeNumberField("pendingAcquisitionCount", value.pendingAcquireCount());
-            generator.writeBooleanField("isClosed", value.closed.get());
+            generator.writeNumberField("saturatedChannelCount", value.saturatedChannelCount());
+            generator.writeNumberField("pendingAcquisitionCount", value.pendingAcquisitionCount());
+            generator.writeEndObject();
             generator.writeEndObject();
         }
     }

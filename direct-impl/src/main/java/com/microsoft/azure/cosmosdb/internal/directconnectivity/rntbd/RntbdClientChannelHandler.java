@@ -102,7 +102,6 @@ public class RntbdClientChannelHandler extends ChannelInitializer<Channel> imple
      *     (RntbdRequestEncoder#0 = com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdRequestEncoder),
      *     (WriteTimeoutHandler#0 = io.netty.handler.timeout.WriteTimeoutHandler),
      *     (RntbdRequestManager#0 = com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdRequestManager),
-     *     (SimpleChannelPool$1#0 = io.netty.channel.pool.SimpleChannelPool$1)
      * }
      * }</pre>
      *
@@ -141,5 +140,4 @@ public class RntbdClientChannelHandler extends ChannelInitializer<Channel> imple
             new SslHandler(sslEngine)
         );
     }
-
 }
