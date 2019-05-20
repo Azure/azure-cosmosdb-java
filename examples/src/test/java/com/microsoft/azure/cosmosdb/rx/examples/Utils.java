@@ -23,10 +23,10 @@
 
 package com.microsoft.azure.cosmosdb.rx.examples;
 
+import com.microsoft.azure.cosmos.DatabaseForTest;
 import com.microsoft.azure.cosmosdb.ConnectionMode;
 import com.microsoft.azure.cosmosdb.ConnectionPolicy;
 import com.microsoft.azure.cosmosdb.Database;
-import com.microsoft.azure.cosmosdb.DatabaseForTest;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.ResourceResponse;

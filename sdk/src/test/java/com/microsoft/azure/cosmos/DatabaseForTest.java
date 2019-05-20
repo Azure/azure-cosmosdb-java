@@ -21,13 +21,21 @@
  * SOFTWARE.
  */
 
-package com.microsoft.azure.cosmosdb;
+package com.microsoft.azure.cosmos;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import rx.Observable;
+
+import com.microsoft.azure.cosmos.CosmosDatabaseSettings;
+import com.microsoft.azure.cosmosdb.FeedResponse;
+import com.microsoft.azure.cosmosdb.SqlParameter;
+import com.microsoft.azure.cosmosdb.SqlParameterCollection;
+import com.microsoft.azure.cosmosdb.SqlQuerySpec;
+
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -44,9 +52,9 @@ public class DatabaseForTest {
     private static DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss");
 
     public LocalDateTime createdTime;
-    public Database createdDatabase;
+    public CosmosDatabase createdDatabase;
 
-    private DatabaseForTest(Database db, LocalDateTime createdTime) {
+    private DatabaseForTest(CosmosDatabase db, LocalDateTime createdTime) {
         this.createdDatabase = db;
         this.createdTime = createdTime;
     }
@@ -63,8 +71,8 @@ public class DatabaseForTest {
         return SHARED_DB_ID_PREFIX + DELIMITER + TIME_FORMATTER.format(LocalDateTime.now()) + DELIMITER + RandomStringUtils.randomAlphabetic(3);
     }
 
-    private static DatabaseForTest from(Database db) {
-        if (db == null || db.getId() == null || db.getSelfLink() == null) {
+    private static DatabaseForTest from(CosmosDatabase db) {
+        if (db == null || db.getId() == null || db.getLink() == null) {
             return null;
         }
 
@@ -90,10 +98,9 @@ public class DatabaseForTest {
     }
 
     public static DatabaseForTest create(DatabaseManager client) {
-        Database dbDef = new Database();
-        dbDef.setId(generateId());
+        CosmosDatabaseSettings dbDef = new CosmosDatabaseSettings(generateId());
 
-        Database db = client.createDatabase(dbDef).toBlocking().single().getResource();
+        CosmosDatabase db = client.createDatabase(dbDef).block().getDatabase();
         DatabaseForTest dbForTest = DatabaseForTest.from(db);
         assertThat(dbForTest).isNotNull();
         return dbForTest;
@@ -101,26 +108,30 @@ public class DatabaseForTest {
 
     public static void cleanupStaleTestDatabases(DatabaseManager client) {
         logger.info("Cleaning stale test databases ...");
-        List<Database> dbs = client.queryDatabases(
+        List<CosmosDatabaseSettings> dbs = client.queryDatabases(
                 new SqlQuerySpec("SELECT * FROM c WHERE STARTSWITH(c.id, @PREFIX)",
                                  new SqlParameterCollection(new SqlParameter("@PREFIX", DatabaseForTest.SHARED_DB_ID_PREFIX))))
-                .flatMap(page -> Observable.from(page.getResults())).toList().toBlocking().single();
+                .flatMap(page -> Flux.fromIterable(page.getResults())).collectList().block();
 
-        for (Database db : dbs) {
+        for (CosmosDatabaseSettings db : dbs) {
             assertThat(db.getId()).startsWith(DatabaseForTest.SHARED_DB_ID_PREFIX);
 
-            DatabaseForTest dbForTest = DatabaseForTest.from(db);
+            DatabaseForTest dbForTest = DatabaseForTest.from(client.getDatabase(db.getId()));
 
             if (db != null && dbForTest.isStale()) {
                 logger.info("Deleting database {}", db.getId());
-                client.deleteDatabase(db.getId()).toBlocking().single();
+                dbForTest.deleteDatabase(db.getId());
             }
         }
     }
 
+    private void deleteDatabase(String id) {
+        this.createdDatabase.delete().block();
+    }
+
     public interface DatabaseManager {
-        Observable<FeedResponse<Database>> queryDatabases(SqlQuerySpec query);
-        Observable<ResourceResponse<Database>> createDatabase(Database databaseDefinition);
-        Observable<ResourceResponse<Database>> deleteDatabase(String id);
+        Flux<FeedResponse<CosmosDatabaseSettings>> queryDatabases(SqlQuerySpec query);
+        Mono<CosmosDatabaseResponse> createDatabase(CosmosDatabaseSettings databaseDefinition);
+        CosmosDatabase getDatabase(String id);
     }
 }

@@ -24,12 +24,12 @@ package com.microsoft.azure.cosmosdb.rx;
 
 import java.util.List;
 
-import com.microsoft.azure.cosmosdb.DatabaseForTest;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
+import com.microsoft.azure.cosmos.DatabaseForTest;
 import com.microsoft.azure.cosmosdb.Database;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.Offer;

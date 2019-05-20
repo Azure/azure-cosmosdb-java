@@ -41,7 +41,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.microsoft.azure.cosmosdb.DataType;
-import com.microsoft.azure.cosmosdb.DatabaseForTest;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.IncludedPath;
 import com.microsoft.azure.cosmosdb.Index;
@@ -52,6 +51,10 @@ import com.microsoft.azure.cosmosdb.Undefined;
 import com.microsoft.azure.cosmosdb.internal.PathParser;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.Protocol;
 import com.microsoft.azure.cosmosdb.rx.internal.Configs;
+
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
 import org.apache.commons.lang3.StringUtils;
 import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
@@ -62,14 +65,23 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.DataProvider;
 
+import com.microsoft.azure.cosmos.CosmosClient;
+import com.microsoft.azure.cosmos.CosmosConfiguration;
+import com.microsoft.azure.cosmos.CosmosConfiguration.Builder;
+import com.microsoft.azure.cosmos.CosmosContainer;
+import com.microsoft.azure.cosmos.CosmosContainerRequestOptions;
+import com.microsoft.azure.cosmos.CosmosContainerSettings;
+import com.microsoft.azure.cosmos.CosmosDatabase;
+import com.microsoft.azure.cosmos.CosmosDatabaseResponse;
+import com.microsoft.azure.cosmos.CosmosDatabaseSettings;
+import com.microsoft.azure.cosmos.CosmosItemRequestOptions;
+import com.microsoft.azure.cosmos.DatabaseForTest;
 import com.microsoft.azure.cosmosdb.CompositePath;
 import com.microsoft.azure.cosmosdb.CompositePathSortOrder;
 import com.microsoft.azure.cosmosdb.ConnectionMode;
 import com.microsoft.azure.cosmosdb.ConnectionPolicy;
 import com.microsoft.azure.cosmosdb.ConsistencyLevel;
-import com.microsoft.azure.cosmosdb.Database;
 import com.microsoft.azure.cosmosdb.Document;
-import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.PartitionKey;
@@ -78,7 +90,6 @@ import com.microsoft.azure.cosmosdb.RequestOptions;
 import com.microsoft.azure.cosmosdb.Resource;
 import com.microsoft.azure.cosmosdb.ResourceResponse;
 import com.microsoft.azure.cosmosdb.User;
-import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient.Builder;
 
 import org.testng.annotations.Test;
 import rx.Observable;
@@ -102,14 +113,11 @@ public class TestSuiteBase {
     
     protected static ConsistencyLevel accountConsistency;
 
-    protected Builder clientBuilder;
+    protected CosmosConfiguration clientBuilder;
 
-    protected static Database SHARED_DATABASE;
-    protected static DocumentCollection SHARED_MULTI_PARTITION_COLLECTION;
-    protected static DocumentCollection SHARED_SINGLE_PARTITION_COLLECTION;
-    protected static DocumentCollection SHARED_SINGLE_PARTITION_COLLECTION_WITHOUT_PARTITION_KEY;
-    protected static DocumentCollection SHARED_MULTI_PARTITION_COLLECTION_WITH_COMPOSITE_AND_SPATIAL_INDEXES;
-
+    protected static CosmosDatabase SHARED_DATABASE;
+    protected static CosmosContainer SHARED_MULTI_PARTITION_COLLECTION;
+    protected static CosmosContainer SHARED_MULTI_PARTITION_COLLECTION_WITH_COMPOSITE_AND_SPATIAL_INDEXES;
 
     protected TestSuiteBase() {
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -124,9 +132,9 @@ public class TestSuiteBase {
         if (this.clientBuilder != null) {
             logger.info("Starting {}::{} using {} {} mode with {} consistency",
                         method.getDeclaringClass().getSimpleName(), method.getName(),
-                        this.clientBuilder.connectionPolicy.getConnectionMode(),
-                        this.clientBuilder.configs.getProtocol(),
-                        this.clientBuilder.desiredConsistencyLevel);
+                        this.clientBuilder.getConnectionPolicy().getConnectionMode(),
+                        this.clientBuilder.getConfigs().getProtocol(),
+                        this.clientBuilder.getDesiredConsistencyLevel());
             return;
         }
         logger.info("Starting {}::{}", method.getDeclaringClass().getSimpleName(), method.getName());
@@ -139,46 +147,43 @@ public class TestSuiteBase {
     }
 
     private static class DatabaseManagerImpl implements DatabaseForTest.DatabaseManager {
-        public static DatabaseManagerImpl getInstance(AsyncDocumentClient client) {
+        public static DatabaseManagerImpl getInstance(CosmosClient client) {
             return new DatabaseManagerImpl(client);
         }
 
-        private final AsyncDocumentClient client;
+        private final CosmosClient client;
 
-        private DatabaseManagerImpl(AsyncDocumentClient client) {
+        private DatabaseManagerImpl(CosmosClient client) {
             this.client = client;
         }
 
         @Override
-        public Observable<FeedResponse<Database>> queryDatabases(SqlQuerySpec query) {
+        public Flux<FeedResponse<CosmosDatabaseSettings>> queryDatabases(SqlQuerySpec query) {
             return client.queryDatabases(query, null);
         }
 
         @Override
-        public Observable<ResourceResponse<Database>> createDatabase(Database databaseDefinition) {
+        public Mono<CosmosDatabaseResponse> createDatabase(CosmosDatabaseSettings databaseDefinition) {
             return client.createDatabase(databaseDefinition, null);
         }
 
         @Override
-        public Observable<ResourceResponse<Database>> deleteDatabase(String id) {
-
-            return client.deleteDatabase("dbs/" + id, null);
+        public CosmosDatabase getDatabase(String id) {
+            return client.getDatabase(id);
         }
     }
 
     @BeforeSuite(groups = { "simple", "long", "direct", "multi-master", "emulator", "non-emulator" }, timeOut = SUITE_SETUP_TIMEOUT)
     public static void beforeSuite() {
         logger.info("beforeSuite Started");
-        AsyncDocumentClient houseKeepingClient = createGatewayHouseKeepingDocumentClient().build();
+        CosmosClient houseKeepingClient = CosmosClient.create(createGatewayHouseKeepingDocumentClient());
         try {
             DatabaseForTest dbForTest = DatabaseForTest.create(DatabaseManagerImpl.getInstance(houseKeepingClient));
             SHARED_DATABASE = dbForTest.createdDatabase;
-            RequestOptions options = new RequestOptions();
+            CosmosContainerRequestOptions options = new CosmosContainerRequestOptions();
             options.setOfferThroughput(10100);
-            SHARED_MULTI_PARTITION_COLLECTION = createCollection(houseKeepingClient, SHARED_DATABASE.getId(), getCollectionDefinitionWithRangeRangeIndex(), options);
-            SHARED_SINGLE_PARTITION_COLLECTION = createCollection(houseKeepingClient, SHARED_DATABASE.getId(), getCollectionDefinition(), null);
-            SHARED_SINGLE_PARTITION_COLLECTION_WITHOUT_PARTITION_KEY = createCollection(houseKeepingClient, SHARED_DATABASE.getId(), getCollectionDefinitionSinglePartitionWithoutPartitionKey());
-            SHARED_MULTI_PARTITION_COLLECTION_WITH_COMPOSITE_AND_SPATIAL_INDEXES = createCollection(houseKeepingClient, SHARED_DATABASE.getId(), getCollectionDefinitionMultiPartitionWithCompositeAndSpatialIndexes(), options);
+            SHARED_MULTI_PARTITION_COLLECTION = createCollection(SHARED_DATABASE, getCollectionDefinitionWithRangeRangeIndex(), options);
+            SHARED_MULTI_PARTITION_COLLECTION_WITH_COMPOSITE_AND_SPATIAL_INDEXES = createCollection(SHARED_DATABASE, getCollectionDefinitionMultiPartitionWithCompositeAndSpatialIndexes(), options);
         } finally {
             houseKeepingClient.close();
         }
@@ -187,33 +192,34 @@ public class TestSuiteBase {
     @AfterSuite(groups = { "simple", "long", "direct", "multi-master", "emulator", "non-emulator" }, timeOut = SUITE_SHUTDOWN_TIMEOUT)
     public static void afterSuite() {
         logger.info("afterSuite Started");
-        AsyncDocumentClient houseKeepingClient = createGatewayHouseKeepingDocumentClient().build();
+        CosmosClient houseKeepingClient = CosmosClient.create(createGatewayHouseKeepingDocumentClient());
         try {
-            safeDeleteDatabase(houseKeepingClient, SHARED_DATABASE);
+            safeDeleteDatabase(SHARED_DATABASE);
             DatabaseForTest.cleanupStaleTestDatabases(DatabaseManagerImpl.getInstance(houseKeepingClient));
         } finally {
             safeClose(houseKeepingClient);
         }
     }
 
-    protected static void truncateCollection(DocumentCollection collection) {
-        logger.info("Truncating collection {} ...", collection.getId());
-        AsyncDocumentClient houseKeepingClient = createGatewayHouseKeepingDocumentClient().build();
+    protected static void truncateCollection(String databaseId, CosmosContainerSettings cosmosContainerSettings) {
+        String cosmosContainerId = cosmosContainerSettings.getId();
+        logger.info("Truncating collection {} ...", cosmosContainerId);
+        CosmosClient houseKeepingClient = CosmosClient.create(createGatewayHouseKeepingDocumentClient());
         try {
-            List<String> paths = collection.getPartitionKey().getPaths();
-
+            List<String> paths = cosmosContainerSettings.getPartitionKey().getPaths();
+            CosmosContainer cosmosContainer = houseKeepingClient.getDatabase(databaseId).getContainer(cosmosContainerId).read().block().getContainer();
             FeedOptions options = new FeedOptions();
             options.setMaxDegreeOfParallelism(-1);
             options.setEnableCrossPartitionQuery(true);
             options.setMaxItemCount(100);
 
-            logger.info("Truncating collection {} documents ...", collection.getId());
+            logger.info("Truncating collection {} documents ...", cosmosContainer.getId());
 
-            houseKeepingClient.queryDocuments(collection.getSelfLink(), "SELECT * FROM root", options)
-                    .flatMap(page -> Observable.from(page.getResults()))
+            cosmosContainer.queryItems("SELECT * FROM root", options)
+                    .flatMap(page -> Flux.fromIterable(page.getResults()))
                     .flatMap(doc -> {
-                        RequestOptions requestOptions = new RequestOptions();
-
+                        
+                        CosmosItemRequestOptions cosmosItemRequestOptions = new CosmosItemRequestOptions();
                         if (paths != null && !paths.isEmpty()) {
                             List<String> pkPath = PathParser.getPathParts(paths.get(0));
                             Object propertyValue = doc.getObjectByPath(pkPath);
@@ -221,15 +227,14 @@ public class TestSuiteBase {
                                 propertyValue = Undefined.Value();
                             }
 
-                            requestOptions.setPartitionKey(new PartitionKey(propertyValue));
+                            cosmosItemRequestOptions.setPartitionKey(new PartitionKey(propertyValue));
                         }
+                        return cosmosContainer.getItem("{'id':'" + doc.getId() + "}").delete(cosmosItemRequestOptions);
+                    }).collectList().block();
 
-                        return houseKeepingClient.deleteDocument(doc.getSelfLink(), requestOptions);
-                    }).toCompletable().await();
+            logger.info("Truncating collection {} triggers ...", cosmosContainerId);
 
-            logger.info("Truncating collection {} triggers ...", collection.getId());
-
-            houseKeepingClient.queryTriggers(collection.getSelfLink(), "SELECT * FROM root", options)
+            houseKeepingClient.queryTriggers("SELECT * FROM root", options)
                     .flatMap(page -> Observable.from(page.getResults()))
                     .flatMap(trigger -> {
                         RequestOptions requestOptions = new RequestOptions();
@@ -306,29 +311,27 @@ public class TestSuiteBase {
         return collectionDefinition;
     }
 
-
-    public static DocumentCollection createCollection(String databaseId,
-                                                      DocumentCollection collection,
-                                                      RequestOptions options) {
-        AsyncDocumentClient client = createGatewayHouseKeepingDocumentClient().build();
+    public static CosmosContainer createCollection(String databaseId,CosmosContainerSettings cosmosContainerSettings,
+            CosmosContainerRequestOptions options) {
+        CosmosClient client = new CosmosClient(createGatewayHouseKeepingDocumentClient());
         try {
-            return client.createCollection("dbs/" + databaseId, collection, options).toBlocking().single().getResource();
+            return client.getDatabase(databaseId).createContainer(cosmosContainerSettings, options).block().getContainer();
         } finally {
             client.close();
         }
     }
 
-    public static DocumentCollection createCollection(AsyncDocumentClient client, String databaseId,
-                                                      DocumentCollection collection, RequestOptions options) {
-        return client.createCollection("dbs/" + databaseId, collection, options).toBlocking().single().getResource();
+    public static CosmosContainer createCollection(CosmosDatabase database, CosmosContainerSettings cosmosContainerSettings,
+            CosmosContainerRequestOptions options) {
+        return database.createContainer(cosmosContainerSettings, options).block().getContainer();
     }
 
-    public static DocumentCollection createCollection(AsyncDocumentClient client, String databaseId,
+    public static DocumentCollection createCollection(CosmosClient client, String databaseId,
                                                       DocumentCollection collection) {
         return client.createCollection("dbs/" + databaseId, collection, null).toBlocking().single().getResource();
     }
 
-    private static DocumentCollection getCollectionDefinitionMultiPartitionWithCompositeAndSpatialIndexes() {
+    private static CosmosContainerSettings getCollectionDefinitionMultiPartitionWithCompositeAndSpatialIndexes() {
         final String NUMBER_FIELD = "numberField";
         final String STRING_FIELD = "stringField";
         final String NUMBER_FIELD_2 = "numberField2";
@@ -342,7 +345,12 @@ public class TestSuiteBase {
         final String LONG_STRING_FIELD = "longStringField";
         final String PARTITION_KEY = "pk";
 
-        DocumentCollection documentCollection = new DocumentCollection();
+        PartitionKeyDefinition partitionKeyDefinition = new PartitionKeyDefinition();
+        ArrayList<String> partitionKeyPaths = new ArrayList<String>();
+        partitionKeyPaths.add("/" + PARTITION_KEY);
+        partitionKeyDefinition.setPaths(partitionKeyPaths);
+
+        CosmosContainerSettings cosmosContainerSettings = new CosmosContainerSettings(UUID.randomUUID().toString(), partitionKeyDefinition);
 
         IndexingPolicy indexingPolicy = new IndexingPolicy();
         Collection<ArrayList<CompositePath>> compositeIndexes = new ArrayList<ArrayList<CompositePath>>();
@@ -431,28 +439,20 @@ public class TestSuiteBase {
         compositeIndexes.add(compositeIndexLongStrings);
 
         indexingPolicy.setCompositeIndexes(compositeIndexes);
-        documentCollection.setIndexingPolicy(indexingPolicy);
+        cosmosContainerSettings.setIndexingPolicy(indexingPolicy);
 
-        PartitionKeyDefinition partitionKeyDefinition = new PartitionKeyDefinition();
-        ArrayList<String> partitionKeyPaths = new ArrayList<String>();
-        partitionKeyPaths.add("/" + PARTITION_KEY);
-        partitionKeyDefinition.setPaths(partitionKeyPaths);
-        documentCollection.setPartitionKey(partitionKeyDefinition);
-
-        documentCollection.setId(UUID.randomUUID().toString());
-
-        return documentCollection;
+        return cosmosContainerSettings;
     }
 
-    public static Document createDocument(AsyncDocumentClient client, String databaseId, String collectionId, Document document) {
+    public static Document createDocument(CosmosClient client, String databaseId, String collectionId, Document document) {
         return createDocument(client, databaseId, collectionId, document, null);
     }
 
-    public static Document createDocument(AsyncDocumentClient client, String databaseId, String collectionId, Document document, RequestOptions options) {
+    public static Document createDocument(CosmosClient client, String databaseId, String collectionId, Document document, RequestOptions options) {
         return client.createDocument(Utils.getCollectionNameLink(databaseId, collectionId), document, options, false).toBlocking().single().getResource();
     }
 
-    public Observable<ResourceResponse<Document>> bulkInsert(AsyncDocumentClient client,
+    public Observable<ResourceResponse<Document>> bulkInsert(CosmosClient client,
                                                              String collectionLink,
                                                              List<Document> documentDefinitionList,
                                                              int concurrencyLevel) {
@@ -464,13 +464,13 @@ public class TestSuiteBase {
         return Observable.merge(result, concurrencyLevel);
     }
 
-    public Observable<ResourceResponse<Document>> bulkInsert(AsyncDocumentClient client,
+    public Observable<ResourceResponse<Document>> bulkInsert(CosmosClient client,
                                                              String collectionLink,
                                                              List<Document> documentDefinitionList) {
         return bulkInsert(client, collectionLink, documentDefinitionList, DEFAULT_BULK_INSERT_CONCURRENCY_LEVEL);
     }
 
-    public List<Document> bulkInsertBlocking(AsyncDocumentClient client,
+    public List<Document> bulkInsertBlocking(CosmosClient client,
                                              String collectionLink,
                                              List<Document> documentDefinitionList) {
         return bulkInsert(client, collectionLink, documentDefinitionList, DEFAULT_BULK_INSERT_CONCURRENCY_LEVEL)
@@ -480,20 +480,20 @@ public class TestSuiteBase {
                 .single();
     }
 
-    public static ConsistencyLevel getAccountDefaultConsistencyLevel(AsyncDocumentClient client) {
+    public static ConsistencyLevel getAccountDefaultConsistencyLevel(CosmosClient client) {
         return client.getDatabaseAccount().toBlocking().single().getConsistencyPolicy().getDefaultConsistencyLevel();
     }
 
-    public static User createUser(AsyncDocumentClient client, String databaseId, User user) {
+    public static User createUser(CosmosClient client, String databaseId, User user) {
         return client.createUser("dbs/" + databaseId, user, null).toBlocking().single().getResource();
     }
 
-    public static User safeCreateUser(AsyncDocumentClient client, String databaseId, User user) {
+    public static User safeCreateUser(CosmosClient client, String databaseId, User user) {
         deleteUserIfExists(client, databaseId, user.getId());
         return createUser(client, databaseId, user);
     }
 
-    private static DocumentCollection safeCreateCollection(AsyncDocumentClient client, String databaseId, DocumentCollection collection, RequestOptions options) {
+    private static DocumentCollection safeCreateCollection(CosmosClient client, String databaseId, DocumentCollection collection, RequestOptions options) {
         deleteCollectionIfExists(client, databaseId, collection.getId());
         return createCollection(client, databaseId, collection, options);
     }
@@ -515,7 +515,7 @@ public class TestSuiteBase {
         return collectionDefinition;
     }
 
-    static protected DocumentCollection getCollectionDefinitionWithRangeRangeIndex() {
+    static protected CosmosContainerSettings getCollectionDefinitionWithRangeRangeIndex() {
         PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition();
         ArrayList<String> paths = new ArrayList<>();
         paths.add("/mypk");
@@ -536,15 +536,13 @@ public class TestSuiteBase {
         includedPaths.add(includedPath);
         indexingPolicy.setIncludedPaths(includedPaths);
 
-        DocumentCollection collectionDefinition = new DocumentCollection();
-        collectionDefinition.setIndexingPolicy(indexingPolicy);
-        collectionDefinition.setId(UUID.randomUUID().toString());
-        collectionDefinition.setPartitionKey(partitionKeyDef);
+        CosmosContainerSettings cosmosContainerSettings = new CosmosContainerSettings(UUID.randomUUID().toString(), partitionKeyDef);
+        cosmosContainerSettings.setIndexingPolicy(indexingPolicy);
 
-        return collectionDefinition;
+        return cosmosContainerSettings;
     }
 
-    public static void deleteCollectionIfExists(AsyncDocumentClient client, String databaseId, String collectionId) {
+    public static void deleteCollectionIfExists(CosmosClient client, String databaseId, String collectionId) {
         List<DocumentCollection> res = client.queryCollections("dbs/" + databaseId,
                                                                String.format("SELECT * FROM root r where r.id = '%s'", collectionId), null).toBlocking().single()
                 .getResults();
@@ -553,11 +551,11 @@ public class TestSuiteBase {
         }
     }
 
-    public static void deleteCollection(AsyncDocumentClient client, String collectionLink) {
+    public static void deleteCollection(CosmosClient client, String collectionLink) {
         client.deleteCollection(collectionLink, null).toBlocking().single();
     }
 
-    public static void deleteDocumentIfExists(AsyncDocumentClient client, String databaseId, String collectionId, String docId) {
+    public static void deleteDocumentIfExists(CosmosClient client, String databaseId, String collectionId, String docId) {
         FeedOptions options = new FeedOptions();
         options.setPartitionKey(new PartitionKey(docId));
         List<Document> res = client
@@ -568,7 +566,7 @@ public class TestSuiteBase {
         }
     }
 
-    public static void safeDeleteDocument(AsyncDocumentClient client, String documentLink, RequestOptions options) {
+    public static void safeDeleteDocument(CosmosClient client, String documentLink, RequestOptions options) {
         if (client != null && documentLink != null) {
             try {
                 client.deleteDocument(documentLink, options).toBlocking().single();
@@ -581,11 +579,11 @@ public class TestSuiteBase {
         }
     }
 
-    public static void deleteDocument(AsyncDocumentClient client, String documentLink) {
+    public static void deleteDocument(CosmosClient client, String documentLink) {
         client.deleteDocument(documentLink, null).toBlocking().single();
     }
 
-    public static void deleteUserIfExists(AsyncDocumentClient client, String databaseId, String userId) {
+    public static void deleteUserIfExists(CosmosClient client, String databaseId, String userId) {
         List<User> res = client
                 .queryUsers("dbs/" + databaseId, String.format("SELECT * FROM root r where r.id = '%s'", userId), null)
                 .toBlocking().single().getResults();
@@ -594,7 +592,7 @@ public class TestSuiteBase {
         }
     }
 
-    public static void deleteUser(AsyncDocumentClient client, String userLink) {
+    public static void deleteUser(CosmosClient client, String userLink) {
         client.deleteUser(userLink, null).toBlocking().single();
     }
 
@@ -602,23 +600,17 @@ public class TestSuiteBase {
         return database.getSelfLink();
     }
 
-    static private Database safeCreateDatabase(AsyncDocumentClient client, Database database) {
-        safeDeleteDatabase(client, database.getId());
-        return createDatabase(client, database);
+    static private CosmosDatabase safeCreateDatabase(CosmosClient client, CosmosDatabaseSettings databaseSettings) {
+        safeDeleteDatabase(client.getDatabase(databaseSettings.getId()));
+        return client.createDatabase(databaseSettings).block().getDatabase();
     }
 
-    static protected Database createDatabase(AsyncDocumentClient client, Database database) {
-        Observable<ResourceResponse<Database>> databaseObservable = client.createDatabase(database, null);
-        return databaseObservable.toBlocking().single().getResource();
+    static protected CosmosDatabase createDatabase(CosmosClient client, String databaseId) {
+        CosmosDatabaseSettings databaseSettings = new CosmosDatabaseSettings(databaseId);
+        return client.createDatabase(databaseSettings).block().getDatabase();
     }
 
-    static protected Database createDatabase(AsyncDocumentClient client, String databaseId) {
-        Database databaseDefinition = new Database();
-        databaseDefinition.setId(databaseId);
-        return createDatabase(client, databaseDefinition);
-    }
-
-    static protected Database createDatabaseIfNotExists(AsyncDocumentClient client, String databaseId) {
+    static protected Database createDatabaseIfNotExists(CosmosClient client, String databaseId) {
         return client.queryDatabases(String.format("SELECT * FROM r where r.id = '%s'", databaseId), null).flatMap(p -> Observable.from(p.getResults())).switchIfEmpty(
                 Observable.defer(() -> {
 
@@ -630,22 +622,16 @@ public class TestSuiteBase {
         ).toBlocking().single();
     }
 
-    static protected void safeDeleteDatabase(AsyncDocumentClient client, Database database) {
+    static protected void safeDeleteDatabase(CosmosDatabase database) {
         if (database != null) {
-            safeDeleteDatabase(client, database.getId());
-        }
-    }
-
-    static protected void safeDeleteDatabase(AsyncDocumentClient client, String databaseId) {
-        if (client != null) {
             try {
-                client.deleteDatabase(Utils.getDatabaseNameLink(databaseId), null).toBlocking().single();
+                database.delete().block();
             } catch (Exception e) {
             }
         }
     }
 
-    static protected void safeDeleteAllCollections(AsyncDocumentClient client, Database database) {
+    static protected void safeDeleteAllCollections(CosmosClient client, Database database) {
         if (database != null) {
             List<DocumentCollection> collections = client.readCollections(database.getSelfLink(), null)
                     .flatMap(p -> Observable.from(p.getResults()))
@@ -659,7 +645,7 @@ public class TestSuiteBase {
         }
     }
 
-    static protected void safeDeleteCollection(AsyncDocumentClient client, DocumentCollection collection) {
+    static protected void safeDeleteCollection(CosmosClient client, DocumentCollection collection) {
         if (client != null && collection != null) {
             try {
                 client.deleteCollection(collection.getSelfLink(), null).toBlocking().single();
@@ -668,7 +654,7 @@ public class TestSuiteBase {
         }
     }
 
-    static protected void safeDeleteCollection(AsyncDocumentClient client, String databaseId, String collectionId) {
+    static protected void safeDeleteCollection(CosmosClient client, String databaseId, String collectionId) {
         if (client != null && databaseId != null && collectionId != null) {
             try {
                 client.deleteCollection("/dbs/" + databaseId + "/colls/" + collectionId, null).toBlocking().single();
@@ -677,7 +663,7 @@ public class TestSuiteBase {
         }
     }
 
-    static protected void safeClose(AsyncDocumentClient client) {
+    static protected void safeClose(CosmosClient client) {
         if (client != null) {
             try {
                 client.close();
@@ -834,23 +820,23 @@ public class TestSuiteBase {
         List<String> preferredLocation = parsePreferredLocation(TestConfigurations.PREFERRED_LOCATIONS);
         boolean isMultiMasterEnabled = preferredLocation != null && accountConsistency == ConsistencyLevel.Session;
 
-        List<Builder> builders = new ArrayList<>();
-        builders.add(createGatewayRxDocumentClient(ConsistencyLevel.Session, false, null));
+        List<CosmosConfiguration> cosmosConfigurations = new ArrayList<>();
+        cosmosConfigurations.add(createGatewayRxDocumentClient(ConsistencyLevel.Session, false, null));
 
         for (Protocol protocol : protocols) {
-            testConsistencies.forEach(consistencyLevel -> builders.add(createDirectRxDocumentClient(consistencyLevel,
+            testConsistencies.forEach(consistencyLevel -> cosmosConfigurations.add(createDirectRxDocumentClient(consistencyLevel,
                                                                                                     protocol,
                                                                                                     isMultiMasterEnabled,
                                                                                                     preferredLocation)));
         }
 
-        builders.forEach(b -> logger.info("Will Use ConnectionMode [{}], Consistency [{}], Protocol [{}]",
-                                          b.connectionPolicy.getConnectionMode(),
-                                          b.desiredConsistencyLevel,
-                                          b.configs.getProtocol()
+        cosmosConfigurations.forEach(c -> logger.info("Will Use ConnectionMode [{}], Consistency [{}], Protocol [{}]",
+                                          c.getConnectionPolicy().getConnectionMode(),
+                                          c.getDesiredConsistencyLevel(),
+                                          c.getConfigs().getProtocol()
         ));
 
-        return builders.stream().map(b -> new Object[]{b}).collect(Collectors.toList()).toArray(new Object[0][]);
+        return cosmosConfigurations.stream().map(b -> new Object[]{b}).collect(Collectors.toList()).toArray(new Object[0][]);
     }
 
     @DataProvider
@@ -905,53 +891,55 @@ public class TestSuiteBase {
         List<String> preferredLocation = parsePreferredLocation(TestConfigurations.PREFERRED_LOCATIONS);
         boolean isMultiMasterEnabled = preferredLocation != null && accountConsistency == ConsistencyLevel.Session;
 
-        List<Builder> builders = new ArrayList<>();
-        builders.add(createGatewayRxDocumentClient(ConsistencyLevel.Session, isMultiMasterEnabled, preferredLocation));
+        List<CosmosConfiguration> cosmosConfigurations = new ArrayList<>();
+        cosmosConfigurations.add(createGatewayRxDocumentClient(ConsistencyLevel.Session, isMultiMasterEnabled, preferredLocation));
 
         for (Protocol protocol : protocols) {
-            testConsistencies.forEach(consistencyLevel -> builders.add(createDirectRxDocumentClient(consistencyLevel,
+            testConsistencies.forEach(consistencyLevel -> cosmosConfigurations.add(createDirectRxDocumentClient(consistencyLevel,
                                                                                                     protocol,
                                                                                                     isMultiMasterEnabled,
                                                                                                     preferredLocation)));
         }
 
-        builders.forEach(b -> logger.info("Will Use ConnectionMode [{}], Consistency [{}], Protocol [{}]",
-                                          b.connectionPolicy.getConnectionMode(),
-                                          b.desiredConsistencyLevel,
-                                          b.configs.getProtocol()
+        cosmosConfigurations.forEach(c -> logger.info("Will Use ConnectionMode [{}], Consistency [{}], Protocol [{}]",
+                                          c.getConnectionPolicy().getConnectionMode(),
+                                          c.getDesiredConsistencyLevel(),
+                                          c.getConfigs().getProtocol()
         ));
 
-        return builders.stream().map(b -> new Object[]{b}).collect(Collectors.toList()).toArray(new Object[0][]);
+        return cosmosConfigurations.stream().map(c -> new Object[]{c}).collect(Collectors.toList()).toArray(new Object[0][]);
     }
 
-    static protected Builder createGatewayHouseKeepingDocumentClient() {
+    static protected CosmosConfiguration createGatewayHouseKeepingDocumentClient() {
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
         connectionPolicy.setConnectionMode(ConnectionMode.Gateway);
         RetryOptions options = new RetryOptions();
         options.setMaxRetryWaitTimeInSeconds(SUITE_SETUP_TIMEOUT);
         connectionPolicy.setRetryOptions(options);
         return new Builder().withServiceEndpoint(TestConfigurations.HOST)
-                .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
+                .withKeyOrResourceToken(TestConfigurations.MASTER_KEY)
                 .withConnectionPolicy(connectionPolicy)
-                .withConsistencyLevel(ConsistencyLevel.Session);
+                .withConsistencyLevel(ConsistencyLevel.Session)
+                .build();
     }
 
-    static protected Builder createGatewayRxDocumentClient(ConsistencyLevel consistencyLevel, boolean multiMasterEnabled, List<String> preferredLocations) {
+    static protected CosmosConfiguration createGatewayRxDocumentClient(ConsistencyLevel consistencyLevel, boolean multiMasterEnabled, List<String> preferredLocations) {
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
         connectionPolicy.setConnectionMode(ConnectionMode.Gateway);
         connectionPolicy.setUsingMultipleWriteLocations(multiMasterEnabled);
         connectionPolicy.setPreferredLocations(preferredLocations);
         return new Builder().withServiceEndpoint(TestConfigurations.HOST)
-                .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
+                .withKeyOrResourceToken(TestConfigurations.MASTER_KEY)
                 .withConnectionPolicy(connectionPolicy)
-                .withConsistencyLevel(consistencyLevel);
+                .withConsistencyLevel(consistencyLevel)
+                .build();
     }
 
-    static protected Builder createGatewayRxDocumentClient() {
+    static protected CosmosConfiguration createGatewayRxDocumentClient() {
         return createGatewayRxDocumentClient(ConsistencyLevel.Session, false, null);
     }
 
-    static protected Builder createDirectRxDocumentClient(ConsistencyLevel consistencyLevel,
+    static protected CosmosConfiguration createDirectRxDocumentClient(ConsistencyLevel consistencyLevel,
                                                                               Protocol protocol,
                                                                               boolean multiMasterEnabled,
                                                                               List<String> preferredLocations) {
@@ -970,10 +958,11 @@ public class TestSuiteBase {
         doAnswer((Answer<Protocol>)invocation -> protocol).when(configs).getProtocol();
 
         return new Builder().withServiceEndpoint(TestConfigurations.HOST)
-                .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
+                .withKeyOrResourceToken(TestConfigurations.MASTER_KEY)
                 .withConnectionPolicy(connectionPolicy)
                 .withConsistencyLevel(consistencyLevel)
-                .withConfigs(configs);
+                .withConfigs(configs)
+                .build();
     }
 
     protected int expectedNumberOfPages(int totalExpectedResult, int maxPageSize) {

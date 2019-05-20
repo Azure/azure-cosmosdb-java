@@ -26,13 +26,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.UUID;
 
-import com.microsoft.azure.cosmosdb.DatabaseForTest;
 import com.microsoft.azure.cosmosdb.Permission;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
+import com.microsoft.azure.cosmos.DatabaseForTest;
 import com.microsoft.azure.cosmosdb.Database;
 import com.microsoft.azure.cosmosdb.ResourceResponse;
 import com.microsoft.azure.cosmosdb.User;

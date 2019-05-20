@@ -28,7 +28,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.UUID;
 
-import com.microsoft.azure.cosmosdb.DatabaseForTest;
 import com.microsoft.azure.cosmosdb.PartitionKeyDefinition;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -36,6 +35,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
+import com.microsoft.azure.cosmos.DatabaseForTest;
 import com.microsoft.azure.cosmosdb.CompositePath;
 import com.microsoft.azure.cosmosdb.CompositePathSortOrder;
 import com.microsoft.azure.cosmosdb.Database;

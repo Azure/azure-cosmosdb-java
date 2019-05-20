@@ -22,11 +22,11 @@
  */
 package com.microsoft.azure.cosmosdb.rx;
 
+import com.microsoft.azure.cosmos.DatabaseForTest;
 import com.microsoft.azure.cosmosdb.BridgeUtils;
 import com.microsoft.azure.cosmosdb.ConflictResolutionMode;
 import com.microsoft.azure.cosmosdb.ConflictResolutionPolicy;
 import com.microsoft.azure.cosmosdb.Database;
-import com.microsoft.azure.cosmosdb.DatabaseForTest;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.Resource;

@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import com.microsoft.azure.cosmosdb.DatabaseForTest;
 import org.apache.commons.lang3.StringUtils;
 
 import org.testng.annotations.AfterClass;
@@ -35,6 +34,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
+import com.microsoft.azure.cosmos.DatabaseForTest;
 import com.microsoft.azure.cosmosdb.ConnectionPolicy;
 import com.microsoft.azure.cosmosdb.ConsistencyLevel;
 import com.microsoft.azure.cosmosdb.Database;

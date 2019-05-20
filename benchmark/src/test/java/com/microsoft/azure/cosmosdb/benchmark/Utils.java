@@ -23,6 +23,9 @@
 
 package com.microsoft.azure.cosmosdb.benchmark;
 
+import com.microsoft.azure.cosmos.CosmosDatabaseSettings;
+import com.microsoft.azure.cosmos.DatabaseForTest;
+
 /*
  * The MIT License (MIT)
  * Copyright (c) 2018 Microsoft Corporation
@@ -49,7 +52,6 @@ package com.microsoft.azure.cosmosdb.benchmark;
 
 import com.microsoft.azure.cosmosdb.ConnectionPolicy;
 import com.microsoft.azure.cosmosdb.Database;
-import com.microsoft.azure.cosmosdb.DatabaseForTest;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.ResourceResponse;
@@ -57,6 +59,8 @@ import com.microsoft.azure.cosmosdb.RetryOptions;
 import com.microsoft.azure.cosmosdb.SqlQuerySpec;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import com.microsoft.azure.cosmosdb.rx.TestConfigurations;
+
+import reactor.core.publisher.Flux;
 import rx.Observable;
 
 public class Utils {
@@ -125,17 +129,17 @@ public class Utils {
         }
 
         @Override
-        public Observable<FeedResponse<Database>> queryDatabases(SqlQuerySpec query) {
+        public Flux<FeedResponse<CosmosDatabaseSettings>> queryDatabases(SqlQuerySpec query) {
             return client.queryDatabases(query, null);
         }
 
         @Override
-        public Observable<ResourceResponse<Database>> createDatabase(Database databaseDefinition) {
+        public Mono<ResourceResponse<Database>> createDatabase(Database databaseDefinition) {
             return client.createDatabase(databaseDefinition, null);
         }
 
         @Override
-        public Observable<ResourceResponse<Database>> deleteDatabase(String id) {
+        public Mono<ResourceResponse<Database>> deleteDatabase(String id) {
 
             return client.deleteDatabase("dbs/" + id, null);
         }

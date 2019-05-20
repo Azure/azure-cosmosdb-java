@@ -25,34 +25,41 @@ package com.microsoft.azure.cosmos;
 import com.microsoft.azure.cosmosdb.ConnectionPolicy;
 import com.microsoft.azure.cosmosdb.ConsistencyLevel;
 import com.microsoft.azure.cosmosdb.Permission;
+import com.microsoft.azure.cosmosdb.TokenResolver;
+import com.microsoft.azure.cosmosdb.rx.internal.Configs;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 
 public class CosmosConfiguration {
+    private Configs configs;
     private URI serviceEndpoint;
     private String keyOrResourceToken;
     private ConnectionPolicy connectionPolicy;
     private ConsistencyLevel desiredConsistencyLevel;
     private List<Permission> permissions;
+    private TokenResolver tokenResolver;
 
     private CosmosConfiguration(Builder builder) {
+        this.configs = builder.configs;
         this.serviceEndpoint = builder.serviceEndpoint;
         this.keyOrResourceToken = builder.keyOrResourceToken;
         this.connectionPolicy = builder.connectionPolicy;
         this.desiredConsistencyLevel = builder.desiredConsistencyLevel;
         this.permissions = builder.permissions;
+        this.tokenResolver = builder.tokenResolver;
     }
 
     public static class Builder {
 
+        Configs configs = new Configs();
         URI serviceEndpoint;
         String keyOrResourceToken;
         ConnectionPolicy connectionPolicy; //can set a default value here
         ConsistencyLevel desiredConsistencyLevel; //can set a default value here
         List<Permission> permissions; //can set a default value here
-        int eventLoopSize = -1;
+        TokenResolver tokenResolver;
 
         public Builder withServiceEndpoint(String serviceEndpoint) {
             try {
@@ -107,6 +114,27 @@ public class CosmosConfiguration {
             return this;
         }
 
+        /**
+         * The (@link Configs) to be used
+         * @param configs (@link configs)
+         * @return current Builder
+         */
+        public Builder withConfigs(Configs configs) {
+            this.configs = configs;
+            return this;
+        }
+
+        /**
+         * This method will accept functional interface TokenResolver which helps in generation authorization
+         * token per request. AsyncDocumentClient can be successfully initialized with this API without passing any MasterKey, ResourceToken or PermissionFeed.
+         * @param tokenResolver The tokenResolver
+         * @return current Builder.
+         */
+        public Builder withTokenResolver(TokenResolver tokenResolver) {
+            this.tokenResolver = tokenResolver;
+            return this;
+        }
+
         private void ifThrowIllegalArgException(boolean value, String error) {
             if (value) {
                 throw new IllegalArgumentException(error);
@@ -126,19 +154,22 @@ public class CosmosConfiguration {
 
             return new CosmosConfiguration(this);
         }
-
     }
 
     public URI getServiceEndpoint() {
         return serviceEndpoint;
     }
 
-    String getKeyOrResourceToken() {
+    public String getKeyOrResourceToken() {
         return keyOrResourceToken;
     }
 
-    ConnectionPolicy getConnectionPolicy() {
+    public ConnectionPolicy getConnectionPolicy() {
         return connectionPolicy;
+    }
+
+    public Configs getConfigs() {
+        return configs;
     }
 
     /**
@@ -155,5 +186,9 @@ public class CosmosConfiguration {
      */
     public List<Permission> getPermissions() {
         return permissions;
+    }
+    
+    public TokenResolver getTokenResolver() {
+        return tokenResolver;
     }
 }
