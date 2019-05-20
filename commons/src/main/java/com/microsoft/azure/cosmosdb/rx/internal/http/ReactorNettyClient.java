@@ -31,8 +31,7 @@ import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpResponseDecoder;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.ssl.SslHandler;
-import io.netty.handler.timeout.ReadTimeoutHandler;
-import io.netty.handler.timeout.WriteTimeoutHandler;
+import io.netty.handler.timeout.IdleStateHandler;
 import org.reactivestreams.Publisher;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
@@ -52,7 +51,6 @@ import reactor.netty.tcp.TcpResources;
 import java.nio.charset.Charset;
 import java.time.Duration;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 
 import static com.microsoft.azure.cosmosdb.rx.internal.http.HttpClientConfig.REACTOR_NETWORK_LOG_CATEGORY;
@@ -106,14 +104,14 @@ class ReactorNettyClient implements HttpClient {
             if (this.httpClientConfig.getMaxIdleConnectionTimeoutInMillis() != null) {
                 maxIdleConnectionTimeoutInMillis = this.httpClientConfig.getMaxIdleConnectionTimeoutInMillis();
             } else {
-                maxIdleConnectionTimeoutInMillis = 60 * 1000;
+                maxIdleConnectionTimeoutInMillis = MAX_IDLE_CONNECTION_TIMEOUT_IN_MILLIS;
             }
 
             BootstrapHandlers.updateConfiguration(bootstrap,
-                    NettyPipeline.OnChannelReadIdle,
+                    "idleStateHandler",
                     ((connectionObserver, channel) ->
                             channel.pipeline().addLast(
-                                    new ReadTimeoutHandler(maxIdleConnectionTimeoutInMillis, TimeUnit.MILLISECONDS))));
+                                    new IdleStateHandler(0, 0, maxIdleConnectionTimeoutInMillis))));
 
             BootstrapHandlers.updateConfiguration(bootstrap,
                     NettyPipeline.HttpAggregator,

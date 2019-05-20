@@ -31,6 +31,8 @@ import reactor.netty.resources.ConnectionProvider;
 public interface HttpClient {
 
     String REACTOR_NETTY_CONNECTION_POOL = "reactor-netty-connection-pool";
+    Integer MAX_IDLE_CONNECTION_TIMEOUT_IN_MILLIS = 60 * 1000;
+    Integer REQUEST_TIMEOUT_IN_MILLIS = 60 * 1000;
 
     /**
      * Send the provided request asynchronously.
