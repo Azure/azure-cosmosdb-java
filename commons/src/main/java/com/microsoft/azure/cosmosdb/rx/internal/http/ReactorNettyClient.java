@@ -82,19 +82,16 @@ class ReactorNettyClient implements HttpClient {
                     tcpClient.proxy(typeSpec -> typeSpec.type(ProxyProvider.Proxy.HTTP).address(this.httpClientConfig.getProxy())));
         }
 
-        httpClient = httpClient.tcpConfiguration(tcpClient -> {
-            tcpClient = tcpClient.secure(SslProvider.defaultClientProvider());
-            Objects.requireNonNull(tcpClient.sslProvider())
-                    .configure(new SslHandler(configs.getSslContext().newEngine(ByteBufAllocator.DEFAULT)));
-            return tcpClient;
-        });
+//        httpClient = httpClient.tcpConfiguration(tcpClient -> {
+//            Objects.requireNonNull(tcpClient.sslProvider())
+//                    .configure(new SslHandler(configs.getSslContext().newEngine(ByteBufAllocator.DEFAULT)));
+//            return tcpClient;
+//        });
 
         return httpClient.tcpConfiguration(client -> client.bootstrap(bootstrap -> {
             BootstrapHandlers.updateConfiguration(bootstrap,
                     NettyPipeline.SslHandler,
-                    ((connectionObserver, channel) -> {
-                        channel.pipeline().addFirst(new SslHandler(configs.getSslContext().newEngine(channel.alloc())));
-                    }));
+                    ((connectionObserver, channel) -> channel.pipeline().addFirst(new SslHandler(configs.getSslContext().newEngine(channel.alloc())))));
             BootstrapHandlers.updateConfiguration(bootstrap,
                     NettyPipeline.HttpCodec,
                     (connectionObserver, channel) ->
