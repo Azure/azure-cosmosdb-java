@@ -90,7 +90,7 @@ class ReactorNettyClient implements HttpClient {
 //            return tcpClient;
 //        });
 
-        httpClient = httpClient.tcpConfiguration(TcpClient::secure);
+//        httpClient = httpClient.tcpConfiguration(TcpClient::secure);
 
         return httpClient.tcpConfiguration(client -> client.bootstrap(bootstrap -> {
             BootstrapHandlers.updateConfiguration(bootstrap,
@@ -135,7 +135,7 @@ class ReactorNettyClient implements HttpClient {
         Objects.requireNonNull(this.httpClientConfig);
 
         return httpClient
-                .tcpConfiguration(tcpClient -> tcpClient.port(request.port()))
+                .tcpConfiguration(tcpClient -> tcpClient.port(request.port()).secure())
                 .request(HttpMethod.valueOf(request.httpMethod().toString()))
                 .uri(request.url().toString())
                 .send(bodySendDelegate(request))
