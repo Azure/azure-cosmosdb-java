@@ -78,7 +78,7 @@ public class DocumentClientResourceLeakTest extends TestSuiteBase {
         TimeUnit.SECONDS.sleep(10);
         long usedMemoryInBytesAfter = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory());
 
-        assertThat(usedMemoryInBytesAfter - usedMemoryInBytesBefore).isLessThan(300 * ONE_MB);
+        assertThat(usedMemoryInBytesAfter - usedMemoryInBytesBefore).isLessThan(200 * ONE_MB);
     }
 
     @BeforeClass(groups = {"emulator"}, timeOut = SETUP_TIMEOUT)

@@ -205,6 +205,7 @@ class ReactorNettyClient implements HttpClient {
         @Override
         public Flux<ByteBuf> body() {
             return bodyIntern().doFinally(s -> {
+                reactorNettyConnection.dispose();
                 if (!reactorNettyConnection.isDisposed()) {
                     reactorNettyConnection.channel().eventLoop().execute(reactorNettyConnection::dispose);
                 }
@@ -214,6 +215,7 @@ class ReactorNettyClient implements HttpClient {
         @Override
         public Mono<byte[]> bodyAsByteArray() {
             return bodyIntern().aggregate().asByteArray().doFinally(s -> {
+                reactorNettyConnection.dispose();
                 if (!reactorNettyConnection.isDisposed()) {
                     reactorNettyConnection.channel().eventLoop().execute(reactorNettyConnection::dispose);
                 }
@@ -223,6 +225,7 @@ class ReactorNettyClient implements HttpClient {
         @Override
         public Mono<String> bodyAsString() {
             return bodyIntern().aggregate().asString().doFinally(s -> {
+                reactorNettyConnection.dispose();
                 if (!reactorNettyConnection.isDisposed()) {
                     reactorNettyConnection.channel().eventLoop().execute(reactorNettyConnection::dispose);
                 }
@@ -232,6 +235,7 @@ class ReactorNettyClient implements HttpClient {
         @Override
         public Mono<String> bodyAsString(Charset charset) {
             return bodyIntern().aggregate().asString(charset).doFinally(s -> {
+                reactorNettyConnection.dispose();
                 if (!reactorNettyConnection.isDisposed()) {
                     reactorNettyConnection.channel().eventLoop().execute(reactorNettyConnection::dispose);
                 }
@@ -240,6 +244,7 @@ class ReactorNettyClient implements HttpClient {
 
         @Override
         public void close() {
+            reactorNettyConnection.dispose();
             if (!reactorNettyConnection.isDisposed()) {
                 reactorNettyConnection.channel().eventLoop().execute(reactorNettyConnection::dispose);
             }
