@@ -34,7 +34,6 @@ import reactor.core.publisher.Mono;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 
 class ResponseUtils {
     private final static int INITIAL_RESPONSE_BUFFER_SIZE = 1024;

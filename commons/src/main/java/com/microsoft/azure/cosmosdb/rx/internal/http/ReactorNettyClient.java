@@ -47,6 +47,7 @@ import reactor.netty.tcp.ProxyProvider;
 import reactor.netty.tcp.SslProvider;
 import reactor.netty.tcp.TcpResources;
 
+import javax.net.ssl.SSLEngine;
 import java.nio.charset.Charset;
 import java.util.Objects;
 import java.util.function.BiFunction;
@@ -89,6 +90,11 @@ class ReactorNettyClient implements HttpClient {
         });
 
         return httpClient.tcpConfiguration(client -> client.bootstrap(bootstrap -> {
+            BootstrapHandlers.updateConfiguration(bootstrap,
+                    NettyPipeline.SslHandler,
+                    ((connectionObserver, channel) -> {
+                        channel.pipeline().addFirst(new SslHandler(configs.getSslContext().newEngine(channel.alloc())));
+                    }));
             BootstrapHandlers.updateConfiguration(bootstrap,
                     NettyPipeline.HttpCodec,
                     (connectionObserver, channel) ->
