@@ -45,6 +45,7 @@ import reactor.netty.http.client.HttpClientResponse;
 import reactor.netty.resources.ConnectionProvider;
 import reactor.netty.tcp.ProxyProvider;
 import reactor.netty.tcp.SslProvider;
+import reactor.netty.tcp.TcpClient;
 import reactor.netty.tcp.TcpResources;
 
 import javax.net.ssl.SSLEngine;
@@ -89,14 +90,9 @@ class ReactorNettyClient implements HttpClient {
 //            return tcpClient;
 //        });
 
+        httpClient = httpClient.tcpConfiguration(TcpClient::secure);
+
         return httpClient.tcpConfiguration(client -> client.bootstrap(bootstrap -> {
-            BootstrapHandlers.updateConfiguration(bootstrap,
-                    NettyPipeline.SslHandler,
-                    ((connectionObserver, channel) -> {
-                        SslHandler sslHandler = new SslHandler(configs.getSslContext().newEngine(channel.alloc()));
-                        sslHandler.setHandshakeTimeout(30, TimeUnit.SECONDS);
-                        channel.pipeline().addFirst(sslHandler);
-                    }));
             BootstrapHandlers.updateConfiguration(bootstrap,
                     NettyPipeline.HttpCodec,
                     (connectionObserver, channel) ->
