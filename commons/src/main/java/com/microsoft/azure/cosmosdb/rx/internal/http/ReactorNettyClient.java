@@ -26,6 +26,7 @@ import com.microsoft.azure.cosmosdb.rx.internal.Configs;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.Unpooled;
+import io.netty.channel.ChannelOption;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpResponseDecoder;
@@ -135,7 +136,12 @@ class ReactorNettyClient implements HttpClient {
         Objects.requireNonNull(this.httpClientConfig);
 
         return httpClient
-                .tcpConfiguration(tcpClient -> tcpClient.port(request.port()).secure())
+                .tcpConfiguration(tcpClient ->
+                        tcpClient
+                        .port(request.port())
+                        .secure()
+                        .option(ChannelOption.SO_KEEPALIVE, true)
+                        .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5_000))
                 .request(HttpMethod.valueOf(request.httpMethod().toString()))
                 .uri(request.url().toString())
                 .send(bodySendDelegate(request))
