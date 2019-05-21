@@ -107,7 +107,7 @@ public class HttpTransportClient extends TransportClient {
 
     @Override
     public void close() {
-        //  Call dispose on HttpClient connection
+        httpClient.shutdown();
     }
 
     public Single<StoreResponse> invokeStoreAsync(
@@ -212,7 +212,8 @@ public class HttpTransportClient extends TransportClient {
                                 activityId,
                                 httpClientResponse.statusCode(),
                                 durationInMilliSeconds,
-                                httpClientResponse.headers());})
+                                httpClientResponse.headers());
+                    })
                     .doOnError(e -> {
                         Instant receivedTimeUtc = Instant.now();
                         double durationInMilliSeconds = (receivedTimeUtc.toEpochMilli() - sendTimeUtc.v.toEpochMilli());
