@@ -50,6 +50,7 @@ import reactor.netty.tcp.TcpResources;
 import javax.net.ssl.SSLEngine;
 import java.nio.charset.Charset;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 
 import static com.microsoft.azure.cosmosdb.rx.internal.http.HttpClientConfig.REACTOR_NETWORK_LOG_CATEGORY;
@@ -91,7 +92,11 @@ class ReactorNettyClient implements HttpClient {
         return httpClient.tcpConfiguration(client -> client.bootstrap(bootstrap -> {
             BootstrapHandlers.updateConfiguration(bootstrap,
                     NettyPipeline.SslHandler,
-                    ((connectionObserver, channel) -> channel.pipeline().addFirst(new SslHandler(configs.getSslContext().newEngine(channel.alloc())))));
+                    ((connectionObserver, channel) -> {
+                        SslHandler sslHandler = new SslHandler(configs.getSslContext().newEngine(channel.alloc()));
+                        sslHandler.setHandshakeTimeout(30, TimeUnit.SECONDS);
+                        channel.pipeline().addFirst(sslHandler);
+                    }));
             BootstrapHandlers.updateConfiguration(bootstrap,
                     NettyPipeline.HttpCodec,
                     (connectionObserver, channel) ->
