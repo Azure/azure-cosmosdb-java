@@ -85,11 +85,13 @@ class ReactorNettyClient implements HttpClient {
                     tcpClient.proxy(typeSpec -> typeSpec.type(ProxyProvider.Proxy.HTTP).address(this.httpClientConfig.getProxy())));
         }
 
-//        httpClient = httpClient.tcpConfiguration(tcpClient -> {
-//            Objects.requireNonNull(tcpClient.sslProvider())
-//                    .configure(new SslHandler(configs.getSslContext().newEngine(ByteBufAllocator.DEFAULT)));
-//            return tcpClient;
-//        });
+        httpClient = httpClient.tcpConfiguration(tcpClient -> {
+            SslProvider sslProvider = SslProvider.defaultClientProvider();
+            SslHandler sslHandler = new SslHandler(configs.getSslContext().newEngine(ByteBufAllocator.DEFAULT));
+            sslHandler.setHandshakeTimeoutMillis(10000);
+            sslProvider.configure(sslHandler);
+            return tcpClient.secure(sslProvider);
+        });
 
 //        httpClient = httpClient.tcpConfiguration(TcpClient::secure);
 
@@ -136,12 +138,7 @@ class ReactorNettyClient implements HttpClient {
         Objects.requireNonNull(this.httpClientConfig);
 
         return httpClient
-                .tcpConfiguration(tcpClient ->
-                        tcpClient
-                        .port(request.port())
-                        .secure()
-                        .option(ChannelOption.SO_KEEPALIVE, true)
-                        .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5_000))
+                .tcpConfiguration(tcpClient -> tcpClient.port(request.port()))
                 .request(HttpMethod.valueOf(request.httpMethod().toString()))
                 .uri(request.url().toString())
                 .send(bodySendDelegate(request))
