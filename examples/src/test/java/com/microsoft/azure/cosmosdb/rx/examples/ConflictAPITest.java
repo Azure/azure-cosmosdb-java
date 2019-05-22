@@ -37,9 +37,11 @@ import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import rx.Completable;
 import rx.Observable;
 import rx.observable.ListenableFutureObservable;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
@@ -88,10 +90,13 @@ public class ConflictAPITest {
 
         int numberOfDocuments = 20;
         // Add documents
+        List<Completable> tasks = new ArrayList<>();
         for (int i = 0; i < numberOfDocuments; i++) {
             Document doc = new Document(String.format("{ 'id': 'loc%d', 'counter': %d}", i, i));
-            client.createDocument(getCollectionLink(), doc, null, true).toBlocking().single();
+            tasks.add(client.createDocument(getCollectionLink(), doc, null, true).toCompletable());
         }
+
+        Completable.merge(tasks).await();
     }
 
     @AfterClass(groups = "samples", timeOut = TIMEOUT)

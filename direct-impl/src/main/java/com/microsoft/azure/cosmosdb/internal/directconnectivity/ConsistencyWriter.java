@@ -321,10 +321,10 @@ public class ConsistencyWriter {
                     ReadMode.Strong,
                     false /*checkMinLsn*/,
                     false /*forceReadAll*/);
-            return storeResultListObs.flatMap(
+            return storeResultListObs.toObservable().flatMap(
                     responses -> {
                         if (responses != null && responses.stream().anyMatch(response -> response.globalCommittedLSN >= selectedGlobalCommittedLsn)) {
-                            return Single.just(Boolean.TRUE);
+                            return Observable.just(Boolean.TRUE);
                         }
 
                         //get max global committed lsn from current batch of responses, then update if greater than max of all batches.
@@ -332,40 +332,37 @@ public class ConsistencyWriter {
                                 (Long) responses.stream().map(s -> s.globalCommittedLSN).max(ComparatorUtils.NATURAL_COMPARATOR).get() :
                                 0l;
                         maxGlobalCommittedLsnReceived.set(maxGlobalCommittedLsnReceived.get() > maxGlobalCommittedLsn ?
-                                maxGlobalCommittedLsnReceived.get() : maxGlobalCommittedLsn);
+                                                                  maxGlobalCommittedLsnReceived.get() : maxGlobalCommittedLsn);
 
                         //only refresh on first barrier call, set to false for subsequent attempts.
                         barrierRequest.requestContext.forceRefreshAddressCache = false;
-
-                        //trace on last retry.
+                        
+                        //get max global committed lsn from current batch of responses, then update if greater than max of all batches.
                         if (writeBarrierRetryCount.getAndDecrement() == 0) {
                             logger.debug("ConsistencyWriter: WaitForWriteBarrierAsync - Last barrier multi-region strong. Responses: {}",
-                                    String.join("; ", responses.stream().map(r -> r.toString()).collect(Collectors.toList())));
+                                         String.join("; ", responses.stream().map(r -> r.toString()).collect(Collectors.toList())));
+                            return Observable.just(false);
                         }
-
-                        return Single.just(null);
-                    }).toObservable();
-        }).repeatWhen(s -> {
+                        return Observable.empty();
+                    });
+        }).repeatWhen(s -> s.flatMap(x -> {
             if (writeBarrierRetryCount.get() == 0) {
-                    return Observable.empty();
+                // repeat loop termination
+                return Observable.<Long>empty();
             } else {
-
+                // repeat with a delay
                 if ((ConsistencyWriter.MAX_NUMBER_OF_WRITE_BARRIER_READ_RETRIES - writeBarrierRetryCount.get()) > ConsistencyWriter.MAX_SHORT_BARRIER_RETRIES_FOR_MULTI_REGION) {
                     return Observable.timer(ConsistencyWriter.DELAY_BETWEEN_WRITE_BARRIER_CALLS_IN_MS, TimeUnit.MILLISECONDS);
                 } else {
                     return Observable.timer(ConsistencyWriter.SHORT_BARRIER_RETRY_INTERVAL_IN_MS_FOR_MULTI_REGION, TimeUnit.MILLISECONDS);
                 }
             }
-        }).take(1)
-                .map(r -> {
-                    if (r == null) {
-                        // after retries exhausted print this log and return false
-                        logger.debug("ConsistencyWriter: Highest global committed lsn received for write barrier call is {}", maxGlobalCommittedLsnReceived);
-
-                        return false;
-                    }
-                    return r;
-                }).toSingle();
+        })).concatWith(
+                Observable.defer(() -> {
+                    logger.debug("ConsistencyWriter: Highest global committed lsn received for write barrier call is {}", maxGlobalCommittedLsnReceived);
+                    return Observable.just(false);
+                })
+        ).take(1).toSingle();
     }
 
     static void getLsnAndGlobalCommittedLsn(StoreResponse response, Utils.ValueHolder<Long> lsn, Utils.ValueHolder<Long> globalCommittedLsn) {
