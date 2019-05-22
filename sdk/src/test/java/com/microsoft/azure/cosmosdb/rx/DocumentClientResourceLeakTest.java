@@ -62,6 +62,7 @@ public class DocumentClientResourceLeakTest extends TestSuiteBase {
         TimeUnit.SECONDS.sleep(10);
         long usedMemoryInBytesBefore = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory());
 
+
         for (int i = 0; i < MAX_NUMBER; i++) {
             logger.info("client {}", i);
             client = clientBuilder.build();
@@ -76,8 +77,6 @@ public class DocumentClientResourceLeakTest extends TestSuiteBase {
         System.gc();
         TimeUnit.SECONDS.sleep(10);
         long usedMemoryInBytesAfter = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory());
-        logger.info("Used Memory in MB before: " + usedMemoryInBytesBefore / ONE_MB);
-        logger.info("Used Memory in MB after: " + usedMemoryInBytesAfter / ONE_MB);
 
         assertThat(usedMemoryInBytesAfter - usedMemoryInBytesBefore).isLessThan(50 * ONE_MB);
     }

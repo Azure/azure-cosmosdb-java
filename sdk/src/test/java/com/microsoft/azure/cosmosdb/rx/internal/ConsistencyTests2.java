@@ -250,26 +250,16 @@ public class ConsistencyTests2 extends ConsistencyTestsBase {
                 .withConsistencyLevel(ConsistencyLevel.Session)
                 .build();
 
-        List<Long> createDocumentTimes = new ArrayList<>();
-        List<Long> feedDocumentTimes = new ArrayList<>();
-
         try {
-            logger.info("Creating document");
             Document lastDocument = client.createDocument(createdCollection.getSelfLink(), getDocumentDefinition(), null, true)
                 .toBlocking()
                 .first()
                 .getResource();
-            logger.info("Created document");
 
             Completable task1 = ParallelAsync.forEachAsync(Range.between(0, 1000), 5, new Action1<Integer>() {
                 @Override
                 public void call(Integer index) {
-                    logger.info("Index {}", index);
-                    long startTime = System.currentTimeMillis();
                     client.createDocument(createdCollection.getSelfLink(), documents.get(index % documents.size()), null, true).toBlocking().first();
-                    long endTime = System.currentTimeMillis();
-                    logger.info("Created Index {}", index);
-                    createDocumentTimes.add(endTime - startTime);
                 }
             });
 
@@ -277,14 +267,9 @@ public class ConsistencyTests2 extends ConsistencyTestsBase {
                 @Override
                 public void call(Integer index) {
                     try {
-                        logger.info("Feed Index {}", index);
-                        long startTime = System.currentTimeMillis();
                         FeedOptions feedOptions = new FeedOptions();
                         feedOptions.setEnableCrossPartitionQuery(true);
                         FeedResponse<Document> queryResponse = client.queryDocuments(createdCollection.getSelfLink(), "SELECT * FROM c WHERE c.Id = 'foo'", feedOptions).toBlocking().first();
-                        long endTime = System.currentTimeMillis();
-                        feedDocumentTimes.add(endTime - startTime);
-                        logger.info("Queried Feed Index {}", index);
                         String lsnHeaderValue = queryResponse.getResponseHeaders().get(WFConstants.BackendHeaders.LSN);
                         long lsn = Long.valueOf(lsnHeaderValue);
                         String sessionTokenHeaderValue = queryResponse.getResponseHeaders().get(HttpConstants.HttpHeaders.SESSION_TOKEN);
@@ -292,11 +277,9 @@ public class ConsistencyTests2 extends ConsistencyTestsBase {
                         logger.info("Session Token = {}, LSN = {}", sessionToken.convertToString(), lsn);
                         assertThat(lsn).isEqualTo(sessionToken.getLSN());
                     } catch (Exception ex) {
-                        logger.error("Exception: ", ex);
                         DocumentClientException clientException = (DocumentClientException) ex.getCause();
                         if (clientException.getStatusCode() != 0) {
                             if (clientException.getStatusCode() == HttpConstants.StatusCodes.REQUEST_TIMEOUT) {
-                                logger.error("Ignoring Request time out");
                                 // ignore
                             } else if (clientException.getStatusCode() == HttpConstants.StatusCodes.NOTFOUND) {
                                 String lsnHeaderValue = clientException.getResponseHeaders().get(WFConstants.BackendHeaders.LSN);
@@ -307,11 +290,9 @@ public class ConsistencyTests2 extends ConsistencyTestsBase {
                                 logger.info("Session Token = {}, LSN = {}", sessionToken.convertToString(), lsn);
                                 assertThat(lsn).isEqualTo(sessionToken.getLSN());
                             } else {
-                                logger.error("Throwing here");
                                 throw ex;
                             }
                         } else {
-                            logger.error("Throwing here else");
                             throw ex;
                         }
                     }
@@ -319,10 +300,6 @@ public class ConsistencyTests2 extends ConsistencyTestsBase {
             });
             Completable.mergeDelayError(task1, task2).await();
         } finally {
-            Long sum = createDocumentTimes.stream().reduce(0L, Long::sum);
-            logger.info("Average of created document times ms : {}", sum / 1000);
-            sum = feedDocumentTimes.stream().reduce(0L, Long::sum);
-            logger.info("Average of feed document times ms : {}", sum / 1000);
             safeClose(client);
         }
     }
