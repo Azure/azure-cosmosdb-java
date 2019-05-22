@@ -80,7 +80,6 @@ import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.SubStatusCodes;
 import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdReporter.reportIssue;
@@ -306,7 +305,12 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         this.traceOperation(context, "userEventTriggered", event);
 
         if (event instanceof RntbdContext) {
-            this.completeRntbdContextFuture(context, (RntbdContext)event);
+            try {
+                this.completeRntbdContextFuture(context, (RntbdContext)event);
+            } catch (Throwable error) {
+                reportIssue(logger, context, "{}: ", event, error);
+                this.exceptionCaught(context, error);
+            }
             return;
         }
 
@@ -453,11 +457,6 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
     }
 
     void pendWrite(final ByteBuf out, final ChannelPromise promise) {
-
-        checkNotNull(out, "out");
-        checkNotNull(promise, "promise");
-        checkState(this.pendingWrites != null, "pendingWrite: null");
-
         this.pendingWrites.add(out, promise);
     }
 
@@ -521,6 +520,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
                 this.contextFuture.completeExceptionally(throwable);
             }
 
+            final int count = this.pendingRequests.size();
             Exception contextRequestException = null;
 
             if (this.contextRequestFuture.isCompletedExceptionally()) {
@@ -530,7 +530,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
                     logger.debug("\n  {} closed: context send cancelled", channel);
                     contextRequestException = error;
                 } catch (final Throwable error) {
-                    final String message = Strings.lenientFormat("context send failed due to %s", error);
+                    final String message = Strings.lenientFormat("RNTBD context request write failed with %s pending requests: %s", count, error);
                     logger.debug("\n  {} closed: {}", channel, message);
                     contextRequestException = new ChannelException(message, error);
                 }
@@ -541,20 +541,19 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
                     logger.debug("\n  {} closed: context receive cancelled", channel);
                     contextRequestException = error;
                 } catch (final Throwable error) {
-                    final String message = Strings.lenientFormat("context receive failed due to %s", error);
+                    final String message = Strings.lenientFormat("RNTBD context request read failed with %s pending requests: %s", count, error);
                     logger.debug("\n  {} closed: {}", channel, message);
                     contextRequestException = new ChannelException(message, error);
                 }
             }
 
             final String origin = "rntbd:/" + channel.remoteAddress();
-            final int count = this.pendingRequests.size();
             final String message;
 
             if (contextRequestException == null) {
                 message = Strings.lenientFormat("%s channel closed with %s pending requests", channel, count);
             } else {
-                message = Strings.lenientFormat("%s context request failed with %s pending requests", channel, count);
+                message = Strings.lenientFormat("%s %s", channel, contextRequestException.getMessage());
             }
 
             final Exception reason;
