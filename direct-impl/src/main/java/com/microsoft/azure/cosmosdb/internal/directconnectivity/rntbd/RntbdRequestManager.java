@@ -551,7 +551,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
             final String message;
 
             if (contextRequestException == null) {
-                message = Strings.lenientFormat("%s channel closed with %s pending requests", channel, count);
+                message = Strings.lenientFormat("%s closed with %s pending requests", channel, count);
             } else {
                 message = Strings.lenientFormat("%s %s", channel, contextRequestException.getMessage());
             }
