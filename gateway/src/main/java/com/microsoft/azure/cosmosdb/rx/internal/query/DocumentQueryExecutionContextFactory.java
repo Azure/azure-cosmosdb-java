@@ -113,7 +113,7 @@ public class DocumentQueryExecutionContextFactory {
                     // SELECT VALUE <AGGREGATE>. So we send the query down the old pipeline to avoid a breaking change.
                     // We will skip this in V3 SDK
                     if(queryInfo.hasAggregates() && !queryInfo.hasSelectValue()){
-                        if(feedOptions != null & feedOptions.getEnableCrossPartitionQuery()){
+                        if(feedOptions != null && feedOptions.getEnableCrossPartitionQuery()){
                             return Observable.error(new DocumentClientException(HttpConstants.StatusCodes.BADREQUEST,
                                     "Cross partition query only supports 'VALUE <AggreateFunc>' for aggregates"));
                         }
