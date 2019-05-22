@@ -74,18 +74,16 @@ class ReactorNettyClient implements HttpClient {
 
     private void configureChannelPipelineHandlers() {
         Configs configs = this.httpClientConfig.getConfigs();
-        if (LoggerFactory.getLogger(REACTOR_NETWORK_LOG_CATEGORY).isTraceEnabled()) {
-            this.httpClient = this.httpClient.tcpConfiguration(tcpClient -> tcpClient.wiretap(REACTOR_NETWORK_LOG_CATEGORY, LogLevel.TRACE));
-        }
-        if (this.httpClientConfig.getProxy() != null) {
-            this.httpClient = this.httpClient.tcpConfiguration(tcpClient ->
-                    tcpClient.proxy(typeSpec -> typeSpec.type(ProxyProvider.Proxy.HTTP).address(this.httpClientConfig.getProxy())));
-        }
-        if (this.httpClientConfig.getRequestTimeoutInMillis() != null) {
-            this.httpClient = this.httpClient.tcpConfiguration(tcpClient -> tcpClient.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, this.httpClientConfig.getRequestTimeoutInMillis()));
-        }
-
         this.httpClient = this.httpClient.tcpConfiguration(tcpClient -> {
+            if (LoggerFactory.getLogger(REACTOR_NETWORK_LOG_CATEGORY).isTraceEnabled()) {
+                tcpClient = tcpClient.wiretap(REACTOR_NETWORK_LOG_CATEGORY, LogLevel.TRACE);
+            }
+            if (this.httpClientConfig.getProxy() != null) {
+                tcpClient = tcpClient.proxy(typeSpec -> typeSpec.type(ProxyProvider.Proxy.HTTP).address(this.httpClientConfig.getProxy()));
+            }
+            if (this.httpClientConfig.getRequestTimeoutInMillis() != null) {
+                tcpClient = tcpClient.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, this.httpClientConfig.getRequestTimeoutInMillis());
+            }
             tcpClient = tcpClient.bootstrap(bootstrap -> {
                 if (this.httpClientConfig.getMaxIdleConnectionTimeoutInMillis() != null) {
                     BootstrapHandlers.updateConfiguration(bootstrap,
@@ -110,7 +108,7 @@ class ReactorNettyClient implements HttpClient {
                 return bootstrap;
             });
             return tcpClient;
-        });
+        }).secure(sslContextSpec -> sslContextSpec.sslContext(this.httpClientConfig.getConfigs().getSslContext()).build());
     }
 
     @Override
@@ -120,8 +118,8 @@ class ReactorNettyClient implements HttpClient {
         Objects.requireNonNull(request.url().getProtocol());
         Objects.requireNonNull(this.httpClientConfig);
 
-        return httpClient
-                .tcpConfiguration(tcpClient -> tcpClient.port(request.port()).secure())
+        return this.httpClient
+                .port(request.port())
                 .request(HttpMethod.valueOf(request.httpMethod().toString()))
                 .uri(request.url().toString())
                 .send(bodySendDelegate(request))
