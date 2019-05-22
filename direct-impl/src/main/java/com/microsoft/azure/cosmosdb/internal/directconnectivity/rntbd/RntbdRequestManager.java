@@ -83,6 +83,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.SubStatusCodes;
+import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdReporter.reportIssue;
 import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdReporter.reportIssueUnless;
 
 public final class RntbdRequestManager implements ChannelHandler, ChannelInboundHandler, ChannelOutboundHandler {
@@ -162,6 +163,9 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         if (message instanceof RntbdResponse) {
             try {
                 this.messageReceived(context, (RntbdResponse)message);
+            } catch (Throwable throwable) {
+                reportIssue(logger, context, "unexpected error: ", throwable);
+                this.exceptionCaught(context, throwable);
             } finally {
                 ReferenceCountUtil.release(message);
             }
@@ -170,7 +174,10 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         }
 
         final String reason = Strings.lenientFormat("expected message of type %s, not %s", RntbdResponse.class, message.getClass());
-        throw new IllegalStateException(reason);
+        final IllegalStateException error = new IllegalStateException(reason);
+        reportIssue(logger, context, "", error);
+
+        this.exceptionCaught(context, error);
     }
 
     /**
