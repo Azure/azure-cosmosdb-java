@@ -167,7 +167,7 @@ public class TestSuiteBase {
         }
     }
 
-    @BeforeSuite(groups = { "simple", "long", "direct", "multi-master", "emulator", "non-emulator" }, timeOut = SUITE_SETUP_TIMEOUT)
+    @BeforeSuite(groups = { "simple", "long", "direct", "multi-master", "emulator", "non-emulator" })
     public static void beforeSuite() {
         Hooks.onOperatorDebug();
         logger.info("beforeSuite Started");

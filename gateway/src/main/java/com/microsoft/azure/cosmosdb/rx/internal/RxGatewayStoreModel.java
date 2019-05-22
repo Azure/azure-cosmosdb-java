@@ -529,8 +529,6 @@ class RxGatewayStoreModel implements RxStoreModel {
                                 throw new RuntimeException(e);
                             }
                         })
-                .map(out -> {
-                    return new String(out.toByteArray(), StandardCharsets.UTF_8);
-                }).flux();
+                .map(out -> new String(out.toByteArray(), StandardCharsets.UTF_8)).flux();
     }
 }

@@ -43,6 +43,15 @@ public interface HttpClient {
     Mono<HttpResponse> send(HttpRequest request);
 
     /**
+     * Create elastic HttpClient with {@link HttpClientConfig}
+     *
+     * @return the HttpClient
+     */
+    static HttpClient createElastic(HttpClientConfig httpClientConfig) {
+        return new ReactorNettyClient(ConnectionProvider.elastic(REACTOR_NETTY_CONNECTION_POOL), httpClientConfig);
+    }
+
+    /**
      * Create fixed HttpClient with {@link HttpClientConfig}
      *
      * @return the HttpClient
