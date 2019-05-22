@@ -30,7 +30,6 @@ import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpResponseDecoder;
 import io.netty.handler.logging.LogLevel;
-import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
 import org.reactivestreams.Publisher;
@@ -87,7 +86,6 @@ class ReactorNettyClient implements HttpClient {
         }
 
         this.httpClient = this.httpClient.tcpConfiguration(tcpClient -> {
-//            tcpClient = tcpClient.secure(spec -> spec.sslContext(SslContextBuilder.forClient()));
             tcpClient = tcpClient.bootstrap(bootstrap -> {
                 if (this.httpClientConfig.getMaxIdleConnectionTimeoutInMillis() != null) {
                     BootstrapHandlers.updateConfiguration(bootstrap,
@@ -99,11 +97,6 @@ class ReactorNettyClient implements HttpClient {
                             (connectionObserver, channel) ->
                                     channel.pipeline().addFirst(new WriteTimeoutHandler(this.httpClientConfig.getMaxIdleConnectionTimeoutInMillis() / 1000)));
                 }
-                BootstrapHandlers.updateConfiguration(bootstrap,
-                        NettyPipeline.SslHandler,
-                        ((connectionObserver, channel) -> channel
-                                .pipeline()
-                                .addLast(new SslHandler(configs.getSslContext().newEngine(channel.alloc())))));
                 BootstrapHandlers.updateConfiguration(bootstrap,
                         NettyPipeline.HttpCodec,
                         (connectionObserver, channel) -> channel.pipeline().addFirst(new HttpResponseDecoder(configs.getMaxHttpInitialLineLength(),
@@ -128,7 +121,7 @@ class ReactorNettyClient implements HttpClient {
         Objects.requireNonNull(this.httpClientConfig);
 
         return httpClient
-                .tcpConfiguration(tcpClient -> tcpClient.port(request.port()))
+                .tcpConfiguration(tcpClient -> tcpClient.port(request.port()).secure())
                 .request(HttpMethod.valueOf(request.httpMethod().toString()))
                 .uri(request.url().toString())
                 .send(bodySendDelegate(request))
