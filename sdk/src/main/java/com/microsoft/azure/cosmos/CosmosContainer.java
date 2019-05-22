@@ -404,6 +404,14 @@ public class CosmosContainer extends CosmosResource {
                                                                                                        response.getResponseHeaders()))));
     }
 
+    /**
+     * Gets a CosmosStoredProcedure object without making a service call.
+     * @param jsonString body of the stored procedure in JSON.
+     * @return a cosmos stored procedure.
+     */
+    public CosmosStoredProcedure getStoredProcedure(String jsonString){
+        return new CosmosStoredProcedure(jsonString, this);
+    }
 
     /* UDF Operations */
 
@@ -483,6 +491,15 @@ public class CosmosContainer extends CosmosResource {
                                                                                                       response.getResponseHeaders()))));
     }
 
+    /**
+     * Gets a CosmosUserDefinedFunction object without making a service call.
+     * @param jsonString body of the udf in JSON.
+     * @return a cosmos user defined function.
+     */
+    public CosmosUserDefinedFunction getUserDefinedFunction(String jsonString){
+        return new CosmosUserDefinedFunction(jsonString, this);
+    }
+
     /* Trigger Operations */
     /**
      * Creates a Cosmos trigger.
@@ -556,6 +573,15 @@ public class CosmosContainer extends CosmosResource {
                                                    .queryTriggers(getLink(), querySpec, options)
                                                    .map(response -> BridgeInternal.createFeedResponse(CosmosTriggerSettings.getFromV2Results(response.getResults()),
                                                                                                       response.getResponseHeaders()))));
+    }
+
+    /**
+     * Gets a CosmosTrigger object without making a service call.
+     * @param jsonString body of the trigger in JSON.
+     * @return a cosmos trigger.
+     */
+    public CosmosTrigger getTrigger(String jsonString){
+        return new CosmosTrigger(jsonString, this);
     }
 
     /**

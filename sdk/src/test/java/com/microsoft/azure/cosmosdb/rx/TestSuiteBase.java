@@ -74,7 +74,10 @@ import com.microsoft.azure.cosmos.CosmosContainerSettings;
 import com.microsoft.azure.cosmos.CosmosDatabase;
 import com.microsoft.azure.cosmos.CosmosDatabaseResponse;
 import com.microsoft.azure.cosmos.CosmosDatabaseSettings;
+import com.microsoft.azure.cosmos.CosmosItem;
 import com.microsoft.azure.cosmos.CosmosItemRequestOptions;
+import com.microsoft.azure.cosmos.CosmosItemResponse;
+import com.microsoft.azure.cosmos.CosmosRequestOptions;
 import com.microsoft.azure.cosmos.DatabaseForTest;
 import com.microsoft.azure.cosmosdb.CompositePath;
 import com.microsoft.azure.cosmosdb.CompositePathSortOrder;
@@ -234,58 +237,58 @@ public class TestSuiteBase {
 
             logger.info("Truncating collection {} triggers ...", cosmosContainerId);
 
-            houseKeepingClient.queryTriggers("SELECT * FROM root", options)
-                    .flatMap(page -> Observable.from(page.getResults()))
+            cosmosContainer.queryTriggers("SELECT * FROM root", options)
+                    .flatMap(page -> Flux.fromIterable(page.getResults()))
                     .flatMap(trigger -> {
-                        RequestOptions requestOptions = new RequestOptions();
+                        CosmosRequestOptions requestOptions = new CosmosRequestOptions();
 
 //                    if (paths != null && !paths.isEmpty()) {
 //                        Object propertyValue = trigger.getObjectByPath(PathParser.getPathParts(paths.get(0)));
 //                        requestOptions.setPartitionKey(new PartitionKey(propertyValue));
 //                    }
 
-                        return houseKeepingClient.deleteTrigger(trigger.getSelfLink(), requestOptions);
-                    }).toCompletable().await();
+                        return cosmosContainer.getTrigger(trigger.toJson()).delete(requestOptions);
+                    }).collectList().block();
 
-            logger.info("Truncating collection {} storedProcedures ...", collection.getId());
+            logger.info("Truncating collection {} storedProcedures ...", cosmosContainerId);
 
-            houseKeepingClient.queryStoredProcedures(collection.getSelfLink(), "SELECT * FROM root", options)
-                    .flatMap(page -> Observable.from(page.getResults()))
+            cosmosContainer.queryStoredProcedures("SELECT * FROM root", options)
+                    .flatMap(page -> Flux.fromIterable(page.getResults()))
                     .flatMap(storedProcedure -> {
-                        RequestOptions requestOptions = new RequestOptions();
+                        CosmosRequestOptions requestOptions = new CosmosRequestOptions();
 
 //                    if (paths != null && !paths.isEmpty()) {
 //                        Object propertyValue = storedProcedure.getObjectByPath(PathParser.getPathParts(paths.get(0)));
 //                        requestOptions.setPartitionKey(new PartitionKey(propertyValue));
 //                    }
 
-                        return houseKeepingClient.deleteStoredProcedure(storedProcedure.getSelfLink(), requestOptions);
-                    }).toCompletable().await();
+                        return cosmosContainer.getStoredProcedure(storedProcedure.toJson()).delete(requestOptions);
+                    }).collectList().block();
 
-            logger.info("Truncating collection {} udfs ...", collection.getId());
+            logger.info("Truncating collection {} udfs ...", cosmosContainerId);
 
-            houseKeepingClient.queryUserDefinedFunctions(collection.getSelfLink(), "SELECT * FROM root", options)
-                    .flatMap(page -> Observable.from(page.getResults()))
+            cosmosContainer.queryUserDefinedFunctions("SELECT * FROM root", options)
+                    .flatMap(page -> Flux.fromIterable(page.getResults()))
                     .flatMap(udf -> {
-                        RequestOptions requestOptions = new RequestOptions();
+                        CosmosRequestOptions requestOptions = new CosmosRequestOptions();
 
 //                    if (paths != null && !paths.isEmpty()) {
 //                        Object propertyValue = udf.getObjectByPath(PathParser.getPathParts(paths.get(0)));
 //                        requestOptions.setPartitionKey(new PartitionKey(propertyValue));
 //                    }
 
-                        return houseKeepingClient.deleteUserDefinedFunction(udf.getSelfLink(), requestOptions);
-                    }).toCompletable().await();
+                        return cosmosContainer.getUserDefinedFunction(udf.toJson()).delete(requestOptions);
+                    }).collectList().block();
 
         } finally {
             houseKeepingClient.close();
         }
 
-        logger.info("Finished truncating collection {}.", collection.getId());
+        logger.info("Finished truncating collection {}.", cosmosContainerId);
     }
 
     protected static void waitIfNeededForReplicasToCatchUp(Builder clientBuilder) {
-        switch (clientBuilder.desiredConsistencyLevel) {
+        switch (clientBuilder.getDesiredConsistencyLevel()) {
             case Eventual:
             case ConsistentPrefix:
                 logger.info(" additional wait in Eventual mode so the replica catch up");
@@ -304,16 +307,9 @@ public class TestSuiteBase {
         }
     }
 
-    private static DocumentCollection getCollectionDefinitionSinglePartitionWithoutPartitionKey() {
-        DocumentCollection collectionDefinition = new DocumentCollection();
-        collectionDefinition.setId(UUID.randomUUID().toString());
-
-        return collectionDefinition;
-    }
-
-    public static CosmosContainer createCollection(String databaseId,CosmosContainerSettings cosmosContainerSettings,
+    public static CosmosContainer createCollection(String databaseId, CosmosContainerSettings cosmosContainerSettings,
             CosmosContainerRequestOptions options) {
-        CosmosClient client = new CosmosClient(createGatewayHouseKeepingDocumentClient());
+        CosmosClient client = CosmosClient.create(createGatewayHouseKeepingDocumentClient());
         try {
             return client.getDatabase(databaseId).createContainer(cosmosContainerSettings, options).block().getContainer();
         } finally {
@@ -324,11 +320,6 @@ public class TestSuiteBase {
     public static CosmosContainer createCollection(CosmosDatabase database, CosmosContainerSettings cosmosContainerSettings,
             CosmosContainerRequestOptions options) {
         return database.createContainer(cosmosContainerSettings, options).block().getContainer();
-    }
-
-    public static DocumentCollection createCollection(CosmosClient client, String databaseId,
-                                                      DocumentCollection collection) {
-        return client.createCollection("dbs/" + databaseId, collection, null).toBlocking().single().getResource();
     }
 
     private static CosmosContainerSettings getCollectionDefinitionMultiPartitionWithCompositeAndSpatialIndexes() {
@@ -444,73 +435,63 @@ public class TestSuiteBase {
         return cosmosContainerSettings;
     }
 
-    public static Document createDocument(CosmosClient client, String databaseId, String collectionId, Document document) {
-        return createDocument(client, databaseId, collectionId, document, null);
+    public static CosmosItem createDocument(CosmosClient client, String databaseId, String collectionId, CosmosItem item) {
+        return createDocument(client, databaseId, collectionId, item, null);
     }
 
-    public static Document createDocument(CosmosClient client, String databaseId, String collectionId, Document document, RequestOptions options) {
-        return client.createDocument(Utils.getCollectionNameLink(databaseId, collectionId), document, options, false).toBlocking().single().getResource();
+    public static CosmosItem createDocument(CosmosClient client, String databaseId, String collectionId, CosmosItem item, CosmosItemRequestOptions options) {
+        return client.getDatabase(databaseId).getContainer(collectionId).getItem(item.toJson()).read(options).block().getItem();
     }
 
-    public Observable<ResourceResponse<Document>> bulkInsert(CosmosClient client,
-                                                             String collectionLink,
-                                                             List<Document> documentDefinitionList,
+    // TODO: respect concurrencyLevel;
+    public Flux<CosmosItemResponse> bulkInsert(CosmosContainer cosmosContainer,
+                                                             List<CosmosItem> documentDefinitionList,
                                                              int concurrencyLevel) {
-        ArrayList<Observable<ResourceResponse<Document>>> result = new ArrayList<Observable<ResourceResponse<Document>>>(documentDefinitionList.size());
-        for (Document docDef : documentDefinitionList) {
-            result.add(client.createDocument(collectionLink, docDef, null, false));
+        CosmosItem first = documentDefinitionList.remove(0);
+        Flux<CosmosItemResponse> result = Flux.from(cosmosContainer.createItem(first));
+        for (CosmosItem docDef : documentDefinitionList) {
+            result.concatWith(cosmosContainer.createItem(docDef));
         }
 
-        return Observable.merge(result, concurrencyLevel);
+        return result;
     }
 
-    public Observable<ResourceResponse<Document>> bulkInsert(CosmosClient client,
-                                                             String collectionLink,
-                                                             List<Document> documentDefinitionList) {
-        return bulkInsert(client, collectionLink, documentDefinitionList, DEFAULT_BULK_INSERT_CONCURRENCY_LEVEL);
-    }
-
-    public List<Document> bulkInsertBlocking(CosmosClient client,
-                                             String collectionLink,
-                                             List<Document> documentDefinitionList) {
-        return bulkInsert(client, collectionLink, documentDefinitionList, DEFAULT_BULK_INSERT_CONCURRENCY_LEVEL)
-                .map(ResourceResponse::getResource)
-                .toList()
-                .toBlocking()
-                .single();
+    public List<CosmosItem> bulkInsertBlocking(CosmosContainer cosmosContainer,
+                                             List<CosmosItem> documentDefinitionList) {
+        return bulkInsert(cosmosContainer, documentDefinitionList, DEFAULT_BULK_INSERT_CONCURRENCY_LEVEL)
+                .map(CosmosItemResponse::getItem)
+                .collectList()
+                .block();
     }
 
     public static ConsistencyLevel getAccountDefaultConsistencyLevel(CosmosClient client) {
-        return client.getDatabaseAccount().toBlocking().single().getConsistencyPolicy().getDefaultConsistencyLevel();
+        return client.getDatabaseAccount().block().getConsistencyPolicy().getDefaultConsistencyLevel();
     }
 
+    //TODO: add cosmosUser tests
+    /*
     public static User createUser(CosmosClient client, String databaseId, User user) {
-        return client.createUser("dbs/" + databaseId, user, null).toBlocking().single().getResource();
+        return client.getDatabase(databaseId).read().block().getDatabase().createUser(user).block();
     }
 
     public static User safeCreateUser(CosmosClient client, String databaseId, User user) {
         deleteUserIfExists(client, databaseId, user.getId());
         return createUser(client, databaseId, user);
     }
-
-    private static DocumentCollection safeCreateCollection(CosmosClient client, String databaseId, DocumentCollection collection, RequestOptions options) {
+     */
+    
+    private static CosmosContainer safeCreateCollection(CosmosClient client, String databaseId, CosmosContainerSettings collection, CosmosContainerRequestOptions options) {
         deleteCollectionIfExists(client, databaseId, collection.getId());
-        return createCollection(client, databaseId, collection, options);
+        return createCollection(databaseId, collection, options);
     }
 
-    public static String getCollectionLink(DocumentCollection collection) {
-        return collection.getSelfLink();
-    }
-
-    static protected DocumentCollection getCollectionDefinition() {
+    static protected CosmosContainerSettings getCollectionDefinition() {
         PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition();
         ArrayList<String> paths = new ArrayList<String>();
         paths.add("/mypk");
         partitionKeyDef.setPaths(paths);
 
-        DocumentCollection collectionDefinition = new DocumentCollection();
-        collectionDefinition.setId(UUID.randomUUID().toString());
-        collectionDefinition.setPartitionKey(partitionKeyDef);
+        CosmosContainerSettings collectionDefinition = new CosmosContainerSettings(UUID.randomUUID().toString(), partitionKeyDef);
 
         return collectionDefinition;
     }
@@ -543,33 +524,39 @@ public class TestSuiteBase {
     }
 
     public static void deleteCollectionIfExists(CosmosClient client, String databaseId, String collectionId) {
-        List<DocumentCollection> res = client.queryCollections("dbs/" + databaseId,
-                                                               String.format("SELECT * FROM root r where r.id = '%s'", collectionId), null).toBlocking().single()
-                .getResults();
+        CosmosDatabase database = client.getDatabase(databaseId).read().block().getDatabase();
+        List<CosmosContainerSettings> res = database.queryContainers(String.format("SELECT * FROM root r where r.id = '%s'", collectionId), null)
+                .flatMap(page -> Flux.fromIterable(page.getResults()))
+                .collectList()
+                .block();
+        
         if (!res.isEmpty()) {
-            deleteCollection(client, Utils.getCollectionNameLink(databaseId, collectionId));
+            deleteCollection(database, collectionId);
         }
     }
 
-    public static void deleteCollection(CosmosClient client, String collectionLink) {
-        client.deleteCollection(collectionLink, null).toBlocking().single();
+    public static void deleteCollection(CosmosDatabase cosmosDatabase, String collectionId) {
+        cosmosDatabase.getContainer(collectionId).delete().block();
     }
 
     public static void deleteDocumentIfExists(CosmosClient client, String databaseId, String collectionId, String docId) {
         FeedOptions options = new FeedOptions();
         options.setPartitionKey(new PartitionKey(docId));
-        List<Document> res = client
-                .queryDocuments(Utils.getCollectionNameLink(databaseId, collectionId), String.format("SELECT * FROM root r where r.id = '%s'", docId), options)
-                .toBlocking().single().getResults();
+        CosmosContainer cosmosContainer = client.getDatabase(databaseId).read().block().getDatabase().getContainer(collectionId).read().block().getContainer();
+        List<CosmosItem> res = cosmosContainer
+                .queryItems(String.format("SELECT * FROM root r where r.id = '%s'", docId), options)
+                .flatMap(page -> Flux.fromIterable(page.getResults()))
+                .collectList().block();
+
         if (!res.isEmpty()) {
-            deleteDocument(client, Utils.getDocumentNameLink(databaseId, collectionId, docId));
+            deleteDocument(cosmosContainer, docId);
         }
     }
 
-    public static void safeDeleteDocument(CosmosClient client, String documentLink, RequestOptions options) {
-        if (client != null && documentLink != null) {
+    public static void safeDeleteDocument(CosmosContainer cosmosContainer, String documentId, Object partitionKey) {
+        if (cosmosContainer != null && documentId != null) {
             try {
-                client.deleteDocument(documentLink, options).toBlocking().single();
+                cosmosContainer.getItem("{'id':'" + documentId + "'}").read(partitionKey).block().getItem().delete(partitionKey).block();
             } catch (Exception e) {
                 DocumentClientException dce = com.microsoft.azure.cosmosdb.rx.internal.Utils.as(e, DocumentClientException.class);
                 if (dce == null || dce.getStatusCode() != 404) {
@@ -579,10 +566,12 @@ public class TestSuiteBase {
         }
     }
 
-    public static void deleteDocument(CosmosClient client, String documentLink) {
-        client.deleteDocument(documentLink, null).toBlocking().single();
+    public static void deleteDocument(CosmosContainer cosmosContainer, String documentId) {
+        cosmosContainer.getItem("{'id':'" + documentId + "'}").read(null).block().getItem().delete(null);
     }
 
+    //TODO: Add user support
+    /*
     public static void deleteUserIfExists(CosmosClient client, String databaseId, String userId) {
         List<User> res = client
                 .queryUsers("dbs/" + databaseId, String.format("SELECT * FROM root r where r.id = '%s'", userId), null)
@@ -595,11 +584,8 @@ public class TestSuiteBase {
     public static void deleteUser(CosmosClient client, String userLink) {
         client.deleteUser(userLink, null).toBlocking().single();
     }
-
-    public static String getDatabaseLink(Database database) {
-        return database.getSelfLink();
-    }
-
+     */
+    
     static private CosmosDatabase safeCreateDatabase(CosmosClient client, CosmosDatabaseSettings databaseSettings) {
         safeDeleteDatabase(client.getDatabase(databaseSettings.getId()));
         return client.createDatabase(databaseSettings).block().getDatabase();
@@ -610,16 +596,17 @@ public class TestSuiteBase {
         return client.createDatabase(databaseSettings).block().getDatabase();
     }
 
-    static protected Database createDatabaseIfNotExists(CosmosClient client, String databaseId) {
-        return client.queryDatabases(String.format("SELECT * FROM r where r.id = '%s'", databaseId), null).flatMap(p -> Observable.from(p.getResults())).switchIfEmpty(
-                Observable.defer(() -> {
-
-                    Database databaseDefinition = new Database();
-                    databaseDefinition.setId(databaseId);
-
-                    return client.createDatabase(databaseDefinition, null).map(ResourceResponse::getResource);
-                })
-        ).toBlocking().single();
+    static protected CosmosDatabase createDatabaseIfNotExists(CosmosClient client, String databaseId) {
+        List<CosmosDatabaseSettings> res = client.queryDatabases(String.format("SELECT * FROM r where r.id = '%s'", databaseId), null)
+                .flatMap(p -> Flux.fromIterable(p.getResults()))
+                .collectList()
+                .block();
+        if (res.size() != 0) {
+            return client.getDatabase(databaseId).read().block().getDatabase();
+        } else {
+            CosmosDatabaseSettings databaseSettings = new CosmosDatabaseSettings(databaseId);
+            return client.createDatabase(databaseSettings).block().getDatabase();
+        }
     }
 
     static protected void safeDeleteDatabase(CosmosDatabase database) {
@@ -631,33 +618,32 @@ public class TestSuiteBase {
         }
     }
 
-    static protected void safeDeleteAllCollections(CosmosClient client, Database database) {
+    static protected void safeDeleteAllCollections(CosmosDatabase database) {
         if (database != null) {
-            List<DocumentCollection> collections = client.readCollections(database.getSelfLink(), null)
-                    .flatMap(p -> Observable.from(p.getResults()))
-                    .toList()
-                    .toBlocking()
-                    .single();
+            List<CosmosContainerSettings> collections = database.listContainers()
+                    .flatMap(p -> Flux.fromIterable(p.getResults()))
+                    .collectList()
+                    .block();
 
-            for(DocumentCollection collection: collections) {
-                client.deleteCollection(collection.getSelfLink(), null).toBlocking().single().getResource();
+            for(CosmosContainerSettings collection: collections) {
+                database.getContainer(collection.getId()).read().block().getContainer().delete().block();
             }
         }
     }
 
-    static protected void safeDeleteCollection(CosmosClient client, DocumentCollection collection) {
-        if (client != null && collection != null) {
+    static protected void safeDeleteCollection(CosmosContainer collection) {
+        if (collection != null) {
             try {
-                client.deleteCollection(collection.getSelfLink(), null).toBlocking().single();
+                collection.delete().block();
             } catch (Exception e) {
             }
         }
     }
 
-    static protected void safeDeleteCollection(CosmosClient client, String databaseId, String collectionId) {
-        if (client != null && databaseId != null && collectionId != null) {
+    static protected void safeDeleteCollection(CosmosDatabase database, String collectionId) {
+        if (database != null && collectionId != null) {
             try {
-                client.deleteCollection("/dbs/" + databaseId + "/colls/" + collectionId, null).toBlocking().single();
+                database.getContainer(collectionId).read().block().getContainer().delete().block();
             } catch (Exception e) {
             }
         }

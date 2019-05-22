@@ -24,9 +24,12 @@ package com.microsoft.azure.cosmos;
 
 import com.microsoft.azure.cosmosdb.BridgeInternal;
 import com.microsoft.azure.cosmosdb.Database;
+import com.microsoft.azure.cosmosdb.DatabaseAccount;
+import com.microsoft.azure.cosmosdb.Document;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
+import com.microsoft.azure.cosmosdb.ResourceResponse;
 import com.microsoft.azure.cosmosdb.SqlQuerySpec;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
@@ -34,6 +37,7 @@ import hu.akarnokd.rxjava.interop.RxJavaInterop;
 import reactor.adapter.rxjava.RxJava2Adapter;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import rx.Observable;
 
 /**
  * Provides a client-side logical representation of the Azure Cosmos database service.
@@ -248,5 +252,9 @@ import reactor.core.publisher.Mono;
      */
     public void close() {
         asyncDocumentClient.close();
+    }
+
+    public Mono<DatabaseAccount> getDatabaseAccount() {
+        return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(asyncDocumentClient.getDatabaseAccount().toSingle()));
     }
 }

@@ -154,6 +154,42 @@ public class CosmosConfiguration {
 
             return new CosmosConfiguration(this);
         }
+        
+        public URI getServiceEndpoint() {
+            return serviceEndpoint;
+        }
+
+        public String getKeyOrResourceToken() {
+            return keyOrResourceToken;
+        }
+
+        public ConnectionPolicy getConnectionPolicy() {
+            return connectionPolicy;
+        }
+
+        public Configs getConfigs() {
+            return configs;
+        }
+
+        /**
+         * Gets the consistency level
+         * @return the (@link ConsistencyLevel)
+         */
+        public ConsistencyLevel getDesiredConsistencyLevel() {
+            return desiredConsistencyLevel;
+        }
+
+        /**
+         * Gets the permission list
+         * @return the permission list
+         */
+        public List<Permission> getPermissions() {
+            return permissions;
+        }
+        
+        public TokenResolver getTokenResolver() {
+            return tokenResolver;
+        }
     }
 
     public URI getServiceEndpoint() {
