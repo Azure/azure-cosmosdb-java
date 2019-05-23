@@ -34,6 +34,7 @@ import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdEndpo
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdMetrics;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdObjectMapper;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdRequestArgs;
+import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdRequestRecord;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdServiceEndpoint;
 import com.microsoft.azure.cosmosdb.rx.internal.Configs;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
@@ -123,11 +124,11 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
         final RntbdEndpoint endpoint = this.endpointProvider.get(physicalAddress);
         this.metrics.incrementRequestCount();
 
-        final CompletableFuture<StoreResponse> future = endpoint.request(requestArgs);
+        final RntbdRequestRecord requestRecord = endpoint.request(requestArgs);
 
         return Single.fromEmitter((SingleEmitter<StoreResponse> emitter) -> {
 
-            future.whenComplete((response, error) -> {
+            requestRecord.whenComplete((response, error) -> {
 
                 requestArgs.traceOperation(logger, null, "emitSingle", response, error);
                 this.metrics.incrementResponseCount();
