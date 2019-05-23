@@ -23,6 +23,7 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpRequest;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpResponse;
 import io.netty.handler.codec.http.HttpMethod;
 import org.apache.commons.lang3.StringUtils;
@@ -36,9 +37,9 @@ import java.nio.charset.StandardCharsets;
 public class ErrorUtils {
     private static final Logger logger = LoggerFactory.getLogger(TransportClient.class);
 
-    static Mono<String> getErrorResponseAsync(HttpResponse responseMessage) {
+    static Mono<String> getErrorResponseAsync(HttpResponse responseMessage, HttpRequest request) {
         Mono<String> responseAsString = responseMessage.bodyAsString(StandardCharsets.UTF_8);
-        if (responseMessage.request().httpMethod() == HttpMethod.DELETE) {
+        if (request.httpMethod() == HttpMethod.DELETE) {
             return Mono.just(StringUtils.EMPTY);
         }
         return responseAsString;

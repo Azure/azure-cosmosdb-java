@@ -145,7 +145,7 @@ public class GatewayServiceConfigurationReader {
 
         HttpRequest httpRequest = new HttpRequest(HttpMethod.GET, serviceEndpoint, serviceEndpoint.getPort(), httpHeaders);
         Mono<HttpResponse> httpResponse = httpClient.send(httpRequest);
-        return toDatabaseAccountObservable(httpResponse);
+        return toDatabaseAccountObservable(httpResponse, httpRequest);
     }
 
     public Single<DatabaseAccount> initializeReaderAsync() {
@@ -170,9 +170,9 @@ public class GatewayServiceConfigurationReader {
         }
     }
 
-    private Single<DatabaseAccount> toDatabaseAccountObservable(Mono<HttpResponse> httpResponse) {
+    private Single<DatabaseAccount> toDatabaseAccountObservable(Mono<HttpResponse> httpResponse, HttpRequest httpRequest) {
 
-        return HttpClientUtils.parseResponseAsync(httpResponse)
+        return HttpClientUtils.parseResponseAsync(httpResponse, httpRequest)
                 .map(rxDocumentServiceResponse -> rxDocumentServiceResponse.getResource(DatabaseAccount.class));
     }
 

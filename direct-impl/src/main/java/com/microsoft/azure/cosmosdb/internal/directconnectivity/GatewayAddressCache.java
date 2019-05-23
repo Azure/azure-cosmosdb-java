@@ -303,7 +303,7 @@ public class GatewayAddressCache implements IAddressCache {
         }
         Mono<HttpResponse> httpResponseMono = this.httpClient.send(httpRequest);
 
-        Single<RxDocumentServiceResponse> dsrObs = HttpClientUtils.parseResponseAsync(httpResponseMono);
+        Single<RxDocumentServiceResponse> dsrObs = HttpClientUtils.parseResponseAsync(httpResponseMono, httpRequest);
         return dsrObs.map(
                 dsr -> {
                     logAddressResolutionEnd(request, identifier);
@@ -452,7 +452,7 @@ public class GatewayAddressCache implements IAddressCache {
         }
 
         Mono<HttpResponse> httpResponseMono = this.httpClient.send(httpRequest);
-        Single<RxDocumentServiceResponse> dsrObs = HttpClientUtils.parseResponseAsync(httpResponseMono);
+        Single<RxDocumentServiceResponse> dsrObs = HttpClientUtils.parseResponseAsync(httpResponseMono, httpRequest);
 
         return dsrObs.map(
                 dsr -> {

@@ -24,6 +24,7 @@
 package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders;
+import com.microsoft.azure.cosmosdb.rx.internal.http.HttpRequest;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpResponse;
 import io.netty.handler.codec.http.HttpMethod;
 import org.apache.commons.lang3.StringUtils;
@@ -33,13 +34,13 @@ import java.nio.charset.StandardCharsets;
 
 class ResponseUtils {
 
-    static Mono<StoreResponse> toStoreResponse(HttpResponse httpClientResponse) {
+    static Mono<StoreResponse> toStoreResponse(HttpResponse httpClientResponse, HttpRequest httpRequest) {
 
         HttpHeaders httpResponseHeaders = httpClientResponse.headers();
 
         Mono<String> contentObservable;
 
-        if (httpClientResponse.request().httpMethod() == HttpMethod.DELETE) {
+        if (httpRequest.httpMethod() == HttpMethod.DELETE) {
             // for delete we don't expect any body
             contentObservable = Mono.just(StringUtils.EMPTY);
         } else {

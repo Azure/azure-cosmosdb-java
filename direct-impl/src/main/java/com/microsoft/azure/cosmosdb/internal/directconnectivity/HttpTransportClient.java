@@ -61,7 +61,6 @@ import reactor.core.publisher.Mono;
 import rx.Single;
 
 import java.net.URI;
-import java.net.URL;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
@@ -697,7 +696,7 @@ public class HttpTransportClient extends TransportClient {
         // If the status code is < 300 or 304 NotModified (we treat not modified as success) then it means that it's a success code and shouldn't throw.
         if (response.statusCode() < HttpConstants.StatusCodes.MINIMUM_STATUSCODE_AS_ERROR_GATEWAY ||
                 response.statusCode() == HttpConstants.StatusCodes.NOT_MODIFIED) {
-            return HttpTransportClient.createStoreResponseFromHttpResponse(response);
+            return ResponseUtils.toStoreResponse(response, httpRequest);
         }
         else {
             return this.createErrorResponseFromHttpResponse(resourceAddress, activityId, httpRequest, response);
@@ -708,7 +707,7 @@ public class HttpTransportClient extends TransportClient {
                                                                       HttpRequest request,
                                                                       HttpResponse response) {
         int statusCode = response.statusCode();
-        Mono<String> errorMessageObs = ErrorUtils.getErrorResponseAsync(response);
+        Mono<String> errorMessageObs = ErrorUtils.getErrorResponseAsync(response, request);
 
         return errorMessageObs.flatMap(
                 errorMessage -> {
@@ -989,10 +988,5 @@ public class HttpTransportClient extends TransportClient {
                     return Mono.error(exception);
                 }
         );
-    }
-
-    private static Mono<StoreResponse> createStoreResponseFromHttpResponse(
-            HttpResponse responseMessage) {
-        return ResponseUtils.toStoreResponse(responseMessage);
     }
 }
