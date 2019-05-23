@@ -336,7 +336,7 @@ public class ConsistencyWriter {
 
                         //only refresh on first barrier call, set to false for subsequent attempts.
                         barrierRequest.requestContext.forceRefreshAddressCache = false;
-                        
+
                         //get max global committed lsn from current batch of responses, then update if greater than max of all batches.
                         if (writeBarrierRetryCount.getAndDecrement() == 0) {
                             logger.debug("ConsistencyWriter: WaitForWriteBarrierAsync - Last barrier multi-region strong. Responses: {}",
