@@ -79,7 +79,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.SubStatusCodes;
 import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdReporter.reportIssue;
@@ -471,7 +470,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
         this.pendingRequest = this.pendingRequests.compute(requestRecord.getActivityId(), (activityId, current) -> {
 
-            checkArgument(current == null, "current: expected no request record, not %s", current);
+            reportIssueUnless(current == null, logger, requestRecord, "current: {}", current);
 
             final Timeout pendingRequestTimeout = requestRecord.newTimeout(timeout -> {
                 this.pendingRequests.remove(activityId);
@@ -495,10 +494,9 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
     private void completeAllPendingRequestsExceptionally(final ChannelHandlerContext context, final Throwable throwable) {
 
-        checkNotNull(throwable, "throwable: null");
-
         if (this.closingExceptionally) {
-            checkArgument(throwable == ClosedWithPendingRequestsException.INSTANCE, "throwable: %s", throwable);
+            reportIssueUnless(throwable == ClosedWithPendingRequestsException.INSTANCE, logger, context,
+                "throwable: ", throwable);
             return;
         }
 
