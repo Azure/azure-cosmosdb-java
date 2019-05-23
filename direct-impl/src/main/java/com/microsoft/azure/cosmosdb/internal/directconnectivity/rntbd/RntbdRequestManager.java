@@ -79,7 +79,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.SubStatusCodes;
 import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdReporter.reportIssue;
@@ -470,7 +469,8 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
         this.pendingRequest = this.pendingRequests.compute(requestRecord.getActivityId(), (activityId, current) -> {
 
-            reportIssueUnless(current == null, logger, requestRecord, "current: {}", current);
+            reportIssueUnless(current == null, logger, context, "current: {}, requestRecord: {}",
+                current, requestRecord);
 
             final Timeout pendingRequestTimeout = requestRecord.newTimeout(timeout -> {
                 EventExecutor executor = context.executor();
@@ -482,8 +482,12 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
             });
 
             requestRecord.whenComplete((response, error) -> {
-                this.pendingRequests.remove(activityId);
-                pendingRequestTimeout.cancel();
+                try {
+                    this.pendingRequests.remove(activityId);
+                    pendingRequestTimeout.cancel();
+                } catch (final Throwable throwable) {
+                    reportIssue(logger, context, "throwable: ", throwable);
+                }
             });
 
             return requestRecord;
