@@ -500,8 +500,14 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
     private void completeAllPendingRequestsExceptionally(final ChannelHandlerContext context, final Throwable throwable) {
 
         if (this.closingExceptionally) {
+
             reportIssueUnless(throwable == ClosedWithPendingRequestsException.INSTANCE, logger, context,
                 "throwable: ", throwable);
+
+            reportIssueUnless(this.pendingRequests.isEmpty() && this.pendingWrites.isEmpty(), logger, context,
+                "pendingRequests: {}, pendingWrites: {}", this.pendingRequests.isEmpty(),
+                this.pendingWrites.isEmpty());
+
             return;
         }
 
