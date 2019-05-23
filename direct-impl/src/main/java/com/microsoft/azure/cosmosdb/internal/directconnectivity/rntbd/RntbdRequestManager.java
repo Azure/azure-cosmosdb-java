@@ -473,7 +473,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
             reportIssueUnless(current == null, logger, requestRecord, "current: {}", current);
 
             final Timeout pendingRequestTimeout = requestRecord.newTimeout(timeout -> {
-                this.pendingRequests.remove(activityId);
+                // TODO: DANOBLE: force this to run on the current executor to avoid race conditions (?)
                 requestRecord.expire();
             });
 
@@ -481,7 +481,6 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
                 this.pendingRequests.remove(activityId);
                 pendingRequestTimeout.cancel();
             });
-
             return requestRecord;
         });
 
