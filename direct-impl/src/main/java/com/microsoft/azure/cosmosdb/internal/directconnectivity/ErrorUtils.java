@@ -24,6 +24,7 @@
 package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpResponse;
+import io.netty.handler.codec.http.HttpMethod;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +38,7 @@ public class ErrorUtils {
 
     static Mono<String> getErrorResponseAsync(HttpResponse responseMessage) {
         Mono<String> responseAsString = responseMessage.bodyAsString(StandardCharsets.UTF_8);
-        if (responseAsString == null) {
+        if (responseMessage.request().httpMethod() == HttpMethod.DELETE) {
             return Mono.just(StringUtils.EMPTY);
         }
         return responseAsString;

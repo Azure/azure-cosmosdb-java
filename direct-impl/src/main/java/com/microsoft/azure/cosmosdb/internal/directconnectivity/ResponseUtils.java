@@ -25,6 +25,7 @@ package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpResponse;
+import io.netty.handler.codec.http.HttpMethod;
 import org.apache.commons.lang3.StringUtils;
 import reactor.core.publisher.Mono;
 
@@ -36,11 +37,13 @@ class ResponseUtils {
 
         HttpHeaders httpResponseHeaders = httpClientResponse.headers();
 
-        Mono<String> contentObservable = httpClientResponse.bodyAsString(StandardCharsets.UTF_8);
+        Mono<String> contentObservable;
 
-        if (contentObservable == null) {
+        if (httpClientResponse.request().httpMethod() == HttpMethod.DELETE) {
             // for delete we don't expect any body
             contentObservable = Mono.just(StringUtils.EMPTY);
+        } else {
+            contentObservable = httpClientResponse.bodyAsString(StandardCharsets.UTF_8);
         }
 
         return contentObservable.flatMap(content -> {
