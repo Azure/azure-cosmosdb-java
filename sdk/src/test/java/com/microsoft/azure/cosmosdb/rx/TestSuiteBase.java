@@ -81,7 +81,6 @@ import com.microsoft.azure.cosmosdb.User;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient.Builder;
 
 import org.testng.annotations.Test;
-import reactor.core.publisher.Hooks;
 import rx.Observable;
 import rx.observers.TestSubscriber;
 
@@ -169,7 +168,6 @@ public class TestSuiteBase {
 
     @BeforeSuite(groups = { "simple", "long", "direct", "multi-master", "emulator", "non-emulator" }, timeOut = SUITE_SETUP_TIMEOUT)
     public static void beforeSuite() {
-        Hooks.onOperatorDebug();
         logger.info("beforeSuite Started");
         AsyncDocumentClient houseKeepingClient = createGatewayHouseKeepingDocumentClient().build();
         try {

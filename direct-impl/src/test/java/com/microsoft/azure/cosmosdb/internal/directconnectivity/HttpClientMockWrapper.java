@@ -33,6 +33,7 @@ import org.mockito.Mockito;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -104,6 +105,7 @@ public class HttpClientMockWrapper {
             HttpResponse resp = Mockito.mock(HttpResponse.class);
             Mockito.doReturn(this.status).when(resp).statusCode();
             Mockito.doReturn(Flux.just(ByteBufUtil.writeUtf8(ByteBufAllocator.DEFAULT, this.content))).when(resp).body();
+            Mockito.doReturn(Mono.just(this.content)).when(resp).bodyAsString(StandardCharsets.UTF_8);
             Mockito.doReturn(this.httpHeaders).when(resp).headers();
             return resp;
         }

@@ -186,7 +186,7 @@ class RxGatewayStoreModel implements RxStoreModel {
 
 
             HttpRequest httpRequest = new HttpRequest(method,
-                    uri.toURL(),
+                    uri,
                     uri.getPort(),
                     httpHeaders,
                     byteBufObservable);
@@ -201,7 +201,7 @@ class RxGatewayStoreModel implements RxStoreModel {
     }
 
     private HttpHeaders getHttpRequestHeaders(Map<String, String> headers) {
-        HttpHeaders httpHeaders = new HttpHeaders();
+        HttpHeaders httpHeaders = new HttpHeaders(this.defaultHeaders.size());
         // Add default headers.
         for (Entry<String, String> entry : this.defaultHeaders.entrySet()) {
             if (!headers.containsKey(entry.getKey())) {
@@ -240,15 +240,13 @@ class RxGatewayStoreModel implements RxStoreModel {
             path = StringUtils.EMPTY;
         }
 
-        URI uri = new URI("https",
+        return new URI("https",
                 null,
                 rootUri.getHost(),
                 rootUri.getPort(),
                 ensureSlashPrefixed(path),
                 null,  // Query string not used.
                 null);
-
-        return uri;
     }
 
     private String ensureSlashPrefixed(String path) {
@@ -330,10 +328,10 @@ class RxGatewayStoreModel implements RxStoreModel {
 
                 if (request.getOperationType() == OperationType.Delete) {
                     // for delete we don't expect any body
-                    contentObservable = Flux.just("");
+                    contentObservable = Flux.just(StringUtils.EMPTY);
                 } else {
                     // transforms the ByteBufFlux to Flux<String>
-                    contentObservable = toString(httpResponse.body());
+                    contentObservable = httpResponse.bodyAsString(StandardCharsets.UTF_8).flux();
                 }
 
                 return contentObservable

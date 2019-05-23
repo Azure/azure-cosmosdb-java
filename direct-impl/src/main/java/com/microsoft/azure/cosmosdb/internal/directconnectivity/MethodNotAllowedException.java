@@ -30,7 +30,7 @@ import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.rx.internal.RMResources;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders;
 
-import java.net.URL;
+import java.net.URI;
 import java.util.Map;
 
 public class MethodNotAllowedException extends DocumentClientException {
@@ -52,8 +52,8 @@ public class MethodNotAllowedException extends DocumentClientException {
         this(message, null, headers, requestUriString);
     }
 
-    public MethodNotAllowedException(String message, HttpHeaders headers, URL requestUrl) {
-        this(message, headers, requestUrl != null ? requestUrl.toString() : null);
+    public MethodNotAllowedException(String message, HttpHeaders headers, URI requestUri) {
+        this(message, headers, requestUri != null ? requestUri.toString() : null);
     }
 
     public MethodNotAllowedException(Exception innerException) {

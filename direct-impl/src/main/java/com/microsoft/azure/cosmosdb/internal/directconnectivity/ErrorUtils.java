@@ -24,30 +24,26 @@
 package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpResponse;
-import io.netty.buffer.ByteBuf;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.net.URL;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
 
 public class ErrorUtils {
     private static final Logger logger = LoggerFactory.getLogger(TransportClient.class);
 
     static Mono<String> getErrorResponseAsync(HttpResponse responseMessage) {
-        if (responseMessage.body() == null) {
+        Mono<String> responseAsString = responseMessage.bodyAsString(StandardCharsets.UTF_8);
+        if (responseAsString == null) {
             return Mono.just(StringUtils.EMPTY);
         }
-        return getErrorFromStream(responseMessage.body());
+        return responseAsString;
     }
 
-    private static Mono<String> getErrorFromStream(Flux<ByteBuf> stream) {
-        return ResponseUtils.toString(stream).single();
-    }
-
-    static void logGoneException(URL physicalAddress, String activityId) {
+    static void logGoneException(URI physicalAddress, String activityId) {
         logger.trace("Listener not found. Store Physical Address {} ActivityId {}",
                 physicalAddress, activityId);
     }
@@ -57,7 +53,7 @@ public class ErrorUtils {
                 physicalAddress, activityId);
     }
 
-    static void logException(URL physicalAddress, String activityId) {
+    static void logException(URI physicalAddress, String activityId) {
         logger.trace("Store Request Failed. Store Physical Address {} ActivityId {}",
                 physicalAddress, activityId);
     }

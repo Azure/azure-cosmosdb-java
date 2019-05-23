@@ -40,7 +40,7 @@ public class HttpUtilsTest {
     
     @Test(groups = { "unit" })
     public void verifyConversionOfHttpResponseHeadersToMap() {
-        HttpHeaders headersMap = new HttpHeaders();
+        HttpHeaders headersMap = new HttpHeaders(1);
         headersMap.set(HttpConstants.HttpHeaders.OWNER_FULL_NAME, OWNER_FULL_NAME_VALUE);
 
         HttpResponse httpResponse = Mockito.mock(HttpResponse.class);

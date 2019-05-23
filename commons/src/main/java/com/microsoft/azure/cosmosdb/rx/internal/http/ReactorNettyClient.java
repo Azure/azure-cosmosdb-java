@@ -114,14 +114,13 @@ class ReactorNettyClient implements HttpClient {
     @Override
     public Mono<HttpResponse> send(final HttpRequest request) {
         Objects.requireNonNull(request.httpMethod());
-        Objects.requireNonNull(request.url());
-        Objects.requireNonNull(request.url().getProtocol());
+        Objects.requireNonNull(request.uri());
         Objects.requireNonNull(this.httpClientConfig);
 
         return this.httpClient
                 .port(request.port())
                 .request(HttpMethod.valueOf(request.httpMethod().toString()))
-                .uri(request.url().toString())
+                .uri(request.uri().toString())
                 .send(bodySendDelegate(request))
                 .responseConnection(responseDelegate(request))
                 .single();
@@ -185,7 +184,7 @@ class ReactorNettyClient implements HttpClient {
 
         @Override
         public HttpHeaders headers() {
-            HttpHeaders headers = new HttpHeaders();
+            HttpHeaders headers = new HttpHeaders(reactorNettyResponse.responseHeaders().size());
             reactorNettyResponse.responseHeaders().forEach(e -> headers.set(e.getKey(), e.getValue()));
             return headers;
         }

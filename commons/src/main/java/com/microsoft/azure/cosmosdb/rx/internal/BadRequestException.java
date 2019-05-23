@@ -29,7 +29,7 @@ import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.HttpUtils;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders;
 
-import java.net.URL;
+import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -62,8 +62,8 @@ public class BadRequestException extends DocumentClientException {
         this(message, null, headers, requestUrlString);
     }
 
-    public BadRequestException(String message, HttpHeaders headers, URL requestUrl) {
-        this(message, headers, requestUrl != null ? requestUrl.toString() : null);
+    public BadRequestException(String message, HttpHeaders headers, URI requestUri) {
+        this(message, headers, requestUri != null ? requestUri.toString() : null);
     }
 
     public BadRequestException(Exception innerException) {

@@ -290,13 +290,17 @@ public class GatewayAddressCache implements IAddressCache {
         URL targetEndpoint = Utils.setQuery(this.addressEndpoint.toString(), Utils.createQuery(addressQuery));
         String identifier = logAddressResolutionStart(request, targetEndpoint);
 
-        HttpHeaders httpHeaders = new HttpHeaders();
+        HttpHeaders httpHeaders = new HttpHeaders(headers.size());
         for (Map.Entry<String, String> entry : headers.entrySet()) {
             httpHeaders.set(entry.getKey(), entry.getValue());
         }
 
-        HttpRequest httpRequest = new HttpRequest(HttpMethod.GET, targetEndpoint, targetEndpoint.getPort())
-                .withHeaders(httpHeaders);
+        HttpRequest httpRequest;
+        try {
+            httpRequest = new HttpRequest(HttpMethod.GET, targetEndpoint.toURI(), targetEndpoint.getPort(), httpHeaders);
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException(targetEndpoint.toString(), e);
+        }
         Mono<HttpResponse> httpResponseMono = this.httpClient.send(httpRequest);
 
         Single<RxDocumentServiceResponse> dsrObs = HttpClientUtils.parseResponseAsync(httpResponseMono);
@@ -435,15 +439,19 @@ public class GatewayAddressCache implements IAddressCache {
         URL targetEndpoint = Utils.setQuery(this.addressEndpoint.toString(), Utils.createQuery(queryParameters));
         String identifier = logAddressResolutionStart(request, targetEndpoint);
 
-        HttpHeaders defaultHttpHeaders = new HttpHeaders();
+        HttpHeaders defaultHttpHeaders = new HttpHeaders(headers.size());
         for (Map.Entry<String, String> entry : headers.entrySet()) {
             defaultHttpHeaders.set(entry.getKey(), entry.getValue());
         }
 
-        HttpRequest httpRequest = new HttpRequest(HttpMethod.GET, targetEndpoint, targetEndpoint.getPort())
-                .withHeaders(defaultHttpHeaders);
-        Mono<HttpResponse> httpResponseMono = this.httpClient.send(httpRequest);
+        HttpRequest httpRequest;
+        try {
+            httpRequest = new HttpRequest(HttpMethod.GET, targetEndpoint.toURI(), targetEndpoint.getPort(), defaultHttpHeaders);
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException(targetEndpoint.toString(), e);
+        }
 
+        Mono<HttpResponse> httpResponseMono = this.httpClient.send(httpRequest);
         Single<RxDocumentServiceResponse> dsrObs = HttpClientUtils.parseResponseAsync(httpResponseMono);
 
         return dsrObs.map(

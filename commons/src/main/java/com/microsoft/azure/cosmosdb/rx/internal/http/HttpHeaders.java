@@ -38,12 +38,20 @@ import java.util.Map;
  * A collection of headers on an HTTP request or response.
  */
 public class HttpHeaders implements Iterable<HttpHeader>, JsonSerializable {
-    private final Map<String, HttpHeader> headers = new HashMap<>();
+    private Map<String, HttpHeader> headers;
 
     /**
      * Create an empty HttpHeaders instance.
      */
     public HttpHeaders() {
+        this.headers = new HashMap<>();
+    }
+
+    /**
+     * Create an HttpHeaders instance with the given size.
+     */
+    public HttpHeaders(int size) {
+        this.headers = new HashMap<>(size);
     }
 
     /**
@@ -52,21 +60,9 @@ public class HttpHeaders implements Iterable<HttpHeader>, JsonSerializable {
      * @param headers the map of initial headers
      */
     public HttpHeaders(Map<String, String> headers) {
+        this.headers = new HashMap<>(headers.size());
         for (final Map.Entry<String, String> header : headers.entrySet()) {
             this.set(header.getKey(), header.getValue());
-        }
-    }
-
-    /**
-     * Create a HttpHeaders instance with the provided initial headers.
-     *
-     * @param headers the collection of initial headers
-     */
-    public HttpHeaders(Iterable<HttpHeader> headers) {
-        this();
-
-        for (final HttpHeader header : headers) {
-            this.set(header.name(), header.value());
         }
     }
 
@@ -134,7 +130,7 @@ public class HttpHeaders implements Iterable<HttpHeader>, JsonSerializable {
      * @return the headers as map
      */
     public Map<String, String> toMap() {
-        final Map<String, String> result = new HashMap<>();
+        final Map<String, String> result = new HashMap<>(headers.size());
         for (final HttpHeader header : headers.values()) {
             result.put(header.name(), header.value());
         }

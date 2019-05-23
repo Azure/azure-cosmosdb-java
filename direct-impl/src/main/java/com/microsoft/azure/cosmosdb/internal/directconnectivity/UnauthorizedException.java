@@ -31,7 +31,6 @@ import com.microsoft.azure.cosmosdb.rx.internal.RMResources;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders;
 
 import java.net.URI;
-import java.net.URL;
 import java.util.Map;
 
 public class UnauthorizedException extends DocumentClientException {
@@ -56,10 +55,6 @@ public class UnauthorizedException extends DocumentClientException {
 
     public UnauthorizedException(String message, HttpHeaders headers, URI requestUri) {
         this(message, headers, requestUri != null ? requestUri.toString() : null);
-    }
-
-    public UnauthorizedException(String message, HttpHeaders headers, URL requestUrl) {
-        this(message, headers, requestUrl != null ? requestUrl.toString() : null);
     }
 
     public UnauthorizedException(Exception innerException) {

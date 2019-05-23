@@ -117,8 +117,6 @@ public class HttpTransportClient extends TransportClient {
 
         try {
 
-            URL physicalAddressUrl = physicalAddress.toURL();
-
             // uuid correlation manager
             UUID activityId = UUID.fromString(request.getActivityId());
 
@@ -140,7 +138,7 @@ public class HttpTransportClient extends TransportClient {
                         sendTimeUtc.v = Instant.now();
                         this.beforeRequest(
                                 activityId,
-                                httpRequest.url(),
+                                httpRequest.uri(),
                                 request.getResourceType(),
                                 httpRequest.headers());
                     })
@@ -168,7 +166,7 @@ public class HttpTransportClient extends TransportClient {
                                             RMResources.Gone),
                                     exception,
                                     null,
-                                    physicalAddressUrl);
+                                    physicalAddress);
 
                             return Mono.error(goneException);
                         } else if (request.isReadOnlyRequest()) {
@@ -185,7 +183,7 @@ public class HttpTransportClient extends TransportClient {
                                             RMResources.Gone),
                                     exception,
                                     null,
-                                    physicalAddressUrl);
+                                    physicalAddress);
 
                             return Mono.error(goneException);
                         } else {
@@ -238,7 +236,7 @@ public class HttpTransportClient extends TransportClient {
         }
     }
 
-    private void beforeRequest(UUID activityId, URL uri, ResourceType resourceType, HttpHeaders requestHeaders) {
+    private void beforeRequest(UUID activityId, URI uri, ResourceType resourceType, HttpHeaders requestHeaders) {
         // TODO: perf counters
         // https://msdata.visualstudio.com/CosmosDB/_workitems/edit/258624
     }
@@ -264,7 +262,7 @@ public class HttpTransportClient extends TransportClient {
         }
     }
 
-    private String GetMatch(RxDocumentServiceRequest request, ResourceOperation resourceOperation) {
+    private String getMatch(RxDocumentServiceRequest request, ResourceOperation resourceOperation) {
         switch (resourceOperation.operationType) {
             case Delete:
             case ExecuteJavaScript:
@@ -297,7 +295,7 @@ public class HttpTransportClient extends TransportClient {
         // HttpRequestMessage -> StreamContent -> MemoryStream all get disposed, the original stream will be left open.
         switch (resourceOperation.operationType) {
             case Create:
-                requestUri = this.getResourceFeedUri(resourceOperation.resourceType, physicalAddress, request);
+                requestUri = getResourceFeedUri(resourceOperation.resourceType, physicalAddress, request);
                 method = HttpMethod.POST;
                 assert request.getContent() != null;
                 httpRequestMessage = new HttpRequest(method, requestUri.toString(), physicalAddress.getPort());
@@ -305,7 +303,7 @@ public class HttpTransportClient extends TransportClient {
                 break;
 
             case ExecuteJavaScript:
-                requestUri = this.getResourceEntryUri(resourceOperation.resourceType, physicalAddress, request);
+                requestUri = getResourceEntryUri(resourceOperation.resourceType, physicalAddress, request);
                 method = HttpMethod.POST;
                 assert request.getContent() != null;
                 httpRequestMessage = new HttpRequest(method, requestUri.toString(), physicalAddress.getPort());
@@ -313,25 +311,25 @@ public class HttpTransportClient extends TransportClient {
                 break;
 
             case Delete:
-                requestUri = this.getResourceEntryUri(resourceOperation.resourceType, physicalAddress, request);
+                requestUri = getResourceEntryUri(resourceOperation.resourceType, physicalAddress, request);
                 method = HttpMethod.DELETE;
                 httpRequestMessage = new HttpRequest(method, requestUri.toString(), physicalAddress.getPort());
                 break;
 
             case Read:
-                requestUri = this.getResourceEntryUri(resourceOperation.resourceType, physicalAddress, request);
+                requestUri = getResourceEntryUri(resourceOperation.resourceType, physicalAddress, request);
                 method = HttpMethod.GET;
                 httpRequestMessage = new HttpRequest(method, requestUri.toString(), physicalAddress.getPort());
                 break;
 
             case ReadFeed:
-                requestUri = this.getResourceFeedUri(resourceOperation.resourceType, physicalAddress, request);
+                requestUri = getResourceFeedUri(resourceOperation.resourceType, physicalAddress, request);
                 method = HttpMethod.GET;
                 httpRequestMessage = new HttpRequest(method, requestUri.toString(), physicalAddress.getPort());
                 break;
 
             case Replace:
-                requestUri = this.getResourceEntryUri(resourceOperation.resourceType, physicalAddress, request);
+                requestUri = getResourceEntryUri(resourceOperation.resourceType, physicalAddress, request);
                 method = HttpMethod.PUT;
                 assert request.getContent() != null;
                 httpRequestMessage = new HttpRequest(method, requestUri.toString(), physicalAddress.getPort());
@@ -339,7 +337,7 @@ public class HttpTransportClient extends TransportClient {
                 break;
 
             case Update:
-                requestUri = this.getResourceEntryUri(resourceOperation.resourceType, physicalAddress, request);
+                requestUri = getResourceEntryUri(resourceOperation.resourceType, physicalAddress, request);
                 method = new HttpMethod("PATCH");
                 assert request.getContent() != null;
                 httpRequestMessage = new HttpRequest(method, requestUri.toString(), physicalAddress.getPort());
@@ -348,7 +346,7 @@ public class HttpTransportClient extends TransportClient {
 
             case Query:
             case SqlQuery:
-                requestUri = this.getResourceFeedUri(resourceOperation.resourceType, physicalAddress, request);
+                requestUri = getResourceFeedUri(resourceOperation.resourceType, physicalAddress, request);
                 method = HttpMethod.POST;
                 assert request.getContent() != null;
                 httpRequestMessage = new HttpRequest(method, requestUri.toString(), physicalAddress.getPort());
@@ -357,7 +355,7 @@ public class HttpTransportClient extends TransportClient {
                 break;
 
             case Upsert:
-                requestUri = this.getResourceFeedUri(resourceOperation.resourceType, physicalAddress, request);
+                requestUri = getResourceFeedUri(resourceOperation.resourceType, physicalAddress, request);
                 method = HttpMethod.POST;
                 assert request.getContent() != null;
                 httpRequestMessage = new HttpRequest(method, requestUri.toString(), physicalAddress.getPort());
@@ -365,13 +363,13 @@ public class HttpTransportClient extends TransportClient {
                 break;
 
             case Head:
-                requestUri = this.getResourceEntryUri(resourceOperation.resourceType, physicalAddress, request);
+                requestUri = getResourceEntryUri(resourceOperation.resourceType, physicalAddress, request);
                 method = HttpMethod.HEAD;
                 httpRequestMessage = new HttpRequest(method, requestUri.toString(), physicalAddress.getPort());
                 break;
 
             case HeadFeed:
-                requestUri = this.getResourceFeedUri(resourceOperation.resourceType, physicalAddress, request);
+                requestUri = getResourceFeedUri(resourceOperation.resourceType, physicalAddress, request);
                 method = HttpMethod.HEAD;
                 httpRequestMessage = new HttpRequest(method, requestUri.toString(), physicalAddress.getPort());
                 break;
@@ -418,7 +416,7 @@ public class HttpTransportClient extends TransportClient {
 
         String dateHeader = HttpUtils.getDateHeader(documentServiceRequestHeaders);
         HttpTransportClient.addHeader(httpRequestHeaders, HttpConstants.HttpHeaders.X_DATE, dateHeader);
-        HttpTransportClient.addHeader(httpRequestHeaders, "Match", this.GetMatch(request, resourceOperation));
+        HttpTransportClient.addHeader(httpRequestHeaders, "Match", this.getMatch(request, resourceOperation));
         HttpTransportClient.addHeader(httpRequestHeaders, HttpConstants.HttpHeaders.IF_MODIFIED_SINCE, request);
         HttpTransportClient.addHeader(httpRequestHeaders, HttpConstants.HttpHeaders.A_IM, request);
         if (!request.getIsNameBased()) {
@@ -531,7 +529,7 @@ public class HttpTransportClient extends TransportClient {
         }
     }
 
-    static URI getResourceEntryUri(ResourceType resourceType, URI physicalAddress, RxDocumentServiceRequest request) throws Exception {
+    private static URI getResourceEntryUri(ResourceType resourceType, URI physicalAddress, RxDocumentServiceRequest request) throws Exception {
         switch (resourceType) {
             case Attachment:
                 return getAttachmentEntryUri(physicalAddress, request);
@@ -566,7 +564,7 @@ public class HttpTransportClient extends TransportClient {
         }
     }
 
-    static URI createURI(URI baseAddress, String resourcePath) {
+    private static URI createURI(URI baseAddress, String resourcePath) {
         return baseAddress.resolve(HttpUtils.urlEncode(trimBeginningAndEndingSlashes(resourcePath)));
     }
 
@@ -574,100 +572,99 @@ public class HttpTransportClient extends TransportClient {
         return baseAddress;
     }
 
-    static URI getDatabaseFeedUri(URI baseAddress) throws Exception {
+    private static URI getDatabaseFeedUri(URI baseAddress) {
         return createURI(baseAddress, PathsHelper.generatePath(ResourceType.Database, StringUtils.EMPTY, true));
     }
 
-    static URI getDatabaseEntryUri(URI baseAddress, RxDocumentServiceRequest request) throws Exception {
+    private static URI getDatabaseEntryUri(URI baseAddress, RxDocumentServiceRequest request) {
         return createURI(baseAddress, PathsHelper.generatePath(ResourceType.Database, request, false));
     }
 
-    static URI getCollectionFeedUri(URI baseAddress, RxDocumentServiceRequest request) throws Exception {
+    private static URI getCollectionFeedUri(URI baseAddress, RxDocumentServiceRequest request) {
         return createURI(baseAddress, PathsHelper.generatePath(ResourceType.DocumentCollection, request, true));
     }
 
-    static URI getStoredProcedureFeedUri(URI baseAddress, RxDocumentServiceRequest request) throws Exception {
+    private static URI getStoredProcedureFeedUri(URI baseAddress, RxDocumentServiceRequest request) {
         return createURI(baseAddress, PathsHelper.generatePath(ResourceType.StoredProcedure, request, true));
     }
 
-    static URI getTriggerFeedUri(URI baseAddress, RxDocumentServiceRequest request) throws Exception {
+    private static URI getTriggerFeedUri(URI baseAddress, RxDocumentServiceRequest request) {
         return createURI(baseAddress, PathsHelper.generatePath(ResourceType.Trigger, request, true));
     }
 
-    static URI getUserDefinedFunctionFeedUri(URI baseAddress, RxDocumentServiceRequest request) throws Exception {
+    private static URI getUserDefinedFunctionFeedUri(URI baseAddress, RxDocumentServiceRequest request) {
         return createURI(baseAddress, PathsHelper.generatePath(ResourceType.UserDefinedFunction, request, true));
     }
 
-    static URI getCollectionEntryUri(URI baseAddress, RxDocumentServiceRequest request) throws Exception {
+    private static URI getCollectionEntryUri(URI baseAddress, RxDocumentServiceRequest request) {
         return createURI(baseAddress, PathsHelper.generatePath(ResourceType.DocumentCollection, request, false));
     }
 
-    static URI getStoredProcedureEntryUri(URI baseAddress, RxDocumentServiceRequest request) throws Exception {
+    private static URI getStoredProcedureEntryUri(URI baseAddress, RxDocumentServiceRequest request) {
         return createURI(baseAddress, PathsHelper.generatePath(ResourceType.StoredProcedure, request, false));
     }
 
-    static URI getTriggerEntryUri(URI baseAddress, RxDocumentServiceRequest request) throws Exception {
+    private static URI getTriggerEntryUri(URI baseAddress, RxDocumentServiceRequest request) {
         return createURI(baseAddress, PathsHelper.generatePath(ResourceType.Trigger, request, false));
     }
 
-    static URI getUserDefinedFunctionEntryUri(URI baseAddress, RxDocumentServiceRequest request) throws Exception {
+    private static URI getUserDefinedFunctionEntryUri(URI baseAddress, RxDocumentServiceRequest request) {
         return createURI(baseAddress, PathsHelper.generatePath(ResourceType.UserDefinedFunction, request, false));
     }
 
-    static URI getDocumentFeedUri(URI baseAddress, RxDocumentServiceRequest request) throws Exception {
+    private static URI getDocumentFeedUri(URI baseAddress, RxDocumentServiceRequest request) {
         return createURI(baseAddress, PathsHelper.generatePath(ResourceType.Document, request, true));
     }
 
-    static URI getDocumentEntryUri(URI baseAddress, RxDocumentServiceRequest request) throws Exception {
+    private static URI getDocumentEntryUri(URI baseAddress, RxDocumentServiceRequest request) {
         return createURI(baseAddress, PathsHelper.generatePath(ResourceType.Document, request, false));
     }
 
-    static URI getConflictFeedUri(URI baseAddress, RxDocumentServiceRequest request) throws Exception {
+    private static URI getConflictFeedUri(URI baseAddress, RxDocumentServiceRequest request) {
         return createURI(baseAddress, PathsHelper.generatePath(ResourceType.Conflict, request, true));
     }
 
-    static URI getConflictEntryUri(URI baseAddress, RxDocumentServiceRequest request) throws Exception {
+    private static URI getConflictEntryUri(URI baseAddress, RxDocumentServiceRequest request) {
         return createURI(baseAddress, PathsHelper.generatePath(ResourceType.Conflict, request, false));
     }
 
-    static URI getAttachmentFeedUri(URI baseAddress, RxDocumentServiceRequest request) throws Exception {
+    private static URI getAttachmentFeedUri(URI baseAddress, RxDocumentServiceRequest request) {
         return createURI(baseAddress, PathsHelper.generatePath(ResourceType.Attachment, request, true));
     }
 
-    static URI getAttachmentEntryUri(URI baseAddress, RxDocumentServiceRequest request) throws Exception {
+    private static URI getAttachmentEntryUri(URI baseAddress, RxDocumentServiceRequest request) {
         return createURI(baseAddress, PathsHelper.generatePath(ResourceType.Attachment, request, false));
     }
 
-    static URI getUserFeedUri(URI baseAddress, RxDocumentServiceRequest request) throws Exception {
+    private static URI getUserFeedUri(URI baseAddress, RxDocumentServiceRequest request) {
         return createURI(baseAddress, PathsHelper.generatePath(ResourceType.User, request, true));
     }
 
-    static URI getUserEntryUri(URI baseAddress, RxDocumentServiceRequest request) throws Exception {
+    private static URI getUserEntryUri(URI baseAddress, RxDocumentServiceRequest request) {
         return createURI(baseAddress, PathsHelper.generatePath(ResourceType.User, request, false));
     }
 
-    static URI getPermissionFeedUri(URI baseAddress, RxDocumentServiceRequest request) throws Exception {
+    private static URI getPermissionFeedUri(URI baseAddress, RxDocumentServiceRequest request) {
         return createURI(baseAddress, PathsHelper.generatePath(ResourceType.Permission, request, true));
     }
 
-    static URI getPermissionEntryUri(URI baseAddress, RxDocumentServiceRequest request) throws Exception {
+    private static URI getPermissionEntryUri(URI baseAddress, RxDocumentServiceRequest request) {
         return createURI(baseAddress, PathsHelper.generatePath(ResourceType.Permission, request, false));
     }
 
-    static URI getOfferFeedUri(URI baseAddress, RxDocumentServiceRequest request) throws Exception {
+    private static URI getOfferFeedUri(URI baseAddress, RxDocumentServiceRequest request) {
         return createURI(baseAddress, PathsHelper.generatePath(ResourceType.Offer, request, true));
     }
 
-
-    static URI getSchemaFeedUri(URI baseAddress, RxDocumentServiceRequest request) throws Exception {
+    private static URI getSchemaFeedUri(URI baseAddress, RxDocumentServiceRequest request) {
         return createURI(baseAddress, PathsHelper.generatePath(ResourceType.Schema, request, true));
     }
 
-    static URI getSchemaEntryUri(URI baseAddress, RxDocumentServiceRequest request) throws Exception {
+    private static URI getSchemaEntryUri(URI baseAddress, RxDocumentServiceRequest request) {
         return createURI(baseAddress, PathsHelper.generatePath(ResourceType.Schema, request, false));
     }
 
-    static URI getOfferEntryUri(URI baseAddress, RxDocumentServiceRequest request) throws Exception {
+    private static URI getOfferEntryUri(URI baseAddress, RxDocumentServiceRequest request) {
         return createURI(baseAddress, PathsHelper.generatePath(ResourceType.Offer, request, false));
     }
 
@@ -747,7 +744,7 @@ public class HttpTransportClient extends TransportClient {
                                             RMResources.ExceptionMessage,
                                             Strings.isNullOrEmpty(errorMessage) ? RMResources.Unauthorized : errorMessage),
                                     response.headers(),
-                                    request.url());
+                                    request.uri());
                             break;
 
                         case HttpConstants.StatusCodes.FORBIDDEN:
@@ -756,7 +753,7 @@ public class HttpTransportClient extends TransportClient {
                                             RMResources.ExceptionMessage,
                                             Strings.isNullOrEmpty(errorMessage) ? RMResources.Forbidden : errorMessage),
                                     response.headers(),
-                                    request.url());
+                                    request.uri());
                             break;
 
                         case HttpConstants.StatusCodes.NOTFOUND:
@@ -775,7 +772,7 @@ public class HttpTransportClient extends TransportClient {
                                         String.format(
                                                 RMResources.ExceptionMessage,
                                                 RMResources.Gone),
-                                        request.url().toString());
+                                        request.uri().toString());
                                 exception.getResponseHeaders().put(HttpConstants.HttpHeaders.ACTIVITY_ID,
                                         activityId);
 
@@ -786,7 +783,7 @@ public class HttpTransportClient extends TransportClient {
                                                 RMResources.ExceptionMessage,
                                                 Strings.isNullOrEmpty(errorMessage) ? RMResources.NotFound : errorMessage),
                                         response.headers(),
-                                        request.url());
+                                        request.uri());
                                 break;
                             }
 
@@ -796,7 +793,7 @@ public class HttpTransportClient extends TransportClient {
                                             RMResources.ExceptionMessage,
                                             Strings.isNullOrEmpty(errorMessage) ? RMResources.BadRequest : errorMessage),
                                     response.headers(),
-                                    request.url());
+                                    request.uri());
                             break;
 
                         case HttpConstants.StatusCodes.METHOD_NOT_ALLOWED:
@@ -806,14 +803,14 @@ public class HttpTransportClient extends TransportClient {
                                             Strings.isNullOrEmpty(errorMessage) ? RMResources.MethodNotAllowed : errorMessage),
                                     null,
                                     response.headers(),
-                                    request.url().toString());
+                                    request.uri().toString());
                             break;
 
                         case HttpConstants.StatusCodes.GONE: {
 
                             // TODO: update perf counter
                             // https://msdata.visualstudio.com/CosmosDB/_workitems/edit/258624
-                            ErrorUtils.logGoneException(request.url(), activityId);
+                            ErrorUtils.logGoneException(request.uri(), activityId);
 
                             Integer nSubStatus = 0;
                             String valueSubStatus = response.headers().value(WFConstants.BackendHeaders.SUB_STATUS);
@@ -824,7 +821,7 @@ public class HttpTransportClient extends TransportClient {
                                                     RMResources.ExceptionMessage,
                                                     RMResources.InvalidBackendResponse),
                                             response.headers(),
-                                            request.url());
+                                            request.uri());
                                     break;
                                 }
                             }
@@ -835,7 +832,7 @@ public class HttpTransportClient extends TransportClient {
                                                 RMResources.ExceptionMessage,
                                                 Strings.isNullOrEmpty(errorMessage) ? RMResources.Gone : errorMessage),
                                         response.headers(),
-                                        request.url().toString());
+                                        request.uri().toString());
                                 break;
                             } else if (nSubStatus == HttpConstants.SubStatusCodes.PARTITION_KEY_RANGE_GONE) {
                                 exception = new PartitionKeyRangeGoneException(
@@ -843,7 +840,7 @@ public class HttpTransportClient extends TransportClient {
                                                 RMResources.ExceptionMessage,
                                                 Strings.isNullOrEmpty(errorMessage) ? RMResources.Gone : errorMessage),
                                         response.headers(),
-                                        request.url().toString());
+                                        request.uri().toString());
                                 break;
                             } else if (nSubStatus == HttpConstants.SubStatusCodes.COMPLETING_SPLIT) {
                                 exception = new PartitionKeyRangeIsSplittingException(
@@ -851,7 +848,7 @@ public class HttpTransportClient extends TransportClient {
                                                 RMResources.ExceptionMessage,
                                                 Strings.isNullOrEmpty(errorMessage) ? RMResources.Gone : errorMessage),
                                         response.headers(),
-                                        request.url().toString());
+                                        request.uri().toString());
                                 break;
                             } else if (nSubStatus == HttpConstants.SubStatusCodes.COMPLETING_PARTITION_MIGRATION) {
                                 exception = new PartitionIsMigratingException(
@@ -859,7 +856,7 @@ public class HttpTransportClient extends TransportClient {
                                                 RMResources.ExceptionMessage,
                                                 Strings.isNullOrEmpty(errorMessage) ? RMResources.Gone : errorMessage),
                                         response.headers(),
-                                        request.url().toString());
+                                        request.uri().toString());
                                 break;
                             } else {
                                 // Have the request URL in the exception message for debugging purposes.
@@ -868,7 +865,7 @@ public class HttpTransportClient extends TransportClient {
                                                 RMResources.ExceptionMessage,
                                                 RMResources.Gone),
                                         response.headers(),
-                                        request.url());
+                                        request.uri());
 
                                 exception.getResponseHeaders().put(HttpConstants.HttpHeaders.ACTIVITY_ID,
                                         activityId);
@@ -882,7 +879,7 @@ public class HttpTransportClient extends TransportClient {
                                             RMResources.ExceptionMessage,
                                             Strings.isNullOrEmpty(errorMessage) ? RMResources.EntityAlreadyExists : errorMessage),
                                     response.headers(),
-                                    request.url().toString());
+                                    request.uri().toString());
                             break;
 
                         case HttpConstants.StatusCodes.PRECONDITION_FAILED:
@@ -891,7 +888,7 @@ public class HttpTransportClient extends TransportClient {
                                             RMResources.ExceptionMessage,
                                             Strings.isNullOrEmpty(errorMessage) ? RMResources.PreconditionFailed : errorMessage),
                                     response.headers(),
-                                    request.url().toString());
+                                    request.uri().toString());
                             break;
 
                         case HttpConstants.StatusCodes.REQUEST_ENTITY_TOO_LARGE:
@@ -902,7 +899,7 @@ public class HttpTransportClient extends TransportClient {
                                                     RMResources.RequestEntityTooLarge,
                                                     HttpConstants.HttpHeaders.PAGE_SIZE)),
                                     response.headers(),
-                                    request.url().toString());
+                                    request.uri().toString());
                             break;
 
                         case HttpConstants.StatusCodes.LOCKED:
@@ -911,7 +908,7 @@ public class HttpTransportClient extends TransportClient {
                                             RMResources.ExceptionMessage,
                                             Strings.isNullOrEmpty(errorMessage) ? RMResources.Locked : errorMessage),
                                     response.headers(),
-                                    request.url().toString());
+                                    request.uri().toString());
                             break;
 
                         case HttpConstants.StatusCodes.SERVICE_UNAVAILABLE:
@@ -920,7 +917,7 @@ public class HttpTransportClient extends TransportClient {
                                             RMResources.ExceptionMessage,
                                             Strings.isNullOrEmpty(errorMessage) ? RMResources.ServiceUnavailable : errorMessage),
                                     response.headers(),
-                                    request.url());
+                                    request.uri());
                             break;
 
                         case HttpConstants.StatusCodes.REQUEST_TIMEOUT:
@@ -929,7 +926,7 @@ public class HttpTransportClient extends TransportClient {
                                             RMResources.ExceptionMessage,
                                             Strings.isNullOrEmpty(errorMessage) ? RMResources.RequestTimeout : errorMessage),
                                     response.headers(),
-                                    request.url());
+                                    request.uri());
                             break;
 
                         case HttpConstants.StatusCodes.RETRY_WITH:
@@ -938,7 +935,7 @@ public class HttpTransportClient extends TransportClient {
                                             RMResources.ExceptionMessage,
                                             Strings.isNullOrEmpty(errorMessage) ? RMResources.RetryWith : errorMessage),
                                     response.headers(),
-                                    request.url());
+                                    request.uri());
                             break;
 
                         case HttpConstants.StatusCodes.TOO_MANY_REQUESTS:
@@ -948,7 +945,7 @@ public class HttpTransportClient extends TransportClient {
                                                     RMResources.ExceptionMessage,
                                                     Strings.isNullOrEmpty(errorMessage) ? RMResources.TooManyRequests : errorMessage),
                                             response.headers(),
-                                            request.url());
+                                            request.uri());
 
                             List<String> values = null;
                             headerValues = response.headers().values(HttpConstants.HttpHeaders.RETRY_AFTER_IN_MILLISECONDS);
@@ -969,18 +966,18 @@ public class HttpTransportClient extends TransportClient {
                                             RMResources.ExceptionMessage,
                                             Strings.isNullOrEmpty(errorMessage) ? RMResources.InternalServerError : errorMessage),
                                     response.headers(),
-                                    request.url());
+                                    request.uri());
                             break;
 
                         default:
                             logger.error("Unrecognized status code {} returned by backend. ActivityId {}", statusCode, activityId);
-                            ErrorUtils.logException(request.url(), activityId);
+                            ErrorUtils.logException(request.uri(), activityId);
                             exception = new InternalServerErrorException(
                                     String.format(
                                             RMResources.ExceptionMessage,
                                             RMResources.InvalidBackendResponse),
                                     response.headers(),
-                                    request.url());
+                                    request.uri());
                             break;
                     }
 
@@ -996,6 +993,6 @@ public class HttpTransportClient extends TransportClient {
 
     private static Mono<StoreResponse> createStoreResponseFromHttpResponse(
             HttpResponse responseMessage) {
-        return ResponseUtils.toStoreResponse(responseMessage, responseMessage.body());
+        return ResponseUtils.toStoreResponse(responseMessage);
     }
 }

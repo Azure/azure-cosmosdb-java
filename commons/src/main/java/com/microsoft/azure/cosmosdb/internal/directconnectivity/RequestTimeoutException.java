@@ -31,7 +31,7 @@ import com.microsoft.azure.cosmosdb.rx.internal.RMResources;
 import com.microsoft.azure.cosmosdb.rx.internal.Strings;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders;
 
-import java.net.URL;
+import java.net.URI;
 import java.util.Map;
 
 public class RequestTimeoutException extends DocumentClientException {
@@ -46,13 +46,13 @@ public class RequestTimeoutException extends DocumentClientException {
         BridgeInternal.setPartitionKeyRangeId(this, partitionKeyRangeId);
     }
 
-    public RequestTimeoutException(String message, URL requestUri) {
+    public RequestTimeoutException(String message, URI requestUri) {
         this(message, null, null, requestUri);
     }
 
     public RequestTimeoutException(String message,
                                    Exception innerException,
-                                   URL requestUri,
+                                   URI requestUri,
                                    String localIpAddress) {
         this(message(localIpAddress, message), innerException, null, requestUri);
     }
@@ -61,7 +61,7 @@ public class RequestTimeoutException extends DocumentClientException {
         this(RMResources.Gone, innerException, (HttpHeaders) null, null);
     }
 
-    public RequestTimeoutException(String message, HttpHeaders headers, URL requestUrl) {
+    public RequestTimeoutException(String message, HttpHeaders headers, URI requestUrl) {
         super(message, null, HttpUtils.asMap(headers), HttpConstants.StatusCodes.REQUEST_TIMEOUT, requestUrl != null ? requestUrl.toString() : null);
     }
 
@@ -72,7 +72,7 @@ public class RequestTimeoutException extends DocumentClientException {
     public RequestTimeoutException(String message,
                                    Exception innerException,
                                    HttpHeaders headers,
-                                   URL requestUrl) {
+                                   URI requestUrl) {
         super(message, innerException, HttpUtils.asMap(headers), HttpConstants.StatusCodes.REQUEST_TIMEOUT, requestUrl != null ? requestUrl.toString() : null);
     }
 

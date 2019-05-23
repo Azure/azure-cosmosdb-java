@@ -22,6 +22,8 @@
  */
 package com.microsoft.azure.cosmosdb.rx.internal.http;
 
+import org.apache.commons.lang3.StringUtils;
+
 /**
  * A single header within a HTTP request or response.
  *
@@ -68,16 +70,7 @@ public class HttpHeader {
      * @return the values of this Header that are separated by a comma
      */
     public String[] values() {
-        return value == null ? null : value.split(",");
-    }
-
-    /**
-     * Add a new value to the end of the Header.
-     *
-     * @param value the value to add
-     */
-    public void addValue(String value) {
-        this.value += "," + value;
+        return value == null ? null : StringUtils.split(value, ",");
     }
 
     /**

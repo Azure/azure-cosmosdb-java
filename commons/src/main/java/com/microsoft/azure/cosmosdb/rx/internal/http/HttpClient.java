@@ -30,10 +30,6 @@ import reactor.netty.resources.ConnectionProvider;
  */
 public interface HttpClient {
 
-    String REACTOR_NETTY_CONNECTION_POOL = "reactor-netty-connection-pool";
-    Integer MAX_IDLE_CONNECTION_TIMEOUT_IN_MILLIS = 60 * 1000;
-    Integer REQUEST_TIMEOUT_IN_MILLIS = 60 * 1000;
-
     /**
      * Send the provided request asynchronously.
      *
@@ -41,15 +37,6 @@ public interface HttpClient {
      * @return A {@link Mono} that emits response asynchronously
      */
     Mono<HttpResponse> send(HttpRequest request);
-
-    /**
-     * Create elastic HttpClient with {@link HttpClientConfig}
-     *
-     * @return the HttpClient
-     */
-    static HttpClient createElastic(HttpClientConfig httpClientConfig) {
-        return new ReactorNettyClient(ConnectionProvider.elastic(REACTOR_NETTY_CONNECTION_POOL), httpClientConfig);
-    }
 
     /**
      * Create fixed HttpClient with {@link HttpClientConfig}
@@ -62,9 +49,9 @@ public interface HttpClient {
         }
 
         if (httpClientConfig.getMaxPoolSize() == null) {
-            return new ReactorNettyClient(ConnectionProvider.fixed(REACTOR_NETTY_CONNECTION_POOL), httpClientConfig);
+            return new ReactorNettyClient(ConnectionProvider.fixed(httpClientConfig.getConfigs().getReactorNettyConnectionPoolName()), httpClientConfig);
         }
-        return new ReactorNettyClient(ConnectionProvider.fixed(REACTOR_NETTY_CONNECTION_POOL, httpClientConfig.getMaxPoolSize()), httpClientConfig);
+        return new ReactorNettyClient(ConnectionProvider.fixed(httpClientConfig.getConfigs().getReactorNettyConnectionPoolName(), httpClientConfig.getMaxPoolSize()), httpClientConfig);
     }
 
     /**

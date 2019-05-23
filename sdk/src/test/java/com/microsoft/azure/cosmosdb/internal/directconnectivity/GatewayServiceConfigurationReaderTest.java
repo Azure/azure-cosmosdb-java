@@ -51,6 +51,7 @@ import rx.Single;
 import rx.observers.TestSubscriber;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -164,6 +165,8 @@ public class GatewayServiceConfigurationReaderTest extends TestSuiteBase {
         Mockito.doReturn(200).when(httpResponse).statusCode();
         Mockito.doReturn(Flux.just(ByteBufUtil.writeUtf8(ByteBufAllocator.DEFAULT, databaseAccountJson)))
                 .when(httpResponse).body();
+        Mockito.doReturn(Mono.just(databaseAccountJson))
+                .when(httpResponse).bodyAsString(StandardCharsets.UTF_8);
 
         Mockito.doReturn(new HttpHeaders()).when(httpResponse).headers();
         return httpResponse;

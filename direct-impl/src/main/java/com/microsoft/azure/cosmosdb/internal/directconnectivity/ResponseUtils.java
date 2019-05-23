@@ -25,59 +25,32 @@ package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpResponse;
-import io.netty.buffer.ByteBuf;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import reactor.core.publisher.Flux;
+import org.apache.commons.lang3.StringUtils;
 import reactor.core.publisher.Mono;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 class ResponseUtils {
-    private final static int INITIAL_RESPONSE_BUFFER_SIZE = 1024;
-    private final static Logger logger = LoggerFactory.getLogger(ResponseUtils.class);
 
-    public static Flux<String> toString(Flux<ByteBuf> contentObservable) {
-        return contentObservable
-                .reduce(
-                        new ByteArrayOutputStream(INITIAL_RESPONSE_BUFFER_SIZE),
-                        (out, bb) -> {
-                            try {
-                                bb.readBytes(out, bb.readableBytes());
-                                return out;
-                            } catch (IOException e) {
-                                throw new RuntimeException(e);
-                            }
-                        })
-                .map(out -> new String(out.toByteArray(), StandardCharsets.UTF_8)).flux();
-    }
-
-    static Mono<StoreResponse> toStoreResponse(HttpResponse httpClientResponse, Flux<ByteBuf> byteBufFlux) {
+    static Mono<StoreResponse> toStoreResponse(HttpResponse httpClientResponse) {
 
         HttpHeaders httpResponseHeaders = httpClientResponse.headers();
 
-        Flux<String> contentObservable;
+        Mono<String> contentObservable = httpClientResponse.bodyAsString(StandardCharsets.UTF_8);
 
-        if (byteBufFlux == null) {
+        if (contentObservable == null) {
             // for delete we don't expect any body
-            contentObservable = Flux.empty();
-        } else {
-            // transforms the ByteBufFlux to Flux<String>
-            contentObservable = toString(byteBufFlux);
+            contentObservable = Mono.just(StringUtils.EMPTY);
         }
 
-        Flux<StoreResponse> storeResponseFlux = contentObservable.flatMap(content -> {
+        return contentObservable.flatMap(content -> {
             try {
-                // transforms to Observable<StoreResponse>
+                // transforms to Mono<StoreResponse>
                 StoreResponse rsp = new StoreResponse(httpClientResponse.statusCode(), HttpUtils.unescape(httpResponseHeaders.toMap().entrySet()), content);
-                return Flux.just(rsp);
+                return Mono.just(rsp);
             } catch (Exception e) {
-                return Flux.error(e);
+                return Mono.error(e);
             }
         });
-
-        return storeResponseFlux.single();
     }
 }

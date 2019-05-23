@@ -29,7 +29,7 @@ import com.microsoft.azure.cosmosdb.Error;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders;
 
-import java.net.URL;
+import java.net.URI;
 import java.util.Map;
 
 public class RetryWithException extends DocumentClientException {
@@ -40,18 +40,18 @@ public class RetryWithException extends DocumentClientException {
         BridgeInternal.setPartitionKeyRangeId(this, partitionKeyRangeId);
     }
 
-    public RetryWithException(String message, URL requestUri) {
+    public RetryWithException(String message, URI requestUri) {
         this(message, null, null, requestUri);
     }
 
     public RetryWithException(String message,
                               Exception innerException,
-                              URL requestUrl) {
-        this(message, innerException, null, requestUrl);
+                              URI requestUri) {
+        this(message, innerException, null, requestUri);
     }
 
-    public RetryWithException(String message, HttpHeaders headers, URL requestUrl) {
-        super(message, null, HttpUtils.asMap(headers), HttpConstants.StatusCodes.RETRY_WITH, requestUrl != null ? requestUrl.toString() : null);
+    public RetryWithException(String message, HttpHeaders headers, URI requestUri) {
+        super(message, null, HttpUtils.asMap(headers), HttpConstants.StatusCodes.RETRY_WITH, requestUri != null ? requestUri.toString() : null);
     }
 
     public RetryWithException(String message, HttpHeaders headers, String requestUriString) {
@@ -61,7 +61,7 @@ public class RetryWithException extends DocumentClientException {
     public RetryWithException(String message,
                               Exception innerException,
                               HttpHeaders headers,
-                              URL requestUrl) {
-        super(message, innerException, HttpUtils.asMap(headers), HttpConstants.StatusCodes.RETRY_WITH, requestUrl != null ? requestUrl.toString() : null);
+                              URI requestUri) {
+        super(message, innerException, HttpUtils.asMap(headers), HttpConstants.StatusCodes.RETRY_WITH, requestUri != null ? requestUri.toString() : null);
     }
 }

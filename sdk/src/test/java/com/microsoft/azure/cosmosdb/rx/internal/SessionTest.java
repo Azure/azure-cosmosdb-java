@@ -31,7 +31,6 @@ import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import com.microsoft.azure.cosmosdb.rx.TestSuiteBase;
 
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpRequest;
-import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.HttpMethod;
 
 import org.apache.commons.lang3.StringUtils;
@@ -42,7 +41,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
-import reactor.netty.http.client.HttpClientRequest;
 
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
@@ -160,7 +158,7 @@ public class SessionTest extends TestSuiteBase {
                 .filter(r -> r.httpMethod() == HttpMethod.GET)
                 .filter(r -> {
                     try {
-                        return URLDecoder.decode(r.url().toString().replaceAll("\\+", "%2b"), "UTF-8").contains(
+                        return URLDecoder.decode(r.uri().toString().replaceAll("\\+", "%2b"), "UTF-8").contains(
                                 StringUtils.removeEnd(documentLink, "/"));
                     } catch (UnsupportedEncodingException e) {
                         return false;
@@ -184,7 +182,7 @@ public class SessionTest extends TestSuiteBase {
                 .filter(r -> r.httpMethod() == HttpMethod.GET)
                 .filter(r -> {
                     try {
-                        return URLDecoder.decode(r.url().toString().replaceAll("\\+", "%2b"), "UTF-8").contains(
+                        return URLDecoder.decode(r.uri().toString().replaceAll("\\+", "%2b"), "UTF-8").contains(
                                 StringUtils.removeEnd(collectionLink, "/"));
                     } catch (UnsupportedEncodingException e) {
                         return false;

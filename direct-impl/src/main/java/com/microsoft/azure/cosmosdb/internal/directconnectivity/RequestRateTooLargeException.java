@@ -30,7 +30,7 @@ import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.rx.internal.RMResources;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders;
 
-import java.net.URL;
+import java.net.URI;
 import java.util.Map;
 
 public class RequestRateTooLargeException extends DocumentClientException {
@@ -45,22 +45,22 @@ public class RequestRateTooLargeException extends DocumentClientException {
         BridgeInternal.setPartitionKeyRangeId(this, partitionKeyRangeId);
     }
 
-    public RequestRateTooLargeException(String message, URL requestUrl) {
-        this(message, null, null, requestUrl);
+    public RequestRateTooLargeException(String message, URI requestUri) {
+        this(message, null, null, requestUri);
     }
 
     public RequestRateTooLargeException(String message,
                                         Exception innerException,
-                                        URL requestUrl) {
-        this(message, innerException, null, requestUrl);
+                                        URI requestUri) {
+        this(message, innerException, null, requestUri);
     }
 
     public RequestRateTooLargeException(Exception innerException) {
         this(RMResources.TooManyRequests, innerException, null, null);
     }
 
-    public RequestRateTooLargeException(String message, HttpHeaders headers, URL requestUrl) {
-        super(message, null, HttpUtils.asMap(headers), HttpConstants.StatusCodes.TOO_MANY_REQUESTS, requestUrl != null ? requestUrl.toString() : null);
+    public RequestRateTooLargeException(String message, HttpHeaders headers, URI requestUri) {
+        super(message, null, HttpUtils.asMap(headers), HttpConstants.StatusCodes.TOO_MANY_REQUESTS, requestUri != null ? requestUri.toString() : null);
     }
 
     public RequestRateTooLargeException(String message, HttpHeaders headers, String requestUriString) {
@@ -70,7 +70,7 @@ public class RequestRateTooLargeException extends DocumentClientException {
     public RequestRateTooLargeException(String message,
                                         Exception innerException,
                                         HttpHeaders headers,
-                                        URL requestUrl) {
-        super(message, innerException, HttpUtils.asMap(headers), HttpConstants.StatusCodes.TOO_MANY_REQUESTS, requestUrl != null ? requestUrl.toString() : null);
+                                        URI requestUri) {
+        super(message, innerException, HttpUtils.asMap(headers), HttpConstants.StatusCodes.TOO_MANY_REQUESTS, requestUri != null ? requestUri.toString() : null);
     }
 }

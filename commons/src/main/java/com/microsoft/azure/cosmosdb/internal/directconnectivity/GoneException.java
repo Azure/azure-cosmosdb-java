@@ -31,7 +31,7 @@ import com.microsoft.azure.cosmosdb.rx.internal.RMResources;
 import com.microsoft.azure.cosmosdb.rx.internal.Strings;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders;
 
-import java.net.URL;
+import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -56,16 +56,16 @@ public class GoneException extends DocumentClientException {
 
     public GoneException(String message,
                          Exception innerException,
-                         URL requestUrl,
+                         URI requestUri,
                          String localIpAddress) {
-        this(message(localIpAddress, message), innerException, null, requestUrl);
+        this(message(localIpAddress, message), innerException, null, requestUri);
     }
 
     public GoneException(Exception innerException) {
         this(RMResources.Gone, innerException, new HashMap<>(), null);
     }
 
-    public GoneException(String message, HttpHeaders headers, URL requestUrl) {
+    public GoneException(String message, HttpHeaders headers, URI requestUrl) {
         super(message, null, HttpUtils.asMap(headers), HttpConstants.StatusCodes.GONE, requestUrl != null ? requestUrl.toString() : null);
     }
 
@@ -76,7 +76,7 @@ public class GoneException extends DocumentClientException {
     public GoneException(String message,
                          Exception innerException,
                          HttpHeaders headers,
-                         URL requestUrl) {
+                         URI requestUrl) {
         super(message, innerException, HttpUtils.asMap(headers), HttpConstants.StatusCodes.GONE, requestUrl != null ? requestUrl.toString() : null);
     }
 

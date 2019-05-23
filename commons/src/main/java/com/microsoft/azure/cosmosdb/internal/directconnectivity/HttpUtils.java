@@ -37,6 +37,7 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -75,10 +76,10 @@ public class HttpUtils {
     }
 
     public static Map<String, String> asMap(HttpHeaders headers) {
-        HashMap<String, String> map = new HashMap<>();
         if (headers == null) {
-            return map;
+            return Collections.emptyMap();
         }
+        HashMap<String, String> map = new HashMap<>(headers.size());
         for (Entry<String, String> entry : headers.toMap().entrySet()) {
             if (entry.getKey().equals(HttpConstants.HttpHeaders.OWNER_FULL_NAME)) {
                 map.put(entry.getKey(), HttpUtils.urlDecode(entry.getValue()));
@@ -105,7 +106,7 @@ public class HttpUtils {
     }
 
     public static List<Entry<String, String>> unescape(Set<Entry<String, String>> headers) {
-        List<Entry<String, String>> result = new ArrayList<>();
+        List<Entry<String, String>> result = new ArrayList<>(headers.size());
         for (Entry<String, String> entry : headers) {
             if (entry.getKey().equals(HttpConstants.HttpHeaders.OWNER_FULL_NAME)) {
                 String unescapedUrl = HttpUtils.urlDecode(entry.getValue());

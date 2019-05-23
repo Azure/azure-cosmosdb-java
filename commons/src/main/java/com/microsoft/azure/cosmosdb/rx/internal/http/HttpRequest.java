@@ -27,8 +27,8 @@ import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.HttpMethod;
 import reactor.core.publisher.Flux;
 
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -36,7 +36,7 @@ import java.nio.charset.StandardCharsets;
  */
 public class HttpRequest {
     private HttpMethod httpMethod;
-    private URL url;
+    private URI uri;
     private int port;
     private HttpHeaders headers;
     private Flux<ByteBuf> body;
@@ -45,11 +45,24 @@ public class HttpRequest {
      * Create a new HttpRequest instance.
      *
      * @param httpMethod the HTTP request method
-     * @param url the target address to send the request to
+     * @param uri        the target address to send the request to
      */
-    public HttpRequest(HttpMethod httpMethod, URL url, int port) {
+    public HttpRequest(HttpMethod httpMethod, URI uri, int port, HttpHeaders httpHeaders) {
         this.httpMethod = httpMethod;
-        this.url = url;
+        this.uri = uri;
+        this.port = port;
+        this.headers = httpHeaders;
+    }
+
+    /**
+     * Create a new HttpRequest instance.
+     *
+     * @param httpMethod the HTTP request method
+     * @param uri        the target address to send the request to
+     */
+    public HttpRequest(HttpMethod httpMethod, String uri, int port) throws URISyntaxException {
+        this.httpMethod = httpMethod;
+        this.uri = new URI(uri);
         this.port = port;
         this.headers = new HttpHeaders();
     }
@@ -58,26 +71,13 @@ public class HttpRequest {
      * Create a new HttpRequest instance.
      *
      * @param httpMethod the HTTP request method
-     * @param url the target address to send the request to
+     * @param uri        the target address to send the request to
+     * @param headers    the HTTP headers to use with this request
+     * @param body       the request content
      */
-    public HttpRequest(HttpMethod httpMethod, String url, int port) throws MalformedURLException {
+    public HttpRequest(HttpMethod httpMethod, URI uri, int port, HttpHeaders headers, Flux<ByteBuf> body) {
         this.httpMethod = httpMethod;
-        this.url = new URL(url);
-        this.port = port;
-        this.headers = new HttpHeaders();
-    }
-
-    /**
-     * Create a new HttpRequest instance.
-     *
-     * @param httpMethod the HTTP request method
-     * @param url the target address to send the request to
-     * @param headers the HTTP headers to use with this request
-     * @param body the request content
-     */
-    public HttpRequest(HttpMethod httpMethod, URL url, int port, HttpHeaders headers, Flux<ByteBuf> body) {
-        this.httpMethod = httpMethod;
-        this.url = url;
+        this.uri = uri;
         this.port = port;
         this.headers = headers;
         this.body = body;
@@ -128,18 +128,18 @@ public class HttpRequest {
      *
      * @return the target address
      */
-    public URL url() {
-        return url;
+    public URI uri() {
+        return uri;
     }
 
     /**
      * Set the target address to send the request to.
      *
-     * @param url target address as {@link URL}
+     * @param uri target address as {@link URI}
      * @return this HttpRequest
      */
-    public HttpRequest withUrl(URL url) {
-        this.url = url;
+    public HttpRequest withUri(URI uri) {
+        this.uri = uri;
         return this;
     }
 
@@ -167,7 +167,7 @@ public class HttpRequest {
      * Set a request header, replacing any existing value.
      * A null for {@code value} will remove the header if one with matching name exists.
      *
-     * @param name the header name
+     * @param name  the header name
      * @param value the header value
      * @return this HttpRequest
      */
@@ -211,7 +211,7 @@ public class HttpRequest {
 
     /**
      * Set request content.
-     *
+     * <p>
      * Caller must set the Content-Length header to indicate the length of the content,
      * or use Transfer-Encoding: chunked.
      *
@@ -221,19 +221,5 @@ public class HttpRequest {
     public HttpRequest withBody(Flux<ByteBuf> content) {
         this.body = content;
         return this;
-    }
-
-    /**
-     * Creates a clone of the request.
-     *
-     * The main purpose of this is so that this HttpRequest can be changed and the resulting
-     * HttpRequest can be a backup. This means that the buffered HttpHeaders and body must
-     * not be able to change from side effects of this HttpRequest.
-     *
-     * @return a new HTTP request instance with cloned instances of all mutable properties.
-     */
-    public HttpRequest buffer() {
-        final HttpHeaders bufferedHeaders = new HttpHeaders(headers);
-        return new HttpRequest(httpMethod, url, port, bufferedHeaders, body);
     }
 }

@@ -39,7 +39,7 @@ public class HttpClientUtils {
         return RxJavaInterop.toV1Single(RxJava2Adapter.monoToSingle(httpResponse.flatMap(response -> {
             if (response.statusCode() < HttpConstants.StatusCodes.MINIMUM_STATUSCODE_AS_ERROR_GATEWAY) {
 
-                return ResponseUtils.toStoreResponse(response, response.body()).map(RxDocumentServiceResponse::new);
+                return ResponseUtils.toStoreResponse(response).map(RxDocumentServiceResponse::new);
 
                 // TODO: to break the dependency between RxDocumentServiceResponse and StoreResponse
                 // we should factor out the  RxDocumentServiceResponse(StoreResponse) constructor to a helper class
@@ -52,7 +52,7 @@ public class HttpClientUtils {
     }
 
     private static Mono<DocumentClientException> createDocumentClientException(HttpResponse httpResponse) {
-        Mono<String> readStream = ResponseUtils.toString(httpResponse.body()).single();
+        Mono<String> readStream = httpResponse.bodyAsString();
 
         return readStream.map(body -> {
             Error error = new Error(body);

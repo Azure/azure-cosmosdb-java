@@ -39,15 +39,12 @@ import com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpRequest;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpResponse;
 import io.netty.handler.codec.http.HttpMethod;
-import org.apache.commons.lang3.StringUtils;
 import reactor.core.publisher.Mono;
 import rx.Single;
-import rx.functions.Action1;
 
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -119,7 +116,7 @@ public class GatewayServiceConfigurationReader {
         return this.queryEngineConfiguration;
     }
 
-    private Single<DatabaseAccount> getDatabaseAccountAsync(URL serviceEndpoint) {
+    private Single<DatabaseAccount> getDatabaseAccountAsync(URI serviceEndpoint) {
 
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.set(HttpConstants.HttpHeaders.VERSION, HttpConstants.Versions.CURRENT_VERSION);
@@ -132,7 +129,7 @@ public class GatewayServiceConfigurationReader {
 
         httpHeaders.set(HttpConstants.HttpHeaders.USER_AGENT, userAgentContainer.getUserAgent());
         httpHeaders.set(HttpConstants.HttpHeaders.API_TYPE, Constants.Properties.SQL_API_TYPE);
-        String authorizationToken = StringUtils.EMPTY;
+        String authorizationToken;
         if (this.hasAuthKeyResourceToken || baseAuthorizationTokenProvider == null) {
             authorizationToken = HttpUtils.urlEncode(this.authKeyResourceToken);
         } else {
@@ -141,17 +138,12 @@ public class GatewayServiceConfigurationReader {
             httpHeaders.set(HttpConstants.HttpHeaders.X_DATE, xDate);
             Map<String, String> header = new HashMap<>();
             header.put(HttpConstants.HttpHeaders.X_DATE, xDate);
-            try {
-                authorizationToken = baseAuthorizationTokenProvider
-                        .generateKeyAuthorizationSignature(HttpConstants.HttpMethods.GET, serviceEndpoint.toURI(), header);
-            } catch (URISyntaxException e) {
-                e.printStackTrace();
-            }
+            authorizationToken = baseAuthorizationTokenProvider
+                    .generateKeyAuthorizationSignature(HttpConstants.HttpMethods.GET, serviceEndpoint, header);
         }
         httpHeaders.set(HttpConstants.HttpHeaders.AUTHORIZATION, authorizationToken);
 
-        HttpRequest httpRequest = new HttpRequest(HttpMethod.GET, serviceEndpoint, serviceEndpoint.getPort())
-                .withHeaders(httpHeaders);
+        HttpRequest httpRequest = new HttpRequest(HttpMethod.GET, serviceEndpoint, serviceEndpoint.getPort(), httpHeaders);
         Mono<HttpResponse> httpResponse = httpClient.send(httpRequest);
         return toDatabaseAccountObservable(httpResponse);
     }
@@ -160,7 +152,13 @@ public class GatewayServiceConfigurationReader {
         try {
             return GlobalEndpointManager.getDatabaseAccountFromAnyLocationsAsync(this.serviceEndpoint.toURL(),
 
-                    new ArrayList<>(this.connectionPolicy.getPreferredLocations()), this::getDatabaseAccountAsync).doOnSuccess(databaseAccount -> {
+                    new ArrayList<>(this.connectionPolicy.getPreferredLocations()), url -> {
+                        try {
+                            return getDatabaseAccountAsync(url.toURI());
+                        } catch (URISyntaxException e) {
+                            throw new IllegalArgumentException("URI " + url);
+                        }
+                    }).doOnSuccess(databaseAccount -> {
                         userReplicationPolicy = BridgeInternal.getReplicationPolicy(databaseAccount);
                         systemReplicationPolicy = BridgeInternal.getSystemReplicationPolicy(databaseAccount);
                         queryEngineConfiguration = BridgeInternal.getQueryEngineConfiuration(databaseAccount);
