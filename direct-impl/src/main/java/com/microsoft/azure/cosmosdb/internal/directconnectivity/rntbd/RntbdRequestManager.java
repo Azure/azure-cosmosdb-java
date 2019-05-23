@@ -564,16 +564,19 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
                 reason = throwable instanceof Exception ? (Exception)throwable : new ChannelException(throwable);
             }
 
-            for (final RntbdRequestRecord requestRecord : this.pendingRequests.values()) {
+            this.pendingRequests.forEach(Long.MAX_VALUE, (id, requestRecord) -> {
 
                 final RntbdRequestArgs args = requestRecord.getArgs();
-                final String requestUri = origin + args.getReplicaPath();
-                final Map<String, String> headers = args.getServiceRequest().getHeaders();
+                final String requestUri = args.getPhysicalAddress().toString();
+                final Map<String, String> requestHeaders = args.getServiceRequest().getHeaders();
 
-                final GoneException cause = new GoneException(message, reason, headers, requestUri);
-                BridgeInternal.setRequestHeaders(cause, headers);
+                final GoneException cause = new GoneException(message, reason, (Map<String, String>)null, requestUri);
+                BridgeInternal.setRequestHeaders(cause, requestHeaders);
+
                 requestRecord.completeExceptionally(cause);
-            }
+
+                logger.debug("{}", requestRecord);
+            });
         }
     }
 
