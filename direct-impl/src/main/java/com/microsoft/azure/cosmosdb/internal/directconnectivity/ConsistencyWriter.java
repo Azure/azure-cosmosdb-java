@@ -341,27 +341,20 @@ public class ConsistencyWriter {
                         if (writeBarrierRetryCount.getAndDecrement() == 0) {
                             logger.debug("ConsistencyWriter: WaitForWriteBarrierAsync - Last barrier multi-region strong. Responses: {}",
                                          String.join("; ", responses.stream().map(r -> r.toString()).collect(Collectors.toList())));
+                            logger.debug("ConsistencyWriter: Highest global committed lsn received for write barrier call is {}", maxGlobalCommittedLsnReceived);
                             return Observable.just(false);
                         }
+
                         return Observable.empty();
                     });
         }).repeatWhen(s -> s.flatMap(x -> {
-            if (writeBarrierRetryCount.get() == 0) {
-                // repeat loop termination
-                return Observable.<Long>empty();
-            } else {
                 // repeat with a delay
                 if ((ConsistencyWriter.MAX_NUMBER_OF_WRITE_BARRIER_READ_RETRIES - writeBarrierRetryCount.get()) > ConsistencyWriter.MAX_SHORT_BARRIER_RETRIES_FOR_MULTI_REGION) {
                     return Observable.timer(ConsistencyWriter.DELAY_BETWEEN_WRITE_BARRIER_CALLS_IN_MS, TimeUnit.MILLISECONDS);
                 } else {
                     return Observable.timer(ConsistencyWriter.SHORT_BARRIER_RETRY_INTERVAL_IN_MS_FOR_MULTI_REGION, TimeUnit.MILLISECONDS);
                 }
-            }
-        })).concatWith(
-                Observable.defer(() -> {
-                    logger.debug("ConsistencyWriter: Highest global committed lsn received for write barrier call is {}", maxGlobalCommittedLsnReceived);
-                    return Observable.just(false);
-                })
+        })
         ).take(1).toSingle();
     }
 
