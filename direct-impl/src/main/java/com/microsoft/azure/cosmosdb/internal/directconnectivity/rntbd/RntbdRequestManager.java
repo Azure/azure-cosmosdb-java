@@ -458,36 +458,36 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         this.pendingWrites.add(out, promise);
     }
 
-    private RntbdRequestArgs addPendingRequestRecord(final ChannelHandlerContext context, final RntbdRequestRecord requestRecord) {
+    private RntbdRequestArgs addPendingRequestRecord(final ChannelHandlerContext context, final RntbdRequestRecord record) {
 
         // TODO: DANOBLE: Revise the implementation of RntbdRequestManager.addPendingRequestRecord
         //  We currently report an issue when we find an existing request record and then replace it.
         //  Links:https://github.com/Azure/azure-cosmosdb-java/issues/130
 
-        this.pendingRequest = this.pendingRequests.compute(requestRecord.getActivityId(), (activityId, current) -> {
+        this.pendingRequest = this.pendingRequests.compute(record.getActivityId(), (activityId, current) -> {
 
-            reportIssueUnless(current == null, logger, context, "current: {}, requestRecord: {}",
-                current, requestRecord);
+            reportIssueUnless(current == null, logger, context, "current: {}, request: {}", current, record);
 
-            final Timeout pendingRequestTimeout = requestRecord.newTimeout(timeout -> {
+            final Timeout pendingRequestTimeout = record.newTimeout(timeout -> {
+
+                // We don't wish to complete on the timeout thread, but rather on a thread doled out by our executor
+
                 EventExecutor executor = context.executor();
+
                 if (executor.inEventLoop()) {
-                    requestRecord.expire();
+                    record.expire();
                 } else {
-                    executor.next().execute(requestRecord::expire);
+                    executor.next().execute(record::expire);
                 }
             });
 
-            requestRecord.whenComplete((response, error) -> {
-                try {
-                    this.pendingRequests.remove(activityId);
-                    pendingRequestTimeout.cancel();
-                } catch (final Throwable throwable) {
-                    reportIssue(logger, context, "throwable: ", throwable);
-                }
+            record.whenComplete((response, error) -> {
+                logger.trace("{} COMPLETE: request: {}, response: {}", context, record, error == null ? response : error);
+                this.pendingRequests.remove(activityId);
+                pendingRequestTimeout.cancel();
             });
 
-            return requestRecord;
+            return record;
         });
 
         return this.pendingRequest.getArgs();
