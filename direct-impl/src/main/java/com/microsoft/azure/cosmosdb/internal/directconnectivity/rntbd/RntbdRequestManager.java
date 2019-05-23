@@ -460,11 +460,8 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
     private RntbdRequestArgs addPendingRequestRecord(final ChannelHandlerContext context, final RntbdRequestRecord requestRecord) {
 
-        // TODO: DANOBLE: Consider revising the implementation of RntbdRequestManager.addPendingRequestRecord
-        //  At a minimum consider these issues:
-        //  * Do we have a requirement to support multiple concurrent operations for a single activityId?
-        //  * Should we replace, renew, or maintain a list of pending requests for each activityId?
-        //  We currently fail when we find an existing request record.
+        // TODO: DANOBLE: Revise the implementation of RntbdRequestManager.addPendingRequestRecord
+        //  We currently report an issue when we find an existing request record and then replace it.
         //  Links:https://github.com/Azure/azure-cosmosdb-java/issues/130
 
         this.pendingRequest = this.pendingRequests.compute(requestRecord.getActivityId(), (activityId, current) -> {
