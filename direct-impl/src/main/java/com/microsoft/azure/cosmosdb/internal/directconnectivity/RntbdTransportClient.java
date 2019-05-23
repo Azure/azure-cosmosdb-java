@@ -55,6 +55,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdReporter.reportIssueUnless;
 
 @JsonSerialize(using = RntbdTransportClient.JsonSerializer.class)
 public final class RntbdTransportClient extends TransportClient implements AutoCloseable {
@@ -136,11 +137,9 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
                 if (error == null) {
                     emitter.onSuccess(response);
                 } else {
-                    if (!(error instanceof DocumentClientException)) {
-                        logger.warn("{} expected error of {}, not ", requestArgs, DocumentClientException.class, error);
-                    }
+                    reportIssueUnless(error instanceof DocumentClientException, logger, requestRecord, "", error);
                     this.metrics.incrementErrorResponseCount();
-                    emitter.onError(error instanceof CompletionException ? error.getCause() : error);
+                    emitter.onError(error);
                 }
 
                 requestArgs.traceOperation(logger, null, "emitSingleComplete");

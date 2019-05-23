@@ -71,11 +71,13 @@ public final class RntbdRequestRecord extends CompletableFuture<StoreResponse> {
     }
 
     public boolean expire() {
-        final RequestTimeoutException error = new RequestTimeoutException(
-            String.format("Request timeout interval (%,d ms) elapsed",
-                this.timer.getRequestTimeout(TimeUnit.MILLISECONDS)),
-            this.args.getPhysicalAddress());
+
+        final long timeoutInterval = this.timer.getRequestTimeout(TimeUnit.MILLISECONDS);
+        final String message = String.format("Request timeout interval (%,d ms) elapsed", timeoutInterval);
+        final RequestTimeoutException error = new RequestTimeoutException(message, this.args.getPhysicalAddress());
+
         BridgeInternal.setRequestHeaders(error, this.args.getServiceRequest().getHeaders());
+
         return this.completeExceptionally(error);
     }
 
