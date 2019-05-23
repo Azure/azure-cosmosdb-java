@@ -579,13 +579,6 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
     private void completeRntbdContextFuture(final ChannelHandlerContext context, final RntbdContext value) {
 
-        checkNotNull(context, "context");
-        checkNotNull(value, "value");
-
-        if (this.contextFuture.isDone()) {
-            throw new IllegalStateException(Strings.lenientFormat("rntbdContextFuture: %s", this.contextFuture));
-        }
-
         this.contextFuture.complete(value);
 
         final RntbdContextNegotiator negotiator = context.channel().pipeline().get(RntbdContextNegotiator.class);
