@@ -48,8 +48,9 @@ public class CosmosContainerRequestOptions extends CosmosRequestOptions {
      *
      * @param offerThroughput the throughput value.
      */
-    public void setOfferThroughput(Integer offerThroughput) {
+    public CosmosContainerRequestOptions offerThroughput(Integer offerThroughput) {
         this.offerThroughput = offerThroughput;
+        return this;
     }
 
     /**
@@ -70,8 +71,9 @@ public class CosmosContainerRequestOptions extends CosmosRequestOptions {
      *
      * @param populateQuotaInfo a boolean value indicating whether PopulateQuotaInfo is enabled or not
      */
-    public void setPopulateQuotaInfo(boolean populateQuotaInfo) {
+    public CosmosContainerRequestOptions populateQuotaInfo(boolean populateQuotaInfo) {
         this.populateQuotaInfo = populateQuotaInfo;
+        return this;
     }
 
     /**
@@ -88,8 +90,9 @@ public class CosmosContainerRequestOptions extends CosmosRequestOptions {
      *
      * @param consistencyLevel the consistency level.
      */
-    public void setConsistencyLevel(ConsistencyLevel consistencyLevel) {
+    public CosmosContainerRequestOptions consistencyLevel(ConsistencyLevel consistencyLevel) {
         this.consistencyLevel = consistencyLevel;
+        return this;
     }
 
     /**
@@ -106,8 +109,9 @@ public class CosmosContainerRequestOptions extends CosmosRequestOptions {
      *
      * @param sessionToken the session token.
      */
-    public void setSessionToken(String sessionToken) {
+    public CosmosContainerRequestOptions sessionToken(String sessionToken) {
         this.sessionToken = sessionToken;
+        return this;
     }
 
     @Override

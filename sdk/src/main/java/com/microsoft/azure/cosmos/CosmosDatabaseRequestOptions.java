@@ -44,8 +44,9 @@ public class CosmosDatabaseRequestOptions extends CosmosRequestOptions{
      *
      * @param offerThroughput the throughput value.
      */
-    public void setOfferThroughput(Integer offerThroughput) {
+    public CosmosDatabaseRequestOptions offerThroughput(Integer offerThroughput) {
         this.offerThroughput = offerThroughput;
+        return this;
     }
 
     @Override

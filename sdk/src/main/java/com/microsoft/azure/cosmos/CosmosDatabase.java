@@ -280,6 +280,20 @@ public class CosmosDatabase extends CosmosResource {
     public CosmosContainer getContainer(String id) {
         return new CosmosContainer(id, this);
     }
+    
+    /** User operations **/
+    
+    Mono<CosmosUserResponse> createUser(CosmosUserSettings settings, RequestOptions options){
+        return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(getDocClientWrapper().createUser(this.getLink(),
+                settings.getV2User(), options).map(response ->
+                new CosmosUserResponse(response, this)).toSingle())); 
+    }
+
+    Mono<CosmosUserResponse> upsertUser(CosmosUserSettings settings, RequestOptions options){
+        return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(getDocClientWrapper().upsertUser(this.getLink(),
+                settings.getV2User(), options).map(response ->
+                new CosmosUserResponse(response, this)).toSingle()));
+    }
 
     CosmosClient getClient() {
         return client;
