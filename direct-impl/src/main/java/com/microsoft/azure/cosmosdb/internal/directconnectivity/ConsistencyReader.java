@@ -43,6 +43,8 @@ import static com.microsoft.azure.cosmosdb.rx.internal.Utils.ValueHolder;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.Exceptions;
+import reactor.core.publisher.Mono;
 import rx.Single;
 
 /*
@@ -176,7 +178,7 @@ public class ConsistencyReader {
             Configs configs,
             AddressSelector addressSelector,
             ISessionContainer sessionContainer,
-            TransportClient transportClient,
+            ReactorTransportClient transportClient,
             GatewayServiceConfigurationReader serviceConfigReader,
             IAuthorizationTokenProvider authorizationTokenProvider) {
         this.configs = configs;
@@ -187,18 +189,18 @@ public class ConsistencyReader {
         this.quorumReader = createQuorumReader(transportClient, addressSelector, this.storeReader, serviceConfigReader, authorizationTokenProvider);
     }
 
-    public Single<StoreResponse> readAsync(RxDocumentServiceRequest entity,
-                                           TimeoutHelper timeout,
-                                           boolean isInRetry,
-                                           boolean forceRefresh) {
+    public Mono<StoreResponse> readAsync(RxDocumentServiceRequest entity,
+                                         TimeoutHelper timeout,
+                                         boolean isInRetry,
+                                         boolean forceRefresh) {
         if (!isInRetry) {
             if (timeout.isElapsed()) {
-                return Single.error(new RequestTimeoutException());
+                return Mono.error(new RequestTimeoutException());
             }
 
         } else {
             if (timeout.isElapsed()) {
-                return Single.error(new GoneException());
+                return Mono.error(new GoneException());
             }
         }
 
@@ -220,7 +222,7 @@ public class ConsistencyReader {
         try {
             desiredReadMode = this.deduceReadMode(entity, targetConsistencyLevel, useSessionToken);
         } catch (DocumentClientException e) {
-            return Single.error(e);
+            return Mono.error(e);
         }
         int maxReplicaCount = this.getMaxReplicaSetSize(entity);
         int readQuorumValue = maxReplicaCount - (maxReplicaCount / 2);
@@ -260,29 +262,25 @@ public class ConsistencyReader {
         }
     }
 
-    private Single<StoreResponse> readPrimaryAsync(RxDocumentServiceRequest entity,
+    private Mono<StoreResponse> readPrimaryAsync(RxDocumentServiceRequest entity,
                                                    boolean useSessionToken) {
 
-        Single<StoreResult> responseObs = this.storeReader.readPrimaryAsync(
+        Mono<StoreResult> responseObs = this.storeReader.readPrimaryAsync(
                 entity,
                 false /*required valid LSN*/,
                 useSessionToken);
         return responseObs.flatMap(response -> {
             try {
-                return Single.just(response.toResponse());
+                return Mono.just(response.toResponse());
             } catch (DocumentClientException e) {
-                // TODO: RxJava1 due to design flaw doesn't allow throwing checked exception
-                // RxJava2 has fixed this design flaw,
-                // once we switched to RxJava2 we can get rid of unnecessary catch block
-                // also we can switch to Observable.map(.)
-                return Single.error(e);
+                throw Exceptions.propagate(e);
             }
         });
     }
 
-    private Single<StoreResponse> readAnyAsync(RxDocumentServiceRequest entity,
+    private Mono<StoreResponse> readAnyAsync(RxDocumentServiceRequest entity,
                                                ReadMode readMode) {
-        Single<List<StoreResult>> responsesObs = this.storeReader.readMultipleReplicaAsync(
+        Mono<List<StoreResult>> responsesObs = this.storeReader.readMultipleReplicaAsync(
                 entity,
                 /* includePrimary */ true,
                 /* replicaCountToRead */ 1,
@@ -293,30 +291,26 @@ public class ConsistencyReader {
         return responsesObs.flatMap(
                 responses -> {
                     if (responses.size() == 0) {
-                        return Single.error(new GoneException(RMResources.Gone));
+                        return Mono.error(new GoneException(RMResources.Gone));
                     }
 
                     try {
-                        return Single.just(responses.get(0).toResponse());
+                        return Mono.just(responses.get(0).toResponse());
                     } catch (DocumentClientException e) {
-                        // TODO: RxJava1 due to design flaw doesn't allow throwing checked exception
-                        // RxJava2 has fixed this design flaw,
-                        // once we switched to RxJava2 we can get rid of unnecessary catch block
-                        // also we can switch to Observable.map(.)
-                        return Single.error(e);
+                        throw Exceptions.propagate(e);
                     }
                 }
         );
     }
 
-    private Single<StoreResponse> readSessionAsync(RxDocumentServiceRequest entity,
+    private Mono<StoreResponse> readSessionAsync(RxDocumentServiceRequest entity,
                                                    ReadMode readMode) {
 
         if (entity.requestContext.timeoutHelper.isElapsed()) {
-            return Single.error(new GoneException());
+            return Mono.error(new GoneException());
         }
 
-        Single<List<StoreResult>> responsesObs = this.storeReader.readMultipleReplicaAsync(
+        Mono<List<StoreResult>> responsesObs = this.storeReader.readMultipleReplicaAsync(
                 entity,
                 /* includePrimary */ true,
                 /* replicaCountToRead */ 1,
@@ -330,7 +324,7 @@ public class ConsistencyReader {
 
             if (responses.size() > 0) {
                 try {
-                    return Single.just(responses.get(0).toResponse(entity.requestContext.requestChargeTracker));
+                    return Mono.just(responses.get(0).toResponse(entity.requestContext.requestChargeTracker));
                 } catch (NotFoundException notFoundException) {
                     try {
                         if (entity.requestContext.sessionToken != null
@@ -339,18 +333,12 @@ public class ConsistencyReader {
                             logger.warn("Convert to session read exception, request {} Session Lsn {}, responseLSN {}", entity.getResourceAddress(), entity.requestContext.sessionToken.convertToString(), responses.get(0).lsn);
                             notFoundException.getResponseHeaders().put(WFConstants.BackendHeaders.SUB_STATUS, Integer.toString(HttpConstants.SubStatusCodes.READ_SESSION_NOT_AVAILABLE));
                         }
-                        return Single.error(notFoundException);
+                        return Mono.error(notFoundException);
                     } catch (DocumentClientException e) {
-                        // TODO: RxJava1 due to design flaw doesn't allow throwing checked exception
-                        // so we have to catch and return
-                        // once we move to RxJava2 we can fix this.
-                        return Single.error(e);
+                        throw Exceptions.propagate(e);
                     }
                 } catch (DocumentClientException dce) {
-                    // TODO: RxJava1 due to design flaw doesn't allow throwing checked exception
-                    // so we have to catch and return
-                    // once we move to RxJava2 we can fix this.
-                    return Single.error(dce);
+                    throw Exceptions.propagate(dce);
                 }
 
             }
@@ -360,7 +348,7 @@ public class ConsistencyReader {
             responseHeaders.put(WFConstants.BackendHeaders.SUB_STATUS, Integer.toString(HttpConstants.SubStatusCodes.READ_SESSION_NOT_AVAILABLE));
             ISessionToken requestSessionToken = entity.requestContext.sessionToken;
             logger.warn("Fail the session read {}, request session token {}", entity.getResourceAddress(), requestSessionToken == null ? "<empty>" : requestSessionToken.convertToString());
-            return Single.error(new NotFoundException(RMResources.ReadSessionNotAvailable, responseHeaders, null));
+            return Mono.error(new NotFoundException(RMResources.ReadSessionNotAvailable, responseHeaders, null));
         });
     }
 
@@ -416,7 +404,7 @@ public class ConsistencyReader {
         }
     }
 
-    StoreReader createStoreReader(TransportClient transportClient,
+    StoreReader createStoreReader(ReactorTransportClient transportClient,
                                   AddressSelector addressSelector,
                                   ISessionContainer sessionContainer) {
         return new StoreReader(transportClient,
@@ -424,7 +412,7 @@ public class ConsistencyReader {
                                sessionContainer);
     }
 
-    QuorumReader createQuorumReader(TransportClient transportClient,
+    QuorumReader createQuorumReader(ReactorTransportClient transportClient,
                                     AddressSelector addressSelector,
                                     StoreReader storeReader,
                                     GatewayServiceConfigurationReader serviceConfigurationReader,

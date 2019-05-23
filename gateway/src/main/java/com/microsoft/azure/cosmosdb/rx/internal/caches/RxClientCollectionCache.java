@@ -45,6 +45,9 @@ import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceResponse;
 import com.microsoft.azure.cosmosdb.rx.internal.RxStoreModel;
 
+import hu.akarnokd.rxjava.interop.RxJavaInterop;
+import io.reactivex.BackpressureStrategy;
+import reactor.adapter.rxjava.RxJava2Adapter;
 import rx.Observable;
 import rx.Single;
 
@@ -115,7 +118,7 @@ public class RxClientCollectionCache extends RxCollectionCache {
             retryPolicyInstance.onBeforeSendRequest(request);
         }
 
-        Observable<RxDocumentServiceResponse> responseObs = this.storeModel.processMessage(request);
+        Observable<RxDocumentServiceResponse> responseObs = RxJavaInterop.toV1Observable(RxJava2Adapter.fluxToFlowable(this.storeModel.processMessage(request)));
         return responseObs.map(response -> BridgeInternal.toResourceResponse(response, DocumentCollection.class)
                 .getResource()).toSingle();
     }

@@ -36,6 +36,7 @@ import org.mockito.Matchers;
 import org.mockito.Mockito;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import reactor.core.publisher.Mono;
 import rx.Single;
 import rx.observers.TestSubscriber;
 
@@ -44,7 +45,7 @@ import java.util.concurrent.TimeUnit;
 public class ReplicatedResourceClientTest {
     protected static final int TIMEOUT = 60000;
     private IAddressResolver addressResolver;
-    private TransportClient transportClient;
+    private ReactorTransportClient transportClient;
     private boolean enableReadRequestsFallback;
     public boolean forceAddressRefresh;
     private GatewayServiceConfigurationReader serviceConfigReader;
@@ -53,7 +54,7 @@ public class ReplicatedResourceClientTest {
     @BeforeClass(groups = "unit")
     public void setup() throws Exception {
         addressResolver = Mockito.mock(IAddressResolver.class);
-        transportClient = Mockito.mock(TransportClient.class);
+        transportClient = Mockito.mock(ReactorTransportClient.class);
         serviceConfigReader = Mockito.mock(GatewayServiceConfigurationReader.class);
         authorizationTokenProvider = Mockito.mock(IAuthorizationTokenProvider.class);
     }
@@ -71,7 +72,7 @@ public class ReplicatedResourceClientTest {
         RxDocumentServiceRequest request = Mockito.spy(RxDocumentServiceRequest.create(OperationType.Create, ResourceType.Document));
 
         Mockito.when(addressResolver.resolveAsync(Matchers.any(), Matchers.anyBoolean()))
-                .thenReturn(Single.error(new GoneException()));
+                .thenReturn(Mono.error(new GoneException()));
         Single<StoreResponse> response = resourceClient.invokeAsync(request, null);
 
         validateFailure(response, validator, TIMEOUT);

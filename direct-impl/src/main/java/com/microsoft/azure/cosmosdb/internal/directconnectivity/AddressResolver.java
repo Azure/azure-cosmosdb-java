@@ -44,8 +44,11 @@ import com.microsoft.azure.cosmosdb.rx.internal.RMResources;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
 import com.microsoft.azure.cosmosdb.rx.internal.Strings;
 import com.microsoft.azure.cosmosdb.rx.internal.caches.RxCollectionCache;
+import hu.akarnokd.rxjava.interop.RxJavaInterop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.adapter.rxjava.RxJava2Adapter;
+import reactor.core.publisher.Mono;
 import rx.Single;
 import rx.functions.Func1;
 
@@ -79,23 +82,23 @@ public class AddressResolver implements IAddressResolver {
         this.collectionRoutingMapCache = collectionRoutingMapCache;
     }
 
-    public Single<AddressInformation[]> resolveAsync(
+    public Mono<AddressInformation[]> resolveAsync(
         RxDocumentServiceRequest request,
         boolean forceRefreshPartitionAddresses) {
 
-        Single<ResolutionResult> resultObs = this.resolveAddressesAndIdentityAsync(request, forceRefreshPartitionAddresses);
+        Mono<ResolutionResult> resultObs = this.resolveAddressesAndIdentityAsync(request, forceRefreshPartitionAddresses);
 
         return resultObs.flatMap(result -> {
 
             try {
                 this.throwIfTargetChanged(request, result.TargetPartitionKeyRange);
             } catch (Exception e) {
-                return Single.error(e);
+                return Mono.error(e);
             }
 
             request.requestContext.resolvedPartitionKeyRange = result.TargetPartitionKeyRange;
 
-            return Single.just(result.Addresses);
+            return Mono.just(result.Addresses);
         });
     }
 
@@ -199,7 +202,7 @@ public class AddressResolver implements IAddressResolver {
         }
     }
 
-    private Single<ResolutionResult> tryResolveServerPartitionAsync(
+    private Mono<ResolutionResult> tryResolveServerPartitionAsync(
         RxDocumentServiceRequest request,
         DocumentCollection collection,
         CollectionRoutingMap routingMap,
@@ -229,7 +232,7 @@ public class AddressResolver implements IAddressResolver {
                     request.getResourceType(),
                     request.getOperationType(),
                     request.getResourceAddress());
-                return Single.error(BridgeInternal.setResourceAddress(new InternalServerErrorException(RMResources.InternalServerError), request.getResourceAddress()));
+                return Mono.error(BridgeInternal.setResourceAddress(new InternalServerErrorException(RMResources.InternalServerError), request.getResourceAddress()));
             }
 
             PartitionKeyRange range;
@@ -252,10 +255,10 @@ public class AddressResolver implements IAddressResolver {
                 return null;
             }
 
-            Single<AddressInformation[]> addressesObs = this.addressCache.tryGetAddresses(
+            Mono<AddressInformation[]> addressesObs = RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(this.addressCache.tryGetAddresses(
                 request,
                 new PartitionKeyRangeIdentity(collection.getResourceId(), range.getId()),
-                forceRefreshPartitionAddresses);
+                forceRefreshPartitionAddresses)));
 
             return addressesObs.flatMap(addresses -> {
 
@@ -263,14 +266,14 @@ public class AddressResolver implements IAddressResolver {
                     logger.info(
                         "Could not resolve addresses for identity {}/{}. Potentially collection cache or routing map cache is outdated. Return null - upper logic will refresh and retry. ",
                         new PartitionKeyRangeIdentity(collection.getResourceId(), range.getId()));
-                    return Single.just(null);
+                    return Mono.just(null);
                 }
 
-                return Single.just(new ResolutionResult(range, addresses));
+                return Mono.just(new ResolutionResult(range, addresses));
             });
 
         } catch (Exception e) {
-            return Single.error(e);
+            return Mono.error(e);
         }
     }
 
@@ -302,17 +305,16 @@ public class AddressResolver implements IAddressResolver {
         }
     }
 
-    private Single<ResolutionResult> resolveMasterResourceAddress(RxDocumentServiceRequest request,
+    private Mono<ResolutionResult> resolveMasterResourceAddress(RxDocumentServiceRequest request,
                                                                   boolean forceRefreshPartitionAddresses) {
         assert ReplicatedResourceClient.isReadingFromMaster(request.getResourceType(), request.getOperationType())
             && request.getPartitionKeyRangeIdentity() == null;
 
         //  ServiceIdentity serviceIdentity = this.masterServiceIdentity;
         PartitionKeyRangeIdentity partitionKeyRangeIdentity = this.masterPartitionKeyRangeIdentity;
-        Single<AddressInformation[]> addressesObs = this.addressCache.tryGetAddresses(
-            request,
-            partitionKeyRangeIdentity,
-            forceRefreshPartitionAddresses);
+        Mono<AddressInformation[]> addressesObs = RxJava2Adapter.singleToMono(
+                RxJavaInterop.toV2Single(this.addressCache.tryGetAddresses(request,
+                        partitionKeyRangeIdentity,forceRefreshPartitionAddresses)));
 
         return addressesObs.flatMap(addresses -> {
             if (addresses == null) {
@@ -321,12 +323,12 @@ public class AddressResolver implements IAddressResolver {
                 // return Observable.error()
                 NotFoundException e = new NotFoundException();
                 BridgeInternal.setResourceAddress(e, request.getResourceAddress());
-                return Single.error(e);
+                return Mono.error(e);
             }
 
             PartitionKeyRange partitionKeyRange = new PartitionKeyRange();
             partitionKeyRange.setId(PartitionKeyRange.MASTER_PARTITION_KEY_RANGE_ID);
-            return Single.just(new ResolutionResult(partitionKeyRange, addresses));
+            return Mono.just(new ResolutionResult(partitionKeyRange, addresses));
 
         });
     }
@@ -340,7 +342,7 @@ public class AddressResolver implements IAddressResolver {
         volatile ResolutionResult resolutionResult;
     }
 
-    private Single<RefreshState> getOrRefreshRoutingMap(RxDocumentServiceRequest request, boolean forceRefreshPartitionAddresses) {
+    private Mono<RefreshState> getOrRefreshRoutingMap(RxDocumentServiceRequest request, boolean forceRefreshPartitionAddresses) {
 
         RefreshState state = new RefreshState();
 
@@ -375,7 +377,7 @@ public class AddressResolver implements IAddressResolver {
             });
         });
 
-        return stateObs.flatMap(newState -> {
+        return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(stateObs.flatMap(newState -> {
 
             if (newState.routingMap == null && !newState.collectionCacheIsUptoDate) {
                 // Routing map was not found by resolved collection rid. Maybe collection rid is outdated.
@@ -403,10 +405,10 @@ public class AddressResolver implements IAddressResolver {
             }
 
             return Single.just(newState);
-        });
+        })));
     }
 
-    private Single<RefreshState> getStateWithNewRoutingMap(RefreshState state, Single<CollectionRoutingMap> routingMapSingle) {
+    private Mono<RefreshState> getStateWithNewRoutingMap(RefreshState state, Mono<CollectionRoutingMap> routingMapSingle) {
         return routingMapSingle.map(r -> {
             state.routingMap = r;
             return state;
@@ -420,7 +422,7 @@ public class AddressResolver implements IAddressResolver {
      * @param forceRefreshPartitionAddresses Force refresh the partition's endpoint
      * @return ResolutionResult
      */
-    private Single<ResolutionResult> resolveAddressesAndIdentityAsync(
+    private Mono<ResolutionResult> resolveAddressesAndIdentityAsync(
         RxDocumentServiceRequest request,
         boolean forceRefreshPartitionAddresses) {
 
@@ -429,7 +431,7 @@ public class AddressResolver implements IAddressResolver {
             return resolveMasterResourceAddress(request, forceRefreshPartitionAddresses);
         }
 
-        Single<RefreshState> refreshStateObs = this.getOrRefreshRoutingMap(request, forceRefreshPartitionAddresses);
+        Mono<RefreshState> refreshStateObs = this.getOrRefreshRoutingMap(request, forceRefreshPartitionAddresses);
 
         return refreshStateObs.flatMap(
             state -> {
@@ -437,11 +439,11 @@ public class AddressResolver implements IAddressResolver {
                     AddressResolver.ensureRoutingMapPresent(request, state.routingMap, state.collection);
 
                 } catch (Exception e) {
-                    return Single.error(e);
+                    return Mono.error(e);
                 }
 
                 // At this point we have both collection and routingMap.
-                Single<ResolutionResult> resultObs = this.tryResolveServerPartitionAsync(
+                Mono<ResolutionResult> resultObs = this.tryResolveServerPartitionAsync(
                     request,
                     state.collection,
                     state.routingMap,
@@ -451,7 +453,7 @@ public class AddressResolver implements IAddressResolver {
 
 
                 return resultObs.flatMap(result -> {
-                    Func1<ResolutionResult, Single<ResolutionResult>> addCollectionRidIfNameBased = funcResolutionResult -> {
+                    Func1<ResolutionResult, Mono<ResolutionResult>> addCollectionRidIfNameBased = funcResolutionResult -> {
                         assert funcResolutionResult != null;
                         if (request.getIsNameBased()) {
                             // Append collection rid.
@@ -463,7 +465,7 @@ public class AddressResolver implements IAddressResolver {
                             request.getHeaders().put(WFConstants.BackendHeaders.COLLECTION_RID, state.collection.getResourceId());
                         }
 
-                        return Single.just(funcResolutionResult);
+                        return Mono.just(funcResolutionResult);
                     };
 
                     if (result != null) {
@@ -473,26 +475,26 @@ public class AddressResolver implements IAddressResolver {
                     // result is null:
                     assert result == null;
 
-                    Func1<RefreshState, Single<RefreshState>> ensureCollectionRoutingMapCacheIsUptoDateFunc = funcState -> {
+                    Func1<RefreshState, Mono<RefreshState>> ensureCollectionRoutingMapCacheIsUptoDateFunc = funcState -> {
                         if (!funcState.collectionRoutingMapCacheIsUptoDate) {
                             funcState.collectionRoutingMapCacheIsUptoDate = true;
-                            Single<CollectionRoutingMap> newRoutingMapObs = this.collectionRoutingMapCache.tryLookupAsync(
+                            Mono<CollectionRoutingMap> newRoutingMapObs = RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(this.collectionRoutingMapCache.tryLookupAsync(
                                 funcState.collection.getResourceId(),
                                 funcState.routingMap,
-                                request.properties);
+                                request.properties)));
 
                             return getStateWithNewRoutingMap(funcState, newRoutingMapObs);
                         } else {
-                            return Single.just(state);
+                            return Mono.just(state);
                         }
                     };
 
-                    Func1<RefreshState, Single<ResolutionResult>> resolveServerPartition = funcState -> {
+                    Func1<RefreshState, Mono<ResolutionResult>> resolveServerPartition = funcState -> {
 
                         try {
                             AddressResolver.ensureRoutingMapPresent(request, funcState.routingMap, funcState.collection);
                         } catch (Exception e) {
-                            return Single.error(e);
+                            return Mono.error(e);
                         }
 
                         return this.tryResolveServerPartitionAsync(
@@ -504,7 +506,7 @@ public class AddressResolver implements IAddressResolver {
                             forceRefreshPartitionAddresses);
                     };
 
-                    Func1<ResolutionResult, Single<ResolutionResult>> onNullThrowNotFound = funcResolutionResult -> {
+                    Func1<ResolutionResult, Mono<ResolutionResult>> onNullThrowNotFound = funcResolutionResult -> {
                         if (funcResolutionResult == null) {
                             logger.debug("Couldn't route partitionkeyrange-oblivious request after retry/cache refresh. Collection doesn't exist.");
 
@@ -512,10 +514,10 @@ public class AddressResolver implements IAddressResolver {
                             // The only reason we will get here is if collection doesn't exist.
                             // Case when partition-key-range doesn't exist is handled in the corresponding method.
 
-                            return Single.error(BridgeInternal.setResourceAddress(new NotFoundException(), request.getResourceAddress()));
+                            return Mono.error(BridgeInternal.setResourceAddress(new NotFoundException(), request.getResourceAddress()));
                         }
 
-                        return Single.just(funcResolutionResult);
+                        return Mono.just(funcResolutionResult);
                     };
 
                     // Couldn't resolve server partition or its addresses.
@@ -524,33 +526,33 @@ public class AddressResolver implements IAddressResolver {
                         request.forceNameCacheRefresh = true;
                         state.collectionCacheIsUptoDate = true;
 
-                        Single<DocumentCollection> newCollectionObs = this.collectionCache.resolveCollectionAsync(request);
-                        Single<RefreshState> newRefreshStateObs = newCollectionObs.flatMap(collection -> {
+                        Mono<DocumentCollection> newCollectionObs = RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(this.collectionCache.resolveCollectionAsync(request)));
+                        Mono<RefreshState> newRefreshStateObs = newCollectionObs.flatMap(collection -> {
                             state.collection = collection;
 
                             if (collection.getResourceId() != state.routingMap.getCollectionUniqueId()) {
                                 // Collection cache was stale. We resolved to new Rid. routing map cache is potentially stale
                                 // for this new collection rid. Mark it as such.
                                 state.collectionRoutingMapCacheIsUptoDate = false;
-                                Single<CollectionRoutingMap> newRoutingMap = this.collectionRoutingMapCache.tryLookupAsync( 
+                                Mono<CollectionRoutingMap> newRoutingMap = RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(this.collectionRoutingMapCache.tryLookupAsync(
                                     collection.getResourceId(),
                                     null,
-                                    request.properties);
+                                    request.properties)));
 
                                 return getStateWithNewRoutingMap(state, newRoutingMap);
                             }
 
-                            return Single.just(state);
+                            return Mono.just(state);
                         });
 
-                        Single<ResolutionResult> newResultObs = newRefreshStateObs.flatMap(ensureCollectionRoutingMapCacheIsUptoDateFunc::call)
+                        Mono<ResolutionResult> newResultObs = newRefreshStateObs.flatMap(ensureCollectionRoutingMapCacheIsUptoDateFunc::call)
                             .flatMap(resolveServerPartition::call);
 
                         return newResultObs.flatMap(onNullThrowNotFound::call).flatMap(addCollectionRidIfNameBased::call);
 
                     } else {
                         return ensureCollectionRoutingMapCacheIsUptoDateFunc.call(state)
-                            .flatMap(resolveServerPartition::call).flatMap(onNullThrowNotFound).flatMap(addCollectionRidIfNameBased);
+                            .flatMap(resolveServerPartition::call).flatMap(onNullThrowNotFound::call).flatMap(addCollectionRidIfNameBased::call);
                     }
                 });
             }
@@ -576,15 +578,15 @@ public class AddressResolver implements IAddressResolver {
         return null;
     }
 
-    private <T> Single<T> returnOrError(Callable<T> function) {
+    private <T> Mono<T> returnOrError(Callable<T> function) {
         try {
-            return Single.just(function.call());
+            return Mono.just(function.call());
         } catch (Exception e) {
-            return Single.error(e);
+            return Mono.error(e);
         }
     }
 
-    private Single<ResolutionResult> tryResolveServerPartitionByPartitionKeyRangeIdAsync(
+    private Mono<ResolutionResult> tryResolveServerPartitionByPartitionKeyRangeIdAsync(
         RxDocumentServiceRequest request,
         DocumentCollection collection,
         CollectionRoutingMap routingMap,
@@ -598,10 +600,10 @@ public class AddressResolver implements IAddressResolver {
             return returnOrError(() -> this.handleRangeAddressResolutionFailure(request, collectionCacheIsUpToDate, routingMapCacheIsUpToDate, routingMap));
         }
 
-        Single<AddressInformation[]> addressesObs = this.addressCache.tryGetAddresses(
+        Mono<AddressInformation[]> addressesObs = RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(this.addressCache.tryGetAddresses(
             request,
             new PartitionKeyRangeIdentity(collection.getResourceId(), request.getPartitionKeyRangeIdentity().getPartitionKeyRangeId()),
-            forceRefreshPartitionAddresses);
+            forceRefreshPartitionAddresses)));
 
         return addressesObs.flatMap(addresses -> {
 
@@ -609,13 +611,13 @@ public class AddressResolver implements IAddressResolver {
                 logger.debug("Cannot resolve addresses for range '{}'", request.getPartitionKeyRangeIdentity().toHeader());
 
                 try {
-                    return Single.just(this.handleRangeAddressResolutionFailure(request, collectionCacheIsUpToDate, routingMapCacheIsUpToDate, routingMap));
+                    return Mono.just(this.handleRangeAddressResolutionFailure(request, collectionCacheIsUpToDate, routingMapCacheIsUpToDate, routingMap));
                 } catch (DocumentClientException e) {
-                    return Single.error(e);
+                    return Mono.error(e);
                 }
             }
 
-            return Single.just(new ResolutionResult(partitionKeyRange, addresses));
+            return Mono.just(new ResolutionResult(partitionKeyRange, addresses));
         });
     }
 

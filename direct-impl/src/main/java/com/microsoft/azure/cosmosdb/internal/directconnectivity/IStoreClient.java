@@ -26,29 +26,30 @@ package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 import com.microsoft.azure.cosmosdb.rx.internal.IRetryPolicy;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceResponse;
-import rx.Single;
-import rx.functions.Func1;
+import reactor.core.publisher.Mono;
+
+import java.util.function.Function;
 
 public interface IStoreClient {
 
-    Single<RxDocumentServiceResponse> processMessageAsync(
+    Mono<RxDocumentServiceResponse> processMessageAsync(
             RxDocumentServiceRequest request,
             IRetryPolicy retryPolicy,
-            Func1<RxDocumentServiceRequest, Single<RxDocumentServiceRequest>> prepareRequestAsyncDelegate);
+            Function<RxDocumentServiceRequest, Mono<RxDocumentServiceRequest>> prepareRequestAsyncDelegate);
 
-    default Single<RxDocumentServiceResponse> processMessageAsync(
+    default Mono<RxDocumentServiceResponse> processMessageAsync(
             RxDocumentServiceRequest request,
-            Func1<RxDocumentServiceRequest, Single<RxDocumentServiceRequest>> prepareRequestAsyncDelegate) {
+            Function<RxDocumentServiceRequest, Mono<RxDocumentServiceRequest>> prepareRequestAsyncDelegate) {
         return processMessageAsync(request, null, prepareRequestAsyncDelegate);
     }
 
-    default Single<RxDocumentServiceResponse> processMessageAsync(
+    default Mono<RxDocumentServiceResponse> processMessageAsync(
             RxDocumentServiceRequest request,
             IRetryPolicy retryPolicy) {
         return processMessageAsync(request, retryPolicy, null);
     }
 
-    default Single<RxDocumentServiceResponse> processMessageAsync(
+    default Mono<RxDocumentServiceResponse> processMessageAsync(
             RxDocumentServiceRequest request) {
         return processMessageAsync(request, null, null);
     }

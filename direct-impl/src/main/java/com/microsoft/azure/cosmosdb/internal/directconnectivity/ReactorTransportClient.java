@@ -25,10 +25,17 @@ package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
 import reactor.core.publisher.Mono;
-import rx.Single;
 
-public interface IAddressResolver {
-    Mono<AddressInformation[]> resolveAsync(
-            RxDocumentServiceRequest request,
-            boolean forceRefreshPartitionAddresses);
+import java.net.URI;
+
+public abstract class ReactorTransportClient implements AutoCloseable {
+
+    // Uses requests's ResourceOperation to determine the operation
+    public Mono<StoreResponse> invokeResourceOperationAsync(URI physicalAddress, RxDocumentServiceRequest request) {
+        return this.invokeStoreAsync(physicalAddress, request);
+    }
+
+    protected abstract Mono<StoreResponse> invokeStoreAsync(
+        URI physicalAddress,
+        RxDocumentServiceRequest request);
 }

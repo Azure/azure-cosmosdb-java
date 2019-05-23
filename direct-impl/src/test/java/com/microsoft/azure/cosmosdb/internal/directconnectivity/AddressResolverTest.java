@@ -234,7 +234,7 @@ public class AddressResolverTest {
         request.getHeaders().put(HttpConstants.HttpHeaders.PARTITION_KEY, new PartitionKey("foo").toString());
         AddressInformation[] resolvedAddresses = null;
         try {
-            resolvedAddresses = this.addressResolver.resolveAsync(request, forceAddressRefresh).toBlocking().value();
+            resolvedAddresses = this.addressResolver.resolveAsync(request, forceAddressRefresh).block();
         } catch (RuntimeException e) {
             throw (Exception) e.getCause();
         } finally {
@@ -301,7 +301,7 @@ public class AddressResolverTest {
         request.routeTo(rangeIdentity);
         AddressInformation[] resolvedAddresses;
         try {
-            resolvedAddresses = this.addressResolver.resolveAsync(request, forceAddressRefresh).toBlocking().value();
+            resolvedAddresses = this.addressResolver.resolveAsync(request, forceAddressRefresh).block();
         } catch (RuntimeException e) {
             e.printStackTrace();
             throw (Exception) e.getCause();

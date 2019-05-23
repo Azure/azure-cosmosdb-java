@@ -23,10 +23,14 @@
 package com.microsoft.azure.cosmosdb.rx.internal;
 
 import java.time.Duration;
+import java.util.concurrent.Callable;
+import java.util.function.Function;
 
 
 import com.microsoft.azure.cosmosdb.internal.Quadruple;
 
+import reactor.core.Exceptions;
+import reactor.core.publisher.Mono;
 import rx.Observable;
 import rx.Single;
 import rx.functions.Action1;
@@ -103,6 +107,20 @@ public class BackoffRetryUtility {
         }).retryWhen(RetryUtils.toRetryWhenFunc(retryPolicy));
     }
 
+    // a helper method for invoking callback method given the retry policy
+    static public <T> Mono<T> executeRetry(Callable<Mono<T>> callbackMethod,
+                                           IRetryPolicy retryPolicy) {
+
+        return Mono.defer(() -> {
+            // TODO: is defer required?
+            try {
+                return callbackMethod.call();
+            } catch (Exception e) {
+                throw Exceptions.propagate(e);
+            }
+        }).retryWhen(RetryUtils.toRetryWhenFunc(retryPolicy));
+    }
+
     static public <T> Single<T> executeAsync(
             Func1<Quadruple<Boolean, Boolean, Duration, Integer>, Single<T>> callbackMethod, IRetryPolicy retryPolicy,
             Func1<Quadruple<Boolean, Boolean, Duration, Integer>, Single<T>> inBackoffAlternateCallbackMethod,
@@ -112,6 +130,18 @@ public class BackoffRetryUtility {
         return Single.defer(() -> {
             // TODO: is defer required?
             return callbackMethod.call(policyArg1).onErrorResumeNext(
+                    RetryUtils.toRetryWithAlternateFunc(callbackMethod,retryPolicy, inBackoffAlternateCallbackMethod,minBackoffForInBackoffCallback));
+        });
+    }
+
+    static public <T> Mono<T> executeAsync(
+            Function<Quadruple<Boolean, Boolean, Duration, Integer>, Mono<T>> callbackMethod, IRetryPolicy retryPolicy,
+            Function<Quadruple<Boolean, Boolean, Duration, Integer>, Mono<T>> inBackoffAlternateCallbackMethod,
+            Duration minBackoffForInBackoffCallback) {
+
+        return Mono.defer(() -> {
+            // TODO: is defer required?
+            return callbackMethod.apply(InitialArgumentValuePolicyArg).onErrorResume(
                     RetryUtils.toRetryWithAlternateFunc(callbackMethod,retryPolicy, inBackoffAlternateCallbackMethod,minBackoffForInBackoffCallback));
         });
     }

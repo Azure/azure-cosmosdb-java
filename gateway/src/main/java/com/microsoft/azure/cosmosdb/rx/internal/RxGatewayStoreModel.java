@@ -53,10 +53,7 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import rx.Observable;
-import rx.Single;
-import rx.functions.Func0;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -65,6 +62,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.Callable;
 
 /**
  * While this class is public, but it is not part of our published public APIs.
@@ -74,7 +72,6 @@ import java.util.Map.Entry;
  */
 class RxGatewayStoreModel implements RxStoreModel {
 
-    private final static int INITIAL_RESPONSE_BUFFER_SIZE = 1024;
     private final Logger logger = LoggerFactory.getLogger(RxGatewayStoreModel.class);
     private final Map<String, String> defaultHeaders;
     private final HttpClient httpClient;
@@ -115,35 +112,35 @@ class RxGatewayStoreModel implements RxStoreModel {
         this.sessionContainer = sessionContainer;
     }
 
-    private Observable<RxDocumentServiceResponse> doCreate(RxDocumentServiceRequest request) {
+    private Flux<RxDocumentServiceResponse> doCreate(RxDocumentServiceRequest request) {
         return this.performRequest(request, HttpMethod.POST);
     }
 
-    private Observable<RxDocumentServiceResponse> upsert(RxDocumentServiceRequest request) {
+    private Flux<RxDocumentServiceResponse> upsert(RxDocumentServiceRequest request) {
         return this.performRequest(request, HttpMethod.POST);
     }
 
-    private Observable<RxDocumentServiceResponse> read(RxDocumentServiceRequest request) {
+    private Flux<RxDocumentServiceResponse> read(RxDocumentServiceRequest request) {
         return this.performRequest(request, HttpMethod.GET);
     }
 
-    private Observable<RxDocumentServiceResponse> replace(RxDocumentServiceRequest request) {
+    private Flux<RxDocumentServiceResponse> replace(RxDocumentServiceRequest request) {
         return this.performRequest(request, HttpMethod.PUT);
     }
 
-    private Observable<RxDocumentServiceResponse> delete(RxDocumentServiceRequest request) {
+    private Flux<RxDocumentServiceResponse> delete(RxDocumentServiceRequest request) {
         return this.performRequest(request, HttpMethod.DELETE);
     }
 
-    private Observable<RxDocumentServiceResponse> execute(RxDocumentServiceRequest request) {
+    private Flux<RxDocumentServiceResponse> execute(RxDocumentServiceRequest request) {
         return this.performRequest(request, HttpMethod.POST);
     }
 
-    private Observable<RxDocumentServiceResponse> readFeed(RxDocumentServiceRequest request) {
+    private Flux<RxDocumentServiceResponse> readFeed(RxDocumentServiceRequest request) {
         return this.performRequest(request, HttpMethod.GET);
     }
 
-    private Observable<RxDocumentServiceResponse> query(RxDocumentServiceRequest request) {
+    private Flux<RxDocumentServiceResponse> query(RxDocumentServiceRequest request) {
         request.getHeaders().put(HttpConstants.HttpHeaders.IS_QUERY, "true");
 
         switch (this.queryCompatibilityMode) {
@@ -162,13 +159,13 @@ class RxGatewayStoreModel implements RxStoreModel {
     }
 
     /**
-     * Given the request it creates an observable which upon subscription issues HTTP call and emits one RxDocumentServiceResponse.
+     * Given the request it creates an flux which upon subscription issues HTTP call and emits one RxDocumentServiceResponse.
      *
      * @param request
      * @param method
-     * @return Observable<RxDocumentServiceResponse>
+     * @return Flux<RxDocumentServiceResponse>
      */
-    public Observable<RxDocumentServiceResponse> performRequest(RxDocumentServiceRequest request, HttpMethod method) {
+    public Flux<RxDocumentServiceResponse> performRequest(RxDocumentServiceRequest request, HttpMethod method) {
 
         try {
             URI uri = getUri(request);
@@ -196,7 +193,7 @@ class RxGatewayStoreModel implements RxStoreModel {
             return toDocumentServiceResponse(httpResponseMono, request);
 
         } catch (Exception e) {
-            return Observable.error(e);
+            throw reactor.core.Exceptions.propagate(e);
         }
     }
 
@@ -270,13 +267,13 @@ class RxGatewayStoreModel implements RxStoreModel {
      *
      * @param httpResponseMono
      * @param request
-     * @return {@link Observable}
+     * @return {@link Flux}
      */
-    private Observable<RxDocumentServiceResponse> toDocumentServiceResponse(Mono<HttpResponse> httpResponseMono,
+    private Flux<RxDocumentServiceResponse> toDocumentServiceResponse(Mono<HttpResponse> httpResponseMono,
                                                                             RxDocumentServiceRequest request) {
 
         if (request.getIsMedia()) {
-            return RxJavaInterop.toV1Observable(httpResponseMono.flatMap(httpResponse -> {
+            return httpResponseMono.flatMap(httpResponse -> {
 
                 // header key/value pairs
                 HttpHeaders httpResponseHeaders = httpResponse.headers();
@@ -315,10 +312,10 @@ class RxGatewayStoreModel implements RxStoreModel {
                             }
                         }).single();
 
-            }).map(RxDocumentServiceResponse::new));
+            }).map(RxDocumentServiceResponse::new).flux();
 
         } else {
-            return RxJavaInterop.toV1Observable(httpResponseMono.flatMap(httpResponse ->  {
+            return httpResponseMono.flatMap(httpResponse ->  {
 
                 // header key/value pairs
                 HttpHeaders httpResponseHeaders = httpResponse.headers();
@@ -369,7 +366,7 @@ class RxGatewayStoreModel implements RxStoreModel {
                         }
 
                         return Mono.error(exception);
-                    }));
+            }).flux();
         }
     }
 
@@ -407,7 +404,7 @@ class RxGatewayStoreModel implements RxStoreModel {
         }
     }
 
-    private Observable<RxDocumentServiceResponse> invokeAsyncInternal(RxDocumentServiceRequest request)  {
+    private Flux<RxDocumentServiceResponse> invokeAsyncInternal(RxDocumentServiceRequest request)  {
         switch (request.getOperationType()) {
             case Create:
                 return this.doCreate(request);
@@ -431,24 +428,24 @@ class RxGatewayStoreModel implements RxStoreModel {
         }
     }
 
-    private Observable<RxDocumentServiceResponse> invokeAsync(RxDocumentServiceRequest request) {
-        Func0<Single<RxDocumentServiceResponse>> funcDelegate = () -> invokeAsyncInternal(request).toSingle();
-        return BackoffRetryUtility.executeRetry(funcDelegate, new WebExceptionRetryPolicy()).toObservable();
+    private Flux<RxDocumentServiceResponse> invokeAsync(RxDocumentServiceRequest request) {
+        Callable<Mono<RxDocumentServiceResponse>> funcDelegate = () -> invokeAsyncInternal(request).single();
+        return BackoffRetryUtility.executeRetry(funcDelegate, new WebExceptionRetryPolicy()).flux();
     }
 
     @Override
-    public Observable<RxDocumentServiceResponse> processMessage(RxDocumentServiceRequest request) {
+    public Flux<RxDocumentServiceResponse> processMessage(RxDocumentServiceRequest request) {
         this.applySessionToken(request);
 
-        Observable<RxDocumentServiceResponse> responseObs = invokeAsync(request);
+        Flux<RxDocumentServiceResponse> responseObs = invokeAsync(request);
 
-        return responseObs.onErrorResumeNext(
+        return responseObs.onErrorResume(
                 e -> {
                     DocumentClientException dce = Utils.as(e, DocumentClientException.class);
 
                     if (dce == null) {
                         logger.error("unexpected failure {}", e.getMessage(), e);
-                        return Observable.error(e);
+                        return Flux.error(e);
                     }
 
                     if ((!ReplicatedResourceClientUtils.isMasterResource(request.getResourceType())) &&
@@ -461,7 +458,7 @@ class RxGatewayStoreModel implements RxStoreModel {
                         this.captureSessionToken(request, dce.getResponseHeaders());
                     }
 
-                    return Observable.error(dce);
+                    return Flux.error(dce);
                 }
         ).map(response ->
                 {
@@ -513,20 +510,5 @@ class RxGatewayStoreModel implements RxStoreModel {
         if (!Strings.isNullOrEmpty(sessionToken)) {
             headers.put(HttpConstants.HttpHeaders.SESSION_TOKEN, sessionToken);
         }
-    }
-
-    private static Flux<String> toString(Flux<ByteBuf> contentObservable) {
-        return contentObservable
-                .reduce(
-                        new ByteArrayOutputStream(INITIAL_RESPONSE_BUFFER_SIZE),
-                        (out, bb) -> {
-                            try {
-                                bb.readBytes(out, bb.readableBytes());
-                                return out;
-                            } catch (IOException e) {
-                                throw new RuntimeException(e);
-                            }
-                        })
-                .map(out -> new String(out.toByteArray(), StandardCharsets.UTF_8)).flux();
     }
 }

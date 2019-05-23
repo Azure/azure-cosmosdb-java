@@ -42,6 +42,7 @@ import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
 import com.microsoft.azure.cosmosdb.rx.internal.caches.RxCollectionCache;
 import com.microsoft.azure.cosmosdb.rx.internal.caches.RxPartitionKeyRangeCache;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient;
+import reactor.core.publisher.Mono;
 import rx.Completable;
 import rx.Single;
 
@@ -121,7 +122,7 @@ public class GlobalAddressResolver implements IAddressResolver {
     }
 
     @Override
-    public Single<AddressInformation[]> resolveAsync(RxDocumentServiceRequest request, boolean forceRefresh) {
+    public Mono<AddressInformation[]> resolveAsync(RxDocumentServiceRequest request, boolean forceRefresh) {
         IAddressResolver resolver = this.getAddressResolver(request);
         return resolver.resolveAsync(request, forceRefresh);
     }

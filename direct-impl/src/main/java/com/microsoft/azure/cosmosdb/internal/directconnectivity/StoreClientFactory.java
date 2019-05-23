@@ -37,7 +37,7 @@ public class StoreClientFactory implements AutoCloseable {
     private final int maxConcurrentConnectionOpenRequests;
     private final int requestTimeoutInSeconds;
     private final Protocol protocol;
-    private final TransportClient transportClient;
+    private final ReactorTransportClient transportClient;
     private volatile boolean isClosed;
 
     public StoreClientFactory(
@@ -54,7 +54,8 @@ public class StoreClientFactory implements AutoCloseable {
         if (protocol == Protocol.Https) {
             this.transportClient = new HttpTransportClient(configs, requestTimeoutInSeconds, userAgent);
         } else if (protocol == Protocol.Tcp){
-            this.transportClient = new RntbdTransportClient(configs, requestTimeoutInSeconds, userAgent);
+            throw new RuntimeException("Not Supported right now");
+//            this.transportClient = new RntbdTransportClient(configs, requestTimeoutInSeconds, userAgent);
         } else {
             throw new IllegalArgumentException(String.format("protocol: %s", this.protocol));
         }

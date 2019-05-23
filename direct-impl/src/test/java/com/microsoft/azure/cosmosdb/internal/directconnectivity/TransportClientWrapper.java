@@ -49,12 +49,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class TransportClientWrapper {
     private static Logger logger = LoggerFactory.getLogger(TransportClientWrapper.class);
-    public final TransportClient transportClient;
+    public final ReactorTransportClient transportClient;
     private final AtomicBoolean valid;
     private final AtomicInteger cnt;
     private final List<Pair<URI, RxDocumentServiceRequest>> requests;
 
-    TransportClientWrapper(TransportClient transportClient, AtomicInteger cnt, AtomicBoolean valid, List<Pair<URI, RxDocumentServiceRequest>> requests) {
+    TransportClientWrapper(ReactorTransportClient transportClient, AtomicInteger cnt, AtomicBoolean valid, List<Pair<URI, RxDocumentServiceRequest>> requests) {
         this.transportClient = transportClient;
         this.valid = valid;
         this.cnt = cnt;
@@ -134,7 +134,7 @@ public class TransportClientWrapper {
                 AtomicBoolean valid = new AtomicBoolean(true);
                 List<Pair<URI, RxDocumentServiceRequest>> capturedArgs = Collections.synchronizedList(new ArrayList<>());
 
-                TransportClient transportClient = Mockito.mock(TransportClient.class);
+                ReactorTransportClient transportClient = Mockito.mock(ReactorTransportClient.class);
                 Mockito.doAnswer(invocation ->  {
                     i.incrementAndGet();
                     URI physicalUri = invocation.getArgumentAt(0, URI.class);
@@ -192,7 +192,7 @@ public class TransportClientWrapper {
                 AtomicBoolean valid = new AtomicBoolean(true);
                 List<Pair<URI, RxDocumentServiceRequest>> capturedArgs = Collections.synchronizedList(new ArrayList<>());
 
-                TransportClient transportClient = Mockito.mock(TransportClient.class);
+                ReactorTransportClient transportClient = Mockito.mock(ReactorTransportClient.class);
                 Mockito.doAnswer(invocation ->  {
                     capture(capturedArgs, invocation);
 
@@ -295,7 +295,7 @@ public class TransportClientWrapper {
                 AtomicBoolean valid = new AtomicBoolean(true);
                 AtomicInteger cnt = new AtomicInteger(0);
                 List<Pair<URI, RxDocumentServiceRequest>> capturedArgs = Collections.synchronizedList(new ArrayList<>());
-                TransportClient transportClient = Mockito.mock(TransportClient.class);
+                ReactorTransportClient transportClient = Mockito.mock(ReactorTransportClient.class);
                 Mockito.doAnswer(invocation ->  {
                     cnt.getAndIncrement();
                     URI physicalUri = invocation.getArgumentAt(0, URI.class);

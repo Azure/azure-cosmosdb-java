@@ -38,9 +38,13 @@ import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.Exceptions;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import rx.Observable;
 import rx.Single;
 
+import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -106,7 +110,7 @@ public class QuorumReader {
 
     public QuorumReader(
             Configs configs,
-            TransportClient transportClient,
+            ReactorTransportClient transportClient,
             AddressSelector addressSelector,
             StoreReader storeReader,
             GatewayServiceConfigurationReader serviceConfigReader,
@@ -126,7 +130,7 @@ public class QuorumReader {
     }
 
     public QuorumReader(
-            TransportClient transportClient,
+            ReactorTransportClient transportClient,
             AddressSelector addressSelector,
             StoreReader storeReader,
             GatewayServiceConfigurationReader serviceConfigReader,
@@ -135,44 +139,44 @@ public class QuorumReader {
         this(configs, transportClient, addressSelector, storeReader, serviceConfigReader, authorizationTokenProvider);
     }
 
-    public Single<StoreResponse> readStrongAsync(
+    public Mono<StoreResponse> readStrongAsync(
             RxDocumentServiceRequest entity,
             int readQuorumValue,
             ReadMode readMode) {
         final MutableVolatile<Boolean> shouldRetryOnSecondary = new MutableVolatile<>(false);
         final MutableVolatile<Boolean> hasPerformedReadFromPrimary = new MutableVolatile<>(false);
 
-        return Observable.defer(
+        return Flux.defer(
                 // the following will be repeated till the repeat().takeUntil(.) condition is satisfied.
                 () -> {
                     if (entity.requestContext.timeoutHelper.isElapsed()) {
-                        return Observable.error(new GoneException());
+                        return Flux.error(new GoneException());
                     }
 
                     shouldRetryOnSecondary.v = false;
-                    Single<ReadQuorumResult> secondaryQuorumReadResultObs =
+                    Mono<ReadQuorumResult> secondaryQuorumReadResultObs =
                             this.readQuorumAsync(entity, readQuorumValue, false, readMode);
 
-                    return secondaryQuorumReadResultObs.toObservable().flatMap(
+                    return secondaryQuorumReadResultObs.flux().flatMap(
                             secondaryQuorumReadResult -> {
 
                                 switch (secondaryQuorumReadResult.quorumResult) {
                                     case QuorumMet:
                                         try {
-                                            return Observable.just(secondaryQuorumReadResult.getResponse());
+                                            return Flux.just(secondaryQuorumReadResult.getResponse());
                                         } catch (DocumentClientException e) {
-                                            return Observable.error(e);
+                                            throw Exceptions.propagate(e);
                                         }
 
                                     case QuorumSelected:
-                                        Single<RxDocumentServiceRequest> barrierRequestObs = BarrierRequestHelper.createAsync(
+                                        Mono<RxDocumentServiceRequest> barrierRequestObs = BarrierRequestHelper.createAsync(
                                                 entity,
                                                 this.authorizationTokenProvider,
                                                 secondaryQuorumReadResult.selectedLsn,
                                                 secondaryQuorumReadResult.globalCommittedSelectedLsn);
 
-                                        return barrierRequestObs.toObservable().flatMap(barrierRequest -> {
-                                            Single<Boolean> readBarrierObs = this.waitForReadBarrierAsync(
+                                        return barrierRequestObs.flux().flatMap(barrierRequest -> {
+                                            Mono<Boolean> readBarrierObs = this.waitForReadBarrierAsync(
                                                     barrierRequest,
                                                     true /* include primary */,
                                                     readQuorumValue,
@@ -180,14 +184,14 @@ public class QuorumReader {
                                                     secondaryQuorumReadResult.globalCommittedSelectedLsn,
                                                     readMode);
 
-                                            return readBarrierObs.toObservable().flatMap(
+                                            return readBarrierObs.flux().flatMap(
                                                     readBarrier -> {
 
                                                         if (readBarrier) {
                                                             try {
-                                                                return Observable.just(secondaryQuorumReadResult.getResponse());
+                                                                return Flux.just(secondaryQuorumReadResult.getResponse());
                                                             } catch (Exception e) {
-                                                                return Observable.error(e);
+                                                                throw Exceptions.propagate(e);
                                                             }
                                                         }
 
@@ -205,7 +209,7 @@ public class QuorumReader {
                                                         entity.requestContext.quorumSelectedLSN = secondaryQuorumReadResult.selectedLsn;
                                                         entity.requestContext.globalCommittedSelectedLSN = secondaryQuorumReadResult.globalCommittedSelectedLsn;
 
-                                                        return Observable.empty();
+                                                        return Flux.empty();
                                                     }
                                             );
                                         });
@@ -213,13 +217,13 @@ public class QuorumReader {
                                     case QuorumNotSelected:
                                         if (hasPerformedReadFromPrimary.v) {
                                             logger.warn("QuorumNotSelected: Primary read already attempted. Quorum could not be selected after retrying on secondaries.");
-                                            return Observable.error(new GoneException(RMResources.ReadQuorumNotMet));
+                                            throw Exceptions.propagate(new GoneException(RMResources.ReadQuorumNotMet));
                                         }
 
                                         logger.warn("QuorumNotSelected: Quorum could not be selected with read quorum of {}", readQuorumValue);
-                                        Single<ReadPrimaryResult> responseObs = this.readPrimaryAsync(entity, readQuorumValue, false);
+                                        Mono<ReadPrimaryResult> responseObs = this.readPrimaryAsync(entity, readQuorumValue, false);
 
-                                        return responseObs.toObservable().flatMap(
+                                        return responseObs.flux().flatMap(
                                                 response -> {
                                                     if (response.isSuccessful && response.shouldRetryOnSecondary) {
                                                         assert false : "QuorumNotSelected: PrimaryResult has both Successful and shouldRetryOnSecondary flags set";
@@ -227,9 +231,9 @@ public class QuorumReader {
                                                     } else if (response.isSuccessful) {
                                                         logger.debug("QuorumNotSelected: ReadPrimary successful");
                                                         try {
-                                                            return Observable.just(response.getResponse());
+                                                            return Flux.just(response.getResponse());
                                                         } catch (DocumentClientException e) {
-                                                            return Observable.error(e);
+                                                            throw Exceptions.propagate(e);
                                                         }
                                                     } else if (response.shouldRetryOnSecondary) {
                                                         shouldRetryOnSecondary.v = true;
@@ -237,48 +241,48 @@ public class QuorumReader {
                                                         hasPerformedReadFromPrimary.v = true;
                                                     } else {
                                                         logger.warn("QuorumNotSelected: Could not get successful response from ReadPrimary");
-                                                        return Observable.error(new GoneException(String.format(RMResources.ReadQuorumNotMet, readQuorumValue)));
+                                                        throw Exceptions.propagate(new GoneException(String.format(RMResources.ReadQuorumNotMet, readQuorumValue)));
                                                     }
 
-                                                    return Observable.empty();
+                                                    return Flux.empty();
 
                                                 }
                                         );
 
                                     default:
                                         logger.error("Unknown ReadQuorum result {}", secondaryQuorumReadResult.quorumResult.toString());
-                                        return Observable.error(new InternalServerErrorException(RMResources.InternalServerError));
+                                        throw Exceptions.propagate(new InternalServerErrorException(RMResources.InternalServerError));
                                 }
 
                             });
                 }).repeat(maxNumberOfReadQuorumRetries)
                 .takeUntil(dummy -> !shouldRetryOnSecondary.v)
-                .concatWith(Observable.defer(() -> {
+                .concatWith(Flux.defer(() -> {
                     logger.warn("Could not complete read quorum with read quorum value of {}", readQuorumValue);
 
-                    return Observable.error(new GoneException(
+                    return Flux.error(new GoneException(
                             String.format(
                                     RMResources.ReadQuorumNotMet,
                                     readQuorumValue)));
                 }))
                 .take(1)
-                .toSingle();
+                .single();
     }
 
-    private Single<ReadQuorumResult> readQuorumAsync(
+    private Mono<ReadQuorumResult> readQuorumAsync(
             RxDocumentServiceRequest entity,
             int readQuorum,
             boolean includePrimary,
             ReadMode readMode) {
         if (entity.requestContext.timeoutHelper.isElapsed()) {
-            return Single.error(new GoneException());
+            return Mono.error(new GoneException());
         }
 
         return ensureQuorumSelectedStoreResponse(entity, readQuorum, includePrimary, readMode).flatMap(
                 res -> {
                     if (res.getLeft() != null) {
                         // no need for barrier
-                        return Single.just(res.getKey());
+                        return Mono.just(res.getKey());
                     }
 
                     long readLsn = res.getValue().getValue0();
@@ -287,14 +291,14 @@ public class QuorumReader {
                     List<String> storeResponses = res.getValue().getValue3();
 
                     // ReadBarrier required
-                    Single<RxDocumentServiceRequest> barrierRequestObs = BarrierRequestHelper.createAsync(entity, this.authorizationTokenProvider, readLsn, globalCommittedLSN);
+                    Mono<RxDocumentServiceRequest> barrierRequestObs = BarrierRequestHelper.createAsync(entity, this.authorizationTokenProvider, readLsn, globalCommittedLSN);
                     return barrierRequestObs.flatMap(
                             barrierRequest -> {
-                                Single<Boolean> waitForObs = this.waitForReadBarrierAsync(barrierRequest, false, readQuorum, readLsn, globalCommittedLSN, readMode);
+                                Mono<Boolean> waitForObs = this.waitForReadBarrierAsync(barrierRequest, false, readQuorum, readLsn, globalCommittedLSN, readMode);
                                 return waitForObs.flatMap(
                                         waitFor -> {
                                             if (!waitFor) {
-                                                return Single.just(new ReadQuorumResult(
+                                                return Mono.just(new ReadQuorumResult(
                                                         entity.requestContext.requestChargeTracker,
                                                         ReadQuorumResultKind.QuorumSelected,
                                                         readLsn,
@@ -303,7 +307,7 @@ public class QuorumReader {
                                                         storeResponses));
                                             }
 
-                                            return Single.just(new ReadQuorumResult(
+                                            return Mono.just(new ReadQuorumResult(
                                                     entity.requestContext.requestChargeTracker,
                                                     ReadQuorumResultKind.QuorumMet,
                                                     readLsn,
@@ -318,10 +322,10 @@ public class QuorumReader {
         );
     }
 
-    private Single<Pair<ReadQuorumResult, Quadruple<Long, Long, StoreResult, List<String>>>> ensureQuorumSelectedStoreResponse(RxDocumentServiceRequest entity, int readQuorum, boolean includePrimary, ReadMode readMode) {
+    private Mono<Pair<ReadQuorumResult, Quadruple<Long, Long, StoreResult, List<String>>>> ensureQuorumSelectedStoreResponse(RxDocumentServiceRequest entity, int readQuorum, boolean includePrimary, ReadMode readMode) {
 
         if (entity.requestContext.quorumSelectedStoreResponse == null) {
-            Single<List<StoreResult>> responseResultObs = this.storeReader.readMultipleReplicaAsync(
+            Mono<List<StoreResult>> responseResultObs = this.storeReader.readMultipleReplicaAsync(
                     entity, includePrimary, readQuorum, true /*required valid LSN*/, false, readMode);
 
             return responseResultObs.flatMap(
@@ -329,7 +333,7 @@ public class QuorumReader {
                         List<String> storeResponses = responseResult.stream().map(response -> response.toString()).collect(Collectors.toList());
                         int responseCount = (int) responseResult.stream().filter(response -> response.isValid).count();
                         if (responseCount < readQuorum) {
-                            return Single.just(Pair.of(new ReadQuorumResult(entity.requestContext.requestChargeTracker,
+                            return Mono.just(Pair.of(new ReadQuorumResult(entity.requestContext.requestChargeTracker,
                                                                             ReadQuorumResultKind.QuorumNotSelected,
                                                                             -1, -1, null, storeResponses), null));
                         }
@@ -351,7 +355,7 @@ public class QuorumReader {
                                 readLsn,
                                 globalCommittedLSN,
                                 storeResult)) {
-                            return Single.just(Pair.of(new ReadQuorumResult(
+                            return Mono.just(Pair.of(new ReadQuorumResult(
                                     entity.requestContext.requestChargeTracker,
                                     ReadQuorumResultKind.QuorumMet,
                                     readLsn.v,
@@ -365,7 +369,7 @@ public class QuorumReader {
                         entity.requestContext.forceRefreshAddressCache = false;
 
                         Quadruple<Long, Long, StoreResult, List<String>> state = Quadruple.with(readLsn.v, globalCommittedLSN.v, storeResult.v, storeResponses);
-                        return Single.just(Pair.of(null, state));
+                        return Mono.just(Pair.of(null, state));
                     }
             );
         } else {
@@ -376,7 +380,7 @@ public class QuorumReader {
             List<String> storeResponses = entity.requestContext.storeResponses;
             Quadruple<Long, Long, StoreResult, List<String>> state = Quadruple.with(readLsn.v, globalCommittedLSN.v, storeResult.v, storeResponses);
 
-            return Single.just(Pair.of(null, state));
+            return Mono.just(Pair.of(null, state));
         }
     }
 
@@ -388,27 +392,27 @@ public class QuorumReader {
      * @param useSessionToken
      * @return
      */
-    private Single<ReadPrimaryResult> readPrimaryAsync(
+    private Mono<ReadPrimaryResult> readPrimaryAsync(
             RxDocumentServiceRequest entity,
             int readQuorum,
             boolean useSessionToken) {
         if (entity.requestContext.timeoutHelper.isElapsed()) {
-            return Single.error(new GoneException());
+            return Mono.error(new GoneException());
         }
 
         // We would have already refreshed address before reaching here. Avoid performing here.
         entity.requestContext.forceRefreshAddressCache = false;
 
-        Single<StoreResult> storeResultObs = this.storeReader.readPrimaryAsync(
+        Mono<StoreResult> storeResultObs = this.storeReader.readPrimaryAsync(
                 entity, true /*required valid LSN*/, useSessionToken);
 
         return storeResultObs.flatMap(
                 storeResult -> {
                     if (!storeResult.isValid) {
                         try {
-                            return Single.error(storeResult.getException());
+                            return Mono.error(storeResult.getException());
                         } catch (InternalServerErrorException e) {
-                            return Single.error(e);
+                            return Mono.error(e);
                         }
                     }
 
@@ -421,14 +425,14 @@ public class QuorumReader {
                         logger.error(message);
 
                         // throw exception instead of returning inconsistent result.
-                        return Single.error(new GoneException(String.format(RMResources.ReadQuorumNotMet, readQuorum)));
+                        return Mono.error(new GoneException(String.format(RMResources.ReadQuorumNotMet, readQuorum)));
 
                     }
 
                     if (storeResult.currentReplicaSetSize > readQuorum) {
                         logger.warn(
                                 "Unexpected response. Replica Set size is {} which is greater than min value {}", storeResult.currentReplicaSetSize, readQuorum);
-                        return Single.just(new ReadPrimaryResult(entity.requestContext.requestChargeTracker,  /*isSuccessful */ false,
+                        return Mono.just(new ReadPrimaryResult(entity.requestContext.requestChargeTracker,  /*isSuccessful */ false,
                                 /* shouldRetryOnSecondary: */ true, /* response: */ null));
                     }
 
@@ -440,10 +444,10 @@ public class QuorumReader {
                         logger.warn("Store LSN {} and quorum acked LSN {} don't match", storeResult.lsn, storeResult.quorumAckedLSN);
                         long higherLsn = storeResult.lsn > storeResult.quorumAckedLSN ? storeResult.lsn : storeResult.quorumAckedLSN;
 
-                        Single<RxDocumentServiceRequest> waitForLsnRequestObs = BarrierRequestHelper.createAsync(entity, this.authorizationTokenProvider, higherLsn, null);
+                        Mono<RxDocumentServiceRequest> waitForLsnRequestObs = BarrierRequestHelper.createAsync(entity, this.authorizationTokenProvider, higherLsn, null);
                         return waitForLsnRequestObs.flatMap(
                                 waitForLsnRequest -> {
-                                    Single<PrimaryReadOutcome> primaryWaitForLsnResponseObs = this.waitForPrimaryLsnAsync(waitForLsnRequest, higherLsn, readQuorum);
+                                    Mono<PrimaryReadOutcome> primaryWaitForLsnResponseObs = this.waitForPrimaryLsnAsync(waitForLsnRequest, higherLsn, readQuorum);
                                     return primaryWaitForLsnResponseObs.map(
                                             primaryWaitForLsnResponse -> {
                                                 if (primaryWaitForLsnResponse == PrimaryReadOutcome.QuorumNotMet) {
@@ -463,42 +467,42 @@ public class QuorumReader {
                         );
                     }
 
-                    return Single.just(new ReadPrimaryResult(
+                    return Mono.just(new ReadPrimaryResult(
                             /* requestChargeTracker: */ entity.requestContext.requestChargeTracker, /* isSuccessful: */ true, /* shouldRetryOnSecondary:*/  false,
                             /*response: */ storeResult));
                 }
         );
     }
 
-    private Single<PrimaryReadOutcome> waitForPrimaryLsnAsync(
+    private Mono<PrimaryReadOutcome> waitForPrimaryLsnAsync(
             RxDocumentServiceRequest barrierRequest,
             long lsnToWaitFor,
             int readQuorum) {
 
-        return Observable.defer(() -> {
+        return Flux.defer(() -> {
             if (barrierRequest.requestContext.timeoutHelper.isElapsed()) {
-                return Observable.error(new GoneException());
+                throw Exceptions.propagate(new GoneException());
             }
 
             // We would have already refreshed address before reaching here. Avoid performing here.
             barrierRequest.requestContext.forceRefreshAddressCache = false;
 
-            Single<StoreResult> storeResultObs = this.storeReader.readPrimaryAsync(barrierRequest, true /*required valid LSN*/, false);
+            Mono<StoreResult> storeResultObs = this.storeReader.readPrimaryAsync(barrierRequest, true /*required valid LSN*/, false);
 
-            return storeResultObs.toObservable().flatMap(
+            return storeResultObs.flux().flatMap(
                     storeResult -> {
                         if (!storeResult.isValid) {
                             try {
-                                return Observable.error(storeResult.getException());
+                                return Flux.error(storeResult.getException());
                             } catch (InternalServerErrorException e) {
-                                return Observable.error(e);
+                                throw Exceptions.propagate(e);
                             }
                         }
 
                         if (storeResult.currentReplicaSetSize > readQuorum) {
                             logger.warn(
                                     "Unexpected response. Replica Set size is {} which is greater than min value {}", storeResult.currentReplicaSetSize, readQuorum);
-                            return Observable.just(PrimaryReadOutcome.QuorumInconclusive);
+                            return Flux.just(PrimaryReadOutcome.QuorumInconclusive);
                         }
 
                         // Java this will move to the repeat logic
@@ -506,20 +510,20 @@ public class QuorumReader {
                             logger.warn(
                                     "Store LSN {} or quorum acked LSN {} are lower than expected LSN {}", storeResult.lsn, storeResult.quorumAckedLSN, lsnToWaitFor);
 
-                            return Observable.timer(delayBetweenReadBarrierCallsInMs, TimeUnit.MILLISECONDS).flatMap(dummy -> Observable.empty());
+                            return Flux.just(0L).delayElements(Duration.ofMillis(delayBetweenReadBarrierCallsInMs)).flatMap(dummy -> Flux.empty());
                         }
 
-                        return Observable.just(PrimaryReadOutcome.QuorumMet);
+                        return Flux.just(PrimaryReadOutcome.QuorumMet);
                     }
             );
         }).repeat(maxNumberOfPrimaryReadRetries)  // Loop for store and quorum LSN to match
                 .defaultIfEmpty(PrimaryReadOutcome.QuorumNotMet)
-                .first()
-                .toSingle();
+                .take(1)
+                .single();
 
     }
 
-    private Single<Boolean> waitForReadBarrierAsync(
+    private Mono<Boolean> waitForReadBarrierAsync(
             RxDocumentServiceRequest barrierRequest,
             boolean allowPrimary,
             final int readQuorum,
@@ -531,17 +535,17 @@ public class QuorumReader {
 
         AtomicLong maxGlobalCommittedLsn = new AtomicLong(0);
 
-        return Observable.defer(() -> {
+        return Flux.defer(() -> {
 
             if (barrierRequest.requestContext.timeoutHelper.isElapsed()) {
-                return Observable.error(new GoneException());
+                return Flux.error(new GoneException());
             }
 
-            Single<List<StoreResult>> responsesObs = this.storeReader.readMultipleReplicaAsync(
+            Mono<List<StoreResult>> responsesObs = this.storeReader.readMultipleReplicaAsync(
                     barrierRequest, allowPrimary, readQuorum,
                     true /*required valid LSN*/, false /*useSessionToken*/, readMode, false /*checkMinLSN*/, true /*forceReadAll*/);
 
-            return responsesObs.toObservable().flatMap(
+            return responsesObs.flux().flatMap(
                     responses -> {
 
                         long maxGlobalCommittedLsnInResponses = responses.size() > 0 ? responses.stream()
@@ -550,7 +554,7 @@ public class QuorumReader {
 
                         if ((responses.stream().filter(response -> response.lsn >= readBarrierLsn).count() >= readQuorum) &&
                                 (!(targetGlobalCommittedLSN > 0) || maxGlobalCommittedLsnInResponses >= targetGlobalCommittedLSN)) {
-                            return Observable.just(true);
+                            return Flux.just(true);
                         }
 
                         maxGlobalCommittedLsn.set(maxGlobalCommittedLsn.get() > maxGlobalCommittedLsnInResponses ?
@@ -564,47 +568,45 @@ public class QuorumReader {
                                          JavaStreamUtils.toString(responses, "; "));
 
                             // retries exhausted
-                            return Observable.just(false);
+                            return Flux.just(false);
 
                         } else {
                             // delay
                             //await Task.Delay(QuorumReader.delayBetweenReadBarrierCallsInMs);
-                            return Observable.empty();
+                            return Flux.empty();
 
                         }
                     }
             );
-        }).repeatWhen(obs -> obs.flatMap(aVoid -> {
-            return Observable.timer(delayBetweenReadBarrierCallsInMs, TimeUnit.MILLISECONDS);
-        }))
+        }).repeatWhen(obs -> obs.flatMap(aVoid -> Flux.just(0L).delayElements(Duration.ofMillis(delayBetweenReadBarrierCallsInMs))))
                 .take(1) // Retry loop
                 .flatMap(barrierRequestSucceeded ->
-                        Observable.defer(() -> {
+                        Flux.defer(() -> {
 
                             if (barrierRequestSucceeded) {
-                                return Observable.just(true);
+                                return Flux.just(true);
                             }
 
                             // we will go into global strong read barrier mode for global strong requests after regular barrier calls have been exhausted.
                             if (targetGlobalCommittedLSN > 0) {
-                                return Observable.defer(() -> {
+                                return Flux.defer(() -> {
 
                                     if (barrierRequest.requestContext.timeoutHelper.isElapsed()) {
-                                        return Observable.error(new GoneException());
+                                        return Flux.error(new GoneException());
                                     }
 
-                                    Single<List<StoreResult>> responsesObs = this.storeReader.readMultipleReplicaAsync(
+                                    Mono<List<StoreResult>> responsesObs = this.storeReader.readMultipleReplicaAsync(
                                             barrierRequest, allowPrimary, readQuorum,
                                             true /*required valid LSN*/, false /*useSessionToken*/, readMode, false /*checkMinLSN*/, true /*forceReadAll*/);
 
-                                    return responsesObs.toObservable().flatMap(
+                                    return responsesObs.flux().flatMap(
                                             responses -> {
                                                 long maxGlobalCommittedLsnInResponses = responses.size() > 0 ? responses.stream()
                                                         .mapToLong(response -> response.globalCommittedLSN).max().getAsLong() : 0;
 
                                                 if ((responses.stream().filter(response -> response.lsn >= readBarrierLsn).count() >= readQuorum) &&
                                                         maxGlobalCommittedLsnInResponses >= targetGlobalCommittedLSN) {
-                                                    return Observable.just(true);
+                                                    return Flux.just(true);
                                                 }
 
                                                 maxGlobalCommittedLsn.set(maxGlobalCommittedLsn.get() > maxGlobalCommittedLsnInResponses ?
@@ -614,9 +616,9 @@ public class QuorumReader {
                                                 if (readBarrierRetryCountMultiRegion.getAndDecrement() == 0) {
                                                     logger.debug("QuorumReader: waitForReadBarrierAsync - Last barrier for mult-region strong requests. Responses: {}",
                                                                  JavaStreamUtils.toString(responses, "; "));
-                                                    return Observable.just(false);
+                                                    return Flux.just(false);
                                                 } else {
-                                                    return Observable.empty();
+                                                    return Flux.empty();
                                                 }
                                             }
                                     );
@@ -624,9 +626,9 @@ public class QuorumReader {
                                 }).repeatWhen(obs -> obs.flatMap(aVoid -> {
 
                                                   if ((maxBarrierRetriesForMultiRegion - readBarrierRetryCountMultiRegion.get()) > maxShortBarrierRetriesForMultiRegion) {
-                                                      return Observable.timer(barrierRetryIntervalInMsForMultiRegion, TimeUnit.MILLISECONDS);
+                                                      return Flux.just(0L).delayElements(Duration.ofMillis(barrierRetryIntervalInMsForMultiRegion));
                                                   } else {
-                                                      return Observable.timer(shortBarrierRetryIntervalInMsForMultiRegion, TimeUnit.MILLISECONDS);
+                                                      return Flux.just(0L).delayElements(Duration.ofMillis(shortBarrierRetryIntervalInMsForMultiRegion));
                                                   }
 
                                               })
@@ -634,14 +636,14 @@ public class QuorumReader {
                                 ).take(1);
                             }
 
-                            return Observable.empty();
+                            return Flux.empty();
                         })).
                         concatWith(
-                                Observable.defer(() -> {
+                                Flux.defer(() -> {
                                     logger.debug("QuorumReader: waitForReadBarrierAsync - TargetGlobalCommittedLsn: {}, MaxGlobalCommittedLsn: {}.", targetGlobalCommittedLSN, maxGlobalCommittedLsn);
-                                    return Observable.just(false);
+                                    return Flux.just(false);
                                 })
-                        ).take(1).toSingle();
+                        ).take(1).single();
     }
 
     private boolean isQuorumMet(

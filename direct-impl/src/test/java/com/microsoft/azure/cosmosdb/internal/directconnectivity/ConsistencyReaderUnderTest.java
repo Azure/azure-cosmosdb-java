@@ -37,7 +37,7 @@ public class ConsistencyReaderUnderTest extends ConsistencyReader {
 
     public ConsistencyReaderUnderTest(AddressSelector addressSelector,
                                       ISessionContainer sessionContainer,
-                                      TransportClient transportClient,
+                                      ReactorTransportClient transportClient,
                                       GatewayServiceConfigurationReader serviceConfigReader,
                                       IAuthorizationTokenProvider authorizationTokenProvider) {
         super(new Configs(), addressSelector, sessionContainer, transportClient, serviceConfigReader, authorizationTokenProvider);
@@ -61,7 +61,7 @@ public class ConsistencyReaderUnderTest extends ConsistencyReader {
     }
 
     @Override
-    QuorumReader createQuorumReader(TransportClient transportClient,
+    QuorumReader createQuorumReader(ReactorTransportClient transportClient,
                                     AddressSelector addressSelector,
                                     StoreReader storeReader,
                                     GatewayServiceConfigurationReader serviceConfigurationReader,
@@ -76,7 +76,7 @@ public class ConsistencyReaderUnderTest extends ConsistencyReader {
     }
 
     @Override
-    StoreReader createStoreReader(TransportClient transportClient,
+    StoreReader createStoreReader(ReactorTransportClient transportClient,
                                   AddressSelector addressSelector,
                                   ISessionContainer sessionContainer) {
         this.origStoreReader = new StoreReaderUnderTest(transportClient, addressSelector, sessionContainer);

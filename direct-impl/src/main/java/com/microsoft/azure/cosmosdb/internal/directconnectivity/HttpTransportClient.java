@@ -51,14 +51,12 @@ import com.microsoft.azure.cosmosdb.rx.internal.http.HttpClientConfig;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpRequest;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpResponse;
-import hu.akarnokd.rxjava.interop.RxJavaInterop;
 import io.netty.handler.codec.http.HttpMethod;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import reactor.adapter.rxjava.RxJava2Adapter;
+import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
-import rx.Single;
 
 import java.net.URI;
 import java.time.Instant;
@@ -71,7 +69,7 @@ import static com.microsoft.azure.cosmosdb.internal.Utils.trimBeginningAndEnding
 /*
  * The following code only support Document Write without any error handling support.
  */
-public class HttpTransportClient extends TransportClient {
+public class HttpTransportClient extends ReactorTransportClient {
     private final Logger logger = LoggerFactory.getLogger(HttpTransportClient.class);
     private final HttpClient httpClient;
     private final Map<String, String> defaultHeaders;
@@ -109,13 +107,12 @@ public class HttpTransportClient extends TransportClient {
         httpClient.shutdown();
     }
 
-    public Single<StoreResponse> invokeStoreAsync(
+    public Mono<StoreResponse> invokeStoreAsync(
         URI physicalAddress,
-        ResourceOperation resourceOperation,
         RxDocumentServiceRequest request) {
 
         try {
-
+            ResourceOperation resourceOperation = new ResourceOperation(request.getOperationType(), request.getResourceType());
             // uuid correlation manager
             UUID activityId = UUID.fromString(request.getActivityId());
 
@@ -221,17 +218,11 @@ public class HttpTransportClient extends TransportClient {
                                 null);
                     });
 
-            return RxJavaInterop
-                    .toV1Single(RxJava2Adapter
-                            .monoToSingle(httpResponseMono.flatMap(rsp -> processHttpResponse(request.getResourceAddress(),
-                                httpRequest,
-                                activityId.toString(),
-                                rsp,
-                                physicalAddress))));
+            return httpResponseMono.flatMap(rsp -> processHttpResponse(request.getResourceAddress(),
+                    httpRequest, activityId.toString(), rsp, physicalAddress));
 
         } catch (Exception e) {
-            // TODO improve on exception catching
-            return Single.error(e);
+            return Mono.error(Exceptions.propagate(e));
         }
     }
 

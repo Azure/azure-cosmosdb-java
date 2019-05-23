@@ -25,7 +25,7 @@ package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
 import com.microsoft.azure.cosmosdb.rx.internal.Strings;
-import rx.Single;
+import reactor.core.publisher.Mono;
 
 import java.net.URI;
 import java.util.Arrays;
@@ -41,22 +41,22 @@ public class AddressSelector {
         this.protocol = protocol;
     }
 
-    public Single<List<URI>> resolveAllUriAsync(
+    public Mono<List<URI>> resolveAllUriAsync(
         RxDocumentServiceRequest request,
         boolean includePrimary,
         boolean forceRefresh) {
-        Single<List<AddressInformation>> allReplicaAddressesObs = this.resolveAddressesAsync(request, forceRefresh);
+        Mono<List<AddressInformation>> allReplicaAddressesObs = this.resolveAddressesAsync(request, forceRefresh);
         return allReplicaAddressesObs.map(allReplicaAddresses -> allReplicaAddresses.stream().filter(a -> includePrimary || !a.isPrimary())
             .map(a -> HttpUtils.toURI(a.getPhysicalUri())).collect(Collectors.toList()));
     }
 
-    public Single<URI> resolvePrimaryUriAsync(RxDocumentServiceRequest request, boolean forceAddressRefresh) {
-        Single<List<AddressInformation>> replicaAddressesObs = this.resolveAddressesAsync(request, forceAddressRefresh);
+    public Mono<URI> resolvePrimaryUriAsync(RxDocumentServiceRequest request, boolean forceAddressRefresh) {
+        Mono<List<AddressInformation>> replicaAddressesObs = this.resolveAddressesAsync(request, forceAddressRefresh);
         return replicaAddressesObs.flatMap(replicaAddresses -> {
             try {
-                return Single.just(AddressSelector.getPrimaryUri(request, replicaAddresses));
+                return Mono.just(AddressSelector.getPrimaryUri(request, replicaAddresses));
             } catch (Exception e) {
-                return Single.error(e);
+                return Mono.error(e);
             }
         });
     }
@@ -83,8 +83,8 @@ public class AddressSelector {
         return HttpUtils.toURI(primaryAddress.getPhysicalUri());
     }
 
-    public Single<List<AddressInformation>> resolveAddressesAsync(RxDocumentServiceRequest request, boolean forceAddressRefresh) {
-        Single<List<AddressInformation>> resolvedAddressesObs =
+    public Mono<List<AddressInformation>> resolveAddressesAsync(RxDocumentServiceRequest request, boolean forceAddressRefresh) {
+        Mono<List<AddressInformation>> resolvedAddressesObs =
             (this.addressResolver.resolveAsync(request, forceAddressRefresh))
                 .map(addresses -> Arrays.stream(addresses)
                     .filter(address -> {
