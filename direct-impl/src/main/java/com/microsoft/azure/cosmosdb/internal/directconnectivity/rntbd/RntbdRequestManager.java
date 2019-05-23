@@ -64,6 +64,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.Timeout;
+import io.netty.util.concurrent.EventExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -422,17 +423,16 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
      * @param context the {@link ChannelHandlerContext} for which the write operation is made
      * @param message the message to write
      * @param promise the {@link ChannelPromise} to notify once the operation completes
-     * @throws Exception thrown if an error occurs
      */
     @Override
-    public void write(final ChannelHandlerContext context, final Object message, final ChannelPromise promise) throws Exception {
+    public void write(final ChannelHandlerContext context, final Object message, final ChannelPromise promise) {
 
         // TODO: DANOBLE: Ensure that all write errors are reported with a root cause of type EncoderException
 
         this.traceOperation(context, "write", message);
 
         if (message instanceof RntbdRequestRecord) {
-            context.write(this.addPendingRequestRecord((RntbdRequestRecord)message), promise);
+            context.write(this.addPendingRequestRecord(context, (RntbdRequestRecord)message), promise);
         } else {
             final String reason = Strings.lenientFormat("Expected message of type %s, not %s", RntbdRequestArgs.class, message.getClass());
             this.exceptionCaught(context, new IllegalStateException(reason));
@@ -459,7 +459,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         this.pendingWrites.add(out, promise);
     }
 
-    private RntbdRequestArgs addPendingRequestRecord(final RntbdRequestRecord requestRecord) {
+    private RntbdRequestArgs addPendingRequestRecord(final ChannelHandlerContext context, final RntbdRequestRecord requestRecord) {
 
         // TODO: DANOBLE: Consider revising the implementation of RntbdRequestManager.addPendingRequestRecord
         //  At a minimum consider these issues:
@@ -473,14 +473,19 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
             reportIssueUnless(current == null, logger, requestRecord, "current: {}", current);
 
             final Timeout pendingRequestTimeout = requestRecord.newTimeout(timeout -> {
-                // TODO: DANOBLE: force this to run on the current executor to avoid race conditions (?)
-                requestRecord.expire();
+                EventExecutor executor = context.executor();
+                if (executor.inEventLoop()) {
+                    requestRecord.expire();
+                } else {
+                    executor.next().execute(requestRecord::expire);
+                }
             });
 
             requestRecord.whenComplete((response, error) -> {
                 this.pendingRequests.remove(activityId);
                 pendingRequestTimeout.cancel();
             });
+
             return requestRecord;
         });
 
@@ -571,8 +576,6 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
                 BridgeInternal.setRequestHeaders(cause, requestHeaders);
 
                 requestRecord.completeExceptionally(cause);
-
-                logger.debug("{}", requestRecord);
             });
         }
     }
