@@ -405,12 +405,12 @@ public class CosmosContainer extends CosmosResource {
     }
 
     /**
-     * Gets a CosmosStoredProcedure object without making a service call.
-     * @param jsonString body of the stored procedure in JSON.
-     * @return a cosmos stored procedure.
+     * Gets a CosmosStoredProcedure object without making a service call
+     * @param id id of the stored procedure
+     * @return a cosmos stored procedure
      */
-    public CosmosStoredProcedure getStoredProcedure(String jsonString){
-        return new CosmosStoredProcedure(jsonString, this);
+    public CosmosStoredProcedure getStoredProcedure(String id){
+        return new CosmosStoredProcedure(id, this);
     }
 
     /* UDF Operations */
@@ -492,12 +492,12 @@ public class CosmosContainer extends CosmosResource {
     }
 
     /**
-     * Gets a CosmosUserDefinedFunction object without making a service call.
-     * @param jsonString body of the udf in JSON.
-     * @return a cosmos user defined function.
+     * Gets a CosmosUserDefinedFunction object without making a service call
+     * @param id id of the user defined function
+     * @return a cosmos user defined function
      */
-    public CosmosUserDefinedFunction getUserDefinedFunction(String jsonString){
-        return new CosmosUserDefinedFunction(jsonString, this);
+    public CosmosUserDefinedFunction getUserDefinedFunction(String id){
+        return new CosmosUserDefinedFunction(id, this);
     }
 
     /* Trigger Operations */
@@ -576,12 +576,12 @@ public class CosmosContainer extends CosmosResource {
     }
 
     /**
-     * Gets a CosmosTrigger object without making a service call.
-     * @param jsonString body of the trigger in JSON.
-     * @return a cosmos trigger.
+     * Gets a CosmosTrigger object without making a service call
+     * @param id id of the cosmos trigger
+     * @return a cosmos trigger
      */
-    public CosmosTrigger getTrigger(String jsonString){
-        return new CosmosTrigger(jsonString, this);
+    public CosmosTrigger getTrigger(String id){
+        return new CosmosTrigger(id, this);
     }
 
     /**

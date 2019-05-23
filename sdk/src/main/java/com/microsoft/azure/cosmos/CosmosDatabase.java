@@ -26,6 +26,7 @@ import com.microsoft.azure.cosmosdb.BridgeInternal;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
+import com.microsoft.azure.cosmosdb.RequestOptions;
 import com.microsoft.azure.cosmosdb.SqlQuerySpec;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.internal.Paths;
@@ -97,7 +98,6 @@ public class CosmosDatabase extends CosmosResource {
      * The {@link Mono} upon successful completion will contain a cosmos database response with the deleted database.
      * In case of failure the {@link Mono} will error.
      *
-     * @param options the cosmos request options                           
      * @return an {@link Mono} containing the single cosmos database response
      */
     public Mono<CosmosDatabaseResponse> delete(CosmosRequestOptions options) {
@@ -169,7 +169,6 @@ public class CosmosDatabase extends CosmosResource {
      * or existing collection.
      * In case of failure the {@link Mono} will error.
      *
-     * @param containerSettings the container settings.
      * @return a {@link Mono} containing the cosmos container response with the created or existing container or
      * an error.
      */
@@ -280,6 +279,44 @@ public class CosmosDatabase extends CosmosResource {
      */
     public CosmosContainer getContainer(String id) {
         return new CosmosContainer(id, this);
+    }
+    
+    /** User operations **/
+
+    public Mono<CosmosUserResponse> createUser(CosmosUserSettings settings) {
+        return this.createUser(settings, null);
+    }
+
+    public  Mono<CosmosUserResponse> createUser(CosmosUserSettings settings, RequestOptions options){
+        return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(getDocClientWrapper().createUser(this.getLink(),
+                settings.getV2User(), options).map(response ->
+                new CosmosUserResponse(response, this)).toSingle())); 
+    }
+
+    public Mono<CosmosUserResponse> upsertUser(CosmosUserSettings settings) {
+        return this.upsertUser(settings, null);
+    }
+
+    public Mono<CosmosUserResponse> upsertUser(CosmosUserSettings settings, RequestOptions options){
+        return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(getDocClientWrapper().upsertUser(this.getLink(),
+                settings.getV2User(), options).map(response ->
+                new CosmosUserResponse(response, this)).toSingle()));
+    }
+
+    public Flux<FeedResponse<CosmosUserSettings>> queryUsers(String query, FeedOptions options){
+        return queryUsers(new SqlQuerySpec(query), options);
+    }
+
+    public Flux<FeedResponse<CosmosUserSettings>> queryUsers(SqlQuerySpec querySpec, FeedOptions options){
+        return RxJava2Adapter.flowableToFlux(RxJavaInterop.toV2Flowable(getDocClientWrapper().queryUsers(getLink(), querySpec,
+                                                                                                options)
+                .map(response-> BridgeInternal.createFeedResponse(
+                        CosmosUserSettings.getFromV2Results(response.getResults()),
+                        response.getResponseHeaders()))));
+    }
+
+    public CosmosUser getUser(String id) {
+        return new CosmosUser(id, this);
     }
 
     CosmosClient getClient() {

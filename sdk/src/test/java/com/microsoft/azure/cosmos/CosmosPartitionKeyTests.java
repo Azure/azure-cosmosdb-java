@@ -77,16 +77,16 @@ public class CosmosPartitionKeyTests extends CosmosTestSuiteBase {
     private final static String NON_PARTITIONED_CONTAINER_DOCUEMNT_ID = "NonPartitionContainer_Document" + UUID.randomUUID().toString();    
 
     private CosmosClient client;
-    private CosmosConfiguration.Builder configBuilder;
+    private CosmosClient.Builder clientBuilder;
 
     @Factory(dataProvider = "clientBuilders")
-    public CosmosPartitionKeyTests(CosmosConfiguration.Builder configBuilder) {
-        this.configBuilder = configBuilder;
+    public CosmosPartitionKeyTests(CosmosClient.Builder clientBuilder) {
+        this.clientBuilder = clientBuilder;
     }
 
     @BeforeClass(groups = { "cosmosv3" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() throws URISyntaxException, IOException {
-        client = CosmosClient.create(configBuilder.build());
+        client = clientBuilder.build();
         createDatabase(client, PRE_EXISTING_DATABASE_ID);
     }
 
