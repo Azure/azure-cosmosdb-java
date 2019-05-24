@@ -29,6 +29,7 @@ import io.netty.buffer.ByteBuf;
 
 import java.util.UUID;
 
+import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdConstants.RntbdRequestHeader;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class RntbdRequest {
@@ -53,7 +54,11 @@ public final class RntbdRequest {
         return this.frame.getActivityId();
     }
 
-    static RntbdRequest decode(final ByteBuf in) {
+    public long getTransportRequestId() {
+        return (long)this.headers.get(RntbdRequestHeader.TransportRequestID).getValue();
+    }
+
+    public static RntbdRequest decode(final ByteBuf in) {
 
         final int resourceOperationCode = in.getInt(in.readerIndex() + Integer.BYTES);
 

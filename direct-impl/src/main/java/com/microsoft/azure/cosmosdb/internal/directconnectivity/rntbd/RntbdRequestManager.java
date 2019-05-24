@@ -92,7 +92,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
     private final CompletableFuture<RntbdContext> contextFuture = new CompletableFuture<>();
     private final CompletableFuture<RntbdContextRequest> contextRequestFuture = new CompletableFuture<>();
-    private final ConcurrentHashMap<UUID, RntbdRequestRecord> pendingRequests = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Long, RntbdRequestRecord> pendingRequests = new ConcurrentHashMap<>();
 
     private boolean closingExceptionally = false;
     private ChannelHandlerContext context;
@@ -154,7 +154,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
     }
 
     @Override
-    public void channelRead(final ChannelHandlerContext context, final Object message) throws Exception {
+    public void channelRead(final ChannelHandlerContext context, final Object message) {
 
         this.traceOperation(context, "channelRead");
 
@@ -162,7 +162,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
             try {
                 this.messageReceived(context, (RntbdResponse)message);
             } catch (Throwable throwable) {
-                reportIssue(logger, context, "unexpected error: ", throwable);
+                reportIssue(logger, context, "{} ", message, throwable);
                 this.exceptionCaught(context, throwable);
             } finally {
                 ReferenceCountUtil.release(message);
@@ -171,7 +171,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
             return;
         }
 
-        final String reason = Strings.lenientFormat("expected message of type %s, not %s", RntbdResponse.class, message.getClass());
+        final String reason = Strings.lenientFormat("expected message of type %s, not %s: %s", RntbdResponse.class, message.getClass(), message);
         final IllegalStateException error = new IllegalStateException(reason);
         reportIssue(logger, context, "", error);
 
@@ -464,7 +464,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         //  We currently report an issue when we find an existing request record and then replace it.
         //  Links:https://github.com/Azure/azure-cosmosdb-java/issues/130
 
-        this.pendingRequest = this.pendingRequests.compute(record.getActivityId(), (activityId, current) -> {
+        this.pendingRequest = this.pendingRequests.compute(record.getTransportRequestId(), (id, current) -> {
 
             reportIssueUnless(current == null, logger, context, "current: {}, request: {}", current, record);
 
@@ -483,7 +483,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
             record.whenComplete((response, error) -> {
                 logger.trace("{} COMPLETE: request: {}, response: {}", context, record, error == null ? response : error);
-                this.pendingRequests.remove(activityId);
+                this.pendingRequests.remove(id);
                 pendingRequestTimeout.cancel();
             });
 
@@ -556,7 +556,6 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
                 }
             }
 
-            final String origin = "rntbd:/" + channel.remoteAddress();
             final String message;
 
             if (contextRequestException == null) {
@@ -608,11 +607,12 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
      */
     private void messageReceived(final ChannelHandlerContext context, final RntbdResponse response) {
 
+        final long transportRequestId = response.getTransportRequestId();
         final UUID activityId = response.getActivityId();
-        final RntbdRequestRecord pendingRequest = this.pendingRequests.get(activityId);
+        final RntbdRequestRecord pendingRequest = this.pendingRequests.get(transportRequestId);
 
         if (pendingRequest == null) {
-            logger.warn("[activityId: {}] no request pending", activityId);
+            reportIssue(logger, context, "{} ignored because there is no matching pending request", response);
             return;
         }
 
@@ -734,9 +734,9 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
                     break;
             }
 
-            logger.trace("{}[activityId: {}, statusCode: {}, subStatusCode: {}] ",
-                context.channel(), cause.getActivityId(), cause.getStatusCode(), cause.getSubStatusCode(), cause
-            );
+            logger.trace("\n  {}\n  [transportRequestId: {}, activityId: {}, statusCode: {}, subStatusCode: {}]\n  ",
+                context.channel(), transportRequestId, cause.getActivityId(), cause.getStatusCode(),
+                cause.getSubStatusCode(), cause);
 
             pendingRequest.completeExceptionally(cause);
         }
