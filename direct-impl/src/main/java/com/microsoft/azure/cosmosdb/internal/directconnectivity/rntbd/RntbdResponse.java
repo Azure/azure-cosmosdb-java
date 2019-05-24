@@ -111,7 +111,7 @@ public final class RntbdResponse implements ReferenceCounted {
     }
 
     @JsonIgnore
-    public long getTransportRequestId() {
+    public Long getTransportRequestId() {
         return this.getHeader(RntbdResponseHeader.TransportRequestID);
     }
 

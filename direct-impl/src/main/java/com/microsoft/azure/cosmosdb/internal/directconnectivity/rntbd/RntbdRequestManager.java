@@ -460,13 +460,9 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
     private RntbdRequestArgs addPendingRequestRecord(final ChannelHandlerContext context, final RntbdRequestRecord record) {
 
-        // TODO: DANOBLE: Revise the implementation of RntbdRequestManager.addPendingRequestRecord
-        //  We currently report an issue when we find an existing request record and then replace it.
-        //  Links:https://github.com/Azure/azure-cosmosdb-java/issues/130
-
         this.pendingRequest = this.pendingRequests.compute(record.getTransportRequestId(), (id, current) -> {
 
-            reportIssueUnless(current == null, logger, context, "current: {}, request: {}", current, record);
+            reportIssueUnless(current == null, logger, context, "id: {}, current: {}, request: {}", id, current, record);
 
             final Timeout pendingRequestTimeout = record.newTimeout(timeout -> {
 
@@ -607,8 +603,13 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
      */
     private void messageReceived(final ChannelHandlerContext context, final RntbdResponse response) {
 
-        final long transportRequestId = response.getTransportRequestId();
-        final UUID activityId = response.getActivityId();
+        final Long transportRequestId = response.getTransportRequestId();
+
+        if (transportRequestId == null) {
+            reportIssue(logger, context, "{} ignored because there is no transport request identifier, response");
+            return;
+        }
+
         final RntbdRequestRecord pendingRequest = this.pendingRequests.get(transportRequestId);
 
         if (pendingRequest == null) {
@@ -617,6 +618,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         }
 
         final HttpResponseStatus status = response.getStatus();
+        final UUID activityId = response.getActivityId();
 
         if (HttpResponseStatus.OK.code() <= status.code() && status.code() < HttpResponseStatus.MULTIPLE_CHOICES.code()) {
 

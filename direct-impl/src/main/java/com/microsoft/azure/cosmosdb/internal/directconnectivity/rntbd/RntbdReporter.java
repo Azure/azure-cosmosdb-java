@@ -29,12 +29,23 @@ import org.slf4j.Logger;
 import org.slf4j.helpers.FormattingTuple;
 import org.slf4j.helpers.MessageFormatter;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public final class RntbdReporter {
 
-    private static final String codeSource = Paths.get(
-        RntbdReporter.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getFileName().toString();
+    private static final String codeSource;
+
+    static {
+        String value;
+        try {
+            Path path = Paths.get(RntbdReporter.class.getProtectionDomain().getCodeSource().getLocation().getPath());
+            value = path.getFileName().toString();
+        } catch (SecurityException error) {
+            value = "azure-cosmosdb-direct";
+        }
+        codeSource = value;
+    }
 
     private RntbdReporter() {
     }
