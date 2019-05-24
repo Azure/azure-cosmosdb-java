@@ -24,14 +24,21 @@ package com.microsoft.azure.cosmosdb.rx.internal;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
+import hu.akarnokd.rxjava.interop.RxJavaInterop;
+import io.reactivex.BackpressureStrategy;
 import org.apache.commons.lang3.time.StopWatch;
+import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.microsoft.azure.cosmosdb.internal.Quadruple;
 import com.microsoft.azure.cosmosdb.rx.internal.IRetryPolicy.ShouldRetryResult;
 
+import reactor.adapter.rxjava.RxJava2Adapter;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import rx.Observable;
 import rx.Single;
 import rx.functions.Func1;
@@ -68,6 +75,31 @@ public class RetryUtils {
                 });
             }
         };
+    }
+
+    public static Function<Flux<Throwable>, Flux<Long>> toRetryWhenFuncReactor(IRetryPolicy policy) {
+        return throwableFlux -> throwableFlux.flatMap(t -> {
+            Exception e = Utils.as(t, Exception.class);
+            if (e == null) {
+                return Flux.error(t);
+            }
+            Single<ShouldRetryResult> shouldRetryResultSingle = policy.shouldRetry(e);
+            Flux<ShouldRetryResult> shouldRetryResultFlux = RxJava2Adapter
+                    .observableToFlux(RxJavaInterop
+                            .toV2Observable(shouldRetryResultSingle
+                                    .toObservable()), BackpressureStrategy.BUFFER);
+            return shouldRetryResultFlux.flatMap(s -> {
+
+                if (s.backOffTime != null) {
+                    return Flux.just(0L).delayElements(Duration.ofMillis(s.backOffTime.toMillis()));
+                } else if (s.exception != null) {
+                    return Flux.error(s.exception);
+                } else {
+                    // NoRetry return original failure
+                    return Flux.error(t);
+                }
+            }).single();
+        });
     }
 
     /**
@@ -120,6 +152,68 @@ public class RetryUtils {
             }
         };
 
+    }
+
+    public static <T> Function<Throwable, Mono<T>> toRetryWithAlternateFunc(Function<Quadruple<Boolean, Boolean, Duration, Integer>, Mono<T>> callbackMethod, IRetryPolicy retryPolicy, Function<Quadruple<Boolean, Boolean, Duration, Integer>, Mono<T>> inBackoffAlternateCallbackMethod, Duration minBackoffForInBackoffCallback) {
+        return throwable -> {
+            Exception e = Utils.as(throwable, Exception.class);
+            if (e == null) {
+                return Mono.error(throwable);
+            }
+
+            Single<ShouldRetryResult> shouldRetryResultSingle = retryPolicy.shouldRetry(e);
+            Flux<ShouldRetryResult> shouldRetryResultFlux = RxJava2Adapter
+                    .observableToFlux(RxJavaInterop
+                            .toV2Observable(shouldRetryResultSingle
+                                    .toObservable()), BackpressureStrategy.BUFFER);
+            return shouldRetryResultFlux.flatMap(shouldRetryResult -> {
+                if (!shouldRetryResult.shouldRetry) {
+                    if(shouldRetryResult.exception == null) {
+                        return Mono.error(e);
+                    } else {
+                        return Mono.error(shouldRetryResult.exception);
+                    }
+                }
+
+                if (inBackoffAlternateCallbackMethod != null
+                        && shouldRetryResult.backOffTime.compareTo(minBackoffForInBackoffCallback) > 0) {
+                    StopWatch stopwatch = new StopWatch();
+                    startStopWatch(stopwatch);
+                    return inBackoffAlternateCallbackMethod.apply(shouldRetryResult.policyArg)
+                            .onErrorResume(recurrsiveWithAlternateFunc(callbackMethod, retryPolicy,
+                                    inBackoffAlternateCallbackMethod, shouldRetryResult, stopwatch,
+                                    minBackoffForInBackoffCallback));
+                } else {
+                    return recurrsiveFunc(callbackMethod, retryPolicy, inBackoffAlternateCallbackMethod,
+                            shouldRetryResult, minBackoffForInBackoffCallback)
+                            .delaySubscription(Duration.ofMillis(shouldRetryResult.backOffTime.toMillis()));
+                }
+            }).single();
+        };
+    }
+
+    private static <T> Mono<T> recurrsiveFunc(Function<Quadruple<Boolean, Boolean, Duration, Integer>, Mono<T>> callbackMethod, IRetryPolicy retryPolicy, Function<Quadruple<Boolean, Boolean, Duration, Integer>, Mono<T>> inBackoffAlternateCallbackMethod, ShouldRetryResult shouldRetryResult, Duration minBackoffForInBackoffCallback) {
+        return callbackMethod.apply(shouldRetryResult.policyArg).onErrorResume(toRetryWithAlternateFunc(
+                callbackMethod, retryPolicy, inBackoffAlternateCallbackMethod, minBackoffForInBackoffCallback));
+    }
+
+    private static <T> Function<Throwable, Mono<T>> recurrsiveWithAlternateFunc(Function<Quadruple<Boolean, Boolean, Duration, Integer>, Mono<T>> callbackMethod, IRetryPolicy retryPolicy, Function<Quadruple<Boolean, Boolean, Duration, Integer>, Mono<T>> inBackoffAlternateCallbackMethod, ShouldRetryResult shouldRetryResult, StopWatch stopwatch, Duration minBackoffForInBackoffCallback) {
+        return throwable -> {
+            Exception e = Utils.as(throwable, Exception.class);
+            if (e == null) {
+                return Mono.error(throwable);
+            }
+
+            stopStopWatch(stopwatch);
+            logger.info("Failed inBackoffAlternateCallback with {}, proceeding with retry. Time taken: {}ms",
+                    e.toString(), stopwatch.getTime());
+            Duration backoffTime = shouldRetryResult.backOffTime.toMillis() > stopwatch.getTime()
+                    ? Duration.ofMillis(shouldRetryResult.backOffTime.toMillis() - stopwatch.getTime())
+                    : Duration.ZERO;
+            return recurrsiveFunc(callbackMethod, retryPolicy, inBackoffAlternateCallbackMethod, shouldRetryResult,
+                    minBackoffForInBackoffCallback)
+                    .delaySubscription(Flux.just(0L).delayElements(Duration.ofMillis(backoffTime.toMillis())));
+        };
     }
 
     private static <T> Single<T> recurrsiveFunc(

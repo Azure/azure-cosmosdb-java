@@ -118,7 +118,7 @@ public class BackoffRetryUtility {
             } catch (Exception e) {
                 throw Exceptions.propagate(e);
             }
-        }).retryWhen(RetryUtils.toRetryWhenFunc(retryPolicy));
+        }).retryWhen(RetryUtils.toRetryWhenFuncReactor(retryPolicy));
     }
 
     static public <T> Single<T> executeAsync(
@@ -142,7 +142,7 @@ public class BackoffRetryUtility {
         return Mono.defer(() -> {
             // TODO: is defer required?
             return callbackMethod.apply(InitialArgumentValuePolicyArg).onErrorResume(
-                    RetryUtils.toRetryWithAlternateFunc(callbackMethod,retryPolicy, inBackoffAlternateCallbackMethod,minBackoffForInBackoffCallback));
+                    RetryUtils.toRetryWithAlternateFunc(callbackMethod, retryPolicy, inBackoffAlternateCallbackMethod,minBackoffForInBackoffCallback));
         });
     }
 
