@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.helpers.FormattingTuple;
 import org.slf4j.helpers.MessageFormatter;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public final class RntbdReporter {
