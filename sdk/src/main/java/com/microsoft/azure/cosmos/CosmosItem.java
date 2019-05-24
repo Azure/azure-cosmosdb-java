@@ -22,43 +22,20 @@
  */
 package com.microsoft.azure.cosmos;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.microsoft.azure.cosmosdb.Document;
-import com.microsoft.azure.cosmosdb.Resource;
 import com.microsoft.azure.cosmosdb.internal.Paths;
-import com.microsoft.azure.cosmosdb.internal.Utils;
 import hu.akarnokd.rxjava.interop.RxJavaInterop;
 import reactor.adapter.rxjava.RxJava2Adapter;
 import reactor.core.publisher.Mono;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.stream.Collectors;
-
-public class CosmosItem extends Resource {
-
+public class CosmosItem extends CosmosResource{
+    private Object partitionKey;
     private CosmosContainer container;
-    final static ObjectMapper mapper = Utils.getSimpleObjectMapper();
 
-    CosmosItem(String json, CosmosContainer container) {
-        super(json);
+     CosmosItem(String id, Object partitionKey, CosmosContainer container) {
+        super(id);
+        this.partitionKey = partitionKey;
         this.container = container;
-    }
-
-    /**
-     * Initialize a item object.
-     */
-    public CosmosItem() {
-        super();
-    }
-
-    /**
-     * Initialize a CosmosItem object from json string.
-     *
-     * @param jsonString the json string that represents the document object.
-     */
-    public CosmosItem(String jsonString) {
-        super(jsonString);
     }
 
     /**
@@ -68,10 +45,9 @@ public class CosmosItem extends Resource {
      * The {@link Mono} upon successful completion will contain a cosmos item response with the read item
      * In case of failure the {@link Mono} will error.
      *
-     * @param partitionKey the partitionKey to be used.
      * @return an {@link Mono} containing the cosmos item response with the read item or an error
      */
-    public Mono<CosmosItemResponse> read(Object partitionKey) {
+    public Mono<CosmosItemResponse> read() {
         return read(new CosmosItemRequestOptions(partitionKey));
     }
 
@@ -88,7 +64,7 @@ public class CosmosItem extends Resource {
     public Mono<CosmosItemResponse> read(CosmosItemRequestOptions requestOptions) {
         return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(container.getDatabase().getDocClientWrapper()
                 .readDocument(getLink(), requestOptions.toRequestOptions())
-                .map(response -> new CosmosItemResponse(response, container)).toSingle()));
+                .map(response -> new CosmosItemResponse(response, requestOptions.getPartitionKey(), container)).toSingle()));
     }
 
     /**
@@ -102,21 +78,6 @@ public class CosmosItem extends Resource {
      * @return an {@link Mono} containing the  cosmos item resource response with the replaced item or an error.
      */
     public Mono<CosmosItemResponse> replace(Object item){
-        return replace(item, new CosmosItemRequestOptions());
-    }
-
-    /**
-     * Replaces an item with the passed in item.
-     *
-     * After subscription the operation will be performed. 
-     * The {@link Mono} upon successful completion will contain a single cosmos item response with the replaced item.
-     * In case of failure the {@link Mono} will error.
-     *
-     * @param item the item to replace (containing the document id).
-     * @param partitionKey the partition key
-     * @return an {@link Mono} containing the  cosmos item resource response with the replaced item or an error.
-     */
-    public Mono<CosmosItemResponse> replace(Object item, Object partitionKey){
         return replace(item, new CosmosItemRequestOptions(partitionKey));
     }
 
@@ -132,24 +93,22 @@ public class CosmosItem extends Resource {
      * @return an {@link Mono} containing the  cosmos item resource response with the replaced item or an error.
      */
     public Mono<CosmosItemResponse> replace(Object item, CosmosItemRequestOptions requestOptions){
-        Document doc = CosmosItem.fromObject(item);
+        Document doc = CosmosItemSettings.fromObject(item);
         return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(container.getDatabase()
                 .getDocClientWrapper()
-                .replaceDocument(doc, requestOptions.toRequestOptions())
-                .map(response -> new CosmosItemResponse(response, container)).toSingle()));
+                .replaceDocument(getLink(), doc, requestOptions.toRequestOptions())
+                .map(response -> new CosmosItemResponse(response, requestOptions.getPartitionKey(), container)).toSingle()));
     }
-    
+
     /**
      * Deletes the item.
      *
      * After subscription the operation will be performed. 
      * The {@link Mono} upon successful completion will contain a single cosmos item response with the replaced item.
      * In case of failure the {@link Mono} will error.
-     * 
-     * @param partitionKey the partitionKey to be used.
      * @return an {@link Mono} containing the  cosmos item resource response.
      */
-    public Mono<CosmosItemResponse> delete(Object partitionKey) {
+    public Mono<CosmosItemResponse> delete() {
         return delete(new CosmosItemRequestOptions(partitionKey));
     }
 
@@ -166,60 +125,24 @@ public class CosmosItem extends Resource {
     public Mono<CosmosItemResponse> delete(CosmosItemRequestOptions options){
         return RxJava2Adapter.singleToMono(
                 RxJavaInterop.toV2Single(container.getDatabase()
-                                                 .getDocClientWrapper()
-                                                 .deleteDocument(getLink(),options.toRequestOptions())
-                                                 .map(response -> new CosmosItemResponse(response, container))
-                                                 .toSingle()));
-    }
-
-    /**
-     * Initialize an CosmosItem object from json string.
-     *
-     * @param jsonString the json string that represents the item object.
-     * @param objectMapper the custom object mapper
-     */
-    public CosmosItem(String jsonString, ObjectMapper objectMapper) {
-        super(jsonString, objectMapper);
+                        .getDocClientWrapper()
+                        .deleteDocument(getLink(),options.toRequestOptions())
+                        .map(response -> new CosmosItemResponse(response, options.getPartitionKey(), container))
+                        .toSingle()));
     }
     
     void setContainer(CosmosContainer container) {
         this.container = container;
     }
 
-    /**
-     * fromObject retuns Document for compatibility with V2 sdk
-     * @param cosmosItem
-     * @return
-     */
-    static Document fromObject(Object cosmosItem) {
-        Document typedItem;
-        if (cosmosItem instanceof CosmosItem) {
-            typedItem = new Document(((CosmosItem)cosmosItem).toJson());
-        } else {
-            try {
-                return new Document(CosmosItem.mapper.writeValueAsString(cosmosItem));
-            } catch (IOException e) {
-                throw new IllegalArgumentException("Can't serialize the object into the json string", e);
-            }
-        }
-        return typedItem;
+    @Override
+    protected String getURIPathSegment() {
+        return Paths.DOCUMENTS_PATH_SEGMENT;
     }
 
-    static List<CosmosItem> getFromV2Results(List<Document> results, CosmosContainer container) {
-        return results.stream().map(document -> new CosmosItem(document.toJson(), container)).collect(Collectors.toList());
+    @Override
+    protected String getParentLink() {
+        return this.container.getLink();
     }
-    
-    public <T> T getObject(Class<?> klass) throws IOException {
-        return (T) mapper.readValue(this.toJson(), klass);
-    }
-    
-    private String getLink(){
-            StringBuilder builder = new StringBuilder();
-            builder.append(container.getLink());
-            builder.append("/");
-            builder.append(Paths.DOCUMENTS_PATH_SEGMENT);
-            builder.append("/");
-            builder.append(getId());
-            return builder.toString();
-    }
+
 }

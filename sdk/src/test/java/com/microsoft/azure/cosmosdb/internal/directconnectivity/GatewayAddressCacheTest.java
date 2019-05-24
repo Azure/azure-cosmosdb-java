@@ -24,17 +24,20 @@ package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.microsoft.azure.cosmos.BridgeInternal;
+import com.microsoft.azure.cosmos.CosmosClient.Builder;
+import com.microsoft.azure.cosmos.CosmosContainer;
+import com.microsoft.azure.cosmos.CosmosContainerRequestOptions;
+import com.microsoft.azure.cosmos.CosmosContainerSettings;
+import com.microsoft.azure.cosmos.CosmosDatabase;
 import com.microsoft.azure.cosmosdb.ConfigsBuilder;
 import com.microsoft.azure.cosmosdb.Database;
 import com.microsoft.azure.cosmosdb.Document;
-import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.PartitionKeyDefinition;
-import com.microsoft.azure.cosmosdb.RequestOptions;
 import com.microsoft.azure.cosmosdb.internal.OperationType;
 import com.microsoft.azure.cosmosdb.internal.ResourceType;
 import com.microsoft.azure.cosmosdb.internal.routing.PartitionKeyRangeIdentity;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
-import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient.Builder;
 import com.microsoft.azure.cosmosdb.rx.TestConfigurations;
 import com.microsoft.azure.cosmosdb.rx.TestSuiteBase;
 import com.microsoft.azure.cosmosdb.rx.internal.Configs;
@@ -42,6 +45,8 @@ import com.microsoft.azure.cosmosdb.rx.internal.HttpClientFactory;
 import com.microsoft.azure.cosmosdb.rx.internal.IAuthorizationTokenProvider;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentClientImpl;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
+import com.microsoft.azure.cosmosdb.rx.internal.directconnectivity.ReflectionUtils;
+
 import io.netty.buffer.ByteBuf;
 import io.reactivex.netty.protocol.http.client.CompositeHttpClient;
 import org.mockito.Matchers;
@@ -70,8 +75,9 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 public class GatewayAddressCacheTest extends TestSuiteBase {
-    private Database createdDatabase;
-    private DocumentCollection createdCollection;
+    private CosmosDatabase createdDatabase;
+    private CosmosContainer createdContainer;
+    private CosmosContainerSettings createdContainerSettings;
 
     private AsyncDocumentClient client;
 
@@ -125,7 +131,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
                 getDocumentDefinition(), new HashMap<>());
 
         Single<List<Address>> addresses = cache.getServerAddressesViaGatewayAsync(
-                req, createdCollection.getResourceId(), partitionKeyRangeIds, false);
+                req, createdContainerSettings.getResourceId(), partitionKeyRangeIds, false);
 
         PartitionReplicasAddressesValidator validator = new PartitionReplicasAddressesValidator.Builder()
                 .withProtocol(protocol)
@@ -194,7 +200,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
                         collectionLink,
                        new Database(), new HashMap<>());
 
-        String collectionRid = createdCollection.getResourceId();
+        String collectionRid = createdContainerSettings.getResourceId();
 
         PartitionKeyRangeIdentity partitionKeyRangeIdentity = new PartitionKeyRangeIdentity(collectionRid, partitionKeyRangeId);
         boolean forceRefreshPartitionAddresses = false;
@@ -237,12 +243,12 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
                                                             null,
                                                             httpClientWrapper.getSpyHttpClient());
 
-        String collectionRid = createdCollection.getResourceId();
+        String collectionRid = createdContainerSettings.getResourceId();
 
         List<PartitionKeyRangeIdentity> pkriList = allPartitionKeyRangeIds.stream().map(
                 pkri -> new PartitionKeyRangeIdentity(collectionRid, pkri)).collect(Collectors.toList());
 
-        cache.openAsync(createdCollection, pkriList).await();
+        cache.openAsync(BridgeInternal.toDocumentCollection(createdContainerSettings), pkriList).await();
 
         assertThat(httpClientWrapper.capturedRequest).asList().hasSize(1);
         httpClientWrapper.capturedRequest.clear();
@@ -292,12 +298,12 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
                                                             null,
                                                             httpClientWrapper.getSpyHttpClient());
 
-        String collectionRid = createdCollection.getResourceId();
+        String collectionRid = createdContainerSettings.getResourceId();
 
         List<PartitionKeyRangeIdentity> pkriList = allPartitionKeyRangeIds.stream().map(
                 pkri -> new PartitionKeyRangeIdentity(collectionRid, pkri)).collect(Collectors.toList());
 
-        cache.openAsync(createdCollection, pkriList).await();
+        cache.openAsync(BridgeInternal.toDocumentCollection(createdContainerSettings), pkriList).await();
 
         assertThat(httpClientWrapper.capturedRequest).asList().hasSize(1);
         httpClientWrapper.capturedRequest.clear();
@@ -349,12 +355,12 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
                                                                 httpClientWrapper.getSpyHttpClient(),
                                                                 suboptimalRefreshTime);
 
-        String collectionRid = createdCollection.getResourceId();
+        String collectionRid = createdContainerSettings.getResourceId();
 
         List<PartitionKeyRangeIdentity> pkriList = allPartitionKeyRangeIds.stream().map(
                 pkri -> new PartitionKeyRangeIdentity(collectionRid, pkri)).collect(Collectors.toList());
 
-        origCache.openAsync(createdCollection, pkriList).await();
+        origCache.openAsync(BridgeInternal.toDocumentCollection(createdContainerSettings), pkriList).await();
 
         assertThat(httpClientWrapper.capturedRequest).asList().hasSize(1);
         httpClientWrapper.capturedRequest.clear();
@@ -821,29 +827,28 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
     
     @BeforeClass(groups = { "direct" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
-        client = clientBuilder.build();
+        client = ReflectionUtils.getAsyncDocumentClient(clientBuilder.build());
         createdDatabase = SHARED_DATABASE;
 
-        RequestOptions options = new RequestOptions();
-        options.setOfferThroughput(30000);
-        createdCollection = createCollection(client, createdDatabase.getId(), getCollectionDefinition(), options);
+        CosmosContainerRequestOptions options = new CosmosContainerRequestOptions();
+        options.offerThroughput(30000);
+        createdContainer = createCollection(createdDatabase, getCollectionDefinition(), options);
+        createdContainerSettings = createdContainer.read().block().getCosmosContainerSettings();
     }
 
     @AfterClass(groups = { "direct" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)
     public void afterClass() {
-        safeDeleteCollection(client, createdCollection);
-        safeClose(client);
+        safeDeleteCollection(createdContainer);
+        client.close();
     }
 
-    static protected DocumentCollection getCollectionDefinition() {
+    static protected CosmosContainerSettings getCollectionDefinition() {
         PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition();
         ArrayList<String> paths = new ArrayList<>();
         paths.add("/mypk");
         partitionKeyDef.setPaths(paths);
 
-        DocumentCollection collectionDefinition = new DocumentCollection();
-        collectionDefinition.setId("mycol");
-        collectionDefinition.setPartitionKey(partitionKeyDef);
+        CosmosContainerSettings collectionDefinition = new CosmosContainerSettings("mycol", partitionKeyDef);
 
         return collectionDefinition;
     }
@@ -860,11 +865,11 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
     }
 
     public String getNameBasedCollectionLink() {
-        return "dbs/" + createdDatabase.getId() + "/colls/" + createdCollection.getId();
+        return "dbs/" + createdDatabase.getId() + "/colls/" + createdContainer.getId();
     }
 
     public String getCollectionSelfLink() {
-        return createdCollection.getSelfLink();
+        return BridgeInternal.getLink(createdContainer);
     }
 
     private Document getDocumentDefinition() {

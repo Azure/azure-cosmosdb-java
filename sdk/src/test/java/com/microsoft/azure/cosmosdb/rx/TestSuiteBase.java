@@ -165,7 +165,7 @@ public class TestSuiteBase {
 
         @Override
         public Mono<CosmosDatabaseResponse> createDatabase(CosmosDatabaseSettings databaseDefinition) {
-            return client.createDatabase(databaseDefinition, null);
+            return client.createDatabase(databaseDefinition);
         }
 
         @Override
@@ -178,16 +178,12 @@ public class TestSuiteBase {
     public static void beforeSuite() {
         logger.info("beforeSuite Started");
         CosmosClient houseKeepingClient = createGatewayHouseKeepingDocumentClient().build();
-        try {
-            DatabaseForTest dbForTest = DatabaseForTest.create(DatabaseManagerImpl.getInstance(houseKeepingClient));
-            SHARED_DATABASE = dbForTest.createdDatabase;
-            CosmosContainerRequestOptions options = new CosmosContainerRequestOptions();
-            options.offerThroughput(10100);
-            SHARED_MULTI_PARTITION_COLLECTION = createCollection(SHARED_DATABASE, getCollectionDefinitionWithRangeRangeIndex(), options);
-            SHARED_MULTI_PARTITION_COLLECTION_WITH_COMPOSITE_AND_SPATIAL_INDEXES = createCollection(SHARED_DATABASE, getCollectionDefinitionMultiPartitionWithCompositeAndSpatialIndexes(), options);
-        } finally {
-            houseKeepingClient.close();
-        }
+        DatabaseForTest dbForTest = DatabaseForTest.create(DatabaseManagerImpl.getInstance(houseKeepingClient));
+        SHARED_DATABASE = dbForTest.createdDatabase;
+        CosmosContainerRequestOptions options = new CosmosContainerRequestOptions();
+        options.offerThroughput(10100);
+        SHARED_MULTI_PARTITION_COLLECTION = createCollection(SHARED_DATABASE, getCollectionDefinitionWithRangeRangeIndex(), options);
+        SHARED_MULTI_PARTITION_COLLECTION_WITH_COMPOSITE_AND_SPATIAL_INDEXES = createCollection(SHARED_DATABASE, getCollectionDefinitionMultiPartitionWithCompositeAndSpatialIndexes(), options);
     }
 
     @AfterSuite(groups = { "simple", "long", "direct", "multi-master", "emulator", "non-emulator" }, timeOut = SUITE_SHUTDOWN_TIMEOUT)
@@ -220,7 +216,6 @@ public class TestSuiteBase {
                     .flatMap(page -> Flux.fromIterable(page.getResults()))
                     .flatMap(doc -> {
                         
-                        CosmosItemRequestOptions cosmosItemRequestOptions = new CosmosItemRequestOptions();
                         if (paths != null && !paths.isEmpty()) {
                             List<String> pkPath = PathParser.getPathParts(paths.get(0));
                             Object propertyValue = doc.getObjectByPath(pkPath);
@@ -228,11 +223,10 @@ public class TestSuiteBase {
                                 propertyValue = Undefined.Value();
                             }
 
-                            cosmosItemRequestOptions.partitionKey(new PartitionKey(propertyValue));
                         }
-                        return cosmosContainer.getItem("{'id':'" + doc.getId() + "}").delete(cosmosItemRequestOptions);
+                        
+                        return cosmosContainer.getItem(doc.getId(), propertyValue).delete().block();
                     }).collectList().block();
-
             logger.info("Truncating collection {} triggers ...", cosmosContainerId);
 
             cosmosContainer.queryTriggers("SELECT * FROM root", options)

@@ -24,6 +24,10 @@
 
 package com.microsoft.azure.cosmosdb.rx.internal;
 
+import com.microsoft.azure.cosmos.CosmosClient;
+import com.microsoft.azure.cosmos.CosmosContainer;
+import com.microsoft.azure.cosmos.CosmosDatabase;
+import com.microsoft.azure.cosmos.CosmosUserSettings;
 import com.microsoft.azure.cosmosdb.AccessCondition;
 import com.microsoft.azure.cosmosdb.AccessConditionType;
 import com.microsoft.azure.cosmosdb.BridgeInternal;
@@ -73,15 +77,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class ConsistencyTestsBase extends TestSuiteBase {
     static final int CONSISTENCY_TEST_TIMEOUT = 120000;
     static final String USER_NAME = "TestUser";
-    RxDocumentClientImpl writeClient;
-    RxDocumentClientImpl readClient;
-    AsyncDocumentClient initClient;
-    Database createdDatabase;
-    DocumentCollection createdCollection;
+    CosmosClient writeClient;
+    CosmosClient readClient;
+    CosmosDatabase createdDatabase;
+    CosmosContainer createdCollection;
 
     @BeforeClass(groups = {"direct"}, timeOut = SETUP_TIMEOUT)
     public void beforeClass() throws Exception {
-        initClient = createGatewayRxDocumentClient().build();
         createdDatabase = SHARED_DATABASE;
         createdCollection = SHARED_MULTI_PARTITION_COLLECTION;
     }
@@ -95,7 +97,7 @@ public class ConsistencyTestsBase extends TestSuiteBase {
             Thread.sleep(1000); //Timestamp is in granularity of seconds.
             Resource updatedResource = null;
             if (resourceToWorkWith instanceof User) {
-                updatedResource = this.writeClient.upsertUser(createdDatabase.getSelfLink(), (User) writeResource, null).toBlocking().first().getResource();
+                updatedResource = createdDatabase.upsertUser((CosmosUserSettings) writeResource).block().getCosmosUserSettings();
             } else if (resourceToWorkWith instanceof Document) {
                 RequestOptions options = new RequestOptions();
                 options.setPartitionKey(new PartitionKey(resourceToWorkWith.get("mypk")));
@@ -764,7 +766,6 @@ public class ConsistencyTestsBase extends TestSuiteBase {
 
     @AfterClass(groups = {"direct"}, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)
     public void afterClass() {
-        safeClose(this.initClient);
         safeClose(this.writeClient);
         safeClose(this.readClient);
     }
