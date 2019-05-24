@@ -24,6 +24,8 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd;
 
+import java.io.File;
+import java.net.URL;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.helpers.FormattingTuple;
@@ -39,9 +41,10 @@ public final class RntbdReporter {
     static {
         String value;
         try {
-            Path path = Paths.get(RntbdReporter.class.getProtectionDomain().getCodeSource().getLocation().getPath());
-            value = path.getFileName().toString();
-        } catch (SecurityException error) {
+            URL url = RntbdReporter.class.getProtectionDomain().getCodeSource().getLocation();
+            File file = new File(url.toURI());
+            value = file.getName();
+        } catch (Throwable error) {
             value = "azure-cosmosdb-direct";
         }
         codeSource = value;
