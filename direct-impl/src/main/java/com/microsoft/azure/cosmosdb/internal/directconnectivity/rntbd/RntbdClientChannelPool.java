@@ -65,7 +65,7 @@ public final class RntbdClientChannelPool extends FixedChannelPool {
     private final int maxRequestsPerChannel;
 
     /**
-     * Creates a new instance using the {@link ChannelHealthChecker#ACTIVE}
+     * Initializes a newly created {@link RntbdClientChannelPool} object
      *
      * @param bootstrap the {@link Bootstrap} that is used for connections
      * @param config    the {@link RntbdEndpoint.Config} that is used for the channel pool instance created
@@ -192,7 +192,7 @@ public final class RntbdClientChannelPool extends FixedChannelPool {
         }, (other, value) -> pendingRequestCount(other) < pendingRequestCount(value) ? other : value);
 
         if (channel == null) {
-            logger.warn("\n  [RntbdClientChannelPool({})]\n  no channels are available", this);
+            logger.warn("\n  [{}]\n  no channels are available", this);
         }
 
         return channel;

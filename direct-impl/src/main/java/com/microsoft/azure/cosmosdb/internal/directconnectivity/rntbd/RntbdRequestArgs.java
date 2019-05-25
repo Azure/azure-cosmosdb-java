@@ -50,7 +50,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 })
 public final class RntbdRequestArgs {
 
-    private static final AtomicLong requestNumber = new AtomicLong();
+    private static final AtomicLong instanceCount = new AtomicLong();
     private static final String simpleClassName = RntbdRequestArgs.class.getSimpleName();
 
     private final UUID activityId;
@@ -70,7 +70,7 @@ public final class RntbdRequestArgs {
         this.physicalAddress = physicalAddress;
         this.replicaPath = StringUtils.stripEnd(physicalAddress.getPath(), "/");
         this.serviceRequest = serviceRequest;
-        this.transportRequestId = requestNumber.incrementAndGet();
+        this.transportRequestId = instanceCount.incrementAndGet();
     }
 
     public UUID getActivityId() {

@@ -24,13 +24,14 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
 import io.netty.buffer.ByteBuf;
 
 import java.util.UUID;
 
-import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdConstants.RntbdRequestHeader;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdConstants.RntbdRequestHeader;
 
 public final class RntbdRequest {
 
@@ -54,8 +55,14 @@ public final class RntbdRequest {
         return this.frame.getActivityId();
     }
 
-    public long getTransportRequestId() {
-        return (long)this.headers.get(RntbdRequestHeader.TransportRequestID).getValue();
+    @JsonIgnore
+    @SuppressWarnings("unchecked")
+    public <T> T getHeader(final RntbdRequestHeader header) {
+        return (T)this.headers.get(header).getValue();
+    }
+
+    public Long getTransportRequestId() {
+        return this.getHeader(RntbdRequestHeader.TransportRequestID);
     }
 
     public static RntbdRequest decode(final ByteBuf in) {
