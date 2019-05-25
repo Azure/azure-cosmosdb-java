@@ -52,8 +52,10 @@ import com.microsoft.azure.cosmosdb.internal.PathParser;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.Protocol;
 import com.microsoft.azure.cosmosdb.rx.internal.Configs;
 
+import io.reactivex.subscribers.TestSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import org.apache.commons.lang3.StringUtils;
 import org.mockito.stubbing.Answer;
@@ -74,9 +76,11 @@ import com.microsoft.azure.cosmos.CosmosDatabase;
 import com.microsoft.azure.cosmos.CosmosDatabaseResponse;
 import com.microsoft.azure.cosmos.CosmosDatabaseSettings;
 import com.microsoft.azure.cosmos.CosmosItem;
-import com.microsoft.azure.cosmos.CosmosItemRequestOptions;
 import com.microsoft.azure.cosmos.CosmosItemResponse;
+import com.microsoft.azure.cosmos.CosmosItemSettings;
 import com.microsoft.azure.cosmos.CosmosRequestOptions;
+import com.microsoft.azure.cosmos.CosmosResponse;
+import com.microsoft.azure.cosmos.CosmosResponseValidator;
 import com.microsoft.azure.cosmos.CosmosUser;
 import com.microsoft.azure.cosmos.CosmosUserSettings;
 import com.microsoft.azure.cosmos.DatabaseForTest;
@@ -94,7 +98,6 @@ import com.microsoft.azure.cosmosdb.ResourceResponse;
 
 import org.testng.annotations.Test;
 import rx.Observable;
-import rx.observers.TestSubscriber;
 
 public class TestSuiteBase {
     private static final int DEFAULT_BULK_INSERT_CONCURRENCY_LEVEL = 500;
@@ -198,13 +201,13 @@ public class TestSuiteBase {
         }
     }
 
-    protected static void truncateCollection(String databaseId, CosmosContainerSettings cosmosContainerSettings) {
+    protected static void truncateCollection(CosmosContainer cosmosContainer) {
+        CosmosContainerSettings cosmosContainerSettings = cosmosContainer.read().block().getCosmosContainerSettings();
         String cosmosContainerId = cosmosContainerSettings.getId();
         logger.info("Truncating collection {} ...", cosmosContainerId);
         CosmosClient houseKeepingClient = createGatewayHouseKeepingDocumentClient().build();
         try {
             List<String> paths = cosmosContainerSettings.getPartitionKey().getPaths();
-            CosmosContainer cosmosContainer = houseKeepingClient.getDatabase(databaseId).getContainer(cosmosContainerId).read().block().getContainer();
             FeedOptions options = new FeedOptions();
             options.setMaxDegreeOfParallelism(-1);
             options.setEnableCrossPartitionQuery(true);
@@ -216,16 +219,17 @@ public class TestSuiteBase {
                     .flatMap(page -> Flux.fromIterable(page.getResults()))
                     .flatMap(doc -> {
                         
+                        Object propertyValue = null;
                         if (paths != null && !paths.isEmpty()) {
                             List<String> pkPath = PathParser.getPathParts(paths.get(0));
-                            Object propertyValue = doc.getObjectByPath(pkPath);
+                            propertyValue = doc.getObjectByPath(pkPath);
                             if (propertyValue == null) {
                                 propertyValue = Undefined.Value();
                             }
 
                         }
-                        
-                        return cosmosContainer.getItem(doc.getId(), propertyValue).delete().block();
+                        cosmosContainer.getItem(doc.getId(), propertyValue).delete().block();
+                        return null;
                     }).collectList().block();
             logger.info("Truncating collection {} triggers ...", cosmosContainerId);
 
@@ -427,31 +431,38 @@ public class TestSuiteBase {
         return cosmosContainerSettings;
     }
 
-    public static CosmosItem createDocument(CosmosClient client, String databaseId, String collectionId, CosmosItem item) {
-        return createDocument(client, databaseId, collectionId, item, null);
+    public static CosmosContainer createCollection(CosmosClient client, String dbId, CosmosContainerSettings collectionDefinition) {
+        return client.getDatabase(dbId).createContainer(collectionDefinition).block().getContainer();
     }
 
-    public static CosmosItem createDocument(CosmosClient client, String databaseId, String collectionId, CosmosItem item, CosmosItemRequestOptions options) {
-        return client.getDatabase(databaseId).getContainer(collectionId).getItem(item.toJson()).read(options).block().getItem();
+    public static void deleteCollection(CosmosClient client, String dbId, String collectionId) {
+        client.getDatabase(dbId).getContainer(collectionId).delete().block();
+    }
+
+    public static CosmosItem createDocument(CosmosContainer cosmosContainer, CosmosItemSettings item) {
+        return cosmosContainer.createItem(item).block().getCosmosItem();
     }
 
     // TODO: respect concurrencyLevel;
     public Flux<CosmosItemResponse> bulkInsert(CosmosContainer cosmosContainer,
-                                                             List<CosmosItem> documentDefinitionList,
+                                                             List<CosmosItemSettings> documentDefinitionList,
                                                              int concurrencyLevel) {
-        CosmosItem first = documentDefinitionList.remove(0);
+        CosmosItemSettings first = documentDefinitionList.remove(0);
         Flux<CosmosItemResponse> result = Flux.from(cosmosContainer.createItem(first));
-        for (CosmosItem docDef : documentDefinitionList) {
+        for (CosmosItemSettings docDef : documentDefinitionList) {
             result.concatWith(cosmosContainer.createItem(docDef));
         }
 
         return result;
     }
 
-    public List<CosmosItem> bulkInsertBlocking(CosmosContainer cosmosContainer,
-                                             List<CosmosItem> documentDefinitionList) {
+    public List<CosmosItemSettings> bulkInsertBlocking(CosmosContainer cosmosContainer,
+                                             List<CosmosItemSettings> documentDefinitionList) {
         return bulkInsert(cosmosContainer, documentDefinitionList, DEFAULT_BULK_INSERT_CONCURRENCY_LEVEL)
-                .map(CosmosItemResponse::getItem)
+                .parallel()
+                .runOn(Schedulers.parallel())
+                .map(CosmosItemResponse::getCosmosItemSettings)
+                .sequential()
                 .collectList()
                 .block();
     }
@@ -528,11 +539,15 @@ public class TestSuiteBase {
         cosmosDatabase.getContainer(collectionId).delete().block();
     }
 
+    public static void deleteCollection(CosmosContainer cosmosContainer) {
+        cosmosContainer.delete().block();
+    }
+
     public static void deleteDocumentIfExists(CosmosClient client, String databaseId, String collectionId, String docId) {
         FeedOptions options = new FeedOptions();
         options.setPartitionKey(new PartitionKey(docId));
         CosmosContainer cosmosContainer = client.getDatabase(databaseId).read().block().getDatabase().getContainer(collectionId).read().block().getContainer();
-        List<CosmosItem> res = cosmosContainer
+        List<CosmosItemSettings> res = cosmosContainer
                 .queryItems(String.format("SELECT * FROM root r where r.id = '%s'", docId), options)
                 .flatMap(page -> Flux.fromIterable(page.getResults()))
                 .collectList().block();
@@ -545,7 +560,7 @@ public class TestSuiteBase {
     public static void safeDeleteDocument(CosmosContainer cosmosContainer, String documentId, Object partitionKey) {
         if (cosmosContainer != null && documentId != null) {
             try {
-                cosmosContainer.getItem("{'id':'" + documentId + "'}").read(partitionKey).block().getItem().delete(partitionKey).block();
+                cosmosContainer.getItem(documentId, partitionKey).read().block().getCosmosItem().delete().block();
             } catch (Exception e) {
                 DocumentClientException dce = com.microsoft.azure.cosmosdb.rx.internal.Utils.as(e, DocumentClientException.class);
                 if (dce == null || dce.getStatusCode() != 404) {
@@ -556,7 +571,7 @@ public class TestSuiteBase {
     }
 
     public static void deleteDocument(CosmosContainer cosmosContainer, String documentId) {
-        cosmosContainer.getItem("{'id':'" + documentId + "'}").read(null).block().getItem().delete(null);
+        cosmosContainer.getItem(documentId, PartitionKey.None).read().block().getCosmosItem().delete();
     }
 
     public static void deleteUserIfExists(CosmosClient client, String databaseId, String userId) {
@@ -647,75 +662,75 @@ public class TestSuiteBase {
         }
     }
 
-    public <T extends Resource> void validateSuccess(Observable<ResourceResponse<T>> observable,
-                                                     ResourceResponseValidator<T> validator) {
-        validateSuccess(observable, validator, subscriberValidationTimeout);
+    public <T extends CosmosResponse> void validateSuccess(Mono<T> single, CosmosResponseValidator<T> validator)
+            throws InterruptedException {
+        validateSuccess(single.flux(), validator, subscriberValidationTimeout);
     }
 
-    public static <T extends Resource> void validateSuccess(Observable<ResourceResponse<T>> observable,
-                                                            ResourceResponseValidator<T> validator, long timeout) {
+    public static <T extends CosmosResponse> void validateSuccess(Flux<T> flowable,
+            CosmosResponseValidator<T> validator, long timeout) throws InterruptedException {
 
-        VerboseTestSubscriber<ResourceResponse<T>> testSubscriber = new VerboseTestSubscriber<>();
+        TestSubscriber<T> testSubscriber = new TestSubscriber<>();
 
-        observable.subscribe(testSubscriber);
+        flowable.subscribe(testSubscriber);
         testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
         testSubscriber.assertNoErrors();
-        testSubscriber.assertCompleted();
+        testSubscriber.assertComplete();
         testSubscriber.assertValueCount(1);
-        validator.validate(testSubscriber.getOnNextEvents().get(0));
+        validator.validate(testSubscriber.values().get(0));
     }
 
-    public <T extends Resource> void validateFailure(Observable<ResourceResponse<T>> observable,
-                                                     FailureValidator validator) {
-        validateFailure(observable, validator, subscriberValidationTimeout);
+    public <T extends Resource, U extends CosmosResponse> void validateFailure(Mono<U> mono, FailureValidator validator)
+            throws InterruptedException {
+        validateFailure(mono.flux(), validator, subscriberValidationTimeout);
     }
 
-    public static <T extends Resource> void validateFailure(Observable<ResourceResponse<T>> observable,
-                                                            FailureValidator validator, long timeout) {
+    public static <T extends Resource, U extends CosmosResponse> void validateFailure(Flux<U> flowable,
+            FailureValidator validator, long timeout) throws InterruptedException {
 
-        VerboseTestSubscriber<ResourceResponse<T>> testSubscriber = new VerboseTestSubscriber<>();
+        TestSubscriber<CosmosResponse> testSubscriber = new TestSubscriber<>();
 
-        observable.subscribe(testSubscriber);
+        flowable.subscribe(testSubscriber);
         testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
-        testSubscriber.assertNotCompleted();
-        testSubscriber.assertTerminalEvent();
-        assertThat(testSubscriber.getOnErrorEvents()).hasSize(1);
-        validator.validate(testSubscriber.getOnErrorEvents().get(0));
+        testSubscriber.assertNotComplete();
+        testSubscriber.assertTerminated();
+        assertThat(testSubscriber.errors()).hasSize(1);
+        validator.validate((Throwable) testSubscriber.getEvents().get(1).get(0));
     }
 
-    public <T extends Resource> void validateQuerySuccess(Observable<FeedResponse<T>> observable,
-                                                          FeedResponseListValidator<T> validator) {
-        validateQuerySuccess(observable, validator, subscriberValidationTimeout);
+    public <T extends Resource> void validateQuerySuccess(Flux<FeedResponse<T>> flowable,
+            FeedResponseListValidator<T> validator) {
+        validateQuerySuccess(flowable, validator, subscriberValidationTimeout);
     }
 
-    public static <T extends Resource> void validateQuerySuccess(Observable<FeedResponse<T>> observable,
-                                                                 FeedResponseListValidator<T> validator, long timeout) {
+    public static <T extends Resource> void validateQuerySuccess(Flux<FeedResponse<T>> flowable,
+            FeedResponseListValidator<T> validator, long timeout) {
 
-        VerboseTestSubscriber<FeedResponse<T>> testSubscriber = new VerboseTestSubscriber<>();
+        TestSubscriber<FeedResponse<T>> testSubscriber = new TestSubscriber<>();
 
-        observable.subscribe(testSubscriber);
+        flowable.subscribe(testSubscriber);
         testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
         testSubscriber.assertNoErrors();
-        testSubscriber.assertCompleted();
-        validator.validate(testSubscriber.getOnNextEvents());
+        testSubscriber.assertComplete();
+        validator.validate(testSubscriber.getEvents().get(0).stream().map(object -> (FeedResponse<T>) object)
+                .collect(Collectors.toList()));
     }
 
-    public <T extends Resource> void validateQueryFailure(Observable<FeedResponse<T>> observable,
-                                                          FailureValidator validator) {
-        validateQueryFailure(observable, validator, subscriberValidationTimeout);
+    public <T extends Resource> void validateQueryFailure(Flux<FeedResponse<T>> flowable, FailureValidator validator) {
+        validateQueryFailure(flowable, validator, subscriberValidationTimeout);
     }
 
-    public static <T extends Resource> void validateQueryFailure(Observable<FeedResponse<T>> observable,
-                                                                 FailureValidator validator, long timeout) {
+    public static <T extends Resource> void validateQueryFailure(Flux<FeedResponse<T>> flowable,
+            FailureValidator validator, long timeout) {
 
-        VerboseTestSubscriber<FeedResponse<T>> testSubscriber = new VerboseTestSubscriber<>();
+        TestSubscriber<FeedResponse<T>> testSubscriber = new TestSubscriber<>();
 
-        observable.subscribe(testSubscriber);
+        flowable.subscribe(testSubscriber);
         testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
-        testSubscriber.assertNotCompleted();
-        testSubscriber.assertTerminalEvent();
-        assertThat(testSubscriber.getOnErrorEvents()).hasSize(1);
-        validator.validate(testSubscriber.getOnErrorEvents().get(0));
+        testSubscriber.assertNotComplete();
+        testSubscriber.assertTerminated();
+        assertThat(testSubscriber.getEvents().get(1)).hasSize(1);
+        validator.validate((Throwable) testSubscriber.getEvents().get(1).get(0));
     }
 
     @DataProvider
@@ -842,7 +857,9 @@ public class TestSuiteBase {
         logger.info("Max test consistency to use is [{}]", accountConsistency);
         List<ConsistencyLevel> testConsistencies = new ArrayList<>();
 
+        /*
         switch (accountConsistency) {
+        
             case Strong:
                 testConsistencies.add(ConsistencyLevel.Strong);
             case BoundedStaleness:
@@ -857,6 +874,9 @@ public class TestSuiteBase {
             default:
                 throw new IllegalStateException("Invalid configured test consistency " + accountConsistency);
         }
+        */
+        testConsistencies.add(ConsistencyLevel.Session);
+        
         return clientBuildersWithDirect(testConsistencies, protocols);
     }
     
@@ -948,6 +968,7 @@ public class TestSuiteBase {
         };
     }
 
+    /*
     public static class VerboseTestSubscriber<T> extends TestSubscriber<T> {
         @Override
         public void assertNoErrors() {
@@ -967,4 +988,5 @@ public class TestSuiteBase {
             }
         }
     }
+    */
 }

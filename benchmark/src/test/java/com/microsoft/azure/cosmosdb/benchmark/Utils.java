@@ -23,6 +23,9 @@
 
 package com.microsoft.azure.cosmosdb.benchmark;
 
+import com.microsoft.azure.cosmos.CosmosClient;
+import com.microsoft.azure.cosmos.CosmosDatabase;
+import com.microsoft.azure.cosmos.CosmosDatabaseResponse;
 import com.microsoft.azure.cosmos.CosmosDatabaseSettings;
 import com.microsoft.azure.cosmos.DatabaseForTest;
 
@@ -61,18 +64,19 @@ import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import com.microsoft.azure.cosmosdb.rx.TestConfigurations;
 
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import rx.Observable;
 
 public class Utils {
-    public static AsyncDocumentClient housekeepingClient() {
+    public static CosmosClient housekeepingClient() {
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
         RetryOptions options = new RetryOptions();
         options.setMaxRetryAttemptsOnThrottledRequests(100);
         options.setMaxRetryWaitTimeInSeconds(60);
         connectionPolicy.setRetryOptions(options);
-        return new AsyncDocumentClient.Builder().withServiceEndpoint(TestConfigurations.HOST)
-                .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
-                .withConnectionPolicy(connectionPolicy)
+        return new CosmosClient.Builder().endpoint(TestConfigurations.HOST)
+                .key(TestConfigurations.MASTER_KEY)
+                .connectionPolicy(connectionPolicy)
                 .build();
     }
 
@@ -80,19 +84,19 @@ public class Utils {
         return "dbs/" + db.getId() + "/colls/" + collection;
     }
 
-    public static Database createDatabaseForTest(AsyncDocumentClient client) {
+    public static CosmosDatabase createDatabaseForTest(CosmosClient client) {
         return DatabaseForTest.create(DatabaseManagerImpl.getInstance(client)).createdDatabase;
     }
 
-    public static void safeCleanDatabases(AsyncDocumentClient client) {
+    public static void safeCleanDatabases(CosmosClient client) {
         if (client != null) {
             DatabaseForTest.cleanupStaleTestDatabases(DatabaseManagerImpl.getInstance(client));
         }
     }
 
-    public static void safeClean(AsyncDocumentClient client, Database database) {
+    public static void safeClean(CosmosDatabase database) {
         if (database != null) {
-            safeClean(client, database.getId());
+            database.delete().block();
         }
     }
 
@@ -111,20 +115,20 @@ public class Utils {
         return DatabaseForTest.generateId();
     }
 
-    public static void safeClose(AsyncDocumentClient client) {
+    public static void safeClose(CosmosClient client) {
         if (client != null) {
             client.close();
         }
     }
 
     private static class DatabaseManagerImpl implements DatabaseForTest.DatabaseManager {
-        public static DatabaseManagerImpl getInstance(AsyncDocumentClient client) {
+        public static DatabaseManagerImpl getInstance(CosmosClient client) {
             return new DatabaseManagerImpl(client);
         }
 
-        private final AsyncDocumentClient client;
+        private final CosmosClient client;
 
-        private DatabaseManagerImpl(AsyncDocumentClient client) {
+        private DatabaseManagerImpl(CosmosClient client) {
             this.client = client;
         }
 
@@ -134,14 +138,13 @@ public class Utils {
         }
 
         @Override
-        public Mono<ResourceResponse<Database>> createDatabase(Database databaseDefinition) {
-            return client.createDatabase(databaseDefinition, null);
+        public Mono<CosmosDatabaseResponse> createDatabase(CosmosDatabaseSettings databaseDefinition) {
+            return client.createDatabase(databaseDefinition);
         }
 
         @Override
-        public Mono<ResourceResponse<Database>> deleteDatabase(String id) {
-
-            return client.deleteDatabase("dbs/" + id, null);
+        public CosmosDatabase getDatabase(String id) {
+            return client.getDatabase(id);
         }
     }
 }

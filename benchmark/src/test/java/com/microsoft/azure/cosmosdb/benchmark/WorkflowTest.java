@@ -24,15 +24,16 @@
 package com.microsoft.azure.cosmosdb.benchmark;
 
 import com.beust.jcommander.JCommander;
+import com.microsoft.azure.cosmos.CosmosClient;
+import com.microsoft.azure.cosmos.CosmosContainer;
+import com.microsoft.azure.cosmos.CosmosContainerRequestOptions;
+import com.microsoft.azure.cosmos.CosmosContainerSettings;
+import com.microsoft.azure.cosmos.CosmosDatabase;
 import com.microsoft.azure.cosmosdb.DataType;
-import com.microsoft.azure.cosmosdb.Database;
-import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.IncludedPath;
 import com.microsoft.azure.cosmosdb.Index;
 import com.microsoft.azure.cosmosdb.IndexingPolicy;
 import com.microsoft.azure.cosmosdb.PartitionKeyDefinition;
-import com.microsoft.azure.cosmosdb.RequestOptions;
-import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import com.microsoft.azure.cosmosdb.rx.TestConfigurations;
 import org.apache.commons.lang3.StringUtils;
 import org.testng.annotations.AfterClass;
@@ -49,8 +50,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class WorkflowTest {
     private static final int TIMEOUT = 120000;
-    private Database database;
-    private DocumentCollection collection;
+    private CosmosDatabase database;
+    private CosmosContainer collection;
 
     @Test(groups = "simple", timeOut = TIMEOUT)
     public void readMyWritesCLI() throws Exception {
@@ -289,15 +290,13 @@ public class WorkflowTest {
 
     @BeforeClass(groups = "simple", timeOut = TIMEOUT)
     public void beforeClass() {
-        RequestOptions options = new RequestOptions();
-        options.setOfferThroughput(10000);
-        AsyncDocumentClient housekeepingClient = Utils.housekeepingClient();
+        CosmosContainerRequestOptions options = new CosmosContainerRequestOptions();
+        options.offerThroughput(10000);
+        CosmosClient housekeepingClient = Utils.housekeepingClient();
         database = Utils.createDatabaseForTest(housekeepingClient);
-        collection = housekeepingClient.createCollection("dbs/"+ database.getId(),
-                                                         getCollectionDefinitionWithRangeRangeIndex(),
-                                                         options)
-                .toBlocking().single().getResource();
-        housekeepingClient.close();
+        collection = database.createContainer(getCollectionDefinitionWithRangeRangeIndex(),
+                                              options)
+                .block().getContainer();
     }
 
     @DataProvider(name = "collectionLinkTypeArgProvider")
@@ -311,13 +310,13 @@ public class WorkflowTest {
 
     @AfterClass(groups = "simple", timeOut = TIMEOUT)
     public void afterClass() {
-        AsyncDocumentClient housekeepingClient = Utils.housekeepingClient();
+        CosmosClient housekeepingClient = Utils.housekeepingClient();
         Utils.safeCleanDatabases(housekeepingClient);
-        Utils.safeClean(housekeepingClient, database);
+        Utils.safeClean(database);
         Utils.safeClose(housekeepingClient);
     }
 
-    DocumentCollection getCollectionDefinitionWithRangeRangeIndex() {
+    CosmosContainerSettings getCollectionDefinitionWithRangeRangeIndex() {
         PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition();
         ArrayList<String> paths = new ArrayList<>();
         paths.add("/mypk");
@@ -338,11 +337,11 @@ public class WorkflowTest {
         includedPaths.add(includedPath);
         indexingPolicy.setIncludedPaths(includedPaths);
 
-        DocumentCollection collectionDefinition = new DocumentCollection();
+        CosmosContainerSettings collectionDefinition = new CosmosContainerSettings(
+                UUID.randomUUID().toString(),
+                partitionKeyDef);
         collectionDefinition.setIndexingPolicy(indexingPolicy);
-        collectionDefinition.setId(UUID.randomUUID().toString());
-        collectionDefinition.setPartitionKey(partitionKeyDef);
-
+        
         return collectionDefinition;
     }
 }

@@ -36,6 +36,8 @@ public class CosmosItemSettings extends Resource {
     final static ObjectMapper mapper = Utils.getSimpleObjectMapper();
 
 
+    public CosmosItemSettings() {}
+    
     /**
      * Initialize a CosmosItemSettings object from json string.
      *

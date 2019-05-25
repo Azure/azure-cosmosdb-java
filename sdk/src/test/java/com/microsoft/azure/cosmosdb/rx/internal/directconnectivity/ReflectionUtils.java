@@ -95,4 +95,8 @@ public class ReflectionUtils {
     public static AsyncDocumentClient getAsyncDocumentClient(CosmosClient client) {
         return get(AsyncDocumentClient.class, client, "asyncDocumentClient");
     }
+    
+    public static void setAsyncDocumentClient(CosmosClient client, RxDocumentClientImpl rxClient) {
+        set(client, rxClient, "asyncDocumentClient");
+    }
 }

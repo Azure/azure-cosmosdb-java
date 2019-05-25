@@ -22,26 +22,39 @@
  */
 package com.microsoft.azure.cosmosdb.rx;
 
-import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient.Builder;
+import java.net.URI;
+import java.net.URISyntaxException;
+
+import com.microsoft.azure.cosmos.CosmosClient;
+import com.microsoft.azure.cosmos.CosmosClient.Builder;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentClientUnderTest;
+import com.microsoft.azure.cosmosdb.rx.internal.directconnectivity.ReflectionUtils;
 
 public class ClientUnderTestBuilder extends Builder {
 
     public ClientUnderTestBuilder(Builder builder) {
-        this.configs = builder.configs;
-        this.connectionPolicy = builder.connectionPolicy;
-        this.desiredConsistencyLevel = builder.desiredConsistencyLevel;
-        this.masterKeyOrResourceToken = builder.masterKeyOrResourceToken;
-        this.serviceEndpoint = builder.serviceEndpoint;
+        this.setConfigs(builder.getConfigs());
+        this.setConnectionPolicy(builder.getConnectionPolicy());
+        this.setDesiredConsistencyLevel(builder.getDesiredConsistencyLevel());
+        this.setKeyOrResourceToken(builder.getKeyOrResourceToken());
+        this.setServiceEndpoint(builder.getServiceEndpoint());
     }
 
     @Override
-    public RxDocumentClientUnderTest build() {
-        return new RxDocumentClientUnderTest(
-            this.serviceEndpoint,
-            this.masterKeyOrResourceToken,
-            this.connectionPolicy,
-            this.desiredConsistencyLevel,
-            this.configs);
+    public CosmosClient build() {
+        RxDocumentClientUnderTest rxClient;
+        try {
+            rxClient = new RxDocumentClientUnderTest(
+                new URI(this.getServiceEndpoint()),
+                this.getKeyOrResourceToken(),
+                this.getConnectionPolicy(),
+                this.getDesiredConsistencyLevel(),
+                this.getConfigs());
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException(e.getMessage());
+        }
+        CosmosClient cosmosClient = super.build();
+        ReflectionUtils.setAsyncDocumentClient(cosmosClient, rxClient);
+        return cosmosClient;
     }
 }
