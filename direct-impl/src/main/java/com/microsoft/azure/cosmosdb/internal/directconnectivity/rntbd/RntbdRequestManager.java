@@ -535,7 +535,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
                     logger.debug("\n  {} closed: context send cancelled", channel);
                     contextRequestException = error;
                 } catch (final Throwable error) {
-                    final String message = Strings.lenientFormat("RNTBD context request write failed with %s pending requests: %s", count, error);
+                    final String message = Strings.lenientFormat("RNTBD context request write failed with %s pending requests", count);
                     logger.debug("\n  {} closed: {}", channel, message);
                     contextRequestException = new ChannelException(message, error);
                 }
@@ -546,7 +546,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
                     logger.debug("\n  {} closed: context receive cancelled", channel);
                     contextRequestException = error;
                 } catch (final Throwable error) {
-                    final String message = Strings.lenientFormat("RNTBD context request read failed with %s pending requests: %s", count, error);
+                    final String message = Strings.lenientFormat("RNTBD context request read failed with %s pending requests", count);
                     logger.debug("\n  {} closed: {}", channel, message);
                     contextRequestException = new ChannelException(message, error);
                 }
@@ -555,17 +555,17 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
             final String message;
 
             if (contextRequestException == null) {
-                message = Strings.lenientFormat("%s closed with %s pending requests", channel, count);
+                message = Strings.lenientFormat("%s closed with %s pending requests", context, count);
             } else {
-                message = Strings.lenientFormat("%s %s", channel, contextRequestException.getMessage());
+                message = Strings.lenientFormat("%s %s", context, contextRequestException.getMessage());
             }
 
-            final Exception reason;
+            final Exception cause;
 
             if (throwable == ClosedWithPendingRequestsException.INSTANCE && contextRequestException != null) {
-                reason = contextRequestException;
+                cause = contextRequestException;
             } else {
-                reason = throwable instanceof Exception ? (Exception)throwable : new ChannelException(throwable);
+                cause = throwable instanceof Exception ? (Exception)throwable : new ChannelException(throwable);
             }
 
             this.pendingRequests.forEach(Long.MAX_VALUE, (id, requestRecord) -> {
@@ -574,10 +574,10 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
                 final String requestUri = args.getPhysicalAddress().toString();
                 final Map<String, String> requestHeaders = args.getServiceRequest().getHeaders();
 
-                final GoneException cause = new GoneException(message, reason, (Map<String, String>)null, requestUri);
-                BridgeInternal.setRequestHeaders(cause, requestHeaders);
+                final GoneException goneException = new GoneException(message, cause, (Map<String, String>)null, requestUri);
+                BridgeInternal.setRequestHeaders(goneException, requestHeaders);
 
-                requestRecord.completeExceptionally(cause);
+                requestRecord.completeExceptionally(goneException);
             });
         }
     }
