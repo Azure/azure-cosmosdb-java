@@ -91,6 +91,6 @@ public final class RntbdRequestRecord extends CompletableFuture<StoreResponse> {
 
     @Override
     public String toString() {
-        return '[' + simpleClassName + '(' + RntbdObjectMapper.toJson(this.args) + ")]";
+        return simpleClassName + '(' + RntbdObjectMapper.toJson(this.args) + ')';
     }
 }

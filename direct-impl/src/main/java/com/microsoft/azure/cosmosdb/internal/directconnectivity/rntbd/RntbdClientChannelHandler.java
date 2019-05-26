@@ -112,7 +112,7 @@ public class RntbdClientChannelHandler extends ChannelInitializer<Channel> imple
 
         checkNotNull(channel);
 
-        final RntbdRequestManager requestManager = new RntbdRequestManager();
+        final RntbdRequestManager requestManager = new RntbdRequestManager(this.config.getMaxRequestsPerChannel());
         final long readerIdleTime = this.config.getReceiveHangDetectionTime();
         final long writerIdleTime = this.config.getSendHangDetectionTime();
         final ChannelPipeline pipeline = channel.pipeline();

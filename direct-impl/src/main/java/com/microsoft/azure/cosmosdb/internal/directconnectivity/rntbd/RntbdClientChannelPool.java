@@ -121,22 +121,19 @@ public final class RntbdClientChannelPool extends FixedChannelPool {
         Field field = pendingAcquireCount.get();
 
         if (field == null) {
-
             synchronized (pendingAcquireCount) {
-
                 field = pendingAcquireCount.get();
-
                 if (field == null) {
                     field = FieldUtils.getDeclaredField(FixedChannelPool.class, "pendingAcquireCount", true);
                     pendingAcquireCount.set(field);
                 }
             }
-
         }
+
         try {
             return (int)FieldUtils.readField(field, this);
         } catch (IllegalAccessException error) {
-            logger.error("could not access field due to ", error);
+            reportIssue(logger, this, "could not access field due to ", error);
         }
 
         return -1;
@@ -159,14 +156,14 @@ public final class RntbdClientChannelPool extends FixedChannelPool {
         }
 
         if (this.closed.get()) {
-            return first;
+            return first;  // because we're closing
         }
 
         if (isInactiveOrServiceableChannel(first)) {
             return decrementAvailableChannelCountAndAccept(first);
         }
 
-        super.offerChannel(first);
+        super.offerChannel(first);  // as a sentinel
 
         for (Channel next = super.pollChannel(); next != first; super.offerChannel(next), next = super.pollChannel()) {
             if (isInactiveOrServiceableChannel(next)) {
@@ -187,7 +184,7 @@ public final class RntbdClientChannelPool extends FixedChannelPool {
      * @return {@code true}, if the {@link Channel} could be added to internal storage; otherwise {@code false}
      */
     @Override
-    protected synchronized boolean offerChannel(final Channel channel) {
+    protected boolean offerChannel(final Channel channel) {
         if (super.offerChannel(channel)) {
             this.availableChannelCount.incrementAndGet();
             return true;
@@ -226,10 +223,7 @@ public final class RntbdClientChannelPool extends FixedChannelPool {
             return true; // inactive
         }
 
-        final int maxRequestsPerChannel = requestManager.hasRntbdContext() ? this.maxRequestsPerChannel : 1;
-        final int requestCount = requestManager.getPendingRequestCount();
-
-        return requestCount < maxRequestsPerChannel;
+        return requestManager.isServiceable(this.maxRequestsPerChannel);
     }
 
     private void throwIfClosed() {
@@ -254,8 +248,8 @@ public final class RntbdClientChannelPool extends FixedChannelPool {
         public void serialize(RntbdClientChannelPool value, JsonGenerator generator, SerializerProvider provider) throws IOException {
             generator.writeStartObject();
             generator.writeStringField("remoteAddress", value.remoteAddress().toString());
-            generator.writeNumberField("maxChannels", value.maxChannels);
-            generator.writeNumberField("maxRequestsPerChannel", value.maxRequestsPerChannel);
+            generator.writeNumberField("maxChannels", value.maxChannels());
+            generator.writeNumberField("maxRequestsPerChannel", value.maxRequestsPerChannel());
             generator.writeObjectFieldStart("state");
             generator.writeBooleanField("isClosed", value.closed.get());
             generator.writeNumberField("acquiredChannelCount", value.acquiredChannelCount());

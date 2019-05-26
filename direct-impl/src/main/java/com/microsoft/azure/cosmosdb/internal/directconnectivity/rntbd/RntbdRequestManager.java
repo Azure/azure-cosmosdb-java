@@ -79,6 +79,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.google.common.base.Preconditions.checkState;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.SubStatusCodes;
 import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdReporter.reportIssue;
@@ -92,7 +93,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
     private final CompletableFuture<RntbdContext> contextFuture = new CompletableFuture<>();
     private final CompletableFuture<RntbdContextRequest> contextRequestFuture = new CompletableFuture<>();
-    private final ConcurrentHashMap<Long, RntbdRequestRecord> pendingRequests = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Long, RntbdRequestRecord> pendingRequests;
 
     private boolean closingExceptionally = false;
     private ChannelHandlerContext context;
@@ -100,6 +101,11 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
     private CoalescingBufferQueue pendingWrites;
 
     // endregion
+
+    public RntbdRequestManager(int capacity) {
+        checkState(capacity > 0);
+        this.pendingRequests = new ConcurrentHashMap<>(capacity);
+    }
 
     // region ChannelHandler methods
 
@@ -109,7 +115,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
      * @param context {@link ChannelHandlerContext} to which this {@link RntbdRequestManager} belongs
      */
     @Override
-    public void handlerAdded(final ChannelHandlerContext context) throws Exception {
+    public void handlerAdded(final ChannelHandlerContext context) {
         this.traceOperation(context, "handlerAdded");
     }
 
@@ -120,7 +126,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
      * @param context {@link ChannelHandlerContext} to which this {@link RntbdRequestManager} belongs
      */
     @Override
-    public void handlerRemoved(final ChannelHandlerContext context) throws Exception {
+    public void handlerRemoved(final ChannelHandlerContext context) {
         this.traceOperation(context, "handlerRemoved");
     }
 
@@ -134,7 +140,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
      * @param context {@link ChannelHandlerContext} to which this {@link RntbdRequestManager} belongs
      */
     @Override
-    public void channelActive(final ChannelHandlerContext context) throws Exception {
+    public void channelActive(final ChannelHandlerContext context) {
         this.traceOperation(this.context, "channelActive");
         context.fireChannelActive();
     }
@@ -147,9 +153,8 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
      * @param context {@link ChannelHandlerContext} to which this {@link RntbdRequestManager} belongs
      */
     @Override
-    public void channelInactive(final ChannelHandlerContext context) throws Exception {
+    public void channelInactive(final ChannelHandlerContext context) {
         this.traceOperation(this.context, "channelInactive");
-        this.completeAllPendingRequestsExceptionally(context, ClosedWithPendingRequestsException.INSTANCE);
         context.fireChannelInactive();
     }
 
@@ -188,7 +193,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
      * @param context {@link ChannelHandlerContext} to which this {@link RntbdRequestManager} belongs
      */
     @Override
-    public void channelReadComplete(final ChannelHandlerContext context) throws Exception {
+    public void channelReadComplete(final ChannelHandlerContext context) {
         this.traceOperation(context, "channelReadComplete");
         context.fireChannelReadComplete();
     }
@@ -204,7 +209,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
      * @param context the {@link ChannelHandlerContext} for which the bind operation is made
      */
     @Override
-    public void channelRegistered(final ChannelHandlerContext context) throws Exception {
+    public void channelRegistered(final ChannelHandlerContext context) {
 
         this.traceOperation(context, "channelRegistered");
 
@@ -223,7 +228,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
      * @param context {@link ChannelHandlerContext} to which this {@link RntbdRequestManager} belongs
      */
     @Override
-    public void channelUnregistered(final ChannelHandlerContext context) throws Exception {
+    public void channelUnregistered(final ChannelHandlerContext context) {
 
         this.traceOperation(context, "channelUnregistered");
 
@@ -243,7 +248,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
      * @param context {@link ChannelHandlerContext} to which this {@link RntbdRequestManager} belongs
      */
     @Override
-    public void channelWritabilityChanged(final ChannelHandlerContext context) throws Exception {
+    public void channelWritabilityChanged(final ChannelHandlerContext context) {
         this.traceOperation(context, "channelWritabilityChanged");
         context.fireChannelWritabilityChanged();
     }
@@ -277,14 +282,6 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
             this.completeAllPendingRequestsExceptionally(context, cause);
             final ChannelPipeline pipeline = context.pipeline();
-            final SslHandler sslHandler = pipeline.get(SslHandler.class);
-
-            if (sslHandler != null) {
-                // Netty 4.1.36.Final: SslHandler.closeOutbound must be called before closing the pipeline
-                // This ensures that all SSL engine and ByteBuf resources are released
-                // This is something that does not occur in the call to ChannelPipeline.close that follows
-                sslHandler.closeOutbound();
-            }
 
             pipeline.close();
         }
@@ -326,10 +323,9 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
      * @param context      the {@link ChannelHandlerContext} for which the bind operation is made
      * @param localAddress the {@link SocketAddress} to which it should bound
      * @param promise      the {@link ChannelPromise} to notify once the operation completes
-     * @throws Exception thrown if an error occurs
      */
     @Override
-    public void bind(final ChannelHandlerContext context, final SocketAddress localAddress, final ChannelPromise promise) throws Exception {
+    public void bind(final ChannelHandlerContext context, final SocketAddress localAddress, final ChannelPromise promise) {
         this.traceOperation(context, "bind");
         context.bind(localAddress, promise);
     }
@@ -339,11 +335,22 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
      *
      * @param context the {@link ChannelHandlerContext} for which the close operation is made
      * @param promise the {@link ChannelPromise} to notify once the operation completes
-     * @throws Exception thrown if an error occurs
      */
     @Override
-    public void close(final ChannelHandlerContext context, final ChannelPromise promise) throws Exception {
+    public void close(final ChannelHandlerContext context, final ChannelPromise promise) {
+
         this.traceOperation(context, "close");
+
+        this.completeAllPendingRequestsExceptionally(context, ClosedWithPendingRequestsException.INSTANCE);
+        final SslHandler sslHandler = context.pipeline().get(SslHandler.class);
+
+        if (sslHandler != null) {
+            // Netty 4.1.36.Final: SslHandler.closeOutbound must be called before closing the pipeline
+            // This ensures that all SSL engine and ByteBuf resources are released
+            // This is something that does not occur in the call to ChannelPipeline.close that follows
+            sslHandler.closeOutbound();
+        }
+
         context.close(promise);
     }
 
@@ -354,10 +361,12 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
      * @param remoteAddress the {@link SocketAddress} to which it should connect
      * @param localAddress  the {@link SocketAddress} which is used as source on connect
      * @param promise       the {@link ChannelPromise} to notify once the operation completes
-     * @throws Exception thrown if an error occurs
      */
     @Override
-    public void connect(final ChannelHandlerContext context, final SocketAddress remoteAddress, final SocketAddress localAddress, final ChannelPromise promise) throws Exception {
+    public void connect(
+        final ChannelHandlerContext context, final SocketAddress remoteAddress, final SocketAddress localAddress,
+        final ChannelPromise promise
+    ) {
         this.traceOperation(context, "connect");
         context.connect(remoteAddress, localAddress, promise);
     }
@@ -367,10 +376,9 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
      *
      * @param context the {@link ChannelHandlerContext} for which the close operation is made
      * @param promise the {@link ChannelPromise} to notify once the operation completes
-     * @throws Exception thrown if an error occurs
      */
     @Override
-    public void deregister(final ChannelHandlerContext context, final ChannelPromise promise) throws Exception {
+    public void deregister(final ChannelHandlerContext context, final ChannelPromise promise) {
         this.traceOperation(context, "deregister");
         context.deregister(promise);
     }
@@ -380,10 +388,9 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
      *
      * @param context the {@link ChannelHandlerContext} for which the disconnect operation is made
      * @param promise the {@link ChannelPromise} to notify once the operation completes
-     * @throws Exception thrown if an error occurs
      */
     @Override
-    public void disconnect(final ChannelHandlerContext context, final ChannelPromise promise) throws Exception {
+    public void disconnect(final ChannelHandlerContext context, final ChannelPromise promise) {
         this.traceOperation(context, "disconnect");
         context.disconnect(promise);
     }
@@ -394,10 +401,9 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
      * The flush operation will try to flush out all previous written messages that are pending.
      *
      * @param context the {@link ChannelHandlerContext} for which the flush operation is made
-     * @throws Exception thrown if an error occurs
      */
     @Override
-    public void flush(final ChannelHandlerContext context) throws Exception {
+    public void flush(final ChannelHandlerContext context) {
         this.traceOperation(context, "flush");
         context.flush();
     }
@@ -408,7 +414,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
      * @param context the {@link ChannelHandlerContext} for which the read operation is made
      */
     @Override
-    public void read(final ChannelHandlerContext context) throws Exception {
+    public void read(final ChannelHandlerContext context) {
         this.traceOperation(context, "read");
         context.read();
     }
@@ -442,16 +448,17 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
     // region Private and package private methods
 
-    int getPendingRequestCount() {
-        return this.pendingRequests.size();
-    }
-
     CompletableFuture<RntbdContextRequest> getRntbdContextRequestFuture() {
         return this.contextRequestFuture;
     }
 
     boolean hasRntbdContext() {
         return this.contextFuture.getNow(null) != null;
+    }
+
+    boolean isServiceable(int capacity) {
+        final int pendingRequestLimit = this.hasRntbdContext() ? capacity : 1;
+        return this.pendingRequests.size() < pendingRequestLimit;
     }
 
     void pendWrite(final ByteBuf out, final ChannelPromise promise) {
@@ -478,7 +485,6 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
             });
 
             record.whenComplete((response, error) -> {
-                logger.trace("{} COMPLETE: request: {}, response: {}", context, record, error == null ? response : error);
                 this.pendingRequests.remove(id);
                 pendingRequestTimeout.cancel();
             });
@@ -515,8 +521,6 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
         if (!this.pendingRequests.isEmpty()) {
 
-            final Channel channel = context.channel();
-
             if (!this.contextRequestFuture.isDone()) {
                 this.contextRequestFuture.completeExceptionally(throwable);
             }
@@ -527,58 +531,69 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
             final int count = this.pendingRequests.size();
             Exception contextRequestException = null;
+            String phrase = null;
 
             if (this.contextRequestFuture.isCompletedExceptionally()) {
+
                 try {
                     this.contextRequestFuture.get();
                 } catch (final CancellationException error) {
-                    logger.debug("\n  {} closed: context send cancelled", channel);
+                    phrase = "RNTBD context request write cancelled";
+                    contextRequestException = error;
+                } catch (final Exception error) {
+                    phrase = "RNTBD context request write failed";
                     contextRequestException = error;
                 } catch (final Throwable error) {
-                    final String message = Strings.lenientFormat("RNTBD context request write failed with %s pending requests", count);
-                    logger.debug("\n  {} closed: {}", channel, message);
-                    contextRequestException = new ChannelException(message, error);
+                    phrase = "RNTBD context request write failed";
+                    contextRequestException = new ChannelException(error);
                 }
+
             } else if (this.contextFuture.isCompletedExceptionally()) {
+
                 try {
                     this.contextFuture.get();
                 } catch (final CancellationException error) {
-                    logger.debug("\n  {} closed: context receive cancelled", channel);
+                    phrase = "RNTBD context request read cancelled";
+                    contextRequestException = error;
+                } catch (final Exception error) {
+                    phrase = "RNTBD context request read failed";
                     contextRequestException = error;
                 } catch (final Throwable error) {
-                    final String message = Strings.lenientFormat("RNTBD context request read failed with %s pending requests", count);
-                    logger.debug("\n  {} closed: {}", channel, message);
-                    contextRequestException = new ChannelException(message, error);
+                    phrase = "RNTBD context request read failed";
+                    contextRequestException = new ChannelException(error);
                 }
-            }
 
-            final String message;
-
-            if (contextRequestException == null) {
-                message = Strings.lenientFormat("%s closed with %s pending requests", context, count);
             } else {
-                message = Strings.lenientFormat("%s %s", context, contextRequestException.getMessage());
+
+                phrase = "closed exceptionally";
             }
 
+            final String message = Strings.lenientFormat("%s %s with %s pending requests", context, phrase, count);
             final Exception cause;
 
-            if (throwable == ClosedWithPendingRequestsException.INSTANCE && contextRequestException != null) {
-                cause = contextRequestException;
+            if (throwable == ClosedWithPendingRequestsException.INSTANCE) {
+
+                cause = contextRequestException == null
+                    ? ClosedWithPendingRequestsException.INSTANCE
+                    : contextRequestException;
+
             } else {
-                cause = throwable instanceof Exception ? (Exception)throwable : new ChannelException(throwable);
+
+                cause = throwable instanceof Exception
+                    ? (Exception)throwable
+                    : new ChannelException(throwable);
             }
 
-            this.pendingRequests.forEach(Long.MAX_VALUE, (id, requestRecord) -> {
+            for (RntbdRequestRecord record : this.pendingRequests.values()) {
 
-                final RntbdRequestArgs args = requestRecord.getArgs();
-                final String requestUri = args.getPhysicalAddress().toString();
-                final Map<String, String> requestHeaders = args.getServiceRequest().getHeaders();
+                final Map<String, String> requestHeaders = record.getArgs().getServiceRequest().getHeaders();
+                final String requestUri = record.getArgs().getPhysicalAddress().toString();
 
-                final GoneException goneException = new GoneException(message, cause, (Map<String, String>)null, requestUri);
-                BridgeInternal.setRequestHeaders(goneException, requestHeaders);
+                final GoneException error = new GoneException(message, cause, (Map<String, String>)null, requestUri);
+                BridgeInternal.setRequestHeaders(error, requestHeaders);
 
-                requestRecord.completeExceptionally(goneException);
-            });
+                record.completeExceptionally(error);
+            }
         }
     }
 
