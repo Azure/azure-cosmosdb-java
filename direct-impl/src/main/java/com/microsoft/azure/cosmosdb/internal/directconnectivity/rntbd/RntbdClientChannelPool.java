@@ -156,14 +156,14 @@ public final class RntbdClientChannelPool extends FixedChannelPool {
         }
 
         if (this.closed.get()) {
-            return first;  // because we're closing and no longer care about serviceability
+            return first;  // because we're being called following a call to close (from super.close)
         }
 
         if (this.isInactiveOrServiceableChannel(first)) {
             return this.decrementAvailableChannelCountAndAccept(first);
         }
 
-        super.offerChannel(first);  // because we need a non-null sentinel to stop the search for a serviceable channel
+        super.offerChannel(first);  // because we need a non-null sentinel to stop the search for a channel
 
         for (Channel next = super.pollChannel(); next != first; super.offerChannel(next), next = super.pollChannel()) {
             if (this.isInactiveOrServiceableChannel(next)) {
