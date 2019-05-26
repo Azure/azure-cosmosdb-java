@@ -24,15 +24,13 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd;
 
-import java.io.File;
-import java.net.URL;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.helpers.FormattingTuple;
 import org.slf4j.helpers.MessageFormatter;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.io.File;
+import java.net.URL;
 
 public final class RntbdReporter {
 
