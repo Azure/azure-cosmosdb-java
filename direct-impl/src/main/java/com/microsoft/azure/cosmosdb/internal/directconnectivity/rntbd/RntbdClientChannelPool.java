@@ -149,29 +149,29 @@ public final class RntbdClientChannelPool extends FixedChannelPool {
     @Override
     protected synchronized Channel pollChannel() {
 
-        Channel first = super.pollChannel();
+        final Channel first = super.pollChannel();
 
         if (first == null) {
             return null;
         }
 
         if (this.closed.get()) {
-            return first;  // because we're closing
+            return first;  // because we're closing and no longer care about serviceability
         }
 
-        if (isInactiveOrServiceableChannel(first)) {
-            return decrementAvailableChannelCountAndAccept(first);
+        if (this.isInactiveOrServiceableChannel(first)) {
+            return this.decrementAvailableChannelCountAndAccept(first);
         }
 
-        super.offerChannel(first);  // as a sentinel
+        super.offerChannel(first);  // because we need a non-null sentinel to stop the search for a serviceable channel
 
         for (Channel next = super.pollChannel(); next != first; super.offerChannel(next), next = super.pollChannel()) {
-            if (isInactiveOrServiceableChannel(next)) {
-                return decrementAvailableChannelCountAndAccept(next);
+            if (this.isInactiveOrServiceableChannel(next)) {
+                return this.decrementAvailableChannelCountAndAccept(next);
             }
         }
 
-        super.offerChannel(first);
+        super.offerChannel(first);  // because we choose not to check any channel more than once in a single call
         return null;
     }
 
