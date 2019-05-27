@@ -44,6 +44,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <commons-beanutils.version>1.9.3</commons-beanutils.version>
     <commons-io.version>2.5</commons-io.version>
     <commons-lang3.version>3.8.1</commons-lang3.version>
     <commons-validator.version>1.6</commons-validator.version>
