@@ -142,12 +142,16 @@ public final class RntbdClientChannelPool extends FixedChannelPool {
     /**
      * Poll a {@link Channel} out of internal storage to reuse it
      * <p>
-     * Maintainers: Implementations of this method must be thread-safe.
+     * Maintainers: Implementations of this method must be thread-safe and this type's base class, {@link FixedChannelPool},
+     * ensures thread safety. It does this by calling this method serially on a single-threaded EventExecutor. As a
+     * result this method need not (and should not) be synchronized.
      *
      * @return a value of {@code null}, if no {@link Channel} is ready to be reused
+     *
+     * @see #acquire(Promise)
      */
     @Override
-    protected synchronized Channel pollChannel() {
+    protected Channel pollChannel() {
 
         final Channel first = super.pollChannel();
 

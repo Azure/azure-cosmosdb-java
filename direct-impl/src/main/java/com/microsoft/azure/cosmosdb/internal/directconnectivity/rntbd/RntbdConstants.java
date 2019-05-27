@@ -77,6 +77,7 @@ final class RntbdConstants {
         }
     }
 
+    @SuppressWarnings("UnstableApiUsage")
     enum RntbdContextHeader implements RntbdHeader {
 
         ProtocolVersion((short)0x0000, RntbdTokenType.ULong, false),

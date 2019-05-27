@@ -24,6 +24,7 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -46,56 +47,57 @@ public final class RntbdContext {
 
     private final RntbdResponseStatus frame;
     private final Headers headers;
+    private ServerProperties serverProperties;
 
     private RntbdContext(final RntbdResponseStatus frame, final Headers headers) {
-
         this.frame = frame;
         this.headers = headers;
     }
 
     @JsonProperty
-    UUID getActivityId() {
+    public UUID getActivityId() {
         return this.frame.getActivityId();
     }
 
     @JsonProperty
-    String getClientVersion() {
+    public String getClientVersion() {
         return this.headers.clientVersion.getValue(String.class);
     }
 
     @JsonProperty
-    long getIdleTimeoutInSeconds() {
+    public long getIdleTimeoutInSeconds() {
         return this.headers.idleTimeoutInSeconds.getValue(Long.class);
     }
 
     @JsonProperty
-    int getProtocolVersion() {
+    public int getProtocolVersion() {
         return this.headers.protocolVersion.getValue(Long.class).intValue();
     }
 
     @JsonProperty
-    ServerProperties getServerProperties() {
-        return new ServerProperties(
+    public ServerProperties getServerProperties() {
+        return this.serverProperties == null ? (this.serverProperties = new ServerProperties(
             this.headers.serverAgent.getValue(String.class),
-            this.headers.serverVersion.getValue(String.class)
-        );
+            this.headers.serverVersion.getValue(String.class))
+        ) : this.serverProperties;
     }
 
-    String getServerVersion() {
+    @JsonIgnore
+    public String getServerVersion() {
         return this.headers.serverVersion.getValue(String.class);
     }
 
     @JsonProperty
-    int getStatusCode() {
+    public int getStatusCode() {
         return this.frame.getStatusCode();
     }
 
     @JsonProperty
-    long getUnauthenticatedTimeoutInSeconds() {
+    public long getUnauthenticatedTimeoutInSeconds() {
         return this.headers.unauthenticatedTimeoutInSeconds.getValue(Long.class);
     }
 
-    static RntbdContext decode(final ByteBuf in) throws TransportException {
+    public static RntbdContext decode(final ByteBuf in) {
 
         in.markReaderIndex();
 
@@ -176,12 +178,7 @@ public final class RntbdContext {
 
     @Override
     public String toString() {
-        final ObjectWriter writer = RntbdObjectMapper.writer();
-        try {
-            return writer.writeValueAsString(this);
-        } catch (final JsonProcessingException error) {
-            throw new CorruptedFrameException(error);
-        }
+        return RntbdObjectMapper.toJson(this);
     }
 
     private static final class Headers extends RntbdTokenStream<RntbdContextHeader> {

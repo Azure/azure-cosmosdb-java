@@ -93,6 +93,8 @@ enum RntbdTokenType {
 
     public interface Codec {
 
+        Class<?> forClass();
+
         int computeLength(Object value);
 
         Object convert(Object value);
@@ -137,6 +139,11 @@ enum RntbdTokenType {
         }
 
         @Override
+        public final Class<?> forClass() {
+            return java.lang.Byte.class;
+        }
+
+        @Override
         public final boolean isValid(final Object value) {
             return value instanceof Number || value instanceof Boolean;
         }
@@ -164,6 +171,11 @@ enum RntbdTokenType {
         private static final byte[] defaultValue = {};
 
         private RntbdBytes() {
+        }
+
+        @Override
+        public Class<?> forClass() {
+            return Byte[].class;
         }
 
         @Override
@@ -225,6 +237,11 @@ enum RntbdTokenType {
         }
 
         @Override
+        public Class<?> forClass() {
+            return Double.class;
+        }
+
+        @Override
         public final int computeLength(final Object value) {
             assert this.isValid(value);
             return java.lang.Double.BYTES;
@@ -268,6 +285,11 @@ enum RntbdTokenType {
         public static final Codec codec = new RntbdFloat();
 
         private RntbdFloat() {
+        }
+
+        @Override
+        public Class<?> forClass() {
+            return Float.class;
         }
 
         @Override
@@ -317,6 +339,11 @@ enum RntbdTokenType {
         }
 
         @Override
+        public Class<?> forClass() {
+            return UUID.class;
+        }
+
+        @Override
         public final int computeLength(final Object value) {
             assert this.isValid(value);
             return 2 * java.lang.Long.BYTES;
@@ -363,6 +390,11 @@ enum RntbdTokenType {
         }
 
         @Override
+        public Class<?> forClass() {
+            return Integer.class;
+        }
+
+        @Override
         public final int computeLength(final Object value) {
             assert this.isValid(value);
             return Integer.BYTES;
@@ -406,6 +438,11 @@ enum RntbdTokenType {
         public static final Codec codec = new RntbdLong();
 
         private RntbdLong() {
+        }
+
+        @Override
+        public Class<?> forClass() {
+            return Long.class;
         }
 
         @Override
@@ -536,6 +573,11 @@ enum RntbdTokenType {
         public static final Codec codec = new RntbdNone();
 
         @Override
+        public Class<?> forClass() {
+            return null;
+        }
+
+        @Override
         public final int computeLength(final Object value) {
             return 0;
         }
@@ -658,6 +700,11 @@ enum RntbdTokenType {
         private RntbdString() {
         }
 
+        @Override
+        public Class<?> forClass() {
+            return String.class;
+        }
+
         final int computeLength(final Object value, final int maxLength) {
 
             assert this.isValid(value);
@@ -750,6 +797,11 @@ enum RntbdTokenType {
         }
 
         @Override
+        public Class<?> forClass() {
+            return Long.class;
+        }
+
+        @Override
         public final int computeLength(final Object value) {
             assert this.isValid(value);
             return Integer.BYTES;
@@ -793,6 +845,11 @@ enum RntbdTokenType {
         public static final Codec codec = new RntbdUnsignedShort();
 
         private RntbdUnsignedShort() {
+        }
+
+        @Override
+        public Class<?> forClass() {
+            return Integer.class;
         }
 
         @Override

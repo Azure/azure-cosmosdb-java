@@ -35,6 +35,7 @@ import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.CorruptedFrameException;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdConstants.RntbdHeader;
 
@@ -133,13 +134,13 @@ final class RntbdToken {
         return this.length;
     }
 
-    // endregion
-
-    // region Methods
-
     static RntbdToken create(final RntbdHeader header) {
         return new RntbdToken(header);
     }
+
+    // endregion
+
+    // region Methods
 
     void decode(final ByteBuf in) {
 
@@ -188,22 +189,12 @@ final class RntbdToken {
 
     @Override
     public String toString() {
-        final ObjectWriter writer = RntbdObjectMapper.writer();
-        try {
-            return writer.writeValueAsString(this);
-        } catch (final JsonProcessingException error) {
-            throw new CorruptedFrameException(error);
-        }
+        return RntbdObjectMapper.toJson(this);
     }
 
     private void ensureValid(final Object value) {
-
         checkNotNull(value, "value");
-
-        if (!this.header.type().codec().isValid(value)) {
-            final String reason = String.format("value: %s", value.getClass());
-            throw new IllegalArgumentException(reason);
-        }
+        checkArgument(this.header.type().codec().isValid(value), "value: %s", value.getClass());
     }
 
     // endregion

@@ -31,17 +31,19 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 
 import java.util.Map;
 
-public class TransportException extends Exception {
+// TODO: DANOBLE: Use TransportException everywhere or get rid of it
+// We use this in just one place today and don't handle it especially well (see RntbdContext.decode)
+
+public class TransportException extends RuntimeException {
 
     final private Error error;
-    final private Map<String, Object> headers;
+    final private Map<String, Object> responseHeaders;
     final private HttpResponseStatus status;
 
-    public TransportException(HttpResponseStatus status, ObjectNode details, Map<String, Object> headers) {
-
-        super("TODO: DANOBLE: format message string based on headers, and status information");
+    public TransportException(HttpResponseStatus status, ObjectNode details, Map<String, Object> responseHeaders) {
+        super(status + ": " + details, null, true, false);
         this.error = BridgeInternal.createError(details);
-        this.headers = headers;
+        this.responseHeaders = responseHeaders;
         this.status = status;
     }
 
@@ -49,8 +51,8 @@ public class TransportException extends Exception {
         return error;
     }
 
-    public Map<String, Object> getHeaders() {
-        return headers;
+    public Map<String, Object> getResponseHeaders() {
+        return responseHeaders;
     }
 
     public HttpResponseStatus getStatus() {
