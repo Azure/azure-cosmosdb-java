@@ -24,38 +24,26 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.microsoft.azure.cosmosdb.BridgeInternal;
-import com.microsoft.azure.cosmosdb.Error;
-import io.netty.handler.codec.http.HttpResponseStatus;
-
-import java.util.Map;
-
-// TODO: DANOBLE: Use TransportException everywhere or get rid of it
-// We use this in just one place today and don't handle it especially well (see RntbdContext.decode)
+// TODO: DANOBLE: Use a TransportException derivative wherever CorruptFrameException is thrown in RntbdTransportClient
+//   * Continue to throw IllegalArgumentException, IllegalStateException, and NullPointerException.
+//   * Continue to complete all pending requests with a GoneException.
+//     Customers should then expect to see these causes for GoneException errors originating in RntbdTransportClient:
+//     - TransportException
+//     - ReadTimeoutException
+//     - WriteTimeoutException
+//     These causes for GoneException errors will be logged as issues because they indicate a problem in the
+//     RntbdTransportClient code:
+//     - IllegalArgumentException
+//     - IllegalStateException
+//     - NullPointerException
+//     Any other exceptions caught by the RntbdTransportClient code will also be logged as issues because they
+//     indicate something unexpected happened.
+//   NOTES:
+//   We throw a derivative in one place: RntbdContextException in RntbdContext.decode. This is a special case
+//   that is handled by RntbdRequestManager.userEventTriggered.
 
 public class TransportException extends RuntimeException {
-
-    final private Error error;
-    final private Map<String, Object> responseHeaders;
-    final private HttpResponseStatus status;
-
-    public TransportException(HttpResponseStatus status, ObjectNode details, Map<String, Object> responseHeaders) {
-        super(status + ": " + details, null, true, false);
-        this.error = BridgeInternal.createError(details);
-        this.responseHeaders = responseHeaders;
-        this.status = status;
-    }
-
-    public Error getError() {
-        return error;
-    }
-
-    public Map<String, Object> getResponseHeaders() {
-        return responseHeaders;
-    }
-
-    public HttpResponseStatus getStatus() {
-        return status;
+    public TransportException(String message, Throwable cause) {
+        super(message, cause, /* enableSuppression */ true, /* writableStackTrace */ false);
     }
 }

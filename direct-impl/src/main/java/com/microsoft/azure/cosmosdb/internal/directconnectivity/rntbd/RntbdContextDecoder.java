@@ -45,18 +45,26 @@ class RntbdContextDecoder extends ByteToMessageDecoder {
      * @param context the {@link ChannelHandlerContext} to which this {@link ByteToMessageDecoder} belongs
      * @param in      the {@link ByteBuf} from which to readTree data
      * @param out     the {@link List} to which decoded messages should be added
-     * @throws Exception thrown if an error occurs
      */
     @Override
-    protected void decode(final ChannelHandlerContext context, final ByteBuf in, final List<Object> out) throws Exception {
+    protected void decode(final ChannelHandlerContext context, final ByteBuf in, final List<Object> out) {
 
         if (RntbdFramer.canDecodeHead(in)) {
 
-            final RntbdContext rntbdContext = RntbdContext.decode(in);
-            context.fireUserEventTriggered(rntbdContext);
-            in.discardReadBytes();
+            Object result;
 
-            logger.debug("{} DECODE COMPLETE: {}", context.channel(), rntbdContext);
+            try {
+                final RntbdContext rntbdContext = RntbdContext.decode(in);
+                context.fireUserEventTriggered(rntbdContext);
+                result = rntbdContext;
+            } catch (RntbdContextException error) {
+                context.fireUserEventTriggered(error);
+                result = error;
+            } finally {
+                in.discardReadBytes();
+            }
+
+            logger.debug("{} DECODE COMPLETE: {}", context.channel(), result);
         }
     }
 }

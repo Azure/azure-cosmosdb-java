@@ -300,17 +300,24 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
         this.traceOperation(context, "userEventTriggered", event);
 
-        if (event instanceof RntbdContext) {
-            try {
-                this.completeRntbdContextFuture(context, (RntbdContext)event);
-            } catch (Throwable error) {
-                reportIssue(logger, context, "{}: ", event, error);
-                this.exceptionCaught(context, error);
-            }
-            return;
-        }
+        try {
 
-        context.fireUserEventTriggered(event);
+            if (event instanceof RntbdContext) {
+                this.contextFuture.complete((RntbdContext)event);
+                this.removeContextNegotiatorAndFlushPendingWrites(context);
+                return;
+            }
+            if (event instanceof RntbdContextException) {
+                this.contextFuture.completeExceptionally((RntbdContextException)event);
+                context.close();
+                return;
+            }
+            context.fireUserEventTriggered(event);
+
+        } catch (Throwable error) {
+            reportIssue(logger, context, "{}: ", event, error);
+            this.exceptionCaught(context, error);
+        }
     }
 
     // endregion
@@ -597,19 +604,6 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         }
     }
 
-    private void completeRntbdContextFuture(final ChannelHandlerContext context, final RntbdContext value) {
-
-        this.contextFuture.complete(value);
-
-        final RntbdContextNegotiator negotiator = context.channel().pipeline().get(RntbdContextNegotiator.class);
-        negotiator.removeInboundHandler();
-        negotiator.removeOutboundHandler();
-
-        if (!this.pendingWrites.isEmpty()) {
-            this.pendingWrites.writeAndRemoveAll(context);
-        }
-    }
-
     /**
      * This method is called for each incoming message of type {@link StoreResponse} to complete a request
      *
@@ -759,6 +753,17 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         }
     }
 
+    private void removeContextNegotiatorAndFlushPendingWrites(final ChannelHandlerContext context) {
+
+        final RntbdContextNegotiator negotiator = context.pipeline().get(RntbdContextNegotiator.class);
+        negotiator.removeInboundHandler();
+        negotiator.removeOutboundHandler();
+
+        if (!this.pendingWrites.isEmpty()) {
+            this.pendingWrites.writeAndRemoveAll(context);
+        }
+    }
+
     private void traceOperation(final ChannelHandlerContext context, final String operationName, final Object... args) {
 
         if (logger.isTraceEnabled()) {
@@ -803,6 +808,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         //  https://msdata.visualstudio.com/CosmosDB/_workitems/edit/388987
 
         private ClosedWithPendingRequestsException() {
+            super(null, null, /* enableSuppression */ false, /* writableStackTrace */ false);
         }
     }
 

@@ -26,13 +26,9 @@ package com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.ServerProperties;
-import com.microsoft.azure.cosmosdb.internal.directconnectivity.TransportException;
 import io.netty.buffer.ByteBuf;
-import io.netty.handler.codec.CorruptedFrameException;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
 import java.util.Collections;
@@ -135,7 +131,7 @@ public final class RntbdContext {
                 map.put("serverVersion", headers.serverVersion.getValue());
             }
 
-            throw new TransportException(frame.getStatus(), details, Collections.unmodifiableMap(map));
+            throw new RntbdContextException(frame.getStatus(), details, Collections.unmodifiableMap(map));
         }
 
         return new RntbdContext(frame, headers);
