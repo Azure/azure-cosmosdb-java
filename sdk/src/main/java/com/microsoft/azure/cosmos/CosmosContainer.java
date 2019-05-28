@@ -235,8 +235,7 @@ public class CosmosContainer extends CosmosResource {
         return RxJava2Adapter.flowableToFlux(
                 RxJavaInterop.toV2Flowable(getDatabase().getDocClientWrapper()
                                                    .readDocuments(getLink(), options)
-                                                   .map(response-> BridgeInternal.createFeedResponse(CosmosItemSettings.getFromV2Results(response.getResults(),
-                                                           this),
+                                                   .map(response-> BridgeInternal.createFeedResponse(CosmosItemSettings.getFromV2Results(response.getResults()),
                                                            response.getResponseHeaders()))));
     }
 
@@ -272,7 +271,7 @@ public class CosmosContainer extends CosmosResource {
                                                    .getDocClientWrapper()
                                                    .queryDocuments(getLink(), querySpec, options)
                                                    .map(response-> BridgeInternal.createFeedResponseWithQueryMetrics(
-                                                           CosmosItemSettings.getFromV2Results(response.getResults(), this),
+                                                           CosmosItemSettings.getFromV2Results(response.getResults()),
                                                            response.getResponseHeaders(),
                                                            response.getQueryMetrics()))));
     }
