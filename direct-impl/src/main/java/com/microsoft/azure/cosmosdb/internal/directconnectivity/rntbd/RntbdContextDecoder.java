@@ -39,10 +39,9 @@ class RntbdContextDecoder extends ByteToMessageDecoder {
     /**
      * Deserialize from an input {@link ByteBuf} to an {@link RntbdContext} instance
      * <p>
-     * This method fulfills the promise of an {@link RntbdContext} instance. It does not pass the instance down the
-     * pipeline.
+     * This method decodes an {@link RntbdContext} or {@link RntbdContextException} instance and fires a user event.
      *
-     * @param context the {@link ChannelHandlerContext} to which this {@link ByteToMessageDecoder} belongs
+     * @param context the {@link ChannelHandlerContext} to which this {@link RntbdContextDecoder} belongs
      * @param in      the {@link ByteBuf} from which to readTree data
      * @param out     the {@link List} to which decoded messages should be added
      */
