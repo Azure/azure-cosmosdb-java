@@ -71,14 +71,36 @@ public class CosmosClient {
         
     }
 
+    /**
+     * Helper class to build {@link CosmosClient} instances
+     * as logical representation of the Azure Cosmos database service.
+     *
+     * <pre>
+     * {@code
+     * ConnectionPolicy connectionPolicy = new ConnectionPolicy();
+     * connectionPolicy.setConnectionMode(ConnectionMode.Direct);
+     * CosmonsClient client = new CosmosClient.Builder()
+     *         .endpoint(serviceEndpoint)
+     *         .key(key)
+     *         .connectionPolicy(connectionPolicy)
+     *         .consistencyLevel(ConsistencyLevel.Session)
+     *         .build();
+     * }
+     * </pre>
+     */
     public static class Builder {
 
         private String serviceEndpoint;
         private String keyOrResourceToken;
-        private ConnectionPolicy connectionPolicy; //can set a default value here
-        private ConsistencyLevel desiredConsistencyLevel; //can set a default value here
-        private List<Permission> permissions; //can set a default value here
+        private ConnectionPolicy connectionPolicy;
+        private ConsistencyLevel desiredConsistencyLevel;
+        private List<Permission> permissions;
 
+        /**
+         * The service ednpoint url
+         * @param serviceEndpoint the service endpoint
+         * @return current Builder
+         */
         public CosmosClient.Builder endpoint(String serviceEndpoint) {
             this.serviceEndpoint = serviceEndpoint;
             return this;
@@ -150,6 +172,10 @@ public class CosmosClient {
 
     }
 
+    /**
+     * Get the service endpoint
+     * @return the service endpoint
+     */
     public String getServiceEndpoint() {
         return serviceEndpoint;
     }

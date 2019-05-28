@@ -5,6 +5,9 @@ import com.microsoft.azure.cosmosdb.ResourceResponse;
 import com.microsoft.azure.cosmosdb.User;
 import com.microsoft.azure.cosmosdb.internal.Constants;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 public class CosmosUserSettings extends Resource {
     /**
      * Initialize a user object.
@@ -26,6 +29,14 @@ public class CosmosUserSettings extends Resource {
         super(response.getResource().toJson()); 
     }
 
+    CosmosUserSettings(User user) {
+        super(user.toJson());
+    }
+
+    static List<CosmosUserSettings> getFromV2Results(List<User> results, CosmosDatabase database) {
+        return results.stream().map(CosmosUserSettings::new).collect(Collectors.toList());
+    }
+
     /**
      * Gets the self-link of the permissions associated with the user.
      *
@@ -40,7 +51,7 @@ public class CosmosUserSettings extends Resource {
         }
     }
 
-    public User getV2User() {
+    User getV2User() {
         return new User(this.toJson());
     }
 }
