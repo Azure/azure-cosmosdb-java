@@ -101,7 +101,7 @@ public class BasicDemo {
                     .doOnError(throwable -> log("Create 3", throwable))
                     .publishOn(Schedulers.elastic())
                     .block()
-                    .getCosmosItem();
+                    .getItem();
         }catch (RuntimeException e){
             log("Couldn't create items due to above exceptions");
         }
