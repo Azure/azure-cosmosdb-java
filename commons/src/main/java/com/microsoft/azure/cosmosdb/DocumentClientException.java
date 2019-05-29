@@ -65,7 +65,7 @@ public class DocumentClientException extends Exception {
     private DocumentClientException(int statusCode, String message, Map<String, String> responseHeaders, Throwable cause) {
         super(message, cause, /* enableSuppression */ true, /* writableStackTrace */ false);
         this.statusCode = statusCode;
-        this.responseHeaders = responseHeaders == null ? new HashMap<>() : responseHeaders;
+        this.responseHeaders = responseHeaders == null ? new HashMap<>() : new HashMap<>(responseHeaders);
     }
 
     /**
