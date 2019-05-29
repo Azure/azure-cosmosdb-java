@@ -33,13 +33,15 @@ import com.microsoft.azure.cosmosdb.rx.internal.PartitionIsMigratingException;
 import com.microsoft.azure.cosmosdb.rx.internal.PartitionKeyRangeIsSplittingException;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
 import com.microsoft.azure.cosmosdb.rx.internal.Utils;
+import hu.akarnokd.rxjava.interop.RxJavaInterop;
+import io.reactivex.subscribers.TestSubscriber;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-import rx.Single;
-import rx.observers.TestSubscriber;
+import reactor.adapter.rxjava.RxJava2Adapter;
+import reactor.core.publisher.Mono;
 import rx.subjects.PublishSubject;
 
 import java.net.URI;
@@ -62,7 +64,7 @@ public class ConsistencyWriterTest {
 
     private AddressSelector addressSelector;
     private ISessionContainer sessionContainer;
-    private TransportClient transportClient;
+    private ReactorTransportClient transportClient;
     private GatewayServiceConfigurationReader serviceConfigReader;
     private ConsistencyWriter consistencyWriter;
 
@@ -108,7 +110,7 @@ public class ConsistencyWriterTest {
         RxDocumentServiceRequest dsr = Mockito.mock(RxDocumentServiceRequest.class);
         dsr.requestContext = Mockito.mock(DocumentServiceRequestContext.class);
 
-        Single<StoreResponse> res = consistencyWriter.writeAsync(dsr, timeoutHelper, false);
+        Mono<StoreResponse> res = consistencyWriter.writeAsync(dsr, timeoutHelper, false);
 
         FailureValidator failureValidator = FailureValidator.builder()
                 .instanceOf(klass)
@@ -119,9 +121,9 @@ public class ConsistencyWriterTest {
         TestSubscriber<StoreResponse> subscriber = new TestSubscriber<>();
         res.subscribe(subscriber);
         subscriber.awaitTerminalEvent();
-        subscriber.assertNotCompleted();
-        assertThat(subscriber.getOnErrorEvents()).hasSize(1);
-        failureValidator.validate(subscriber.getOnErrorEvents().get(0));
+        subscriber.assertNotComplete();
+        assertThat(subscriber.errorCount()).isEqualTo(1);
+        failureValidator.validate(subscriber.errors().get(0));
     }
 
     @Test(groups = "unit")
@@ -137,9 +139,9 @@ public class ConsistencyWriterTest {
         List<InvocationOnMock> invocationOnMocks = Collections.synchronizedList(new ArrayList<>());
         Mockito.doAnswer(new Answer() {
             @Override
-            public Single<URI> answer(InvocationOnMock invocationOnMock)  {
+            public Mono<URI> answer(InvocationOnMock invocationOnMock)  {
                 invocationOnMocks.add(invocationOnMock);
-                return subject.toSingle().doOnSuccess(x -> c.countDown()).doAfterTerminate(() -> {
+                return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(subject.toSingle().doOnSuccess(x -> c.countDown()).doAfterTerminate(() -> {
                     new Thread() {
                         @Override
                         public void run() {
@@ -150,7 +152,7 @@ public class ConsistencyWriterTest {
                             }
                         }
                     }.start();
-                });
+                })));
             }
         }).when(addressSelector).resolvePrimaryUriAsync(Mockito.any(RxDocumentServiceRequest.class), Mockito.anyBoolean());
         RxDocumentServiceRequest request = Mockito.mock(RxDocumentServiceRequest.class);
@@ -192,7 +194,6 @@ public class ConsistencyWriterTest {
         TestSubscriber<StoreResponse> subscriber = new TestSubscriber();
 
         spyConsistencyWriter.writeAsync(Mockito.mock(RxDocumentServiceRequest.class), timeoutHelper, false)
-                .toObservable()
                 .subscribe(subscriber);
 
         subscriber.awaitTerminalEvent(10, TimeUnit.MILLISECONDS);
@@ -210,7 +211,6 @@ public class ConsistencyWriterTest {
         TestSubscriber<StoreResponse> subscriber = new TestSubscriber();
 
         spyConsistencyWriter.writeAsync(Mockito.mock(RxDocumentServiceRequest.class), timeoutHelper, false)
-                .toObservable()
                 .subscribe(subscriber);
 
         subscriber.awaitTerminalEvent(10, TimeUnit.MILLISECONDS);
@@ -276,7 +276,7 @@ public class ConsistencyWriterTest {
     private void initializeConsistencyWriter(boolean useMultipleWriteLocation) {
         addressSelector = Mockito.mock(AddressSelector.class);
         sessionContainer = Mockito.mock(ISessionContainer.class);
-        transportClient = Mockito.mock(TransportClient.class);
+        transportClient = Mockito.mock(ReactorTransportClient.class);
         IAuthorizationTokenProvider authorizationTokenProvider = Mockito.mock(IAuthorizationTokenProvider.class);
         serviceConfigReader = Mockito.mock(GatewayServiceConfigurationReader.class);
 

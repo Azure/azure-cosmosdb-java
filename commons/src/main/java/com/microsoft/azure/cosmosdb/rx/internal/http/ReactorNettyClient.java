@@ -81,9 +81,13 @@ class ReactorNettyClient implements HttpClient {
             if (this.httpClientConfig.getProxy() != null) {
                 tcpClient = tcpClient.proxy(typeSpec -> typeSpec.type(ProxyProvider.Proxy.HTTP).address(this.httpClientConfig.getProxy()));
             }
-            if (this.httpClientConfig.getRequestTimeoutInMillis() != null) {
-                tcpClient = tcpClient.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, this.httpClientConfig.getRequestTimeoutInMillis());
-            }
+            //  TODO: Request Time out can be done with HashedWheelTimers
+            //  TODO: The sequence matters of the handlers
+            //  Read Timeout
+            //  SSL Handler
+            //  Http Codec (first check if this is needed)
+            //  .... Last should be Write Timeout
+
             tcpClient = tcpClient.bootstrap(bootstrap -> {
                 if (this.httpClientConfig.getMaxIdleConnectionTimeoutInMillis() != null) {
                     BootstrapHandlers.updateConfiguration(bootstrap,
@@ -116,6 +120,10 @@ class ReactorNettyClient implements HttpClient {
         Objects.requireNonNull(request.httpMethod());
         Objects.requireNonNull(request.uri());
         Objects.requireNonNull(this.httpClientConfig);
+
+        //  TODO: Start with basic HttpClient
+        //  Figure out the pipeline.
+        //  If need to add anything else, then add it, otherwise just use it as is.
 
         return this.httpClient
                 .port(request.port())
@@ -192,8 +200,9 @@ class ReactorNettyClient implements HttpClient {
         @Override
         public Flux<ByteBuf> body() {
             return bodyIntern().doFinally(s -> {
-                reactorNettyConnection.dispose();
-                if (!reactorNettyConnection.isDisposed()) {
+                if (reactorNettyConnection.channel().eventLoop().inEventLoop()) {
+                    reactorNettyConnection.dispose();
+                } else {
                     reactorNettyConnection.channel().eventLoop().execute(reactorNettyConnection::dispose);
                 }
             });
@@ -202,8 +211,9 @@ class ReactorNettyClient implements HttpClient {
         @Override
         public Mono<byte[]> bodyAsByteArray() {
             return bodyIntern().aggregate().asByteArray().doFinally(s -> {
-                reactorNettyConnection.dispose();
-                if (!reactorNettyConnection.isDisposed()) {
+                if (reactorNettyConnection.channel().eventLoop().inEventLoop()) {
+                    reactorNettyConnection.dispose();
+                } else {
                     reactorNettyConnection.channel().eventLoop().execute(reactorNettyConnection::dispose);
                 }
             });
@@ -212,8 +222,9 @@ class ReactorNettyClient implements HttpClient {
         @Override
         public Mono<String> bodyAsString() {
             return bodyIntern().aggregate().asString().doFinally(s -> {
-                reactorNettyConnection.dispose();
-                if (!reactorNettyConnection.isDisposed()) {
+                if (reactorNettyConnection.channel().eventLoop().inEventLoop()) {
+                    reactorNettyConnection.dispose();
+                } else {
                     reactorNettyConnection.channel().eventLoop().execute(reactorNettyConnection::dispose);
                 }
             });
@@ -222,8 +233,9 @@ class ReactorNettyClient implements HttpClient {
         @Override
         public Mono<String> bodyAsString(Charset charset) {
             return bodyIntern().aggregate().asString(charset).doFinally(s -> {
-                reactorNettyConnection.dispose();
-                if (!reactorNettyConnection.isDisposed()) {
+                if (reactorNettyConnection.channel().eventLoop().inEventLoop()) {
+                    reactorNettyConnection.dispose();
+                } else {
                     reactorNettyConnection.channel().eventLoop().execute(reactorNettyConnection::dispose);
                 }
             });
@@ -231,8 +243,9 @@ class ReactorNettyClient implements HttpClient {
 
         @Override
         public void close() {
-            reactorNettyConnection.dispose();
-            if (!reactorNettyConnection.isDisposed()) {
+            if (reactorNettyConnection.channel().eventLoop().inEventLoop()) {
+                reactorNettyConnection.dispose();
+            } else {
                 reactorNettyConnection.channel().eventLoop().execute(reactorNettyConnection::dispose);
             }
         }

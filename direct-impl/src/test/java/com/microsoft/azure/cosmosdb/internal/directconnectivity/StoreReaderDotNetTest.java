@@ -42,14 +42,14 @@ import com.microsoft.azure.cosmosdb.rx.internal.InvalidPartitionException;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceResponse;
 import com.microsoft.azure.cosmosdb.rx.internal.Strings;
+import io.reactivex.subscribers.TestSubscriber;
 import org.apache.commons.lang3.StringUtils;
 import org.mockito.Matchers;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
-import rx.Single;
-import rx.observers.TestSubscriber;
+import reactor.core.publisher.Mono;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -77,7 +77,7 @@ public class StoreReaderDotNetTest {
 
         IAddressResolver mockAddressCache = Mockito.mock(IAddressResolver.class);
 
-        Mockito.doReturn(Single.just(addressInformation))
+        Mockito.doReturn(Mono.just(addressInformation))
                 .when(mockAddressCache)
                 .resolveAsync(Mockito.any(RxDocumentServiceRequest.class), Mockito.eq(false));
 
@@ -119,7 +119,7 @@ public class StoreReaderDotNetTest {
         srb.withHeader(WFConstants.BackendHeaders.LSN, "50");
 
         // setup mock transport client
-        Mockito.doReturn(Single.just(srb.build()))
+        Mockito.doReturn(Mono.just(srb.build()))
                 .when(mockTransportClient)
                 .invokeResourceOperationAsync(
                         Mockito.eq(URI.create(addressInformation[0].getPhysicalUri())),
@@ -154,20 +154,20 @@ public class StoreReaderDotNetTest {
                 .build();
 
         // setup mock transport client for the first replica
-        Mockito.doReturn(Single.just(mockStoreResponseFast))
+        Mockito.doReturn(Mono.just(mockStoreResponseFast))
                 .when(mockTransportClient)
                 .invokeResourceOperationAsync(Mockito.eq(URI.create(addressInformation[0].getPhysicalUri())), Mockito.any(RxDocumentServiceRequest.class));
 
 
         // setup mock transport client with a sequence of outputs
-        Mockito.doReturn(Single.just(mockStoreResponseFast))     // initial read response
-                .doReturn(Single.just(mockStoreResponseFast))    // barrier retry, count 1
-                .doReturn(Single.just(mockStoreResponseFast))    // barrier retry, count 2
-                .doReturn(Single.error(new InvalidPartitionException())) // throw invalid partition exception to simulate collection recreate with same name
-                .doReturn(Single.just(mockStoreResponseFast))    // new read
-                .doReturn(Single.just(mockStoreResponseFast))    // subsequent barriers
-                .doReturn(Single.just(mockStoreResponseFast))
-                .doReturn(Single.just(mockStoreResponseFast))
+        Mockito.doReturn(Mono.just(mockStoreResponseFast))     // initial read response
+                .doReturn(Mono.just(mockStoreResponseFast))    // barrier retry, count 1
+                .doReturn(Mono.just(mockStoreResponseFast))    // barrier retry, count 2
+                .doReturn(Mono.error(new InvalidPartitionException())) // throw invalid partition exception to simulate collection recreate with same name
+                .doReturn(Mono.just(mockStoreResponseFast))    // new read
+                .doReturn(Mono.just(mockStoreResponseFast))    // subsequent barriers
+                .doReturn(Mono.just(mockStoreResponseFast))
+                .doReturn(Mono.just(mockStoreResponseFast))
                 .when(mockTransportClient).invokeResourceOperationAsync(
                         Mockito.eq(URI.create(addressInformation[1].getPhysicalUri())),
                         Mockito.any(RxDocumentServiceRequest.class));
@@ -187,7 +187,7 @@ public class StoreReaderDotNetTest {
         // 2nd time: returns InvalidPartitionException
             // initial read response
 
-        Mockito.doAnswer((params) -> Single.just(queueOfResponses.poll()))
+        Mockito.doAnswer((params) -> Mono.just(queueOfResponses.poll()))
                 .when(mockTransportClient).invokeResourceOperationAsync(
                         Mockito.eq(URI.create(addressInformation[2].getPhysicalUri())),
                         Mockito.any(RxDocumentServiceRequest.class));
@@ -201,9 +201,9 @@ public class StoreReaderDotNetTest {
         QuorumNotSelected
     }
 
-    private TransportClient getMockTransportClientForGlobalStrongReads(AddressInformation[] addressInformation, ReadQuorumResultKind result) {
+    private ReactorTransportClient getMockTransportClientForGlobalStrongReads(AddressInformation[] addressInformation, ReadQuorumResultKind result) {
         // create objects for all the dependencies of the StoreReader
-        TransportClient mockTransportClient = Mockito.mock(TransportClient.class);
+        ReactorTransportClient mockTransportClient = Mockito.mock(ReactorTransportClient.class);
 
         // create mock store response object
 
@@ -253,26 +253,26 @@ public class StoreReaderDotNetTest {
 
         if(result == ReadQuorumResultKind.QuorumMet) {
             // setup mock transport client for the first replica
-            Mockito.doReturn(Single.just(mockStoreResponse5))
+            Mockito.doReturn(Mono.just(mockStoreResponse5))
                     .when(mockTransportClient).invokeResourceOperationAsync(
                             Mockito.eq(URI.create(addressInformation[0].getPhysicalUri())), Mockito.any(RxDocumentServiceRequest.class));
 
-            Mockito.doReturn(Single.just(mockStoreResponse1))
-                    .doReturn(Single.just(mockStoreResponse1))
-                    .doReturn(Single.just(mockStoreResponse1))
-                    .doReturn(Single.just(mockStoreResponse1))
-                    .doReturn(Single.just(mockStoreResponse1))
-                    .doReturn(Single.just(mockStoreResponse5))
+            Mockito.doReturn(Mono.just(mockStoreResponse1))
+                    .doReturn(Mono.just(mockStoreResponse1))
+                    .doReturn(Mono.just(mockStoreResponse1))
+                    .doReturn(Mono.just(mockStoreResponse1))
+                    .doReturn(Mono.just(mockStoreResponse1))
+                    .doReturn(Mono.just(mockStoreResponse5))
                     .when(mockTransportClient).invokeResourceOperationAsync(
                             Mockito.eq(URI.create(addressInformation[1].getPhysicalUri())),
                             Mockito.any(RxDocumentServiceRequest.class));
 
-            Mockito.doReturn(Single.just(mockStoreResponse2))
-                    .doReturn(Single.just(mockStoreResponse2))
-                    .doReturn(Single.just(mockStoreResponse2))
-                    .doReturn(Single.just(mockStoreResponse1))
-                    .doReturn(Single.just(mockStoreResponse4))
-                    .doReturn(Single.just(mockStoreResponse5))
+            Mockito.doReturn(Mono.just(mockStoreResponse2))
+                    .doReturn(Mono.just(mockStoreResponse2))
+                    .doReturn(Mono.just(mockStoreResponse2))
+                    .doReturn(Mono.just(mockStoreResponse1))
+                    .doReturn(Mono.just(mockStoreResponse4))
+                    .doReturn(Mono.just(mockStoreResponse5))
                     .when(mockTransportClient).invokeResourceOperationAsync(
                             Mockito.eq(URI.create(addressInformation[2].getPhysicalUri())),
                             Mockito.any(RxDocumentServiceRequest.class));
@@ -280,32 +280,32 @@ public class StoreReaderDotNetTest {
 
         if (result == ReadQuorumResultKind.QuorumSelected) {
             // setup mock transport client for the first replica
-            Mockito.doReturn(Single.just(mockStoreResponse2))
+            Mockito.doReturn(Mono.just(mockStoreResponse2))
                     .when(mockTransportClient).invokeResourceOperationAsync(
                             Mockito.eq(URI.create(addressInformation[0].getPhysicalUri())), Mockito.any(RxDocumentServiceRequest.class));
 
             // setup mock transport client with a sequence of outputs
-            Mockito.doReturn(Single.just(mockStoreResponse1))
+            Mockito.doReturn(Mono.just(mockStoreResponse1))
                     .when(mockTransportClient).invokeResourceOperationAsync(
                             Mockito.eq(URI.create(addressInformation[1].getPhysicalUri())), Mockito.any(RxDocumentServiceRequest.class));
 
 
             // setup mock transport client with a sequence of outputs
-            Mockito.doReturn(Single.just(mockStoreResponse2))
+            Mockito.doReturn(Mono.just(mockStoreResponse2))
                     .when(mockTransportClient).invokeResourceOperationAsync(
                             Mockito.eq(URI.create(addressInformation[2].getPhysicalUri())), Mockito.any(RxDocumentServiceRequest.class));
         } else if (result == ReadQuorumResultKind.QuorumNotSelected) {
             // setup mock transport client for the first replica
 
-            Mockito.doReturn(Single.just(mockStoreResponse5))
+            Mockito.doReturn(Mono.just(mockStoreResponse5))
                     .when(mockTransportClient).invokeResourceOperationAsync(
                     Mockito.eq(URI.create(addressInformation[0].getPhysicalUri())), Mockito.any(RxDocumentServiceRequest.class));
 
-            Mockito.doReturn(Single.just(mockStoreResponse5))
+            Mockito.doReturn(Mono.just(mockStoreResponse5))
                     .when(mockTransportClient).invokeResourceOperationAsync(
                     Mockito.eq(URI.create(addressInformation[1].getPhysicalUri())), Mockito.any(RxDocumentServiceRequest.class));
 
-            Mockito.doReturn(Single.error(new GoneException("test")))
+            Mockito.doReturn(Mono.error(new GoneException("test")))
                     .when(mockTransportClient).invokeResourceOperationAsync(
                     Mockito.eq(URI.create(addressInformation[2].getPhysicalUri())), Mockito.any(RxDocumentServiceRequest.class));
         }
@@ -313,14 +313,14 @@ public class StoreReaderDotNetTest {
         return mockTransportClient;
     }
 
-    private TransportClient getMockTransportClientForGlobalStrongWrites(
+    private ReactorTransportClient getMockTransportClientForGlobalStrongWrites(
             AddressInformation[] addressInformation,
             int indexOfCaughtUpReplica,
             boolean undershootGlobalCommittedLsnDuringBarrier,
             boolean overshootLsnDuringBarrier,
             boolean overshootGlobalCommittedLsnDuringBarrier)
     {
-        TransportClient mockTransportClient = Mockito.mock(TransportClient.class);
+        ReactorTransportClient mockTransportClient = Mockito.mock(ReactorTransportClient.class);
 
         // create mock store response object
 
@@ -381,21 +381,21 @@ public class StoreReaderDotNetTest {
 
         for (int i = 0; i < addressInformation.length; i++) {
             if (i == indexOfCaughtUpReplica) {
-                Mockito.doReturn(Single.just(mockStoreResponse1))
-                    .doReturn(Single.just(mockStoreResponse1))
-                    .doReturn(Single.just(mockStoreResponse1))
-                    .doReturn(Single.just(mockStoreResponse1))
-                    .doReturn(Single.just(finalResponse))
+                Mockito.doReturn(Mono.just(mockStoreResponse1))
+                    .doReturn(Mono.just(mockStoreResponse1))
+                    .doReturn(Mono.just(mockStoreResponse1))
+                    .doReturn(Mono.just(mockStoreResponse1))
+                    .doReturn(Mono.just(finalResponse))
                         .when(mockTransportClient).invokeResourceOperationAsync(
                             Mockito.eq(URI.create(addressInformation[i].getPhysicalUri())), Mockito.any(RxDocumentServiceRequest.class));
 
             } else {
-                Mockito.doReturn(Single.just(mockStoreResponse1))
-                        .doReturn(Single.just(mockStoreResponse1))
-                        .doReturn(Single.just(mockStoreResponse1))
-                        .doReturn(Single.just(mockStoreResponse1))
-                        .doReturn(Single.just(mockStoreResponse1))
-                        .doReturn(Single.just(mockStoreResponse1))
+                Mockito.doReturn(Mono.just(mockStoreResponse1))
+                        .doReturn(Mono.just(mockStoreResponse1))
+                        .doReturn(Mono.just(mockStoreResponse1))
+                        .doReturn(Mono.just(mockStoreResponse1))
+                        .doReturn(Mono.just(mockStoreResponse1))
+                        .doReturn(Mono.just(mockStoreResponse1))
                         .when(mockTransportClient).invokeResourceOperationAsync(
                         Mockito.eq(URI.create(addressInformation[i].getPhysicalUri())), Mockito.any(RxDocumentServiceRequest.class));
             }
@@ -437,10 +437,10 @@ public class StoreReaderDotNetTest {
         // AddressCache can be mocked.
         IAddressResolver mockAddressCache = Mockito.mock(IAddressResolver.class);
 
-        Mockito.doReturn(Single.just(addressInformation)).when(mockAddressCache)
+        Mockito.doReturn(Mono.just(addressInformation)).when(mockAddressCache)
                 .resolveAsync(Mockito.any(RxDocumentServiceRequest.class), Mockito.eq(false) /*forceRefresh*/);
 
-        Mockito.doReturn(Single.just(new AddressInformation[0])).when(mockAddressCache)
+        Mockito.doReturn(Mono.just(new AddressInformation[0])).when(mockAddressCache)
                 .resolveAsync(Mockito.any(RxDocumentServiceRequest.class), Mockito.eq(true) /*forceRefresh*/);
 
         return mockAddressCache;
@@ -521,55 +521,55 @@ public class StoreReaderDotNetTest {
         assertThat(result).hasSize(2);
     }
 
-    public static void validateSuccess(Single<List<StoreResult>> single,
+    public static void validateSuccess(Mono<List<StoreResult>> single,
                                        MultiStoreResultValidator validator) {
         validateSuccess(single, validator, 10000);
     }
 
-    public static void validateSuccess(Single<List<StoreResult>> single,
+    public static void validateSuccess(Mono<List<StoreResult>> single,
                                        MultiStoreResultValidator validator, long timeout) {
         TestSubscriber<List<StoreResult>> testSubscriber = new TestSubscriber<>();
 
-        single.toObservable().subscribe(testSubscriber);
+        single.subscribe(testSubscriber);
         testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
         testSubscriber.assertNoErrors();
-        testSubscriber.assertCompleted();
+        testSubscriber.assertComplete();
         testSubscriber.assertValueCount(1);
-        validator.validate(testSubscriber.getOnNextEvents().get(0));
+        validator.validate((List<StoreResult>) testSubscriber.getEvents().get(0).get(0));
     }
 
-    public static void validateSuccess(Single<StoreResult> single,
+    public static void validateSuccess(Mono<StoreResult> single,
                                        StoreResultValidator validator) {
         validateSuccess(single, validator, 10000);
     }
 
-    public static void validateSuccess(Single<StoreResult> single,
+    public static void validateSuccess(Mono<StoreResult> single,
                                        StoreResultValidator validator, long timeout) {
         TestSubscriber<StoreResult> testSubscriber = new TestSubscriber<>();
 
-        single.toObservable().subscribe(testSubscriber);
+        single.subscribe(testSubscriber);
         testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
         testSubscriber.assertNoErrors();
-        testSubscriber.assertCompleted();
+        testSubscriber.assertComplete();
         testSubscriber.assertValueCount(1);
-        validator.validate(testSubscriber.getOnNextEvents().get(0));
+        validator.validate((StoreResult) testSubscriber.getEvents().get(0).get(0));
     }
 
-    public static void validateException(Single<StoreResult> single,
+    public static void validateException(Mono<StoreResult> single,
                                          FailureValidator validator) {
         validateException(single, validator, 10000);
     }
 
-    public static void validateException(Single<StoreResult> single,
+    public static void validateException(Mono<StoreResult> single,
                                          FailureValidator validator, long timeout) {
         TestSubscriber<StoreResult> testSubscriber = new TestSubscriber<>();
 
-        single.toObservable().subscribe(testSubscriber);
+        single.subscribe(testSubscriber);
         testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
-        testSubscriber.assertNotCompleted();
-        testSubscriber.assertTerminalEvent();
-        assertThat(testSubscriber.getOnErrorEvents()).hasSize(1);
-        validator.validate(testSubscriber.getOnErrorEvents().get(0));
+        testSubscriber.assertNotComplete();
+        testSubscriber.assertTerminated();
+        assertThat(testSubscriber.errorCount()).isEqualTo(1);
+        validator.validate(testSubscriber.errors().get(0));
     }
 
     /**
@@ -643,7 +643,7 @@ public class StoreReaderDotNetTest {
             StoreClient storeClient = new StoreClient(new Configs(),mockAddressCache, sessionContainer, mockServiceConfigReader, mockAuthorizationTokenProvider, mockTransportClient, false);
 
             ServerStoreModel storeModel = new ServerStoreModel(storeClient);
-            Single<RxDocumentServiceResponse> result = storeModel.processMessage(entity).toSingle();
+            Mono<RxDocumentServiceResponse> result = storeModel.processMessage(entity).single();
             result.block();
 
             // if we have reached this point, there was a successful request.
@@ -708,7 +708,7 @@ public class StoreReaderDotNetTest {
                 Matchers.any(), Matchers.anyMap())).thenReturn("dummyauthtoken");
 
         for (int i = 0; i < addressInformations.length; i++) {
-            TransportClient mockTransportClient = getMockTransportClientForGlobalStrongWrites(addressInformations, i, false, false, false);
+            ReactorTransportClient mockTransportClient = getMockTransportClientForGlobalStrongWrites(addressInformations, i, false, false, false);
             StoreReader storeReader = new StoreReader(mockTransportClient, addressSelector, sessionContainer);
             ConsistencyWriter consistencyWriter = new ConsistencyWriter(addressSelector, sessionContainer, mockTransportClient, mockAuthorizationTokenProvider, serviceConfigurationReader, false);
             StoreResponse response = consistencyWriter.writeAsync(entity, new TimeoutHelper(Duration.ofSeconds(30)), false).block();
@@ -788,7 +788,7 @@ public class StoreReaderDotNetTest {
         // Quorum Met scenario Start
         {
             // get mock transport client that returns a sequence of responses to simulate upgrade
-            TransportClient mockTransportClient = getMockTransportClientForGlobalStrongReads(addressInformations, ReadQuorumResultKind.QuorumMet);
+            ReactorTransportClient mockTransportClient = getMockTransportClientForGlobalStrongReads(addressInformations, ReadQuorumResultKind.QuorumMet);
 
             // create a real session container - we don't need session for this test anyway
             SessionContainer sessionContainer = new SessionContainer(StringUtils.EMPTY);
@@ -821,7 +821,7 @@ public class StoreReaderDotNetTest {
         // Quorum Selected scenario
         {
             // get mock transport client that returns a sequence of responses to simulate upgrade
-            TransportClient mockTransportClient = getMockTransportClientForGlobalStrongReads(addressInformations, ReadQuorumResultKind.QuorumSelected);
+            ReactorTransportClient mockTransportClient = getMockTransportClientForGlobalStrongReads(addressInformations, ReadQuorumResultKind.QuorumSelected);
 
             // create a real session container - we don't need session for this test anyway
             SessionContainer sessionContainer = new SessionContainer(StringUtils.EMPTY);
@@ -861,7 +861,7 @@ public class StoreReaderDotNetTest {
         // Quorum not met scenario
         {
             // get mock transport client that returns a sequence of responses to simulate upgrade
-            TransportClient mockTransportClient = getMockTransportClientForGlobalStrongReads(addressInformations, ReadQuorumResultKind.QuorumNotSelected);
+            ReactorTransportClient mockTransportClient = getMockTransportClientForGlobalStrongReads(addressInformations, ReadQuorumResultKind.QuorumNotSelected);
 
             // create a real session container - we don't need session for this test anyway
             SessionContainer sessionContainer = new SessionContainer(StringUtils.EMPTY);

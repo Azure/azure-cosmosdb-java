@@ -36,12 +36,11 @@ import com.microsoft.azure.cosmosdb.rx.internal.Configs;
 import com.microsoft.azure.cosmosdb.rx.internal.DocumentServiceRequestContext;
 import com.microsoft.azure.cosmosdb.rx.internal.IAuthorizationTokenProvider;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
+import io.reactivex.subscribers.TestSubscriber;
 import org.mockito.Mockito;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import reactor.core.publisher.Mono;
-import rx.Single;
-import rx.observers.TestSubscriber;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -650,12 +649,12 @@ public class QuorumReaderTest {
                                        long timeout) {
         TestSubscriber<List<StoreResult>> testSubscriber = new TestSubscriber<>();
 
-        single.flux().subscribe(testSubscriber);
+        single.subscribe(testSubscriber);
         testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
         testSubscriber.assertNoErrors();
-        testSubscriber.assertCompleted();
+        testSubscriber.assertComplete();
         testSubscriber.assertValueCount(1);
-        validator.validate(testSubscriber.getOnNextEvents().get(0));
+        validator.validate((List<StoreResult>) testSubscriber.getEvents().get(0).get(0));
     }
 
     public static void validateSuccess(Mono<StoreResponse> single,
@@ -668,11 +667,11 @@ public class QuorumReaderTest {
                                        long timeout) {
         TestSubscriber<StoreResponse> testSubscriber = new TestSubscriber<>();
 
-        single.toObservable().subscribe(testSubscriber);
+        single.subscribe(testSubscriber);
         testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
         testSubscriber.assertNoErrors();
-        testSubscriber.assertCompleted();
+        testSubscriber.assertComplete();
         testSubscriber.assertValueCount(1);
-        validator.validate(testSubscriber.getOnNextEvents().get(0));
+        validator.validate((StoreResponse) testSubscriber.getEvents().get(0).get(0));
     }
 }

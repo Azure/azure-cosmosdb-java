@@ -34,12 +34,11 @@ import com.microsoft.azure.cosmosdb.rx.FailureValidator;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpRequest;
 import io.netty.handler.timeout.ReadTimeoutException;
+import io.reactivex.subscribers.TestSubscriber;
 import org.mockito.Mockito;
 import org.testng.annotations.Test;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import rx.Observable;
-import rx.observers.TestSubscriber;
 
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
@@ -91,12 +90,12 @@ public class RxGatewayStoreModelTest {
                                        FailureValidator validator,
                                        long timeout) {
         TestSubscriber<RxDocumentServiceResponse> testSubscriber = new TestSubscriber<>();
-
         observable.subscribe(testSubscriber);
+        observable.subscribe();
         testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
-        testSubscriber.assertNotCompleted();
-        testSubscriber.assertTerminalEvent();
-        assertThat(testSubscriber.getOnErrorEvents()).hasSize(1);
-        validator.validate(testSubscriber.getOnErrorEvents().get(0));
+        testSubscriber.assertNotComplete();
+        testSubscriber.assertTerminated();
+        assertThat(testSubscriber.errorCount()).isEqualTo(1);
+        validator.validate(testSubscriber.errors().get(0));
     }
 }

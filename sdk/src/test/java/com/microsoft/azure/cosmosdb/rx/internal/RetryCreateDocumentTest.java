@@ -38,16 +38,15 @@ import com.microsoft.azure.cosmosdb.rx.FailureValidator;
 import com.microsoft.azure.cosmosdb.rx.ResourceResponseValidator;
 import com.microsoft.azure.cosmosdb.rx.TestSuiteBase;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
+import reactor.core.publisher.Flux;
 import rx.Observable;
 
-import javax.net.ssl.SSLException;
 import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.UUID;
@@ -80,24 +79,21 @@ public class RetryCreateDocumentTest extends TestSuiteBase {
                 .createDocument(collection.getSelfLink(), docDefinition, null, false);
         AtomicInteger count = new AtomicInteger();
 
-        doAnswer(new Answer< Observable<RxDocumentServiceResponse>>() {
-            @Override
-            public Observable<RxDocumentServiceResponse> answer(InvocationOnMock invocation) throws Throwable {
-                RxDocumentServiceRequest req = (RxDocumentServiceRequest) invocation.getArguments()[0];
-                if (req.getOperationType() != OperationType.Create) {
-                    return client.getOrigGatewayStoreModel().processMessage(req);
-                }
+        doAnswer((Answer<Flux<RxDocumentServiceResponse>>) invocation -> {
+            RxDocumentServiceRequest req = (RxDocumentServiceRequest) invocation.getArguments()[0];
+            if (req.getOperationType() != OperationType.Create) {
+                return client.getOrigGatewayStoreModel().processMessage(req);
+            }
 
-                int currentAttempt = count.getAndIncrement();
-                if (currentAttempt == 0) {
-                    Map<String, String> header = ImmutableMap.of(
-                            HttpConstants.HttpHeaders.SUB_STATUS,
-                            Integer.toString(HttpConstants.SubStatusCodes.PARTITION_KEY_MISMATCH));          
+            int currentAttempt = count.getAndIncrement();
+            if (currentAttempt == 0) {
+                Map<String, String> header = ImmutableMap.of(
+                        HttpConstants.HttpHeaders.SUB_STATUS,
+                        Integer.toString(HttpConstants.SubStatusCodes.PARTITION_KEY_MISMATCH));
 
-                    return Observable.error(new DocumentClientException(HttpConstants.StatusCodes.BADREQUEST, new Error() , header));
-                } else {
-                    return client.getOrigGatewayStoreModel().processMessage(req);
-                }
+                return Flux.error(new DocumentClientException(HttpConstants.StatusCodes.BADREQUEST, new Error() , header));
+            } else {
+                return client.getOrigGatewayStoreModel().processMessage(req);
             }
         }).when(client.getSpyGatewayStoreModel()).processMessage(anyObject());
 
@@ -111,25 +107,22 @@ public class RetryCreateDocumentTest extends TestSuiteBase {
     public void createDocument_noRetryOnNonRetriableFailure() throws Exception {
 
         AtomicInteger count = new AtomicInteger();
-        doAnswer(new Answer< Observable<RxDocumentServiceResponse>>() {
-            @Override
-            public Observable<RxDocumentServiceResponse> answer(InvocationOnMock invocation) throws Throwable {
-                RxDocumentServiceRequest req = (RxDocumentServiceRequest) invocation.getArguments()[0];
+        doAnswer((Answer<Flux<RxDocumentServiceResponse>>) invocation -> {
+            RxDocumentServiceRequest req = (RxDocumentServiceRequest) invocation.getArguments()[0];
 
-                if (req.getResourceType() != ResourceType.Document) {
-                    return client.getOrigGatewayStoreModel().processMessage(req);
-                }
+            if (req.getResourceType() != ResourceType.Document) {
+                return client.getOrigGatewayStoreModel().processMessage(req);
+            }
 
-                int currentAttempt = count.getAndIncrement();
-                if (currentAttempt == 0) {
-                    return client.getOrigGatewayStoreModel().processMessage(req);
-                } else {
-                    Map<String, String> header = ImmutableMap.of(
-                            HttpConstants.HttpHeaders.SUB_STATUS,
-                            Integer.toString(2));          
+            int currentAttempt = count.getAndIncrement();
+            if (currentAttempt == 0) {
+                return client.getOrigGatewayStoreModel().processMessage(req);
+            } else {
+                Map<String, String> header = ImmutableMap.of(
+                        HttpConstants.HttpHeaders.SUB_STATUS,
+                        Integer.toString(2));
 
-                    return Observable.error(new DocumentClientException(1, new Error() , header));
-                }
+                return Flux.error(new DocumentClientException(1, new Error() , header));
             }
         }).when(client.getSpyGatewayStoreModel()).processMessage(anyObject());
 
@@ -154,23 +147,20 @@ public class RetryCreateDocumentTest extends TestSuiteBase {
         client.createDocument(collection.getSelfLink(),  getDocumentDefinition(), null, false).toBlocking().single();
         AtomicInteger count = new AtomicInteger();
 
-        doAnswer(new Answer< Observable<RxDocumentServiceResponse>>() {
-            @Override
-            public Observable<RxDocumentServiceResponse> answer(InvocationOnMock invocation) throws Throwable {
-                RxDocumentServiceRequest req = (RxDocumentServiceRequest) invocation.getArguments()[0];
-                if (req.getOperationType() != OperationType.Create) {
-                    return client.getOrigGatewayStoreModel().processMessage(req);
-                }
-                int currentAttempt = count.getAndIncrement();
-                if (currentAttempt == 0) {
-                    Map<String, String> header = ImmutableMap.of(
-                            HttpConstants.HttpHeaders.SUB_STATUS,
-                            Integer.toString(2));          
+        doAnswer((Answer<Flux<RxDocumentServiceResponse>>) invocation -> {
+            RxDocumentServiceRequest req = (RxDocumentServiceRequest) invocation.getArguments()[0];
+            if (req.getOperationType() != OperationType.Create) {
+                return client.getOrigGatewayStoreModel().processMessage(req);
+            }
+            int currentAttempt = count.getAndIncrement();
+            if (currentAttempt == 0) {
+                Map<String, String> header = ImmutableMap.of(
+                        HttpConstants.HttpHeaders.SUB_STATUS,
+                        Integer.toString(2));
 
-                    return Observable.error(new DocumentClientException(1, new Error() , header));
-                } else {
-                    return client.getOrigGatewayStoreModel().processMessage(req);
-                }
+                return Flux.error(new DocumentClientException(1, new Error() , header));
+            } else {
+                return client.getOrigGatewayStoreModel().processMessage(req);
             }
         }).when(client.getSpyGatewayStoreModel()).processMessage(anyObject());
 

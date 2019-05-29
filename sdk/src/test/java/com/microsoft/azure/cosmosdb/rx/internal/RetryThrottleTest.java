@@ -23,32 +23,12 @@
 
 package com.microsoft.azure.cosmosdb.rx.internal;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
-import static org.mockito.Matchers.anyObject;
-import static org.mockito.Mockito.doAnswer;
-
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import com.microsoft.azure.cosmosdb.ConnectionPolicy;
 import com.microsoft.azure.cosmosdb.ConsistencyLevel;
 import com.microsoft.azure.cosmosdb.Database;
 import com.microsoft.azure.cosmosdb.Document;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
-import com.microsoft.azure.cosmosdb.RequestOptions;
 import com.microsoft.azure.cosmosdb.ResourceResponse;
 import com.microsoft.azure.cosmosdb.RetryOptions;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
@@ -58,8 +38,22 @@ import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import com.microsoft.azure.cosmosdb.rx.ResourceResponseValidator;
 import com.microsoft.azure.cosmosdb.rx.TestConfigurations;
 import com.microsoft.azure.cosmosdb.rx.TestSuiteBase;
-
+import org.mockito.stubbing.Answer;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+import reactor.core.publisher.Flux;
 import rx.Observable;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Matchers.anyObject;
+import static org.mockito.Mockito.doAnswer;
 
 public class RetryThrottleTest extends TestSuiteBase {
     private final static int TIMEOUT = 10000;
@@ -99,16 +93,13 @@ public class RetryThrottleTest extends TestSuiteBase {
         AtomicInteger totalCount = new AtomicInteger();
         AtomicInteger successCount = new AtomicInteger();
 
-        doAnswer(new Answer< Observable<RxDocumentServiceResponse>>() {
-            @Override
-            public Observable<RxDocumentServiceResponse> answer(InvocationOnMock invocation) throws Throwable {
-                RxDocumentServiceRequest req = (RxDocumentServiceRequest) invocation.getArguments()[0];
-                if (req.getResourceType() ==  ResourceType.Document && req.getOperationType() == OperationType.Create) {
-                    // increment the counter per Document Create operations
-                    totalCount.incrementAndGet();
-                }
-                return client.getOrigGatewayStoreModel().processMessage(req).doOnNext(rsp -> successCount.incrementAndGet());
+        doAnswer((Answer<Flux<RxDocumentServiceResponse>>) invocation -> {
+            RxDocumentServiceRequest req = (RxDocumentServiceRequest) invocation.getArguments()[0];
+            if (req.getResourceType() ==  ResourceType.Document && req.getOperationType() == OperationType.Create) {
+                // increment the counter per Document Create operations
+                totalCount.incrementAndGet();
             }
+            return client.getOrigGatewayStoreModel().processMessage(req).doOnNext(rsp -> successCount.incrementAndGet());
         }).when(client.getSpyGatewayStoreModel()).processMessage(anyObject());
 
         List<ResourceResponse<Document>> rsps = Observable.merge(list, 100).toList().toSingle().toBlocking().value();
@@ -131,19 +122,16 @@ public class RetryThrottleTest extends TestSuiteBase {
                 .createDocument(collection.getSelfLink(), docDefinition, null, false);
         AtomicInteger count = new AtomicInteger();
 
-        doAnswer(new Answer< Observable<RxDocumentServiceResponse>>() {
-            @Override
-            public Observable<RxDocumentServiceResponse> answer(InvocationOnMock invocation) throws Throwable {
-                RxDocumentServiceRequest req = (RxDocumentServiceRequest) invocation.getArguments()[0];
-                if (req.getOperationType() != OperationType.Create) {
-                    return client.getOrigGatewayStoreModel().processMessage(req);
-                }
-                int currentAttempt = count.getAndIncrement();
-                if (currentAttempt == 0) {
-                    return Observable.error(new DocumentClientException(HttpConstants.StatusCodes.TOO_MANY_REQUESTS));
-                } else {
-                    return client.getOrigGatewayStoreModel().processMessage(req);
-                }
+        doAnswer((Answer<Flux<RxDocumentServiceResponse>>) invocation -> {
+            RxDocumentServiceRequest req = (RxDocumentServiceRequest) invocation.getArguments()[0];
+            if (req.getOperationType() != OperationType.Create) {
+                return client.getOrigGatewayStoreModel().processMessage(req);
+            }
+            int currentAttempt = count.getAndIncrement();
+            if (currentAttempt == 0) {
+                return Flux.error(new DocumentClientException(HttpConstants.StatusCodes.TOO_MANY_REQUESTS));
+            } else {
+                return client.getOrigGatewayStoreModel().processMessage(req);
             }
         }).when(client.getSpyGatewayStoreModel()).processMessage(anyObject());
 

@@ -24,6 +24,7 @@
 package com.microsoft.azure.cosmosdb.rx.internal.directconnectivity;
 
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.HttpTransportClient;
+import com.microsoft.azure.cosmosdb.internal.directconnectivity.ReactorTransportClient;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.ServerStoreModel;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.StoreClient;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.TransportClient;
@@ -67,9 +68,9 @@ public class ReflectionUtils {
         return get(StoreClient.class, serverStoreModel, "storeClient");
     }
 
-    public static TransportClient getTransportClient(RxDocumentClientImpl client) {
+    public static ReactorTransportClient getTransportClient(RxDocumentClientImpl client) {
         StoreClient storeClient = getStoreClient(client);
-        return get(TransportClient.class, storeClient, "transportClient");
+        return get(ReactorTransportClient.class, storeClient, "transportClient");
     }
 
     public static void setTransportClient(RxDocumentClientImpl client, TransportClient transportClient) {
@@ -78,13 +79,13 @@ public class ReflectionUtils {
     }
 
     public static HttpClient getDirectHttpsHttpClient(RxDocumentClientImpl client) {
-        TransportClient transportClient = getTransportClient(client);
+        ReactorTransportClient transportClient = getTransportClient(client);
         assert transportClient instanceof HttpTransportClient;
         return get(HttpClient.class, transportClient, "httpClient");
     }
 
     public static void setDirectHttpsHttpClient(RxDocumentClientImpl client, HttpClient newHttpClient) {
-        TransportClient transportClient = getTransportClient(client);
+        ReactorTransportClient transportClient = getTransportClient(client);
         assert transportClient instanceof HttpTransportClient;
         set(transportClient, newHttpClient, "httpClient");
     }

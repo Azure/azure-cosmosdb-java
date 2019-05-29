@@ -41,11 +41,11 @@ import com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpRequest;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpResponse;
 import io.netty.channel.ConnectTimeoutException;
+import io.reactivex.subscribers.TestSubscriber;
 import org.assertj.core.api.Assertions;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-import rx.Single;
-import rx.observers.TestSubscriber;
+import reactor.core.publisher.Mono;
 
 import java.net.URI;
 import java.net.UnknownHostException;
@@ -145,9 +145,7 @@ public class HttpTransportClientTest {
                 OperationType.Create, "dbs/db/colls/col", ResourceType.Document);
         request.setContentBytes(new byte[0]);
 
-        transportClient.invokeStoreAsync(physicalAddress,
-                new ResourceOperation(OperationType.Create, ResourceType.Document),
-                request).toBlocking().value();
+        transportClient.invokeStoreAsync(physicalAddress, request).block();
 
         assertThat(httpClientMockWrapper.getCapturedInvocation()).asList().hasSize(1);
         HttpRequest httpRequest = httpClientMockWrapper.getCapturedInvocation().get(0);
@@ -464,9 +462,8 @@ public class HttpTransportClientTest {
                 OperationType.Create, "dbs/db/colls/col", ResourceType.Document);
         request.setContentBytes(new byte[0]);
 
-        Single<StoreResponse> storeResp = transportClient.invokeStoreAsync(
+        Mono<StoreResponse> storeResp = transportClient.invokeStoreAsync(
                 physicalAddress,
-                new ResourceOperation(OperationType.Create, ResourceType.Document),
                 request);
 
         validateFailure(storeResp, failureValidatorBuilder.build());
@@ -573,9 +570,8 @@ public class HttpTransportClientTest {
                 userAgentContainer,
                 httpClientMockWrapper.getClient());
 
-        Single<StoreResponse> storeResp = transportClient.invokeStoreAsync(
+        Mono<StoreResponse> storeResp = transportClient.invokeStoreAsync(
                 physicalAddress,
-                new ResourceOperation(OperationType.Create, ResourceType.Document),
                 request);
 
         validateFailure(storeResp, failureValidatorBuilder.build());
@@ -603,36 +599,36 @@ public class HttpTransportClientTest {
         return req;
     }
 
-    public void validateSuccess(Single<StoreResponse> single, StoreResponseValidator validator) {
+    public void validateSuccess(Mono<StoreResponse> single, StoreResponseValidator validator) {
         validateSuccess(single, validator, TIMEOUT);
     }
 
-    public static void validateSuccess(Single<StoreResponse> single,
+    public static void validateSuccess(Mono<StoreResponse> single,
                                        StoreResponseValidator validator, long timeout) {
 
         TestSubscriber<StoreResponse> testSubscriber = new TestSubscriber<>();
-        single.toObservable().subscribe(testSubscriber);
+        single.subscribe(testSubscriber);
         testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
         testSubscriber.assertNoErrors();
-        testSubscriber.assertCompleted();
+        testSubscriber.assertComplete();
         testSubscriber.assertValueCount(1);
-        validator.validate(testSubscriber.getOnNextEvents().get(0));
+        validator.validate((StoreResponse) testSubscriber.getEvents().get(0).get(0));
     }
 
-    public void validateFailure(Single<StoreResponse> single,
+    public void validateFailure(Mono<StoreResponse> single,
                                 FailureValidator validator) {
         validateFailure(single, validator, TIMEOUT);
     }
 
-    public static void validateFailure(Single<StoreResponse> single,
+    public static void validateFailure(Mono<StoreResponse> single,
                                        FailureValidator validator, long timeout) {
 
         TestSubscriber<StoreResponse> testSubscriber = new TestSubscriber<>();
-        single.toObservable().subscribe(testSubscriber);
+        single.subscribe(testSubscriber);
         testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
-        testSubscriber.assertNotCompleted();
-        testSubscriber.assertTerminalEvent();
-        Assertions.assertThat(testSubscriber.getOnErrorEvents()).hasSize(1);
-        validator.validate(testSubscriber.getOnErrorEvents().get(0));
+        testSubscriber.assertNotComplete();
+        testSubscriber.assertTerminated();
+        Assertions.assertThat(testSubscriber.errorCount()).isEqualTo(1);
+        validator.validate(testSubscriber.errors().get(0));
     }
 }

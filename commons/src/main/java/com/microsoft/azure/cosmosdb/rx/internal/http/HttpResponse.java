@@ -34,7 +34,7 @@ import java.nio.charset.Charset;
 /**
  * The type representing response of {@link HttpRequest}.
  */
-public abstract class HttpResponse implements Closeable {
+public abstract class HttpResponse implements AutoCloseable {
     private HttpRequest request;
 
     /**

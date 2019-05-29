@@ -95,9 +95,12 @@ import com.microsoft.azure.cosmosdb.rx.internal.query.DocumentQueryExecutionCont
 import com.microsoft.azure.cosmosdb.rx.internal.query.IDocumentQueryClient;
 import com.microsoft.azure.cosmosdb.rx.internal.query.IDocumentQueryExecutionContext;
 import com.microsoft.azure.cosmosdb.rx.internal.query.Paginator;
+import hu.akarnokd.rxjava.interop.RxJavaInterop;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.adapter.rxjava.RxJava2Adapter;
+import reactor.core.publisher.Flux;
 import rx.Observable;
 import rx.Single;
 import rx.functions.Func1;
@@ -731,27 +734,27 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
 
     private Observable<RxDocumentServiceResponse> delete(RxDocumentServiceRequest request) {
         populateHeaders(request, HttpConstants.HttpMethods.DELETE);
-        return getStoreProxy(request).processMessage(request);
+        return RxJavaInterop.toV1Observable(RxJava2Adapter.fluxToFlowable(getStoreProxy(request).processMessage(request)));
     }
 
     private Observable<RxDocumentServiceResponse> read(RxDocumentServiceRequest request) {
         populateHeaders(request, HttpConstants.HttpMethods.GET);
-        return getStoreProxy(request).processMessage(request);
+        return RxJavaInterop.toV1Observable(RxJava2Adapter.fluxToFlowable(getStoreProxy(request).processMessage(request)));
     }
 
     Observable<RxDocumentServiceResponse> readFeed(RxDocumentServiceRequest request) {
         populateHeaders(request, HttpConstants.HttpMethods.GET);
-        return gatewayProxy.processMessage(request);
+        return RxJavaInterop.toV1Observable(RxJava2Adapter.fluxToFlowable(gatewayProxy.processMessage(request)));
     }
 
     private Observable<RxDocumentServiceResponse> query(RxDocumentServiceRequest request) {
         populateHeaders(request, HttpConstants.HttpMethods.POST);
-        return this.getStoreProxy(request).processMessage(request)
+        return RxJavaInterop.toV1Observable(RxJava2Adapter.fluxToFlowable(this.getStoreProxy(request).processMessage(request)
                 .map(response -> {
                             this.captureSessionToken(request, response);
                             return response;
                         }
-                );
+                )));
     }
 
     @Override
@@ -1116,7 +1119,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
     private Observable<RxDocumentServiceResponse> create(RxDocumentServiceRequest request) {
         populateHeaders(request, HttpConstants.HttpMethods.POST);
         RxStoreModel storeProxy = this.getStoreProxy(request);
-        return storeProxy.processMessage(request);
+        return RxJavaInterop.toV1Observable(RxJava2Adapter.fluxToFlowable(storeProxy.processMessage(request)));
     }
 
     private Observable<RxDocumentServiceResponse> upsert(RxDocumentServiceRequest request) {
@@ -1130,17 +1133,17 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
         assert (headers != null);
         headers.put(HttpConstants.HttpHeaders.IS_UPSERT, "true");
 
-        return getStoreProxy(request).processMessage(request)
+        return RxJavaInterop.toV1Observable(RxJava2Adapter.fluxToFlowable(getStoreProxy(request).processMessage(request)
                 .map(response -> {
                             this.captureSessionToken(request, response);
                             return response;
                         }
-                );
+                )));
     }
 
     private Observable<RxDocumentServiceResponse> replace(RxDocumentServiceRequest request) {
         populateHeaders(request, HttpConstants.HttpMethods.PUT);
-        return getStoreProxy(request).processMessage(request);
+        return RxJavaInterop.toV1Observable(RxJava2Adapter.fluxToFlowable(getStoreProxy(request).processMessage(request)));
     }
 
     @Override
@@ -2339,8 +2342,8 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
         request.setIsMedia(true);
         // Media is strong consistent always -> no need of session handling
         populateHeaders(request, HttpConstants.HttpMethods.GET);
-        return gatewayProxy.processMessage(request).map(response ->
-                BridgeInternal.toMediaResponse(response, this.connectionPolicy.getMediaReadMode() == MediaReadMode.Buffered));
+        return RxJavaInterop.toV1Observable(RxJava2Adapter.fluxToFlowable(gatewayProxy.processMessage(request).map(response ->
+                BridgeInternal.toMediaResponse(response, this.connectionPolicy.getMediaReadMode() == MediaReadMode.Buffered))));
     }
 
     @Override
@@ -2367,8 +2370,8 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
 
         // Media is strong consistent always -> need of session handling
         populateHeaders(request, HttpConstants.HttpMethods.PUT);
-        return gatewayProxy.processMessage(request).map(response ->
-                BridgeInternal.toMediaResponse(response, this.connectionPolicy.getMediaReadMode() == MediaReadMode.Buffered));
+        return RxJavaInterop.toV1Observable(RxJava2Adapter.fluxToFlowable(gatewayProxy.processMessage(request).map(response ->
+                BridgeInternal.toMediaResponse(response, this.connectionPolicy.getMediaReadMode() == MediaReadMode.Buffered))));
     }
 
     @Override
@@ -3076,9 +3079,9 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
     }
 
     public Observable<DatabaseAccount> getDatabaseAccountFromEndpoint(URI endpoint) {
-        return Observable.defer(() -> {
+        return RxJavaInterop.toV1Observable(RxJava2Adapter.fluxToFlowable(Flux.defer(() -> {
             RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.Read,
-                    ResourceType.DatabaseAccount, "", (HashMap<String, String>) null, (Object) null);
+                    ResourceType.DatabaseAccount, "", null, (Object) null);
             this.populateHeaders(request, HttpConstants.HttpMethods.GET);
 
             request.setEndpointOverride(endpoint);
@@ -3093,7 +3096,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
                         this.useMultipleWriteLocations = this.connectionPolicy.isUsingMultipleWriteLocations()
                                 && BridgeInternal.isEnableMultipleWriteLocations(databaseAccount);
                     });
-        });
+        })));
     }
 
     /**

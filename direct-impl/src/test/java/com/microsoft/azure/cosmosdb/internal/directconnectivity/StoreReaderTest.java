@@ -41,15 +41,16 @@ import com.microsoft.azure.cosmosdb.rx.internal.PartitionIsMigratingException;
 import com.microsoft.azure.cosmosdb.rx.internal.PartitionKeyRangeIsSplittingException;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
 import com.microsoft.azure.cosmosdb.rx.internal.Utils;
+import hu.akarnokd.rxjava.interop.RxJavaInterop;
+import io.reactivex.subscribers.TestSubscriber;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import reactor.adapter.rxjava.RxJava2Adapter;
 import reactor.core.publisher.Mono;
-import rx.Single;
-import rx.observers.TestSubscriber;
 import rx.subjects.PublishSubject;
 
 import java.net.URI;
@@ -88,9 +89,9 @@ public class StoreReaderTest {
 
         Mockito.doAnswer(new Answer() {
             @Override
-            public Single<List<URI>> answer(InvocationOnMock invocationOnMock) throws Throwable {
+            public Mono<List<URI>> answer(InvocationOnMock invocationOnMock) throws Throwable {
 
-                return subject.toSingle().doOnSuccess(x -> c.countDown()).doAfterTerminate(() -> {
+                return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(subject.toSingle().doOnSuccess(x -> c.countDown()).doAfterTerminate(() -> {
                     new Thread() {
                         @Override
                         public void run() {
@@ -101,7 +102,7 @@ public class StoreReaderTest {
                             }
                         }
                     }.start();
-                });
+                })));
             }
         }).when(addressSelector).resolveAllUriAsync(Mockito.any(RxDocumentServiceRequest.class), Mockito.eq(true), Mockito.eq(true));
         RxDocumentServiceRequest request = Mockito.mock(RxDocumentServiceRequest.class);
@@ -192,9 +193,9 @@ public class StoreReaderTest {
         TestSubscriber<List<StoreResult>> subscriber = new TestSubscriber<>();
         res.subscribe(subscriber);
         subscriber.awaitTerminalEvent();
-        subscriber.assertNotCompleted();
-        assertThat(subscriber.getOnErrorEvents()).hasSize(1);
-        failureValidator.validate(subscriber.getOnErrorEvents().get(0));
+        subscriber.assertNotComplete();
+        assertThat(subscriber.errorCount()).isEqualTo(1);
+        failureValidator.validate(subscriber.errors().get(0));
     }
 
     /**
@@ -500,11 +501,11 @@ public class StoreReaderTest {
         request.requestContext.resolvedPartitionKeyRange = partitionKeyRangeWithId("12");
         request.requestContext.requestChargeTracker = new RequestChargeTracker();
 
-        Mockito.doReturn(Single.just(primaryURI)).when(addressSelector).resolvePrimaryUriAsync(
+        Mockito.doReturn(Mono.just(primaryURI)).when(addressSelector).resolvePrimaryUriAsync(
               Mockito.eq(request) , Mockito.eq(false));
 
         StoreResponse storeResponse = Mockito.mock(StoreResponse.class);
-        Mockito.doReturn(Single.just(storeResponse)).when(transportClient).invokeResourceOperationAsync(Mockito.eq(primaryURI), Mockito.eq(request));
+        Mockito.doReturn(Mono.just(storeResponse)).when(transportClient).invokeResourceOperationAsync(Mockito.eq(primaryURI), Mockito.eq(request));
 
         StoreReader storeReader = new StoreReader(transportClient, addressSelector, sessionContainer);
 
@@ -531,10 +532,10 @@ public class StoreReaderTest {
         request.requestContext.resolvedPartitionKeyRange = partitionKeyRangeWithId("12");
         request.requestContext.requestChargeTracker = new RequestChargeTracker();
 
-        Mockito.doReturn(Single.just(primaryURI)).when(addressSelector).resolvePrimaryUriAsync(
+        Mockito.doReturn(Mono.just(primaryURI)).when(addressSelector).resolvePrimaryUriAsync(
                 Mockito.eq(request) , Mockito.eq(false));
 
-        Mockito.doReturn(Single.error(ExceptionBuilder.create().asGoneException())).when(transportClient).invokeResourceOperationAsync(Mockito.eq(primaryURI), Mockito.eq(request));
+        Mockito.doReturn(Mono.error(ExceptionBuilder.create().asGoneException())).when(transportClient).invokeResourceOperationAsync(Mockito.eq(primaryURI), Mockito.eq(request));
         StoreReader storeReader = new StoreReader(transportClient, addressSelector, sessionContainer);
         Mono<StoreResult> readResult = storeReader.readPrimaryAsync(request, true, true);
 
@@ -559,11 +560,11 @@ public class StoreReaderTest {
         request.requestContext.resolvedPartitionKeyRange = partitionKeyRangeWithId("12");
         request.requestContext.requestChargeTracker = new RequestChargeTracker();
 
-        Mockito.doReturn(Single.just(primaryURI)).when(addressSelector).resolvePrimaryUriAsync(
+        Mockito.doReturn(Mono.just(primaryURI)).when(addressSelector).resolvePrimaryUriAsync(
                 Mockito.eq(request) , Mockito.eq(false));
 
         StoreResponse storeResponse = Mockito.mock(StoreResponse.class);
-        Mockito.doReturn(Single.just(storeResponse)).when(transportClient).invokeResourceOperationAsync(Mockito.eq(primaryURI), Mockito.eq(request));
+        Mockito.doReturn(Mono.just(storeResponse)).when(transportClient).invokeResourceOperationAsync(Mockito.eq(primaryURI), Mockito.eq(request));
 
         StoreReader storeReader = new StoreReader(transportClient, addressSelector, sessionContainer);
 
@@ -785,26 +786,26 @@ public class StoreReaderTest {
         single.flux().subscribe(testSubscriber);
         testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
         testSubscriber.assertNoErrors();
-        testSubscriber.assertCompleted();
+        testSubscriber.assertComplete();
         testSubscriber.assertValueCount(1);
-        validator.validate(testSubscriber.getOnNextEvents().get(0));
+        validator.validate((List<StoreResult>) testSubscriber.getEvents().get(0).get(0));
     }
 
-    public static void validateSuccess(Single<StoreResult> single,
+    public static void validateSuccess(Mono<StoreResult> single,
                                        StoreResultValidator validator) {
         validateSuccess(single, validator, 10000);
     }
 
-    public static void validateSuccess(Single<StoreResult> single,
+    public static void validateSuccess(Mono<StoreResult> single,
                                        StoreResultValidator validator, long timeout) {
         TestSubscriber<StoreResult> testSubscriber = new TestSubscriber<>();
 
-        single.toObservable().subscribe(testSubscriber);
+        single.subscribe(testSubscriber);
         testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
         testSubscriber.assertNoErrors();
-        testSubscriber.assertCompleted();
+        testSubscriber.assertComplete();
         testSubscriber.assertValueCount(1);
-        validator.validate(testSubscriber.getOnNextEvents().get(0));
+        validator.validate((StoreResult) testSubscriber.getEvents().get(0).get(0));
     }
 
     public static <T> void validateException(Mono<T> single,
@@ -813,10 +814,10 @@ public class StoreReaderTest {
 
         single.flux().subscribe(testSubscriber);
         testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
-        testSubscriber.assertNotCompleted();
-        testSubscriber.assertTerminalEvent();
-        assertThat(testSubscriber.getOnErrorEvents()).hasSize(1);
-        validator.validate(testSubscriber.getOnErrorEvents().get(0));
+        testSubscriber.assertNotComplete();
+        testSubscriber.assertTerminated();
+        assertThat(testSubscriber.errorCount()).isEqualTo(1);
+        validator.validate((Throwable) testSubscriber.getEvents().get(0).get(0));
     }
 
     public static <T> void validateException(Mono<T> single,
