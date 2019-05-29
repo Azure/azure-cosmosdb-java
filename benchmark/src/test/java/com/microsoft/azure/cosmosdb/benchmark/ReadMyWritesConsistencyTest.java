@@ -71,7 +71,7 @@ public class ReadMyWritesConsistencyTest {
     private final String numberOfOperationsAsString =
             System.getProperty("NUMBER_OF_OPERATIONS",
                                StringUtils.defaultString(Strings.emptyToNull(
-                                       System.getenv().get("NUMBER_OF_OPERATIONS")), Integer.toString(50_000)));
+                                       System.getenv().get("NUMBER_OF_OPERATIONS")), Integer.toString(400_000)));
     private Database database;
     private DocumentCollection collection;
 
