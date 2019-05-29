@@ -48,8 +48,6 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.BeforeClass;
@@ -238,6 +236,8 @@ public class AddressResolverTest {
         } catch (RuntimeException e) {
             throw (Exception) e.getCause();
         } finally {
+            logger.info("Collection cache refresh count {}", collectionCacheRefreshedCount);
+            logger.info("Collection cache refreshed {}", collectionCacheRefreshed);
             assertThat(collectionCacheRefreshed).isEqualTo(collectionCacheRefreshedCount).describedAs("collection cache refresh count mismath");
 
             assertThat(routingMapCacheRefreshed).isEqualTo(routingMapRefreshCount.values().stream().mapToInt(v -> v).sum()).describedAs("routing map cache refresh count mismath");
@@ -335,35 +335,32 @@ public class AddressResolverTest {
         MutableObject<DocumentCollection> currentCollection = new MutableObject(collectionBeforeRefresh);
         this.collectionCacheRefreshedCount = 0;
 
-        Mockito.doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                RxDocumentServiceRequest request = invocationOnMock.getArgumentAt(0, RxDocumentServiceRequest.class);
-                if (request.forceNameCacheRefresh && collectionAfterRefresh != null) {
-                    currentCollection.setValue(collectionAfterRefresh);
-                    AddressResolverTest.this.collectionCacheRefreshedCount++;
-                    request.forceNameCacheRefresh = false;
-                    return Single.just(currentCollection.getValue());
-                }
-
-                if (request.forceNameCacheRefresh && collectionAfterRefresh == null) {
-                    currentCollection.setValue(null);
-                    AddressResolverTest.this.collectionCacheRefreshedCount++;
-                    request.forceNameCacheRefresh = false;
-                    return Single.error(new NotFoundException());
-                }
-
-                if (!request.forceNameCacheRefresh && currentCollection.getValue() == null) {
-                    return Single.error(new NotFoundException());
-
-                }
-
-                if (!request.forceNameCacheRefresh && currentCollection.getValue() != null) {
-                    return Single.just(currentCollection.getValue());
-                }
-
-                return null;
+        Mockito.doAnswer(invocationOnMock -> {
+            RxDocumentServiceRequest request = invocationOnMock.getArgumentAt(0, RxDocumentServiceRequest.class);
+            if (request.forceNameCacheRefresh && collectionAfterRefresh != null) {
+                currentCollection.setValue(collectionAfterRefresh);
+                AddressResolverTest.this.collectionCacheRefreshedCount++;
+                request.forceNameCacheRefresh = false;
+                return Single.just(currentCollection.getValue());
             }
+
+            if (request.forceNameCacheRefresh && collectionAfterRefresh == null) {
+                currentCollection.setValue(null);
+                AddressResolverTest.this.collectionCacheRefreshedCount++;
+                request.forceNameCacheRefresh = false;
+                return Single.error(new NotFoundException());
+            }
+
+            if (!request.forceNameCacheRefresh && currentCollection.getValue() == null) {
+                return Single.error(new NotFoundException());
+
+            }
+
+            if (!request.forceNameCacheRefresh && currentCollection.getValue() != null) {
+                return Single.just(currentCollection.getValue());
+            }
+
+            return null;
         }).when(this.collectionCache).resolveCollectionAsync(Mockito.any(RxDocumentServiceRequest.class));
 
         // Routing map cache
@@ -371,53 +368,47 @@ public class AddressResolverTest {
             new HashMap<>(routingMapBeforeRefresh);
         this.routingMapRefreshCount = new HashMap<>();
 
-        Mockito.doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                String collectionRid = invocationOnMock.getArgumentAt(0, String.class);
-                CollectionRoutingMap previousValue = invocationOnMock.getArgumentAt(1, CollectionRoutingMap.class);
+        Mockito.doAnswer(invocationOnMock -> {
+            String collectionRid = invocationOnMock.getArgumentAt(0, String.class);
+            CollectionRoutingMap previousValue = invocationOnMock.getArgumentAt(1, CollectionRoutingMap.class);
 
-                return collectionRoutingMapCache.tryLookupAsync(collectionRid, previousValue, false, null);
-            }
+            return collectionRoutingMapCache.tryLookupAsync(collectionRid, previousValue, false, null);
         }).when(this.collectionRoutingMapCache).tryLookupAsync(Mockito.anyString(), Mockito.any(CollectionRoutingMap.class), Mockito.anyMap());
 
         // Refresh case
-        Mockito.doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                String collectionRid = invocationOnMock.getArgumentAt(0, String.class);
-                CollectionRoutingMap previousValue = invocationOnMock.getArgumentAt(1, CollectionRoutingMap.class);
+        Mockito.doAnswer(invocationOnMock -> {
+            String collectionRid = invocationOnMock.getArgumentAt(0, String.class);
+            CollectionRoutingMap previousValue = invocationOnMock.getArgumentAt(1, CollectionRoutingMap.class);
 
-                if (previousValue == null) {
-                    return Single.just(currentRoutingMap.containsKey(collectionRid) ? currentRoutingMap.get(collectionRid) : null);
-                }
-
-                if (previousValue != null && currentRoutingMap.containsKey(previousValue.getCollectionUniqueId()) &&
-                    currentRoutingMap.get(previousValue.getCollectionUniqueId()) == previousValue) {
-
-
-                    if (previousValue != null && previousValue.getCollectionUniqueId() != collectionRid) {
-                        throw new RuntimeException("InvalidOperation");
-                    }
-
-                    if (routingMapAfterRefresh.containsKey(collectionRid)) {
-                        currentRoutingMap.put(collectionRid, routingMapAfterRefresh.get(collectionRid));
-                    } else {
-                        currentRoutingMap.remove(collectionRid);
-                    }
-
-                    if (!routingMapRefreshCount.containsKey(collectionRid)) {
-                        routingMapRefreshCount.put(collectionRid, 1);
-                    } else {
-                        routingMapRefreshCount.put(collectionRid, routingMapRefreshCount.get(collectionRid) + 1);
-                    }
-
-
-                    return Single.just(currentRoutingMap.containsKey(collectionRid) ? currentRoutingMap.get(collectionRid) : null);
-                }
-
-                return Single.error(new NotImplementedException("not mocked"));
+            if (previousValue == null) {
+                return Single.just(currentRoutingMap.containsKey(collectionRid) ? currentRoutingMap.get(collectionRid) : null);
             }
+
+            if (previousValue != null && currentRoutingMap.containsKey(previousValue.getCollectionUniqueId()) &&
+                currentRoutingMap.get(previousValue.getCollectionUniqueId()) == previousValue) {
+
+
+                if (previousValue != null && previousValue.getCollectionUniqueId() != collectionRid) {
+                    throw new RuntimeException("InvalidOperation");
+                }
+
+                if (routingMapAfterRefresh.containsKey(collectionRid)) {
+                    currentRoutingMap.put(collectionRid, routingMapAfterRefresh.get(collectionRid));
+                } else {
+                    currentRoutingMap.remove(collectionRid);
+                }
+
+                if (!routingMapRefreshCount.containsKey(collectionRid)) {
+                    routingMapRefreshCount.put(collectionRid, 1);
+                } else {
+                    routingMapRefreshCount.put(collectionRid, routingMapRefreshCount.get(collectionRid) + 1);
+                }
+
+
+                return Single.just(currentRoutingMap.containsKey(collectionRid) ? currentRoutingMap.get(collectionRid) : null);
+            }
+
+            return Single.error(new NotImplementedException("not mocked"));
         }).when(this.collectionRoutingMapCache).tryLookupAsync(Mockito.anyString(), Mockito.any(CollectionRoutingMap.class), Mockito.anyBoolean(), Mockito.anyMap());
 
 
@@ -427,43 +418,40 @@ public class AddressResolverTest {
         this.addressesRefreshCount = new HashMap<>();
 
         // No refresh case
-        Mockito.doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocationOnMock) throws Exception {
-                RxDocumentServiceRequest request = invocationOnMock.getArgumentAt(0, RxDocumentServiceRequest.class);
-                PartitionKeyRangeIdentity pkri = invocationOnMock.getArgumentAt(1, PartitionKeyRangeIdentity.class);
-                Boolean forceRefresh = invocationOnMock.getArgumentAt(2, Boolean.class);
+        //
+        Mockito.doAnswer(invocationOnMock -> {
+            RxDocumentServiceRequest request = invocationOnMock.getArgumentAt(0, RxDocumentServiceRequest.class);
+            PartitionKeyRangeIdentity pkri = invocationOnMock.getArgumentAt(1, PartitionKeyRangeIdentity.class);
+            Boolean forceRefresh = invocationOnMock.getArgumentAt(2, Boolean.class);
 
-                if (!forceRefresh) {
-                    return Single.just(currentAddresses.get(findMatchingServiceIdentity(currentAddresses, pkri)));
+            if (!forceRefresh) {
+                return Single.just(currentAddresses.get(findMatchingServiceIdentity(currentAddresses, pkri)));
+            } else {
+
+                ServiceIdentity si;
+
+                if ((si = findMatchingServiceIdentity(addressesAfterRefresh, pkri)) != null) {
+                    currentAddresses.put(si, addressesAfterRefresh.get(si));
                 } else {
 
-                    ServiceIdentity si;
-
-                    if ((si = findMatchingServiceIdentity(addressesAfterRefresh, pkri)) != null) {
-                        currentAddresses.put(si, addressesAfterRefresh.get(si));
-                    } else {
-
-                        si = findMatchingServiceIdentity(currentAddresses, pkri);
-                        currentAddresses.remove(si);
-                    }
-
-                    if (si == null) {
-                        si = ServiceIdentity.dummyInstance;
-                    }
-
-                    if (!addressesRefreshCount.containsKey(si)) {
-                        addressesRefreshCount.put(si, 1);
-                    } else {
-                        addressesRefreshCount.put(si, addressesRefreshCount.get(si) + 1);
-                    }
-
-
-                    // TODO: what to return in this case if it is null!!
-                    return Single.just(currentAddresses.containsKey(si) ? currentAddresses.get(si) : null);
+                    si = findMatchingServiceIdentity(currentAddresses, pkri);
+                    currentAddresses.remove(si);
                 }
+
+                if (si == null) {
+                    si = ServiceIdentity.dummyInstance;
+                }
+
+                if (!addressesRefreshCount.containsKey(si)) {
+                    addressesRefreshCount.put(si, 1);
+                } else {
+                    addressesRefreshCount.put(si, addressesRefreshCount.get(si) + 1);
+                }
+
+
+                // TODO: what to return in this case if it is null!!
+                return Single.just(currentAddresses.containsKey(si) ? currentAddresses.get(si) : null);
             }
-            //
         }).when(fabricAddressCache).tryGetAddresses(Mockito.any(RxDocumentServiceRequest.class), Mockito.any(PartitionKeyRangeIdentity.class), Mockito.anyBoolean());
     }
 

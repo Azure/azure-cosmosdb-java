@@ -266,7 +266,7 @@ public class AddressResolver implements IAddressResolver {
                     logger.info(
                         "Could not resolve addresses for identity {}/{}. Potentially collection cache or routing map cache is outdated. Return null - upper logic will refresh and retry. ",
                         new PartitionKeyRangeIdentity(collection.getResourceId(), range.getId()));
-                    return Mono.just(null);
+                    return Mono.empty();
                 }
 
                 return Mono.just(new ResolutionResult(range, addresses));
@@ -295,7 +295,7 @@ public class AddressResolver implements IAddressResolver {
         // So we route request to the first partition. If this is non-partitioned collection - request will succeed.
         // If it is partitioned collection - backend will return bad request as partition key header is required in this case.
         if (routingMap.getOrderedPartitionKeyRanges().size() == 1) {
-            return (PartitionKeyRange) routingMap.getOrderedPartitionKeyRanges().get(0);
+            return routingMap.getOrderedPartitionKeyRanges().get(0);
         }
 
         if (collectionCacheIsUptoDate) {
@@ -472,8 +472,7 @@ public class AddressResolver implements IAddressResolver {
                         return addCollectionRidIfNameBased.call(result);
                     }
 
-                    // result is null:
-                    assert result == null;
+                    // result is null
 
                     Func1<RefreshState, Mono<RefreshState>> ensureCollectionRoutingMapCacheIsUptoDateFunc = funcState -> {
                         if (!funcState.collectionRoutingMapCacheIsUptoDate) {
@@ -580,7 +579,7 @@ public class AddressResolver implements IAddressResolver {
 
     private <T> Mono<T> returnOrError(Callable<T> function) {
         try {
-            return Mono.just(function.call());
+            return Mono.justOrEmpty(function.call());
         } catch (Exception e) {
             return Mono.error(e);
         }
@@ -611,7 +610,7 @@ public class AddressResolver implements IAddressResolver {
                 logger.debug("Cannot resolve addresses for range '{}'", request.getPartitionKeyRangeIdentity().toHeader());
 
                 try {
-                    return Mono.just(this.handleRangeAddressResolutionFailure(request, collectionCacheIsUpToDate, routingMapCacheIsUpToDate, routingMap));
+                    return Mono.justOrEmpty(this.handleRangeAddressResolutionFailure(request, collectionCacheIsUpToDate, routingMapCacheIsUpToDate, routingMap));
                 } catch (DocumentClientException e) {
                     return Mono.error(e);
                 }

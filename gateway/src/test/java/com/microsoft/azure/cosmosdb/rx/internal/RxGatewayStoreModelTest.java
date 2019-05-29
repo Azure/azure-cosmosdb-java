@@ -91,7 +91,6 @@ public class RxGatewayStoreModelTest {
                                        long timeout) {
         TestSubscriber<RxDocumentServiceResponse> testSubscriber = new TestSubscriber<>();
         observable.subscribe(testSubscriber);
-        observable.subscribe();
         testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
         testSubscriber.assertNotComplete();
         testSubscriber.assertTerminated();
