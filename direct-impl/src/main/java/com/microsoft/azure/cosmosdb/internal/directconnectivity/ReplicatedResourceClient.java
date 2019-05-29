@@ -132,9 +132,7 @@ public class ReplicatedResourceClient {
         Function<Quadruple<Boolean, Boolean, Duration, Integer>, Mono<StoreResponse>> funcDelegate = (
                 Quadruple<Boolean, Boolean, Duration, Integer> forceRefreshAndTimeout) -> {
             if (prepareRequestAsyncDelegate != null) {
-                return prepareRequestAsyncDelegate.apply(request).flatMap(responseReq -> {
-                    return mainFuncDelegate.apply(forceRefreshAndTimeout, responseReq);
-                });
+                return prepareRequestAsyncDelegate.apply(request).flatMap(responseReq -> mainFuncDelegate.apply(forceRefreshAndTimeout, responseReq));
             } else {
                 return mainFuncDelegate.apply(forceRefreshAndTimeout, request);
             }

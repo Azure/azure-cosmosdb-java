@@ -77,7 +77,7 @@ public class AddressSelector {
         if (primaryAddress == null) {
             // Primary endpoint (of the desired protocol) was not found.
             throw new GoneException(String.format("The requested resource is no longer available at the server. Returned addresses are {%s}",
-                String.join(",", replicaAddresses.stream().map(address -> address.getPhysicalUri()).collect(Collectors.toList()))), null);
+                    replicaAddresses.stream().map(AddressInformation::getPhysicalUri).collect(Collectors.joining(","))), null);
         }
 
         return HttpUtils.toURI(primaryAddress.getPhysicalUri());
@@ -87,9 +87,7 @@ public class AddressSelector {
         Mono<List<AddressInformation>> resolvedAddressesObs =
             (this.addressResolver.resolveAsync(request, forceAddressRefresh))
                 .map(addresses -> Arrays.stream(addresses)
-                    .filter(address -> {
-                        return !Strings.isNullOrEmpty(address.getPhysicalUri()) && Strings.areEqualIgnoreCase(address.getProtocolScheme(), this.protocol.scheme());
-                    })
+                    .filter(address -> !Strings.isNullOrEmpty(address.getPhysicalUri()) && Strings.areEqualIgnoreCase(address.getProtocolScheme(), this.protocol.scheme()))
                     .collect(Collectors.toList()));
 
         return resolvedAddressesObs.map(
@@ -98,7 +96,7 @@ public class AddressSelector {
                 if (r.size() > 0) {
                     return r;
                 } else {
-                    return resolvedAddresses.stream().filter(address -> address.isPublic()).collect(Collectors.toList());
+                    return resolvedAddresses.stream().filter(AddressInformation::isPublic).collect(Collectors.toList());
                 }
             }
         );

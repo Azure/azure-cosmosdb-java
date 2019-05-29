@@ -817,7 +817,7 @@ public class StoreReaderTest {
         testSubscriber.assertNotComplete();
         testSubscriber.assertTerminated();
         assertThat(testSubscriber.errorCount()).isEqualTo(1);
-        validator.validate((Throwable) testSubscriber.getEvents().get(0).get(0));
+        validator.validate((Throwable) testSubscriber.getEvents().get(1).get(0));
     }
 
     public static <T> void validateException(Mono<T> single,

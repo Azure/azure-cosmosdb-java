@@ -139,9 +139,7 @@ public class StoreReader {
             } else {
                 return Mono.just(readQuorumResult.responses);
             }
-        }).flux().doAfterTerminate(() -> {
-            SessionTokenHelper.setOriginalSessionToken(entity, originalSessionToken);
-        }).single();
+        }).doAfterTerminate(() -> SessionTokenHelper.setOriginalSessionToken(entity, originalSessionToken)).single();
     }
 
     private Flux<ReadReplicaResult> earlyResultIfNotEnoughReplicas(List<URI> replicaAddresses,

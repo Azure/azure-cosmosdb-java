@@ -84,7 +84,7 @@ public class ReplicatedResourceClientTest {
         TestSubscriber<StoreResponse> testSubscriber = new TestSubscriber<>();
         single.subscribe(testSubscriber);
         testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
-        testSubscriber.assertComplete();
+        testSubscriber.assertNotComplete();
         testSubscriber.assertTerminated();
         Assertions.assertThat(testSubscriber.errorCount()).isEqualTo(1);
         validator.validate(testSubscriber.errors().get(0));
