@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.microsoft.azure.cosmos.CosmosItemSettings;
 import com.microsoft.azure.cosmosdb.BridgeInternal;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.microsoft.azure.cosmosdb.CompositePath;
@@ -240,13 +241,13 @@ public interface FeedResponseListValidator<T extends Resource> {
             return this;
         }
 
-        public Builder<T> withOrderedResults(ArrayList<Document> expectedOrderedList,
+        public Builder<T> withOrderedResults(ArrayList<CosmosItemSettings> expectedOrderedList,
                 ArrayList<CompositePath> compositeIndex) {
-            validators.add(new FeedResponseListValidator<Document>() {
+            validators.add(new FeedResponseListValidator<CosmosItemSettings>() {
                 @Override
-                public void validate(List<FeedResponse<Document>> feedList) {
+                public void validate(List<FeedResponse<CosmosItemSettings>> feedList) {
 
-                    List<Document> resultOrderedList = feedList.stream()
+                    List<CosmosItemSettings> resultOrderedList = feedList.stream()
                             .flatMap(f -> f.getResults().stream())
                             .collect(Collectors.toList());
                     assertThat(expectedOrderedList.size()).isEqualTo(resultOrderedList.size());

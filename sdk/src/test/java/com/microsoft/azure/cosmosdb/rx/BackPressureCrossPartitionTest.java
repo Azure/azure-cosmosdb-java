@@ -22,6 +22,7 @@
  */
 package com.microsoft.azure.cosmosdb.rx;
 
+import com.microsoft.azure.cosmos.BridgeInternal;
 import com.microsoft.azure.cosmos.CosmosClient;
 import com.microsoft.azure.cosmos.CosmosClient.Builder;
 import com.microsoft.azure.cosmos.CosmosContainer;
@@ -152,7 +153,7 @@ public class BackPressureCrossPartitionTest extends TestSuiteBase {
         options.setMaxDegreeOfParallelism(2);
         Flux<FeedResponse<CosmosItemSettings>> queryObservable = createdCollection.queryItems(query, options);
 
-        RxDocumentClientUnderTest rxClient = (RxDocumentClientUnderTest)ReflectionUtils.getAsyncDocumentClient(client);
+        RxDocumentClientUnderTest rxClient = (RxDocumentClientUnderTest)BridgeInternal.getAsyncDocumentClient(client);
         rxClient.httpRequests.clear();
 
         log.info("instantiating subscriber ...");

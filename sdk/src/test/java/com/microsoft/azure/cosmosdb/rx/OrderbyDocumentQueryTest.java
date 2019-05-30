@@ -44,6 +44,13 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
+import com.microsoft.azure.cosmos.BridgeInternal;
+import com.microsoft.azure.cosmos.CosmosBridgeInternal;
+import com.microsoft.azure.cosmos.CosmosClient;
+import com.microsoft.azure.cosmos.CosmosContainer;
+import com.microsoft.azure.cosmos.CosmosItemRequestOptions;
+import com.microsoft.azure.cosmos.CosmosItemResponse;
+import com.microsoft.azure.cosmos.CosmosItemSettings;
 import com.microsoft.azure.cosmosdb.Database;
 import com.microsoft.azure.cosmosdb.Document;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
@@ -58,22 +65,22 @@ import com.microsoft.azure.cosmosdb.rx.internal.Utils.ValueHolder;
 import com.microsoft.azure.cosmosdb.rx.internal.query.CompositeContinuationToken;
 import com.microsoft.azure.cosmosdb.rx.internal.query.OrderByContinuationToken;
 
+import reactor.core.publisher.Mono;
 import rx.Observable;
 import rx.observers.TestSubscriber;
 
 public class OrderbyDocumentQueryTest extends TestSuiteBase {
     private final double minQueryRequestChargePerPartition = 2.0;
 
-    private Database createdDatabase;
-    private DocumentCollection createdCollection;
-    private List<Document> createdDocuments = new ArrayList<>();
+    private CosmosContainer createdCollection;
+    private List<CosmosItemSettings> createdDocuments = new ArrayList<>();
 
-    private AsyncDocumentClient client;
+    private CosmosClient client;
 
     private int numberOfPartitions;
 
     @Factory(dataProvider = "clientBuildersWithDirect")
-    public OrderbyDocumentQueryTest(AsyncDocumentClient.Builder clientBuilder) {
+    public OrderbyDocumentQueryTest(CosmosClient.Builder clientBuilder) {
         this.clientBuilder = clientBuilder;
     }
 
@@ -417,31 +424,27 @@ public class OrderbyDocumentQueryTest extends TestSuiteBase {
 
     public Document createDocument(AsyncDocumentClient client, Map<String, Object> keyValueProps)
             throws DocumentClientException {
-        Document docDefinition = getDocumentDefinition(keyValueProps);
+        CosmosItemSettings docDefinition = getDocumentDefinition(keyValueProps);
         return client.createDocument(getCollectionLink(), docDefinition, null, false)
                 .toBlocking().single()
                 .getResource();
     }
 
-    public List<Document> bulkInsert(AsyncDocumentClient client, List<Map<String, Object>> keyValuePropsList) {
+    public List<CosmosItemSettings> bulkInsert(CosmosContainer cosmosContainer, List<Map<String, Object>> keyValuePropsList) {
 
-        ArrayList<Observable<ResourceResponse<Document>>> result = new ArrayList<Observable<ResourceResponse<Document>>>();
+        ArrayList<CosmosItemSettings> result = new ArrayList<CosmosItemSettings>();
 
         for(Map<String, Object> keyValueProps: keyValuePropsList) {
-            Document docDefinition = getDocumentDefinition(keyValueProps);
-            Observable<ResourceResponse<Document>> obs = client.createDocument(getCollectionLink(), docDefinition, null, false);
-            result.add(obs);
+            CosmosItemSettings docDefinition = getDocumentDefinition(keyValueProps);
+            result.add(docDefinition);
         }
 
-        return Observable.merge(result, 100).
-                map(resp -> resp.getResource())
-                .toList().toBlocking().single();
+        return bulkInsertBlocking(cosmosContainer, result);
     }
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() throws Exception {
         client = clientBuilder.build();
-        createdDatabase = SHARED_DATABASE;
         createdCollection = SHARED_MULTI_PARTITION_COLLECTION;
         truncateCollection(SHARED_MULTI_PARTITION_COLLECTION);
 
@@ -459,16 +462,16 @@ public class OrderbyDocumentQueryTest extends TestSuiteBase {
         props = new HashMap<>();
         keyValuePropsList.add(props);
 
-        createdDocuments = bulkInsert(client, keyValuePropsList);
+        createdDocuments = bulkInsert(createdCollection, keyValuePropsList);
 
         for(int i = 0; i < 10; i++) {
             Map<String, Object> p = new HashMap<>();
             p.put("propScopedPartitionInt", i);
-            Document doc = getDocumentDefinition("duplicateParitionKeyValue", UUID.randomUUID().toString(), p);
-            createdDocuments.add(client.createDocument(getCollectionLink(), doc, null, false).toBlocking().single().getResource());
+            CosmosItemSettings doc = getDocumentDefinition("duplicateParitionKeyValue", UUID.randomUUID().toString(), p);
+            createdDocuments.add(createDocument(createdCollection, doc).read().block().getCosmosItemSettings());
 
         }
-        numberOfPartitions = client
+        numberOfPartitions = CosmosBridgeInternal.getAsyncDocumentClient(client)
                 .readPartitionKeyRanges(getCollectionLink(), null)
                 .flatMap(p -> Observable.from(p.getResults())).toList().toBlocking().single().size();
 
@@ -547,7 +550,7 @@ public class OrderbyDocumentQueryTest extends TestSuiteBase {
         return receivedDocuments;
     }
 
-    private static Document getDocumentDefinition(String partitionKey, String id, Map<String, Object> keyValuePair) {
+    private static CosmosItemSettings getDocumentDefinition(String partitionKey, String id, Map<String, Object> keyValuePair) {
         StringBuilder sb = new StringBuilder();
         sb.append("{\n");
 
@@ -567,16 +570,12 @@ public class OrderbyDocumentQueryTest extends TestSuiteBase {
         sb.append(String.format("  \"mypk\": \"%s\"\n", partitionKey));
         sb.append("}");
 
-        return new Document(sb.toString());
+        return new CosmosItemSettings(sb.toString());
     }
 
-    private static Document getDocumentDefinition(Map<String, Object> keyValuePair) {
+    private static CosmosItemSettings getDocumentDefinition(Map<String, Object> keyValuePair) {
         String uuid = UUID.randomUUID().toString();
         return getDocumentDefinition(uuid, uuid, keyValuePair);
-    }
-
-    public String getCollectionLink() {
-        return Utils.getCollectionNameLink(createdDatabase.getId(), createdCollection.getId());
     }
 
     private static String toJson(Object object){

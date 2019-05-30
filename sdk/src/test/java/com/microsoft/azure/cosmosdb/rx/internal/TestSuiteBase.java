@@ -58,6 +58,7 @@ import com.microsoft.azure.cosmosdb.rx.internal.Configs;
 import io.reactivex.subscribers.TestSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import org.apache.commons.lang3.StringUtils;
 import org.mockito.stubbing.Answer;
@@ -203,13 +204,13 @@ public class TestSuiteBase {
         }
     }
 
-    protected static void truncateCollection(String databaseId, CosmosContainerSettings cosmosContainerSettings) {
+    protected static void truncateCollection(CosmosContainer cosmosContainer) {
+        CosmosContainerSettings cosmosContainerSettings = cosmosContainer.read().block().getCosmosContainerSettings();
         String cosmosContainerId = cosmosContainerSettings.getId();
         logger.info("Truncating collection {} ...", cosmosContainerId);
         CosmosClient houseKeepingClient = createGatewayHouseKeepingDocumentClient().build();
         try {
             List<String> paths = cosmosContainerSettings.getPartitionKey().getPaths();
-            CosmosContainer cosmosContainer = houseKeepingClient.getDatabase(databaseId).getContainer(cosmosContainerId).read().block().getContainer();
             FeedOptions options = new FeedOptions();
             options.setMaxDegreeOfParallelism(-1);
             options.setEnableCrossPartitionQuery(true);
@@ -433,29 +434,46 @@ public class TestSuiteBase {
         return cosmosContainerSettings;
     }
 
-    public static CosmosItem createDocument(CosmosContainer cosmosContainer, CosmosItemSettings item, Object partitionKey) {
-        return cosmosContainer.getItem(item.getId(), partitionKey).read().block().getCosmosItem();
+    public static CosmosContainer createCollection(CosmosClient client, String dbId, CosmosContainerSettings collectionDefinition) {
+        return client.getDatabase(dbId).createContainer(collectionDefinition).block().getContainer();
     }
 
+    public static void deleteCollection(CosmosClient client, String dbId, String collectionId) {
+        client.getDatabase(dbId).getContainer(collectionId).delete().block();
+    }
+
+    public static CosmosItem createDocument(CosmosContainer cosmosContainer, CosmosItemSettings item) {
+        return cosmosContainer.createItem(item).block().getCosmosItem();
+    }
+
+    /*
     // TODO: respect concurrencyLevel;
     public Flux<CosmosItemResponse> bulkInsert(CosmosContainer cosmosContainer,
-                                                             List<CosmosItem> documentDefinitionList,
+                                                             List<CosmosItemSettings> documentDefinitionList,
                                                              int concurrencyLevel) {
-        CosmosItem first = documentDefinitionList.remove(0);
+        CosmosItemSettings first = documentDefinitionList.remove(0);
         Flux<CosmosItemResponse> result = Flux.from(cosmosContainer.createItem(first));
-        for (CosmosItem docDef : documentDefinitionList) {
+        for (CosmosItemSettings docDef : documentDefinitionList) {
             result.concatWith(cosmosContainer.createItem(docDef));
         }
 
         return result;
     }
-
-    public List<CosmosItem> bulkInsertBlocking(CosmosContainer cosmosContainer,
-                                             List<CosmosItem> documentDefinitionList) {
+*/
+    public List<CosmosItemSettings> bulkInsertBlocking(CosmosContainer cosmosContainer,
+                                             List<CosmosItemSettings> documentDefinitionList) {
+        /*
         return bulkInsert(cosmosContainer, documentDefinitionList, DEFAULT_BULK_INSERT_CONCURRENCY_LEVEL)
-                .map(CosmosItemResponse::getCosmosItem)
+                .parallel()
+                .runOn(Schedulers.parallel())
+                .map(CosmosItemResponse::getCosmosItemSettings)
+                .sequential()
                 .collectList()
                 .block();
+                */
+        return Flux.merge(documentDefinitionList.stream()
+                .map(d -> cosmosContainer.createItem(d).map(response -> response.getCosmosItemSettings()))
+                .collect(Collectors.toList())).collectList().block();
     }
 
     public static ConsistencyLevel getAccountDefaultConsistencyLevel(CosmosClient client) {
@@ -528,6 +546,10 @@ public class TestSuiteBase {
 
     public static void deleteCollection(CosmosDatabase cosmosDatabase, String collectionId) {
         cosmosDatabase.getContainer(collectionId).delete().block();
+    }
+
+    public static void deleteCollection(CosmosContainer cosmosContainer) {
+        cosmosContainer.delete().block();
     }
 
     public static void deleteDocumentIfExists(CosmosClient client, String databaseId, String collectionId, String docId) {
@@ -844,7 +866,9 @@ public class TestSuiteBase {
         logger.info("Max test consistency to use is [{}]", accountConsistency);
         List<ConsistencyLevel> testConsistencies = new ArrayList<>();
 
+        /*
         switch (accountConsistency) {
+        
             case Strong:
                 testConsistencies.add(ConsistencyLevel.Strong);
             case BoundedStaleness:
@@ -859,6 +883,9 @@ public class TestSuiteBase {
             default:
                 throw new IllegalStateException("Invalid configured test consistency " + accountConsistency);
         }
+        */
+        testConsistencies.add(ConsistencyLevel.Session);
+        
         return clientBuildersWithDirect(testConsistencies, protocols);
     }
     

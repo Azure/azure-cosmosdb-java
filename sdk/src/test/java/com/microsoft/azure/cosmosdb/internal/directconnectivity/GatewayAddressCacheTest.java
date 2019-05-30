@@ -25,6 +25,7 @@ package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.microsoft.azure.cosmos.BridgeInternal;
+import com.microsoft.azure.cosmos.CosmosBridgeInternal;
 import com.microsoft.azure.cosmos.CosmosClient.Builder;
 import com.microsoft.azure.cosmos.CosmosContainer;
 import com.microsoft.azure.cosmos.CosmosContainerRequestOptions;
@@ -45,7 +46,6 @@ import com.microsoft.azure.cosmosdb.rx.internal.HttpClientFactory;
 import com.microsoft.azure.cosmosdb.rx.internal.IAuthorizationTokenProvider;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentClientImpl;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
-import com.microsoft.azure.cosmosdb.rx.internal.directconnectivity.ReflectionUtils;
 
 import io.netty.buffer.ByteBuf;
 import io.reactivex.netty.protocol.http.client.CompositeHttpClient;
@@ -827,7 +827,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
     
     @BeforeClass(groups = { "direct" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
-        client = ReflectionUtils.getAsyncDocumentClient(clientBuilder.build());
+        client = CosmosBridgeInternal.getAsyncDocumentClient(clientBuilder.build());
         createdDatabase = SHARED_DATABASE;
 
         CosmosContainerRequestOptions options = new CosmosContainerRequestOptions();

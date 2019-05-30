@@ -443,6 +443,7 @@ public class TestSuiteBase {
         return cosmosContainer.createItem(item).block().getCosmosItem();
     }
 
+    /*
     // TODO: respect concurrencyLevel;
     public Flux<CosmosItemResponse> bulkInsert(CosmosContainer cosmosContainer,
                                                              List<CosmosItemSettings> documentDefinitionList,
@@ -455,9 +456,10 @@ public class TestSuiteBase {
 
         return result;
     }
-
+*/
     public List<CosmosItemSettings> bulkInsertBlocking(CosmosContainer cosmosContainer,
                                              List<CosmosItemSettings> documentDefinitionList) {
+        /*
         return bulkInsert(cosmosContainer, documentDefinitionList, DEFAULT_BULK_INSERT_CONCURRENCY_LEVEL)
                 .parallel()
                 .runOn(Schedulers.parallel())
@@ -465,6 +467,10 @@ public class TestSuiteBase {
                 .sequential()
                 .collectList()
                 .block();
+                */
+        return Flux.merge(documentDefinitionList.stream()
+                .map(d -> cosmosContainer.createItem(d).map(response -> response.getCosmosItemSettings()))
+                .collect(Collectors.toList())).collectList().block();
     }
 
     public static ConsistencyLevel getAccountDefaultConsistencyLevel(CosmosClient client) {

@@ -49,16 +49,12 @@ import com.microsoft.azure.cosmos.DatabaseForTest;
 import com.microsoft.azure.cosmosdb.CompositePath;
 import com.microsoft.azure.cosmosdb.CompositePathSortOrder;
 import com.microsoft.azure.cosmosdb.Database;
-import com.microsoft.azure.cosmosdb.Document;
-import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.IndexingMode;
 import com.microsoft.azure.cosmosdb.IndexingPolicy;
-import com.microsoft.azure.cosmosdb.ResourceResponse;
 import com.microsoft.azure.cosmosdb.SpatialSpec;
 import com.microsoft.azure.cosmosdb.SpatialType;
 
 import reactor.core.publisher.Mono;
-import rx.Observable;
 
 public class CollectionCrudTest extends TestSuiteBase {
     private static final int TIMEOUT = 30000;

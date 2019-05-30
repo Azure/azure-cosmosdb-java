@@ -22,11 +22,12 @@
  */
 package com.microsoft.azure.cosmosdb.rx;
 
-import com.microsoft.azure.cosmosdb.Database;
-import com.microsoft.azure.cosmosdb.Document;
-import com.microsoft.azure.cosmosdb.DocumentCollection;
+import com.microsoft.azure.cosmos.CosmosClient;
+import com.microsoft.azure.cosmos.CosmosClient.Builder;
+import com.microsoft.azure.cosmos.CosmosContainer;
+import com.microsoft.azure.cosmos.CosmosDatabase;
+import com.microsoft.azure.cosmos.CosmosItemSettings;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.Protocol;
-import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient.Builder;
 import org.testng.SkipException;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
@@ -39,23 +40,24 @@ import static org.apache.commons.io.FileUtils.ONE_MB;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class DocumentClientResourceLeakTest extends TestSuiteBase {
-    private static final int TIMEOUT = 240000;
+    private static final int TIMEOUT = 2400000;
     private static final int MAX_NUMBER = 1000;
     private Builder clientBuilder;
-    private AsyncDocumentClient client;
+    private CosmosClient client;
 
-    private Database createdDatabase;
-    private DocumentCollection createdCollection;
+    private CosmosDatabase createdDatabase;    
+    private CosmosContainer createdCollection;
 
     @Factory(dataProvider = "simpleClientBuildersWithDirect")
     public DocumentClientResourceLeakTest(Builder clientBuilder) {
         this.clientBuilder = clientBuilder;
     }
 
+    //TODO : FIX tests
     @Test(groups = {"emulator"}, timeOut = TIMEOUT)
     public void resourceLeak() throws Exception {
         //TODO FIXME DANOBLE this test doesn't pass on RNTBD
-        if (clientBuilder.configs.getProtocol() == Protocol.Tcp) {
+        if (clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {
             throw new SkipException("RNTBD");
         }
         System.gc();
@@ -68,7 +70,7 @@ public class DocumentClientResourceLeakTest extends TestSuiteBase {
             client = clientBuilder.build();
             try {
                 logger.info("creating doc...");
-                createDocument(client, createdDatabase.getId(), createdCollection.getId(), getDocumentDefinition());
+                createDocument(client.getDatabase(createdDatabase.getId()).getContainer(createdCollection.getId()), getDocumentDefinition());
             } finally {
                 logger.info("closing client...");
                 client.close();
@@ -87,9 +89,9 @@ public class DocumentClientResourceLeakTest extends TestSuiteBase {
         createdCollection = SHARED_MULTI_PARTITION_COLLECTION;
     }
 
-    private Document getDocumentDefinition() {
+    private CosmosItemSettings getDocumentDefinition() {
         String uuid = UUID.randomUUID().toString();
-        Document doc = new Document(String.format("{ "
+        CosmosItemSettings doc = new CosmosItemSettings(String.format("{ "
                                                           + "\"id\": \"%s\", "
                                                           + "\"mypk\": \"%s\", "
                                                           + "\"sgmts\": [[6519456, 1471916863], [2498434, 1455671440]]"
