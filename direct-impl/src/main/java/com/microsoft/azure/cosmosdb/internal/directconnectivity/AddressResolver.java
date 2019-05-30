@@ -50,9 +50,9 @@ import org.slf4j.LoggerFactory;
 import reactor.adapter.rxjava.RxJava2Adapter;
 import reactor.core.publisher.Mono;
 import rx.Single;
-import rx.functions.Func1;
 
 import java.util.concurrent.Callable;
+import java.util.function.Function;
 
 /**
  * Abstracts out the logic to resolve physical replica addresses for the given {@link RxDocumentServiceRequest}
@@ -453,7 +453,7 @@ public class AddressResolver implements IAddressResolver {
 
 
                 return resultObs.flatMap(result -> {
-                    Func1<ResolutionResult, Mono<ResolutionResult>> addCollectionRidIfNameBased = funcResolutionResult -> {
+                    Function<ResolutionResult, Mono<ResolutionResult>> addCollectionRidIfNameBased = funcResolutionResult -> {
                         assert funcResolutionResult != null;
                         if (request.getIsNameBased()) {
                             // Append collection rid.
@@ -469,12 +469,12 @@ public class AddressResolver implements IAddressResolver {
                     };
 
                     if (result != null) {
-                        return addCollectionRidIfNameBased.call(result);
+                        return addCollectionRidIfNameBased.apply(result);
                     }
 
                     // result is null
 
-                    Func1<RefreshState, Mono<RefreshState>> ensureCollectionRoutingMapCacheIsUptoDateFunc = funcState -> {
+                    Function<RefreshState, Mono<RefreshState>> ensureCollectionRoutingMapCacheIsUptoDateFunc = funcState -> {
                         if (!funcState.collectionRoutingMapCacheIsUptoDate) {
                             funcState.collectionRoutingMapCacheIsUptoDate = true;
                             Mono<CollectionRoutingMap> newRoutingMapObs = RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(this.collectionRoutingMapCache.tryLookupAsync(
@@ -488,7 +488,7 @@ public class AddressResolver implements IAddressResolver {
                         }
                     };
 
-                    Func1<RefreshState, Mono<ResolutionResult>> resolveServerPartition = funcState -> {
+                    Function<RefreshState, Mono<ResolutionResult>> resolveServerPartition = funcState -> {
 
                         try {
                             AddressResolver.ensureRoutingMapPresent(request, funcState.routingMap, funcState.collection);
@@ -505,7 +505,7 @@ public class AddressResolver implements IAddressResolver {
                             forceRefreshPartitionAddresses);
                     };
 
-                    Func1<ResolutionResult, Mono<ResolutionResult>> onNullThrowNotFound = funcResolutionResult -> {
+                    Function<ResolutionResult, Mono<ResolutionResult>> onNullThrowNotFound = funcResolutionResult -> {
                         if (funcResolutionResult == null) {
                             logger.debug("Couldn't route partitionkeyrange-oblivious request after retry/cache refresh. Collection doesn't exist.");
 
@@ -544,14 +544,14 @@ public class AddressResolver implements IAddressResolver {
                             return Mono.just(state);
                         });
 
-                        Mono<ResolutionResult> newResultObs = newRefreshStateObs.flatMap(ensureCollectionRoutingMapCacheIsUptoDateFunc::call)
-                            .flatMap(resolveServerPartition::call);
+                        Mono<ResolutionResult> newResultObs = newRefreshStateObs.flatMap(ensureCollectionRoutingMapCacheIsUptoDateFunc)
+                            .flatMap(resolveServerPartition);
 
-                        return newResultObs.flatMap(onNullThrowNotFound::call).flatMap(addCollectionRidIfNameBased::call);
+                        return newResultObs.flatMap(onNullThrowNotFound).flatMap(addCollectionRidIfNameBased);
 
                     } else {
-                        return ensureCollectionRoutingMapCacheIsUptoDateFunc.call(state)
-                            .flatMap(resolveServerPartition::call).flatMap(onNullThrowNotFound::call).flatMap(addCollectionRidIfNameBased::call);
+                        return ensureCollectionRoutingMapCacheIsUptoDateFunc.apply(state)
+                            .flatMap(resolveServerPartition).flatMap(onNullThrowNotFound).flatMap(addCollectionRidIfNameBased);
                     }
                 });
             }

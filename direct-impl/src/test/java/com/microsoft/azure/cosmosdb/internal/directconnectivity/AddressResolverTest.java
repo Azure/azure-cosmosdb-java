@@ -52,6 +52,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import reactor.core.publisher.Hooks;
 import rx.Single;
 import rx.functions.Func1;
 
@@ -86,6 +87,7 @@ public class AddressResolverTest {
 
     @BeforeClass(groups = "unit")
     public void setup() throws Exception {
+        Hooks.onOperatorDebug();
         this.addressResolver = new AddressResolver();
         this.collectionCache = Mockito.mock(RxCollectionCache.class);
         this.collectionRoutingMapCache = Mockito.mock(ICollectionRoutingMapCache.class);
@@ -234,10 +236,9 @@ public class AddressResolverTest {
         try {
             resolvedAddresses = this.addressResolver.resolveAsync(request, forceAddressRefresh).block();
         } catch (RuntimeException e) {
+            logger.error("Error occurred ", e);
             throw (Exception) e.getCause();
         } finally {
-            logger.info("Collection cache refresh count {}", collectionCacheRefreshedCount);
-            logger.info("Collection cache refreshed {}", collectionCacheRefreshed);
             assertThat(collectionCacheRefreshed).isEqualTo(collectionCacheRefreshedCount).describedAs("collection cache refresh count mismath");
 
             assertThat(routingMapCacheRefreshed).isEqualTo(routingMapRefreshCount.values().stream().mapToInt(v -> v).sum()).describedAs("routing map cache refresh count mismath");
