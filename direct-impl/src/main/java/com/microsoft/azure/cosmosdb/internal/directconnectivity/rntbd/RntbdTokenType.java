@@ -24,10 +24,11 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd;
 
+import com.google.common.base.Strings;
 import com.google.common.base.Utf8;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
-import io.netty.handler.codec.CorruptedFrameException;
+import io.netty.handler.codec.DecoderException;
 
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
@@ -93,8 +94,6 @@ enum RntbdTokenType {
 
     public interface Codec {
 
-        Class<?> forClass();
-
         int computeLength(Object value);
 
         Object convert(Object value);
@@ -106,6 +105,8 @@ enum RntbdTokenType {
         Object read(ByteBuf in);
 
         ByteBuf readSlice(ByteBuf in);
+
+        Class<?> valueType();
 
         void write(Object value, ByteBuf out);
     }
@@ -139,11 +140,6 @@ enum RntbdTokenType {
         }
 
         @Override
-        public final Class<?> forClass() {
-            return java.lang.Byte.class;
-        }
-
-        @Override
         public final boolean isValid(final Object value) {
             return value instanceof Number || value instanceof Boolean;
         }
@@ -159,6 +155,11 @@ enum RntbdTokenType {
         }
 
         @Override
+        public final Class<?> valueType() {
+            return java.lang.Byte.class;
+        }
+
+        @Override
         public final void write(final Object value, final ByteBuf out) {
             assert this.isValid(value);
             out.writeByte(value instanceof Byte ? (byte)value : ((boolean)value ? 0x01 : 0x00));
@@ -171,11 +172,6 @@ enum RntbdTokenType {
         private static final byte[] defaultValue = {};
 
         private RntbdBytes() {
-        }
-
-        @Override
-        public Class<?> forClass() {
-            return Byte[].class;
         }
 
         @Override
@@ -213,6 +209,11 @@ enum RntbdTokenType {
         }
 
         @Override
+        public Class<?> valueType() {
+            return Byte[].class;
+        }
+
+        @Override
         public void write(final Object value, final ByteBuf out) {
 
             assert this.isValid(value);
@@ -234,11 +235,6 @@ enum RntbdTokenType {
         public static final Codec codec = new RntbdDouble();
 
         private RntbdDouble() {
-        }
-
-        @Override
-        public Class<?> forClass() {
-            return Double.class;
         }
 
         @Override
@@ -274,6 +270,11 @@ enum RntbdTokenType {
         }
 
         @Override
+        public Class<?> valueType() {
+            return Double.class;
+        }
+
+        @Override
         public final void write(final Object value, final ByteBuf out) {
             assert this.isValid(value);
             out.writeDoubleLE(((Number)value).doubleValue());
@@ -285,11 +286,6 @@ enum RntbdTokenType {
         public static final Codec codec = new RntbdFloat();
 
         private RntbdFloat() {
-        }
-
-        @Override
-        public Class<?> forClass() {
-            return Float.class;
         }
 
         @Override
@@ -325,6 +321,11 @@ enum RntbdTokenType {
         }
 
         @Override
+        public Class<?> valueType() {
+            return Float.class;
+        }
+
+        @Override
         public final void write(final Object value, final ByteBuf out) {
             assert this.isValid(value);
             out.writeFloatLE(((Number)value).floatValue());
@@ -336,11 +337,6 @@ enum RntbdTokenType {
         public static final Codec codec = new RntbdGuid();
 
         private RntbdGuid() {
-        }
-
-        @Override
-        public Class<?> forClass() {
-            return UUID.class;
         }
 
         @Override
@@ -376,6 +372,11 @@ enum RntbdTokenType {
         }
 
         @Override
+        public Class<?> valueType() {
+            return UUID.class;
+        }
+
+        @Override
         public final void write(final Object value, final ByteBuf out) {
             assert this.isValid(value);
             RntbdUUID.encode((UUID)value, out);
@@ -387,11 +388,6 @@ enum RntbdTokenType {
         public static final Codec codec = new RntbdInteger();
 
         private RntbdInteger() {
-        }
-
-        @Override
-        public Class<?> forClass() {
-            return Integer.class;
         }
 
         @Override
@@ -427,6 +423,11 @@ enum RntbdTokenType {
         }
 
         @Override
+        public Class<?> valueType() {
+            return Integer.class;
+        }
+
+        @Override
         public final void write(final Object value, final ByteBuf out) {
             assert this.isValid(value);
             out.writeIntLE(((Number)value).intValue());
@@ -438,11 +439,6 @@ enum RntbdTokenType {
         public static final Codec codec = new RntbdLong();
 
         private RntbdLong() {
-        }
-
-        @Override
-        public Class<?> forClass() {
-            return Long.class;
         }
 
         @Override
@@ -475,6 +471,11 @@ enum RntbdTokenType {
         @Override
         public final ByteBuf readSlice(final ByteBuf in) {
             return in.readSlice(java.lang.Long.BYTES);
+        }
+
+        @Override
+        public Class<?> valueType() {
+            return Long.class;
         }
 
         @Override
@@ -573,11 +574,6 @@ enum RntbdTokenType {
         public static final Codec codec = new RntbdNone();
 
         @Override
-        public Class<?> forClass() {
-            return null;
-        }
-
-        @Override
         public final int computeLength(final Object value) {
             return 0;
         }
@@ -604,6 +600,11 @@ enum RntbdTokenType {
 
         @Override
         public final ByteBuf readSlice(final ByteBuf in) {
+            return null;
+        }
+
+        @Override
+        public Class<?> valueType() {
             return null;
         }
 
@@ -700,11 +701,6 @@ enum RntbdTokenType {
         private RntbdString() {
         }
 
-        @Override
-        public Class<?> forClass() {
-            return String.class;
-        }
-
         final int computeLength(final Object value, final int maxLength) {
 
             assert this.isValid(value);
@@ -720,16 +716,16 @@ enum RntbdTokenType {
                 final byte[] string = (byte[])value;
 
                 if (!Utf8.isWellFormed(string)) {
-                    final String reason = java.lang.String.format("UTF-8 byte string is ill-formed: %s", ByteBufUtil.hexDump(string));
-                    throw new CorruptedFrameException(reason);
+                    final String reason = Strings.lenientFormat("UTF-8 byte string is ill-formed: %s", ByteBufUtil.hexDump(string));
+                    throw new DecoderException(reason);
                 }
 
                 length = string.length;
             }
 
             if (length > maxLength) {
-                final String reason = java.lang.String.format("UTF-8 byte string exceeds %d bytes: %d bytes", maxLength, length);
-                throw new CorruptedFrameException(reason);
+                final String reason = Strings.lenientFormat("UTF-8 byte string exceeds %s bytes: %s bytes", maxLength, length);
+                throw new DecoderException(reason);
             }
 
             return length;
@@ -768,6 +764,11 @@ enum RntbdTokenType {
         }
 
         @Override
+        public Class<?> valueType() {
+            return String.class;
+        }
+
+        @Override
         public void write(final Object value, final ByteBuf out) {
 
             final int length = this.computeLength(value, 0xFFFF);
@@ -794,11 +795,6 @@ enum RntbdTokenType {
         public static final Codec codec = new RntbdUnsignedInteger();
 
         private RntbdUnsignedInteger() {
-        }
-
-        @Override
-        public Class<?> forClass() {
-            return Long.class;
         }
 
         @Override
@@ -834,6 +830,11 @@ enum RntbdTokenType {
         }
 
         @Override
+        public Class<?> valueType() {
+            return Long.class;
+        }
+
+        @Override
         public final void write(final Object value, final ByteBuf out) {
             assert this.isValid(value);
             out.writeIntLE(((Number)value).intValue());
@@ -845,11 +846,6 @@ enum RntbdTokenType {
         public static final Codec codec = new RntbdUnsignedShort();
 
         private RntbdUnsignedShort() {
-        }
-
-        @Override
-        public Class<?> forClass() {
-            return Integer.class;
         }
 
         @Override
@@ -882,6 +878,11 @@ enum RntbdTokenType {
         @Override
         public final ByteBuf readSlice(final ByteBuf in) {
             return in.readSlice(Short.BYTES);
+        }
+
+        @Override
+        public Class<?> valueType() {
+            return Integer.class;
         }
 
         @Override

@@ -93,7 +93,7 @@ abstract class RntbdTokenStream<T extends Enum<T> & RntbdHeader> {
         for (final RntbdToken token : stream.tokens.values()) {
             if (!token.isPresent() && token.isRequired()) {
                 final String reason = String.format("Required token not found on RNTBD stream: type: %s, identifier: %s",
-                    token.getType(), token.getId());
+                    token.getTokenType(), token.getId());
                 throw new IllegalStateException(reason);
             }
         }

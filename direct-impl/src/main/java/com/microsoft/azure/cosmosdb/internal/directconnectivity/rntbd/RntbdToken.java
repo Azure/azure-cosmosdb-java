@@ -24,16 +24,14 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.PropertyWriter;
 import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
 import io.netty.buffer.ByteBuf;
-import io.netty.handler.codec.CorruptedFrameException;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -56,6 +54,8 @@ final class RntbdToken {
 
     // endregion
 
+    // region Constructors
+
     private RntbdToken(final RntbdHeader header) {
         checkNotNull(header, "header");
         this.header = header;
@@ -63,25 +63,27 @@ final class RntbdToken {
         this.length = Integer.MIN_VALUE;
     }
 
-    @JsonProperty
-    final short getId() {
-        return this.header.id();
-    }
+    // endregion
 
     // region Accessors
 
     @JsonProperty
-    final String getName() {
+    public short getId() {
+        return this.header.id();
+    }
+
+    @JsonProperty
+    public String getName() {
         return this.header.name();
     }
 
     @JsonProperty
-    final RntbdTokenType getType() {
+    public RntbdTokenType getTokenType() {
         return this.header.type();
     }
 
     @JsonProperty
-    final Object getValue() {
+    public Object getValue() {
 
         if (this.value == null) {
             return this.header.type().codec().defaultValue();
@@ -98,24 +100,37 @@ final class RntbdToken {
         return this.value;
     }
 
+    public <T> T getValue(final Class<T> cls) {
+        return cls.cast(this.getValue());
+    }
+
     @JsonProperty
-    final void setValue(final Object value) {
+    public void setValue(final Object value) {
         this.ensureValid(value);
         this.length = Integer.MIN_VALUE;
         this.value = value;
     }
 
+    @JsonIgnore
+    public final Class<?> getValueType() {
+        return this.header.type().codec().valueType();
+    }
+
     @JsonProperty
-    final boolean isPresent() {
+    public boolean isPresent() {
         return this.value != null;
     }
 
     @JsonProperty
-    final boolean isRequired() {
+    public boolean isRequired() {
         return this.header.isRequired();
     }
 
-    final int computeLength() {
+    // endregion
+
+    // region Methods
+
+    public int computeLength() {
 
         if (!this.isPresent()) {
             return 0;
@@ -134,15 +149,11 @@ final class RntbdToken {
         return this.length;
     }
 
-    static RntbdToken create(final RntbdHeader header) {
+    public static RntbdToken create(final RntbdHeader header) {
         return new RntbdToken(header);
     }
 
-    // endregion
-
-    // region Methods
-
-    void decode(final ByteBuf in) {
+    public void decode(final ByteBuf in) {
 
         checkNotNull(in, "in");
 
@@ -153,7 +164,7 @@ final class RntbdToken {
         this.value = this.header.type().codec().readSlice(in).retain(); // No data transfer until the first call to RntbdToken.getValue
     }
 
-    final void encode(final ByteBuf out) {
+    public void encode(final ByteBuf out) {
 
         checkNotNull(out, "out");
 
@@ -166,7 +177,7 @@ final class RntbdToken {
         }
 
         out.writeShortLE(this.getId());
-        out.writeByte(this.getType().id());
+        out.writeByte(this.getTokenType().id());
 
         if (this.value instanceof ByteBuf) {
             out.writeBytes((ByteBuf)this.value);
@@ -176,11 +187,7 @@ final class RntbdToken {
         }
     }
 
-    final <T> T getValue(final Class<T> cls) {
-        return cls.cast(this.getValue());
-    }
-
-    final void releaseBuffer() {
+    public void releaseBuffer() {
         if (this.value instanceof ByteBuf) {
             final ByteBuf buffer = (ByteBuf)this.value;
             buffer.release();
@@ -191,6 +198,10 @@ final class RntbdToken {
     public String toString() {
         return RntbdObjectMapper.toJson(this);
     }
+
+    // endregion
+
+    // region Privates
 
     private void ensureValid(final Object value) {
         checkNotNull(value, "value");

@@ -1192,7 +1192,7 @@ final class RntbdRequestHeaders extends RntbdTokenStream<RntbdRequestHeader> {
 
             final RntbdToken token = supplier.get();
 
-            switch (token.getType()) {
+            switch (token.getTokenType()) {
 
                 case SmallString:
                 case String:
