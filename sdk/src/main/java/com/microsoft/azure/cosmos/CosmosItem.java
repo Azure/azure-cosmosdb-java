@@ -23,6 +23,7 @@
 package com.microsoft.azure.cosmos;
 
 import com.microsoft.azure.cosmosdb.Document;
+import com.microsoft.azure.cosmosdb.RequestOptions;
 import com.microsoft.azure.cosmosdb.internal.Paths;
 import hu.akarnokd.rxjava.interop.RxJavaInterop;
 import reactor.adapter.rxjava.RxJava2Adapter;
@@ -58,12 +59,16 @@ public class CosmosItem extends CosmosResource{
      * The {@link Mono} upon successful completion will contain a cosmos item response with the read item
      * In case of failure the {@link Mono} will error.
      *
-     * @param requestOptions the request comosItemRequestOptions
+     * @param options the request comosItemRequestOptions
      * @return an {@link Mono} containing the cosmos item response with the read item or an error
      */
-    public Mono<CosmosItemResponse> read(CosmosItemRequestOptions requestOptions) {
+    public Mono<CosmosItemResponse> read(CosmosItemRequestOptions options) {
+        if (options == null) {
+            options = new CosmosItemRequestOptions();
+        }
+        RequestOptions requestOptions = options.toRequestOptions();
         return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(container.getDatabase().getDocClientWrapper()
-                .readDocument(getLink(), requestOptions.toRequestOptions())
+                .readDocument(getLink(), requestOptions)
                 .map(response -> new CosmosItemResponse(response, requestOptions.getPartitionKey(), container)).toSingle()));
     }
 
@@ -89,14 +94,18 @@ public class CosmosItem extends CosmosResource{
      * In case of failure the {@link Mono} will error.
      *
      * @param item the item to replace (containing the document id).
-     * @param requestOptions the request comosItemRequestOptions
+     * @param options the request comosItemRequestOptions
      * @return an {@link Mono} containing the  cosmos item resource response with the replaced item or an error.
      */
-    public Mono<CosmosItemResponse> replace(Object item, CosmosItemRequestOptions requestOptions){
+    public Mono<CosmosItemResponse> replace(Object item, CosmosItemRequestOptions options){
         Document doc = CosmosItemSettings.fromObject(item);
+        if (options == null) {
+            options = new CosmosItemRequestOptions();
+        }
+        RequestOptions requestOptions = options.toRequestOptions();
         return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(container.getDatabase()
                 .getDocClientWrapper()
-                .replaceDocument(getLink(), doc, requestOptions.toRequestOptions())
+                .replaceDocument(getLink(), doc, requestOptions)
                 .map(response -> new CosmosItemResponse(response, requestOptions.getPartitionKey(), container)).toSingle()));
     }
 
@@ -123,11 +132,15 @@ public class CosmosItem extends CosmosResource{
      * @return an {@link Mono} containing the  cosmos item resource response.
      */
     public Mono<CosmosItemResponse> delete(CosmosItemRequestOptions options){
+        if (options == null) {
+            options = new CosmosItemRequestOptions();
+        }
+        RequestOptions requestOptions = options.toRequestOptions();
         return RxJava2Adapter.singleToMono(
                 RxJavaInterop.toV2Single(container.getDatabase()
                         .getDocClientWrapper()
-                        .deleteDocument(getLink(),options.toRequestOptions())
-                        .map(response -> new CosmosItemResponse(response, options.getPartitionKey(), container))
+                        .deleteDocument(getLink(), requestOptions)
+                        .map(response -> new CosmosItemResponse(response, requestOptions.getPartitionKey(), container))
                         .toSingle()));
     }
     
