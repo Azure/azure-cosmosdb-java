@@ -30,7 +30,7 @@ import com.microsoft.azure.cosmosdb.RequestOptions;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.rx.internal.caches.RxClientCollectionCache;
 
-import rx.Single;
+import reactor.core.publisher.Mono;
 
 /**
  * While this class is public, but it is not part of our published public APIs.
@@ -74,7 +74,7 @@ public class PartitionKeyMismatchRetryPolicy implements IDocumentClientRetryPoli
     /// <param name="exception">Exception that occured when the operation was tried</param>
     /// <param name="cancellationToken"></param>
     /// <returns>True indicates caller should retry, False otherwise</returns>
-    public Single<ShouldRetryResult> shouldRetry(Exception exception) {
+    public Mono<ShouldRetryResult> shouldRetry(Exception exception) {
         DocumentClientException clientException = Utils.as(exception, DocumentClientException.class) ;
 
         if (clientException != null && 
@@ -93,7 +93,7 @@ public class PartitionKeyMismatchRetryPolicy implements IDocumentClientRetryPoli
 
             this.retriesAttempted.incrementAndGet();
 
-            return Single.just(ShouldRetryResult.retryAfter(Duration.ZERO));
+            return Mono.just(ShouldRetryResult.retryAfter(Duration.ZERO));
         } 
 
         return this.nextRetryPolicy.shouldRetry(exception);

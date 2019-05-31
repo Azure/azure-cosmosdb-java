@@ -29,8 +29,8 @@ import org.slf4j.LoggerFactory;
 
 import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
+import reactor.core.publisher.Mono;
 
-import rx.Single;
 
 /**
  * While this class is public, but it is not part of our published public APIs.
@@ -70,7 +70,7 @@ public class ResourceThrottleRetryPolicy implements IDocumentClientRetryPolicy{
     }
 
     @Override
-    public Single<ShouldRetryResult> shouldRetry(Exception exception) {
+    public Mono<ShouldRetryResult> shouldRetry(Exception exception) {
         Duration retryDelay = Duration.ZERO;
 
         if (this.currentAttemptCount < this.maxAttemptCount &&
@@ -82,13 +82,13 @@ public class ResourceThrottleRetryPolicy implements IDocumentClientRetryPolicy{
                     this.currentAttemptCount,
                     this.cumulativeRetryDelay,
                     exception);
-            return Single.just(ShouldRetryResult.retryAfter(retryDelay));
+            return Mono.just(ShouldRetryResult.retryAfter(retryDelay));
         } else {
             logger.debug(
                     "Operation will NOT be retried. Current attempt {}",
                     this.currentAttemptCount, 
                     exception);
-            return Single.just(ShouldRetryResult.noRetry());
+            return Mono.just(ShouldRetryResult.noRetry());
         }
     }
 

@@ -29,7 +29,7 @@ import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.rx.internal.caches.RxCollectionCache;
 
-import rx.Single;
+import reactor.core.publisher.Mono;
 
 /**
  * While this class is public, but it is not part of our published public APIs.
@@ -63,7 +63,7 @@ public class InvalidPartitionExceptionRetryPolicy implements IDocumentClientRetr
     }
 
     @Override
-    public Single<ShouldRetryResult> shouldRetry(Exception e) {
+    public Mono<ShouldRetryResult> shouldRetry(Exception e) {
         DocumentClientException clientException = Utils.as(e, DocumentClientException.class);
         if (clientException != null && 
                 Exceptions.isStatusCode(clientException, HttpConstants.StatusCodes.GONE) &&
@@ -79,9 +79,9 @@ public class InvalidPartitionExceptionRetryPolicy implements IDocumentClientRetr
                 }
 
                 this.retried = true;
-                return Single.just(ShouldRetryResult.retryAfter(Duration.ZERO));
+                return Mono.just(ShouldRetryResult.retryAfter(Duration.ZERO));
             } else {
-                return Single.just(ShouldRetryResult.error(e));
+                return Mono.just(ShouldRetryResult.error(e));
             }
         }
 

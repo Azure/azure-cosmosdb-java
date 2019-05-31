@@ -32,8 +32,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import rx.Single;
+import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 
@@ -61,7 +60,7 @@ public class RenameCollectionAwareClientRetryPolicy implements IDocumentClientRe
     }
 
     @Override
-    public Single<ShouldRetryResult> shouldRetry(Exception e) {
+    public Mono<ShouldRetryResult> shouldRetry(Exception e) {
         return this.retryPolicy.shouldRetry(e).flatMap(shouldRetryResult -> {
             if (!shouldRetryResult.shouldRetry && !this.hasTriggered) {
                 DocumentClientException clientException = Utils.as(e, DocumentClientException.class);
@@ -69,7 +68,7 @@ public class RenameCollectionAwareClientRetryPolicy implements IDocumentClientRe
                 if (this.request == null) {
                     // someone didn't call OnBeforeSendRequest - nothing we can do
                     logger.error("onBeforeSendRequest is not invoked, encountered failure due to request being null", e);
-                    return Single.just(ShouldRetryResult.error(e));
+                    return Mono.just(ShouldRetryResult.error(e));
                 }
 
                 if (clientException != null && this.request.getIsNameBased() &&
@@ -87,28 +86,29 @@ public class RenameCollectionAwareClientRetryPolicy implements IDocumentClientRe
                     request.forceNameCacheRefresh = true;
                     request.requestContext.resolvedCollectionRid = null;
 
-                    Single<DocumentCollection> collectionObs = this.collectionCache.resolveCollectionAsync(request);
+                    Mono<DocumentCollection> collectionObs = this.collectionCache.resolveCollectionAsync(request);
 
                     return collectionObs.flatMap(collectionInfo -> {
-                        if (collectionInfo == null) {
-                            logger.warn("Can't recover from session unavailable exception because resolving collection name {} returned null", request.getResourceAddress());
-                        } else if (!StringUtils.isEmpty(oldCollectionRid) && !StringUtils.isEmpty(collectionInfo.getResourceId())) {
-                            return Single.just(ShouldRetryResult.retryAfter(Duration.ZERO));
+                        if (!StringUtils.isEmpty(oldCollectionRid) && !StringUtils.isEmpty(collectionInfo.getResourceId())) {
+                            return Mono.just(ShouldRetryResult.retryAfter(Duration.ZERO));
                         }
-                        return Single.just(shouldRetryResult);
-                    }).onErrorResumeNext(throwable -> {
+                        return Mono.just(shouldRetryResult);
+                    }).switchIfEmpty(Mono.defer(() -> {
+                        logger.warn("Can't recover from session unavailable exception because resolving collection name {} returned null", request.getResourceAddress());
+                        return Mono.just(shouldRetryResult);
+                    })).onErrorResume(throwable -> {
                         // When resolveCollectionAsync throws an exception ignore it because it's an attempt to recover an existing
                         // error. When the recovery fails we return ShouldRetryResult.noRetry and propagate the original exception to the client
 
                         logger.warn("Can't recover from session unavailable exception because resolving collection name {} failed with {}", request.getResourceAddress(), throwable.getMessage());
                         if (throwable instanceof Exception) {
-                            return Single.just(ShouldRetryResult.error((Exception) throwable));
+                            return Mono.just(ShouldRetryResult.error((Exception) throwable));
                         }
-                        return Single.error(throwable);
+                        return Mono.error(throwable);
                     });
                 }
             }
-            return Single.just(shouldRetryResult);
+            return Mono.just(shouldRetryResult);
         });
     }
 }

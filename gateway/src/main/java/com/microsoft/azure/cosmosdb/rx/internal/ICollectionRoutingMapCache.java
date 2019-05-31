@@ -23,8 +23,7 @@
 package com.microsoft.azure.cosmosdb.rx.internal;
 
 import com.microsoft.azure.cosmosdb.internal.routing.CollectionRoutingMap;
-
-import rx.Single;
+import reactor.core.publisher.Mono;
 
 import java.util.Map;
 
@@ -34,14 +33,14 @@ import java.util.Map;
  * This is meant to be internally used only by our sdk.
  **/
 public interface ICollectionRoutingMapCache {
-    default Single<CollectionRoutingMap> tryLookupAsync(
+    default Mono<CollectionRoutingMap> tryLookupAsync(
             String collectionRid,
             CollectionRoutingMap previousValue,
             Map<String, Object> properties) {
         return tryLookupAsync(collectionRid, previousValue, false, properties);
     }
 
-    Single<CollectionRoutingMap> tryLookupAsync(
+    Mono<CollectionRoutingMap> tryLookupAsync(
             String collectionRid,
             CollectionRoutingMap previousValue,
             boolean forceRefreshCollectionRoutingMap,

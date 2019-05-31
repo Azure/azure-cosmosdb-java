@@ -40,7 +40,6 @@ import com.microsoft.azure.cosmosdb.rx.internal.http.HttpRequest;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpResponse;
 import io.netty.handler.codec.http.HttpMethod;
 import reactor.core.publisher.Mono;
-import rx.Single;
 
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -116,7 +115,7 @@ public class GatewayServiceConfigurationReader {
         return this.queryEngineConfiguration;
     }
 
-    private Single<DatabaseAccount> getDatabaseAccountAsync(URI serviceEndpoint) {
+    private Mono<DatabaseAccount> getDatabaseAccountAsync(URI serviceEndpoint) {
 
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.set(HttpConstants.HttpHeaders.VERSION, HttpConstants.Versions.CURRENT_VERSION);
@@ -148,7 +147,7 @@ public class GatewayServiceConfigurationReader {
         return toDatabaseAccountObservable(httpResponse, httpRequest);
     }
 
-    public Single<DatabaseAccount> initializeReaderAsync() {
+    public Mono<DatabaseAccount> initializeReaderAsync() {
         try {
             return GlobalEndpointManager.getDatabaseAccountFromAnyLocationsAsync(this.serviceEndpoint.toURL(),
 
@@ -170,7 +169,7 @@ public class GatewayServiceConfigurationReader {
         }
     }
 
-    private Single<DatabaseAccount> toDatabaseAccountObservable(Mono<HttpResponse> httpResponse, HttpRequest httpRequest) {
+    private Mono<DatabaseAccount> toDatabaseAccountObservable(Mono<HttpResponse> httpResponse, HttpRequest httpRequest) {
 
         return HttpClientUtils.parseResponseAsync(httpResponse, httpRequest)
                 .map(rxDocumentServiceResponse -> rxDocumentServiceResponse.getResource(DatabaseAccount.class));

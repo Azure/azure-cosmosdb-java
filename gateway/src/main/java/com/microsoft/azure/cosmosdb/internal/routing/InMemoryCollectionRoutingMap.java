@@ -157,12 +157,12 @@ public class InMemoryCollectionRoutingMap implements CollectionRoutingMap {
 
 
     @Override
-    public Collection<PartitionKeyRange> getOverlappingRanges(Range<String> range) {
+    public List<PartitionKeyRange> getOverlappingRanges(Range<String> range) {
         return this.getOverlappingRanges(Collections.singletonList(range));
     }
 
     @Override
-    public Collection<PartitionKeyRange> getOverlappingRanges(Collection<Range<String>> providedPartitionKeyRanges) {
+    public List<PartitionKeyRange> getOverlappingRanges(Collection<Range<String>> providedPartitionKeyRanges) {
         if (providedPartitionKeyRanges == null) {
             throw new IllegalArgumentException("providedPartitionKeyRanges");
         }
@@ -188,7 +188,7 @@ public class InMemoryCollectionRoutingMap implements CollectionRoutingMap {
             }
         }
 
-        return partitionRanges.values();
+        return new ArrayList<>(partitionRanges.values());
     }
 
 

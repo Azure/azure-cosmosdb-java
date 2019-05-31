@@ -43,8 +43,6 @@ import com.microsoft.azure.cosmosdb.rx.internal.caches.RxCollectionCache;
 import com.microsoft.azure.cosmosdb.rx.internal.caches.RxPartitionKeyRangeCache;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient;
 import reactor.core.publisher.Mono;
-import rx.Completable;
-import rx.Single;
 
 import java.net.URL;
 import java.util.ArrayList;
@@ -104,21 +102,19 @@ public class GlobalAddressResolver implements IAddressResolver {
         }
     }
 
-    Completable openAsync(DocumentCollection collection) {
-        Single<CollectionRoutingMap> routingMap = this.routingMapProvider.tryLookupAsync(collection.getId(), null, null);
-        return routingMap.flatMapCompletable(collectionRoutingMap -> {
-            if (collectionRoutingMap == null) {
-                return Completable.complete();
-            }
+    Mono<Void> openAsync(DocumentCollection collection) {
+        Mono<CollectionRoutingMap> routingMap = this.routingMapProvider.tryLookupAsync(collection.getId(), null, null);
+        return routingMap.flatMap(collectionRoutingMap -> {
 
             List<PartitionKeyRangeIdentity> ranges = ((List<PartitionKeyRange>)collectionRoutingMap.getOrderedPartitionKeyRanges()).stream().map(range ->
                     new PartitionKeyRangeIdentity(collection.getResourceId(), range.getId())).collect(Collectors.toList());
-            List<Completable> tasks = new ArrayList<>();
+            List<Mono<Void>> tasks = new ArrayList<>();
             for (EndpointCache endpointCache : this.addressCacheByEndpoint.values()) {
                 tasks.add(endpointCache.addressCache.openAsync(collection, ranges));
             }
-            return Completable.mergeDelayError(tasks);
-        });
+            //  TODO: Not sure if this will work.
+            return Mono.whenDelayError(tasks);
+        }).switchIfEmpty(Mono.defer(Mono::empty));
     }
 
     @Override
@@ -153,10 +149,10 @@ public class GlobalAddressResolver implements IAddressResolver {
             List<URL> allEndpoints = new ArrayList(this.endpointManager.getWriteEndpoints());
             allEndpoints.addAll(this.endpointManager.getReadEndpoints());
             Collections.reverse(allEndpoints);
-            Queue<URL> endpoints = new LinkedList<>(allEndpoints);
+            LinkedList<URL> endpoints = new LinkedList<>(allEndpoints);
             while (this.addressCacheByEndpoint.size() > this.maxEndpoints) {
                 if (endpoints.size() > 0) {
-                    URL dequeueEnpoint = ((LinkedList<URL>) endpoints).pop();
+                    URL dequeueEnpoint = endpoints.pop();
                     if (this.addressCacheByEndpoint.get(dequeueEnpoint) != null) {
                         this.addressCacheByEndpoint.remove(dequeueEnpoint);
                     }

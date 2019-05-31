@@ -22,30 +22,29 @@
  */
 package com.microsoft.azure.cosmosdb.rx.internal.caches;
 
-import java.util.List;
-import java.util.Map;
-
 import com.microsoft.azure.cosmosdb.PartitionKeyRange;
 import com.microsoft.azure.cosmosdb.internal.routing.CollectionRoutingMap;
 import com.microsoft.azure.cosmosdb.internal.routing.Range;
 import com.microsoft.azure.cosmosdb.rx.internal.ICollectionRoutingMapCache;
 import com.microsoft.azure.cosmosdb.rx.internal.IRoutingMapProvider;
+import reactor.core.publisher.Mono;
 
-import rx.Single;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 
  */
 public interface IPartitionKeyRangeCache extends IRoutingMapProvider, ICollectionRoutingMapCache {
 
-    Single<CollectionRoutingMap> tryLookupAsync(String collectionRid, CollectionRoutingMap previousValue, Map<String, Object> properties);
+    Mono<CollectionRoutingMap> tryLookupAsync(String collectionRid, CollectionRoutingMap previousValue, Map<String, Object> properties);
 
-    Single<List<PartitionKeyRange>> tryGetOverlappingRangesAsync(String collectionRid, Range<String> range, boolean forceRefresh,
+    Mono<List<PartitionKeyRange>> tryGetOverlappingRangesAsync(String collectionRid, Range<String> range, boolean forceRefresh,
                                                                  Map<String, Object> properties);
 
-    Single<PartitionKeyRange> tryGetPartitionKeyRangeByIdAsync(String collectionResourceId, String partitionKeyRangeId, boolean forceRefresh,
+    Mono<PartitionKeyRange> tryGetPartitionKeyRangeByIdAsync(String collectionResourceId, String partitionKeyRangeId, boolean forceRefresh,
                                                                Map<String, Object> properties);
 
-    Single<PartitionKeyRange> tryGetRangeByPartitionKeyRangeId(String collectionRid, String partitionKeyRangeId, Map<String, Object> properties);
+    Mono<PartitionKeyRange> tryGetRangeByPartitionKeyRangeId(String collectionRid, String partitionKeyRangeId, Map<String, Object> properties);
 
 }

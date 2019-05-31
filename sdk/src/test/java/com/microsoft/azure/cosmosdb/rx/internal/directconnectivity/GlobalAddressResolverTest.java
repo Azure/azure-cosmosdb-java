@@ -186,7 +186,7 @@ public class GlobalAddressResolverTest {
         });
         Mockito.when(gatewayAddressCache.openAsync(documentCollection, ranges)).thenReturn(completable);
 
-        globalAddressResolver.openAsync(documentCollection).await();
+        globalAddressResolver.openAsync(documentCollection).block();
         assertThat(numberOfTaskCompleted.get()).isEqualTo(2);
     }
 }

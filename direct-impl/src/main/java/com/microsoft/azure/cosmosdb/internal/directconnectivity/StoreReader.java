@@ -48,8 +48,6 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
-import rx.Observable;
-import rx.Single;
 import rx.exceptions.CompositeException;
 
 import java.net.URI;

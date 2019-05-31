@@ -32,14 +32,12 @@ import org.slf4j.LoggerFactory;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.internal.Quadruple;
-import com.microsoft.azure.cosmosdb.rx.internal.IDocumentClientRetryPolicy;
 import com.microsoft.azure.cosmosdb.rx.internal.IRetryPolicy;
 import com.microsoft.azure.cosmosdb.rx.internal.InvalidPartitionException;
 import com.microsoft.azure.cosmosdb.rx.internal.PartitionIsMigratingException;
 import com.microsoft.azure.cosmosdb.rx.internal.PartitionKeyRangeIsSplittingException;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
-
-import rx.Single;
+import reactor.core.publisher.Mono;
 
 public class GoneAndRetryWithRetryPolicy implements IRetryPolicy {
 
@@ -71,7 +69,7 @@ public class GoneAndRetryWithRetryPolicy implements IRetryPolicy {
     }
 
     @Override
-    public Single<ShouldRetryResult> shouldRetry(Exception exception) {
+    public Mono<ShouldRetryResult> shouldRetry(Exception exception) {
         DocumentClientException exceptionToThrow = null;
         Duration backoffTime = Duration.ofSeconds(0);
         Duration timeout = Duration.ofSeconds(0);
@@ -86,7 +84,7 @@ public class GoneAndRetryWithRetryPolicy implements IRetryPolicy {
             logger.debug("Operation will NOT be retried. Current attempt {}, Exception: {} ", this.attemptCount,
                     exception);
             stopStopWatch(this.durationTimer);
-            return Single.just(ShouldRetryResult.noRetry());
+            return Mono.just(ShouldRetryResult.noRetry());
         } else if (exception instanceof RetryWithException) {
             this.lastRetryWithException = (RetryWithException) exception;
         }
@@ -140,7 +138,7 @@ public class GoneAndRetryWithRetryPolicy implements IRetryPolicy {
                             exception.toString());
                 }
                 stopStopWatch(this.durationTimer);
-                return Single.just(ShouldRetryResult.error(exceptionToThrow));
+                return Mono.just(ShouldRetryResult.error(exceptionToThrow));
             }
             backoffTime = Duration.ofSeconds(Math.min(Math.min(this.currentBackoffSeconds, remainingSeconds),
                     GoneAndRetryWithRetryPolicy.MAXIMUM_BACKOFF_TIME_IN_SECONDS));
@@ -169,7 +167,7 @@ public class GoneAndRetryWithRetryPolicy implements IRetryPolicy {
                 // for second InvalidPartitionException, stop retrying.
                 logger.warn("Received second InvalidPartitionException after backoff/retry. Will fail the request. {}",
                         exception.toString());
-                return Single.just(ShouldRetryResult
+                return Mono.just(ShouldRetryResult
                         .error(new DocumentClientException(HttpConstants.StatusCodes.SERVICE_UNAVAILABLE, exception)));
             }
 
@@ -179,7 +177,7 @@ public class GoneAndRetryWithRetryPolicy implements IRetryPolicy {
             } else {
                 logger.error("Received unexpected invalid collection exception, request should be non-null.",
                         exception);
-                return Single.just(ShouldRetryResult
+                return Mono.just(ShouldRetryResult
                         .error(new DocumentClientException(HttpConstants.StatusCodes.INTERNAL_SERVER_ERROR, exception)));
             }
             forceRefreshAddressCache = false;
@@ -196,7 +194,7 @@ public class GoneAndRetryWithRetryPolicy implements IRetryPolicy {
             // from refreshing any caches.
             forceRefreshAddressCache = false;
         }
-        return Single.just(ShouldRetryResult.retryAfter(backoffTime,
+        return Mono.just(ShouldRetryResult.retryAfter(backoffTime,
                 Quadruple.with(forceRefreshAddressCache, true, timeout, currentRetryAttemptCount)));
     }
 

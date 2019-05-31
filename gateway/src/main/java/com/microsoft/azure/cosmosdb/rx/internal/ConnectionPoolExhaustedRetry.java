@@ -26,7 +26,7 @@ package com.microsoft.azure.cosmosdb.rx.internal;
 import io.reactivex.netty.client.PoolExhaustedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import rx.Single;
+import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 
@@ -40,12 +40,12 @@ class ConnectionPoolExhaustedRetry implements IDocumentClientRetryPolicy {
     private int retryCount = 0;
 
     @Override
-    public Single<ShouldRetryResult> shouldRetry(Exception e) {
+    public Mono<ShouldRetryResult> shouldRetry(Exception e) {
         boolean isConnectionPoolExhaustedException = isConnectionPoolExhaustedException(e);
         assert isConnectionPoolExhaustedException;
         if (!isConnectionPoolExhaustedException) {
             logger.error("Fatal error invalid retry path for {}", e.getMessage(), e);
-            return Single.just(ShouldRetryResult.error(e));
+            return Mono.just(ShouldRetryResult.error(e));
         }
 
         if (++retryCount <= MAX_RETRY_COUNT) {
@@ -53,13 +53,13 @@ class ConnectionPoolExhaustedRetry implements IDocumentClientRetryPolicy {
                                  " the load on the SDK is higher than what current connection pool size can support" +
                                  " either increase the connection pool size for the configured connection mode," +
                                  " or distribute the load on more machines. retry count {}", retryCount);
-            return Single.just(ShouldRetryResult.retryAfter(RETRY_WAIT_TIME));
+            return Mono.just(ShouldRetryResult.retryAfter(RETRY_WAIT_TIME));
         } else {
             logger.error("PoolExhaustedException failure indicates" +
                                  " the load on the SDK is higher than what current connection pool size can support" +
                                  " either increase the connection pool size for the configured connection mode," +
                                  " or distribute the load on more machines. All retries exhausted!");
-            return Single.just(ShouldRetryResult.error(e));
+            return Mono.just(ShouldRetryResult.error(e));
         }
     }
 

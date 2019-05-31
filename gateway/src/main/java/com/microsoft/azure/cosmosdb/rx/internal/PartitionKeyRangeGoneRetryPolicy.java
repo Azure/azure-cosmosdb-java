@@ -33,9 +33,7 @@ import com.microsoft.azure.cosmosdb.internal.ResourceType;
 import com.microsoft.azure.cosmosdb.internal.routing.CollectionRoutingMap;
 import com.microsoft.azure.cosmosdb.rx.internal.caches.RxCollectionCache;
 import com.microsoft.azure.cosmosdb.rx.internal.caches.IPartitionKeyRangeCache;
-
-import rx.Observable;
-import rx.Single;
+import reactor.core.publisher.Mono;
 
 // TODO: this need testing
 /**
@@ -70,14 +68,14 @@ public class PartitionKeyRangeGoneRetryPolicy implements IDocumentClientRetryPol
     /// <param name="exception">Exception that occured when the operation was tried</param>
     /// <param name="cancellationToken"></param>
     /// <returns>True indicates caller should retry, False otherwise</returns>
-    public Single<ShouldRetryResult> shouldRetry(Exception exception) {
+    public Mono<ShouldRetryResult> shouldRetry(Exception exception) {
         DocumentClientException clientException = Utils.as(exception, DocumentClientException.class);
         if (clientException != null && 
                 Exceptions.isStatusCode(clientException, HttpConstants.StatusCodes.GONE) &&
                 Exceptions.isSubStatusCode(clientException, HttpConstants.SubStatusCodes.PARTITION_KEY_RANGE_GONE)) {
 
             if (this.retried){
-                return Single.just(ShouldRetryResult.error(clientException));
+                return Mono.just(ShouldRetryResult.error(clientException));
             }
 
             RxDocumentServiceRequest request = RxDocumentServiceRequest.create(
@@ -90,31 +88,30 @@ public class PartitionKeyRangeGoneRetryPolicy implements IDocumentClientRetryPol
             if (this.feedOptions != null) {
                 request.properties = this.feedOptions.getProperties();
             }
-            Single<DocumentCollection> collectionObs = this.collectionCache.resolveCollectionAsync(request);
+            Mono<DocumentCollection> collectionObs = this.collectionCache.resolveCollectionAsync(request);
 
-            Single<ShouldRetryResult> retryTimeObservable = collectionObs.flatMap(collection -> {
+            return collectionObs.flatMap(collection -> {
 
-                Single<CollectionRoutingMap> routingMapObs = this.partitionKeyRangeCache.tryLookupAsync(collection.getResourceId(), null, request.properties);
+                Mono<CollectionRoutingMap> routingMapObs = this.partitionKeyRangeCache.tryLookupAsync(collection.getResourceId(), null, request.properties);
 
-                Single<CollectionRoutingMap> refreshedRoutingMapObs = routingMapObs.flatMap(routingMap -> {
-                    if (routingMap != null) {
-                        // Force refresh.
-                        return this.partitionKeyRangeCache.tryLookupAsync(
-                                collection.getResourceId(),
-                                routingMap,
-                                request.properties);
-                    } else {
-                        return Observable.just((CollectionRoutingMap) null).toSingle();
-                    }
-                });
+                Mono<CollectionRoutingMap> refreshedRoutingMapObs = routingMapObs.flatMap(routingMap -> {
+                    // Force refresh.
+                    return this.partitionKeyRangeCache.tryLookupAsync(
+                            collection.getResourceId(),
+                            routingMap,
+                            request.properties);
+                }).switchIfEmpty(Mono.defer(Mono::empty));
 
+                //  TODO: Check if this behavior can be replaced by doOnSubscribe
                 return refreshedRoutingMapObs.flatMap(rm -> {
                     this.retried = true;
-                    return Single.just(ShouldRetryResult.retryAfter(Duration.ZERO));
-                });
+                    return Mono.just(ShouldRetryResult.retryAfter(Duration.ZERO));
+                }).switchIfEmpty(Mono.defer(() -> {
+                    this.retried = true;
+                    return Mono.just(ShouldRetryResult.retryAfter(Duration.ZERO));
+                }));
 
             });
-            return retryTimeObservable;
 
         } else {
             return this.nextRetryPolicy.shouldRetry(exception);

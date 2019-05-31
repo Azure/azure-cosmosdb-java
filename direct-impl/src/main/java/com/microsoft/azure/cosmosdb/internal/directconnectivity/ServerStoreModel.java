@@ -35,8 +35,6 @@ import com.microsoft.azure.cosmosdb.rx.internal.Strings;
 import org.apache.commons.lang3.EnumUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import rx.Observable;
-import rx.Single;
 
 public class ServerStoreModel implements RxStoreModel {
     private final StoreClient storeClient;

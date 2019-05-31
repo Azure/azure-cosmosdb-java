@@ -23,9 +23,9 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
-import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
 import com.microsoft.azure.cosmosdb.internal.routing.PartitionKeyRangeIdentity;
-import rx.Single;
+import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
+import reactor.core.publisher.Mono;
 
 public interface IAddressCache {
 
@@ -39,7 +39,7 @@ public interface IAddressCache {
      * @param forceRefreshPartitionAddresses Whether addresses need to be refreshed as previously resolved addresses were determined to be outdated.
      * @return Physical addresses.
      */
-    Single<AddressInformation[]> tryGetAddresses(
+    Mono<AddressInformation[]> tryGetAddresses(
             RxDocumentServiceRequest request,
             PartitionKeyRangeIdentity partitionKeyRangeIdentity,
             boolean forceRefreshPartitionAddresses);

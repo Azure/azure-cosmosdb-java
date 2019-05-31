@@ -29,15 +29,12 @@ import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceResponse;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpRequest;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpResponse;
-import hu.akarnokd.rxjava.interop.RxJavaInterop;
-import reactor.adapter.rxjava.RxJava2Adapter;
 import reactor.core.publisher.Mono;
-import rx.Single;
 
 public class HttpClientUtils {
 
-    static Single<RxDocumentServiceResponse> parseResponseAsync(Mono<HttpResponse> httpResponse, HttpRequest httpRequest) {
-        return RxJavaInterop.toV1Single(RxJava2Adapter.monoToSingle(httpResponse.flatMap(response -> {
+    static Mono<RxDocumentServiceResponse> parseResponseAsync(Mono<HttpResponse> httpResponse, HttpRequest httpRequest) {
+        return httpResponse.flatMap(response -> {
             if (response.statusCode() < HttpConstants.StatusCodes.MINIMUM_STATUSCODE_AS_ERROR_GATEWAY) {
 
                 return ResponseUtils.toStoreResponse(response, httpRequest).map(RxDocumentServiceResponse::new);
@@ -49,7 +46,7 @@ public class HttpClientUtils {
                 return HttpClientUtils
                         .createDocumentClientException(response).flatMap(Mono::error);
             }
-        })));
+        });
     }
 
     private static Mono<DocumentClientException> createDocumentClientException(HttpResponse httpResponse) {

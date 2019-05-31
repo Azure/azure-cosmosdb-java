@@ -42,16 +42,12 @@ import org.slf4j.LoggerFactory;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
-import rx.Observable;
-import rx.Single;
 
 import java.net.URI;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -220,18 +216,16 @@ public class ConsistencyWriter {
         } else {
 
             Mono<RxDocumentServiceRequest> barrierRequestObs = BarrierRequestHelper.createAsync(request, this.authorizationTokenProvider, null, request.requestContext.globalCommittedSelectedLSN);
-            return barrierRequestObs.flatMap(barrierRequest -> {
-                return waitForWriteBarrierAsync(barrierRequest, request.requestContext.globalCommittedSelectedLSN)
-                        .flatMap(v -> {
+            return barrierRequestObs.flatMap(barrierRequest -> waitForWriteBarrierAsync(barrierRequest, request.requestContext.globalCommittedSelectedLSN)
+                    .flatMap(v -> {
 
-                            if (!v.booleanValue()) {
-                                logger.warn("ConsistencyWriter: Write barrier has not been met for global strong request. SelectedGlobalCommittedLsn: {}", request.requestContext.globalCommittedSelectedLSN);
-                                return Mono.error(new GoneException(RMResources.GlobalStrongWriteBarrierNotMet));
-                            }
+                        if (!v) {
+                            logger.warn("ConsistencyWriter: Write barrier has not been met for global strong request. SelectedGlobalCommittedLsn: {}", request.requestContext.globalCommittedSelectedLSN);
+                            return Mono.error(new GoneException(RMResources.GlobalStrongWriteBarrierNotMet));
+                        }
 
-                            return Mono.just(request);
-                        });
-            }).map(req -> req.requestContext.globalStrongWriteResponse);
+                        return Mono.just(request);
+                    })).map(req -> req.requestContext.globalStrongWriteResponse);
         }
     }
 
@@ -334,7 +328,7 @@ public class ConsistencyWriter {
                         //get max global committed lsn from current batch of responses, then update if greater than max of all batches.
                         long maxGlobalCommittedLsn = (responses != null || !responses.isEmpty()) ?
                                 (Long) responses.stream().map(s -> s.globalCommittedLSN).max(ComparatorUtils.NATURAL_COMPARATOR).get() :
-                                0l;
+                                0L;
                         maxGlobalCommittedLsnReceived.set(maxGlobalCommittedLsnReceived.get() > maxGlobalCommittedLsn ?
                                 maxGlobalCommittedLsnReceived.get() : maxGlobalCommittedLsn);
 
@@ -344,10 +338,10 @@ public class ConsistencyWriter {
                         //trace on last retry.
                         if (writeBarrierRetryCount.getAndDecrement() == 0) {
                             logger.debug("ConsistencyWriter: WaitForWriteBarrierAsync - Last barrier multi-region strong. Responses: {}",
-                                    String.join("; ", responses.stream().map(r -> r.toString()).collect(Collectors.toList())));
+                                    responses.stream().map(StoreResult::toString).collect(Collectors.joining("; ")));
                         }
 
-                        return Mono.just(null);
+                        return Mono.empty();
                     }).flux();
         }).repeatWhen(s -> {
             if (writeBarrierRetryCount.get() == 0) {
@@ -355,26 +349,20 @@ public class ConsistencyWriter {
             } else {
 
                 if ((ConsistencyWriter.MAX_NUMBER_OF_WRITE_BARRIER_READ_RETRIES - writeBarrierRetryCount.get()) > ConsistencyWriter.MAX_SHORT_BARRIER_RETRIES_FOR_MULTI_REGION) {
-                    return Mono.just(0L).delayElement(Duration.ofMillis(ConsistencyWriter.DELAY_BETWEEN_WRITE_BARRIER_CALLS_IN_MS));
+                    return Mono.delay(Duration.ofMillis(ConsistencyWriter.DELAY_BETWEEN_WRITE_BARRIER_CALLS_IN_MS));
                 } else {
-                    return Mono.just(0L).delayElement(Duration.ofMillis(ConsistencyWriter.SHORT_BARRIER_RETRY_INTERVAL_IN_MS_FOR_MULTI_REGION));
+                    return Mono.delay(Duration.ofMillis(ConsistencyWriter.SHORT_BARRIER_RETRY_INTERVAL_IN_MS_FOR_MULTI_REGION));
                 }
             }
         }).take(1)
-                .map(r -> {
-                    if (r == null) {
-                        // after retries exhausted print this log and return false
-                        logger.debug("ConsistencyWriter: Highest global committed lsn received for write barrier call is {}", maxGlobalCommittedLsnReceived);
-
-                        return false;
-                    }
-                    return r;
-                }).single();
+                .map(r -> r)
+                .switchIfEmpty(Mono.defer(() -> Mono.just(false)))
+                .single();
     }
 
     static void getLsnAndGlobalCommittedLsn(StoreResponse response, Utils.ValueHolder<Long> lsn, Utils.ValueHolder<Long> globalCommittedLsn) {
-        lsn.v = -1l;
-        globalCommittedLsn.v = -1l;
+        lsn.v = -1L;
+        globalCommittedLsn.v = -1L;
 
         String headerValue;
 

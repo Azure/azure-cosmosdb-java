@@ -52,10 +52,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import rx.Completable;
-import rx.Observable;
-import rx.Single;
 
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
@@ -154,7 +152,7 @@ public class GatewayAddressCache implements IAddressCache {
     }
 
     @Override
-    public Single<AddressInformation[]> tryGetAddresses(RxDocumentServiceRequest request,
+    public Mono<AddressInformation[]> tryGetAddresses(RxDocumentServiceRequest request,
                                                         PartitionKeyRangeIdentity partitionKeyRangeIdentity,
                                                         boolean forceRefreshPartitionAddresses) {
 
@@ -165,7 +163,7 @@ public class GatewayAddressCache implements IAddressCache {
                 PartitionKeyRange.MASTER_PARTITION_KEY_RANGE_ID)) {
 
             // if that's master partition return master partition address!
-            return this.resolveMasterAsync(request, forceRefreshPartitionAddresses, request.properties).map(r -> r.getRight());
+            return this.resolveMasterAsync(request, forceRefreshPartitionAddresses, request.properties).map(Pair::getRight);
         }
 
         Instant suboptimalServerPartitionTimestamp = this.suboptimalServerPartitionTimestamps.get(partitionKeyRangeIdentity);
@@ -207,7 +205,7 @@ public class GatewayAddressCache implements IAddressCache {
             this.suboptimalServerPartitionTimestamps.remove(partitionKeyRangeIdentity);
         }
 
-        Single<AddressInformation[]> addressesObs = this.serverPartitionAddressCache.getAsync(
+        Mono<AddressInformation[]> addressesObs = this.serverPartitionAddressCache.getAsync(
                 partitionKeyRangeIdentity,
                 null,
                 () -> this.getAddressesForRangeId(
@@ -223,13 +221,13 @@ public class GatewayAddressCache implements IAddressCache {
                     }
 
                     return addresses;
-                }).onErrorResumeNext(ex -> {
+                }).onErrorResume(ex -> {
             DocumentClientException dce = com.microsoft.azure.cosmosdb.rx.internal.Utils.as(ex, DocumentClientException.class);
             if (dce == null) {
                 if (forceRefreshPartitionAddressesModified) {
                     this.suboptimalServerPartitionTimestamps.remove(partitionKeyRangeIdentity);
                 }
-                return Single.error(ex);
+                return Mono.error(ex);
             } else {
                 if (Exceptions.isStatusCode(dce, HttpConstants.StatusCodes.NOTFOUND) ||
                         Exceptions.isStatusCode(dce, HttpConstants.StatusCodes.GONE) ||
@@ -238,13 +236,13 @@ public class GatewayAddressCache implements IAddressCache {
                     this.suboptimalServerPartitionTimestamps.remove(partitionKeyRangeIdentity);
                     return null;
                 }
-                return Single.error(ex);
+                return Mono.error(ex);
             }
 
         });
     }
 
-    Single<List<Address>> getServerAddressesViaGatewayAsync(
+    Mono<List<Address>> getServerAddressesViaGatewayAsync(
             RxDocumentServiceRequest request,
             String collectionRid,
             List<String> partitionKeyRangeIds,
@@ -303,7 +301,7 @@ public class GatewayAddressCache implements IAddressCache {
         }
         Mono<HttpResponse> httpResponseMono = this.httpClient.send(httpRequest);
 
-        Single<RxDocumentServiceResponse> dsrObs = HttpClientUtils.parseResponseAsync(httpResponseMono, httpRequest);
+        Mono<RxDocumentServiceResponse> dsrObs = HttpClientUtils.parseResponseAsync(httpResponseMono, httpRequest);
         return dsrObs.map(
                 dsr -> {
                     logAddressResolutionEnd(request, identifier);
@@ -316,7 +314,7 @@ public class GatewayAddressCache implements IAddressCache {
         //https://msdata.visualstudio.com/CosmosDB/_workitems/edit/340842
     }
 
-    private Single<Pair<PartitionKeyRangeIdentity, AddressInformation[]>> resolveMasterAsync(RxDocumentServiceRequest request, boolean forceRefresh, Map<String, Object> properties) {
+    private Mono<Pair<PartitionKeyRangeIdentity, AddressInformation[]>> resolveMasterAsync(RxDocumentServiceRequest request, boolean forceRefresh, Map<String, Object> properties) {
         Pair<PartitionKeyRangeIdentity, AddressInformation[]> masterAddressAndRangeInitial = this.masterPartitionAddressCache;
 
         forceRefresh = forceRefresh ||
@@ -325,7 +323,7 @@ public class GatewayAddressCache implements IAddressCache {
                         Duration.between(this.suboptimalMasterPartitionTimestamp, Instant.now()).getSeconds() > this.suboptimalPartitionForceRefreshIntervalInSeconds);
 
         if (forceRefresh || this.masterPartitionAddressCache == null) {
-            Single<List<Address>> masterReplicaAddressesObs = this.getMasterAddressesViaGatewayAsync(
+            Mono<List<Address>> masterReplicaAddressesObs = this.getMasterAddressesViaGatewayAsync(
                     request,
                     ResourceType.Database,
                     null,
@@ -359,29 +357,29 @@ public class GatewayAddressCache implements IAddressCache {
                 this.suboptimalMasterPartitionTimestamp = Instant.now();
             }
 
-            return Single.just(masterAddressAndRangeInitial);
+            return Mono.just(masterAddressAndRangeInitial);
         }
     }
 
-    private Single<AddressInformation[]> getAddressesForRangeId(
+    private Mono<AddressInformation[]> getAddressesForRangeId(
             RxDocumentServiceRequest request,
             String collectionRid,
             String partitionKeyRangeId,
             boolean forceRefresh) {
-        Single<List<Address>> addressResponse = this.getServerAddressesViaGatewayAsync(request, collectionRid, Collections.singletonList(partitionKeyRangeId), forceRefresh);
+        Mono<List<Address>> addressResponse = this.getServerAddressesViaGatewayAsync(request, collectionRid, Collections.singletonList(partitionKeyRangeId), forceRefresh);
 
-        Single<List<Pair<PartitionKeyRangeIdentity, AddressInformation[]>>> addressInfos =
+        Mono<List<Pair<PartitionKeyRangeIdentity, AddressInformation[]>>> addressInfos =
                 addressResponse.map(
                         addresses ->
                                 addresses.stream().filter(addressInfo ->
                                         this.protocolScheme.equals(addressInfo.getProtocolScheme()))
                                         .collect(Collectors.groupingBy(
-                                                address -> address.getParitionKeyRangeId()))
+                                                Address::getParitionKeyRangeId))
                                         .values().stream()
                                         .map(groupedAddresses -> toPartitionAddressAndRange(collectionRid, addresses))
                                         .collect(Collectors.toList()));
 
-        Single<List<Pair<PartitionKeyRangeIdentity, AddressInformation[]>>> result = addressInfos.map(addressInfo -> addressInfo.stream()
+        Mono<List<Pair<PartitionKeyRangeIdentity, AddressInformation[]>>> result = addressInfos.map(addressInfo -> addressInfo.stream()
                 .filter(a ->
                         StringUtils.equals(a.getLeft().getPartitionKeyRangeId(), partitionKeyRangeId))
                 .collect(Collectors.toList()));
@@ -398,14 +396,14 @@ public class GatewayAddressCache implements IAddressCache {
                         PartitionKeyRangeGoneException e = new PartitionKeyRangeGoneException(errorMessage);
                         BridgeInternal.setResourceAddress(e, collectionRid);
 
-                        return Single.error(e);
+                        return Mono.error(e);
                     } else {
-                        return Single.just(list.get(0).getRight());
+                        return Mono.just(list.get(0).getRight());
                     }
                 });
     }
 
-    Single<List<Address>> getMasterAddressesViaGatewayAsync(
+    Mono<List<Address>> getMasterAddressesViaGatewayAsync(
             RxDocumentServiceRequest request,
             ResourceType resourceType,
             String resourceAddress,
@@ -452,7 +450,7 @@ public class GatewayAddressCache implements IAddressCache {
         }
 
         Mono<HttpResponse> httpResponseMono = this.httpClient.send(httpRequest);
-        Single<RxDocumentServiceResponse> dsrObs = HttpClientUtils.parseResponseAsync(httpResponseMono, httpRequest);
+        Mono<RxDocumentServiceResponse> dsrObs = HttpClientUtils.parseResponseAsync(httpResponseMono, httpRequest);
 
         return dsrObs.map(
                 dsr -> {
@@ -475,10 +473,10 @@ public class GatewayAddressCache implements IAddressCache {
         return new AddressInformation(true, address.IsPrimary(), address.getPhyicalUri(), address.getProtocolScheme());
     }
 
-    public Completable openAsync(
+    public Mono<Void> openAsync(
             DocumentCollection collection,
             List<PartitionKeyRangeIdentity> partitionKeyRangeIdentities) {
-        List<Observable<List<Address>>> tasks = new ArrayList<>();
+        List<Flux<List<Address>>> tasks = new ArrayList<>();
         int batchSize = GatewayAddressCache.DefaultBatchSize;
 
         RxDocumentServiceRequest request = RxDocumentServiceRequest.create(
@@ -487,7 +485,7 @@ public class GatewayAddressCache implements IAddressCache {
                 collection.getResourceId(),
                 ResourceType.DocumentCollection,
                 //       AuthorizationTokenType.PrimaryMasterKey
-                Collections.EMPTY_MAP);
+                Collections.emptyMap());
         for (int i = 0; i < partitionKeyRangeIdentities.size(); i += batchSize) {
 
             int endIndex = i + batchSize;
@@ -499,16 +497,16 @@ public class GatewayAddressCache implements IAddressCache {
                     collection.getResourceId(),
 
                     partitionKeyRangeIdentities.subList(i, endIndex).
-                            stream().map(range -> range.getPartitionKeyRangeId()).collect(Collectors.toList()),
-                    false).toObservable());
+                            stream().map(PartitionKeyRangeIdentity::getPartitionKeyRangeId).collect(Collectors.toList()),
+                    false).flux());
         }
 
-        return Observable.concat(tasks)
+        return Flux.concat(tasks)
                 .doOnNext(list -> {
                     List<Pair<PartitionKeyRangeIdentity, AddressInformation[]>> addressInfos = list.stream()
                             .filter(addressInfo -> this.protocolScheme.equals(addressInfo.getProtocolScheme()))
-                            .collect(Collectors.groupingBy(address -> address.getParitionKeyRangeId()))
-                            .entrySet().stream().map(group -> toPartitionAddressAndRange(collection.getResourceId(), group.getValue()))
+                            .collect(Collectors.groupingBy(Address::getParitionKeyRangeId))
+                            .values().stream().map(addresses -> toPartitionAddressAndRange(collection.getResourceId(), addresses))
                             .collect(Collectors.toList());
 
                     for (Pair<PartitionKeyRangeIdentity, AddressInformation[]> addressInfo : addressInfos) {
@@ -516,11 +514,11 @@ public class GatewayAddressCache implements IAddressCache {
                                 new PartitionKeyRangeIdentity(collection.getResourceId(), addressInfo.getLeft().getPartitionKeyRangeId()),
                                 addressInfo.getRight());
                     }
-                }).toCompletable();
+                }).then();
     }
 
     private boolean notAllReplicasAvailable(AddressInformation[] addressInformations) {
-        return addressInformations.length < this.serviceConfig.userReplicationPolicy.MaxReplicaSetSize;
+        return addressInformations.length < ServiceConfig.SystemReplicationPolicy.MaxReplicaSetSize;
     }
 
     private static String logAddressResolutionStart(RxDocumentServiceRequest request, URL targetEndpointUrl) {

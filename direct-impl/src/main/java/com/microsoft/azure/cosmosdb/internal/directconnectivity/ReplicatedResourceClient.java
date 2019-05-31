@@ -31,7 +31,6 @@ import com.microsoft.azure.cosmosdb.ClientSideRequestStatistics;
 import com.microsoft.azure.cosmosdb.ConsistencyLevel;
 import com.microsoft.azure.cosmosdb.rx.internal.Configs;
 import com.microsoft.azure.cosmosdb.rx.internal.ReplicatedResourceClientUtils;
-import hu.akarnokd.rxjava.interop.RxJavaInterop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,11 +43,7 @@ import com.microsoft.azure.cosmosdb.rx.internal.BackoffRetryUtility;
 import com.microsoft.azure.cosmosdb.rx.internal.IAuthorizationTokenProvider;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
 
-import reactor.adapter.rxjava.RxJava2Adapter;
 import reactor.core.publisher.Mono;
-import rx.Single;
-import rx.functions.Func1;
-import rx.functions.Func2;
 
 /**
  * ReplicatedResourceClient uses the ConsistencyReader to make requests to

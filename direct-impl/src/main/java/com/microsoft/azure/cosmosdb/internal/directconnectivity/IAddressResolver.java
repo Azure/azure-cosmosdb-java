@@ -25,7 +25,6 @@ package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
 import reactor.core.publisher.Mono;
-import rx.Single;
 
 public interface IAddressResolver {
     Mono<AddressInformation[]> resolveAsync(
