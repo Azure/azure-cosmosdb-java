@@ -39,7 +39,7 @@ import static org.apache.commons.io.FileUtils.ONE_MB;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class DocumentClientResourceLeakTest extends TestSuiteBase {
-    private static final int TIMEOUT = 30 * 60 * 1000;  // 30 minutes
+    private static final int TIMEOUT = 4 * 60 * 1000;  // 4 minutes
     private static final int MAX_NUMBER = 1000;
     private Builder clientBuilder;
     private AsyncDocumentClient client;
@@ -75,11 +75,8 @@ public class DocumentClientResourceLeakTest extends TestSuiteBase {
         TimeUnit.SECONDS.sleep(10);
         long usedMemoryInBytesAfter = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory());
 
-        try {
-            assertThat(usedMemoryInBytesAfter - usedMemoryInBytesBefore).isLessThan(50 * ONE_MB);
-        } catch (Throwable error) {
-            throw error;
-        }
+        logger.info("memory delta: {} MB", (usedMemoryInBytesAfter - usedMemoryInBytesBefore) / (double)ONE_MB);
+        assertThat(usedMemoryInBytesAfter - usedMemoryInBytesBefore).isLessThan(150 * ONE_MB);
     }
 
     @BeforeClass(groups = {"emulator"}, timeOut = SETUP_TIMEOUT)
