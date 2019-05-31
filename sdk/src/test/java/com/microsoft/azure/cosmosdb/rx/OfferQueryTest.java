@@ -35,7 +35,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
-import com.microsoft.azure.cosmos.DatabaseForTest;
+import com.microsoft.azure.cosmos.CosmosDatabaseForTest;
 import com.microsoft.azure.cosmosdb.Database;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.FeedOptions;
@@ -47,6 +47,7 @@ import rx.Observable;
 
 public class OfferQueryTest extends TestSuiteBase {
 
+    /*
     public final static int SETUP_TIMEOUT = 40000;
     public final String databaseId = DatabaseForTest.generateId();
 
@@ -156,4 +157,5 @@ public class OfferQueryTest extends TestSuiteBase {
         safeDeleteDatabase(client, databaseId);
         safeClose(client);
     }
+    */
 }

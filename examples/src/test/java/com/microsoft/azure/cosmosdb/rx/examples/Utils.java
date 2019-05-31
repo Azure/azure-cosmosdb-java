@@ -23,19 +23,25 @@
 
 package com.microsoft.azure.cosmosdb.rx.examples;
 
-import com.microsoft.azure.cosmos.DatabaseForTest;
+import com.microsoft.azure.cosmos.CosmosClient;
+import com.microsoft.azure.cosmos.CosmosDatabase;
+import com.microsoft.azure.cosmos.CosmosDatabaseForTest;
+import com.microsoft.azure.cosmos.CosmosDatabaseResponse;
+import com.microsoft.azure.cosmos.CosmosDatabaseSettings;
 import com.microsoft.azure.cosmosdb.ConnectionMode;
 import com.microsoft.azure.cosmosdb.ConnectionPolicy;
 import com.microsoft.azure.cosmosdb.Database;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.FeedResponse;
-import com.microsoft.azure.cosmosdb.ResourceResponse;
 import com.microsoft.azure.cosmosdb.RetryOptions;
 import com.microsoft.azure.cosmosdb.SqlQuerySpec;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import com.microsoft.azure.cosmosdb.rx.TestConfigurations;
+
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
 import org.testng.annotations.AfterSuite;
-import rx.Observable;
 
 public class Utils {
 
@@ -45,9 +51,9 @@ public class Utils {
         connectionPolicy.setConnectionMode(ConnectionMode.Direct);
         RetryOptions options = new RetryOptions();
         connectionPolicy.setRetryOptions(options);
-        AsyncDocumentClient client = new AsyncDocumentClient.Builder().withServiceEndpoint(TestConfigurations.HOST)
-                .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
-                .withConnectionPolicy(connectionPolicy)
+        CosmosClient client = new CosmosClient.Builder().endpoint(TestConfigurations.HOST)
+                .key(TestConfigurations.MASTER_KEY)
+                .connectionPolicy(connectionPolicy)
                 .build();
         safeCleanDatabases(client);
         client.close();
@@ -57,13 +63,13 @@ public class Utils {
         return "dbs/" + db.getId() + "/colls/" + collection;
     }
 
-    public static Database createDatabaseForTest(AsyncDocumentClient client) {
-        return DatabaseForTest.create(DatabaseManagerImpl.getInstance(client)).createdDatabase;
+    public static CosmosDatabase createDatabaseForTest(CosmosClient client) {
+        return CosmosDatabaseForTest.create(DatabaseManagerImpl.getInstance(client)).createdDatabase;
     }
 
-    private static void safeCleanDatabases(AsyncDocumentClient client) {
+    private static void safeCleanDatabases(CosmosClient client) {
         if (client != null) {
-            DatabaseForTest.cleanupStaleTestDatabases(DatabaseManagerImpl.getInstance(client));
+            CosmosDatabaseForTest.cleanupStaleTestDatabases(DatabaseManagerImpl.getInstance(client));
         }
     }
 
@@ -85,7 +91,7 @@ public class Utils {
     }
 
     public static String generateDatabaseId() {
-        return DatabaseForTest.generateId();
+        return CosmosDatabaseForTest.generateId();
     }
 
     public static void safeClose(AsyncDocumentClient client) {
@@ -94,31 +100,30 @@ public class Utils {
         }
     }
 
-    private static class DatabaseManagerImpl implements DatabaseForTest.DatabaseManager {
-        public static DatabaseManagerImpl getInstance(AsyncDocumentClient client) {
+    private static class DatabaseManagerImpl implements CosmosDatabaseForTest.DatabaseManager {
+        public static DatabaseManagerImpl getInstance(CosmosClient client) {
             return new DatabaseManagerImpl(client);
         }
 
-        private final AsyncDocumentClient client;
+        private final CosmosClient client;
 
-        private DatabaseManagerImpl(AsyncDocumentClient client) {
+        private DatabaseManagerImpl(CosmosClient client) {
             this.client = client;
         }
 
         @Override
-        public Observable<FeedResponse<Database>> queryDatabases(SqlQuerySpec query) {
+        public Flux<FeedResponse<CosmosDatabaseSettings>> queryDatabases(SqlQuerySpec query) {
             return client.queryDatabases(query, null);
         }
 
         @Override
-        public Observable<ResourceResponse<Database>> createDatabase(Database databaseDefinition) {
-            return client.createDatabase(databaseDefinition, null);
+        public Mono<CosmosDatabaseResponse> createDatabase(CosmosDatabaseSettings databaseDefinition) {
+            return client.createDatabase(databaseDefinition);
         }
 
         @Override
-        public Observable<ResourceResponse<Database>> deleteDatabase(String id) {
-
-            return client.deleteDatabase("dbs/" + id, null);
+        public CosmosDatabase getDatabase(String id) {
+            return client.getDatabase(id);
         }
     }
 }

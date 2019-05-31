@@ -27,7 +27,7 @@ import com.microsoft.azure.cosmos.CosmosContainer;
 import com.microsoft.azure.cosmos.CosmosContainerResponse;
 import com.microsoft.azure.cosmos.CosmosContainerSettings;
 import com.microsoft.azure.cosmos.CosmosDatabase;
-import com.microsoft.azure.cosmos.DatabaseForTest;
+import com.microsoft.azure.cosmos.CosmosDatabaseForTest;
 import com.microsoft.azure.cosmosdb.BridgeUtils;
 import com.microsoft.azure.cosmosdb.ConflictResolutionMode;
 import com.microsoft.azure.cosmosdb.ConflictResolutionPolicy;
@@ -51,7 +51,7 @@ import static org.assertj.core.api.Assertions.fail;
 public class MultiMasterConflictResolutionTest extends TestSuiteBase {
     private static final int TIMEOUT = 40000;
 
-    private final String databaseId = DatabaseForTest.generateId();
+    private final String databaseId = CosmosDatabaseForTest.generateId();
 
     private PartitionKeyDefinition partitionKeyDef;
     private CosmosClient client;

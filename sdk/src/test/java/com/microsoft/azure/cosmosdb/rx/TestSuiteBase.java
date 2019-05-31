@@ -47,7 +47,6 @@ import com.microsoft.azure.cosmosdb.Index;
 import com.microsoft.azure.cosmosdb.IndexingPolicy;
 import com.microsoft.azure.cosmosdb.RetryOptions;
 import com.microsoft.azure.cosmosdb.SqlQuerySpec;
-import com.microsoft.azure.cosmosdb.Undefined;
 import com.microsoft.azure.cosmosdb.internal.PathParser;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.Protocol;
 import com.microsoft.azure.cosmosdb.rx.internal.Configs;
@@ -55,7 +54,7 @@ import com.microsoft.azure.cosmosdb.rx.internal.Configs;
 import io.reactivex.subscribers.TestSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
+import rx.Observable;
 
 import org.apache.commons.lang3.StringUtils;
 import org.mockito.stubbing.Answer;
@@ -76,14 +75,13 @@ import com.microsoft.azure.cosmos.CosmosDatabase;
 import com.microsoft.azure.cosmos.CosmosDatabaseResponse;
 import com.microsoft.azure.cosmos.CosmosDatabaseSettings;
 import com.microsoft.azure.cosmos.CosmosItem;
-import com.microsoft.azure.cosmos.CosmosItemResponse;
 import com.microsoft.azure.cosmos.CosmosItemSettings;
 import com.microsoft.azure.cosmos.CosmosRequestOptions;
 import com.microsoft.azure.cosmos.CosmosResponse;
 import com.microsoft.azure.cosmos.CosmosResponseValidator;
 import com.microsoft.azure.cosmos.CosmosUser;
 import com.microsoft.azure.cosmos.CosmosUserSettings;
-import com.microsoft.azure.cosmos.DatabaseForTest;
+import com.microsoft.azure.cosmos.CosmosDatabaseForTest;
 import com.microsoft.azure.cosmosdb.CompositePath;
 import com.microsoft.azure.cosmosdb.CompositePathSortOrder;
 import com.microsoft.azure.cosmosdb.ConnectionMode;
@@ -97,7 +95,6 @@ import com.microsoft.azure.cosmosdb.Resource;
 import com.microsoft.azure.cosmosdb.ResourceResponse;
 
 import org.testng.annotations.Test;
-import rx.Observable;
 
 public class TestSuiteBase {
     private static final int DEFAULT_BULK_INSERT_CONCURRENCY_LEVEL = 500;
@@ -150,7 +147,7 @@ public class TestSuiteBase {
         logger.info("Finished {}:{}.", m.getDeclaringClass().getSimpleName(), m.getName());
     }
 
-    private static class DatabaseManagerImpl implements DatabaseForTest.DatabaseManager {
+    private static class DatabaseManagerImpl implements CosmosDatabaseForTest.DatabaseManager {
         public static DatabaseManagerImpl getInstance(CosmosClient client) {
             return new DatabaseManagerImpl(client);
         }
@@ -181,7 +178,7 @@ public class TestSuiteBase {
     public static void beforeSuite() {
         logger.info("beforeSuite Started");
         CosmosClient houseKeepingClient = createGatewayHouseKeepingDocumentClient().build();
-        DatabaseForTest dbForTest = DatabaseForTest.create(DatabaseManagerImpl.getInstance(houseKeepingClient));
+        CosmosDatabaseForTest dbForTest = CosmosDatabaseForTest.create(DatabaseManagerImpl.getInstance(houseKeepingClient));
         SHARED_DATABASE = dbForTest.createdDatabase;
         CosmosContainerRequestOptions options = new CosmosContainerRequestOptions();
         options.offerThroughput(10100);
@@ -195,7 +192,7 @@ public class TestSuiteBase {
         CosmosClient houseKeepingClient = createGatewayHouseKeepingDocumentClient().build();
         try {
             safeDeleteDatabase(SHARED_DATABASE);
-            DatabaseForTest.cleanupStaleTestDatabases(DatabaseManagerImpl.getInstance(houseKeepingClient));
+            CosmosDatabaseForTest.cleanupStaleTestDatabases(DatabaseManagerImpl.getInstance(houseKeepingClient));
         } finally {
             safeClose(houseKeepingClient);
         }
@@ -224,12 +221,11 @@ public class TestSuiteBase {
                             List<String> pkPath = PathParser.getPathParts(paths.get(0));
                             propertyValue = doc.getObjectByPath(pkPath);
                             if (propertyValue == null) {
-                                propertyValue = Undefined.Value();
+                                propertyValue = PartitionKey.None;
                             }
 
                         }
-                        cosmosContainer.getItem(doc.getId(), propertyValue).delete().block();
-                        return null;
+                        return cosmosContainer.getItem(doc.getId(), propertyValue).delete();
                     }).collectList().block();
             logger.info("Truncating collection {} triggers ...", cosmosContainerId);
 
@@ -243,7 +239,7 @@ public class TestSuiteBase {
 //                        requestOptions.setPartitionKey(new PartitionKey(propertyValue));
 //                    }
 
-                        return cosmosContainer.getTrigger(trigger.toJson()).delete(requestOptions);
+                        return cosmosContainer.getTrigger(trigger.getId()).delete(requestOptions);
                     }).collectList().block();
 
             logger.info("Truncating collection {} storedProcedures ...", cosmosContainerId);
@@ -258,7 +254,7 @@ public class TestSuiteBase {
 //                        requestOptions.setPartitionKey(new PartitionKey(propertyValue));
 //                    }
 
-                        return cosmosContainer.getStoredProcedure(storedProcedure.toJson()).delete(requestOptions);
+                        return cosmosContainer.getStoredProcedure(storedProcedure.getId()).delete(requestOptions);
                     }).collectList().block();
 
             logger.info("Truncating collection {} udfs ...", cosmosContainerId);
@@ -273,7 +269,7 @@ public class TestSuiteBase {
 //                        requestOptions.setPartitionKey(new PartitionKey(propertyValue));
 //                    }
 
-                        return cosmosContainer.getUserDefinedFunction(udf.toJson()).delete(requestOptions);
+                        return cosmosContainer.getUserDefinedFunction(udf.getId()).delete(requestOptions);
                     }).collectList().block();
 
         } finally {
@@ -668,6 +664,77 @@ public class TestSuiteBase {
         }
     }
 
+    public <T extends Resource> void validateSuccess(Observable<ResourceResponse<T>> observable,
+            ResourceResponseValidator<T> validator) {
+        validateSuccess(observable, validator, subscriberValidationTimeout);
+    }
+
+    public static <T extends Resource> void validateSuccess(Observable<ResourceResponse<T>> observable,
+            ResourceResponseValidator<T> validator, long timeout) {
+
+        VerboseTestSubscriber<ResourceResponse<T>> testSubscriber = new VerboseTestSubscriber<>();
+
+        observable.subscribe(testSubscriber);
+        testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertCompleted();
+        testSubscriber.assertValueCount(1);
+        validator.validate(testSubscriber.getOnNextEvents().get(0));
+    }
+
+    public <T extends Resource> void validateFailure(Observable<ResourceResponse<T>> observable,
+            FailureValidator validator) {
+        validateFailure(observable, validator, subscriberValidationTimeout);
+    }
+
+    public static <T extends Resource> void validateFailure(Observable<ResourceResponse<T>> observable,
+            FailureValidator validator, long timeout) {
+
+        VerboseTestSubscriber<ResourceResponse<T>> testSubscriber = new VerboseTestSubscriber<>();
+
+        observable.subscribe(testSubscriber);
+        testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
+        testSubscriber.assertNotCompleted();
+        testSubscriber.assertTerminalEvent();
+        assertThat(testSubscriber.getOnErrorEvents()).hasSize(1);
+        validator.validate(testSubscriber.getOnErrorEvents().get(0));
+    }
+
+    public <T extends Resource> void validateQuerySuccess(Observable<FeedResponse<T>> observable,
+            FeedResponseListValidator<T> validator) {
+        validateQuerySuccess(observable, validator, subscriberValidationTimeout);
+    }
+
+    public static <T extends Resource> void validateQuerySuccess(Observable<FeedResponse<T>> observable,
+            FeedResponseListValidator<T> validator, long timeout) {
+
+        VerboseTestSubscriber<FeedResponse<T>> testSubscriber = new VerboseTestSubscriber<>();
+
+        observable.subscribe(testSubscriber);
+        testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertCompleted();
+        validator.validate(testSubscriber.getOnNextEvents());
+    }
+
+    public <T extends Resource> void validateQueryFailure(Observable<FeedResponse<T>> observable,
+            FailureValidator validator) {
+        validateQueryFailure(observable, validator, subscriberValidationTimeout);
+    }
+
+    public static <T extends Resource> void validateQueryFailure(Observable<FeedResponse<T>> observable,
+            FailureValidator validator, long timeout) {
+
+        VerboseTestSubscriber<FeedResponse<T>> testSubscriber = new VerboseTestSubscriber<>();
+
+        observable.subscribe(testSubscriber);
+        testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
+        testSubscriber.assertNotCompleted();
+        testSubscriber.assertTerminalEvent();
+        assertThat(testSubscriber.getOnErrorEvents()).hasSize(1);
+        validator.validate(testSubscriber.getOnErrorEvents().get(0));
+    }
+
     public <T extends CosmosResponse> void validateSuccess(Mono<T> single, CosmosResponseValidator<T> validator)
             throws InterruptedException {
         validateSuccess(single.flux(), validator, subscriberValidationTimeout);
@@ -974,8 +1041,7 @@ public class TestSuiteBase {
         };
     }
 
-    /*
-    public static class VerboseTestSubscriber<T> extends TestSubscriber<T> {
+    public static class VerboseTestSubscriber<T> extends rx.observers.TestSubscriber<T> {
         @Override
         public void assertNoErrors() {
             List<Throwable> onErrorEvents = getOnErrorEvents();
@@ -994,5 +1060,4 @@ public class TestSuiteBase {
             }
         }
     }
-    */
 }

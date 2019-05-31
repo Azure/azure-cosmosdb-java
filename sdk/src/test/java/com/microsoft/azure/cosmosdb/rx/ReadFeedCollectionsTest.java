@@ -37,7 +37,7 @@ import com.microsoft.azure.cosmos.CosmosContainer;
 import com.microsoft.azure.cosmos.CosmosContainerRequestOptions;
 import com.microsoft.azure.cosmos.CosmosContainerSettings;
 import com.microsoft.azure.cosmos.CosmosDatabase;
-import com.microsoft.azure.cosmos.DatabaseForTest;
+import com.microsoft.azure.cosmos.CosmosDatabaseForTest;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.PartitionKeyDefinition;
@@ -50,7 +50,7 @@ public class ReadFeedCollectionsTest extends TestSuiteBase {
     protected static final int SETUP_TIMEOUT = 60000;
     protected static final int SHUTDOWN_TIMEOUT = 20000;
 
-    public final String databaseId = DatabaseForTest.generateId();
+    public final String databaseId = CosmosDatabaseForTest.generateId();
 
     private CosmosDatabase createdDatabase;
     private List<CosmosContainer> createdCollections = new ArrayList<>();

@@ -40,7 +40,7 @@ import com.microsoft.azure.cosmos.CosmosClient.Builder;
 import com.microsoft.azure.cosmos.CosmosContainer;
 import com.microsoft.azure.cosmos.CosmosContainerSettings;
 import com.microsoft.azure.cosmos.CosmosDatabase;
-import com.microsoft.azure.cosmos.DatabaseForTest;
+import com.microsoft.azure.cosmos.CosmosDatabaseForTest;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.PartitionKeyDefinition;
@@ -49,7 +49,7 @@ import reactor.core.publisher.Flux;
 
 public class CollectionQueryTest extends TestSuiteBase {
     private final static int TIMEOUT = 30000;
-    private final String databaseId = DatabaseForTest.generateId();
+    private final String databaseId = CosmosDatabaseForTest.generateId();
     private List<CosmosContainer> createdCollections = new ArrayList<>();
     private CosmosClient client;
     private CosmosDatabase createdDatabase;

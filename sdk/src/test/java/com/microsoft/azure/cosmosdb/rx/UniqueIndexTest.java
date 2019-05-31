@@ -43,7 +43,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.google.common.collect.ImmutableList;
-import com.microsoft.azure.cosmos.DatabaseForTest;
+import com.microsoft.azure.cosmos.CosmosDatabaseForTest;
 import com.microsoft.azure.cosmosdb.ConnectionPolicy;
 import com.microsoft.azure.cosmosdb.ConsistencyLevel;
 import com.microsoft.azure.cosmosdb.DataType;
@@ -69,7 +69,7 @@ public class UniqueIndexTest extends TestSuiteBase {
     protected static final int SETUP_TIMEOUT = 20000;
     protected static final int SHUTDOWN_TIMEOUT = 20000;
 
-    private final String databaseId = DatabaseForTest.generateId();
+    private final String databaseId = CosmosDatabaseForTest.generateId();
     private AsyncDocumentClient client;
     private Database database;
 

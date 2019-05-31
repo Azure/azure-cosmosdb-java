@@ -27,10 +27,11 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
-import javax.net.ssl.SSLException;
-
-import com.microsoft.azure.cosmosdb.Database;
-import com.microsoft.azure.cosmosdb.DocumentCollection;
+import com.microsoft.azure.cosmos.CosmosBridgeInternal;
+import com.microsoft.azure.cosmos.CosmosClient;
+import com.microsoft.azure.cosmos.CosmosContainer;
+import com.microsoft.azure.cosmos.CosmosContainerRequestOptions;
+import com.microsoft.azure.cosmos.CosmosDatabase;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.PartitionKeyRange;
@@ -39,13 +40,13 @@ import rx.Observable;
 
 public class ReadFeedPkrTests extends TestSuiteBase {
 
-    private Database createdDatabase;
-    private DocumentCollection createdCollection;
+    private CosmosDatabase createdDatabase;
+    private CosmosContainer createdCollection;
 
     private AsyncDocumentClient client;
     
     @Factory(dataProvider = "clientBuildersWithDirect")
-    public ReadFeedPkrTests(AsyncDocumentClient.Builder clientBuilder) {
+    public ReadFeedPkrTests(CosmosClient.Builder clientBuilder) {
         this.clientBuilder = clientBuilder;
     }
 
@@ -69,14 +70,14 @@ public class ReadFeedPkrTests extends TestSuiteBase {
         createdDatabase = SHARED_DATABASE;
         createdCollection = createCollection(createdDatabase.getId(),
                                              getCollectionDefinition(),
-                                             null);
-        client = clientBuilder.build();
+                                             new CosmosContainerRequestOptions());
+        client = CosmosBridgeInternal.getAsyncDocumentClient(clientBuilder.build());
     }
 
     @AfterClass(groups = { "emulator" }, timeOut = SETUP_TIMEOUT, alwaysRun = true)
     public void afterClass() {
-        safeDeleteCollection(client, createdCollection);
-        safeClose(client);
+        safeDeleteCollection(createdCollection);
+        client.close();
     }
 
     private String getCollectionLink() {

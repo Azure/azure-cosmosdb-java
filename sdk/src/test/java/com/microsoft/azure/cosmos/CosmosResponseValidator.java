@@ -29,6 +29,7 @@ import com.microsoft.azure.cosmosdb.Resource;
 import com.microsoft.azure.cosmosdb.ResourceResponse;
 import com.microsoft.azure.cosmosdb.SpatialSpec;
 import com.microsoft.azure.cosmosdb.SpatialType;
+import com.microsoft.azure.cosmosdb.StoredProcedure;
 import com.microsoft.azure.cosmosdb.rx.ResourceResponseValidator;
 import com.microsoft.azure.cosmosdb.rx.ResourceResponseValidator.Builder;
 
@@ -193,6 +194,29 @@ public interface CosmosResponseValidator<T extends CosmosResponse> {
                         assertThat(entry.getValue())
                         .containsExactlyInAnyOrderElementsOf(writtenIndexMap.get(entry.getKey()));
                     }
+                }
+            });
+            return this;
+        }
+
+        public Builder<T> withStoredProcedureBody(String storedProcedureBody) {
+            validators.add(new CosmosResponseValidator<CosmosStoredProcedureResponse>() {
+
+                @Override
+                public void validate(CosmosStoredProcedureResponse resourceResponse) {
+                    assertThat(resourceResponse.getStoredProcedureSettings().getBody()).isEqualTo(storedProcedureBody);
+                }
+            });
+            return this;
+        }
+        
+        public Builder<T> notNullEtag() {
+            validators.add(new CosmosResponseValidator<T>() {
+
+                @Override
+                public void validate(T resourceResponse) {
+                    assertThat(resourceResponse.getResourceSettings()).isNotNull();
+                    assertThat(resourceResponse.getResourceSettings().getETag()).isNotNull();
                 }
             });
             return this;

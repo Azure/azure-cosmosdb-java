@@ -44,8 +44,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class DatabaseForTest {
-    private static Logger logger = LoggerFactory.getLogger(DatabaseForTest.class);
+public class CosmosDatabaseForTest {
+    private static Logger logger = LoggerFactory.getLogger(CosmosDatabaseForTest.class);
     public static final String SHARED_DB_ID_PREFIX = "RxJava.SDKTest.SharedDatabase";
     private static final Duration CLEANUP_THRESHOLD_DURATION = Duration.ofHours(1);
     private static final String DELIMITER = "_";
@@ -54,7 +54,7 @@ public class DatabaseForTest {
     public LocalDateTime createdTime;
     public CosmosDatabase createdDatabase;
 
-    private DatabaseForTest(CosmosDatabase db, LocalDateTime createdTime) {
+    private CosmosDatabaseForTest(CosmosDatabase db, LocalDateTime createdTime) {
         this.createdDatabase = db;
         this.createdTime = createdTime;
     }
@@ -71,7 +71,7 @@ public class DatabaseForTest {
         return SHARED_DB_ID_PREFIX + DELIMITER + TIME_FORMATTER.format(LocalDateTime.now()) + DELIMITER + RandomStringUtils.randomAlphabetic(3);
     }
 
-    private static DatabaseForTest from(CosmosDatabase db) {
+    private static CosmosDatabaseForTest from(CosmosDatabase db) {
         if (db == null || db.getId() == null || db.getLink() == null) {
             return null;
         }
@@ -91,17 +91,17 @@ public class DatabaseForTest {
 
         try {
             LocalDateTime parsedTime = LocalDateTime.parse(parts[1], TIME_FORMATTER);
-            return new DatabaseForTest(db, parsedTime);
+            return new CosmosDatabaseForTest(db, parsedTime);
         } catch (Exception e) {
             return null;
         }
     }
 
-    public static DatabaseForTest create(DatabaseManager client) {
+    public static CosmosDatabaseForTest create(DatabaseManager client) {
         CosmosDatabaseSettings dbDef = new CosmosDatabaseSettings(generateId());
 
         CosmosDatabase db = client.createDatabase(dbDef).block().getDatabase();
-        DatabaseForTest dbForTest = DatabaseForTest.from(db);
+        CosmosDatabaseForTest dbForTest = CosmosDatabaseForTest.from(db);
         assertThat(dbForTest).isNotNull();
         return dbForTest;
     }
@@ -110,13 +110,13 @@ public class DatabaseForTest {
         logger.info("Cleaning stale test databases ...");
         List<CosmosDatabaseSettings> dbs = client.queryDatabases(
                 new SqlQuerySpec("SELECT * FROM c WHERE STARTSWITH(c.id, @PREFIX)",
-                                 new SqlParameterCollection(new SqlParameter("@PREFIX", DatabaseForTest.SHARED_DB_ID_PREFIX))))
+                                 new SqlParameterCollection(new SqlParameter("@PREFIX", CosmosDatabaseForTest.SHARED_DB_ID_PREFIX))))
                 .flatMap(page -> Flux.fromIterable(page.getResults())).collectList().block();
 
         for (CosmosDatabaseSettings db : dbs) {
-            assertThat(db.getId()).startsWith(DatabaseForTest.SHARED_DB_ID_PREFIX);
+            assertThat(db.getId()).startsWith(CosmosDatabaseForTest.SHARED_DB_ID_PREFIX);
 
-            DatabaseForTest dbForTest = DatabaseForTest.from(client.getDatabase(db.getId()));
+            CosmosDatabaseForTest dbForTest = CosmosDatabaseForTest.from(client.getDatabase(db.getId()));
 
             if (db != null && dbForTest.isStale()) {
                 logger.info("Deleting database {}", db.getId());

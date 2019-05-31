@@ -45,7 +45,7 @@ import com.microsoft.azure.cosmos.CosmosItem;
 import com.microsoft.azure.cosmos.CosmosItemResponse;
 import com.microsoft.azure.cosmos.CosmosItemSettings;
 import com.microsoft.azure.cosmos.CosmosResponseValidator;
-import com.microsoft.azure.cosmos.DatabaseForTest;
+import com.microsoft.azure.cosmos.CosmosDatabaseForTest;
 import com.microsoft.azure.cosmosdb.CompositePath;
 import com.microsoft.azure.cosmosdb.CompositePathSortOrder;
 import com.microsoft.azure.cosmosdb.Database;
@@ -60,7 +60,7 @@ public class CollectionCrudTest extends TestSuiteBase {
     private static final int TIMEOUT = 30000;
     private static final int SETUP_TIMEOUT = 20000;
     private static final int SHUTDOWN_TIMEOUT = 20000;
-    private final String databaseId = DatabaseForTest.generateId();
+    private final String databaseId = CosmosDatabaseForTest.generateId();
 
     private CosmosClient client;
     private CosmosDatabase database;

@@ -303,6 +303,17 @@ public class CosmosDatabase extends CosmosResource {
                 new CosmosUserResponse(response, this)).toSingle()));
     }
 
+    public Flux<FeedResponse<CosmosUserSettings>> listUsers(FeedOptions options) {
+        //TODO:
+        return RxJava2Adapter.flowableToFlux(RxJavaInterop.toV2Flowable(getDocClientWrapper().readUsers(getLink(), options)
+                .map(response-> BridgeInternal.createFeedResponse(CosmosUserSettings.getFromV2Results(response.getResults()),
+                        response.getResponseHeaders()))));
+    }
+
+    public Flux<FeedResponse<CosmosUserSettings>> listUsers() {
+        return listUsers(new FeedOptions());
+    }
+
     public Flux<FeedResponse<CosmosUserSettings>> queryUsers(String query, FeedOptions options){
         return queryUsers(new SqlQuerySpec(query), options);
     }

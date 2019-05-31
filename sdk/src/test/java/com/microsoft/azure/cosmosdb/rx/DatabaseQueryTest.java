@@ -38,7 +38,7 @@ import com.microsoft.azure.cosmos.CosmosClient;
 import com.microsoft.azure.cosmos.CosmosClient.Builder;
 import com.microsoft.azure.cosmos.CosmosDatabase;
 import com.microsoft.azure.cosmos.CosmosDatabaseSettings;
-import com.microsoft.azure.cosmos.DatabaseForTest;
+import com.microsoft.azure.cosmos.CosmosDatabaseForTest;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 
@@ -46,8 +46,8 @@ import reactor.core.publisher.Flux;
 
 public class DatabaseQueryTest extends TestSuiteBase {
 
-    public final String databaseId1 = DatabaseForTest.generateId();
-    public final String databaseId2 = DatabaseForTest.generateId();
+    public final String databaseId1 = CosmosDatabaseForTest.generateId();
+    public final String databaseId2 = CosmosDatabaseForTest.generateId();
 
     private List<CosmosDatabase> createdDatabases = new ArrayList<>();
 
