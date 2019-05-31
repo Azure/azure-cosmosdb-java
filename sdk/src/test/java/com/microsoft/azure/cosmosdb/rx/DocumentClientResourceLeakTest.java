@@ -39,7 +39,7 @@ import static org.apache.commons.io.FileUtils.ONE_MB;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class DocumentClientResourceLeakTest extends TestSuiteBase {
-    private static final int TIMEOUT = 240000;
+    private static final int TIMEOUT = 30 * 60 * 1000;  // 30 minutes
     private static final int MAX_NUMBER = 1000;
     private Builder clientBuilder;
     private AsyncDocumentClient client;
@@ -54,31 +54,32 @@ public class DocumentClientResourceLeakTest extends TestSuiteBase {
 
     @Test(groups = {"emulator"}, timeOut = TIMEOUT)
     public void resourceLeak() throws Exception {
-        //TODO FIXME DANOBLE this test doesn't pass on RNTBD
-        if (clientBuilder.configs.getProtocol() == Protocol.Tcp) {
-            throw new SkipException("RNTBD");
-        }
+
         System.gc();
         TimeUnit.SECONDS.sleep(10);
         long usedMemoryInBytesBefore = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory());
 
-
         for (int i = 0; i < MAX_NUMBER; i++) {
-            logger.info("client {}", i);
+            logger.info("CLIENT {}", i);
             client = clientBuilder.build();
             try {
-                logger.info("creating doc...");
+                logger.info("creating document");
                 createDocument(client, createdDatabase.getId(), createdCollection.getId(), getDocumentDefinition());
             } finally {
-                logger.info("closing client...");
+                logger.info("closing client");
                 client.close();
             }
         }
+
         System.gc();
         TimeUnit.SECONDS.sleep(10);
         long usedMemoryInBytesAfter = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory());
 
-        assertThat(usedMemoryInBytesAfter - usedMemoryInBytesBefore).isLessThan(200 * ONE_MB);
+        try {
+            assertThat(usedMemoryInBytesAfter - usedMemoryInBytesBefore).isLessThan(50 * ONE_MB);
+        } catch (Throwable error) {
+            throw error;
+        }
     }
 
     @BeforeClass(groups = {"emulator"}, timeOut = SETUP_TIMEOUT)

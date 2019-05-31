@@ -59,18 +59,8 @@ public class VeryLargeDocumentQueryTest extends TestSuiteBase {
         for(int i = 0; i < cnt; i++) {
             createLargeDocument();
         }
-
-        try {
-            validateQuerySuccess(client.queryDocuments(getCollectionLink(), "SELECT * FROM r", null),
-                new FeedResponseListValidator.Builder().totalSize(cnt).build());
-        } catch (Throwable error) {
-            if (this.clientBuilder.configs.getProtocol() == Protocol.Tcp) {
-                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.desiredConsistencyLevel);
-                logger.info(message, error);
-                throw new SkipException(message, error);
-            }
-            throw error;
-        }
+        validateQuerySuccess(client.queryDocuments(getCollectionLink(), "SELECT * FROM r", null),
+            new FeedResponseListValidator.Builder().totalSize(cnt).build());
     }
 
     private void createLargeDocument() {
