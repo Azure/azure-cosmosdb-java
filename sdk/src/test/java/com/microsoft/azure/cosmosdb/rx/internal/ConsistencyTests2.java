@@ -269,6 +269,7 @@ public class ConsistencyTests2 extends ConsistencyTestsBase {
                     try {
                         FeedOptions feedOptions = new FeedOptions();
                         feedOptions.setEnableCrossPartitionQuery(true);
+                        feedOptions.setAllowEmptyPages(true);
                         FeedResponse<Document> queryResponse = client.queryDocuments(createdCollection.getSelfLink(), "SELECT * FROM c WHERE c.Id = 'foo'", feedOptions).toBlocking().first();
                         String lsnHeaderValue = queryResponse.getResponseHeaders().get(WFConstants.BackendHeaders.LSN);
                         long lsn = Long.valueOf(lsnHeaderValue);

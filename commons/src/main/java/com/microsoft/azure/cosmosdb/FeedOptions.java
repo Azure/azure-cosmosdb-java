@@ -35,6 +35,7 @@ public final class FeedOptions extends FeedOptionsBase {
     private int maxDegreeOfParallelism;
     private int maxBufferedItemCount;
     private int responseContinuationTokenLimitInKb;
+    private boolean allowEmptyPages;
 
     public FeedOptions() {}
 
@@ -48,6 +49,7 @@ public final class FeedOptions extends FeedOptionsBase {
         this.maxDegreeOfParallelism = options.maxDegreeOfParallelism;
         this.maxBufferedItemCount = options.maxBufferedItemCount;
         this.responseContinuationTokenLimitInKb = options.responseContinuationTokenLimitInKb;
+        this.allowEmptyPages = options.allowEmptyPages;
     }
 
     /**
@@ -228,5 +230,20 @@ public final class FeedOptions extends FeedOptionsBase {
      */
     public int getResponseContinuationTokenLimitInKb() {
         return responseContinuationTokenLimitInKb;
+    }
+
+    /**
+     * Gets the option to allow empty result pages in feed response.
+     */
+    public boolean getAllowEmptyPages() {
+        return allowEmptyPages;
+    }
+
+    /**
+     * Sets the option to allow empty result pages in feed response.
+     * @param allowEmptyPages
+     */
+    public void setAllowEmptyPages(boolean allowEmptyPages) {
+        this.allowEmptyPages = allowEmptyPages;
     }
 }
