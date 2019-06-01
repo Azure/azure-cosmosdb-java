@@ -22,16 +22,13 @@
  */
 package com.microsoft.azure.cosmos.changefeed.internal;
 
-import com.microsoft.azure.cosmos.CosmosClient;
 import com.microsoft.azure.cosmos.CosmosContainer;
 import com.microsoft.azure.cosmos.ChangeFeedObserver;
 import com.microsoft.azure.cosmos.ChangeFeedObserverFactory;
 import com.microsoft.azure.cosmos.ChangeFeedProcessor;
 import com.microsoft.azure.cosmos.ChangeFeedProcessorOptions;
-import com.microsoft.azure.cosmos.CosmosDatabase;
 import com.microsoft.azure.cosmos.changefeed.Bootstrapper;
 import com.microsoft.azure.cosmos.changefeed.ChangeFeedContextClient;
-import com.microsoft.azure.cosmos.changefeed.ContainerConnectionInfo;
 import com.microsoft.azure.cosmos.changefeed.HealthMonitor;
 import com.microsoft.azure.cosmos.changefeed.LeaseStoreManager;
 import com.microsoft.azure.cosmos.changefeed.PartitionController;
@@ -46,12 +43,9 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.time.Duration;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
-import static com.microsoft.azure.cosmos.changefeed.internal.ChangeFeedHelper.getCollectionSelfLink;
 
 /**
  * Helper class to build {@link ChangeFeedProcessor} instances
@@ -60,21 +54,11 @@ import static com.microsoft.azure.cosmos.changefeed.internal.ChangeFeedHelper.ge
  * <pre>
  * {@code
  *  ChangeFeedProcessor.Builder()
- *       .withHostName("SampleHost")
- *       .withFeedCollection(
- *           new DocumentCollectionInfo()
- *               .withDatabaseName("DatabaseName")
- *               .withCollectionName("MonitoredCollectionName")
- *               .withUri(new URI("https://sampleservice.documents.azure.com:443/"))
- *               .withMasterKey("-- the auth key"))
- *       .withLeaseCollection(
- *           new DocumentCollectionInfo()
- *               .withDatabaseName("DatabaseName")
- *               .withCollectionName("leases")
- *               .withUri(new URI("https://sampleservice.documents.azure.com:443/"))
- *               .withMasterKey("-- the auth key"))
- *       .withChangeFeedObserver(SampleObserverImpl.class)
- *       .build();
+ *     .withHostName(hostName)
+ *     .withFeedContainerClient(feedContainer)
+ *     .withLeaseContainerClient(leaseContainer)
+ *     .withChangeFeedObserver(SampleObserverImpl.class)
+ *     .build();
  * }
  * </pre>
  */
@@ -84,16 +68,12 @@ public class ChangeFeedProcessorBuilderImpl implements ChangeFeedProcessor.Build
     private final Duration lockTime = Duration.ofSeconds(30);
 
     private String hostName;
-    // private ContainerConnectionInfo feedCollectionLocation;
     private ChangeFeedContextClient feedContextClient;
-    private boolean closeFeedDocumentClient;
     private ChangeFeedProcessorOptions changeFeedProcessorOptions;
     private ChangeFeedObserverFactory observerFactory;
     private String databaseResourceId;
     private String collectionResourceId;
-    // private ContainerConnectionInfo leaseCollectionLocation;
     private ChangeFeedContextClient leaseContextClient;
-    private boolean closeLeaseDocumentClient;
     private PartitionLoadBalancingStrategy loadBalancingStrategy;
     private PartitionProcessorFactory partitionProcessorFactory;
     private LeaseStoreManager leaseStoreManager;
@@ -134,26 +114,6 @@ public class ChangeFeedProcessorBuilderImpl implements ChangeFeedProcessor.Build
         return this;
     }
 
-//    /**
-//     * Sets the {@link ContainerConnectionInfo} of the collection to listen for changes.
-//     *
-//     * @param feedCollectionLocation the {@link ContainerConnectionInfo} of the collection to listen for changes.
-//     * @return current Builder.
-//     */
-//    @Override
-//    public ChangeFeedProcessorBuilderImpl withFeedCollection(ContainerConnectionInfo feedCollectionLocation) {
-//        this.feedCollectionLocation = feedCollectionLocation;
-//        if (feedCollectionLocation == null || feedCollectionLocation.getConnectionPolicy() == null) {
-//            throw new IllegalArgumentException("feedCollectionLocation");
-//        }
-//        if (feedCollectionLocation.getConnectionPolicy().getUserAgentSuffix() == null
-//            || feedCollectionLocation.getConnectionPolicy().getUserAgentSuffix().isEmpty()) {
-//            this.feedCollectionLocation = new ContainerConnectionInfo(feedCollectionLocation);
-//            this.feedCollectionLocation.getConnectionPolicy().setUserAgentSuffix("changefeed-2.2.6");
-//        }
-//        return this;
-//    }
-
     /**
      * Sets and existing {@link CosmosContainer} to be used to read from the monitored collection.
      *
@@ -183,6 +143,8 @@ public class ChangeFeedProcessorBuilderImpl implements ChangeFeedProcessor.Build
         }
 
         this.changeFeedProcessorOptions = changeFeedProcessorOptions;
+        this.executorService = changeFeedProcessorOptions.getExecutorService();
+
         return this;
     }
 
@@ -213,7 +175,6 @@ public class ChangeFeedProcessorBuilderImpl implements ChangeFeedProcessor.Build
             throw new IllegalArgumentException("type");
         }
 
-//        this.observerType = type;
         this.observerFactory = new ChangeFeedObserverFactoryImpl(type);
 
         return this;
@@ -225,7 +186,6 @@ public class ChangeFeedProcessorBuilderImpl implements ChangeFeedProcessor.Build
      * @param databaseResourceId the database resource ID of the monitored collection.
      * @return current Builder.
      */
-    @Override
     public ChangeFeedProcessorBuilderImpl withDatabaseResourceId(String databaseResourceId) {
         this.databaseResourceId = databaseResourceId;
         return this;
@@ -236,22 +196,10 @@ public class ChangeFeedProcessorBuilderImpl implements ChangeFeedProcessor.Build
      * @param collectionResourceId the collection resource ID of the monitored collection.
      * @return current Builder.
      */
-    @Override
     public ChangeFeedProcessorBuilderImpl withCollectionResourceId(String collectionResourceId) {
         this.collectionResourceId = collectionResourceId;
         return this;
     }
-
-//    /**
-//     * Sets the {@link ContainerConnectionInfo} of the collection to use for leases.
-//     * @param leaseCollectionLocation the {@link ContainerConnectionInfo} of the collection to use for leases.
-//     * @return current Builder.
-//     */
-//    @Override
-//    public ChangeFeedProcessorBuilderImpl withLeaseCollection(ContainerConnectionInfo leaseCollectionLocation) {
-//        this.leaseCollectionLocation = ChangeFeedHelper.canonicalize(leaseCollectionLocation);
-//        return this;
-//    }
 
     /**
      * Sets an existing {@link CosmosContainer} to be used to read from the leases collection.
@@ -290,7 +238,6 @@ public class ChangeFeedProcessorBuilderImpl implements ChangeFeedProcessor.Build
      * @param partitionProcessorFactory the instance of {@link PartitionProcessorFactory} to use.
      * @return current Builder.
      */
-    @Override
     public ChangeFeedProcessorBuilderImpl withPartitionProcessorFactory(PartitionProcessorFactory partitionProcessorFactory) {
         if (partitionProcessorFactory == null) {
             throw new IllegalArgumentException("partitionProcessorFactory");
@@ -306,7 +253,6 @@ public class ChangeFeedProcessorBuilderImpl implements ChangeFeedProcessor.Build
      * @param leaseStoreManager the instance of {@link LeaseStoreManager} to use.
      * @return current Builder.
      */
-    @Override
     public ChangeFeedProcessorBuilderImpl withLeaseStoreManager(LeaseStoreManager leaseStoreManager) {
         if (leaseStoreManager == null) {
             throw new IllegalArgumentException("leaseStoreManager");
@@ -322,19 +268,12 @@ public class ChangeFeedProcessorBuilderImpl implements ChangeFeedProcessor.Build
      * @param healthMonitor The instance of {@link HealthMonitor} to use.
      * @return current Builder.
      */
-    @Override
     public ChangeFeedProcessorBuilderImpl withHealthMonitor(HealthMonitor healthMonitor) {
         if (healthMonitor == null) {
             throw new IllegalArgumentException("healthMonitor");
         }
 
         this.healthMonitor = healthMonitor;
-        return this;
-    }
-
-    @Override
-    public ChangeFeedProcessor.BuilderDefinition withExecutorService(ExecutorService executorService) {
-        this.executorService = executorService;
         return this;
     }
 
@@ -357,6 +296,10 @@ public class ChangeFeedProcessorBuilderImpl implements ChangeFeedProcessor.Build
             throw new IllegalArgumentException("Observer was not specified");
         }
 
+        if (this.executorService == null) {
+            this.executorService = Executors.newCachedThreadPool();
+        }
+
         this.initializeCollectionPropertiesForBuild().block();
         LeaseStoreManager leaseStoreManager = this.getLeaseStoreManager(true).block();
         this.partitionManager = this.buildPartitionManager(leaseStoreManager).block();
@@ -368,7 +311,6 @@ public class ChangeFeedProcessorBuilderImpl implements ChangeFeedProcessor.Build
     }
 
     public ChangeFeedProcessorBuilderImpl(PartitionManager partitionManager) {
-        this.closeLeaseDocumentClient = true;
         this.partitionManager = partitionManager;
     }
 
@@ -464,10 +406,6 @@ public class ChangeFeedProcessorBuilderImpl implements ChangeFeedProcessor.Build
     private Mono<PartitionManager> buildPartitionManager(LeaseStoreManager leaseStoreManager) {
         ChangeFeedProcessorBuilderImpl self = this;
 
-        if (this.executorService == null) {
-            this.executorService = Executors.newCachedThreadPool();
-        }
-
         CheckpointerObserverFactory factory = new CheckpointerObserverFactory(this.observerFactory, this.changeFeedProcessorOptions.getCheckpointFrequency());
 
         PartitionSynchronizerImpl synchronizer = new PartitionSynchronizerImpl(
@@ -522,13 +460,7 @@ public class ChangeFeedProcessorBuilderImpl implements ChangeFeedProcessor.Build
     }
 
     @Override
-    public void close() throws Exception {
-        if (this.closeLeaseDocumentClient) {
-            this.leaseContextClient.close();
-        }
-
-        if (this.closeFeedDocumentClient) {
-            this.feedContextClient.close();
-        }
+    public void close() {
+        this.stop().subscribeOn(Schedulers.elastic()).subscribe();
     }
 }

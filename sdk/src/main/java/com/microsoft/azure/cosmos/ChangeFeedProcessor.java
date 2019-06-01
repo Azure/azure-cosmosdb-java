@@ -50,18 +50,8 @@ import java.util.concurrent.ExecutorService;
  * {@code
  * ChangeFeedProcessor changeFeedProcessor = ChangeFeedProcessor.Builder()
  *     .withHostName(hostName)
- *     .withFeedCollection(
- *     new ContainerInfo()
- *         .withDatabaseName("COSMOSDB_DATABASE")
- *         .withCollectionName("COSMOSDB_COLLECTION")
- *         .withServiceEndpointUri("COSMOSDB_ENDPOINT")
- *         .withKeyOrResourceToken("COSMOSDB_SECRET"))
- *     .withLeaseCollection(
- *     new ContainerInfo()
- *         .withDatabaseName("COSMOSDB_DATABASE")
- *         .withCollectionName("COSMOSDB_COLLECTION" + "-lease")
- *         .withUri("COSMOSDB_ENDPOINT")
- *         .withServiceEndpointUri("COSMOSDB_SECRET"))
+ *     .withFeedContainerClient(feedContainer)
+ *     .withLeaseContainerClient(leaseContainer)
  *     .withChangeFeedObserver(SampleObserverImpl.class)
  *     .build();
  * }
@@ -90,18 +80,8 @@ public interface ChangeFeedProcessor {
      *
      *  ChangeFeedProcessor.Builder()
      *       .withHostName("SampleHost")
-     *       .withFeedCollection(
-     *           new ContainerInfo()
-     *               .withDatabaseName("DatabaseName")
-     *               .withCollectionName("MonitoredCollectionName")
-     *               .withServiceEndpointUri(new URI("https://sampleservice.documents.azure.com:443/"))
-     *               .withKeyOrResourceToken("-- the auth key"))
-     *       .withLeaseCollection(
-     *           new ContainerInfo()
-     *               .withDatabaseName("DatabaseName")
-     *               .withCollectionName("leases")
-     *               .withServiceEndpointUri(new URI("https://sampleservice.documents.azure.com:443/"))
-     *               .withKeyOrResourceToken("-- the auth key"))
+     *       .withFeedContainerClient(feedContainer)
+     *       .withLeaseContainerClient(leaseContainer)
      *       .withChangeFeedObserver(SampleObserverImpl.class)
      *       .build();
      * }
@@ -154,68 +134,12 @@ public interface ChangeFeedProcessor {
         BuilderDefinition withChangeFeedObserver(Class<? extends ChangeFeedObserver> type);
 
         /**
-         * Sets the database resource ID of the monitored collection.
-         *
-         * @param databaseResourceId the database resource ID of the monitored collection.
-         * @return current Builder.
-         */
-        BuilderDefinition withDatabaseResourceId(String databaseResourceId);
-
-        /**
-         * Sets the collection resource ID of the monitored collection.
-         *
-         * @param collectionResourceId the collection resource ID of the monitored collection.
-         * @return current Builder.
-         */
-        BuilderDefinition withCollectionResourceId(String collectionResourceId);
-
-        /**
          * Sets an existing {@link CosmosContainer} to be used to read from the leases collection.
          *
          * @param leaseCosmosClient the instance of {@link CosmosContainer} to use.
          * @return current Builder.
          */
         BuilderDefinition withLeaseContainerClient(CosmosContainer leaseCosmosClient);
-
-        /**
-         * Sets the {@link PartitionLoadBalancingStrategy} to be used for partition load balancing.
-         *
-         * @param loadBalancingStrategy the {@link PartitionLoadBalancingStrategy} to be used for partition load balancing.
-         * @return current Builder.
-         */
-        BuilderDefinition withPartitionLoadBalancingStrategy(PartitionLoadBalancingStrategy loadBalancingStrategy);
-
-        /**
-         * Sets the {@link PartitionProcessorFactory} to be used to create {@link PartitionProcessor} for partition processing.
-         *
-         * @param partitionProcessorFactory the instance of {@link PartitionProcessorFactory} to use.
-         * @return current Builder.
-         */
-        BuilderDefinition withPartitionProcessorFactory(PartitionProcessorFactory partitionProcessorFactory);
-
-        /**
-         * Sets the {@link LeaseStoreManager} to be used to manage leases.
-         *
-         * @param leaseStoreManager the instance of {@link LeaseStoreManager} to use.
-         * @return current Builder.
-         */
-        BuilderDefinition withLeaseStoreManager(LeaseStoreManager leaseStoreManager);
-
-        /**
-         * Sets the {@link HealthMonitor} to be used to monitor unhealthiness situation.
-         *
-         * @param healthMonitor The instance of {@link HealthMonitor} to use.
-         * @return current Builder.
-         */
-        BuilderDefinition withHealthMonitor(HealthMonitor healthMonitor);
-
-        /**
-         * Sets the {@link ExecutorService} to be used to control the thread pool.
-         *
-         * @param executorService The instance of {@link ExecutorService} to use.
-         * @return current Builder.
-         */
-        BuilderDefinition withExecutorService(ExecutorService executorService);
 
         /**
          * Builds a new instance of the {@link ChangeFeedProcessor} with the specified configuration asynchronously.
