@@ -35,11 +35,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.microsoft.azure.cosmosdb.RetryAnalyzier;
 import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
@@ -58,6 +60,7 @@ import com.microsoft.azure.cosmosdb.rx.internal.Utils.ValueHolder;
 import com.microsoft.azure.cosmosdb.rx.internal.query.CompositeContinuationToken;
 import com.microsoft.azure.cosmosdb.rx.internal.query.OrderByContinuationToken;
 
+import org.testng.util.RetryAnalyzerCount;
 import rx.Observable;
 import rx.observers.TestSubscriber;
 
@@ -372,8 +375,8 @@ public class OrderbyDocumentQueryTest extends TestSuiteBase {
         	assertThat(OrderByContinuationToken.tryParse("{\"property\" : \"Not a valid Order By Token\"}", outOrderByContinuationToken)).isFalse();
         }
 	}
-    
-    @Test(groups = { "simple" }, timeOut = TIMEOUT * 10, dataProvider = "sortOrder")
+    @Test(groups = { "simple" }, timeOut = TIMEOUT * 10, dataProvider = "sortOrder",
+            retryAnalyzer = RetryAnalyzier.class)
     public void queryDocumentsWithOrderByContinuationTokensInteger(String sortOrder) throws Exception {
         // Get Actual
         String query = String.format("SELECT * FROM c ORDER BY c.propInt %s", sortOrder);
@@ -436,6 +439,12 @@ public class OrderbyDocumentQueryTest extends TestSuiteBase {
         return Observable.merge(result, 100).
                 map(resp -> resp.getResource())
                 .toList().toBlocking().single();
+    }
+
+    @BeforeMethod(groups = { "simple" })
+    public void beforeMethod() throws Exception {
+        // add a cool off time
+        TimeUnit.SECONDS.sleep(10);
     }
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
