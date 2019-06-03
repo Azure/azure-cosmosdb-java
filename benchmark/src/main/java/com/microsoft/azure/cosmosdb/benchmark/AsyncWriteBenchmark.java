@@ -31,19 +31,17 @@ import com.codahale.metrics.Timer;
 import com.microsoft.azure.cosmosdb.Document;
 import com.microsoft.azure.cosmosdb.ResourceResponse;
 import com.microsoft.azure.cosmosdb.benchmark.Configuration.Operation;
-
-import rx.Observable;
-import rx.Subscriber;
-import rx.schedulers.Schedulers;
-
-import javax.net.ssl.SSLException;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
+import reactor.core.publisher.Flux;
+import reactor.core.scheduler.Schedulers;
 
 class AsyncWriteBenchmark extends AsyncBenchmark<ResourceResponse<Document>> {
 
     private final String uuid;
     private final String dataFieldValue;
 
-    class LatencySubscriber<T> extends Subscriber<T> {
+    class LatencySubscriber<T> implements Subscriber<T> {
 
         Timer.Context context;
         Subscriber<T> subscriber;
@@ -53,15 +51,20 @@ class AsyncWriteBenchmark extends AsyncBenchmark<ResourceResponse<Document>> {
         }
 
         @Override
-        public void onCompleted() {
-            context.stop();
-            subscriber.onCompleted();
-        }
-
-        @Override
         public void onError(Throwable e) {
             context.stop();
             subscriber.onError(e);
+        }
+
+        @Override
+        public void onComplete() {
+            context.stop();
+            subscriber.onComplete();
+        }
+
+        @Override
+        public void onSubscribe(Subscription s) {
+
         }
 
         @Override
@@ -88,18 +91,18 @@ class AsyncWriteBenchmark extends AsyncBenchmark<ResourceResponse<Document>> {
         newDoc.set("dataField3", dataFieldValue);
         newDoc.set("dataField4", dataFieldValue);
         newDoc.set("dataField5", dataFieldValue);
-        Observable<ResourceResponse<Document>> obs = client.createDocument(getCollectionLink(), newDoc, null,
+        Flux<ResourceResponse<Document>> obs = client.createDocument(getCollectionLink(), newDoc, null,
                 false);
 
         concurrencyControlSemaphore.acquire();
 
         if (configuration.getOperationType() == Operation.WriteThroughput) {
-            obs.subscribeOn(Schedulers.computation()).subscribe(subs);
+            obs.subscribeOn(Schedulers.parallel()).subscribe(subs);
         } else {
             LatencySubscriber<ResourceResponse<Document>> latencySubscriber = new LatencySubscriber<>(
                     subs);
             latencySubscriber.context = latency.time();
-            obs.subscribeOn(Schedulers.computation()).subscribe(latencySubscriber);
+            obs.subscribeOn(Schedulers.parallel()).subscribe(latencySubscriber);
         }
     }
 }

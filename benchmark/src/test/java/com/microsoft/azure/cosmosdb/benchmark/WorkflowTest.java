@@ -296,7 +296,7 @@ public class WorkflowTest {
         collection = housekeepingClient.createCollection("dbs/"+ database.getId(),
                                                          getCollectionDefinitionWithRangeRangeIndex(),
                                                          options)
-                .toBlocking().single().getResource();
+                .single().block().getResource();
         housekeepingClient.close();
     }
 

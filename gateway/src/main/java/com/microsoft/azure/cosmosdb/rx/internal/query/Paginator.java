@@ -77,6 +77,7 @@ public class Paginator {
             Function<RxDocumentServiceRequest, Flux<FeedResponse<T>>> executeFunc, Class<T> resourceType,
             int top, int maxPageSize, boolean isChangeFeed) {
 
+        Flux.push();
         Flux<FeedResponse<T>> obs = Flux.defer(() -> {
             return Flux.create(new AsyncOnSubscribe<Fetcher, FeedResponse<T>>() {
                 @Override

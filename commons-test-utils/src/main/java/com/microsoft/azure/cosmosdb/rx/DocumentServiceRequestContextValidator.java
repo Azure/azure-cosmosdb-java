@@ -23,11 +23,8 @@
  */
 package com.microsoft.azure.cosmosdb.rx;
 
-import com.microsoft.azure.cosmosdb.internal.OperationType;
-import com.microsoft.azure.cosmosdb.internal.ResourceType;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.StoreResponse;
 import com.microsoft.azure.cosmosdb.rx.internal.DocumentServiceRequestContext;
-import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
 
 import java.util.ArrayList;
 import java.util.List;

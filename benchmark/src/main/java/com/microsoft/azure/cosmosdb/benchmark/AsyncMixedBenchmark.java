@@ -29,9 +29,9 @@ import com.microsoft.azure.cosmosdb.PartitionKey;
 import com.microsoft.azure.cosmosdb.RequestOptions;
 import com.microsoft.azure.cosmosdb.ResourceResponse;
 import org.apache.commons.lang3.RandomStringUtils;
-import rx.Observable;
-import rx.Subscriber;
-import rx.schedulers.Schedulers;
+import org.reactivestreams.Subscriber;
+import reactor.core.publisher.Flux;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.Random;
 import java.util.UUID;
@@ -51,7 +51,7 @@ class AsyncMixedBenchmark extends AsyncBenchmark<Document> {
 
     @Override
     protected void performWorkload(Subscriber<Document> subs, long i) throws InterruptedException {
-        Observable<Document> obs;
+        Flux<Document> obs;
         if (i % 10 == 0 && i % 100 != 0) {
 
             String idString = uuid + i;
@@ -86,6 +86,6 @@ class AsyncMixedBenchmark extends AsyncBenchmark<Document> {
 
         concurrencyControlSemaphore.acquire();
 
-        obs.subscribeOn(Schedulers.computation()).subscribe(subs);
+        obs.subscribeOn(Schedulers.parallel()).subscribe(subs);
     }
 }

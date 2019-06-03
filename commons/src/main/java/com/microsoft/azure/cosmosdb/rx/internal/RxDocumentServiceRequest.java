@@ -23,6 +23,7 @@
 
 package com.microsoft.azure.cosmosdb.rx.internal;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -30,6 +31,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.WFConstants;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import com.microsoft.azure.cosmosdb.FeedOptionsBase;
@@ -46,6 +48,7 @@ import com.microsoft.azure.cosmosdb.internal.ResourceType;
 import com.microsoft.azure.cosmosdb.internal.Utils;
 import com.microsoft.azure.cosmosdb.internal.routing.PartitionKeyRangeIdentity;
 import reactor.core.publisher.Flux;
+import rx.observables.StringObservable;
 
 /**
  * This is core Transport/Connection agnostic request to the Azure Cosmos DB database service.
@@ -338,10 +341,9 @@ public class RxDocumentServiceRequest {
             ResourceType resourceType,
             String relativePath,
             InputStream inputStream,
-            Map<String, String> headers) {
-        // StringObservable is mis-named. It doesn't make any assumptions on character set
-        // and handles bytes only
-        return new RxDocumentServiceRequest(operation, resourceType, relativePath, StringObservable.from(inputStream), headers, AuthorizationTokenType.PrimaryMasterKey);
+            Map<String, String> headers) throws IOException {
+        Flux<byte[]> byteFlux = Flux.just(IOUtils.toByteArray(inputStream));
+        return new RxDocumentServiceRequest(operation, resourceType, relativePath, byteFlux, headers, AuthorizationTokenType.PrimaryMasterKey);
     }
 
     /** Creates a DocumentServiceRequest with a stream.
@@ -359,10 +361,9 @@ public class RxDocumentServiceRequest {
             String relativePath,
             InputStream inputStream,
             Map<String, String> headers,
-            AuthorizationTokenType authorizationTokenType) {
-        // StringObservable is mis-named. It doesn't make any assumptions on character set
-        // and handles bytes only
-        return new RxDocumentServiceRequest(operation, resourceType, relativePath, StringObservable.from(inputStream), headers, authorizationTokenType);
+            AuthorizationTokenType authorizationTokenType) throws IOException {
+        Flux<byte[]> byteFlux = Flux.just(IOUtils.toByteArray(inputStream));
+        return new RxDocumentServiceRequest(operation, resourceType, relativePath, byteFlux, headers, authorizationTokenType);
     }
 
     /**
@@ -489,7 +490,7 @@ public class RxDocumentServiceRequest {
             break;
         }
 
-        Flux<byte[]> body = StringObservable.encode(Flux.just(queryText), StandardCharsets.UTF_8);
+        Flux<byte[]> body = Flux.just(queryText).map(s -> StandardCharsets.UTF_8.encode(s).array());
         return new RxDocumentServiceRequest(operation, resourceType, relativePath, body, headers, AuthorizationTokenType.PrimaryMasterKey);
     }
 

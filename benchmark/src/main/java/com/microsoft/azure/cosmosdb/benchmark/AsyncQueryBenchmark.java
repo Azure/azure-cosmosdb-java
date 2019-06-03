@@ -30,12 +30,9 @@ import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.PartitionKey;
 import com.microsoft.azure.cosmosdb.benchmark.Configuration.Operation;
-
-import rx.Observable;
-import rx.Subscriber;
-import rx.schedulers.Schedulers;
-
-import javax.net.ssl.SSLException;
+import org.reactivestreams.Subscriber;
+import reactor.core.publisher.Flux;
+import reactor.core.scheduler.Schedulers;
 
 class AsyncQueryBenchmark extends AsyncBenchmark<FeedResponse<Document>> {
 
@@ -59,7 +56,7 @@ class AsyncQueryBenchmark extends AsyncBenchmark<FeedResponse<Document>> {
     @Override
     protected void performWorkload(Subscriber<FeedResponse<Document>> subs, long i) throws InterruptedException {
 
-        Observable<FeedResponse<Document>> obs;
+        Flux<FeedResponse<Document>> obs;
         Random r = new Random();
         FeedOptions options = new FeedOptions();
 
@@ -109,6 +106,6 @@ class AsyncQueryBenchmark extends AsyncBenchmark<FeedResponse<Document>> {
         }
         concurrencyControlSemaphore.acquire();
 
-        obs.subscribeOn(Schedulers.computation()).subscribe(subs);
+        obs.subscribeOn(Schedulers.parallel()).subscribe(subs);
     }
 }

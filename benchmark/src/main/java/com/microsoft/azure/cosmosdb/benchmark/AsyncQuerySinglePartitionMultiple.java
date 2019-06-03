@@ -27,12 +27,10 @@ import com.microsoft.azure.cosmosdb.Document;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.PartitionKey;
+import org.reactivestreams.Subscriber;
+import reactor.core.publisher.Flux;
+import reactor.core.scheduler.Schedulers;
 
-import rx.Observable;
-import rx.Subscriber;
-import rx.schedulers.Schedulers;
-
-import javax.net.ssl.SSLException;
 
 class AsyncQuerySinglePartitionMultiple extends AsyncBenchmark<FeedResponse<Document>> {
 
@@ -60,10 +58,10 @@ class AsyncQuerySinglePartitionMultiple extends AsyncBenchmark<FeedResponse<Docu
 
     @Override
     protected void performWorkload(Subscriber<FeedResponse<Document>> subs, long i) throws InterruptedException {
-        Observable<FeedResponse<Document>> obs = client.queryDocuments(getCollectionLink(), SQL_QUERY, options);
+        Flux<FeedResponse<Document>> obs = client.queryDocuments(getCollectionLink(), SQL_QUERY, options);
 
         concurrencyControlSemaphore.acquire();
 
-        obs.subscribeOn(Schedulers.computation()).subscribe(subs);
+        obs.subscribeOn(Schedulers.parallel()).subscribe(subs);
     }
 }
