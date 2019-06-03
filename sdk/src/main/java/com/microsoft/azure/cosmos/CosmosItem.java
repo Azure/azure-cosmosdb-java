@@ -69,7 +69,8 @@ public class CosmosItem extends CosmosResource{
         RequestOptions requestOptions = options.toRequestOptions();
         return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(container.getDatabase().getDocClientWrapper()
                 .readDocument(getLink(), requestOptions)
-                .map(response -> new CosmosItemResponse(response, requestOptions.getPartitionKey(), container)).toSingle()));
+                .map(response -> new CosmosItemResponse(response, requestOptions.getPartitionKey(), container))
+                .toSingle()));
     }
 
     /**
@@ -106,7 +107,8 @@ public class CosmosItem extends CosmosResource{
         return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(container.getDatabase()
                 .getDocClientWrapper()
                 .replaceDocument(getLink(), doc, requestOptions)
-                .map(response -> new CosmosItemResponse(response, requestOptions.getPartitionKey(), container)).toSingle()));
+                .map(response -> new CosmosItemResponse(response, requestOptions.getPartitionKey(), container))
+                .toSingle()));
     }
 
     /**
