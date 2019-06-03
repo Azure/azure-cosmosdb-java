@@ -30,8 +30,6 @@ import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.SqlQuerySpec;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
-import hu.akarnokd.rxjava.interop.RxJavaInterop;
-import reactor.adapter.rxjava.RxJava2Adapter;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -137,8 +135,8 @@ import reactor.core.publisher.Mono;
             CosmosDatabaseRequestOptions options) {
         Database wrappedDatabase = new Database();
         wrappedDatabase.setId(databaseSettings.getId());
-        return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(asyncDocumentClient.createDatabase(wrappedDatabase, options.toRequestOptions()).map(databaseResourceResponse ->
-                new CosmosDatabaseResponse(databaseResourceResponse, this)).toSingle()));
+        return asyncDocumentClient.createDatabase(wrappedDatabase, options.toRequestOptions()).map(databaseResourceResponse ->
+                new CosmosDatabaseResponse(databaseResourceResponse, this)).single();
     }
 
     /**
@@ -182,9 +180,9 @@ import reactor.core.publisher.Mono;
      * @return a {@link Flux} containing one or several feed response pages of read databases or an error.
      */
     public Flux<FeedResponse<CosmosDatabaseSettings>> listDatabases(FeedOptions options) {
-        return RxJava2Adapter.flowableToFlux(RxJavaInterop.toV2Flowable(getDocClientWrapper().readDatabases(options)
+        return getDocClientWrapper().readDatabases(options)
                 .map(response-> BridgeInternal.createFeedResponse(CosmosDatabaseSettings.getFromV2Results(response.getResults()),
-                        response.getResponseHeaders()))));
+                        response.getResponseHeaders()));
     }
 
     /**
@@ -228,10 +226,10 @@ import reactor.core.publisher.Mono;
      * @return an {@link Flux} containing one or several feed response pages of read databases or an error.
      */
     public Flux<FeedResponse<CosmosDatabaseSettings>> queryDatabases(SqlQuerySpec querySpec, FeedOptions options){
-        return RxJava2Adapter.flowableToFlux(RxJavaInterop.toV2Flowable(getDocClientWrapper().queryDatabases(querySpec, options)
+        return getDocClientWrapper().queryDatabases(querySpec, options)
                 .map(response-> BridgeInternal.createFeedResponse(
                         CosmosDatabaseSettings.getFromV2Results(response.getResults()),
-                        response.getResponseHeaders()))));
+                        response.getResponseHeaders()));
     }
 
     /**

@@ -29,7 +29,7 @@ import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceResponse;
 import com.microsoft.azure.cosmosdb.rx.internal.caches.RxCollectionCache;
 import com.microsoft.azure.cosmosdb.rx.internal.caches.IPartitionKeyRangeCache;
 
-import rx.Single;
+import reactor.core.publisher.Mono;
 
 /**
  * While this class is public, but it is not part of our published public APIs.
@@ -66,7 +66,7 @@ public interface IDocumentQueryClient {
      */
     ConsistencyLevel getDesiredConsistencyLevelAsync();
 
-    Single<RxDocumentServiceResponse> executeQueryAsync(RxDocumentServiceRequest request);
+    Mono<RxDocumentServiceResponse> executeQueryAsync(RxDocumentServiceRequest request);
 
     QueryCompatibilityMode getQueryCompatibilityMode();
 
@@ -92,5 +92,5 @@ public interface IDocumentQueryClient {
         SqlQuery
     }
 
-    Single<RxDocumentServiceResponse> readFeedAsync(RxDocumentServiceRequest request);
+    Mono<RxDocumentServiceResponse> readFeedAsync(RxDocumentServiceRequest request);
 }

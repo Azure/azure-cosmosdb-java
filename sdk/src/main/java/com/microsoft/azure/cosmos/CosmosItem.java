@@ -27,8 +27,6 @@ import com.microsoft.azure.cosmosdb.Document;
 import com.microsoft.azure.cosmosdb.Resource;
 import com.microsoft.azure.cosmosdb.internal.Paths;
 import com.microsoft.azure.cosmosdb.internal.Utils;
-import hu.akarnokd.rxjava.interop.RxJavaInterop;
-import reactor.adapter.rxjava.RxJava2Adapter;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
@@ -63,8 +61,8 @@ public class CosmosItem extends Resource {
 
     /**
      * Reads an item.
-     *
-     * After subscription the operation will be performed. 
+     * <p>
+     * After subscription the operation will be performed.
      * The {@link Mono} upon successful completion will contain a cosmos item response with the read item
      * In case of failure the {@link Mono} will error.
      *
@@ -76,8 +74,8 @@ public class CosmosItem extends Resource {
 
     /**
      * Reads an item.
-     *
-     * After subscription the operation will be performed. 
+     * <p>
+     * After subscription the operation will be performed.
      * The {@link Mono} upon successful completion will contain a cosmos item response with the read item
      * In case of failure the {@link Mono} will error.
      *
@@ -85,51 +83,53 @@ public class CosmosItem extends Resource {
      * @return an {@link Mono} containing the cosmos item response with the read item or an error
      */
     public Mono<CosmosItemResponse> read(CosmosItemRequestOptions requestOptions) {
-        return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(container.getDatabase().getDocClientWrapper()
+        return container.getDatabase().getDocClientWrapper()
                 .readDocument(getLink(), requestOptions.toRequestOptions())
-                .map(response -> new CosmosItemResponse(response, container)).toSingle()));
+                .map(response -> new CosmosItemResponse(response, container))
+                .single();
     }
 
     /**
      * Replaces an item with the passed in item.
-     *
-     * After subscription the operation will be performed. 
+     * <p>
+     * After subscription the operation will be performed.
      * The {@link Mono} upon successful completion will contain a single cosmos item response with the replaced item.
      * In case of failure the {@link Mono} will error.
      *
-     * @param item the item to replace (containing the document id).
+     * @param item         the item to replace (containing the document id).
      * @param partitionKey the partition key
      * @return an {@link Mono} containing the  cosmos item resource response with the replaced item or an error.
      */
-    public Mono<CosmosItemResponse> replace(Object item, Object partitionKey){
+    public Mono<CosmosItemResponse> replace(Object item, Object partitionKey) {
         return replace(item, new CosmosItemRequestOptions(partitionKey));
     }
 
     /**
      * Replaces an item with the passed in item.
-     *
-     * After subscription the operation will be performed. 
+     * <p>
+     * After subscription the operation will be performed.
      * The {@link Mono} upon successful completion will contain a single cosmos item response with the replaced item.
      * In case of failure the {@link Mono} will error.
      *
-     * @param item the item to replace (containing the document id).
+     * @param item           the item to replace (containing the document id).
      * @param requestOptions the request comosItemRequestOptions
      * @return an {@link Mono} containing the  cosmos item resource response with the replaced item or an error.
      */
-    public Mono<CosmosItemResponse> replace(Object item, CosmosItemRequestOptions requestOptions){
+    public Mono<CosmosItemResponse> replace(Object item, CosmosItemRequestOptions requestOptions) {
         Document doc = CosmosItem.fromObject(item);
-        return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(container.getDatabase()
+        return container.getDatabase()
                 .getDocClientWrapper()
                 .replaceDocument(doc, requestOptions.toRequestOptions())
-                .map(response -> new CosmosItemResponse(response, container)).toSingle()));
+                .map(response -> new CosmosItemResponse(response, container)).single();
     }
-    
+
     /**
      * Deletes the item.
-     *
-     * After subscription the operation will be performed. 
+     * <p>
+     * After subscription the operation will be performed.
      * The {@link Mono} upon successful completion will contain a single cosmos item response with the replaced item.
      * In case of failure the {@link Mono} will error.
+     *
      * @param partitionKey
      * @return an {@link Mono} containing the  cosmos item resource response.
      */
@@ -139,46 +139,46 @@ public class CosmosItem extends Resource {
 
     /**
      * Deletes the item.
-     *
-     * After subscription the operation will be performed. 
+     * <p>
+     * After subscription the operation will be performed.
      * The {@link Mono} upon successful completion will contain a single cosmos item response with the replaced item.
      * In case of failure the {@link Mono} will error.
      *
      * @param options the request options
      * @return an {@link Mono} containing the  cosmos item resource response.
      */
-    public Mono<CosmosItemResponse> delete(CosmosItemRequestOptions options){
-        return RxJava2Adapter.singleToMono(
-                RxJavaInterop.toV2Single(container.getDatabase()
-                                                 .getDocClientWrapper()
-                                                 .deleteDocument(getLink(),options.toRequestOptions())
-                                                 .map(response -> new CosmosItemResponse(response, container))
-                                                 .toSingle()));
+    public Mono<CosmosItemResponse> delete(CosmosItemRequestOptions options) {
+        return container.getDatabase()
+                        .getDocClientWrapper()
+                        .deleteDocument(getLink(), options.toRequestOptions())
+                        .map(response -> new CosmosItemResponse(response, container))
+                        .single();
     }
 
     /**
      * Initialize an CosmosItem object from json string.
      *
-     * @param jsonString the json string that represents the item object.
+     * @param jsonString   the json string that represents the item object.
      * @param objectMapper the custom object mapper
      */
     public CosmosItem(String jsonString, ObjectMapper objectMapper) {
         super(jsonString, objectMapper);
     }
-    
+
     void setContainer(CosmosContainer container) {
         this.container = container;
     }
 
     /**
      * fromObject retuns Document for compatibility with V2 sdk
+     *
      * @param cosmosItem
      * @return
      */
     static Document fromObject(Object cosmosItem) {
         Document typedItem;
         if (cosmosItem instanceof CosmosItem) {
-            typedItem = new Document(((CosmosItem)cosmosItem).toJson());
+            typedItem = new Document(((CosmosItem) cosmosItem).toJson());
         } else {
             try {
                 return new Document(CosmosItem.mapper.writeValueAsString(cosmosItem));
@@ -192,18 +192,18 @@ public class CosmosItem extends Resource {
     static List<CosmosItem> getFromV2Results(List<Document> results, CosmosContainer container) {
         return results.stream().map(document -> new CosmosItem(document.toJson(), container)).collect(Collectors.toList());
     }
-    
+
     public <T> T getObject(Class<?> klass) throws IOException {
         return (T) mapper.readValue(this.toJson(), klass);
     }
-    
-    private String getLink(){
-            StringBuilder builder = new StringBuilder();
-            builder.append(container.getLink());
-            builder.append("/");
-            builder.append(Paths.DOCUMENTS_PATH_SEGMENT);
-            builder.append("/");
-            builder.append(getId());
-            return builder.toString();
+
+    private String getLink() {
+        StringBuilder builder = new StringBuilder();
+        builder.append(container.getLink());
+        builder.append("/");
+        builder.append(Paths.DOCUMENTS_PATH_SEGMENT);
+        builder.append("/");
+        builder.append(getId());
+        return builder.toString();
     }
 }

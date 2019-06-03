@@ -26,6 +26,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.function.Function;
 
 import com.microsoft.azure.cosmosdb.BridgeInternal;
 import com.microsoft.azure.cosmosdb.FeedOptions;
@@ -41,10 +43,7 @@ import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
 import com.microsoft.azure.cosmosdb.rx.internal.Utils;
 
 import com.microsoft.azure.cosmosdb.QueryMetrics;
-import rx.Observable;
-import rx.functions.Func0;
-import rx.functions.Func1;
-import rx.functions.Func3;
+import reactor.core.publisher.Flux;
 
 class OrderByDocumentProducer<T extends Resource> extends DocumentProducer<T> {
     private final OrderbyRowComparer<T> consumeComparer;
@@ -55,11 +54,11 @@ class OrderByDocumentProducer<T extends Resource> extends DocumentProducer<T> {
             IDocumentQueryClient client,
             String collectionResourceId,
             FeedOptions feedOptions,
-            Func3<PartitionKeyRange, String, Integer, RxDocumentServiceRequest> createRequestFunc,
-            Func1<RxDocumentServiceRequest, Observable<FeedResponse<T>>> executeRequestFunc,
+            TriFunction<PartitionKeyRange, String, Integer, RxDocumentServiceRequest> createRequestFunc,
+            Function<RxDocumentServiceRequest, Flux<FeedResponse<T>>> executeRequestFunc,
             PartitionKeyRange targetRange,
             String collectionLink,
-            Func0<IDocumentClientRetryPolicy> createRetryPolicyFunc,
+            Callable<IDocumentClientRetryPolicy> createRetryPolicyFunc,
             Class<T> resourceType, 
             UUID correlatedActivityId,
             int initialPageSize, 
@@ -72,16 +71,14 @@ class OrderByDocumentProducer<T extends Resource> extends DocumentProducer<T> {
         this.targetRangeToOrderByContinuationTokenMap = targetRangeToOrderByContinuationTokenMap;
     }
 
-    protected Observable<DocumentProducerFeedResponse> produceOnSplit(Observable<DocumentProducer<T>> replacementProducers) {
-        Observable<DocumentProducerFeedResponse> res = replacementProducers.toList().single().flatMap(documentProducers -> {
+    protected Flux<DocumentProducerFeedResponse> produceOnSplit(Flux<DocumentProducer<T>> replacementProducers) {
+        return replacementProducers.collectList().flux().flatMap(documentProducers -> {
             RequestChargeTracker tracker = new RequestChargeTracker();
             Map<String, QueryMetrics> queryMetricsMap = new HashMap<>();
             return OrderByUtils.orderedMerge(resourceType, consumeComparer, tracker, documentProducers, queryMetricsMap,
                     targetRangeToOrderByContinuationTokenMap)
                     .map(orderByQueryResult -> resultPageFrom(tracker, orderByQueryResult));
         });
-
-        return res;
     }
 
     @SuppressWarnings("unchecked")

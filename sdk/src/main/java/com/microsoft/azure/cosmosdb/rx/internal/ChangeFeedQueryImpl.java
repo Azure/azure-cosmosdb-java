@@ -24,6 +24,8 @@ package com.microsoft.azure.cosmosdb.rx.internal;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import com.microsoft.azure.cosmosdb.BridgeInternal;
 import com.microsoft.azure.cosmosdb.ChangeFeedOptions;
@@ -37,11 +39,8 @@ import com.microsoft.azure.cosmosdb.internal.Utils;
 import com.microsoft.azure.cosmosdb.internal.routing.PartitionKeyInternal;
 import com.microsoft.azure.cosmosdb.internal.routing.PartitionKeyRangeIdentity;
 import com.microsoft.azure.cosmosdb.rx.internal.query.Paginator;
-
-import rx.Observable;
-import rx.Single;
-import rx.functions.Func1;
-import rx.functions.Func2;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 class ChangeFeedQueryImpl<T extends Resource> {
 
@@ -140,18 +139,18 @@ class ChangeFeedQueryImpl<T extends Resource> {
         return newOps;
     }
     
-    public Observable<FeedResponse<T>> executeAsync() {
+    public Flux<FeedResponse<T>> executeAsync() {
 
-        Func2<String, Integer, RxDocumentServiceRequest> createRequestFunc = (continuationToken, pageSize) -> this.createDocumentServiceRequest(continuationToken, pageSize);
+        BiFunction<String, Integer, RxDocumentServiceRequest> createRequestFunc = this::createDocumentServiceRequest;
 
         // TODO: clean up if we want to use single vs observable.
-        Func1<RxDocumentServiceRequest, Observable<FeedResponse<T>>> executeFunc = request -> this.executeRequestAsync(request).toObservable();
+        Function<RxDocumentServiceRequest, Flux<FeedResponse<T>>> executeFunc = request -> this.executeRequestAsync(request).flux();
 
         return Paginator.getPaginatedChangeFeedQueryResultAsObservable(options, createRequestFunc, executeFunc, klass, options.getMaxItemCount() != null ? options.getMaxItemCount(): -1);
     }
 
-    private Single<FeedResponse<T>> executeRequestAsync(RxDocumentServiceRequest request) {
-        return client.readFeed(request).toSingle()
+    private Mono<FeedResponse<T>> executeRequestAsync(RxDocumentServiceRequest request) {
+        return client.readFeed(request).single()
                 .map( rsp -> BridgeInternal.toChaneFeedResponsePage(rsp, klass));
     }
 }

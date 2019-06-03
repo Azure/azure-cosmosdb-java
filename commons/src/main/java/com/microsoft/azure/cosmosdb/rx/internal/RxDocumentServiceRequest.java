@@ -32,8 +32,6 @@ import java.util.Map;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.WFConstants;
 import org.apache.commons.lang3.StringUtils;
 
-import com.microsoft.azure.cosmosdb.ChangeFeedOptions;
-import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedOptionsBase;
 import com.microsoft.azure.cosmosdb.RequestOptions;
 import com.microsoft.azure.cosmosdb.Resource;
@@ -47,9 +45,7 @@ import com.microsoft.azure.cosmosdb.internal.ResourceId;
 import com.microsoft.azure.cosmosdb.internal.ResourceType;
 import com.microsoft.azure.cosmosdb.internal.Utils;
 import com.microsoft.azure.cosmosdb.internal.routing.PartitionKeyRangeIdentity;
-
-import rx.Observable;
-import rx.observables.StringObservable;
+import reactor.core.publisher.Flux;
 
 /**
  * This is core Transport/Connection agnostic request to the Azure Cosmos DB database service.
@@ -79,7 +75,7 @@ public class RxDocumentServiceRequest {
 
     public DocumentServiceRequestContext requestContext;
 
-    private Observable<byte[]> contentObservable;
+    private Flux<byte[]> contentObservable;
     private byte[] byteContent;
     
     // NOTE: TODO: these fields are copied from .Net SDK
@@ -224,7 +220,7 @@ public class RxDocumentServiceRequest {
     private RxDocumentServiceRequest(OperationType operationType,
             String resourceId,
             ResourceType resourceType,
-            Observable<byte[]> contentObservable,
+            Flux<byte[]> contentObservable,
             byte[] content,
             String path,
             Map<String, String> headers,
@@ -250,7 +246,7 @@ public class RxDocumentServiceRequest {
     private RxDocumentServiceRequest(OperationType operationType,
             ResourceType resourceType,
             String path,
-            Observable<byte[]> contentObservable,
+            Flux<byte[]> contentObservable,
             Map<String, String> headers,
             AuthorizationTokenType authorizationTokenType) {
         this(operationType, extractIdFromUri(path), resourceType, contentObservable, null, path, headers, authorizationTokenType);
@@ -305,7 +301,7 @@ public class RxDocumentServiceRequest {
     public static RxDocumentServiceRequest create(OperationType operation,
             ResourceType resourceType,
             String relativePath,
-            Observable<byte[]> content,
+            Flux<byte[]> content,
             Map<String, String> headers) {
         return new RxDocumentServiceRequest(operation, resourceType, relativePath, content, headers, AuthorizationTokenType.PrimaryMasterKey);
     }
@@ -323,7 +319,7 @@ public class RxDocumentServiceRequest {
     public static RxDocumentServiceRequest create(OperationType operation,
             ResourceType resourceType,
             String relativePath,
-            Observable<byte[]> content,
+            Flux<byte[]> content,
             Map<String, String> headers,
             AuthorizationTokenType authorizationTokenType) {
         return new RxDocumentServiceRequest(operation, resourceType, relativePath, content, headers, authorizationTokenType);
@@ -493,7 +489,7 @@ public class RxDocumentServiceRequest {
             break;
         }
 
-        Observable<byte[]> body = StringObservable.encode(Observable.just(queryText), StandardCharsets.UTF_8);
+        Flux<byte[]> body = StringObservable.encode(Flux.just(queryText), StandardCharsets.UTF_8);
         return new RxDocumentServiceRequest(operation, resourceType, relativePath, body, headers, AuthorizationTokenType.PrimaryMasterKey);
     }
 
@@ -1007,7 +1003,7 @@ public class RxDocumentServiceRequest {
         this.requestContext.resolvedPartitionKeyRange = null;
     }
 
-    public Observable<byte[]> getContentObservable() {
+    public Flux<byte[]> getContentObservable() {
         return contentObservable;
     }
 

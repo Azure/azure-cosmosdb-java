@@ -101,7 +101,7 @@ public class PartitionKeyMismatchRetryPolicy implements IDocumentClientRetryPoli
 
 
     /* (non-Javadoc)
-     * @see com.microsoft.azure.cosmosdb.rx.internal.query.IDocumentClientRetryPolicy#onBeforeSendRequest(rx.Observable)
+     * @see com.microsoft.azure.cosmosdb.rx.internal.query.IDocumentClientRetryPolicy#onBeforeSendRequest(RxDocumentServiceRequest)
      */
     @Override
     public void onBeforeSendRequest(RxDocumentServiceRequest request) {

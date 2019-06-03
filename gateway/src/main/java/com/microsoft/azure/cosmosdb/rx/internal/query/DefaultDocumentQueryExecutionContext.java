@@ -26,6 +26,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import com.microsoft.azure.cosmosdb.BridgeInternal;
 import com.microsoft.azure.cosmosdb.FeedOptions;
@@ -57,10 +59,9 @@ import com.microsoft.azure.cosmosdb.internal.query.metrics.SchedulingTimeSpan;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
-import rx.Observable;
-import rx.Single;
-import rx.functions.Func1;
-import rx.functions.Func2;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
 
 /**
  * While this class is public, but it is not part of our published public APIs.
@@ -99,7 +100,7 @@ public class DefaultDocumentQueryExecutionContext<T extends Resource> extends Do
     }
 
     @Override
-    public Observable<FeedResponse<T>> executeAsync() {
+    public Flux<FeedResponse<T>> executeAsync() {
 
         if (feedOptions == null) {
             feedOptions = new FeedOptions();
@@ -122,23 +123,23 @@ public class DefaultDocumentQueryExecutionContext<T extends Resource> extends Do
 
         int maxPageSize = newFeedOptions.getMaxItemCount() != null ? newFeedOptions.getMaxItemCount() : Constants.Properties.DEFAULT_MAX_PAGE_SIZE;
 
-        Func2<String, Integer, RxDocumentServiceRequest> createRequestFunc = (continuationToken, pageSize) -> this.createRequestAsync(continuationToken, pageSize);
+        BiFunction<String, Integer, RxDocumentServiceRequest> createRequestFunc = (continuationToken, pageSize) -> this.createRequestAsync(continuationToken, pageSize);
 
         // TODO: clean up if we want to use single vs observable.
-        Func1<RxDocumentServiceRequest, Observable<FeedResponse<T>>> executeFunc = executeInternalAsyncFunc();
+        Function<RxDocumentServiceRequest, Flux<FeedResponse<T>>> executeFunc = executeInternalAsyncFunc();
 
         return Paginator
     			.getPaginatedQueryResultAsObservable(newFeedOptions, createRequestFunc, executeFunc, resourceType, maxPageSize);
     }
 
-    public Single<List<PartitionKeyRange>> getTargetPartitionKeyRanges(String resourceId, List<Range<String>> queryRanges) {
+    public Mono<List<PartitionKeyRange>> getTargetPartitionKeyRanges(String resourceId, List<Range<String>> queryRanges) {
         // TODO: FIXME this needs to be revisited
 
         Range<String> r = new Range<>("", "FF", true, false);
         return client.getPartitionKeyRangeCache().tryGetOverlappingRangesAsync(resourceId, r, false, null);
     }
 
-    protected Func1<RxDocumentServiceRequest, Observable<FeedResponse<T>>> executeInternalAsyncFunc() {
+    protected Function<RxDocumentServiceRequest, Flux<FeedResponse<T>>> executeInternalAsyncFunc() {
         RxCollectionCache collectionCache = this.client.getCollectionCache();
         IPartitionKeyRangeCache partitionKeyRangeCache =  this.client.getPartitionKeyRangeCache();
         IDocumentClientRetryPolicy retryPolicyInstance = this.client.getResetSessionTokenRetryPolicy().getRequestPolicy();
@@ -155,14 +156,14 @@ public class DefaultDocumentQueryExecutionContext<T extends Resource> extends Do
 
         final IDocumentClientRetryPolicy finalRetryPolicyInstance = retryPolicyInstance;
 
-        Func1<RxDocumentServiceRequest, Observable<FeedResponse<T>>> executeFunc = req -> {
+        return req -> {
             finalRetryPolicyInstance.onBeforeSendRequest(req);
             this.fetchExecutionRangeAccumulator.beginFetchRange();
             this.fetchSchedulingMetrics.start();
             return BackoffRetryUtility.executeRetry(() -> {
                 ++this.retries;
                 return executeRequestAsync(req);
-            }, finalRetryPolicyInstance).toObservable()
+            }, finalRetryPolicyInstance).flux()
                     .map(tFeedResponse -> {
                         this.fetchSchedulingMetrics.stop();
                         this.fetchExecutionRangeAccumulator.endFetchRange(tFeedResponse.getActivityId(),
@@ -184,11 +185,9 @@ public class DefaultDocumentQueryExecutionContext<T extends Resource> extends Do
                         return tFeedResponse;
                     });
         };
-
-        return executeFunc;
     }
 
-    private Single<FeedResponse<T>> executeOnceAsync(IDocumentClientRetryPolicy retryPolicyInstance, String continuationToken) {
+    private Mono<FeedResponse<T>> executeOnceAsync(IDocumentClientRetryPolicy retryPolicyInstance, String continuationToken) {
         // Don't reuse request, as the rest of client SDK doesn't reuse requests between retries.
         // The code leaves some temporary garbage in request (in RequestContext etc.),
         // which shold be erased during retries.

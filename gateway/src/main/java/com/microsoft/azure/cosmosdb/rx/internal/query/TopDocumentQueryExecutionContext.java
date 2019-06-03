@@ -26,6 +26,7 @@ package com.microsoft.azure.cosmosdb.rx.internal.query;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import com.microsoft.azure.cosmosdb.BridgeInternal;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
@@ -34,8 +35,7 @@ import com.microsoft.azure.cosmosdb.Resource;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.rx.internal.Utils.ValueHolder;
 
-import rx.Observable;
-import rx.functions.Func1;
+import reactor.core.publisher.Flux;
 
 public class TopDocumentQueryExecutionContext<T extends Resource> implements IDocumentQueryExecutionComponent<T> {
 
@@ -47,8 +47,8 @@ public class TopDocumentQueryExecutionContext<T extends Resource> implements IDo
         this.top = top;
     }
 
-    public static <T extends Resource> Observable<IDocumentQueryExecutionComponent<T>> createAsync(
-            Function<String, Observable<IDocumentQueryExecutionComponent<T>>> createSourceComponentFunction,
+    public static <T extends Resource> Flux<IDocumentQueryExecutionComponent<T>> createAsync(
+            Function<String, Flux<IDocumentQueryExecutionComponent<T>>> createSourceComponentFunction,
             int topCount, String topContinuationToken) {
         TakeContinuationToken takeContinuationToken;
 
@@ -61,7 +61,7 @@ public class TopDocumentQueryExecutionContext<T extends Resource> implements IDo
                         topContinuationToken);
                 DocumentClientException dce = new DocumentClientException(HttpConstants.StatusCodes.BADREQUEST,
                         message);
-                return Observable.error(dce);
+                return Flux.error(dce);
             }
 
             takeContinuationToken = outTakeContinuationToken.v;
@@ -72,16 +72,16 @@ public class TopDocumentQueryExecutionContext<T extends Resource> implements IDo
                     "top count in continuation token: %d can not be greater than the top count in the query: %d.",
                     takeContinuationToken.getTakeCount(), topCount);
             DocumentClientException dce = new DocumentClientException(HttpConstants.StatusCodes.BADREQUEST, message);
-            return Observable.error(dce);
+            return Flux.error(dce);
         }
 
-        return createSourceComponentFunction.apply(takeContinuationToken.getSourceToken()).map(component -> {
-            return new TopDocumentQueryExecutionContext<T>(component, takeContinuationToken.getTakeCount());
-        });
+        return createSourceComponentFunction
+                .apply(takeContinuationToken.getSourceToken())
+                .map(component -> new TopDocumentQueryExecutionContext<>(component, takeContinuationToken.getTakeCount()));
     }
 
     @Override
-    public Observable<FeedResponse<T>> drainAsync(int maxPageSize) {
+    public Flux<FeedResponse<T>> drainAsync(int maxPageSize) {
         ParallelDocumentQueryExecutionContextBase<T> context;
 
         if (this.component instanceof AggregateDocumentQueryExecutionContext<?>) {
@@ -93,25 +93,25 @@ public class TopDocumentQueryExecutionContext<T extends Resource> implements IDo
 
         context.setTop(this.top);
 
-        return this.component.drainAsync(maxPageSize).takeUntil(new Func1<FeedResponse<T>, Boolean>() {
+        return this.component.drainAsync(maxPageSize).takeUntil(new Predicate<FeedResponse<T>>() {
 
             private volatile int fetchedItems = 0;
 
             @Override
-            public Boolean call(FeedResponse<T> frp) {
+            public boolean test(FeedResponse<T> frp) {
 
                 fetchedItems += frp.getResults().size();
 
                 // take until we have at least top many elements fetched
                 return fetchedItems >= top;
             }
-        }).map(new Func1<FeedResponse<T>, FeedResponse<T>>() {
+        }).map(new Function<FeedResponse<T>, FeedResponse<T>>() {
 
             private volatile int collectedItems = 0;
             private volatile boolean lastPage = false;
 
             @Override
-            public FeedResponse<T> call(FeedResponse<T> t) {
+            public FeedResponse<T> apply(FeedResponse<T> t) {
 
                 if (collectedItems + t.getResults().size() <= top) {
                     collectedItems += t.getResults().size();

@@ -41,7 +41,6 @@ import com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpHeaders;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpRequest;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpResponse;
-import hu.akarnokd.rxjava.interop.RxJavaInterop;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.HttpMethod;
@@ -52,7 +51,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import rx.Observable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -175,8 +173,7 @@ class RxGatewayStoreModel implements RxStoreModel {
             Flux<ByteBuf> byteBufObservable = Flux.empty();
 
             if (request.getContentObservable() != null) {
-                Observable<ByteBuf> bufObservable = request.getContentObservable().map(Unpooled::wrappedBuffer);
-                byteBufObservable = Flux.from(RxJavaInterop.toV2Flowable(bufObservable));
+                byteBufObservable = request.getContentObservable().map(Unpooled::wrappedBuffer);
             } else if (request.getContent() != null){
                 byteBufObservable = Flux.just(Unpooled.wrappedBuffer(request.getContent()));
             }

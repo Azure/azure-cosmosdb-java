@@ -225,10 +225,9 @@ public class RxPartitionKeyRangeCache implements IPartitionKeyRangeCache {
             if (properties != null) {
                 feedOptions.setProperties(properties);
             }
-            Flux<List<PartitionKeyRange>> rs = client.readPartitionKeyRanges(coll.getSelfLink(), feedOptions)
+            return client.readPartitionKeyRanges(coll.getSelfLink(), feedOptions)
                     // maxConcurrent = 1 to makes it in the right order
-                    .flatMap(p -> Flux.fromIterable(p.getResults()), 1).toList();
-            return rs.single();
+                    .flatMap(p -> Flux.fromIterable(p.getResults()), 1).collectList();
         });
     }
 }

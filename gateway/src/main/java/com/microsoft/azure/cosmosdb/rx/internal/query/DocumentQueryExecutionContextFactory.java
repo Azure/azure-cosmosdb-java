@@ -38,9 +38,8 @@ import com.microsoft.azure.cosmosdb.rx.internal.BadRequestException;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
 import com.microsoft.azure.cosmosdb.rx.internal.Utils;
 import com.microsoft.azure.cosmosdb.rx.internal.caches.RxCollectionCache;
-
-import rx.Observable;
-import rx.Single;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * While this class is public, but it is not part of our published public APIs.
@@ -50,8 +49,8 @@ public class DocumentQueryExecutionContextFactory {
 
     private final static int PageSizeFactorForTop = 5;
 
-    private static Single<DocumentCollection> resolveCollection(IDocumentQueryClient client, SqlQuerySpec query, 
-            ResourceType resourceTypeEnum, String resourceLink) {
+    private static Mono<DocumentCollection> resolveCollection(IDocumentQueryClient client, SqlQuerySpec query,
+                                                              ResourceType resourceTypeEnum, String resourceLink) {
 
         RxCollectionCache collectionCache = client.getCollectionCache();
 
@@ -64,7 +63,7 @@ public class DocumentQueryExecutionContextFactory {
         return collectionCache.resolveCollectionAsync(request);
     }
 
-    public static <T extends Resource> Observable<? extends IDocumentQueryExecutionContext<T>> createDocumentQueryExecutionContextAsync(
+    public static <T extends Resource> Flux<? extends IDocumentQueryExecutionContext<T>> createDocumentQueryExecutionContextAsync(
             IDocumentQueryClient client,
             ResourceType resourceTypeEnum,
             Class<T> resourceType,
@@ -75,17 +74,17 @@ public class DocumentQueryExecutionContextFactory {
             UUID correlatedActivityId) {
 
         // return proxy
-        Observable<DocumentCollection> collectionObs = Observable.just(null);
+        Flux<DocumentCollection> collectionObs = Flux.empty();
         
         if (resourceTypeEnum.isCollectionChild()) {
-            collectionObs = resolveCollection(client, query, resourceTypeEnum, resourceLink).toObservable();
+            collectionObs = resolveCollection(client, query, resourceTypeEnum, resourceLink).flux();
         }
 
         // We create a ProxyDocumentQueryExecutionContext that will be initialized with DefaultDocumentQueryExecutionContext
         // which will be used to send the query to Gateway and on getting 400(bad request) with 1004(cross parition query not servable), we initialize it with
         // PipelinedDocumentQueryExecutionContext by providing the partition query execution info that's needed(which we get from the exception returned from Gateway).
 
-        Observable<ProxyDocumentQueryExecutionContext<T>> proxyQueryExecutionContext =
+        Flux<ProxyDocumentQueryExecutionContext<T>> proxyQueryExecutionContext =
                 collectionObs.flatMap(collection -> 
                 ProxyDocumentQueryExecutionContext.createAsync(
                         client,
@@ -101,7 +100,7 @@ public class DocumentQueryExecutionContextFactory {
         return proxyQueryExecutionContext;
     }
 
-	public static <T extends Resource> Observable<? extends IDocumentQueryExecutionContext<T>> createSpecializedDocumentQueryExecutionContextAsync(
+	public static <T extends Resource> Flux<? extends IDocumentQueryExecutionContext<T>> createSpecializedDocumentQueryExecutionContextAsync(
             IDocumentQueryClient client,
             ResourceType resourceTypeEnum,
             Class<T> resourceType,
@@ -119,7 +118,7 @@ public class DocumentQueryExecutionContextFactory {
         BadRequestException validationError = Utils.checkRequestOrReturnException
                 (initialPageSize > 0, "MaxItemCount", "Invalid MaxItemCount %s", initialPageSize);
         if (validationError != null) {
-            return Observable.error(validationError);
+            return Flux.error(validationError);
         }
 
         QueryInfo queryInfo = partitionedQueryExecutionInfo.getQueryInfo();

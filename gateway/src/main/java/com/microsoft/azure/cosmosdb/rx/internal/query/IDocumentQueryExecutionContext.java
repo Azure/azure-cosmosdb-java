@@ -25,7 +25,7 @@ package com.microsoft.azure.cosmosdb.rx.internal.query;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.Resource;
 
-import rx.Observable;
+import reactor.core.publisher.Flux;
 
 /**
  * While this class is public, but it is not part of our published public APIs.
@@ -33,5 +33,5 @@ import rx.Observable;
  */
 public interface IDocumentQueryExecutionContext<T extends Resource> {
 
-    Observable<FeedResponse<T>> executeAsync();
+    Flux<FeedResponse<T>> executeAsync();
 }

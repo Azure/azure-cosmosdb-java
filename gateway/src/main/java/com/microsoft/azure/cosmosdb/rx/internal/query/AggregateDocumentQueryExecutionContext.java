@@ -48,7 +48,7 @@ import com.microsoft.azure.cosmosdb.internal.query.aggregation.MinAggregator;
 import com.microsoft.azure.cosmosdb.internal.query.aggregation.SumAggregator;
 import com.microsoft.azure.cosmosdb.QueryMetrics;
 
-import rx.Observable;
+import reactor.core.publisher.Flux;
 
 public class AggregateDocumentQueryExecutionContext<T extends Resource> implements IDocumentQueryExecutionComponent<T>{
 
@@ -86,10 +86,10 @@ public class AggregateDocumentQueryExecutionContext<T extends Resource> implemen
 
     @SuppressWarnings("unchecked")
     @Override
-    public Observable<FeedResponse<T>> drainAsync(int maxPageSize) {
+    public Flux<FeedResponse<T>> drainAsync(int maxPageSize) {
         
         return this.component.drainAsync(maxPageSize)
-                .toList()
+                .collectList()
                 .map( superList -> {
                     
                     double requestCharge = 0;
@@ -132,11 +132,11 @@ public class AggregateDocumentQueryExecutionContext<T extends Resource> implemen
                         }
                     }
                     return (FeedResponse<T>) frp;
-                });
+                }).flux();
     }
 
-    public static <T extends Resource>  Observable<IDocumentQueryExecutionComponent<T>> createAsync(
-            Function<String, Observable<IDocumentQueryExecutionComponent<T>>> createSourceComponentFunction, 
+    public static <T extends Resource>  Flux<IDocumentQueryExecutionComponent<T>> createAsync(
+            Function<String, Flux<IDocumentQueryExecutionComponent<T>>> createSourceComponentFunction,
             Collection<AggregateOperator> aggregates,
             String continuationToken) {
 

@@ -30,8 +30,6 @@ import com.microsoft.azure.cosmosdb.StoredProcedure;
 import com.microsoft.azure.cosmosdb.Trigger;
 import com.microsoft.azure.cosmosdb.UserDefinedFunction;
 import com.microsoft.azure.cosmosdb.internal.Paths;
-import hu.akarnokd.rxjava.interop.RxJavaInterop;
-import reactor.adapter.rxjava.RxJava2Adapter;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -46,9 +44,9 @@ public class CosmosContainer extends CosmosResource {
 
     /**
      * Reads the document container
-     *
+     * <p>
      * After subscription the operation will be performed.
-     * The {@link Mono} upon successful completion will contain a single cossmos container response with the read 
+     * The {@link Mono} upon successful completion will contain a single cossmos container response with the read
      * container.
      * In case of failure the {@link Mono} will error.
      *
@@ -60,7 +58,7 @@ public class CosmosContainer extends CosmosResource {
 
     /**
      * Reads the document container by the container link.
-     *
+     * <p>
      * After subscription the operation will be performed.
      * The {@link Mono} upon successful completion will contain a single cossmos container response with the read container.
      * In case of failure the {@link Mono} will error.
@@ -68,32 +66,31 @@ public class CosmosContainer extends CosmosResource {
      * @return an {@link Mono} containing the single cossmos container response with the read container or an error.
      */
     public Mono<CosmosContainerResponse> read(CosmosContainerRequestOptions requestOptions) {
-        return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(database.getDocClientWrapper().readCollection(getLink(),
-                                                                                                     requestOptions.toRequestOptions())
-                .map(response -> new CosmosContainerResponse(response, database)).toSingle()));
+        return database.getDocClientWrapper().readCollection(getLink(),
+                requestOptions.toRequestOptions())
+                .map(response -> new CosmosContainerResponse(response, database)).single();
     }
 
     /**
      * Deletes the item container
-     *
+     * <p>
      * After subscription the operation will be performed.
      * The {@link Mono} upon successful completion will contain a single cossmos container response for the deleted database.
      * In case of failure the {@link Mono} will error.
      *
-     * @param requestOptions        the request options.
+     * @param requestOptions the request options.
      * @return an {@link Mono} containing the single cossmos container response for the deleted database or an error.
      */
     public Mono<CosmosContainerResponse> delete(CosmosContainerRequestOptions requestOptions) {
-        return RxJava2Adapter.singleToMono(
-                RxJavaInterop.toV2Single(database.getDocClientWrapper()
-                                                 .deleteCollection(getLink(),requestOptions.toRequestOptions())
-                                                 .map(response -> new CosmosContainerResponse(response, database))
-                                                 .toSingle()));
+        return database.getDocClientWrapper()
+                .deleteCollection(getLink(), requestOptions.toRequestOptions())
+                .map(response -> new CosmosContainerResponse(response, database))
+                .single();
     }
 
     /**
      * Deletes the item container
-     *
+     * <p>
      * After subscription the operation will be performed.
      * The {@link Mono} upon successful completion will contain a single cosmos container response for the deleted container.
      * In case of failure the {@link Mono} will error.
@@ -106,7 +103,7 @@ public class CosmosContainer extends CosmosResource {
 
     /**
      * Replaces a document container.
-     *
+     * <p>
      * After subscription the operation will be performed.
      * The {@link Mono} upon successful completion will contain a single cossmos container response with the replaced document container.
      * In case of failure the {@link Mono} will error.
@@ -116,23 +113,22 @@ public class CosmosContainer extends CosmosResource {
      * @return an {@link Mono} containing the single cossmos container response with the replaced document container or an error.
      */
     public Mono<CosmosContainerResponse> replace(CosmosContainerSettings containerSettings,
-                                                   CosmosContainerRequestOptions requestOptions) {
+                                                 CosmosContainerRequestOptions requestOptions) {
         validateResource(containerSettings);
-        if(requestOptions == null){
+        if (requestOptions == null) {
             requestOptions = new CosmosContainerRequestOptions();
         }
-        return RxJava2Adapter.singleToMono(
-                RxJavaInterop.toV2Single(database.getDocClientWrapper()
-                                                 .replaceCollection(containerSettings.getV2Collection(),requestOptions.toRequestOptions())
-                                                 .map(response -> new CosmosContainerResponse(response, database))
-                                                 .toSingle()));
+        return database.getDocClientWrapper()
+                .replaceCollection(containerSettings.getV2Collection(), requestOptions.toRequestOptions())
+                .map(response -> new CosmosContainerResponse(response, database))
+                .single();
     }
 
     /* CosmosItem operations */
 
     /**
      * Creates a cosmos item.
-     *
+     * <p>
      * After subscription the operation will be performed.
      * The {@link Mono} upon successful completion will contain a single resource response with the created cosmos item.
      * In case of failure the {@link Mono} will error.
@@ -140,69 +136,68 @@ public class CosmosContainer extends CosmosResource {
      * @param item the cosmos item represented as a POJO or cosmos item object.
      * @return an {@link Mono} containing the single resource response with the created cosmos item or an error.
      */
-    public Mono<CosmosItemResponse> createItem(Object item){
+    public Mono<CosmosItemResponse> createItem(Object item) {
         return createItem(item, null);
     }
 
     /**
      * Creates a cosmos item.
-     *
+     * <p>
      * After subscription the operation will be performed.
      * The {@link Mono} upon successful completion will contain a single resource response with the created cosmos item.
      * In case of failure the {@link Mono} will error.
      *
-     * @param item the cosmos item represented as a POJO or cosmos item object.
+     * @param item         the cosmos item represented as a POJO or cosmos item object.
      * @param partitionKey the partition key
      * @return an {@link Mono} containing the single resource response with the created cosmos item or an error.
      */
-    public Mono<CosmosItemResponse> createItem(Object item, Object partitionKey){
+    public Mono<CosmosItemResponse> createItem(Object item, Object partitionKey) {
         return createItem(item, new CosmosItemRequestOptions(partitionKey));
     }
 
     /**
      * Creates a cosmos item.
-     *
+     * <p>
      * After subscription the operation will be performed.
      * The {@link Mono} upon successful completion will contain a single resource response with the created cosmos item.
      * In case of failure the {@link Mono} will error.
      *
-     * @param item                         the cosmos item represented as a POJO or cosmos item object.
-     * @param options                      the request options.
+     * @param item    the cosmos item represented as a POJO or cosmos item object.
+     * @param options the request options.
      * @return an {@link Mono} containing the single resource response with the created cosmos item or an error.
      */
     public Mono<CosmosItemResponse> createItem(Object item, CosmosItemRequestOptions options) {
-        return RxJava2Adapter.singleToMono(
-                RxJavaInterop.toV2Single(database.getDocClientWrapper()
-                                                 .createDocument(getLink(),CosmosItem.fromObject(item),options.toRequestOptions(), true)
-                                                 .map(response -> new CosmosItemResponse(response, this))
-                                                 .toSingle()));
+        return database.getDocClientWrapper()
+                .createDocument(getLink(), CosmosItem.fromObject(item), options.toRequestOptions(), true)
+                .map(response -> new CosmosItemResponse(response, this))
+                .single();
     }
 
     /**
      * Upserts a cosmos item.
-     *
-     * After subscription the operation will be performed. 
+     * <p>
+     * After subscription the operation will be performed.
      * The {@link Mono} upon successful completion will contain a single resource response with the upserted item.
      * In case of failure the {@link Mono} will error.
      *
-     * @param item                         the item represented as a POJO or Item object to upsert.
-     * @param options                      the request options.
+     * @param item    the item represented as a POJO or Item object to upsert.
+     * @param options the request options.
      * @return an {@link Mono} containing the single resource response with the upserted document or an error.
      */
-    public Mono<CosmosItemResponse> upsertItem(Object item, CosmosItemRequestOptions options){
-        return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(this.getDatabase()
-                                                                            .getDocClientWrapper()
-                                                                            .upsertDocument(this.getLink(),
-                                                                                            item,
-                                                                                            options.toRequestOptions(),
-                                                                                            true)
-                                                                            .map(response -> new CosmosItemResponse(response, this))
-                                                                            .toSingle()));
+    public Mono<CosmosItemResponse> upsertItem(Object item, CosmosItemRequestOptions options) {
+        return this.getDatabase()
+                .getDocClientWrapper()
+                .upsertDocument(this.getLink(),
+                        item,
+                        options.toRequestOptions(),
+                        true)
+                .map(response -> new CosmosItemResponse(response, this))
+                .single();
     }
 
     /**
      * Reads all cosmos items in the container.
-     *
+     * <p>
      * After subscription the operation will be performed.
      * The {@link Flux} will contain one or several feed response of the read cosmos items.
      * In case of failure the {@link Flux} will error.
@@ -215,64 +210,63 @@ public class CosmosContainer extends CosmosResource {
 
     /**
      * Reads all cosmos items in a container.
-     *
+     * <p>
      * After subscription the operation will be performed.
      * The {@link Flux} will contain one or several feed response of the read cosmos items.
      * In case of failure the {@link Flux} will error.
      *
-     * @param options        the feed options.
+     * @param options the feed options.
      * @return an {@link Flux} containing one or several feed response pages of the read cosmos items or an error.
      */
     public Flux<FeedResponse<CosmosItem>> listItems(FeedOptions options) {
-        return RxJava2Adapter.flowableToFlux(
-                RxJavaInterop.toV2Flowable(getDatabase().getDocClientWrapper()
-                                                   .readDocuments(getLink(), options)
-                                                   .map(response-> BridgeInternal.createFeedResponse(CosmosItem.getFromV2Results(response.getResults(),this),
-                                                                                                     response.getResponseHeaders()))));
+        return getDatabase().getDocClientWrapper()
+                .readDocuments(getLink(), options)
+                .map(response -> BridgeInternal.createFeedResponse(CosmosItem.getFromV2Results(response.getResults(), this),
+                        response.getResponseHeaders()));
     }
 
     /**
      * Query for documents in a items in a container
-     *
-     * After subscription the operation will be performed. 
+     * <p>
+     * After subscription the operation will be performed.
      * The {@link Flux} will contain one or several feed response of the obtained items.
      * In case of failure the {@link Flux} will error.
      *
-     * @param query          the query.
-     * @param options        the feed options.
+     * @param query   the query.
+     * @param options the feed options.
      * @return an {@link Flux} containing one or several feed response pages of the obtained items or an error.
      */
-    public Flux<FeedResponse<CosmosItem>> queryItems(String query, FeedOptions options){
+    public Flux<FeedResponse<CosmosItem>> queryItems(String query, FeedOptions options) {
         return queryItems(new SqlQuerySpec(query), options);
     }
 
     /**
      * Query for documents in a items in a container
-     *
-     * After subscription the operation will be performed. 
+     * <p>
+     * After subscription the operation will be performed.
      * The {@link Flux} will contain one or several feed response of the obtained items.
      * In case of failure the {@link Flux} will error.
      *
-     * @param querySpec      the SQL query specification.
-     * @param options        the feed options.
+     * @param querySpec the SQL query specification.
+     * @param options   the feed options.
      * @return an {@link Flux} containing one or several feed response pages of the obtained items or an error.
      */
-    public Flux<FeedResponse<CosmosItem>> queryItems(SqlQuerySpec querySpec, FeedOptions options){
-        return RxJava2Adapter.flowableToFlux(
-                RxJavaInterop.toV2Flowable(getDatabase()
-                                                   .getDocClientWrapper()
-                                                   .queryDocuments(getLink(), querySpec, options)
-                                                   .map(response-> BridgeInternal.createFeedResponseWithQueryMetrics(
-                                                           CosmosItem.getFromV2Results(response.getResults(), this),
-                                                            response.getResponseHeaders(), response.getQueryMetrics()))));
+    public Flux<FeedResponse<CosmosItem>> queryItems(SqlQuerySpec querySpec, FeedOptions options) {
+        return getDatabase()
+                .getDocClientWrapper()
+                .queryDocuments(getLink(), querySpec, options)
+                .map(response -> BridgeInternal.createFeedResponseWithQueryMetrics(
+                        CosmosItem.getFromV2Results(response.getResults(), this),
+                        response.getResponseHeaders(), response.getQueryMetrics()));
     }
 
     /**
      * Gets a CosmosItem object without making a service call
+     *
      * @param id id of the item
      * @return a cosmos item
      */
-    public CosmosItem getItem(String id){
+    public CosmosItem getItem(String id) {
         return new CosmosItem(id, this);
     }
 
@@ -280,83 +274,80 @@ public class CosmosContainer extends CosmosResource {
 
     /**
      * Creates a cosmos stored procedure.
-     *
+     * <p>
      * After subscription the operation will be performed.
      * The {@link Mono} upon successful completion will contain a single cosmos stored procedure response with the
      * created cosmos stored procedure.
      * In case of failure the {@link Mono} will error.
      *
-     * @param settings  the cosmos stored procedure settings.
-     * @param options the stored procedure request options.
+     * @param settings the cosmos stored procedure settings.
+     * @param options  the stored procedure request options.
      * @return an {@link Mono} containing the single cosmos stored procedure resource response or an error.
      */
     public Mono<CosmosStoredProcedureResponse> createStoredProcedure(CosmosStoredProcedureSettings settings,
-                                                                       CosmosStoredProcedureRequestOptions options){
+                                                                     CosmosStoredProcedureRequestOptions options) {
         StoredProcedure sProc = new StoredProcedure();
         sProc.setId(settings.getId());
         sProc.setBody(settings.getBody());
-        return RxJava2Adapter.singleToMono(
-                RxJavaInterop.toV2Single(database.getDocClientWrapper()
-                                                 .createStoredProcedure(getLink(), sProc, options.toRequestOptions())
-                                                 .map(response -> new CosmosStoredProcedureResponse(response, this))
-                                                 .toSingle()));
+        return database.getDocClientWrapper()
+                .createStoredProcedure(getLink(), sProc, options.toRequestOptions())
+                .map(response -> new CosmosStoredProcedureResponse(response, this))
+                .single();
     }
 
     /**
      * Reads all cosmos stored procedures in a container.
-     *
+     * <p>
      * After subscription the operation will be performed.
      * The {@link Flux} will contain one or several feed response pages of the read cosmos stored procedure settings.
      * In case of failure the {@link Flux} will error.
      *
-     * @param options        the feed options.
+     * @param options the feed options.
      * @return an {@link Flux} containing one or several feed response pages of the read cosmos stored procedures
      * settings or an error.
      */
-    public Flux<FeedResponse<CosmosStoredProcedureSettings>> listStoredProcedures(FeedOptions options){
-        return RxJava2Adapter.flowableToFlux(
-                RxJavaInterop.toV2Flowable(database.getDocClientWrapper()
-                                                   .readStoredProcedures(getLink(), options)
-                                                   .map(response -> BridgeInternal.createFeedResponse(CosmosStoredProcedureSettings.getFromV2Results(response.getResults()),
-                                                                                                      response.getResponseHeaders()))));
+    public Flux<FeedResponse<CosmosStoredProcedureSettings>> listStoredProcedures(FeedOptions options) {
+        return database.getDocClientWrapper()
+                .readStoredProcedures(getLink(), options)
+                .map(response -> BridgeInternal.createFeedResponse(CosmosStoredProcedureSettings.getFromV2Results(response.getResults()),
+                        response.getResponseHeaders()));
     }
 
     /**
      * Query for stored procedures in a container.
-     *
-     * After subscription the operation will be performed. 
+     * <p>
+     * After subscription the operation will be performed.
      * The {@link Flux} will contain one or several feed response pages of the obtained stored procedures.
      * In case of failure the {@link Flux} will error.
      *
-     * @param query      the the query.
-     * @param options    the feed options.
+     * @param query   the the query.
+     * @param options the feed options.
      * @return an {@link Flux} containing one or several feed response pages of the obtained stored procedures or
      * an error.
      */
     public Flux<FeedResponse<CosmosStoredProcedureSettings>> queryStoredProcedures(String query,
-                                                                                       FeedOptions options){
+                                                                                   FeedOptions options) {
         return queryStoredProcedures(new SqlQuerySpec(query), options);
     }
 
     /**
      * Query for stored procedures in a container.
-     *
-     * After subscription the operation will be performed. 
+     * <p>
+     * After subscription the operation will be performed.
      * The {@link Flux} will contain one or several feed response pages of the obtained stored procedures.
      * In case of failure the {@link Flux} will error.
      *
-     * @param querySpec  the SQL query specification.
-     * @param options    the feed options.
+     * @param querySpec the SQL query specification.
+     * @param options   the feed options.
      * @return an {@link Flux} containing one or several feed response pages of the obtained stored procedures or
      * an error.
      */
     public Flux<FeedResponse<CosmosStoredProcedureSettings>> queryStoredProcedures(SqlQuerySpec querySpec,
-                                                                                       FeedOptions options){
-        return RxJava2Adapter.flowableToFlux(
-                RxJavaInterop.toV2Flowable(database.getDocClientWrapper()
-                                                   .queryStoredProcedures(getLink(), querySpec,options)
-                                                   .map(response -> BridgeInternal.createFeedResponse( CosmosStoredProcedureSettings.getFromV2Results(response.getResults()),
-                                                                                                       response.getResponseHeaders()))));
+                                                                                   FeedOptions options) {
+        return database.getDocClientWrapper()
+                .queryStoredProcedures(getLink(), querySpec, options)
+                .map(response -> BridgeInternal.createFeedResponse(CosmosStoredProcedureSettings.getFromV2Results(response.getResults()),
+                        response.getResponseHeaders()));
     }
 
 
@@ -364,156 +355,153 @@ public class CosmosContainer extends CosmosResource {
 
     /**
      * Creates a cosmos user defined function.
-     *
+     * <p>
      * After subscription the operation will be performed.
      * The {@link Mono} upon successful completion will contain a single cosmos user defined function response.
      * In case of failure the {@link Mono} will error.
      *
-     * @param settings       the cosmos user defined function settings
-     * @param options        the cosmos request options.
+     * @param settings the cosmos user defined function settings
+     * @param options  the cosmos request options.
      * @return an {@link Mono} containing the single resource response with the created user defined function or an error.
      */
     public Mono<CosmosUserDefinedFunctionResponse> createUserDefinedFunction(CosmosUserDefinedFunctionSettings settings,
-                                                                               CosmosRequestOptions options){
+                                                                             CosmosRequestOptions options) {
         UserDefinedFunction udf = new UserDefinedFunction();
         udf.setId(settings.getId());
         udf.setBody(settings.getBody());
-        return RxJava2Adapter.singleToMono(
-                RxJavaInterop.toV2Single(database.getDocClientWrapper()
-                                                 .createUserDefinedFunction(getLink(), udf, options.toRequestOptions())
-                                                 .map(response -> new CosmosUserDefinedFunctionResponse(response, this)).toSingle()));
+        return database.getDocClientWrapper()
+                .createUserDefinedFunction(getLink(), udf, options.toRequestOptions())
+                .map(response -> new CosmosUserDefinedFunctionResponse(response, this))
+                .single();
     }
 
     /**
      * Reads all cosmos user defined functions in the container
-     *
+     * <p>
      * After subscription the operation will be performed.
      * The {@link Flux} will contain one or several feed response pages of the read user defined functions.
      * In case of failure the {@link Flux} will error.
      *
-     * @param options        the feed options.
+     * @param options the feed options.
      * @return an {@link Flux} containing one or several feed response pages of the read user defined functions or an error.
      */
-    public Flux<FeedResponse<CosmosUserDefinedFunctionSettings>> listUserDefinedFunctions(FeedOptions options){
-        return RxJava2Adapter.flowableToFlux(
-                RxJavaInterop.toV2Flowable(database.getDocClientWrapper()
-                                                   .readUserDefinedFunctions(getLink(), options)
-                                                   .map(response -> BridgeInternal.createFeedResponse(CosmosUserDefinedFunctionSettings.getFromV2Results(response.getResults()),
-                                                                                                      response.getResponseHeaders()))));
+    public Flux<FeedResponse<CosmosUserDefinedFunctionSettings>> listUserDefinedFunctions(FeedOptions options) {
+        return database.getDocClientWrapper()
+                .readUserDefinedFunctions(getLink(), options)
+                .map(response -> BridgeInternal.createFeedResponse(CosmosUserDefinedFunctionSettings.getFromV2Results(response.getResults()),
+                        response.getResponseHeaders()));
     }
 
     /**
      * Query for user defined functions in the container.
-     *
-     * After subscription the operation will be performed. 
+     * <p>
+     * After subscription the operation will be performed.
      * The {@link Flux} will contain one or several feed response pages of the obtained user defined functions.
      * In case of failure the {@link Flux} will error.
      *
-     * @param query          the query.
-     * @param options        the feed options.
+     * @param query   the query.
+     * @param options the feed options.
      * @return an {@link Flux} containing one or several feed response pages of the obtained user defined functions or an error.
      */
     public Flux<FeedResponse<CosmosUserDefinedFunctionSettings>> queryUserDefinedFunctions(String query,
-                                                                                               FeedOptions options){
+                                                                                           FeedOptions options) {
         return queryUserDefinedFunctions(new SqlQuerySpec(query), options);
     }
 
     /**
      * Query for user defined functions in the container.
-     *
-     * After subscription the operation will be performed. 
+     * <p>
+     * After subscription the operation will be performed.
      * The {@link Flux} will contain one or several feed response pages of the obtained user defined functions.
      * In case of failure the {@link Flux} will error.
      *
-     * @param querySpec      the SQL query specification.
-     * @param options        the feed options.
+     * @param querySpec the SQL query specification.
+     * @param options   the feed options.
      * @return an {@link Flux} containing one or several feed response pages of the obtained user defined functions or an error.
      */
     public Flux<FeedResponse<CosmosUserDefinedFunctionSettings>> queryUserDefinedFunctions(SqlQuerySpec querySpec,
-                                                                                               FeedOptions options){
-        return RxJava2Adapter.flowableToFlux(
-                RxJavaInterop.toV2Flowable(database.getDocClientWrapper()
-                                                   .queryUserDefinedFunctions(getLink(),querySpec, options)
-                                                   .map(response -> BridgeInternal.createFeedResponse(CosmosUserDefinedFunctionSettings.getFromV2Results(response.getResults()),
-                                                                                                      response.getResponseHeaders()))));
+                                                                                           FeedOptions options) {
+        return database.getDocClientWrapper()
+                .queryUserDefinedFunctions(getLink(), querySpec, options)
+                .map(response -> BridgeInternal.createFeedResponse(CosmosUserDefinedFunctionSettings.getFromV2Results(response.getResults()),
+                        response.getResponseHeaders()));
     }
 
     /* Trigger Operations */
+
     /**
      * Creates a Cosmos trigger.
-     *
+     * <p>
      * After subscription the operation will be performed.
      * The {@link Mono} upon successful completion will contain a cosmos trigger response
      * In case of failure the {@link Mono} will error.
      *
-     * @param options        the request options.
+     * @param options the request options.
      * @return an {@link Mono} containing the single resource response with the created trigger or an error.
      */
     public Mono<CosmosTriggerResponse> createTrigger(CosmosTriggerSettings settings,
-                                                       CosmosRequestOptions options){
+                                                     CosmosRequestOptions options) {
         Trigger trigger = new Trigger(settings.toJson());
-        return RxJava2Adapter.singleToMono(
-                RxJavaInterop.toV2Single(database.getDocClientWrapper()
-                                                 .createTrigger(getLink(), trigger,options.toRequestOptions())
-                                                 .map(response -> new CosmosTriggerResponse(response, this))
-                                                 .toSingle()));
+        return database.getDocClientWrapper()
+                .createTrigger(getLink(), trigger, options.toRequestOptions())
+                .map(response -> new CosmosTriggerResponse(response, this))
+                .single();
     }
 
     /**
      * Reads all triggers in a container
-     *
+     * <p>
      * After subscription the operation will be performed.
      * The {@link Flux} will contain one or several feed response pages of the read cosmos trigger settings.
      * In case of failure the {@link Flux} will error.
      *
-     * @param options        the feed options.
+     * @param options the feed options.
      * @return an {@link Flux} containing one or several feed response pages of the read cosmos rigger settings or an error.
      */
-    public Flux<FeedResponse<CosmosTriggerSettings>> listTriggers(FeedOptions options){
-        return RxJava2Adapter.flowableToFlux(
-                RxJavaInterop.toV2Flowable(database.getDocClientWrapper()
-                                                   .readTriggers(getLink(), options)
-                                                   .map(response -> BridgeInternal.createFeedResponse(CosmosTriggerSettings.getFromV2Results(response.getResults()),
-                                                                                                      response.getResponseHeaders()))));
+    public Flux<FeedResponse<CosmosTriggerSettings>> listTriggers(FeedOptions options) {
+        return database.getDocClientWrapper()
+                .readTriggers(getLink(), options)
+                .map(response -> BridgeInternal.createFeedResponse(CosmosTriggerSettings.getFromV2Results(response.getResults()),
+                        response.getResponseHeaders()));
     }
 
     /**
      * Query for triggers in the container
-     *
-     * After subscription the operation will be performed. 
+     * <p>
+     * After subscription the operation will be performed.
      * The {@link Flux} will contain one or several feed response pages of the obtained triggers.
      * In case of failure the {@link Flux} will error.
      *
-     * @param query          the query.
-     * @param options        the feed options.
+     * @param query   the query.
+     * @param options the feed options.
      * @return an {@link Flux} containing one or several feed response pages of the obtained triggers or an error.
      */
-    public Flux<FeedResponse<CosmosTriggerSettings>> queryTriggers(String query, FeedOptions options){
+    public Flux<FeedResponse<CosmosTriggerSettings>> queryTriggers(String query, FeedOptions options) {
         return queryTriggers(new SqlQuerySpec(query), options);
     }
 
     /**
      * Query for triggers in the container
-     *
-     * After subscription the operation will be performed. 
+     * <p>
+     * After subscription the operation will be performed.
      * The {@link Flux} will contain one or several feed response pages of the obtained triggers.
      * In case of failure the {@link Flux} will error.
      *
-     * @param querySpec      the SQL query specification.
-     * @param options        the feed options.
+     * @param querySpec the SQL query specification.
+     * @param options   the feed options.
      * @return an {@link Flux} containing one or several feed response pages of the obtained triggers or an error.
      */
     public Flux<FeedResponse<CosmosTriggerSettings>> queryTriggers(SqlQuerySpec querySpec,
-                                                     FeedOptions options){
-        return RxJava2Adapter.flowableToFlux(
-                RxJavaInterop.toV2Flowable(database.getDocClientWrapper()
-                                                   .queryTriggers(getLink(), querySpec, options)
-                                                   .map(response -> BridgeInternal.createFeedResponse(CosmosTriggerSettings.getFromV2Results(response.getResults()),
-                                                                                                      response.getResponseHeaders()))));
+                                                                   FeedOptions options) {
+        return database.getDocClientWrapper()
+                .queryTriggers(getLink(), querySpec, options)
+                .map(response -> BridgeInternal.createFeedResponse(CosmosTriggerSettings.getFromV2Results(response.getResults()),
+                        response.getResponseHeaders()));
     }
 
     /**
      * Gets the parent Database
+     *
      * @return the (@link CosmosDatabase)
      */
     public CosmosDatabase getDatabase() {

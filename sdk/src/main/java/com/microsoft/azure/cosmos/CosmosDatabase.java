@@ -51,37 +51,38 @@ public class CosmosDatabase extends CosmosResource {
 
     /**
      * Reads a database.
-     *
-     * After subscription the operation will be performed. 
+     * <p>
+     * After subscription the operation will be performed.
      * The {@link Mono} upon successful completion will contain a single cosmos database respone with the read database.
      * In case of failure the {@link Mono} will error.
      *
      * @return an {@link Mono} containing the single cosmos database respone with the read database or an error.
      */
-    public Mono<CosmosDatabaseResponse> read(){
+    public Mono<CosmosDatabaseResponse> read() {
         return read(new CosmosDatabaseRequestOptions());
     }
 
     /**
      * Reads a database.
-     *
-     * After subscription the operation will be performed. 
+     * <p>
+     * After subscription the operation will be performed.
      * The {@link Mono} upon successful completion will contain a cosmos cosmos database respone with the read database.
      * In case of failure the {@link Mono} will error.
      *
-     * @param options      the request options.
+     * @param options the request options.
      * @return an {@link Mono} containing the single cosmos database response with the read database or an error.
      */
     public Mono<CosmosDatabaseResponse> read(CosmosDatabaseRequestOptions options) {
-        return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(getDocClientWrapper().readDatabase(getLink(),
-                                                                                          options.toRequestOptions())
-                .map(response -> new CosmosDatabaseResponse(response, getClient())).toSingle()));
+        return getDocClientWrapper().readDatabase(getLink(),
+                options.toRequestOptions())
+                .map(response -> new CosmosDatabaseResponse(response, getClient()))
+                .single();
     }
 
     /**
      * Deletes a database.
-     *
-     * After subscription the operation will be performed. 
+     * <p>
+     * After subscription the operation will be performed.
      * The {@link Mono} upon successful completion will contain a cosmos database response with the deleted database.
      * In case of failure the {@link Mono} will error.
      *
@@ -93,32 +94,31 @@ public class CosmosDatabase extends CosmosResource {
 
     /**
      * Deletes a database.
-     *
-     * After subscription the operation will be performed. 
+     * <p>
+     * After subscription the operation will be performed.
      * The {@link Mono} upon successful completion will contain a cosmos database response with the deleted database.
      * In case of failure the {@link Mono} will error.
      *
      * @return an {@link Mono} containing the single cosmos database response
      */
     public Mono<CosmosDatabaseResponse> delete(CosmosRequestOptions options) {
-        return RxJava2Adapter.singleToMono(
-                RxJavaInterop.toV2Single(getDocClientWrapper()
-                                                 .deleteDatabase(getLink(), options.toRequestOptions())
-                                                 .map(response -> new CosmosDatabaseResponse(response, getClient()))
-                                                 .toSingle()));
+        return getDocClientWrapper()
+                .deleteDatabase(getLink(), options.toRequestOptions())
+                .map(response -> new CosmosDatabaseResponse(response, getClient()))
+                .single();
     }
 
     /* CosmosContainer operations */
 
     /**
      * Creates a document container.
-     *
-     * After subscription the operation will be performed. 
-     * The {@link Mono} upon successful completion will contain a cosmos container response with the created 
+     * <p>
+     * After subscription the operation will be performed.
+     * The {@link Mono} upon successful completion will contain a cosmos container response with the created
      * collection.
      * In case of failure the {@link Mono} will error.
      *
-     * @param containerSettings   the container settings.
+     * @param containerSettings the container settings.
      * @return an {@link Flux} containing the single cosmos container response with the created container or an error.
      */
     public Mono<CosmosContainerResponse> createContainer(CosmosContainerSettings containerSettings) {
@@ -128,32 +128,33 @@ public class CosmosDatabase extends CosmosResource {
 
     /**
      * Creates a document container.
-     *
-     * After subscription the operation will be performed. 
-     * The {@link Mono} upon successful completion will contain a cosmos container response with the created 
+     * <p>
+     * After subscription the operation will be performed.
+     * The {@link Mono} upon successful completion will contain a cosmos container response with the created
      * collection.
      * In case of failure the {@link Mono} will error.
      *
-     * @param containerSettings   the containerSettings.
-     * @param options the cosmos container request options                           
+     * @param containerSettings the containerSettings.
+     * @param options           the cosmos container request options
      * @return an {@link Flux} containing the cosmos container response with the created container or an error.
      */
     public Mono<CosmosContainerResponse> createContainer(CosmosContainerSettings containerSettings,
-            CosmosContainerRequestOptions options) {
-        return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(getDocClientWrapper().createCollection(this.getLink(),
+                                                         CosmosContainerRequestOptions options) {
+        return getDocClientWrapper().createCollection(this.getLink(),
                 containerSettings.getV2Collection(), options.toRequestOptions()).map(response ->
-                new CosmosContainerResponse(response, this)).toSingle()));
+                new CosmosContainerResponse(response, this))
+                .single();
     }
 
     /**
      * Creates a document container.
-     *
-     * After subscription the operation will be performed. 
-     * The {@link Mono} upon successful completion will contain a cosmos container response with the created 
+     * <p>
+     * After subscription the operation will be performed.
+     * The {@link Mono} upon successful completion will contain a cosmos container response with the created
      * collection.
      * In case of failure the {@link Mono} will error.
      *
-     * @param id the cosmos container id
+     * @param id               the cosmos container id
      * @param partitionKeyPath the partition key path
      * @return an {@link Flux} containing the cosmos container response with the created container or an error.
      */
@@ -163,9 +164,9 @@ public class CosmosDatabase extends CosmosResource {
 
     /**
      * Creates a document container if it does not exist on the service.
-     *
-     * After subscription the operation will be performed. 
-     * The {@link Mono} upon successful completion will contain a cosmos container response with the created 
+     * <p>
+     * After subscription the operation will be performed.
+     * The {@link Mono} upon successful completion will contain a cosmos container response with the created
      * or existing collection.
      * In case of failure the {@link Mono} will error.
      *
@@ -179,13 +180,13 @@ public class CosmosDatabase extends CosmosResource {
 
     /**
      * Creates a document container if it does not exist on the service.
-     *
-     * After subscription the operation will be performed. 
+     * <p>
+     * After subscription the operation will be performed.
      * The {@link Mono} upon successful completion will contain a cosmos container response with the created
      * collection.
      * In case of failure the {@link Mono} will error.
      *
-     * @param id the cosmos container id
+     * @param id               the cosmos container id
      * @param partitionKeyPath the partition key path
      * @return an {@link Flux} containing the cosmos container response with the created container or an error.
      */
@@ -210,7 +211,7 @@ public class CosmosDatabase extends CosmosResource {
 
     /**
      * Reads all cosmos containers.
-     *
+     * <p>
      * After subscription the operation will be performed.
      * The {@link Flux} will contain one or several feed response of the read containers.
      * In case of failure the {@link Flux} will error.
@@ -219,15 +220,14 @@ public class CosmosDatabase extends CosmosResource {
      * @return a {@link Flux} containing one or several feed response pages of read containers or an error.
      */
     public Flux<FeedResponse<CosmosContainerSettings>> listContainers(FeedOptions options) {
-        //TODO:
-        return RxJava2Adapter.flowableToFlux(RxJavaInterop.toV2Flowable(getDocClientWrapper().readCollections(getLink(), options)
-                .map(response-> BridgeInternal.createFeedResponse(CosmosContainerSettings.getFromV2Results(response.getResults()),
-                        response.getResponseHeaders()))));
+        return getDocClientWrapper().readCollections(getLink(), options)
+                .map(response -> BridgeInternal.createFeedResponse(CosmosContainerSettings.getFromV2Results(response.getResults()),
+                        response.getResponseHeaders()));
     }
 
     /**
      * Reads all cosmos containers.
-     *
+     * <p>
      * After subscription the operation will be performed.
      * The {@link Flux} will contain one or several feed response of the read containers.
      * In case of failure the {@link Flux} will error.
@@ -240,40 +240,41 @@ public class CosmosDatabase extends CosmosResource {
 
     /**
      * Query for cosmos containers in a cosmos database.
-     *
-     * After subscription the operation will be performed. 
+     * <p>
+     * After subscription the operation will be performed.
      * The {@link Flux} will contain one or several feed response of the obtained containers.
      * In case of failure the {@link Flux} will error.
      *
-     * @param query        the query.
-     * @param options      the feed options.
+     * @param query   the query.
+     * @param options the feed options.
      * @return an {@link Flux} containing one or several feed response pages of the obtained containers or an error.
      */
-    public Flux<FeedResponse<CosmosContainerSettings>> queryContainers(String query, FeedOptions options){
+    public Flux<FeedResponse<CosmosContainerSettings>> queryContainers(String query, FeedOptions options) {
         return queryContainers(new SqlQuerySpec(query), options);
     }
 
     /**
      * Query for cosmos containers in a cosmos database.
-     *
-     * After subscription the operation will be performed. 
+     * <p>
+     * After subscription the operation will be performed.
      * The {@link Flux} will contain one or several feed response of the obtained containers.
      * In case of failure the {@link Flux} will error.
      *
-     * @param querySpec    the SQL query specification.
-     * @param options      the feed options.
+     * @param querySpec the SQL query specification.
+     * @param options   the feed options.
      * @return an {@link Flux} containing one or several feed response pages of the obtained containers or an error.
      */
-    public Flux<FeedResponse<CosmosContainerSettings>> queryContainers(SqlQuerySpec querySpec, FeedOptions options){
-        return RxJava2Adapter.flowableToFlux(RxJavaInterop.toV2Flowable(getDocClientWrapper().queryCollections(getLink(), querySpec,
-                                                                                                options)
-                .map(response-> BridgeInternal.createFeedResponse(
+    public Flux<FeedResponse<CosmosContainerSettings>> queryContainers(SqlQuerySpec querySpec, FeedOptions options) {
+        return getDocClientWrapper().queryCollections(getLink(), querySpec,
+                options)
+                .map(response -> BridgeInternal.createFeedResponse(
                         CosmosContainerSettings.getFromV2Results(response.getResults()),
-                        response.getResponseHeaders()))));
+                        response.getResponseHeaders()));
     }
 
     /**
      * Gets a CosmosContainer object without making a service call
+     *
      * @param id id of the container
      * @return Cosmos Container
      */
@@ -285,7 +286,7 @@ public class CosmosDatabase extends CosmosResource {
         return client;
     }
 
-    AsyncDocumentClient getDocClientWrapper(){
+    AsyncDocumentClient getDocClientWrapper() {
         return client.getDocClientWrapper();
     }
 

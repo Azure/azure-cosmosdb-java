@@ -25,11 +25,12 @@ package com.microsoft.azure.cosmosdb.rx.internal.query;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.github.davidmoten.rx.Transformers;
 import com.microsoft.azure.cosmosdb.Resource;
 import com.microsoft.azure.cosmosdb.internal.RequestChargeTracker;
 import com.microsoft.azure.cosmosdb.internal.ResourceId;
@@ -42,27 +43,38 @@ import com.microsoft.azure.cosmosdb.QueryMetrics;
 
 import com.microsoft.azure.cosmosdb.rx.internal.BadRequestException;
 import org.apache.commons.lang3.tuple.Pair;
-import rx.Observable;
-import rx.Observable.Transformer;
+import reactor.core.publisher.Flux;
 
 class OrderByUtils {
 
-    public static <T extends Resource> Observable<OrderByRowResult<T>> orderedMerge(Class<T> klass,
-                                                                                    OrderbyRowComparer<T> consumeComparer,
-                                                                                    RequestChargeTracker tracker,
-                                                                                    List<DocumentProducer<T>> documentProducers,
-                                                                                    Map<String, QueryMetrics> queryMetricsMap,
-                                                                                    Map<String, OrderByContinuationToken> targetRangeToOrderByContinuationTokenMap) {
-        return toOrderByQueryResultObservable(klass, documentProducers.get(0), tracker, queryMetricsMap, targetRangeToOrderByContinuationTokenMap, consumeComparer.getSortOrders())
-                .compose(
-                        Transformers.orderedMergeWith(
-                                documentProducers.subList(1, documentProducers.size())
-                                        .stream()
-                                        .map(producer -> toOrderByQueryResultObservable(klass, producer, tracker, queryMetricsMap, targetRangeToOrderByContinuationTokenMap, consumeComparer.getSortOrders()))
-                                        .collect(Collectors.toList()), consumeComparer, false, 1));
+    public static <T extends Resource> Flux<OrderByRowResult<T>> orderedMerge(Class<T> klass,
+                                                                              OrderbyRowComparer<T> consumeComparer,
+                                                                              RequestChargeTracker tracker,
+                                                                              List<DocumentProducer<T>> documentProducers,
+                                                                              Map<String, QueryMetrics> queryMetricsMap,
+                                                                              Map<String, OrderByContinuationToken> targetRangeToOrderByContinuationTokenMap) {
+        return toOrderByQueryResultObservable(klass,
+                documentProducers.get(0),
+                tracker,
+                queryMetricsMap,
+                targetRangeToOrderByContinuationTokenMap,
+                consumeComparer.getSortOrders())
+                .compose(orderByRowResultFlux -> {
+                    List<Flux<OrderByRowResult<T>>> collectedFluxes = documentProducers.subList(1, documentProducers.size())
+                            .stream()
+                            .map(producer -> toOrderByQueryResultObservable(klass,
+                                    producer,
+                                    tracker,
+                                    queryMetricsMap,
+                                    targetRangeToOrderByContinuationTokenMap,
+                                    consumeComparer.getSortOrders()))
+                            .collect(Collectors.toList());
+                    Flux<OrderByRowResult<T>>[] sources = (Flux<OrderByRowResult<T>>[]) collectedFluxes.toArray();
+                    return Flux.mergeOrdered(consumeComparer, sources);
+                });
     }
 
-    private static <T extends Resource> Observable<OrderByRowResult<T>> toOrderByQueryResultObservable(Class<T> klass,
+    private static <T extends Resource> Flux<OrderByRowResult<T>> toOrderByQueryResultObservable(Class<T> klass,
                                                                                                        DocumentProducer<T> producer,
                                                                                                        RequestChargeTracker tracker,
                                                                                                        Map<String, QueryMetrics> queryMetricsMap,
@@ -73,7 +85,7 @@ class OrderByUtils {
                 .compose(new OrderByUtils.PageToItemTransformer<T>(klass, tracker, queryMetricsMap, targetRangeToOrderByContinuationTokenMap, sortOrders));
     }
 
-    private static class PageToItemTransformer<T extends Resource> implements Transformer<DocumentProducer<T>.DocumentProducerFeedResponse, OrderByRowResult<T>> {
+    private static class PageToItemTransformer<T extends Resource> implements Function<Flux<DocumentProducer<T>.DocumentProducerFeedResponse>, Flux<OrderByRowResult<T>>> {
         private final RequestChargeTracker tracker;
         private final Class<T> klass;
         private final Map<String, QueryMetrics> queryMetricsMap;
@@ -90,7 +102,7 @@ class OrderByUtils {
         }
 
         @Override
-        public Observable<OrderByRowResult<T>> call(Observable<DocumentProducer<T>.DocumentProducerFeedResponse> source) {
+        public Flux<OrderByRowResult<T>> apply(Flux<DocumentProducer<T>.DocumentProducerFeedResponse> source) {
             return source.flatMap(documentProducerFeedResponse -> {
                 for (String key : documentProducerFeedResponse.pageResult.getQueryMetrics().keySet()) {
                     if (queryMetricsMap.containsKey(key)) {
@@ -105,7 +117,7 @@ class OrderByUtils {
                 if (orderByContinuationToken != null) {
                     Pair<Boolean, ResourceId> booleanResourceIdPair = ResourceId.tryParse(orderByContinuationToken.getRid());
                     if (!booleanResourceIdPair.getLeft()) {
-                        return Observable.error(new BadRequestException(String.format("Invalid Rid in the continuation token %s for OrderBy~Context.",
+                        return Flux.error(new BadRequestException(String.format("Invalid Rid in the continuation token %s for OrderBy~Context.",
                                 orderByContinuationToken.getCompositeContinuationToken().getToken())));
                     }
                     ResourceId continuationTokenRid = booleanResourceIdPair.getRight();
@@ -134,7 +146,7 @@ class OrderByUtils {
                                         break;
                                     }
                                 }
-                                
+
                                 if (cmp == 0) {
                                     // Once the item matches the order by items from the continuation tokens
                                     // We still need to remove all the documents that have a lower rid in the rid sort order.
@@ -156,7 +168,7 @@ class OrderByUtils {
                 }
 
                 tracker.addCharge(documentProducerFeedResponse.pageResult.getRequestCharge());
-                Observable<T> x = Observable.<T>from(results);
+                Flux<T> x = Flux.fromIterable(results);
 
                 return x.map(r -> new OrderByRowResult<T>(
                         klass,

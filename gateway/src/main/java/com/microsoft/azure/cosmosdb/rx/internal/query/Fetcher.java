@@ -32,16 +32,16 @@ import com.microsoft.azure.cosmosdb.FeedOptionsBase;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.Resource;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
+import reactor.core.publisher.Flux;
 
-import rx.Observable;
-import rx.functions.Func1;
-import rx.functions.Func2;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 class Fetcher<T extends Resource> {
     private final static Logger logger = LoggerFactory.getLogger(Fetcher.class);
 
-    private final Func2<String, Integer, RxDocumentServiceRequest> createRequestFunc;
-    private final Func1<RxDocumentServiceRequest, Observable<FeedResponse<T>>> executeFunc;
+    private final BiFunction<String, Integer, RxDocumentServiceRequest> createRequestFunc;
+    private final Function<RxDocumentServiceRequest, Flux<FeedResponse<T>>> executeFunc;
     private final boolean isChangeFeed;
 
     private volatile boolean shouldFetchMore;
@@ -49,8 +49,8 @@ class Fetcher<T extends Resource> {
     private volatile int top;
     private volatile String continuationToken;
 
-    public Fetcher(Func2<String, Integer, RxDocumentServiceRequest> createRequestFunc,
-                   Func1<RxDocumentServiceRequest, Observable<FeedResponse<T>>> executeFunc,
+    public Fetcher(BiFunction<String, Integer, RxDocumentServiceRequest> createRequestFunc,
+                   Function<RxDocumentServiceRequest, Flux<FeedResponse<T>>> executeFunc,
                    FeedOptionsBase options,
                    boolean isChangeFeed,
                    int top,
@@ -75,7 +75,7 @@ class Fetcher<T extends Resource> {
         return shouldFetchMore;
     }
 
-    public Observable<FeedResponse<T>> nextPage() {
+    public Flux<FeedResponse<T>> nextPage() {
         RxDocumentServiceRequest request = createRequest();
         return nextPage(request);
     }
@@ -111,11 +111,11 @@ class Fetcher<T extends Resource> {
             throw new IllegalStateException("Invalid state, trying to fetch more after completion");
         }
 
-        return createRequestFunc.call(continuationToken, maxItemCount);
+        return createRequestFunc.apply(continuationToken, maxItemCount);
     }
 
-    private Observable<FeedResponse<T>> nextPage(RxDocumentServiceRequest request) {
-        return executeFunc.call(request).map(rsp -> {
+    private Flux<FeedResponse<T>> nextPage(RxDocumentServiceRequest request) {
+        return executeFunc.apply(request).map(rsp -> {
             updateState(rsp);
             return rsp;
         });
