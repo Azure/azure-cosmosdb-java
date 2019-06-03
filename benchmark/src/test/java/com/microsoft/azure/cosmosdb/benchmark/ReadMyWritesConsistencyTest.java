@@ -25,15 +25,12 @@ package com.microsoft.azure.cosmosdb.benchmark;
 
 import com.beust.jcommander.JCommander;
 import com.google.common.base.Strings;
-import com.microsoft.azure.cosmosdb.ConsistencyLevel;
 import com.microsoft.azure.cosmosdb.DataType;
 import com.microsoft.azure.cosmosdb.Database;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
-import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.IncludedPath;
 import com.microsoft.azure.cosmosdb.Index;
 import com.microsoft.azure.cosmosdb.IndexingPolicy;
-import com.microsoft.azure.cosmosdb.Offer;
 import com.microsoft.azure.cosmosdb.PartitionKeyDefinition;
 import com.microsoft.azure.cosmosdb.RequestOptions;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
@@ -48,10 +45,10 @@ import org.testng.annotations.Test;
 import rx.Observable;
 import rx.schedulers.Schedulers;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -60,29 +57,37 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class ReadMyWritesConsistencyTest {
     private final static Logger logger = LoggerFactory.getLogger(ReadMyWritesConsistencyTest.class);
-    private final static int TIMEOUT = 60 * 60 * 1000;
-    private final AtomicBoolean failed = new AtomicBoolean(false);
+    private final int initialCollectionThroughput = 10_000;
+    private final int newCollectionThroughput = 100_000;
+    private final int delayForInitiationCollectionScaleUpInSeconds = 60;
+    private final Duration defaultMaxRunningTimeInSeconds = Duration.ofMinutes(45);
+
+    private final String maxRunningTime =
+                    System.getProperty("MAX_RUNNING_TIME", StringUtils.defaultString(Strings.emptyToNull(
+                            System.getenv().get("MAX_RUNNING_TIME")), defaultMaxRunningTimeInSeconds.toString()));
+
+    private final AtomicBoolean collectionScaleUpFailed = new AtomicBoolean(false);
     private final String desiredConsistency =
             System.getProperty("DESIRED_CONSISTENCY",
                                StringUtils.defaultString(Strings.emptyToNull(
-                                       System.getenv().get("DESIRED_CONSISTENCY")), "Strong"));
-
+                                       System.getenv().get("DESIRED_CONSISTENCY")), "Session"));
 
     private final String numberOfOperationsAsString =
             System.getProperty("NUMBER_OF_OPERATIONS",
                                StringUtils.defaultString(Strings.emptyToNull(
-                                       System.getenv().get("NUMBER_OF_OPERATIONS")), Integer.toString(400_000)));
+                                       System.getenv().get("NUMBER_OF_OPERATIONS")), "-1"));
+
     private Database database;
     private DocumentCollection collection;
 
-
-    @Test(dataProvider = "collectionLinkTypeArgProvider", groups = "e2e", timeOut = TIMEOUT)
+    @Test(dataProvider = "collectionLinkTypeArgProvider", groups = "e2e")
     public void readMyWrites(boolean useNameLink) throws Exception {
-        int numberOfOperations = Integer.parseInt(numberOfOperationsAsString);
         int concurrency = 5;
         String cmdFormat = "-serviceEndpoint %s -masterKey %s" +
                 " -databaseId %s -collectionId %s" +
-                " -consistencyLevel %s -concurrency %d -numberOfOperations %s" +
+                " -consistencyLevel %s -concurrency %d" +
+                " -numberOfOperations %s" +
+                " -maxRunningTimeDuration %s" +
                 " -operation ReadMyWrites -connectionMode Direct -numberOfPreCreatedDocuments 100 " +
                 " -printingInterval 60";
 
@@ -93,7 +98,8 @@ public class ReadMyWritesConsistencyTest {
                                    collection.getId(),
                                    desiredConsistency,
                                    concurrency,
-                                   numberOfOperations)
+                                   numberOfOperationsAsString,
+                                   maxRunningTime)
                 + (useNameLink ? " -useNameLink" : "");
 
         Configuration cfg = new Configuration();
@@ -114,21 +120,26 @@ public class ReadMyWritesConsistencyTest {
             }
         };
 
-        // schedules a collection scale up in 2 minutes
-        scheduleScaleUp(120, 100_000);
+        // schedules a collection scale up after a delay
+        scheduleScaleUp(delayForInitiationCollectionScaleUpInSeconds, newCollectionThroughput);
 
         wf.run();
         wf.shutdown();
 
+        int numberOfOperations = Integer.parseInt(numberOfOperationsAsString);
+
         assertThat(error).hasValue(0);
-        assertThat(success).hasValue(numberOfOperations);
-        assertThat(failed).isFalse();
+        assertThat(collectionScaleUpFailed).isFalse();
+
+        if (numberOfOperations > 0) {
+            assertThat(success).hasValue(numberOfOperations);
+        }
     }
 
-    @BeforeClass(groups = "e2e", timeOut = TIMEOUT)
+    @BeforeClass(groups = "e2e")
     public void beforeClass() {
         RequestOptions options = new RequestOptions();
-        options.setOfferThroughput(10000);
+        options.setOfferThroughput(initialCollectionThroughput);
         AsyncDocumentClient housekeepingClient = Utils.housekeepingClient();
         database = Utils.createDatabaseForTest(housekeepingClient);
         collection = housekeepingClient.createCollection("dbs/" + database.getId(),
@@ -143,11 +154,10 @@ public class ReadMyWritesConsistencyTest {
         return new Object[][]{
                 // is namebased
                 {true},
-                //    {false},
         };
     }
 
-    @AfterClass(groups = "e2e", timeOut = TIMEOUT)
+    @AfterClass(groups = "e2e")
     public void afterClass() {
         AsyncDocumentClient housekeepingClient = Utils.housekeepingClient();
         Utils.safeCleanDatabases(housekeepingClient);
@@ -202,8 +212,8 @@ public class ReadMyWritesConsistencyTest {
         }).doOnTerminate(() -> housekeepingClient.close())
                 .subscribe(aVoid -> {
                            }, e -> {
-                               logger.error("failed to scale up collection", e);
-                               failed.set(true);
+                               logger.error("collectionScaleUpFailed to scale up collection", e);
+                               collectionScaleUpFailed.set(true);
                            },
                            () -> {
                                logger.info("Collection Scale up request sent to the service");
