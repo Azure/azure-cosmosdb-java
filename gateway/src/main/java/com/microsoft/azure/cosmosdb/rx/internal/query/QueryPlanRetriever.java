@@ -48,7 +48,6 @@ class QueryPlanRetriever {
 
     static Single<PartitionedQueryExecutionInfo> getQueryPlanThroughGatewayAsync(IDocumentQueryClient queryClient,
                                                                                  SqlQuerySpec sqlQuerySpec, String resourceLink) {
-
         Map<String, String> requestHeaders = new HashMap<>();
         requestHeaders.put(HttpConstants.HttpHeaders.CONTENT_TYPE, RuntimeConstants.MediaTypes.JSON);
         requestHeaders.put(HttpConstants.HttpHeaders.IS_QUERY_PLAN_REQUEST, TRUE);
