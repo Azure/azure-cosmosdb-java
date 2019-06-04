@@ -54,7 +54,6 @@
     <log4j.version>1.2.17</log4j.version>
     <metrics.version>4.0.5</metrics.version>
     <mockito.version>1.10.19</mockito.version>
-    <mockito.version>1.10.19</mockito.version>
     <netty.version>4.1.36.Final</netty.version>
     <rxjava-extras.version>0.8.0.17</rxjava-extras.version>
     <rxjava-string.version>1.1.1</rxjava-string.version>
