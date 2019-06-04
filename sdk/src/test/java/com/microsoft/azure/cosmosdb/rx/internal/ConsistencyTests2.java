@@ -43,8 +43,8 @@ import com.microsoft.azure.cosmosdb.rx.FailureValidator;
 import com.microsoft.azure.cosmosdb.rx.TestConfigurations;
 import org.apache.commons.lang3.Range;
 import org.testng.annotations.Test;
+import reactor.core.publisher.Flux;
 import rx.Completable;
-import rx.Observable;
 import rx.functions.Action1;
 
 import java.util.ArrayList;
@@ -69,7 +69,8 @@ public class ConsistencyTests2 extends ConsistencyTestsBase {
                 .withConnectionPolicy(connectionPolicy)
                 .withConsistencyLevel(ConsistencyLevel.Session).build();
 
-        Document document = this.initClient.createDocument(createdCollection.getSelfLink(), getDocumentDefinition(), null, false).toBlocking().first().getResource();
+        Document document = this.initClient.createDocument(createdCollection.getSelfLink(), getDocumentDefinition(),
+                                                           null, false).blockFirst().getResource();
         Thread.sleep(5000);//WaitForServerReplication
         boolean readLagging = this.validateReadSession(document);
         //assertThat(readLagging).isTrue(); //Will fail if batch repl is turned off
@@ -89,7 +90,8 @@ public class ConsistencyTests2 extends ConsistencyTestsBase {
                 .withConnectionPolicy(connectionPolicy)
                 .withConsistencyLevel(ConsistencyLevel.Session).build();
 
-        Document document = this.initClient.createDocument(createdCollection.getSelfLink(), getDocumentDefinition(), null, false).toBlocking().first().getResource();
+        Document document = this.initClient.createDocument(createdCollection.getSelfLink(), getDocumentDefinition(),
+                                                           null, false).blockFirst().getResource();
         Thread.sleep(5000);//WaitForServerReplication
         boolean readLagging = this.validateWriteSession(document);
         //assertThat(readLagging).isTrue(); //Will fail if batch repl is turned off
@@ -198,12 +200,13 @@ public class ConsistencyTests2 extends ConsistencyTestsBase {
                 .build();
         try {
             // Create collection
-            DocumentCollection parentResource = writeClient.createCollection(createdDatabase.getSelfLink(), getCollectionDefinition(), null).toBlocking().first().getResource();
+            DocumentCollection parentResource = writeClient.createCollection(createdDatabase.getSelfLink(),
+                                                                             getCollectionDefinition(), null).blockFirst().getResource();
 
             // Document to lock pause/resume clients
             Document documentDefinition = getDocumentDefinition();
             documentDefinition.setId("test" + documentDefinition.getId());
-            ResourceResponse<Document> childResource = writeClient.createDocument(parentResource.getSelfLink(), documentDefinition, null, true).toBlocking().first();
+            ResourceResponse<Document> childResource = writeClient.createDocument(parentResource.getSelfLink(), documentDefinition, null, true).blockFirst();
             logger.info("Created {} child resource", childResource.getResource().getResourceId());
 
             String token = childResource.getSessionToken().split(":")[0] + ":" + this.createSessionToken(SessionTokenHelper.parse(childResource.getSessionToken()), 100000000).convertToString();
@@ -212,7 +215,7 @@ public class ConsistencyTests2 extends ConsistencyTestsBase {
             feedOptions.setPartitionKey(new PartitionKey(PartitionKeyInternal.Empty.toJson()));
             feedOptions.setSessionToken(token);
             FailureValidator validator = new FailureValidator.Builder().statusCode(HttpConstants.StatusCodes.NOTFOUND).subStatusCode(HttpConstants.SubStatusCodes.READ_SESSION_NOT_AVAILABLE).build();
-            Observable<FeedResponse<Document>> feedObservable = readSecondaryClient.readDocuments(parentResource.getSelfLink(), feedOptions);
+            Flux<FeedResponse<Document>> feedObservable = readSecondaryClient.readDocuments(parentResource.getSelfLink(), feedOptions);
             validateQueryFailure(feedObservable, validator);
         } finally {
             safeClose(writeClient);
@@ -251,25 +254,30 @@ public class ConsistencyTests2 extends ConsistencyTestsBase {
                 .build();
 
         try {
-            Document lastDocument = client.createDocument(createdCollection.getSelfLink(), getDocumentDefinition(), null, true)
-                .toBlocking()
-                .first()
-                .getResource();
+            Document lastDocument = client.createDocument(createdCollection.getSelfLink(), getDocumentDefinition(),
+                                                          null, true)
+                    .blockFirst()
+                    .getResource();
 
             Completable task1 = ParallelAsync.forEachAsync(Range.between(0, 1000), 5, new Action1<Integer>() {
                 @Override
                 public void call(Integer index) {
-                    client.createDocument(createdCollection.getSelfLink(), documents.get(index % documents.size()), null, true).toBlocking().first();
+                    client.createDocument(createdCollection.getSelfLink(), documents.get(index % documents.size()),
+                                          null, true)
+                            .blockFirst();
                 }
             });
-
+            
             Completable task2 = ParallelAsync.forEachAsync(Range.between(0, 1000), 5, new Action1<Integer>() {
                 @Override
                 public void call(Integer index) {
                     try {
                         FeedOptions feedOptions = new FeedOptions();
                         feedOptions.setEnableCrossPartitionQuery(true);
-                        FeedResponse<Document> queryResponse = client.queryDocuments(createdCollection.getSelfLink(), "SELECT * FROM c WHERE c.Id = 'foo'", feedOptions).toBlocking().first();
+                        FeedResponse<Document> queryResponse = client.queryDocuments(createdCollection.getSelfLink(),
+                                                                                     "SELECT * FROM c WHERE c.Id = " +
+                                                                                             "'foo'", feedOptions)
+                                .blockFirst();
                         String lsnHeaderValue = queryResponse.getResponseHeaders().get(WFConstants.BackendHeaders.LSN);
                         long lsn = Long.valueOf(lsnHeaderValue);
                         String sessionTokenHeaderValue = queryResponse.getResponseHeaders().get(HttpConstants.HttpHeaders.SESSION_TOKEN);

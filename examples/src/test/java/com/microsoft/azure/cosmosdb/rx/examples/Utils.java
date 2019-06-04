@@ -35,7 +35,7 @@ import com.microsoft.azure.cosmosdb.SqlQuerySpec;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import com.microsoft.azure.cosmosdb.rx.TestConfigurations;
 import org.testng.annotations.AfterSuite;
-import rx.Observable;
+import reactor.core.publisher.Flux;
 
 public class Utils {
 
@@ -106,17 +106,17 @@ public class Utils {
         }
 
         @Override
-        public Observable<FeedResponse<Database>> queryDatabases(SqlQuerySpec query) {
+        public Flux<FeedResponse<Database>> queryDatabases(SqlQuerySpec query) {
             return client.queryDatabases(query, null);
         }
 
         @Override
-        public Observable<ResourceResponse<Database>> createDatabase(Database databaseDefinition) {
+        public Flux<ResourceResponse<Database>> createDatabase(Database databaseDefinition) {
             return client.createDatabase(databaseDefinition, null);
         }
 
         @Override
-        public Observable<ResourceResponse<Database>> deleteDatabase(String id) {
+        public Flux<ResourceResponse<Database>> deleteDatabase(String id) {
 
             return client.deleteDatabase("dbs/" + id, null);
         }

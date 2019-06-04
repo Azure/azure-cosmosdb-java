@@ -75,7 +75,7 @@ public class RetryCreateDocumentTest extends TestSuiteBase {
 
         Document docDefinition = getDocumentDefinition();
 
-        Observable<ResourceResponse<Document>> createObservable = client
+        Flux<ResourceResponse<Document>> createObservable = client
                 .createDocument(collection.getSelfLink(), docDefinition, null, false);
         AtomicInteger count = new AtomicInteger();
 

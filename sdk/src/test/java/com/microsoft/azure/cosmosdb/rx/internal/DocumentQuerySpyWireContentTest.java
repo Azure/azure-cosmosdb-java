@@ -59,6 +59,7 @@ import com.microsoft.azure.cosmosdb.rx.TestSuiteBase;
 import com.microsoft.azure.cosmosdb.rx.Utils;
 
 import io.netty.buffer.ByteBuf;
+import reactor.core.publisher.Flux;
 import reactor.netty.http.client.HttpClientRequest;
 import rx.Observable;
 
@@ -133,11 +134,11 @@ public class DocumentQuerySpyWireContentTest extends TestSuiteBase {
 
         client.clearCapturedRequests();
 
-        Observable<FeedResponse<Document>> queryObservable = client
+        Flux<FeedResponse<Document>> queryObservable = client
                 .queryDocuments(collectionLink, query, options);
 
-        List<Document> results = queryObservable.flatMap(p -> Observable.from(p.getResults()))
-            .toList().toBlocking().single();
+        List<Document> results = queryObservable.flatMap(p -> Flux.fromIterable(p.getResults()))
+            .collectList().block();
 
         assertThat(results.size()).describedAs("total results").isGreaterThanOrEqualTo(1);
         
@@ -168,7 +169,7 @@ public class DocumentQuerySpyWireContentTest extends TestSuiteBase {
 
         Document docDefinition = getDocumentDefinition(cnt);
         return client
-                .createDocument(collectionLink, docDefinition, null, false).toBlocking().single().getResource();
+                .createDocument(collectionLink, docDefinition, null, false).blockFirst().getResource();
     }
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
@@ -199,11 +200,11 @@ public class DocumentQuerySpyWireContentTest extends TestSuiteBase {
         
         // do the query once to ensure the collection is cached.
         client.queryDocuments(getMultiPartitionCollectionLink(), "select * from root", options)
-            .toCompletable().await();
+            .toIterable();
 
         // do the query once to ensure the collection is cached.
         client.queryDocuments(getSinglePartitionCollectionLink(), "select * from root", options)
-            .toCompletable().await();
+            .toIterable();
     }
 
     @AfterClass(groups = { "simple" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)

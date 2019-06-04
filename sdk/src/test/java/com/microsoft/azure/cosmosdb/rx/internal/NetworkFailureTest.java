@@ -35,6 +35,7 @@ import org.mockito.Mockito;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
+import reactor.core.publisher.Flux;
 import rx.Observable;
 
 import java.net.UnknownHostException;
@@ -61,7 +62,7 @@ public class NetworkFailureTest extends TestSuiteBase {
 
             Database database = SHARED_DATABASE;
 
-            Observable<ResourceResponse<DocumentCollection>> createObservable = client
+            Flux<ResourceResponse<DocumentCollection>> createObservable = client
                     .createCollection(database.getSelfLink(), collectionDefinition, null);
 
 

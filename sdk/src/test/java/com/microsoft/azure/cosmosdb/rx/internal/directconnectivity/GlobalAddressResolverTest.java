@@ -47,6 +47,7 @@ import org.mockito.Matchers;
 import org.mockito.Mockito;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import reactor.core.publisher.Mono;
 import rx.Completable;
 import rx.Single;
 import rx.functions.Action0;
@@ -57,6 +58,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -113,7 +115,7 @@ public class GlobalAddressResolverTest {
         DocumentCollection collectionDefinition = new DocumentCollection();
         collectionDefinition.setId(UUID.randomUUID().toString());
         collectionCache = Mockito.mock(RxCollectionCache.class);
-        Mockito.when(collectionCache.resolveCollectionAsync(Matchers.any(RxDocumentServiceRequest.class))).thenReturn(Single.just(collectionDefinition));
+        Mockito.when(collectionCache.resolveCollectionAsync(Matchers.any(RxDocumentServiceRequest.class))).thenReturn(Mono.just(collectionDefinition));
         routingMapProvider = Mockito.mock(RxPartitionKeyRangeCache.class);
         userAgentContainer = Mockito.mock(UserAgentContainer.class);
         serviceConfigReader = Mockito.mock(GatewayServiceConfigurationReader.class);
@@ -170,7 +172,7 @@ public class GlobalAddressResolverTest {
         List<PartitionKeyRange> partitionKeyRanges = new ArrayList<>();
         partitionKeyRanges.add(range);
         Mockito.when(collectionRoutingMap.getOrderedPartitionKeyRanges()).thenReturn(partitionKeyRanges);
-        Single<CollectionRoutingMap> collectionRoutingMapSingle = Single.just(collectionRoutingMap);
+        Mono<CollectionRoutingMap> collectionRoutingMapSingle = Mono.just(collectionRoutingMap);
         Mockito.when(routingMapProvider.tryLookupAsync(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(collectionRoutingMapSingle);
 
         List<PartitionKeyRangeIdentity> ranges = new ArrayList<>();
@@ -178,10 +180,12 @@ public class GlobalAddressResolverTest {
             PartitionKeyRangeIdentity partitionKeyRangeIdentity = new PartitionKeyRangeIdentity(documentCollection.getResourceId(), partitionKeyRange.getId());
             ranges.add(partitionKeyRangeIdentity);
         }
-        Completable completable = Completable.fromAction(new Action0() {
+
+        Mono<Void> completable = Mono.fromCallable(new Callable<Void>() {
             @Override
-            public void call() {
+            public Void call() throws Exception {
                 numberOfTaskCompleted.getAndIncrement();
+                return null;
             }
         });
         Mockito.when(gatewayAddressCache.openAsync(documentCollection, ranges)).thenReturn(completable);

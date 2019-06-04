@@ -41,7 +41,7 @@ import com.microsoft.azure.cosmosdb.rx.ResourceResponseValidator;
 import com.microsoft.azure.cosmosdb.rx.TestConfigurations;
 import org.testng.SkipException;
 import org.testng.annotations.Test;
-import rx.Observable;
+import reactor.core.publisher.Flux;
 
 import java.util.ArrayList;
 import java.util.UUID;
@@ -277,19 +277,20 @@ public class ConsistencyTests1 extends ConsistencyTestsBase {
             partitionKeyDefinition.setPaths(paths);
             documentCollection.setPartitionKey(partitionKeyDefinition);
 
-            DocumentCollection collection = client.createCollection(createdDatabase.getSelfLink(), documentCollection, null).toBlocking().first().getResource();
+            DocumentCollection collection = client.createCollection(createdDatabase.getSelfLink(), documentCollection
+                    , null).blockFirst().getResource();
             RequestOptions requestOptions = new RequestOptions();
             requestOptions.setPartitionKey(new PartitionKey("1"));
 
             Document documentDefinition = new Document();
             documentDefinition.setId("1");
-            Document document = client.createDocument(collection.getSelfLink(), documentDefinition, requestOptions, false).toBlocking().first().getResource();
+            Document document = client.createDocument(collection.getSelfLink(), documentDefinition, requestOptions, false).blockFirst().getResource();
 
-            Observable<ResourceResponse<Document>> deleteObservable = client.deleteDocument(document.getSelfLink(), requestOptions);
+            Flux<ResourceResponse<Document>> deleteObservable = client.deleteDocument(document.getSelfLink(), requestOptions);
             ResourceResponseValidator<Document> validator = new ResourceResponseValidator.Builder<Document>()
                     .nullResource().build();
             validateSuccess(deleteObservable, validator);
-            Observable<ResourceResponse<Document>> readObservable = client.readDocument(document.getSelfLink(), requestOptions);
+            Flux<ResourceResponse<Document>> readObservable = client.readDocument(document.getSelfLink(), requestOptions);
             FailureValidator notFoundValidator = new FailureValidator.Builder().resourceNotFound().unknownSubStatusCode().build();
             validateFailure(readObservable, notFoundValidator);
 

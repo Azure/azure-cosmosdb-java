@@ -69,6 +69,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import reactor.core.publisher.Flux;
 import rx.Observable;
 import rx.observers.TestSubscriber;
 
@@ -152,17 +153,17 @@ public class TestSuiteBase {
         }
 
         @Override
-        public Observable<FeedResponse<Database>> queryDatabases(SqlQuerySpec query) {
+        public Flux<FeedResponse<Database>> queryDatabases(SqlQuerySpec query) {
             return client.queryDatabases(query, null);
         }
 
         @Override
-        public Observable<ResourceResponse<Database>> createDatabase(Database databaseDefinition) {
+        public Flux<ResourceResponse<Database>> createDatabase(Database databaseDefinition) {
             return client.createDatabase(databaseDefinition, null);
         }
 
         @Override
-        public Observable<ResourceResponse<Database>> deleteDatabase(String id) {
+        public Flux<ResourceResponse<Database>> deleteDatabase(String id) {
 
             return client.deleteDatabase("dbs/" + id, null);
         }
@@ -212,7 +213,7 @@ public class TestSuiteBase {
             logger.info("Truncating collection {} documents ...", collection.getId());
 
             houseKeepingClient.queryDocuments(collection.getSelfLink(), "SELECT * FROM root", options)
-                    .flatMap(page -> Observable.from(page.getResults()))
+                    .flatMap(page -> Flux.fromIterable(page.getResults()))
                     .flatMap(doc -> {
                         RequestOptions requestOptions = new RequestOptions();
 
@@ -227,12 +228,12 @@ public class TestSuiteBase {
                         }
 
                         return houseKeepingClient.deleteDocument(doc.getSelfLink(), requestOptions);
-                    }).toCompletable().await();
+                    }).then().block();
 
             logger.info("Truncating collection {} triggers ...", collection.getId());
 
             houseKeepingClient.queryTriggers(collection.getSelfLink(), "SELECT * FROM root", options)
-                    .flatMap(page -> Observable.from(page.getResults()))
+                    .flatMap(page -> Flux.fromIterable(page.getResults()))
                     .flatMap(trigger -> {
                         RequestOptions requestOptions = new RequestOptions();
 
@@ -242,12 +243,12 @@ public class TestSuiteBase {
 //                    }
 
                         return houseKeepingClient.deleteTrigger(trigger.getSelfLink(), requestOptions);
-                    }).toCompletable().await();
+                    }).then().block();
 
             logger.info("Truncating collection {} storedProcedures ...", collection.getId());
 
             houseKeepingClient.queryStoredProcedures(collection.getSelfLink(), "SELECT * FROM root", options)
-                    .flatMap(page -> Observable.from(page.getResults()))
+                    .flatMap(page -> Flux.fromIterable(page.getResults()))
                     .flatMap(storedProcedure -> {
                         RequestOptions requestOptions = new RequestOptions();
 
@@ -257,12 +258,12 @@ public class TestSuiteBase {
 //                    }
 
                         return houseKeepingClient.deleteStoredProcedure(storedProcedure.getSelfLink(), requestOptions);
-                    }).toCompletable().await();
+                    }).then().block();
 
             logger.info("Truncating collection {} udfs ...", collection.getId());
 
             houseKeepingClient.queryUserDefinedFunctions(collection.getSelfLink(), "SELECT * FROM root", options)
-                    .flatMap(page -> Observable.from(page.getResults()))
+                    .flatMap(page -> Flux.fromIterable(page.getResults()))
                     .flatMap(udf -> {
                         RequestOptions requestOptions = new RequestOptions();
 
@@ -272,7 +273,7 @@ public class TestSuiteBase {
 //                    }
 
                         return houseKeepingClient.deleteUserDefinedFunction(udf.getSelfLink(), requestOptions);
-                    }).toCompletable().await();
+                    }).then().block();
 
         } finally {
             houseKeepingClient.close();
@@ -314,7 +315,7 @@ public class TestSuiteBase {
                                                       RequestOptions options) {
         AsyncDocumentClient client = createGatewayHouseKeepingDocumentClient().build();
         try {
-            return client.createCollection("dbs/" + databaseId, collection, options).toBlocking().single().getResource();
+            return client.createCollection("dbs/" + databaseId, collection, options).blockFirst().getResource();
         } finally {
             client.close();
         }
@@ -322,12 +323,12 @@ public class TestSuiteBase {
 
     public static DocumentCollection createCollection(AsyncDocumentClient client, String databaseId,
                                                       DocumentCollection collection, RequestOptions options) {
-        return client.createCollection("dbs/" + databaseId, collection, options).toBlocking().single().getResource();
+        return client.createCollection("dbs/" + databaseId, collection, options).blockFirst().getResource();
     }
 
     public static DocumentCollection createCollection(AsyncDocumentClient client, String databaseId,
                                                       DocumentCollection collection) {
-        return client.createCollection("dbs/" + databaseId, collection, null).toBlocking().single().getResource();
+        return client.createCollection("dbs/" + databaseId, collection, null).blockFirst().getResource();
     }
 
     private static DocumentCollection getCollectionDefinitionMultiPartitionWithCompositeAndSpatialIndexes() {
@@ -450,23 +451,27 @@ public class TestSuiteBase {
         return createDocument(client, databaseId, collectionId, document, null);
     }
 
-    public static Document createDocument(AsyncDocumentClient client, String databaseId, String collectionId, Document document, RequestOptions options) {
-        return client.createDocument(com.microsoft.azure.cosmosdb.rx.Utils.getCollectionNameLink(databaseId, collectionId), document, options, false).toBlocking().single().getResource();
+    public static Document createDocument(AsyncDocumentClient client, String databaseId, String collectionId,
+            Document document, RequestOptions options) {
+        return client.createDocument(com.microsoft.azure.cosmosdb.rx.Utils.getCollectionNameLink(databaseId,
+                                                                                                 collectionId),
+                                     document, options, false).blockFirst().getResource();
     }
 
-    public Observable<ResourceResponse<Document>> bulkInsert(AsyncDocumentClient client,
+    public Flux<ResourceResponse<Document>> bulkInsert(AsyncDocumentClient client,
                                                              String collectionLink,
                                                              List<Document> documentDefinitionList,
                                                              int concurrencyLevel) {
-        ArrayList<Observable<ResourceResponse<Document>>> result = new ArrayList<Observable<ResourceResponse<Document>>>(documentDefinitionList.size());
+        ArrayList<Flux<ResourceResponse<Document>>> result =
+                new ArrayList<Flux<ResourceResponse<Document>>>(documentDefinitionList.size());
         for (Document docDef : documentDefinitionList) {
             result.add(client.createDocument(collectionLink, docDef, null, false));
         }
 
-        return Observable.merge(result, concurrencyLevel);
+        return Flux.merge(Flux.fromIterable(result), concurrencyLevel);
     }
 
-    public Observable<ResourceResponse<Document>> bulkInsert(AsyncDocumentClient client,
+    public Flux<ResourceResponse<Document>> bulkInsert(AsyncDocumentClient client,
                                                              String collectionLink,
                                                              List<Document> documentDefinitionList) {
         return bulkInsert(client, collectionLink, documentDefinitionList, DEFAULT_BULK_INSERT_CONCURRENCY_LEVEL);
@@ -477,17 +482,16 @@ public class TestSuiteBase {
                                              List<Document> documentDefinitionList) {
         return bulkInsert(client, collectionLink, documentDefinitionList, DEFAULT_BULK_INSERT_CONCURRENCY_LEVEL)
                 .map(ResourceResponse::getResource)
-                .toList()
-                .toBlocking()
-                .single();
+                .collectList()
+                .block();
     }
 
     public static ConsistencyLevel getAccountDefaultConsistencyLevel(AsyncDocumentClient client) {
-        return client.getDatabaseAccount().toBlocking().single().getConsistencyPolicy().getDefaultConsistencyLevel();
+        return client.getDatabaseAccount().blockFirst().getConsistencyPolicy().getDefaultConsistencyLevel();
     }
 
     public static User createUser(AsyncDocumentClient client, String databaseId, User user) {
-        return client.createUser("dbs/" + databaseId, user, null).toBlocking().single().getResource();
+        return client.createUser("dbs/" + databaseId, user, null).blockFirst().getResource();
     }
 
     public static User safeCreateUser(AsyncDocumentClient client, String databaseId, User user) {
@@ -548,23 +552,28 @@ public class TestSuiteBase {
 
     public static void deleteCollectionIfExists(AsyncDocumentClient client, String databaseId, String collectionId) {
         List<DocumentCollection> res = client.queryCollections("dbs/" + databaseId,
-                                                               String.format("SELECT * FROM root r where r.id = '%s'", collectionId), null).toBlocking().single()
+                                                               String.format("SELECT * FROM root r where r.id = '%s'", collectionId), null)
+                .single()
+                .block()
                 .getResults();
         if (!res.isEmpty()) {
-            deleteCollection(client, com.microsoft.azure.cosmosdb.rx.Utils.getCollectionNameLink(databaseId, collectionId));
+            deleteCollection(client, com.microsoft.azure.cosmosdb.rx.Utils.getCollectionNameLink(databaseId,
+                                                                                                 collectionId));
         }
     }
 
     public static void deleteCollection(AsyncDocumentClient client, String collectionLink) {
-        client.deleteCollection(collectionLink, null).toBlocking().single();
+        client.deleteCollection(collectionLink, null).blockFirst();
     }
 
     public static void deleteDocumentIfExists(AsyncDocumentClient client, String databaseId, String collectionId, String docId) {
         FeedOptions options = new FeedOptions();
         options.setPartitionKey(new PartitionKey(docId));
         List<Document> res = client
-                .queryDocuments(com.microsoft.azure.cosmosdb.rx.Utils.getCollectionNameLink(databaseId, collectionId), String.format("SELECT * FROM root r where r.id = '%s'", docId), options)
-                .toBlocking().single().getResults();
+                .queryDocuments(com.microsoft.azure.cosmosdb.rx.Utils.getCollectionNameLink(databaseId, collectionId),
+                                String.format("SELECT * FROM root r where r.id = '%s'", docId), 
+                                options)
+                .single().block().getResults();
         if (!res.isEmpty()) {
             deleteDocument(client, com.microsoft.azure.cosmosdb.rx.Utils.getDocumentNameLink(databaseId, collectionId, docId));
         }
@@ -573,7 +582,7 @@ public class TestSuiteBase {
     public static void safeDeleteDocument(AsyncDocumentClient client, String documentLink, RequestOptions options) {
         if (client != null && documentLink != null) {
             try {
-                client.deleteDocument(documentLink, options).toBlocking().single();
+                client.deleteDocument(documentLink, options).single().block();
             } catch (Exception e) {
                 DocumentClientException dce = com.microsoft.azure.cosmosdb.rx.internal.Utils.as(e, DocumentClientException.class);
                 if (dce == null || dce.getStatusCode() != 404) {
@@ -584,20 +593,20 @@ public class TestSuiteBase {
     }
 
     public static void deleteDocument(AsyncDocumentClient client, String documentLink) {
-        client.deleteDocument(documentLink, null).toBlocking().single();
+        client.deleteDocument(documentLink, null).single().block();
     }
 
     public static void deleteUserIfExists(AsyncDocumentClient client, String databaseId, String userId) {
         List<User> res = client
                 .queryUsers("dbs/" + databaseId, String.format("SELECT * FROM root r where r.id = '%s'", userId), null)
-                .toBlocking().single().getResults();
+                .single().block().getResults();
         if (!res.isEmpty()) {
             deleteUser(client, com.microsoft.azure.cosmosdb.rx.Utils.getUserNameLink(databaseId, userId));
         }
     }
 
     public static void deleteUser(AsyncDocumentClient client, String userLink) {
-        client.deleteUser(userLink, null).toBlocking().single();
+        client.deleteUser(userLink, null).single().block();
     }
 
     public static String getDatabaseLink(Database database) {
@@ -610,8 +619,8 @@ public class TestSuiteBase {
     }
 
     static protected Database createDatabase(AsyncDocumentClient client, Database database) {
-        Observable<ResourceResponse<Database>> databaseObservable = client.createDatabase(database, null);
-        return databaseObservable.toBlocking().single().getResource();
+        Flux<ResourceResponse<Database>> databaseObservable = client.createDatabase(database, null);
+        return databaseObservable.single().block().getResource();
     }
 
     static protected Database createDatabase(AsyncDocumentClient client, String databaseId) {
@@ -621,15 +630,16 @@ public class TestSuiteBase {
     }
 
     static protected Database createDatabaseIfNotExists(AsyncDocumentClient client, String databaseId) {
-        return client.queryDatabases(String.format("SELECT * FROM r where r.id = '%s'", databaseId), null).flatMap(p -> Observable.from(p.getResults())).switchIfEmpty(
-                Observable.defer(() -> {
+        return client.queryDatabases(String.format("SELECT * FROM r where r.id = '%s'", databaseId), null)
+                .flatMap(p -> Flux.fromIterable(p.getResults())).switchIfEmpty(
+                Flux.defer(() -> {
 
                     Database databaseDefinition = new Database();
                     databaseDefinition.setId(databaseId);
 
                     return client.createDatabase(databaseDefinition, null).map(ResourceResponse::getResource);
                 })
-        ).toBlocking().single();
+        ).single().block();
     }
 
     static protected void safeDeleteDatabase(AsyncDocumentClient client, Database database) {
@@ -641,7 +651,9 @@ public class TestSuiteBase {
     static protected void safeDeleteDatabase(AsyncDocumentClient client, String databaseId) {
         if (client != null) {
             try {
-                client.deleteDatabase(com.microsoft.azure.cosmosdb.rx.Utils.getDatabaseNameLink(databaseId), null).toBlocking().single();
+                client.deleteDatabase(com.microsoft.azure.cosmosdb.rx.Utils.getDatabaseNameLink(databaseId), null)
+                        .single()
+                        .block();
             } catch (Exception e) {
             }
         }
@@ -650,13 +662,12 @@ public class TestSuiteBase {
     static protected void safeDeleteAllCollections(AsyncDocumentClient client, Database database) {
         if (database != null) {
             List<DocumentCollection> collections = client.readCollections(database.getSelfLink(), null)
-                    .flatMap(p -> Observable.from(p.getResults()))
-                    .toList()
-                    .toBlocking()
-                    .single();
+                    .flatMap(p -> Flux.fromIterable(p.getResults()))
+                    .collectList()
+                    .block();
 
             for(DocumentCollection collection: collections) {
-                client.deleteCollection(collection.getSelfLink(), null).toBlocking().single().getResource();
+                client.deleteCollection(collection.getSelfLink(), null).single().block().getResource();
             }
         }
     }
@@ -664,7 +675,7 @@ public class TestSuiteBase {
     static protected void safeDeleteCollection(AsyncDocumentClient client, DocumentCollection collection) {
         if (client != null && collection != null) {
             try {
-                client.deleteCollection(collection.getSelfLink(), null).toBlocking().single();
+                client.deleteCollection(collection.getSelfLink(), null).single().block();
             } catch (Exception e) {
             }
         }
@@ -673,7 +684,9 @@ public class TestSuiteBase {
     static protected void safeDeleteCollection(AsyncDocumentClient client, String databaseId, String collectionId) {
         if (client != null && databaseId != null && collectionId != null) {
             try {
-                client.deleteCollection("/dbs/" + databaseId + "/colls/" + collectionId, null).toBlocking().single();
+                client.deleteCollection("/dbs/" + databaseId + "/colls/" + collectionId, null)
+                        .single()
+                        .block();
             } catch (Exception e) {
             }
         }

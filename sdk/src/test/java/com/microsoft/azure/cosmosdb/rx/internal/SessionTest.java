@@ -115,14 +115,14 @@ public class SessionTest extends TestSuiteBase {
     
     @Test(groups = { "simple" }, timeOut = TIMEOUT, dataProvider = "sessionTestArgProvider")
     public void sessionConsistency_ReadYourWrites(boolean isNameBased) {
-        spyClient.readCollection(getCollectionLink(isNameBased), null).toBlocking().single();
-        spyClient.createDocument(getCollectionLink(isNameBased), new Document(), null, false).toBlocking().single();
+        spyClient.readCollection(getCollectionLink(isNameBased), null).blockFirst();
+        spyClient.createDocument(getCollectionLink(isNameBased), new Document(), null, false).blockFirst();
 
         spyClient.clearCapturedRequests();
         
         for (int i = 0; i < 10; i++) {
             Document documentCreated = spyClient.createDocument(getCollectionLink(isNameBased), new Document(), null, false)
-                    .toBlocking().single().getResource();
+                    .blockFirst().getResource();
 
             // We send session tokens on Writes in Gateway mode
             if (connectionMode == ConnectionMode.Gateway) {
@@ -130,12 +130,12 @@ public class SessionTest extends TestSuiteBase {
                 assertThat(getSessionTokensInRequests().get(3 * i + 0)).isNotEmpty();
             }
 
-            spyClient.readDocument(getDocumentLink(documentCreated, isNameBased), null).toBlocking().single();
+            spyClient.readDocument(getDocumentLink(documentCreated, isNameBased), null).blockFirst();
 
             assertThat(getSessionTokensInRequests()).hasSize(3 * i + 2);
             assertThat(getSessionTokensInRequests().get(3 * i + 1)).isNotEmpty();
 
-            spyClient.readDocument(getDocumentLink(documentCreated, isNameBased), null).toBlocking().single();
+            spyClient.readDocument(getDocumentLink(documentCreated, isNameBased), null).blockFirst();
 
             assertThat(getSessionTokensInRequests()).hasSize(3 * i + 3);
             assertThat(getSessionTokensInRequests().get(3 * i + 2)).isNotEmpty();
@@ -147,11 +147,12 @@ public class SessionTest extends TestSuiteBase {
         Document document = new Document();
         document.setId(UUID.randomUUID().toString());
         document.set("pk", "pk");
-        document = spyClient.createDocument(getCollectionLink(isNameBased), document, null, false).toBlocking().single()
+        document = spyClient.createDocument(getCollectionLink(isNameBased), document, null, false)
+                .blockFirst()
                 .getResource();
 
         final String documentLink = getDocumentLink(document, isNameBased);
-        spyClient.readDocument(documentLink, null).toBlocking().single()
+        spyClient.readDocument(documentLink, null).blockFirst()
                 .getResource();
 
         List<HttpRequest> documentReadHttpRequests = spyClient.getCapturedRequests().stream()
@@ -176,7 +177,7 @@ public class SessionTest extends TestSuiteBase {
             throw new SkipException("Master resource access is only through gateway");
         }
         String collectionLink = getCollectionLink(isNameBased);
-        spyClient.readCollection(collectionLink, null).toBlocking().single();
+        spyClient.readCollection(collectionLink, null).blockFirst();
 
         List<HttpRequest> collectionReadHttpRequests = spyClient.getCapturedRequests().stream()
                 .filter(r -> r.httpMethod() == HttpMethod.GET)

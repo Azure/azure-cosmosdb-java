@@ -119,7 +119,7 @@ public class TokenResolverTest extends TestSuiteBase {
     public void readDocumentWithReadPermission(ConnectionMode connectionMode) {
         Document docDefinition = getDocumentDefinition();
         ResourceResponse<Document> resourceResponse = client
-                .createDocument(BridgeInternal.getAltLink(createdCollection), docDefinition, null, false).toBlocking().first();
+                .createDocument(BridgeInternal.getAltLink(createdCollection), docDefinition, null, false).blockFirst();
         AsyncDocumentClient asyncClientWithTokenResolver = null;
         try {
             asyncClientWithTokenResolver = buildClient(connectionMode, PermissionMode.Read);
@@ -141,7 +141,7 @@ public class TokenResolverTest extends TestSuiteBase {
     public void deleteDocumentWithReadPermission(ConnectionMode connectionMode) {
         Document docDefinition = getDocumentDefinition();
         ResourceResponse<Document> resourceResponse = client
-                .createDocument(BridgeInternal.getAltLink(createdCollection), docDefinition, null, false).toBlocking().first();
+                .createDocument(BridgeInternal.getAltLink(createdCollection), docDefinition, null, false).blockFirst();
         AsyncDocumentClient asyncClientWithTokenResolver = null;
         try {
             asyncClientWithTokenResolver = buildClient(connectionMode, PermissionMode.Read);
@@ -187,7 +187,7 @@ public class TokenResolverTest extends TestSuiteBase {
     public void deleteDocumentWithAllPermission(ConnectionMode connectionMode) {
         Document docDefinition = getDocumentDefinition();
         ResourceResponse<Document> resourceResponse = client
-                .createDocument(BridgeInternal.getAltLink(createdCollection), docDefinition, null, false).toBlocking().first();
+                .createDocument(BridgeInternal.getAltLink(createdCollection), docDefinition, null, false).blockFirst();
         AsyncDocumentClient asyncClientWithTokenResolver = null;
         try {
             asyncClientWithTokenResolver = buildClient(connectionMode, PermissionMode.All);

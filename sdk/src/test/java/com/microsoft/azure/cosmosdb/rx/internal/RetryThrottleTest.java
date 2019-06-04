@@ -81,11 +81,11 @@ public class RetryThrottleTest extends TestSuiteBase {
         client = SpyClientUnderTestFactory.createClientWithGatewaySpy(builder);
 
         // create a document to ensure collection is cached
-        client.createDocument(getCollectionLink(collection), getDocumentDefinition(), null, false).toBlocking().single();
+        client.createDocument(getCollectionLink(collection), getDocumentDefinition(), null, false).blockFirst();
 
         List<Observable<ResourceResponse<Document>>> list = new ArrayList<>();
         for(int i = 0; i < TOTAL_DOCS; i++) {
-            Observable<ResourceResponse<Document>> obs = client.createDocument(getCollectionLink(collection),  getDocumentDefinition(), null, false);
+            Flux<ResourceResponse<Document>> obs = client.createDocument(getCollectionLink(collection), getDocumentDefinition(), null, false);
             list.add(obs);
         }
 
@@ -114,11 +114,11 @@ public class RetryThrottleTest extends TestSuiteBase {
         client = SpyClientUnderTestFactory.createClientWithGatewaySpy(createGatewayRxDocumentClient());
 
         // create a document to ensure collection is cached
-        client.createDocument(getCollectionLink(collection),  getDocumentDefinition(), null, false).toBlocking().single();
+        client.createDocument(getCollectionLink(collection),  getDocumentDefinition(), null, false).blockFirst();
 
         Document docDefinition = getDocumentDefinition();
 
-        Observable<ResourceResponse<Document>> createObservable = client
+        Flux<ResourceResponse<Document>> createObservable = client
                 .createDocument(collection.getSelfLink(), docDefinition, null, false);
         AtomicInteger count = new AtomicInteger();
 

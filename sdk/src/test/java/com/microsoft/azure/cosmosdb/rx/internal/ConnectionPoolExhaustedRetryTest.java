@@ -52,7 +52,7 @@ public class ConnectionPoolExhaustedRetryTest {
         ClientRetryPolicy clientRetryPolicy = new ClientRetryPolicy(globalEndpointManager, false, Mockito.mock(RetryOptions.class));
 
         clientRetryPolicy.onBeforeSendRequest(Mockito.mock(RxDocumentServiceRequest.class));
-        IRetryPolicy.ShouldRetryResult shouldRetryResult = clientRetryPolicy.shouldRetry(exception).toBlocking().value();
+        IRetryPolicy.ShouldRetryResult shouldRetryResult = clientRetryPolicy.shouldRetry(exception).block();
         assertThat(shouldRetryResult.shouldRetry).isTrue();
         assertThat(shouldRetryResult.backOffTime).isGreaterThanOrEqualTo(ConnectionPoolExhaustedRetry.RETRY_WAIT_TIME);
 
@@ -69,12 +69,12 @@ public class ConnectionPoolExhaustedRetryTest {
 
         clientRetryPolicy.onBeforeSendRequest(Mockito.mock(RxDocumentServiceRequest.class));
         for (int i = 0; i < ConnectionPoolExhaustedRetry.MAX_RETRY_COUNT; i++) {
-            IRetryPolicy.ShouldRetryResult shouldRetryResult = clientRetryPolicy.shouldRetry(exception).toBlocking().value();
+            IRetryPolicy.ShouldRetryResult shouldRetryResult = clientRetryPolicy.shouldRetry(exception).block();
             assertThat(shouldRetryResult.shouldRetry).isTrue();
             assertThat(shouldRetryResult.backOffTime).isGreaterThanOrEqualTo(ConnectionPoolExhaustedRetry.RETRY_WAIT_TIME);
         }
 
-        IRetryPolicy.ShouldRetryResult shouldRetryResult = clientRetryPolicy.shouldRetry(exception).toBlocking().value();
+        IRetryPolicy.ShouldRetryResult shouldRetryResult = clientRetryPolicy.shouldRetry(exception).block();
         assertThat(shouldRetryResult.shouldRetry).isFalse();
         assertThat(shouldRetryResult.backOffTime).isNull();
         // no interaction with global endpoint manager

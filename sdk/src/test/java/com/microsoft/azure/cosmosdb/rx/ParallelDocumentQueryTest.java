@@ -126,12 +126,12 @@ public class ParallelDocumentQueryTest extends TestSuiteBase {
 
         Observable<FeedResponse<Document>> queryObservable = client
                 .queryDocuments(getCollectionLink(), query, options);
-        List<FeedResponse<Document>> resultList1 = queryObservable.toList().toBlocking().single();
+        List<FeedResponse<Document>> resultList1 = queryObservable.toList().block().single();
 
         options.setMaxDegreeOfParallelism(4);
         Observable<FeedResponse<Document>> threadedQueryObs = client.queryDocuments(getCollectionLink(), query,
                 options);
-        List<FeedResponse<Document>> resultList2 = threadedQueryObs.toList().toBlocking().single();
+        List<FeedResponse<Document>> resultList2 = threadedQueryObs.toList().block().single();
 
         assertThat(resultList1.size()).isEqualTo(resultList2.size());
         for(int i = 0; i < resultList1.size(); i++){
@@ -251,14 +251,14 @@ public class ParallelDocumentQueryTest extends TestSuiteBase {
         try {
             for (String partitionKeyRangeId : client.readPartitionKeyRanges(getCollectionLink(), null)
                 .flatMap(p -> Observable.from(p.getResults()))
-                .map(pkr -> pkr.getId()).toList().toBlocking().single()) {
+                .map(pkr -> pkr.getId()).toList().block().single()) {
                 String query = "SELECT * from root";
                 FeedOptions options = new FeedOptions();
                 options.setPartitionKeyRangeIdInternal(partitionKeyRangeId);
                 int queryResultCount = client
                     .queryDocuments(getCollectionLink(), query, options)
                     .flatMap(p -> Observable.from(p.getResults()))
-                    .toList().toBlocking().single().size();
+                    .toList().block().single().size();
 
                 sum += queryResultCount;
             }
@@ -386,7 +386,7 @@ public class ParallelDocumentQueryTest extends TestSuiteBase {
 
 		Document docDefinition = getDocumentDefinition(cnt);
 
-		return client.createDocument(getCollectionLink(), docDefinition, null, false).toBlocking().single()
+		return client.createDocument(getCollectionLink(), docDefinition, null, false).block().single()
 				.getResource();
 	}
 	

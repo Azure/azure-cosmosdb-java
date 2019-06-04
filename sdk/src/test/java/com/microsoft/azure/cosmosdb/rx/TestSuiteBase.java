@@ -81,6 +81,7 @@ import com.microsoft.azure.cosmosdb.User;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient.Builder;
 
 import org.testng.annotations.Test;
+import reactor.core.publisher.Flux;
 import rx.Observable;
 import rx.observers.TestSubscriber;
 
@@ -150,17 +151,17 @@ public class TestSuiteBase {
         }
 
         @Override
-        public Observable<FeedResponse<Database>> queryDatabases(SqlQuerySpec query) {
+        public Flux<FeedResponse<Database>> queryDatabases(SqlQuerySpec query) {
             return client.queryDatabases(query, null);
         }
 
         @Override
-        public Observable<ResourceResponse<Database>> createDatabase(Database databaseDefinition) {
+        public Flux<ResourceResponse<Database>> createDatabase(Database databaseDefinition) {
             return client.createDatabase(databaseDefinition, null);
         }
 
         @Override
-        public Observable<ResourceResponse<Database>> deleteDatabase(String id) {
+        public Flux<ResourceResponse<Database>> deleteDatabase(String id) {
 
             return client.deleteDatabase("dbs/" + id, null);
         }
@@ -312,7 +313,7 @@ public class TestSuiteBase {
                                                       RequestOptions options) {
         AsyncDocumentClient client = createGatewayHouseKeepingDocumentClient().build();
         try {
-            return client.createCollection("dbs/" + databaseId, collection, options).toBlocking().single().getResource();
+            return client.createCollection("dbs/" + databaseId, collection, options).block().single().getResource();
         } finally {
             client.close();
         }
@@ -320,7 +321,7 @@ public class TestSuiteBase {
 
     public static DocumentCollection createCollection(AsyncDocumentClient client, String databaseId,
                                                       DocumentCollection collection, RequestOptions options) {
-        return client.createCollection("dbs/" + databaseId, collection, options).toBlocking().single().getResource();
+        return client.createCollection("dbs/" + databaseId, collection, options).block().single().getResource();
     }
 
     public static DocumentCollection createCollection(AsyncDocumentClient client, String databaseId,

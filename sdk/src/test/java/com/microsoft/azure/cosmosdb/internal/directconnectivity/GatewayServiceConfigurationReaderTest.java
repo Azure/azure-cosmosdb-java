@@ -104,7 +104,7 @@ public class GatewayServiceConfigurationReaderTest extends TestSuiteBase {
 
     @Test(groups = "simple")
     public void mockInitializeReaderAsync() {
-        Single<DatabaseAccount> databaseAccount = mockGatewayServiceConfigurationReader.initializeReaderAsync();
+        Mono<DatabaseAccount> databaseAccount = mockGatewayServiceConfigurationReader.initializeReaderAsync();
         validateSuccess(databaseAccount, expectedDatabaseAccount);
     }
 
@@ -116,13 +116,13 @@ public class GatewayServiceConfigurationReaderTest extends TestSuiteBase {
         mockGatewayServiceConfigurationReader = new GatewayServiceConfigurationReader(new URI(TestConfigurations.HOST),
                 true, "SampleResourceToken", connectionPolicy, baseAuthorizationTokenProvider, mockHttpClient);
 
-        Single<DatabaseAccount> databaseAccount = mockGatewayServiceConfigurationReader.initializeReaderAsync();
+        Mono<DatabaseAccount> databaseAccount = mockGatewayServiceConfigurationReader.initializeReaderAsync();
         validateSuccess(databaseAccount, expectedDatabaseAccount);
     }
 
     @Test(groups = "simple")
     public void initializeReaderAsync() {
-        Single<DatabaseAccount> databaseAccount = gatewayServiceConfigurationReader.initializeReaderAsync();
+        Mono<DatabaseAccount> databaseAccount = gatewayServiceConfigurationReader.initializeReaderAsync();
         validateSuccess(databaseAccount);
     }
 
