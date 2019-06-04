@@ -33,6 +33,7 @@ import com.microsoft.azure.cosmosdb.StoredProcedure;
 import com.microsoft.azure.cosmosdb.Trigger;
 import com.microsoft.azure.cosmosdb.TriggerOperation;
 import com.microsoft.azure.cosmosdb.TriggerType;
+import com.microsoft.azure.cosmosdb.UserDefinedFunction;
 import com.microsoft.azure.cosmosdb.rx.ResourceResponseValidator;
 import com.microsoft.azure.cosmosdb.rx.ResourceResponseValidator.Builder;
 
@@ -88,6 +89,8 @@ public interface CosmosResponseValidator<T extends CosmosResponse> {
                 return ((CosmosTriggerResponse)resourceResponse).getCosmosTriggerSettings();
             } else if (resourceResponse instanceof CosmosUserDefinedFunctionResponse) {
                 return ((CosmosUserDefinedFunctionResponse)resourceResponse).getCosmosUserDefinedFunctionSettings();
+            } else if (resourceResponse instanceof CosmosUserResponse) {
+                return ((CosmosUserResponse)resourceResponse).getCosmosUserSettings();
             }
             return null;
         }
@@ -249,6 +252,17 @@ public interface CosmosResponseValidator<T extends CosmosResponse> {
                 public void validate(CosmosTriggerResponse resourceResponse) {
                     assertThat(resourceResponse.getCosmosTriggerSettings().getTriggerType()).isEqualTo(type);
                     assertThat(resourceResponse.getCosmosTriggerSettings().getTriggerOperation()).isEqualTo(op);
+                }
+            });
+            return this;
+        }
+
+        public Builder<T> withUserDefinedFunctionBody(String functionBody) {
+            validators.add(new CosmosResponseValidator<CosmosUserDefinedFunctionResponse>() {
+
+                @Override
+                public void validate(CosmosUserDefinedFunctionResponse resourceResponse) {
+                    assertThat(resourceResponse.getCosmosUserDefinedFunctionSettings().getBody()).isEqualTo(functionBody);
                 }
             });
             return this;

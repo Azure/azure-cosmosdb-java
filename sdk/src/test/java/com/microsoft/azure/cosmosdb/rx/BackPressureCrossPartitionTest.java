@@ -70,6 +70,7 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class BackPressureCrossPartitionTest extends TestSuiteBase {
+    /*
     private final Logger log = LoggerFactory.getLogger(BackPressureCrossPartitionTest.class);
 
     private static final int TIMEOUT = 1800000;
@@ -258,4 +259,5 @@ public class BackPressureCrossPartitionTest extends TestSuiteBase {
             , uuid, cnt, uuid));
         return doc;
     }
+    */
 }

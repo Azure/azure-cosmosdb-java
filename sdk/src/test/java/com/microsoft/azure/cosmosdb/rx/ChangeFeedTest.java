@@ -62,6 +62,7 @@ import rx.Observable;
 
 public class ChangeFeedTest extends TestSuiteBase {
 
+    /*
     private static final int SETUP_TIMEOUT = 40000;
     private static final int TIMEOUT = 30000;
     private static final String PartitionKeyFieldName = "mypk";
@@ -308,4 +309,5 @@ public class ChangeFeedTest extends TestSuiteBase {
             Thread.sleep(100);
         }
     }
+    */
 }
