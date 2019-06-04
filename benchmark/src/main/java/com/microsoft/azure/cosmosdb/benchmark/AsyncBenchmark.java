@@ -41,24 +41,23 @@ import com.microsoft.azure.cosmosdb.ResourceResponse;
 import com.microsoft.azure.cosmosdb.benchmark.Configuration.Operation;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.reactivestreams.Subscriber;
-import org.reactivestreams.Subscription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import reactor.core.publisher.Flux;
+import rx.Observable;
+import rx.Subscriber;
 
 import java.net.InetSocketAddress;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 abstract class AsyncBenchmark<T> {
     private final MetricRegistry metricsRegistry = new MetricRegistry();
     private final ScheduledReporter reporter;
-    private final CountDownLatch operationCounterLatch;
     private final String nameCollectionLink;
 
     private Meter successMeter;
@@ -88,10 +87,9 @@ abstract class AsyncBenchmark<T> {
         nameCollectionLink = String.format("dbs/%s/colls/%s", database.getId(), collection.getId());
         partitionKey = collection.getPartitionKey().getPaths().iterator().next().split("/")[1];
         concurrencyControlSemaphore = new Semaphore(cfg.getConcurrency());
-        operationCounterLatch = new CountDownLatch(cfg.getNumberOfOperations());
         configuration = cfg;
 
-        ArrayList<Flux<Document>> createDocumentObservables = new ArrayList<>();
+        ArrayList<Observable<Document>> createDocumentObservables = new ArrayList<>();
 
         if (configuration.getOperationType() != Operation.WriteLatency
                 && configuration.getOperationType() != Operation.WriteThroughput
@@ -107,13 +105,13 @@ abstract class AsyncBenchmark<T> {
                 newDoc.set("dataField3", dataFieldValue);
                 newDoc.set("dataField4", dataFieldValue);
                 newDoc.set("dataField5", dataFieldValue);
-                Flux<Document> obs = client.createDocument(collection.getSelfLink(), newDoc, null, false)
+                Observable<Document> obs = client.createDocument(collection.getSelfLink(), newDoc, null, false)
                         .map(ResourceResponse::getResource);
                 createDocumentObservables.add(obs);
             }
         }
 
-        docsToRead = Flux.merge(Flux.fromIterable(createDocumentObservables), 100).collectList().block();
+        docsToRead = Observable.merge(createDocumentObservables, 100).toList().toBlocking().single();
         init();
 
         if (configuration.isEnableJvmStats()) {
@@ -167,6 +165,24 @@ abstract class AsyncBenchmark<T> {
 
     protected abstract void performWorkload(Subscriber<T> subs, long i) throws Exception;
 
+    private boolean shouldContinue(long startTimeMillis, long iterationCount) {
+        Duration maxDurationTime = configuration.getMaxRunningTimeDuration();
+        int maxNumberOfOperations = configuration.getNumberOfOperations();
+        if (maxDurationTime == null) {
+            return iterationCount < maxNumberOfOperations;
+        }
+
+        if (startTimeMillis + maxDurationTime.toMillis() < System.currentTimeMillis()) {
+            return false;
+        }
+
+        if (maxNumberOfOperations < 0) {
+            return true;
+        }
+
+        return iterationCount < maxNumberOfOperations;
+    }
+
     void run() throws Exception {
 
         successMeter = metricsRegistry.meter("#Successful Operations");
@@ -179,9 +195,27 @@ abstract class AsyncBenchmark<T> {
 
         long startTime = System.currentTimeMillis();
 
-        for (long i = 1; i <= configuration.getNumberOfOperations(); i++) {
+        AtomicLong count = new AtomicLong(0);
+        long i;
+        for ( i = 0; shouldContinue(startTime, i); i++) {
 
             Subscriber<T> subs = new Subscriber<T>() {
+
+                @Override
+                public void onStart() {
+                }
+
+                @Override
+                public void onCompleted() {
+                    successMeter.mark();
+                    concurrencyControlSemaphore.release();
+                    AsyncBenchmark.this.onSuccess();
+
+                    synchronized (count) {
+                        count.incrementAndGet();
+                        count.notify();
+                    }
+                }
 
                 @Override
                 public void onError(Throwable e) {
@@ -189,20 +223,12 @@ abstract class AsyncBenchmark<T> {
                     logger.error("Encountered failure {} on thread {}" ,
                                  e.getMessage(), Thread.currentThread().getName(), e);
                     concurrencyControlSemaphore.release();
-                    operationCounterLatch.countDown();
                     AsyncBenchmark.this.onError(e);
-                }
 
-                @Override
-                public void onComplete() {
-                    successMeter.mark();
-                    concurrencyControlSemaphore.release();
-                    operationCounterLatch.countDown();
-                    AsyncBenchmark.this.onSuccess();
-                }
-
-                @Override
-                public void onSubscribe(Subscription s) {
+                    synchronized (count) {
+                        count.incrementAndGet();
+                        count.notify();
+                    }
                 }
 
                 @Override
@@ -213,7 +239,12 @@ abstract class AsyncBenchmark<T> {
             performWorkload(subs, i);
         }
 
-        operationCounterLatch.await();
+        synchronized (count) {
+            while (count.get() < i) {
+                count.wait();
+            }
+        }
+
         long endTime = System.currentTimeMillis();
         logger.info("[{}] operations performed in [{}] seconds.",
                     configuration.getNumberOfOperations(), (int) ((endTime - startTime) / 1000));
