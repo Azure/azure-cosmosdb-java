@@ -232,7 +232,7 @@ public class OrderbyDocumentQueryTest extends TestSuiteBase {
             { createdDocuments.size() + 1 }, { 2 * createdDocuments.size() } };
     }
 
-    @Test(groups = { "simple" }, timeOut = TIMEOUT, dataProvider =  "topValue")
+    @Test(groups = { "simple" }, timeOut = TIMEOUT, dataProvider =  "topValue", retryAnalyzer = RetryAnalyzer.class)
     public void queryOrderWithTop(int topValue) throws Exception {
         String query = String.format("SELECT TOP %d * FROM r ORDER BY r.propInt", topValue);
         FeedOptions options = new FeedOptions();
