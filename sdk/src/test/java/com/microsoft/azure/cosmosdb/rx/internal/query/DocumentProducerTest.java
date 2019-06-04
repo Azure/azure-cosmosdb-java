@@ -204,7 +204,7 @@ public class DocumentProducerTest {
                 .distinct().collect(Collectors.toList())).containsExactlyElementsOf(Collections.singleton(initialPageSize));
 
         // expected results
-        validateSplitResults((List<DocumentProducer<Document>.DocumentProducerFeedResponse>)(Object)subscriber.getEvents().get(0),
+        validateSplitResults((List<DocumentProducer<Document>.DocumentProducerFeedResponse>)(Object)subscriber.getEvents().get(0).get(0),
                              parentPartitionId, leftChildPartitionId,
                              rightChildPartitionId, resultFromParentPartition, resultFromLeftChildPartition,
                              resultFromRightChildPartition, false);
@@ -287,7 +287,7 @@ public class DocumentProducerTest {
         assertThat(requestCreator.invocations.stream().map(i -> i.maxItemCount).distinct().collect(Collectors.toList())).containsExactlyElementsOf(Collections.singleton(initialPageSize));
 
         // expected results
-        validateSplitResults((List<DocumentProducer<Document>.DocumentProducerFeedResponse>)(Object)subscriber.getEvents().get(0),
+        validateSplitResults((List<DocumentProducer<Document>.DocumentProducerFeedResponse>)subscriber.getEvents().get(0).get(0),
                              parentPartitionId, leftChildPartitionId,
                              rightChildPartitionId, resultFromParentPartition, resultFromLeftChildPartition,
                              resultFromRightChildPartition, true);

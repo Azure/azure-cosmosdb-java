@@ -333,7 +333,7 @@ public class LocationCacheTest {
                 .mapToObj(index -> this.endpointManager.refreshLocationAsync(null))
                 .collect(Collectors.toList());
 
-        Completable.merge(list).await();
+        Flux.merge(list).then().block();
 
         assertThat(mockedClient.getInvocationCounter()).isLessThanOrEqualTo(1);
         mockedClient.reset();
@@ -341,8 +341,8 @@ public class LocationCacheTest {
         IntStream.range(0, 10)
                 .mapToObj(index -> this.endpointManager.refreshLocationAsync(null))
                 .collect(Collectors.toList());
-        for (Completable completable : list) {
-            completable.await();
+        for (Mono completable : list) {
+            completable.block();
         }
 
         assertThat(mockedClient.getInvocationCounter()).isLessThanOrEqualTo(1);
