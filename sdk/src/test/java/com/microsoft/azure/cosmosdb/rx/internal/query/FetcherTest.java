@@ -29,7 +29,10 @@ import static org.mockito.Mockito.mock;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
+import io.reactivex.subscribers.TestSubscriber;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -39,11 +42,7 @@ import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedOptionsBase;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
-
-import rx.Observable;
-import rx.functions.Func1;
-import rx.functions.Func2;
-import rx.observers.TestSubscriber;
+import reactor.core.publisher.Flux;
 
 public class FetcherTest {
 
@@ -96,7 +95,7 @@ public class FetcherTest {
 
         AtomicInteger requestIndex = new AtomicInteger(0);
 
-        Func2<String, Integer, RxDocumentServiceRequest> createRequestFunc = (token, maxItemCount) -> {
+        BiFunction<String, Integer, RxDocumentServiceRequest> createRequestFunc = (token, maxItemCount) -> {
             assertThat(maxItemCount).describedAs("max item count").isEqualTo(
                     getExpectedMaxItemCountInRequest(options, top, feedResponseList, requestIndex.get()));
             assertThat(token).describedAs("continuation token").isEqualTo(
@@ -108,10 +107,10 @@ public class FetcherTest {
 
         AtomicInteger executeIndex = new AtomicInteger(0);
 
-        Func1<RxDocumentServiceRequest, Observable<FeedResponse<Document>>> executeFunc = request ->  {
+        Function<RxDocumentServiceRequest, Flux<FeedResponse<Document>>> executeFunc = request ->  {
                 FeedResponse<Document> rsp = feedResponseList.get(executeIndex.getAndIncrement());
                 totalResultsReceived.addAndGet(rsp.getResults().size());
-                return Observable.just(rsp);
+                return Flux.just(rsp);
         };
 
         Fetcher<Document> fetcher =
@@ -164,7 +163,7 @@ public class FetcherTest {
 
         AtomicInteger requestIndex = new AtomicInteger(0);
 
-        Func2<String, Integer, RxDocumentServiceRequest> createRequestFunc = (token, maxItemCount) -> {
+        BiFunction<String, Integer, RxDocumentServiceRequest> createRequestFunc = (token, maxItemCount) -> {
             assertThat(maxItemCount).describedAs("max item count").isEqualTo(options.getMaxItemCount());
             assertThat(token).describedAs("continuation token").isEqualTo(
                     getExpectedContinuationTokenInRequest(options, feedResponseList, requestIndex.getAndIncrement()));
@@ -174,8 +173,8 @@ public class FetcherTest {
 
         AtomicInteger executeIndex = new AtomicInteger(0);
 
-        Func1<RxDocumentServiceRequest, Observable<FeedResponse<Document>>> executeFunc = request -> {
-            return Observable.just(feedResponseList.get(executeIndex.getAndIncrement()));
+        Function<RxDocumentServiceRequest, Flux<FeedResponse<Document>>> executeFunc = request -> {
+            return Flux.just(feedResponseList.get(executeIndex.getAndIncrement()));
         };
 
         Fetcher<Document> fetcher =
@@ -198,14 +197,14 @@ public class FetcherTest {
         assertThat(fetcher.shouldFetchMore()).describedAs("should not fetch more pages").isFalse();
     }
 
-    private FeedResponse<Document> validate(Observable<FeedResponse<Document>> page) {
+    private FeedResponse<Document> validate(Flux<FeedResponse<Document>> page) {
         TestSubscriber<FeedResponse<Document>> subscriber = new TestSubscriber();
         page.subscribe(subscriber);
         subscriber.awaitTerminalEvent();
-        subscriber.assertCompleted();
+        subscriber.assertComplete();
         subscriber.assertNoErrors();
         subscriber.assertValueCount(1);
-        return subscriber.getOnNextEvents().get(0);
+        return (FeedResponse<Document>) subscriber.getEvents().get(0);
     }
 
     private String getExpectedContinuationTokenInRequest(FeedOptionsBase options,
