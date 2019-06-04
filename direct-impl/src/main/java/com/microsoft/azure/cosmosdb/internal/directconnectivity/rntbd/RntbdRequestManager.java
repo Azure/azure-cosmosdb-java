@@ -219,6 +219,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
         this.pendingWrites = new CoalescingBufferQueue(context.channel());
         this.context = context;
+
         context.fireChannelRegistered();
     }
 
@@ -232,12 +233,14 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
         this.traceOperation(context, "channelUnregistered");
 
-        if (this.context == null || this.pendingWrites == null || !this.pendingWrites.isEmpty()) {
+        if (this.context == null || this.pendingWrites == null) {
             throw new IllegalStateException();
         }
 
+        this.completeAllPendingRequestsExceptionally(context, ClosedWithPendingRequestsException.INSTANCE);
         this.pendingWrites = null;
         this.context = null;
+
         context.fireChannelUnregistered();
     }
 
@@ -281,9 +284,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
                 "expected an exception other than ", ClosedWithPendingRequestsException.INSTANCE);
 
             this.completeAllPendingRequestsExceptionally(context, cause);
-            final ChannelPipeline pipeline = context.pipeline();
-
-            pipeline.close();
+            context.pipeline().flush().close();
         }
     }
 
@@ -309,7 +310,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
             }
             if (event instanceof RntbdContextException) {
                 this.contextFuture.completeExceptionally((RntbdContextException)event);
-                context.close();
+                context.pipeline().flush().close();
                 return;
             }
             context.fireUserEventTriggered(event);
