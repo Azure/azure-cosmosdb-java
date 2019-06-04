@@ -38,10 +38,10 @@ public class CosmosDatabaseCrudTest extends CosmosTestSuiteBase {
     private final static String DATABASE_ID2 = getDatabaseId(CosmosDatabaseCrudTest.class) + "2";
 
     private CosmosClient client;
-    private CosmosClient.Builder clientBuilder;
+    private CosmosClientBuilder clientBuilder;
 
     @Factory(dataProvider = "clientBuilders")
-    public CosmosDatabaseCrudTest(CosmosClient.Builder clientBuilder) {
+    public CosmosDatabaseCrudTest(CosmosClientBuilder clientBuilder) {
         this.clientBuilder = clientBuilder;
     }
 

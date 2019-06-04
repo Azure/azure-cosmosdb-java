@@ -99,14 +99,14 @@ public class CosmosTestSuiteBase {
         return new Object[][] { { createGatewayRxCosmosClient() } };
     }
 
-    static protected CosmosClient.Builder createGatewayRxCosmosClient() {
+    static protected CosmosClientBuilder createGatewayRxCosmosClient() {
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
         connectionPolicy.setConnectionMode(ConnectionMode.Gateway);
         RetryOptions options = new RetryOptions();
         options.setMaxRetryWaitTimeInSeconds(SUITE_SETUP_TIMEOUT);
         connectionPolicy.setRetryOptions(options);
-        
-        return  new CosmosClient.Builder().connectionPolicy(connectionPolicy)
+
+        return CosmosClient.builder().connectionPolicy(connectionPolicy)
                 .endpoint(TestConfigurations.HOST)
                 .key(TestConfigurations.MASTER_KEY)
                 .consistencyLevel(ConsistencyLevel.Session);

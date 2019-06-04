@@ -52,7 +52,7 @@ public class BasicDemo {
 
     private void start(){
         // Get client
-        client = new CosmosClient.Builder()
+        client = CosmosClient.builder()
                 .endpoint(AccountSettings.HOST)
                 .key(AccountSettings.MASTER_KEY)
                 .build();

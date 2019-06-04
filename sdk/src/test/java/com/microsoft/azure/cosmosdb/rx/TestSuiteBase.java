@@ -236,7 +236,7 @@ public class TestSuiteBase {
 
 //                    if (paths != null && !paths.isEmpty()) {
 //                        Object propertyValue = trigger.getObjectByPath(PathParser.getPathParts(paths.get(0)));
-//                        requestOptions.partitionKey(new PartitionKey(propertyValue));
+//                        requestOptions.setPartitionKey(new PartitionKey(propertyValue));
 //                    }
 
                         return houseKeepingClient.deleteTrigger(trigger.getSelfLink(), requestOptions);
@@ -251,7 +251,7 @@ public class TestSuiteBase {
 
 //                    if (paths != null && !paths.isEmpty()) {
 //                        Object propertyValue = storedProcedure.getObjectByPath(PathParser.getPathParts(paths.get(0)));
-//                        requestOptions.partitionKey(new PartitionKey(propertyValue));
+//                        requestOptions.setPartitionKey(new PartitionKey(propertyValue));
 //                    }
 
                         return houseKeepingClient.deleteStoredProcedure(storedProcedure.getSelfLink(), requestOptions);
@@ -266,7 +266,7 @@ public class TestSuiteBase {
 
 //                    if (paths != null && !paths.isEmpty()) {
 //                        Object propertyValue = udf.getObjectByPath(PathParser.getPathParts(paths.get(0)));
-//                        requestOptions.partitionKey(new PartitionKey(propertyValue));
+//                        requestOptions.setPartitionKey(new PartitionKey(propertyValue));
 //                    }
 
                         return houseKeepingClient.deleteUserDefinedFunction(udf.getSelfLink(), requestOptions);

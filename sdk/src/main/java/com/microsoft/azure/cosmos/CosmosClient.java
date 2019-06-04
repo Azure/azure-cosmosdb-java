@@ -48,128 +48,34 @@ import java.util.List;
 public class CosmosClient {
 
     //Document client wrapper
-    final private AsyncDocumentClient asyncDocumentClient;
-    final private String serviceEndpoint;
-    final private String keyOrResourceToken;
-    final private ConnectionPolicy connectionPolicy;
-    final private ConsistencyLevel desiredConsistencyLevel;
-    final private List<Permission> permissions;
+    private final AsyncDocumentClient asyncDocumentClient;
+    private final String serviceEndpoint;
+    private final String keyOrResourceToken;
+    private final ConnectionPolicy connectionPolicy;
+    private final ConsistencyLevel desiredConsistencyLevel;
+    private final List<Permission> permissions;
 
 
-    private CosmosClient(CosmosClient.Builder builder) {
-        this.serviceEndpoint = builder.serviceEndpoint;
-        this.keyOrResourceToken = builder.keyOrResourceToken;
-        this.connectionPolicy = builder.connectionPolicy;
-        this.desiredConsistencyLevel = builder.desiredConsistencyLevel;
-        this.permissions = builder.permissions;
+     CosmosClient(CosmosClientBuilder builder) {
+        this.serviceEndpoint = builder.getServiceEndpoint();
+        this.keyOrResourceToken = builder.getKeyOrResourceToken();
+        this.connectionPolicy = builder.getConnectionPolicy();
+        this.desiredConsistencyLevel = builder.getDesiredConsistencyLevel();
+        this.permissions = builder.getPermissions();
         this.asyncDocumentClient = new AsyncDocumentClient.Builder()
                 .withServiceEndpoint(this.serviceEndpoint)
                 .withMasterKeyOrResourceToken(this.keyOrResourceToken)
                 .withConnectionPolicy(this.connectionPolicy)
                 .withConsistencyLevel(this.desiredConsistencyLevel)
                 .build();
-        
     }
 
     /**
-     * Helper class to build {@link CosmosClient} instances
-     * as logical representation of the Azure Cosmos database service.
-     *
-     * <pre>
-     * {@code
-     * ConnectionPolicy connectionPolicy = new ConnectionPolicy();
-     * connectionPolicy.setConnectionMode(ConnectionMode.Direct);
-     * CosmonsClient client = new CosmosClient.Builder()
-     *         .endpoint(serviceEndpoint)
-     *         .key(key)
-     *         .connectionPolicy(connectionPolicy)
-     *         .consistencyLevel(ConsistencyLevel.Session)
-     *         .build();
-     * }
-     * </pre>
+     * Instantiate the cosmos client builder to build cosmos client
+     * @return {@link CosmosClientBuilder}
      */
-    public static class Builder {
-
-        private String serviceEndpoint;
-        private String keyOrResourceToken;
-        private ConnectionPolicy connectionPolicy;
-        private ConsistencyLevel desiredConsistencyLevel;
-        private List<Permission> permissions;
-
-        /**
-         * The service ednpoint url
-         * @param serviceEndpoint the service endpoint
-         * @return current Builder
-         */
-        public CosmosClient.Builder endpoint(String serviceEndpoint) {
-            this.serviceEndpoint = serviceEndpoint;
-            return this;
-        }
-
-        /**
-         * This method will take either key or resource token and perform authentication
-         * for accessing resource.
-         *
-         * @param keyOrResourceToken key or resourceToken for authentication .
-         * @return current Builder.
-         */
-        public CosmosClient.Builder key(String keyOrResourceToken) {
-            this.keyOrResourceToken = keyOrResourceToken;
-            return this;
-        }
-
-        /**
-         * This method will accept the permission list , which contains the
-         * resource tokens needed to access resources.
-         *
-         * @param permissions Permission list for authentication.
-         * @return current Builder.
-         */
-        public CosmosClient.Builder permissions(List<Permission> permissions) {
-            this.permissions = permissions;
-            return this;
-        }
-
-        /**
-         * This method accepts the (@link ConsistencyLevel) to be used
-         * @param desiredConsistencyLevel (@link ConsistencyLevel)
-         * @return
-         */
-        public CosmosClient.Builder consistencyLevel(ConsistencyLevel desiredConsistencyLevel) {
-            this.desiredConsistencyLevel = desiredConsistencyLevel;
-            return this;
-        }
-
-        /**
-         * The (@link ConnectionPolicy) to be used
-         * @param connectionPolicy
-         * @return
-         */
-        public CosmosClient.Builder connectionPolicy(ConnectionPolicy connectionPolicy) {
-            this.connectionPolicy = connectionPolicy;
-            return this;
-        }
-
-        private void ifThrowIllegalArgException(boolean value, String error) {
-            if (value) {
-                throw new IllegalArgumentException(error);
-            }
-        }
-
-        /**
-         * Builds a cosmos configuration object with the provided settings
-         * @return CosmosClient
-         */
-        public CosmosClient build() {
-
-            ifThrowIllegalArgException(this.serviceEndpoint == null, "cannot build client without service endpoint");
-            ifThrowIllegalArgException(
-                    this.keyOrResourceToken == null && (permissions == null || permissions.isEmpty()),
-                    "cannot build client without key or resource token");
-
-            return new CosmosClient(this);
-        }
-
+    public static CosmosClientBuilder builder(){
+         return new CosmosClientBuilder();
     }
 
     /**
@@ -180,11 +86,19 @@ public class CosmosClient {
         return serviceEndpoint;
     }
 
+    /**
+     * Gets the key or resource token
+     * @return get the key or resource token
+     */
     String getKeyOrResourceToken() {
         return keyOrResourceToken;
     }
 
-    ConnectionPolicy getConnectionPolicy() {
+    /**
+     * Get the connection policy
+     * @return {@link ConnectionPolicy}
+     */
+    public ConnectionPolicy getConnectionPolicy() {
         return connectionPolicy;
     }
 
