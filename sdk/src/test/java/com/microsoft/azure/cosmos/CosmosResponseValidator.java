@@ -30,6 +30,9 @@ import com.microsoft.azure.cosmosdb.ResourceResponse;
 import com.microsoft.azure.cosmosdb.SpatialSpec;
 import com.microsoft.azure.cosmosdb.SpatialType;
 import com.microsoft.azure.cosmosdb.StoredProcedure;
+import com.microsoft.azure.cosmosdb.Trigger;
+import com.microsoft.azure.cosmosdb.TriggerOperation;
+import com.microsoft.azure.cosmosdb.TriggerType;
 import com.microsoft.azure.cosmosdb.rx.ResourceResponseValidator;
 import com.microsoft.azure.cosmosdb.rx.ResourceResponseValidator.Builder;
 
@@ -73,12 +76,18 @@ public interface CosmosResponseValidator<T extends CosmosResponse> {
         }
 
         private  Resource getResource(T resourceResponse) {
-            if(resourceResponse instanceof CosmosDatabaseResponse){
+            if (resourceResponse instanceof CosmosDatabaseResponse) {
                 return ((CosmosDatabaseResponse)resourceResponse).getCosmosDatabaseSettings();
-            }else if(resourceResponse instanceof CosmosContainerResponse){
+            } else if (resourceResponse instanceof CosmosContainerResponse) {
                 return ((CosmosContainerResponse)resourceResponse).getCosmosContainerSettings();
-            }else if(resourceResponse instanceof CosmosItemResponse){
+            } else if (resourceResponse instanceof CosmosItemResponse) {
                 return ((CosmosItemResponse)resourceResponse).getCosmosItemSettings();
+            } else if (resourceResponse instanceof CosmosStoredProcedureResponse) {
+                return ((CosmosStoredProcedureResponse)resourceResponse).getStoredProcedureSettings();
+            } else if (resourceResponse instanceof CosmosTriggerResponse) {
+                return ((CosmosTriggerResponse)resourceResponse).getCosmosTriggerSettings();
+            } else if (resourceResponse instanceof CosmosUserDefinedFunctionResponse) {
+                return ((CosmosUserDefinedFunctionResponse)resourceResponse).getCosmosUserDefinedFunctionSettings();
             }
             return null;
         }
@@ -217,6 +226,29 @@ public interface CosmosResponseValidator<T extends CosmosResponse> {
                 public void validate(T resourceResponse) {
                     assertThat(resourceResponse.getResourceSettings()).isNotNull();
                     assertThat(resourceResponse.getResourceSettings().getETag()).isNotNull();
+                }
+            });
+            return this;
+        }
+
+        public Builder<T> withTriggerBody(String functionBody) {
+            validators.add(new CosmosResponseValidator<CosmosTriggerResponse>() {
+
+                @Override
+                public void validate(CosmosTriggerResponse resourceResponse) {
+                    assertThat(resourceResponse.getCosmosTriggerSettings().getBody()).isEqualTo(functionBody);
+                }
+            });
+            return this;
+        }
+
+        public Builder<T> withTriggerInternals(TriggerType type, TriggerOperation op) {
+            validators.add(new CosmosResponseValidator<CosmosTriggerResponse>() {
+
+                @Override
+                public void validate(CosmosTriggerResponse resourceResponse) {
+                    assertThat(resourceResponse.getCosmosTriggerSettings().getTriggerType()).isEqualTo(type);
+                    assertThat(resourceResponse.getCosmosTriggerSettings().getTriggerOperation()).isEqualTo(op);
                 }
             });
             return this;

@@ -23,6 +23,11 @@
 
 package com.microsoft.azure.cosmosdb.rx;
 
+import com.microsoft.azure.cosmos.CosmosClient;
+import com.microsoft.azure.cosmos.CosmosContainer;
+import com.microsoft.azure.cosmos.CosmosDatabase;
+import com.microsoft.azure.cosmos.CosmosUser;
+import com.microsoft.azure.cosmos.CosmosUserSettings;
 import com.microsoft.azure.cosmosdb.BridgeInternal;
 import com.microsoft.azure.cosmosdb.ChangeFeedOptions;
 import com.microsoft.azure.cosmosdb.ConnectionMode;
@@ -64,6 +69,7 @@ import java.util.UUID;
 import java.util.Map;
 
 public class TokenResolverTest extends TestSuiteBase {
+    /*
 
     private class UserClass {
         public String userName;
@@ -75,19 +81,19 @@ public class TokenResolverTest extends TestSuiteBase {
         }
     }
     
-    private Database createdDatabase;
-    private DocumentCollection createdCollection;
-    private User userWithReadPermission;
-    private User userWithAllPermission;
+    private CosmosDatabase createdDatabase;
+    private CosmosContainer createdCollection;
+    private CosmosUser userWithReadPermission;
+    private CosmosUser userWithAllPermission;
 
     private Permission readPermission;
     private Permission allPermission;
 
-    private AsyncDocumentClient.Builder clientBuilder;
-    private AsyncDocumentClient client;
+    private CosmosClient.Builder clientBuilder;
+    private CosmosClient client;
 
     @Factory(dataProvider = "clientBuilders")
-    public TokenResolverTest(AsyncDocumentClient.Builder clientBuilder) {
+    public TokenResolverTest(CosmosClient.Builder clientBuilder) {
         this.clientBuilder = clientBuilder;
     }
 
@@ -102,7 +108,7 @@ public class TokenResolverTest extends TestSuiteBase {
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
         createdDatabase = SHARED_DATABASE;
-        createdCollection = SHARED_SINGLE_PARTITION_COLLECTION;
+        createdCollection = SHARED_MULTI_PARTITION_COLLECTION;
 
         client = clientBuilder.build();
 
@@ -503,8 +509,8 @@ public class TokenResolverTest extends TestSuiteBase {
                 .build();
     }
 
-    private static User getUserDefinition() {
-        User user = new User();
+    private static CosmosUserSettings getUserDefinition() {
+        CosmosUserSettings user = new CosmosUserSettings();
         user.setId(UUID.randomUUID().toString());
         return user;
     }
@@ -563,4 +569,5 @@ public class TokenResolverTest extends TestSuiteBase {
             }
         };
     }
+    */
 }
