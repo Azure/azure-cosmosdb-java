@@ -92,8 +92,8 @@ public class CosmosClientBuilder {
 
     /**
      * This method accepts the (@link ConsistencyLevel) to be used
-     * @param desiredConsistencyLevel (@link ConsistencyLevel)
-     * @return
+     * @param desiredConsistencyLevel {@link ConsistencyLevel}
+     * @return current Builder
      */
     public CosmosClientBuilder consistencyLevel(ConsistencyLevel desiredConsistencyLevel) {
         this.desiredConsistencyLevel = desiredConsistencyLevel;
@@ -102,8 +102,8 @@ public class CosmosClientBuilder {
 
     /**
      * The (@link ConnectionPolicy) to be used
-     * @param connectionPolicy
-     * @return
+     * @param connectionPolicy {@link ConnectionPolicy}
+     * @return current Builder
      */
     public CosmosClientBuilder connectionPolicy(ConnectionPolicy connectionPolicy) {
         this.connectionPolicy = connectionPolicy;

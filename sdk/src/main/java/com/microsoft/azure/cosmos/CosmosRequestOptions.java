@@ -45,6 +45,7 @@ public  class CosmosRequestOptions {
      * Sets the conditions associated with the request.
      *
      * @param accessCondition the access condition.
+     * @return the current request options
      */
     public CosmosRequestOptions accessCondition(AccessCondition accessCondition) {
         this.accessCondition = accessCondition;

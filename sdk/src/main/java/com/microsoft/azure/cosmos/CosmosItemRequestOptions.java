@@ -73,6 +73,7 @@ public class CosmosItemRequestOptions extends CosmosRequestOptions {
      * Sets the consistency level required for the request.
      *
      * @param consistencyLevel the consistency level.
+     * @return the current options
      */
     public CosmosItemRequestOptions consistencyLevel(ConsistencyLevel consistencyLevel) {
         this.consistencyLevel = consistencyLevel;
@@ -92,6 +93,7 @@ public class CosmosItemRequestOptions extends CosmosRequestOptions {
      * Sets the indexing directive (index, do not index etc).
      *
      * @param indexingDirective the indexing directive.
+     * @return the current options
      */
     public CosmosItemRequestOptions indexingDirective(IndexingDirective indexingDirective) {
         this.indexingDirective = indexingDirective;
@@ -111,6 +113,7 @@ public class CosmosItemRequestOptions extends CosmosRequestOptions {
      * Sets the triggers to be invoked before the operation.
      *
      * @param preTriggerInclude the triggers to be invoked before the operation.
+     * @return the current options
      */
     public CosmosItemRequestOptions preTriggerInclude(List<String> preTriggerInclude) {
         this.preTriggerInclude = preTriggerInclude;
@@ -130,6 +133,7 @@ public class CosmosItemRequestOptions extends CosmosRequestOptions {
      * Sets the triggers to be invoked after the operation.
      *
      * @param postTriggerInclude the triggers to be invoked after the operation.
+     * @return the current options
      */
     public CosmosItemRequestOptions postTriggerInclude(List<String> postTriggerInclude) {
         this.postTriggerInclude = postTriggerInclude;
@@ -149,6 +153,7 @@ public class CosmosItemRequestOptions extends CosmosRequestOptions {
      * Sets the token for use with session consistency.
      *
      * @param sessionToken the session token.
+     * @return the current options
      */
     public CosmosItemRequestOptions sessionToken(String sessionToken) {
         this.sessionToken = sessionToken;
@@ -157,7 +162,9 @@ public class CosmosItemRequestOptions extends CosmosRequestOptions {
 
     /**
      * Sets the partition key
-     * @param partitionKey
+     *
+     * @param partitionKey {@link PartitionKey} the partition key
+     * @return the current options
      */
     public CosmosItemRequestOptions partitionKey(PartitionKey partitionKey) {
         this.partitionKey = partitionKey;

@@ -68,6 +68,7 @@ public class CosmosItem extends Resource {
      * The {@link Mono} upon successful completion will contain a cosmos item response with the read item
      * In case of failure the {@link Mono} will error.
      *
+     * @param partitionKey the partition key
      * @return an {@link Mono} containing the cosmos item response with the read item or an error
      */
     public Mono<CosmosItemResponse> read(Object partitionKey) {
@@ -123,14 +124,15 @@ public class CosmosItem extends Resource {
                 .replaceDocument(doc, requestOptions.toRequestOptions())
                 .map(response -> new CosmosItemResponse(response, container)).toSingle()));
     }
-    
+
     /**
      * Deletes the item.
-     *
-     * After subscription the operation will be performed. 
+     * <p>
+     * After subscription the operation will be performed.
      * The {@link Mono} upon successful completion will contain a single cosmos item response with the replaced item.
      * In case of failure the {@link Mono} will error.
-     * @param partitionKey
+     *
+     * @param partitionKey the partition key
      * @return an {@link Mono} containing the  cosmos item resource response.
      */
     public Mono<CosmosItemResponse> delete(Object partitionKey) {

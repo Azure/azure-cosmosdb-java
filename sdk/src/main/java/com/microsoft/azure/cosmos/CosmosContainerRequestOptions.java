@@ -47,6 +47,7 @@ public class CosmosContainerRequestOptions extends CosmosRequestOptions {
      * Sets the throughput in the form of Request Units per second when creating a cosmos container.
      *
      * @param offerThroughput the throughput value.
+     * @return the current request options
      */
     public CosmosContainerRequestOptions offerThroughput(Integer offerThroughput) {
         this.offerThroughput = offerThroughput;
@@ -70,6 +71,7 @@ public class CosmosContainerRequestOptions extends CosmosRequestOptions {
      * collection read requests.
      *
      * @param populateQuotaInfo a boolean value indicating whether PopulateQuotaInfo is enabled or not
+     * @return the current request options
      */
     public CosmosContainerRequestOptions populateQuotaInfo(boolean populateQuotaInfo) {
         this.populateQuotaInfo = populateQuotaInfo;
@@ -89,6 +91,7 @@ public class CosmosContainerRequestOptions extends CosmosRequestOptions {
      * Sets the consistency level required for the request.
      *
      * @param consistencyLevel the consistency level.
+     * @return the current request options
      */
     public CosmosContainerRequestOptions consistencyLevel(ConsistencyLevel consistencyLevel) {
         this.consistencyLevel = consistencyLevel;
@@ -108,6 +111,7 @@ public class CosmosContainerRequestOptions extends CosmosRequestOptions {
      * Sets the token for use with session consistency.
      *
      * @param sessionToken the session token.
+     * @return the current request options
      */
     public CosmosContainerRequestOptions sessionToken(String sessionToken) {
         this.sessionToken = sessionToken;

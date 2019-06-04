@@ -15,8 +15,9 @@ public class CosmosUser extends CosmosResource {
 
     /**
      * Reads a cosmos user
-     * @param options
-     * @return
+     *
+     * @param options the request options
+     * @return a {@link Mono} containing the single resource response with the read user or an error.
      */
     public Mono<CosmosUserResponse> read(RequestOptions options) {
         return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(this.database.getDocClientWrapper()
@@ -26,9 +27,10 @@ public class CosmosUser extends CosmosResource {
 
     /**
      * Replace a cosmos user
-     * @param userSettings
-     * @param options
-     * @return
+     *
+     * @param userSettings the user settings to use
+     * @param options      the request options
+     * @return a {@link Mono} containing the single resource response with the replaced user or an error.
      */
     public Mono<CosmosUserResponse> replace(CosmosUserSettings userSettings, RequestOptions options) {
         return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(this.database.getDocClientWrapper()
@@ -38,8 +40,9 @@ public class CosmosUser extends CosmosResource {
 
     /**
      * Delete a cosmos user
-     * @param options
-     * @return
+     *
+     * @param options the request options
+     * @return a {@link Mono} containing the single resource response with the deleted user or an error.
      */
     public Mono<CosmosUserResponse> delete(RequestOptions options) {
         return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(this.database.getDocClientWrapper()

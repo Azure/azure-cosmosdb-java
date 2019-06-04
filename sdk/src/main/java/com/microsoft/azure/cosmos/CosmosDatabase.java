@@ -93,11 +93,12 @@ public class CosmosDatabase extends CosmosResource {
 
     /**
      * Deletes a database.
-     *
-     * After subscription the operation will be performed. 
+     * <p>
+     * After subscription the operation will be performed.
      * The {@link Mono} upon successful completion will contain a cosmos database response with the deleted database.
      * In case of failure the {@link Mono} will error.
      *
+     * @param options the request options
      * @return an {@link Mono} containing the single cosmos database response
      */
     public Mono<CosmosDatabaseResponse> delete(CosmosRequestOptions options) {
@@ -163,12 +164,13 @@ public class CosmosDatabase extends CosmosResource {
 
     /**
      * Creates a document container if it does not exist on the service.
-     *
-     * After subscription the operation will be performed. 
-     * The {@link Mono} upon successful completion will contain a cosmos container response with the created 
+     * <p>
+     * After subscription the operation will be performed.
+     * The {@link Mono} upon successful completion will contain a cosmos container response with the created
      * or existing collection.
      * In case of failure the {@link Mono} will error.
      *
+     * @param containerSettings the container settings
      * @return a {@link Mono} containing the cosmos container response with the created or existing container or
      * an error.
      */
