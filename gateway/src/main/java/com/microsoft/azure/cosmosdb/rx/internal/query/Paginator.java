@@ -32,9 +32,13 @@ import org.reactivestreams.Subscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxSink;
+import reactor.core.publisher.SynchronousSink;
 import rx.observables.AsyncOnSubscribe;
 
+import java.util.concurrent.Callable;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -77,7 +81,17 @@ public class Paginator {
             Function<RxDocumentServiceRequest, Flux<FeedResponse<T>>> executeFunc, Class<T> resourceType,
             int top, int maxPageSize, boolean isChangeFeed) {
 
-        Flux.push();
+        Flux<FeedResponse<T>> flux = Flux.defer(() -> {
+
+        });
+
+        Flux.push(new Consumer<FluxSink<? extends Object>>() {
+            @Override
+            public void accept(FluxSink<?> fluxSink) {
+
+            }
+        });
+
         Flux<FeedResponse<T>> obs = Flux.defer(() -> {
             return Flux.create(new AsyncOnSubscribe<Fetcher, FeedResponse<T>>() {
                 @Override

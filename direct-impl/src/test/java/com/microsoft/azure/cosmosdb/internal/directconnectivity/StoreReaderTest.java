@@ -41,17 +41,13 @@ import com.microsoft.azure.cosmosdb.rx.internal.PartitionIsMigratingException;
 import com.microsoft.azure.cosmosdb.rx.internal.PartitionKeyRangeIsSplittingException;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
 import com.microsoft.azure.cosmosdb.rx.internal.Utils;
-import hu.akarnokd.rxjava.interop.RxJavaInterop;
 import io.reactivex.subscribers.TestSubscriber;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-import reactor.adapter.rxjava.RxJava2Adapter;
+import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Mono;
-import rx.subjects.PublishSubject;
 
 import java.net.URI;
 import java.util.List;
@@ -81,35 +77,27 @@ public class StoreReaderTest {
         StoreReader storeReader = new StoreReader(transportClient, addressSelector, sessionContainer);
 
         CyclicBarrier b = new CyclicBarrier(2);
-        PublishSubject<List<URI>> subject = PublishSubject.create();
+        DirectProcessor<List<URI>> subject = DirectProcessor.create();
         CountDownLatch c = new CountDownLatch(1);
 
         List<URI> uris = ImmutableList.of(URI.create("https://localhost:5050"), URI.create("https://localhost:5051"),
                                           URI.create("https://localhost:50502"), URI.create("https://localhost:5053"));
 
-        Mockito.doAnswer(new Answer() {
+        Mockito.doAnswer(invocationOnMock -> subject.single().doOnSuccess(x -> c.countDown()).doAfterTerminate(() -> new Thread() {
             @Override
-            public Mono<List<URI>> answer(InvocationOnMock invocationOnMock) throws Throwable {
-
-                return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(subject.toSingle().doOnSuccess(x -> c.countDown()).doAfterTerminate(() -> {
-                    new Thread() {
-                        @Override
-                        public void run() {
-                            try {
-                                b.await();
-                            } catch (Exception e) {
-
-                            }
-                        }
-                    }.start();
-                })));
+            public void run() {
+                try {
+                    b.await();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
-        }).when(addressSelector).resolveAllUriAsync(Mockito.any(RxDocumentServiceRequest.class), Mockito.eq(true), Mockito.eq(true));
+        }.start())).when(addressSelector).resolveAllUriAsync(Mockito.any(RxDocumentServiceRequest.class), Mockito.eq(true), Mockito.eq(true));
         RxDocumentServiceRequest request = Mockito.mock(RxDocumentServiceRequest.class);
         storeReader.startBackgroundAddressRefresh(request);
 
         subject.onNext(uris);
-        subject.onCompleted();
+        subject.onComplete();
 
         TimeUnit.MILLISECONDS.sleep(100);
         AssertionsForClassTypes.assertThat(c.getCount()).isEqualTo(0);

@@ -33,16 +33,13 @@ import com.microsoft.azure.cosmosdb.rx.internal.PartitionIsMigratingException;
 import com.microsoft.azure.cosmosdb.rx.internal.PartitionKeyRangeIsSplittingException;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
 import com.microsoft.azure.cosmosdb.rx.internal.Utils;
-import hu.akarnokd.rxjava.interop.RxJavaInterop;
 import io.reactivex.subscribers.TestSubscriber;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-import reactor.adapter.rxjava.RxJava2Adapter;
+import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Mono;
-import rx.subjects.PublishSubject;
 
 import java.net.URI;
 import java.util.AbstractMap;
@@ -131,35 +128,30 @@ public class ConsistencyWriterTest {
         initializeConsistencyWriter(false);
 
         CyclicBarrier b = new CyclicBarrier(2);
-        PublishSubject<URI> subject = PublishSubject.create();
+        DirectProcessor<URI> directProcessor = DirectProcessor.create();
         CountDownLatch c = new CountDownLatch(1);
 
         URI uri = URI.create("https://localhost:5050");
 
         List<InvocationOnMock> invocationOnMocks = Collections.synchronizedList(new ArrayList<>());
-        Mockito.doAnswer(new Answer() {
-            @Override
-            public Mono<URI> answer(InvocationOnMock invocationOnMock)  {
-                invocationOnMocks.add(invocationOnMock);
-                return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(subject.toSingle().doOnSuccess(x -> c.countDown()).doAfterTerminate(() -> {
-                    new Thread() {
-                        @Override
-                        public void run() {
-                            try {
-                                b.await();
-                            } catch (Exception e) {
-
-                            }
-                        }
-                    }.start();
-                })));
-            }
+        Mockito.doAnswer(invocationOnMock -> {
+            invocationOnMocks.add(invocationOnMock);
+            return directProcessor.single().doOnSuccess(x -> c.countDown()).doAfterTerminate(() -> new Thread() {
+                @Override
+                public void run() {
+                    try {
+                        b.await();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }.start());
         }).when(addressSelector).resolvePrimaryUriAsync(Mockito.any(RxDocumentServiceRequest.class), Mockito.anyBoolean());
         RxDocumentServiceRequest request = Mockito.mock(RxDocumentServiceRequest.class);
         consistencyWriter.startBackgroundAddressRefresh(request);
 
-        subject.onNext(uri);
-        subject.onCompleted();
+        directProcessor.onNext(uri);
+        directProcessor.onComplete();
 
         TimeUnit.MILLISECONDS.sleep(1000);
         assertThat(c.getCount()).isEqualTo(0);

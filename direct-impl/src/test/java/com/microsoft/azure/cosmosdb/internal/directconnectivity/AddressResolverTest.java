@@ -52,9 +52,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-import reactor.core.publisher.Hooks;
-import rx.Single;
-import rx.functions.Func1;
+import reactor.core.publisher.Mono;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -64,6 +62,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -87,7 +86,6 @@ public class AddressResolverTest {
 
     @BeforeClass(groups = "unit")
     public void setup() throws Exception {
-        Hooks.onOperatorDebug();
         this.addressResolver = new AddressResolver();
         this.collectionCache = Mockito.mock(RxCollectionCache.class);
         this.collectionRoutingMapCache = Mockito.mock(ICollectionRoutingMapCache.class);
@@ -108,7 +106,7 @@ public class AddressResolverTest {
         partitionKeyDef.setPaths(ImmutableList.of("/field1"));
         this.collection2.setPartitionKey(partitionKeyDef);
 
-        Func1<List<ImmutablePair<PartitionKeyRange, IServerIdentity>>, Void> addPartitionKeyRangeFunc = listArg -> {
+        Function<List<ImmutablePair<PartitionKeyRange, IServerIdentity>>, Void> addPartitionKeyRangeFunc = listArg -> {
             listArg.forEach(tuple -> ((ServiceIdentity) tuple.right).partitionKeyRangeIds.add(new PartitionKeyRangeIdentity(collection1.getResourceId(), tuple.left.getId())));
             return null;
         };
@@ -121,7 +119,7 @@ public class AddressResolverTest {
             ImmutablePair.of(new PartitionKeyRange("0", PartitionKeyInternalHelper.MinimumInclusiveEffectivePartitionKey,
                 PartitionKeyInternalHelper.MaximumExclusiveEffectivePartitionKey), serverServiceIdentity));
 
-        addPartitionKeyRangeFunc.call(rangesBeforeSplit1);
+        addPartitionKeyRangeFunc.apply(rangesBeforeSplit1);
 
 
         this.routingMapCollection1BeforeSplit =
@@ -144,7 +142,7 @@ public class AddressResolverTest {
                 new PartitionKeyRange("2", "5E", PartitionKeyInternalHelper.MaximumExclusiveEffectivePartitionKey, ImmutableList.of("0")),
                 serverServiceIdentity3));
 
-        addPartitionKeyRangeFunc.call(rangesAfterSplit1);
+        addPartitionKeyRangeFunc.apply(rangesAfterSplit1);
 
         this.routingMapCollection1AfterSplit = InMemoryCollectionRoutingMap.tryCreateCompleteRoutingMap(rangesAfterSplit1, collection1.getResourceId());
 
@@ -157,7 +155,7 @@ public class AddressResolverTest {
                 new PartitionKeyRange("0", PartitionKeyInternalHelper.MinimumInclusiveEffectivePartitionKey, PartitionKeyInternalHelper.MaximumExclusiveEffectivePartitionKey),
                 serverServiceIdentity4));
 
-        addPartitionKeyRangeFunc.call(rangesBeforeSplit2);
+        addPartitionKeyRangeFunc.apply(rangesBeforeSplit2);
 
 
         this.routingMapCollection2BeforeSplit = InMemoryCollectionRoutingMap.tryCreateCompleteRoutingMap(rangesBeforeSplit2, collection2.getResourceId());
@@ -178,7 +176,7 @@ public class AddressResolverTest {
                 serverServiceIdentity6));
 
 
-        addPartitionKeyRangeFunc.call(rangesAfterSplit2);
+        addPartitionKeyRangeFunc.apply(rangesAfterSplit2);
 
 
         this.routingMapCollection2AfterSplit = InMemoryCollectionRoutingMap.tryCreateCompleteRoutingMap(rangesAfterSplit2, collection2.getResourceId());
@@ -342,23 +340,23 @@ public class AddressResolverTest {
                 currentCollection.setValue(collectionAfterRefresh);
                 AddressResolverTest.this.collectionCacheRefreshedCount++;
                 request.forceNameCacheRefresh = false;
-                return Single.just(currentCollection.getValue());
+                return Mono.just(currentCollection.getValue());
             }
 
             if (request.forceNameCacheRefresh && collectionAfterRefresh == null) {
                 currentCollection.setValue(null);
                 AddressResolverTest.this.collectionCacheRefreshedCount++;
                 request.forceNameCacheRefresh = false;
-                return Single.error(new NotFoundException());
+                return Mono.error(new NotFoundException());
             }
 
             if (!request.forceNameCacheRefresh && currentCollection.getValue() == null) {
-                return Single.error(new NotFoundException());
+                return Mono.error(new NotFoundException());
 
             }
 
             if (!request.forceNameCacheRefresh && currentCollection.getValue() != null) {
-                return Single.just(currentCollection.getValue());
+                return Mono.just(currentCollection.getValue());
             }
 
             return null;
@@ -382,7 +380,7 @@ public class AddressResolverTest {
             CollectionRoutingMap previousValue = invocationOnMock.getArgumentAt(1, CollectionRoutingMap.class);
 
             if (previousValue == null) {
-                return Single.just(currentRoutingMap.containsKey(collectionRid) ? currentRoutingMap.get(collectionRid) : null);
+                return Mono.just(currentRoutingMap.containsKey(collectionRid) ? currentRoutingMap.get(collectionRid) : null);
             }
 
             if (previousValue != null && currentRoutingMap.containsKey(previousValue.getCollectionUniqueId()) &&
@@ -406,10 +404,10 @@ public class AddressResolverTest {
                 }
 
 
-                return Single.just(currentRoutingMap.containsKey(collectionRid) ? currentRoutingMap.get(collectionRid) : null);
+                return Mono.just(currentRoutingMap.containsKey(collectionRid) ? currentRoutingMap.get(collectionRid) : null);
             }
 
-            return Single.error(new NotImplementedException("not mocked"));
+            return Mono.error(new NotImplementedException("not mocked"));
         }).when(this.collectionRoutingMapCache).tryLookupAsync(Mockito.anyString(), Mockito.any(CollectionRoutingMap.class), Mockito.anyBoolean(), Mockito.anyMap());
 
 
@@ -426,7 +424,7 @@ public class AddressResolverTest {
             Boolean forceRefresh = invocationOnMock.getArgumentAt(2, Boolean.class);
 
             if (!forceRefresh) {
-                return Single.just(currentAddresses.get(findMatchingServiceIdentity(currentAddresses, pkri)));
+                return Mono.just(currentAddresses.get(findMatchingServiceIdentity(currentAddresses, pkri)));
             } else {
 
                 ServiceIdentity si;
@@ -451,7 +449,7 @@ public class AddressResolverTest {
 
 
                 // TODO: what to return in this case if it is null!!
-                return Single.just(currentAddresses.containsKey(si) ? currentAddresses.get(si) : null);
+                return Mono.just(currentAddresses.containsKey(si) ? currentAddresses.get(si) : null);
             }
         }).when(fabricAddressCache).tryGetAddresses(Mockito.any(RxDocumentServiceRequest.class), Mockito.any(PartitionKeyRangeIdentity.class), Mockito.anyBoolean());
     }
