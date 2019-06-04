@@ -42,14 +42,13 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-import rx.Observable;
-import rx.schedulers.Schedulers;
+import reactor.core.publisher.Flux;
+import reactor.core.scheduler.Schedulers;
 
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -145,7 +144,7 @@ public class ReadMyWritesConsistencyTest {
         collection = housekeepingClient.createCollection("dbs/" + database.getId(),
                                                          getCollectionDefinitionWithRangeRangeIndex(),
                                                          options)
-                .toBlocking().single().getResource();
+                .single().block().getResource();
         housekeepingClient.close();
     }
 
@@ -196,20 +195,20 @@ public class ReadMyWritesConsistencyTest {
 
     private void scheduleScaleUp(int delayStartInSeconds, int newThroughput) {
         AsyncDocumentClient housekeepingClient = Utils.housekeepingClient();
-        Observable.timer(delayStartInSeconds, TimeUnit.SECONDS, Schedulers.newThread()).flatMap(aVoid -> {
+        Flux.interval(Duration.ofSeconds(delayStartInSeconds), Schedulers.elastic()).flatMap(aVoid -> {
 
             // increase throughput to max for a single partition collection to avoid throttling
             // for bulk insert and later queries.
             return housekeepingClient.queryOffers(
                     String.format("SELECT * FROM r WHERE r.offerResourceId = '%s'",
                                   collection.getResourceId())
-                    , null).flatMap(page -> Observable.from(page.getResults()))
-                    .first().flatMap(offer -> {
+                    , null).flatMap(page -> Flux.fromIterable(page.getResults()))
+                    .take(1).flatMap(offer -> {
                         logger.info("going to scale up collection, newThroughput {}", newThroughput);
                         offer.setThroughput(newThroughput);
                         return housekeepingClient.replaceOffer(offer);
                     });
-        }).doOnTerminate(() -> housekeepingClient.close())
+        }).doOnTerminate(housekeepingClient::close)
                 .subscribe(aVoid -> {
                            }, e -> {
                                logger.error("collectionScaleUpFailed to scale up collection", e);

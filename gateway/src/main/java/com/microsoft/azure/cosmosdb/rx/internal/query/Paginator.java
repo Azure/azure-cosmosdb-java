@@ -81,15 +81,8 @@ public class Paginator {
             Function<RxDocumentServiceRequest, Flux<FeedResponse<T>>> executeFunc, Class<T> resourceType,
             int top, int maxPageSize, boolean isChangeFeed) {
 
-        Flux<FeedResponse<T>> flux = Flux.defer(() -> {
+        Flux.push((Consumer<FluxSink<T>>) fluxSink -> {
 
-        });
-
-        Flux.push(new Consumer<FluxSink<? extends Object>>() {
-            @Override
-            public void accept(FluxSink<?> fluxSink) {
-
-            }
         });
 
         Flux<FeedResponse<T>> obs = Flux.defer(() -> {

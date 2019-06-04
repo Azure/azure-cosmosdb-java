@@ -41,10 +41,11 @@ import com.microsoft.azure.cosmosdb.ResourceResponse;
 import com.microsoft.azure.cosmosdb.benchmark.Configuration.Operation;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import rx.Observable;
-import rx.Subscriber;
+import reactor.core.publisher.Flux;
 
 import java.net.InetSocketAddress;
 import java.time.Duration;
@@ -89,7 +90,7 @@ abstract class AsyncBenchmark<T> {
         concurrencyControlSemaphore = new Semaphore(cfg.getConcurrency());
         configuration = cfg;
 
-        ArrayList<Observable<Document>> createDocumentObservables = new ArrayList<>();
+        ArrayList<Flux<Document>> createDocumentObservables = new ArrayList<>();
 
         if (configuration.getOperationType() != Operation.WriteLatency
                 && configuration.getOperationType() != Operation.WriteThroughput
@@ -105,13 +106,13 @@ abstract class AsyncBenchmark<T> {
                 newDoc.set("dataField3", dataFieldValue);
                 newDoc.set("dataField4", dataFieldValue);
                 newDoc.set("dataField5", dataFieldValue);
-                Observable<Document> obs = client.createDocument(collection.getSelfLink(), newDoc, null, false)
+                Flux<Document> obs = client.createDocument(collection.getSelfLink(), newDoc, null, false)
                         .map(ResourceResponse::getResource);
                 createDocumentObservables.add(obs);
             }
         }
 
-        docsToRead = Observable.merge(createDocumentObservables, 100).toList().toBlocking().single();
+        docsToRead = Flux.merge(Flux.fromIterable(createDocumentObservables), 100).collectList().block();
         init();
 
         if (configuration.isEnableJvmStats()) {
@@ -202,22 +203,6 @@ abstract class AsyncBenchmark<T> {
             Subscriber<T> subs = new Subscriber<T>() {
 
                 @Override
-                public void onStart() {
-                }
-
-                @Override
-                public void onCompleted() {
-                    successMeter.mark();
-                    concurrencyControlSemaphore.release();
-                    AsyncBenchmark.this.onSuccess();
-
-                    synchronized (count) {
-                        count.incrementAndGet();
-                        count.notify();
-                    }
-                }
-
-                @Override
                 public void onError(Throwable e) {
                     failureMeter.mark();
                     logger.error("Encountered failure {} on thread {}" ,
@@ -229,6 +214,23 @@ abstract class AsyncBenchmark<T> {
                         count.incrementAndGet();
                         count.notify();
                     }
+                }
+
+                @Override
+                public void onComplete() {
+                    successMeter.mark();
+                    concurrencyControlSemaphore.release();
+                    AsyncBenchmark.this.onSuccess();
+
+                    synchronized (count) {
+                        count.incrementAndGet();
+                        count.notify();
+                    }
+                }
+
+                @Override
+                public void onSubscribe(Subscription s) {
+
                 }
 
                 @Override
