@@ -41,7 +41,7 @@ import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-import rx.Observable;
+import reactor.core.publisher.Flux;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -93,18 +93,18 @@ public class TokenResolverTest {
         // Create collection
         createdCollection = asyncClient
                 .createCollection("dbs/" + createdDatabase.getId(), collectionDefinition, null)
-                .toBlocking().single().getResource();
+                .single().block().getResource();
 
         for (int i = 0; i < 10; i++) {
             // Create a document
             Document documentDefinition = new Document();
             documentDefinition.setId(UUID.randomUUID().toString());
-            Document createdDocument = asyncClient.createDocument(createdCollection.getSelfLink(), documentDefinition, null, true).toBlocking().first().getResource();
+            Document createdDocument = asyncClient.createDocument(createdCollection.getSelfLink(), documentDefinition, null, true).single().block().getResource();
 
             // Create a User who is meant to only read this document
             User readUserDefinition = new User();
             readUserDefinition.setId(UUID.randomUUID().toString());
-            User createdReadUser = asyncClient.createUser(createdDatabase.getSelfLink(), readUserDefinition, null).toBlocking().first().getResource();
+            User createdReadUser = asyncClient.createUser(createdDatabase.getSelfLink(), readUserDefinition, null).single().block().getResource();
 
             // Create a read only permission for  the above document
             Permission readOnlyPermissionDefinition = new Permission();
@@ -113,7 +113,7 @@ public class TokenResolverTest {
             readOnlyPermissionDefinition.setPermissionMode(PermissionMode.Read);
 
             // Assign the permission to the above user
-            Permission readOnlyCreatedPermission = asyncClient.createPermission(createdReadUser.getSelfLink(), readOnlyPermissionDefinition, null).toBlocking().first().getResource();
+            Permission readOnlyCreatedPermission = asyncClient.createPermission(createdReadUser.getSelfLink(), readOnlyPermissionDefinition, null).single().block().getResource();
             userToReadOnlyResourceTokenMap.put(createdReadUser.getId(), readOnlyCreatedPermission.getToken());
 
             documentToReadUserMap.put(createdDocument.getSelfLink(), createdReadUser.getId());
@@ -121,7 +121,7 @@ public class TokenResolverTest {
             // Create a User who can both read and write this document
             User readWriteUserDefinition = new User();
             readWriteUserDefinition.setId(UUID.randomUUID().toString());
-            User createdReadWriteUser = asyncClient.createUser(createdDatabase.getSelfLink(), readWriteUserDefinition, null).toBlocking().first().getResource();
+            User createdReadWriteUser = asyncClient.createUser(createdDatabase.getSelfLink(), readWriteUserDefinition, null).single().block().getResource();
 
             // Create a read/write permission for the above document
             Permission readWritePermissionDefinition = new Permission();
@@ -130,7 +130,7 @@ public class TokenResolverTest {
             readWritePermissionDefinition.setPermissionMode(PermissionMode.All);
 
             // Assign the permission to the above user
-            Permission readWriteCreatedPermission = asyncClient.createPermission(createdReadWriteUser.getSelfLink(), readWritePermissionDefinition, null).toBlocking().first().getResource();
+            Permission readWriteCreatedPermission = asyncClient.createPermission(createdReadWriteUser.getSelfLink(), readWritePermissionDefinition, null).single().block().getResource();
             userToReadWriteResourceTokenMap.put(createdReadWriteUser.getId(), readWriteCreatedPermission.getToken());
 
             documentToReadWriteUserMap.put(createdDocument.getSelfLink(), createdReadWriteUser.getId());
@@ -163,7 +163,7 @@ public class TokenResolverTest {
                         .build();
                 RequestOptions requestOptions = new RequestOptions();
                 requestOptions.setProperties(properties);
-                Observable<ResourceResponse<Document>> readDocumentObservable = asyncClientWithTokenResolver
+                Flux<ResourceResponse<Document>> readDocumentObservable = asyncClientWithTokenResolver
                         .readDocument(documentLink, requestOptions);
                 readDocumentObservable.subscribe(resourceResponse -> {
                     capturedResponse.add(resourceResponse);
@@ -204,7 +204,7 @@ public class TokenResolverTest {
 
                 RequestOptions requestOptions = new RequestOptions();
                 requestOptions.setProperties(properties);
-                Observable<ResourceResponse<Document>> readDocumentObservable = asyncClientWithTokenResolver
+                Flux<ResourceResponse<Document>> readDocumentObservable = asyncClientWithTokenResolver
                         .deleteDocument(documentLink, requestOptions);
                 readDocumentObservable.subscribe(resourceResponse -> {
                     capturedResponse.add(resourceResponse);
@@ -245,7 +245,7 @@ public class TokenResolverTest {
                     .build();
 
             options.setProperties(properties);
-            Observable<ResourceResponse<DocumentCollection>> readObservable = asyncClientWithTokenResolver.readCollection(createdCollection.getSelfLink(), options);
+            Flux<ResourceResponse<DocumentCollection>> readObservable = asyncClientWithTokenResolver.readCollection(createdCollection.getSelfLink(), options);
             List<Throwable> capturedErrors = Collections
                     .synchronizedList(new ArrayList<>());
             readObservable.subscribe(response -> {}, throwable -> capturedErrors.add(throwable));

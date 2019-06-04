@@ -77,7 +77,7 @@ public class Utils {
         if (client != null) {
             if (databaseId != null) {
                 try {
-                    client.deleteDatabase("/dbs/" + databaseId, null).toBlocking().single();
+                    client.deleteDatabase("/dbs/" + databaseId, null).single().block();
                 } catch (Exception e) {
                 }
             }

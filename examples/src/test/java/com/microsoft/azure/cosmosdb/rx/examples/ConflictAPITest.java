@@ -22,7 +22,6 @@
  */
 package com.microsoft.azure.cosmosdb.rx.examples;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import com.microsoft.azure.cosmosdb.Conflict;
 import com.microsoft.azure.cosmosdb.ConnectionMode;
 import com.microsoft.azure.cosmosdb.ConnectionPolicy;
@@ -37,12 +36,13 @@ import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-import rx.Observable;
-import rx.observable.ListenableFutureObservable;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -53,9 +53,9 @@ import static org.hamcrest.Matchers.notNullValue;
  * This integration test class demonstrates how to use Async API for
  * Conflicts.
  * <p>
- * Also if you need to work with Future or ListenableFuture it is possible to
- * transform an observable to ListenableFuture. Please see
- * {@link #transformObservableToGoogleGuavaListenableFuture()}
+ * Also if you need to work with Future or CompletableFuture it is possible to
+ * transform a flux to CompletableFuture. Please see
+ * {@link #transformObservableToCompletableFuture()}
  */
 public class ConflictAPITest {
     private final static int TIMEOUT = 60000;
@@ -84,13 +84,13 @@ public class ConflictAPITest {
         // Create collection
         createdCollection = client
                 .createCollection("/dbs/" + createdDatabase.getId(), collectionDefinition, null)
-                .toBlocking().single().getResource();
+                .single().block().getResource();
 
         int numberOfDocuments = 20;
         // Add documents
         for (int i = 0; i < numberOfDocuments; i++) {
             Document doc = new Document(String.format("{ 'id': 'loc%d', 'counter': %d}", i, i));
-            client.createDocument(getCollectionLink(), doc, null, true).toBlocking().single();
+            client.createDocument(getCollectionLink(), doc, null, true).single().block();
         }
     }
 
@@ -112,12 +112,11 @@ public class ConflictAPITest {
         FeedOptions options = new FeedOptions();
         options.setMaxItemCount(requestPageSize);
 
-        Observable<FeedResponse<Conflict>> conflictReadFeedObservable = client
+        Flux<FeedResponse<Conflict>> conflictReadFeedObservable = client
                 .readConflicts(getCollectionLink(), options);
 
-        // Covert the observable to a blocking observable, then convert the blocking
-        // observable to an iterator
-        Iterator<FeedResponse<Conflict>> it = conflictReadFeedObservable.toBlocking().getIterator();
+        // Covert the flux to an iterable, and then to iterator
+        Iterator<FeedResponse<Conflict>> it = conflictReadFeedObservable.toIterable().iterator();
 
         int expectedNumberOfConflicts = 0;
 
@@ -135,25 +134,22 @@ public class ConflictAPITest {
     }
 
     /**
-     * You can convert an Observable to a ListenableFuture.
-     * ListenableFuture (part of google guava library) is a popular extension
-     * of Java's Future which allows registering listener callbacks:
-     * https://github.com/google/guava/wiki/ListenableFutureExplained
+     * You can convert a Flux to a CompletableFuture.
      */
     @Test(groups = "samples", timeOut = TIMEOUT)
-    public void transformObservableToGoogleGuavaListenableFuture() throws Exception {
+    public void transformObservableToCompletableFuture() throws Exception {
         int requestPageSize = 3;
         FeedOptions options = new FeedOptions();
         options.setMaxItemCount(requestPageSize);
 
-        Observable<FeedResponse<Conflict>> conflictReadFeedObservable = client
+        Flux<FeedResponse<Conflict>> conflictReadFeedObservable = client
                 .readConflicts(getCollectionLink(), options);
 
         // Convert to observable of list of pages
-        Observable<List<FeedResponse<Conflict>>> allPagesObservable = conflictReadFeedObservable.toList();
+        Mono<List<FeedResponse<Conflict>>> allPagesObservable = conflictReadFeedObservable.collectList();
 
         // Convert the observable of list of pages to a Future
-        ListenableFuture<List<FeedResponse<Conflict>>> future = ListenableFutureObservable.to(allPagesObservable);
+        CompletableFuture<List<FeedResponse<Conflict>>> future = allPagesObservable.toFuture();
 
         List<FeedResponse<Conflict>> pageList = future.get();
 

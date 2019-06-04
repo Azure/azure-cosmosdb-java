@@ -22,7 +22,6 @@
  */
 package com.microsoft.azure.cosmosdb.rx.examples;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import com.microsoft.azure.cosmosdb.ConnectionMode;
 import com.microsoft.azure.cosmosdb.ConnectionPolicy;
 import com.microsoft.azure.cosmosdb.ConsistencyLevel;
@@ -42,15 +41,15 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-import rx.Observable;
-import rx.functions.Action1;
-import rx.observable.ListenableFutureObservable;
+import reactor.core.publisher.Flux;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.function.Consumer;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -74,9 +73,9 @@ import static org.hamcrest.Matchers.greaterThan;
  * do the same thing without lambda expression.
  * </ul>
  * <p>
- * Also if you need to work with Future or ListenableFuture it is possible to
- * transform an observable to ListenableFuture. Please see
- * {@link #transformObservableToGoogleGuavaListenableFuture()}
+ * Also if you need to work with Future or CompletableFuture it is possible to
+ * transform a flux to CompletableFuture. Please see
+ * {@link #transformObservableToCompletableFuture()}
  * <p>
  * To Modify the Collection's throughput after it has been created, you need to
  * update the corresponding Offer. Please see
@@ -124,7 +123,7 @@ public class CollectionCRUDAsyncAPITest {
     public void createCollection_SinglePartition_Async() throws Exception {
         RequestOptions singlePartitionRequestOptions = new RequestOptions();
         singlePartitionRequestOptions.setOfferThroughput(400);
-        Observable<ResourceResponse<DocumentCollection>> createCollectionObservable = asyncClient
+        Flux<ResourceResponse<DocumentCollection>> createCollectionObservable = asyncClient
                 .createCollection(getDatabaseLink(), collectionDefinition, singlePartitionRequestOptions);
 
         final CountDownLatch countDownLatch = new CountDownLatch(1);
@@ -156,7 +155,7 @@ public class CollectionCRUDAsyncAPITest {
         RequestOptions multiPartitionRequestOptions = new RequestOptions();
         multiPartitionRequestOptions.setOfferThroughput(20000);
 
-        Observable<ResourceResponse<DocumentCollection>> createCollectionObservable = asyncClient.createCollection(
+        Flux<ResourceResponse<DocumentCollection>> createCollectionObservable = asyncClient.createCollection(
                 getDatabaseLink(), getMultiPartitionCollectionDefinition(), multiPartitionRequestOptions);
 
         final CountDownLatch countDownLatch = new CountDownLatch(1);
@@ -180,23 +179,23 @@ public class CollectionCRUDAsyncAPITest {
      */
     @Test(groups = "samples", timeOut = TIMEOUT)
     public void createCollection_Async_withoutLambda() throws Exception {
-        Observable<ResourceResponse<DocumentCollection>> createCollectionObservable = asyncClient
+        Flux<ResourceResponse<DocumentCollection>> createCollectionObservable = asyncClient
                 .createCollection(getDatabaseLink(), collectionDefinition, null);
 
         final CountDownLatch countDownLatch = new CountDownLatch(1);
-        Action1<ResourceResponse<DocumentCollection>> onCollectionCreationAction = new Action1<ResourceResponse<DocumentCollection>>() {
+        Consumer<ResourceResponse<DocumentCollection>> onCollectionCreationAction = new Consumer<ResourceResponse<DocumentCollection>>() {
 
             @Override
-            public void call(ResourceResponse<DocumentCollection> resourceResponse) {
+            public void accept(ResourceResponse<DocumentCollection> resourceResponse) {
                 // Collection is created
                 System.out.println(resourceResponse.getActivityId());
                 countDownLatch.countDown();
             }
         };
 
-        Action1<Throwable> onError = new Action1<Throwable>() {
+        Consumer<Throwable> onError = new Consumer<Throwable>() {
             @Override
-            public void call(Throwable error) {
+            public void accept(Throwable error) {
                 System.err.println(
                         "an error occurred while creating the collection: actual cause: " + error.getMessage());
                 countDownLatch.countDown();
@@ -215,12 +214,12 @@ public class CollectionCRUDAsyncAPITest {
      */
     @Test(groups = "samples", timeOut = TIMEOUT)
     public void createCollection_toBlocking() {
-        Observable<ResourceResponse<DocumentCollection>> createCollectionObservable = asyncClient
+        Flux<ResourceResponse<DocumentCollection>> createCollectionObservable = asyncClient
                 .createCollection(getDatabaseLink(), collectionDefinition, null);
 
-        // toBlocking() converts the observable to a blocking observable.
-        // single() gets the only result.
-        createCollectionObservable.toBlocking().single();
+        // single() converts the flux to a mono.
+        // block() gets the only result.
+        createCollectionObservable.single().block();
     }
 
     /**
@@ -232,15 +231,15 @@ public class CollectionCRUDAsyncAPITest {
      */
     @Test(groups = "samples", timeOut = TIMEOUT)
     public void createCollection_toBlocking_CollectionAlreadyExists_Fails() {
-        asyncClient.createCollection(getDatabaseLink(), collectionDefinition, null).toBlocking().single();
+        asyncClient.createCollection(getDatabaseLink(), collectionDefinition, null).single().block();
 
         // Create the collection for test.
-        Observable<ResourceResponse<DocumentCollection>> collectionForTestObservable = asyncClient
+        Flux<ResourceResponse<DocumentCollection>> collectionForTestObservable = asyncClient
                 .createCollection(getDatabaseLink(), collectionDefinition, null);
 
         try {
-            collectionForTestObservable.toBlocking() // Blocks
-                    .single(); // Gets the single result
+            collectionForTestObservable.single() // Gets the single result
+                    .block(); // Blocks
             assertThat("Should not reach here", false);
         } catch (Exception e) {
             assertThat("Collection already exists.", ((DocumentClientException) e.getCause()).getStatusCode(),
@@ -249,17 +248,13 @@ public class CollectionCRUDAsyncAPITest {
     }
 
     /**
-     * You can convert an Observable to a ListenableFuture.
-     * ListenableFuture (part of google guava library) is a popular extension
-     * of Java's Future which allows registering listener callbacks:
-     * https://github.com/google/guava/wiki/ListenableFutureExplained
+     * You can convert a Flux to a CompletableFuture.
      */
     @Test(groups = "samples", timeOut = TIMEOUT)
-    public void transformObservableToGoogleGuavaListenableFuture() throws Exception {
-        Observable<ResourceResponse<DocumentCollection>> createCollectionObservable = asyncClient
+    public void transformObservableToCompletableFuture() throws Exception {
+        Flux<ResourceResponse<DocumentCollection>> createCollectionObservable = asyncClient
                 .createCollection(getDatabaseLink(), collectionDefinition, null);
-        ListenableFuture<ResourceResponse<DocumentCollection>> future = ListenableFutureObservable
-                .to(createCollectionObservable);
+        CompletableFuture<ResourceResponse<DocumentCollection>> future = createCollectionObservable.single().toFuture();
 
         ResourceResponse<DocumentCollection> rrd = future.get();
 
@@ -274,11 +269,11 @@ public class CollectionCRUDAsyncAPITest {
     public void createAndReadCollection() throws Exception {
         // Create a Collection
         DocumentCollection documentCollection = asyncClient
-                .createCollection(getDatabaseLink(), collectionDefinition, null).toBlocking().single()
+                .createCollection(getDatabaseLink(), collectionDefinition, null).single().block()
                 .getResource();
 
         // Read the created collection using async api
-        Observable<ResourceResponse<DocumentCollection>> readCollectionObservable = asyncClient
+        Flux<ResourceResponse<DocumentCollection>> readCollectionObservable = asyncClient
                 .readCollection(getCollectionLink(documentCollection), null);
 
         final CountDownLatch countDownLatch = new CountDownLatch(1);
@@ -304,11 +299,11 @@ public class CollectionCRUDAsyncAPITest {
     public void createAndDeleteCollection() throws Exception {
         // Create a Collection
         DocumentCollection documentCollection = asyncClient
-                .createCollection(getDatabaseLink(), collectionDefinition, null).toBlocking().single()
+                .createCollection(getDatabaseLink(), collectionDefinition, null).single().block()
                 .getResource();
 
         // Delete the created collection using async api
-        Observable<ResourceResponse<DocumentCollection>> deleteCollectionObservable = asyncClient
+        Flux<ResourceResponse<DocumentCollection>> deleteCollectionObservable = asyncClient
                 .deleteCollection(getCollectionLink(documentCollection), null);
 
         final CountDownLatch countDownLatch = new CountDownLatch(1);
@@ -334,17 +329,17 @@ public class CollectionCRUDAsyncAPITest {
     public void collectionCreateAndQuery() throws Exception {
         // Create a Collection
         DocumentCollection collection = asyncClient
-                .createCollection(getDatabaseLink(), collectionDefinition, null).toBlocking().single()
+                .createCollection(getDatabaseLink(), collectionDefinition, null).single().block()
                 .getResource();
 
         // Query the created collection using async api
-        Observable<FeedResponse<DocumentCollection>> queryCollectionObservable = asyncClient.queryCollections(
+        Flux<FeedResponse<DocumentCollection>> queryCollectionObservable = asyncClient.queryCollections(
                 getDatabaseLink(), String.format("SELECT * FROM r where r.id = '%s'", collection.getId()),
                 null);
 
         final CountDownLatch countDownLatch = new CountDownLatch(1);
 
-        queryCollectionObservable.toList().subscribe(collectionFeedResponseList -> {
+        queryCollectionObservable.collectList().subscribe(collectionFeedResponseList -> {
             // toList() should return a list of size 1
             assertThat(collectionFeedResponseList.size(), equalTo(1));
 

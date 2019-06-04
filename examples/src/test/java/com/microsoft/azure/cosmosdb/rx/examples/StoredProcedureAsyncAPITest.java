@@ -50,7 +50,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 
-import javax.net.ssl.SSLException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -82,7 +81,7 @@ public class StoredProcedureAsyncAPITest {
 
         createdCollection = asyncClient
                 .createCollection("dbs/" + createdDatabase.getId(), getMultiPartitionCollectionDefinition(), null)
-                .toBlocking().single().getResource();
+                .single().block().getResource();
     }
 
     @AfterClass(groups = "samples", timeOut = TIMEOUT)
@@ -115,7 +114,7 @@ public class StoredProcedureAsyncAPITest {
                         "}");
 
         storedProcedure = asyncClient.createStoredProcedure(getCollectionLink(), storedProcedure, null)
-                .toBlocking().single().getResource();
+                .single().block().getResource();
 
         RequestOptions requestOptions = new RequestOptions();
         requestOptions.setScriptLoggingEnabled(true);
@@ -161,7 +160,7 @@ public class StoredProcedureAsyncAPITest {
                         "}");
 
         storedProcedure = asyncClient.createStoredProcedure(getCollectionLink(), storedProcedure, null)
-                .toBlocking().single().getResource();
+                .single().block().getResource();
 
         RequestOptions requestOptions = new RequestOptions();
         requestOptions.setPartitionKey(new PartitionKey("Seattle"));
@@ -201,7 +200,7 @@ public class StoredProcedureAsyncAPITest {
                         "}");
 
         storedProcedure = asyncClient.createStoredProcedure(getCollectionLink(), storedProcedure, null)
-                .toBlocking().single().getResource();
+                .single().block().getResource();
 
         RequestOptions requestOptions = new RequestOptions();
         requestOptions.setPartitionKey(new PartitionKey("Seattle"));

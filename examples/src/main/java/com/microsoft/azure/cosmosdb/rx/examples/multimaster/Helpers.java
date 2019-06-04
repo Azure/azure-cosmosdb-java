@@ -28,8 +28,8 @@ import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.ResourceResponse;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
-import rx.Observable;
-import rx.Single;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 public class Helpers {
 
@@ -41,10 +41,10 @@ public class Helpers {
         return String.format("/dbs/%s", databaseName);
     }
 
-    static public Single<Database> createDatabaseIfNotExists(AsyncDocumentClient client, String databaseName) {
+    static public Mono<Database> createDatabaseIfNotExists(AsyncDocumentClient client, String databaseName) {
 
         return client.readDatabase("/dbs/" + databaseName, null)
-                .onErrorResumeNext(
+                .onErrorResume(
                         e -> {
                             if (e instanceof DocumentClientException) {
                                 DocumentClientException dce = (DocumentClientException) e;
@@ -58,14 +58,14 @@ public class Helpers {
                                 }
                             }
 
-                            return Observable.error(e);
+                            return Flux.error(e);
                         }
-                ).map(ResourceResponse::getResource).toSingle();
+                ).map(ResourceResponse::getResource).single();
     }
 
-    static public Single<DocumentCollection> createCollectionIfNotExists(AsyncDocumentClient client, String databaseName, String collectionName) {
+    static public Mono<DocumentCollection> createCollectionIfNotExists(AsyncDocumentClient client, String databaseName, String collectionName) {
         return client.readCollection(createDocumentCollectionUri(databaseName, collectionName), null)
-                .onErrorResumeNext(
+                .onErrorResume(
                         e -> {
                             if (e instanceof DocumentClientException) {
                                 DocumentClientException dce = (DocumentClientException) e;
@@ -79,14 +79,14 @@ public class Helpers {
                                 }
                             }
 
-                            return Observable.error(e);
+                            return Flux.error(e);
                         }
-                ).map(ResourceResponse::getResource).toSingle();
+                ).map(ResourceResponse::getResource).single();
     }
 
-    static public Single<DocumentCollection> createCollectionIfNotExists(AsyncDocumentClient client, String databaseName, DocumentCollection collection) {
+    static public Mono<DocumentCollection> createCollectionIfNotExists(AsyncDocumentClient client, String databaseName, DocumentCollection collection) {
         return client.readCollection(createDocumentCollectionUri(databaseName, collection.getId()), null)
-                .onErrorResumeNext(
+                .onErrorResume(
                         e -> {
                             if (e instanceof DocumentClientException) {
                                 DocumentClientException dce = (DocumentClientException) e;
@@ -97,8 +97,8 @@ public class Helpers {
                                 }
                             }
 
-                            return Observable.error(e);
+                            return Flux.error(e);
                         }
-                ).map(ResourceResponse::getResource).toSingle();
+                ).map(ResourceResponse::getResource).single();
     }
 }

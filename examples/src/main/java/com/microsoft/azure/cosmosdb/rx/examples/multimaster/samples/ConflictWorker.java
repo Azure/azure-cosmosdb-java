@@ -26,7 +26,6 @@ package com.microsoft.azure.cosmosdb.rx.examples.multimaster.samples;
 import com.microsoft.azure.cosmosdb.AccessCondition;
 import com.microsoft.azure.cosmosdb.AccessConditionType;
 import com.microsoft.azure.cosmosdb.Conflict;
-import com.microsoft.azure.cosmosdb.ConflictResolutionMode;
 import com.microsoft.azure.cosmosdb.ConflictResolutionPolicy;
 import com.microsoft.azure.cosmosdb.Document;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
@@ -42,9 +41,9 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import rx.Observable;
-import rx.Scheduler;
-import rx.schedulers.Schedulers;
+import reactor.core.publisher.Flux;
+import reactor.core.scheduler.Scheduler;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -83,7 +82,7 @@ public class ConflictWorker {
         this.udpCollectionName = udpCollectionName;
 
         this.executor = Executors.newFixedThreadPool(100);
-        this.schedulerForBlockingWork = Schedulers.from(executor);
+        this.schedulerForBlockingWork = Schedulers.fromExecutor(executor);
     }
 
     public void addClient(AsyncDocumentClient client) {
@@ -92,13 +91,13 @@ public class ConflictWorker {
 
     private DocumentCollection createCollectionIfNotExists(AsyncDocumentClient createClient, String databaseName, DocumentCollection collection) {
         return Helpers.createCollectionIfNotExists(createClient, this.databaseName, collection)
-                .subscribeOn(schedulerForBlockingWork).toBlocking().value();
+                .subscribeOn(schedulerForBlockingWork).block();
     }
 
     private DocumentCollection createCollectionIfNotExists(AsyncDocumentClient createClient, String databaseName, String collectionName) {
 
         return Helpers.createCollectionIfNotExists(createClient, this.databaseName, this.basicCollectionName)
-                .subscribeOn(schedulerForBlockingWork).toBlocking().value();
+                .subscribeOn(schedulerForBlockingWork).block();
     }
 
     private DocumentCollection getCollectionDefForManual(String id) {
@@ -128,7 +127,7 @@ public class ConflictWorker {
     public void initialize() throws Exception {
         AsyncDocumentClient createClient = this.clients.get(0);
 
-        Helpers.createDatabaseIfNotExists(createClient, this.databaseName).subscribeOn(schedulerForBlockingWork).toBlocking().value();
+        Helpers.createDatabaseIfNotExists(createClient, this.databaseName).subscribeOn(schedulerForBlockingWork).block();
 
         DocumentCollection basic = createCollectionIfNotExists(createClient, this.databaseName, this.basicCollectionName);
 
@@ -153,8 +152,8 @@ public class ConflictWorker {
 
     }
 
-    private <T extends Resource> T getResource(Observable<ResourceResponse<T>> obs) {
-        return obs.subscribeOn(schedulerForBlockingWork).toBlocking().single().getResource();
+    private <T extends Resource> T getResource(Flux<ResourceResponse<T>> obs) {
+        return obs.subscribeOn(schedulerForBlockingWork).single().block().getResource();
     }
 
     public void runManualConflict() throws Exception {
@@ -194,7 +193,7 @@ public class ConflictWorker {
         do {
             logger.info("1) Performing conflicting insert across {} regions on {}", this.clients.size(), this.manualCollectionName);
 
-            ArrayList<Observable<Document>> insertTask = new ArrayList<Observable<Document>>();
+            ArrayList<Flux<Document>> insertTask = new ArrayList<>();
 
             Document conflictDocument = new Document();
             conflictDocument.setId(UUID.randomUUID().toString());
@@ -204,7 +203,7 @@ public class ConflictWorker {
                 insertTask.add(this.tryInsertDocument(client, this.manualCollectionUri, conflictDocument, index++));
             }
 
-            List<Document> conflictDocuments = Observable.merge(insertTask).toList().subscribeOn(schedulerForBlockingWork).toBlocking().single();
+            List<Document> conflictDocuments = Flux.merge(insertTask).collectList().subscribeOn(schedulerForBlockingWork).single().block();
 
             if (conflictDocuments.size() == this.clients.size()) {
                 logger.info("2) Caused {} insert conflicts, verifying conflict resolution", conflictDocuments.size());
@@ -226,21 +225,21 @@ public class ConflictWorker {
 
 
             conflictDocument = this.tryInsertDocument(clients.get(0), this.manualCollectionUri, conflictDocument, 0)
-                    .firstOrDefault(null).toBlocking().first();
+                    .singleOrEmpty().block();
 
             TimeUnit.SECONDS.sleep(1);//1 Second for write to sync.
 
 
             logger.info("1) Performing conflicting update across 3 regions on {}", this.manualCollectionName);
 
-            ArrayList<Observable<Document>> updateTask = new ArrayList<Observable<Document>>();
+            ArrayList<Flux<Document>> updateTask = new ArrayList<>();
 
             int index = 0;
             for (AsyncDocumentClient client : this.clients) {
                 updateTask.add(this.tryUpdateDocument(client, this.manualCollectionUri, conflictDocument, index++));
             }
 
-            List<Document> conflictDocuments = Observable.merge(updateTask).toList().toBlocking().single();
+            List<Document> conflictDocuments = Flux.merge(updateTask).collectList().single().block();
 
             if (conflictDocuments.size() > 1) {
                 logger.info("2) Caused {} updated conflicts, verifying conflict resolution", conflictDocuments.size());
@@ -261,22 +260,22 @@ public class ConflictWorker {
             conflictDocument.setId(UUID.randomUUID().toString());
 
             conflictDocument = this.tryInsertDocument(clients.get(0), this.manualCollectionUri, conflictDocument, 0)
-                    .firstOrDefault(null).toBlocking().first();
+                    .singleOrEmpty().block();
 
             TimeUnit.SECONDS.sleep(10);//1 Second for write to sync.
 
             logger.info("1) Performing conflicting delete across 3 regions on {}", this.manualCollectionName);
 
-            ArrayList<Observable<Document>> deleteTask = new ArrayList<Observable<Document>>();
+            ArrayList<Flux<Document>> deleteTask = new ArrayList<>();
 
             int index = 0;
             for (AsyncDocumentClient client : this.clients) {
                 deleteTask.add(this.tryDeleteDocument(client, this.manualCollectionUri, conflictDocument, index++));
             }
 
-            List<Document> conflictDocuments = Observable.merge(deleteTask).toList()
+            List<Document> conflictDocuments = Flux.merge(deleteTask).collectList()
                     .subscribeOn(schedulerForBlockingWork)
-                    .toBlocking().single();
+                    .single().block();
 
             if (conflictDocuments.size() > 1) {
                 logger.info("2) Caused {} delete conflicts, verifying conflict resolution", conflictDocuments.size());
@@ -296,7 +295,7 @@ public class ConflictWorker {
         do {
             logger.info("Performing conflicting insert across 3 regions");
 
-            ArrayList<Observable<Document>> insertTask = new ArrayList<Observable<Document>>();
+            ArrayList<Flux<Document>> insertTask = new ArrayList<>();
 
             Document conflictDocument = new Document();
             conflictDocument.setId(UUID.randomUUID().toString());
@@ -306,7 +305,7 @@ public class ConflictWorker {
                 insertTask.add(this.tryInsertDocument(client, this.lwwCollectionUri, conflictDocument, index++));
             }
 
-            List<Document> conflictDocuments = Observable.merge(insertTask).toList().toBlocking().single();
+            List<Document> conflictDocuments = Flux.merge(insertTask).collectList().single().block();
 
 
             if (conflictDocuments.size() > 1) {
@@ -327,21 +326,21 @@ public class ConflictWorker {
             conflictDocument.setId(UUID.randomUUID().toString());
 
             conflictDocument = this.tryInsertDocument(clients.get(0), this.lwwCollectionUri, conflictDocument, 0)
-                    .firstOrDefault(null).toBlocking().first();
+                    .singleOrEmpty().block();
 
 
             TimeUnit.SECONDS.sleep(1); //1 Second for write to sync.
 
             logger.info("1) Performing conflicting update across {} regions on {}", this.clients.size(), this.lwwCollectionUri);
 
-            ArrayList<Observable<Document>> insertTask = new ArrayList<Observable<Document>>();
+            ArrayList<Flux<Document>> insertTask = new ArrayList<>();
 
             int index = 0;
             for (AsyncDocumentClient client : this.clients) {
                 insertTask.add(this.tryUpdateDocument(client, this.lwwCollectionUri, conflictDocument, index++));
             }
 
-            List<Document> conflictDocuments = Observable.merge(insertTask).toList().toBlocking().single();
+            List<Document> conflictDocuments = Flux.merge(insertTask).collectList().single().block();
 
 
             if (conflictDocuments.size() > 1) {
@@ -362,14 +361,14 @@ public class ConflictWorker {
             conflictDocument.setId(UUID.randomUUID().toString());
 
             conflictDocument = this.tryInsertDocument(clients.get(0), this.lwwCollectionUri, conflictDocument, 0)
-                    .firstOrDefault(null).toBlocking().first();
+                    .singleOrEmpty().block();
 
 
             TimeUnit.SECONDS.sleep(1); //1 Second for write to sync.
 
             logger.info("1) Performing conflicting delete across {} regions on {}", this.clients.size(), this.lwwCollectionUri);
 
-            ArrayList<Observable<Document>> insertTask = new ArrayList<Observable<Document>>();
+            ArrayList<Flux<Document>> insertTask = new ArrayList<>();
 
             int index = 0;
             for (AsyncDocumentClient client : this.clients) {
@@ -381,7 +380,7 @@ public class ConflictWorker {
                 }
             }
 
-            List<Document> conflictDocuments = Observable.merge(insertTask).toList().toBlocking().single();
+            List<Document> conflictDocuments = Flux.merge(insertTask).collectList().single().block();
 
             if (conflictDocuments.size() > 1) {
                 logger.info("Inserted {} conflicts, verifying conflict resolution", conflictDocuments.size());
@@ -399,7 +398,7 @@ public class ConflictWorker {
         do {
             logger.info("1) Performing conflicting insert across 3 regions on {}", this.udpCollectionName);
 
-            ArrayList<Observable<Document>> insertTask = new ArrayList<Observable<Document>>();
+            ArrayList<Flux<Document>> insertTask = new ArrayList<>();
 
             Document conflictDocument = new Document();
             conflictDocument.setId(UUID.randomUUID().toString());
@@ -409,7 +408,7 @@ public class ConflictWorker {
                 insertTask.add(this.tryInsertDocument(client, this.udpCollectionUri, conflictDocument, index++));
             }
 
-            List<Document> conflictDocuments = Observable.merge(insertTask).toList().toBlocking().single();
+            List<Document> conflictDocuments = Flux.merge(insertTask).collectList().single().block();
 
 
             if (conflictDocuments.size() > 1) {
@@ -430,20 +429,20 @@ public class ConflictWorker {
             conflictDocument.setId(UUID.randomUUID().toString());
 
             conflictDocument = this.tryInsertDocument(clients.get(0), this.udpCollectionUri, conflictDocument, 0)
-                    .firstOrDefault(null).toBlocking().first();
+                    .singleOrEmpty().block();
 
             TimeUnit.SECONDS.sleep(1); //1 Second for write to sync.
 
             logger.info("1) Performing conflicting update across 3 regions on {}", this.udpCollectionUri);
 
-            ArrayList<Observable<Document>> updateTask = new ArrayList<Observable<Document>>();
+            ArrayList<Flux<Document>> updateTask = new ArrayList<>();
 
             int index = 0;
             for (AsyncDocumentClient client : this.clients) {
                 updateTask.add(this.tryUpdateDocument(client, this.udpCollectionUri, conflictDocument, index++));
             }
 
-            List<Document> conflictDocuments = Observable.merge(updateTask).toList().toBlocking().single();
+            List<Document> conflictDocuments = Flux.merge(updateTask).collectList().single().block();
 
 
             if (conflictDocuments.size() > 1) {
@@ -464,13 +463,13 @@ public class ConflictWorker {
             conflictDocument.setId(UUID.randomUUID().toString());
 
             conflictDocument = this.tryInsertDocument(clients.get(0), this.udpCollectionUri, conflictDocument, 0)
-                    .firstOrDefault(null).toBlocking().first();
+                    .singleOrEmpty().block();
 
             TimeUnit.SECONDS.sleep(1); //1 Second for write to sync.
 
             logger.info("1) Performing conflicting update/delete across 3 regions on {}", this.udpCollectionUri);
 
-            ArrayList<Observable<Document>> deleteTask = new ArrayList<Observable<Document>>();
+            ArrayList<Flux<Document>> deleteTask = new ArrayList<>();
 
             int index = 0;
             for (AsyncDocumentClient client : this.clients) {
@@ -482,7 +481,7 @@ public class ConflictWorker {
                 }
             }
 
-            List<Document> conflictDocuments = Observable.merge(deleteTask).toList().toBlocking().single();
+            List<Document> conflictDocuments = Flux.merge(deleteTask).collectList().single().block();
 
             if (conflictDocuments.size() > 1) {
                 logger.info("2) Caused {} delete conflicts, verifying conflict resolution", conflictDocuments.size());
@@ -496,17 +495,17 @@ public class ConflictWorker {
         } while (true);
     }
 
-    private Observable<Document> tryInsertDocument(AsyncDocumentClient client, String collectionUri, Document document, int index) {
+    private Flux<Document> tryInsertDocument(AsyncDocumentClient client, String collectionUri, Document document, int index) {
 
         logger.debug("region: {}", client.getWriteEndpoint());
         document.set("regionId", index);
         document.set("regionEndpoint", client.getReadEndpoint());
         return client.createDocument(collectionUri, document, null, false)
-                .onErrorResumeNext(e -> {
+                .onErrorResume(e -> {
                     if (hasDocumentClientException(e, 409)) {
-                        return Observable.empty();
+                        return Flux.empty();
                     } else {
-                        return Observable.error(e);
+                        return Flux.error(e);
                     }
                 }).map(ResourceResponse::getResource);
     }
@@ -544,7 +543,7 @@ public class ConflictWorker {
         return false;
     }
 
-    private Observable<Document> tryUpdateDocument(AsyncDocumentClient client, String collectionUri, Document document, int index) {
+    private Flux<Document> tryUpdateDocument(AsyncDocumentClient client, String collectionUri, Document document, int index) {
         document.set("regionId", index);
         document.set("regionEndpoint", client.getReadEndpoint());
 
@@ -554,19 +553,19 @@ public class ConflictWorker {
         options.getAccessCondition().setCondition(document.getETag());
 
 
-        return client.replaceDocument(document.getSelfLink(), document, null).onErrorResumeNext(e -> {
+        return client.replaceDocument(document.getSelfLink(), document, null).onErrorResume(e -> {
 
             // pre condition failed
             if (hasDocumentClientException(e, 412)) {
                 //Lost synchronously or not document yet. No conflict is induced.
-                return Observable.empty();
+                return Flux.empty();
 
             }
-            return Observable.error(e);
+            return Flux.error(e);
         }).map(ResourceResponse::getResource);
     }
 
-    private Observable<Document> tryDeleteDocument(AsyncDocumentClient client, String collectionUri, Document document, int index) {
+    private Flux<Document> tryDeleteDocument(AsyncDocumentClient client, String collectionUri, Document document, int index) {
         document.set("regionId", index);
         document.set("regionEndpoint", client.getReadEndpoint());
 
@@ -576,15 +575,15 @@ public class ConflictWorker {
         options.getAccessCondition().setCondition(document.getETag());
 
 
-        return client.deleteDocument(document.getSelfLink(), options).onErrorResumeNext(e -> {
+        return client.deleteDocument(document.getSelfLink(), options).onErrorResume(e -> {
 
             // pre condition failed
             if (hasDocumentClientException(e, 412)) {
                 //Lost synchronously. No conflict is induced.
-                return Observable.empty();
+                return Flux.empty();
 
             }
-            return Observable.error(e);
+            return Flux.error(e);
         }).map(rr -> document);
     }
 
@@ -611,7 +610,7 @@ public class ConflictWorker {
     private boolean validateManualConflict(AsyncDocumentClient client, Document conflictDocument) throws Exception {
         while (true) {
             FeedResponse<Conflict> response = client.readConflicts(this.manualCollectionUri, null)
-                    .first().toBlocking().single();
+                    .take(1).single().block();
 
             for (Conflict conflict : response.getResults()) {
                 if (!isDelete(conflict)) {
@@ -628,7 +627,7 @@ public class ConflictWorker {
                             try {
                                 //Checking whether this is the winner.
                                 Document winnerDocument = client.readDocument(conflictDocument.getSelfLink(), null)
-                                        .toBlocking().single().getResource();
+                                        .single().block().getResource();
                                 logger.info("Document from region {} won the conflict @ {}",
                                         conflictDocument.getInt("regionId"),
                                         client.getReadEndpoint());
@@ -666,7 +665,7 @@ public class ConflictWorker {
     private void deleteConflict(Document conflictDocument) {
         AsyncDocumentClient delClient = clients.get(0);
 
-        FeedResponse<Conflict> conflicts = delClient.readConflicts(this.manualCollectionUri, null).first().toBlocking().single();
+        FeedResponse<Conflict> conflicts = delClient.readConflicts(this.manualCollectionUri, null).take(1).single().block();
 
         for (Conflict conflict : conflicts.getResults()) {
             if (!isDelete(conflict)) {
@@ -677,7 +676,7 @@ public class ConflictWorker {
                             conflict.getSourceResourceId(),
                             conflictContent.getInt("regionId"));
                     delClient.deleteConflict(conflict.getSelfLink(), null)
-                            .toBlocking().single();
+                            .single().block();
 
                 }
             } else if (equals(conflict.getSourceResourceId(), conflictDocument.getResourceId())) {
@@ -685,7 +684,7 @@ public class ConflictWorker {
                         conflict.getSourceResourceId(),
                         conflictDocument.getInt("regionId"));
                 delClient.deleteConflict(conflict.getSelfLink(), null)
-                        .toBlocking().single();
+                        .single().block();
             }
         }
     }
@@ -703,7 +702,7 @@ public class ConflictWorker {
 
     private void validateLWW(AsyncDocumentClient client, List<Document> conflictDocument, boolean hasDeleteConflict) throws Exception {
         FeedResponse<Conflict> response = client.readConflicts(this.lwwCollectionUri, null)
-                .first().toBlocking().single();
+                .take(1).single().block();
 
         if (response.getResults().size() != 0) {
             logger.error("Found {} conflicts in the lww collection", response.getResults().size());
@@ -713,7 +712,7 @@ public class ConflictWorker {
         if (hasDeleteConflict) {
             do {
                 try {
-                    client.readDocument(conflictDocument.get(0).getSelfLink(), null).toBlocking().single();
+                    client.readDocument(conflictDocument.get(0).getSelfLink(), null).single().block();
 
                     logger.error("Delete conflict for document {} didnt win @ {}",
                             conflictDocument.get(0).getId(),
@@ -756,7 +755,7 @@ public class ConflictWorker {
         while (true) {
             try {
                 Document existingDocument = client.readDocument(winnerDocument.getSelfLink(), null)
-                        .toBlocking().single().getResource();
+                        .single().block().getResource();
 
                 if (existingDocument.getInt("regionId") == winnerDocument.getInt("regionId")) {
                     logger.info("Winner document from region {} found at {}",
@@ -793,7 +792,7 @@ public class ConflictWorker {
     }
 
     private void validateUDPAsync(AsyncDocumentClient client, List<Document> conflictDocument, boolean hasDeleteConflict) throws Exception {
-        FeedResponse<Conflict> response = client.readConflicts(this.udpCollectionUri, null).first().toBlocking().single();
+        FeedResponse<Conflict> response = client.readConflicts(this.udpCollectionUri, null).take(1).single().block();
 
         if (response.getResults().size() != 0) {
             logger.error("Found {} conflicts in the udp collection", response.getResults().size());
@@ -805,7 +804,7 @@ public class ConflictWorker {
                 try {
                     client.readDocument(
                             documentNameLink(udpCollectionName, conflictDocument.get(0).getId()), null)
-                            .toBlocking().single();
+                            .single().block();
 
                     logger.error("Delete conflict for document {} didnt win @ {}",
                             conflictDocument.get(0).getId(),
@@ -845,7 +844,7 @@ public class ConflictWorker {
 
                 Document existingDocument = client.readDocument(
                         documentNameLink(udpCollectionName, winnerDocument.getId()), null)
-                        .toBlocking().single().getResource();
+                        .single().block().getResource();
 
                 if (existingDocument.getInt("regionId") == winnerDocument.getInt(
                         ("regionId"))) {

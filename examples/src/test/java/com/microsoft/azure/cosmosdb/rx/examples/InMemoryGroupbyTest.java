@@ -36,8 +36,8 @@ import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-import rx.Observable;
-import rx.observables.GroupedObservable;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.GroupedFlux;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -70,7 +70,7 @@ public class InMemoryGroupbyTest {
         // Create collection
         createdCollection = asyncClient
                 .createCollection("dbs/" + createdDatabase.getId(), collectionDefinition, null)
-                .toBlocking().single().getResource();
+                .single().block().getResource();
 
         int numberOfPayers = 10;
         int numberOfDocumentsPerPayer = 10;
@@ -87,7 +87,7 @@ public class InMemoryGroupbyTest {
                         + "'payer_id': %d, "
                         + " 'created_time' : %d "
                         + "}", UUID.randomUUID().toString(), i, currentTime.getSecond()));
-                asyncClient.createDocument(getCollectionLink(), doc, null, true).toBlocking().single();
+                asyncClient.createDocument(getCollectionLink(), doc, null, true).single().block();
 
                 Thread.sleep(100);
             }
@@ -113,21 +113,21 @@ public class InMemoryGroupbyTest {
         FeedOptions options = new FeedOptions();
         options.setMaxItemCount(requestPageSize);
 
-        Observable<Document> documentsObservable = asyncClient
+        Flux<Document> documentsObservable = asyncClient
                 .queryDocuments(getCollectionLink(),
                         new SqlQuerySpec("SELECT * FROM root r WHERE r.site_id=@site_id",
                                 new SqlParameterCollection(new SqlParameter("@site_id", "ABC"))),
                         options)
-                .flatMap(page -> Observable.from(page.getResults()));
+                .flatMap(page -> Flux.fromIterable(page.getResults()));
 
         final LocalDateTime now = LocalDateTime.now();
 
         List<List<Document>> resultsGroupedAsLists = documentsObservable
                 .filter(doc -> Math.abs(now.getSecond() - doc.getInt("created_time")) <= 90)
-                .groupBy(doc -> doc.getInt("payer_id")).flatMap(grouped -> grouped.toList())
-                .toList()
-                .toBlocking()
-                .single();
+                .groupBy(doc -> doc.getInt("payer_id")).flatMap(Flux::collectList)
+                .collectList()
+                .single()
+                .block();
 
         for(List<Document> resultsForEachPayer :resultsGroupedAsLists) {
             System.out.println("documents with payer_id : " + resultsForEachPayer.get(0).getInt("payer_id") + " are " + resultsForEachPayer);
@@ -146,25 +146,25 @@ public class InMemoryGroupbyTest {
         options.setMaxItemCount(requestPageSize);
 
 
-        Observable<Document> documentsObservable = asyncClient
+        Flux<Document> documentsObservable = asyncClient
                 .queryDocuments(getCollectionLink(),
                         new SqlQuerySpec("SELECT * FROM root r WHERE r.site_id=@site_id",
                                 new SqlParameterCollection(new SqlParameter("@site_id", "ABC"))),
                         options)
-                .flatMap(page -> Observable.from(page.getResults()));
+                .flatMap(page -> Flux.fromIterable(page.getResults()));
 
         final LocalDateTime now = LocalDateTime.now();
 
-        Observable<GroupedObservable<Integer, Document>> groupedByPayerIdObservable = documentsObservable
+        Flux<GroupedFlux<Integer, Document>> groupedByPayerIdObservable = documentsObservable
                 .filter(doc -> Math.abs(now.getSecond() - doc.getInt("created_time")) <= 90)
                 .groupBy(doc -> doc.getInt("payer_id"));
 
-        Observable<List<Document>> docsGroupedAsList = groupedByPayerIdObservable.flatMap(grouped -> {
-            Observable<List<Document>> list = grouped.toList();
+        Flux<List<Document>> docsGroupedAsList = groupedByPayerIdObservable.flatMap(grouped -> {
+            Flux<List<Document>> list = grouped.collectList().flux();
             return list;
         });
 
-        List<List<Document>> resultsGroupedAsLists = docsGroupedAsList.toList().toBlocking().single();
+        List<List<Document>> resultsGroupedAsLists = docsGroupedAsList.collectList().single().block();
 
         for(List<Document> resultsForEachPayer : resultsGroupedAsLists) {
             System.out.println("documents with payer_id : " + resultsForEachPayer.get(0).getInt("payer_id") + " are " + resultsForEachPayer);
