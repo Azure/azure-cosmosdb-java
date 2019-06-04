@@ -197,7 +197,7 @@ public class DocumentCrudTest extends TestSuiteBase {
     public void timestamp(String documentId, boolean isNameBased) throws Exception {
         Date before = new Date();
         Document docDefinition = getDocumentDefinition(documentId);
-        Thread.sleep(1000);
+        Thread.sleep(3000);
         Document document = client
                 .createDocument(getCollectionLink(isNameBased), docDefinition, null, false).toBlocking().single().getResource();
 
@@ -207,7 +207,7 @@ public class DocumentCrudTest extends TestSuiteBase {
         options.setPartitionKey(new PartitionKey(document.get("mypk")));
         Observable<ResourceResponse<Document>> readObservable = client.readDocument(getDocumentLink(document, isNameBased), options);
         Document readDocument = readObservable.toBlocking().single().getResource();
-        Thread.sleep(1000);
+        Thread.sleep(3000);
         Date after = new Date();
 
         assertThat(readDocument.getTimestamp()).isAfterOrEqualsTo(before);

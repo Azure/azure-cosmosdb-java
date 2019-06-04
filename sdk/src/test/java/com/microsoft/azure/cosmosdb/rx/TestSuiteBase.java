@@ -878,6 +878,11 @@ public class TestSuiteBase {
     }
 
     @DataProvider
+    public static Object[][] clientBuildsForSessionOnlyDirect() {
+        return createOnlyDirect(ImmutableList.of(ConsistencyLevel.Session), toArray(protocols));
+    }
+
+    @DataProvider
     public static Object[][] clientBuildersWithDirect() {
         return clientBuildersWithDirectAllConsistencies(toArray(protocols));
     }
@@ -947,6 +952,26 @@ public class TestSuiteBase {
         List<Builder> builders = new ArrayList<>();
         builders.add(createGatewayRxDocumentClient(ConsistencyLevel.Session, isMultiMasterEnabled, preferredLocations));
 
+        for (Protocol protocol : protocols) {
+            testConsistencies.forEach(consistencyLevel -> builders.add(createDirectRxDocumentClient(consistencyLevel,
+                                                                                                    protocol,
+                                                                                                    isMultiMasterEnabled,
+                                                                                                    preferredLocations)));
+        }
+
+        builders.forEach(b -> logger.info("Will Use ConnectionMode [{}], Consistency [{}], Protocol [{}]",
+                                          b.connectionPolicy.getConnectionMode(),
+                                          b.desiredConsistencyLevel,
+                                          b.configs.getProtocol()
+        ));
+
+        return builders.stream().map(b -> new Object[]{b}).collect(Collectors.toList()).toArray(new Object[0][]);
+    }
+
+    private static Object[][] createOnlyDirect(List<ConsistencyLevel> testConsistencies, Protocol... protocols) {
+        boolean isMultiMasterEnabled = preferredLocations != null && accountConsistency == ConsistencyLevel.Session;
+
+        List<Builder> builders = new ArrayList<>();
         for (Protocol protocol : protocols) {
             testConsistencies.forEach(consistencyLevel -> builders.add(createDirectRxDocumentClient(consistencyLevel,
                                                                                                     protocol,

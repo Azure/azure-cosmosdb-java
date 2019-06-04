@@ -22,9 +22,6 @@
  */
 package com.microsoft.azure.cosmosdb.rx;
 
-import com.microsoft.azure.cosmosdb.ConnectionMode;
-import com.microsoft.azure.cosmosdb.ConnectionPolicy;
-import com.microsoft.azure.cosmosdb.ConsistencyLevel;
 import com.microsoft.azure.cosmosdb.Database;
 import com.microsoft.azure.cosmosdb.Document;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
@@ -33,21 +30,19 @@ import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.PartitionKey;
 import com.microsoft.azure.cosmosdb.RequestOptions;
 import com.microsoft.azure.cosmosdb.ResourceResponse;
+import com.microsoft.azure.cosmosdb.RetryAnalyzer;
 import com.microsoft.azure.cosmosdb.StoredProcedure;
 import com.microsoft.azure.cosmosdb.StoredProcedureResponse;
 import com.microsoft.azure.cosmosdb.internal.OperationType;
 import com.microsoft.azure.cosmosdb.internal.ResourceType;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.Protocol;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient.Builder;
-import com.microsoft.azure.cosmosdb.rx.internal.Configs;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
 import com.microsoft.azure.cosmosdb.rx.internal.SpyClientUnderTestFactory;
-import org.mockito.stubbing.Answer;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 import rx.Observable;
@@ -59,8 +54,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.spy;
 
 /**
  * The purpose of the tests in this class is to ensure the request are routed through direct connectivity stack.
@@ -75,28 +68,7 @@ public class DCDocumentCrudTest extends TestSuiteBase {
 
     private SpyClientUnderTestFactory.ClientWithGatewaySpy client;
 
-    @DataProvider
-    public static Object[][] directClientBuilder() {
-        return new Object[][] { { createDCBuilder(Protocol.Https) }, { createDCBuilder(Protocol.Tcp) } };
-    }
-
-    static Builder createDCBuilder(Protocol protocol) {
-
-        ConnectionPolicy connectionPolicy = new ConnectionPolicy();
-        connectionPolicy.setConnectionMode(ConnectionMode.Direct);
-
-        Configs configs = spy(new Configs());
-        doAnswer((Answer<Protocol>) invocation -> protocol).when(configs).getProtocol();
-
-        return new Builder()
-            .withServiceEndpoint(TestConfigurations.HOST)
-            .withConfigs(configs)
-            .withConnectionPolicy(connectionPolicy)
-            .withConsistencyLevel(ConsistencyLevel.Session)
-            .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY);
-    }
-
-    @Factory(dataProvider = "directClientBuilder")
+    @Factory(dataProvider = "clientBuildsForSessionOnlyDirect")
     public DCDocumentCrudTest(Builder clientBuilder) {
         this.clientBuilder = clientBuilder;
     }
@@ -214,7 +186,7 @@ public class DCDocumentCrudTest extends TestSuiteBase {
         validateNoDocumentOperationThroughGateway();
     }
 
-    @Test(groups = { "direct" }, timeOut = QUERY_TIMEOUT)
+    @Test(groups = { "direct" }, timeOut = QUERY_TIMEOUT, retryAnalyzer = RetryAnalyzer.class)
     public void crossPartitionQuery() {
 
         truncateCollection(createdCollection);
