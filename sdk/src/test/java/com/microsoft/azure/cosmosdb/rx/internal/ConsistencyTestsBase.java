@@ -358,7 +358,7 @@ public class ConsistencyTestsBase extends TestSuiteBase {
             Thread.sleep(1000);
             Resource updatedResource = null;
             if (resourceToWorkWith instanceof Document) {
-                updatedResource = this.writeClient.upsertDocument(createdCollection.getSelfLink(), writeResource, null, false).toBlocking().single().getResource();
+                updatedResource = this.writeClient.upsertDocument(createdCollection.getSelfLink(), writeResource, null, false).single().block().getResource();
             }
             assertThat(updatedResource.getTimestamp().after(sourceTimestamp)).isTrue();
             writeResource = updatedResource;

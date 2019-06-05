@@ -44,12 +44,11 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 import reactor.core.publisher.Flux;
-import rx.Observable;
 
 import java.lang.reflect.Method;
+import java.time.Duration;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.mockito.Matchers.anyObject;
@@ -70,7 +69,7 @@ public class RetryCreateDocumentTest extends TestSuiteBase {
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
     public void retryDocumentCreate() throws Exception {
         // create a document to ensure collection is cached
-        client.createDocument(collection.getSelfLink(),  getDocumentDefinition(), null, false).toBlocking().single();
+        client.createDocument(collection.getSelfLink(),  getDocumentDefinition(), null, false).single().block();
 
         Document docDefinition = getDocumentDefinition();
 
@@ -127,12 +126,12 @@ public class RetryCreateDocumentTest extends TestSuiteBase {
 
         // create a document to ensure collection is cached
         client.createDocument(collection.getSelfLink(),  getDocumentDefinition(), null, false)
-                .toBlocking()
-                .single();
+                .single()
+                .block();
 
         Document docDefinition = getDocumentDefinition();
 
-        Observable<ResourceResponse<Document>> createObservable = client
+        Flux<ResourceResponse<Document>> createObservable = client
                 .createDocument(collection.getSelfLink(), docDefinition, null, false);
 
         // validate
@@ -143,7 +142,7 @@ public class RetryCreateDocumentTest extends TestSuiteBase {
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
     public void createDocument_failImmediatelyOnNonRetriable() throws Exception {
         // create a document to ensure collection is cached
-        client.createDocument(collection.getSelfLink(),  getDocumentDefinition(), null, false).toBlocking().single();
+        client.createDocument(collection.getSelfLink(),  getDocumentDefinition(), null, false).single().block();
         AtomicInteger count = new AtomicInteger();
 
         doAnswer((Answer<Flux<RxDocumentServiceResponse>>) invocation -> {
@@ -165,12 +164,12 @@ public class RetryCreateDocumentTest extends TestSuiteBase {
 
         Document docDefinition = getDocumentDefinition();
 
-        Observable<ResourceResponse<Document>> createObservable = client
+        Flux<ResourceResponse<Document>> createObservable = client
                 .createDocument(collection.getSelfLink(), docDefinition, null, false);
         // validate
 
         FailureValidator validator = new FailureValidator.Builder().statusCode(1).subStatusCode(2).build();
-        validateFailure(createObservable.timeout(100, TimeUnit.MILLISECONDS), validator);
+        validateFailure(createObservable.timeout(Duration.ofMillis(100)), validator);
     }
     
     @BeforeMethod(groups = { "simple" })

@@ -2351,7 +2351,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
         return ObservableHelper.inlineIfPossibleAsObs(() -> updateMediaInternal(targetPath, mediaStream, options), this.resetSessionTokenRetryPolicy.getRequestPolicy());
     }
 
-    private Flux<MediaResponse> updateMediaInternal(String mediaLink, InputStream mediaStream, MediaOptions options) {
+    private Flux<MediaResponse> updateMediaInternal(String mediaLink, InputStream mediaStream, MediaOptions options) throws IOException {
         logger.debug("Updating a Media. mediaLink [{}]", mediaLink);
         Map<String, String> requestHeaders = this.getMediaHeaders(options);
         RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.Replace, ResourceType.Media,
@@ -2454,7 +2454,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
     }
 
     private Mono<RxDocumentServiceRequest> getAttachmentRequest(String documentLink, InputStream mediaStream,
-                                                                  MediaOptions options, RequestOptions requestOptions, OperationType operationType) {
+                                                                  MediaOptions options, RequestOptions requestOptions, OperationType operationType) throws IOException {
         if (StringUtils.isEmpty(documentLink)) {
             throw new IllegalArgumentException("documentLink");
         }
