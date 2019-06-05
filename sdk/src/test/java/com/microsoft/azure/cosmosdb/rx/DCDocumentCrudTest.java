@@ -68,7 +68,7 @@ import static org.mockito.Mockito.spy;
  */
 public class DCDocumentCrudTest extends TestSuiteBase {
 //    
-//    private final static int QUERY_TIMEOUT = 30000;
+//    private final static int QUERY_TIMEOUT = 40000;
 //    private final static String PARTITION_KEY_FIELD_NAME = "mypk";
 //
 //    private static Database createdDatabase;

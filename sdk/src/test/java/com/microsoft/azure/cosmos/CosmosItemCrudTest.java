@@ -50,7 +50,6 @@ public class CosmosItemCrudTest extends CosmosTestSuiteBase {
         CosmosContainer container = client.getDatabase(PRE_EXISTING_DATABASE_ID).getContainer(PRE_EXISTING_CONTAINER_ID);
         CosmosItemSettings itemDefinition = getItemDefinition();
         // create the item
-        System.out.println("itemDefinition = " + itemDefinition);
         Mono<CosmosItemResponse> createMono = container.createItem(itemDefinition, "mypk");
         
         // validate
@@ -80,7 +79,7 @@ public class CosmosItemCrudTest extends CosmosTestSuiteBase {
         CosmosContainer container = client.getDatabase(PRE_EXISTING_DATABASE_ID).getContainer(PRE_EXISTING_CONTAINER_ID);
         CosmosItemSettings itemDefinition = getItemDefinition();
         // create the item
-        CosmosItem item = container.createItem(itemDefinition, "mypk").block().getCosmosItem();
+        CosmosItem item = container.createItem(itemDefinition, "mypk").block().getItem();
         Mono<CosmosItemResponse> readMono = item.read();
 
         // validate
@@ -94,7 +93,7 @@ public class CosmosItemCrudTest extends CosmosTestSuiteBase {
         CosmosContainer container = client.getDatabase(PRE_EXISTING_DATABASE_ID).getContainer(PRE_EXISTING_CONTAINER_ID);
         CosmosItemSettings itemDefinition = getItemDefinition();
         // create the item
-        CosmosItem item = container.createItem(itemDefinition, "mypk").block().getCosmosItem();
+        CosmosItem item = container.createItem(itemDefinition, "mypk").block().getItem();
         Mono<CosmosItemResponse> deleteMono = item.delete();
         // validate
         CosmosResponseValidator<CosmosItemResponse>  validator = new CosmosResponseValidator.Builder<CosmosItemResponse>()

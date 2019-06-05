@@ -1,17 +1,17 @@
 /*
  * The MIT License (MIT)
  * Copyright (c) 2018 Microsoft Corporation
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -29,6 +29,7 @@ import java.util.Collection;
 import java.util.UUID;
 
 import com.microsoft.azure.cosmosdb.PartitionKeyDefinition;
+import com.microsoft.azure.cosmosdb.RetryAnalyzer;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -57,7 +58,7 @@ import com.microsoft.azure.cosmosdb.SpatialType;
 import reactor.core.publisher.Mono;
 
 public class CollectionCrudTest extends TestSuiteBase {
-    private static final int TIMEOUT = 30000;
+    private static final int TIMEOUT = 50000;
     private static final int SETUP_TIMEOUT = 20000;
     private static final int SHUTDOWN_TIMEOUT = 20000;
     private final String databaseId = CosmosDatabaseForTest.generateId();
@@ -104,7 +105,7 @@ public class CollectionCrudTest extends TestSuiteBase {
 
         CosmosResponseValidator<CosmosContainerResponse> validator = new CosmosResponseValidator.Builder<CosmosContainerResponse>()
                 .withId(collectionDefinition.getId()).build();
-        
+
         validateSuccess(createObservable, validator);
         safeDeleteAllCollections(database);
     }
@@ -137,17 +138,17 @@ public class CollectionCrudTest extends TestSuiteBase {
         compositePath5.setOrder(CompositePathSortOrder.Descending);
         CompositePath compositePath6 = new CompositePath();
         compositePath6.setPath("/path6");
-        
+
         ArrayList<CompositePath> compositeIndex1 = new ArrayList<CompositePath>();
         compositeIndex1.add(compositePath1);
         compositeIndex1.add(compositePath2);
         compositeIndex1.add(compositePath3);
-        
+
         ArrayList<CompositePath> compositeIndex2 = new ArrayList<CompositePath>();
         compositeIndex2.add(compositePath4);
         compositeIndex2.add(compositePath5);
         compositeIndex2.add(compositePath6);
-        
+
         Collection<ArrayList<CompositePath>> compositeIndexes = new ArrayList<ArrayList<CompositePath>>();
         compositeIndexes.add(compositeIndex1);
         compositeIndexes.add(compositeIndex2);
@@ -158,7 +159,7 @@ public class CollectionCrudTest extends TestSuiteBase {
                 SpatialType.LineString,
                 SpatialType.Polygon,
                 SpatialType.MultiPolygon
-                };
+        };
         Collection<SpatialSpec> spatialIndexes = new ArrayList<SpatialSpec>();
         for (int index = 0; index < 2; index++) {
             Collection<SpatialType> collectionOfSpatialTypes = new ArrayList<SpatialType>();
@@ -172,7 +173,7 @@ public class CollectionCrudTest extends TestSuiteBase {
             spec.setSpatialTypes(collectionOfSpatialTypes);
             spatialIndexes.add(spec);
         }
-        
+
         indexingPolicy.setSpatialIndexes(spatialIndexes);
 
         collection.setIndexingPolicy(indexingPolicy);
@@ -185,7 +186,7 @@ public class CollectionCrudTest extends TestSuiteBase {
                 .withCompositeIndexes(compositeIndexes)
                 .withSpatialIndexes(spatialIndexes)
                 .build();
-        
+
         validateSuccess(createObservable, validator);
         safeDeleteAllCollections(database);
     }
@@ -252,12 +253,12 @@ public class CollectionCrudTest extends TestSuiteBase {
         safeDeleteAllCollections(database);
     }
 
-    @Test(groups = { "emulator" }, timeOut = TIMEOUT)
+    @Test(groups = { "emulator" }, timeOut = 10 * TIMEOUT, retryAnalyzer = RetryAnalyzer.class)
     public void sessionTokenConsistencyCollectionDeleteCreateSameName() {
         CosmosClient client1 = clientBuilder.build();
         CosmosClient client2 = clientBuilder.build();
 
-        String dbId = "db";
+        String dbId = CosmosDatabaseForTest.generateId();
         String collectionId = "coll";
         CosmosDatabase db = null;
         try {

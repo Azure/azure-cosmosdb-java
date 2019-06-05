@@ -23,33 +23,52 @@
 
 package com.microsoft.azure.cosmosdb.benchmark;
 
-import com.microsoft.azure.cosmos.CosmosClient;
-import com.microsoft.azure.cosmos.CosmosDatabase;
-import com.microsoft.azure.cosmos.CosmosDatabaseResponse;
-import com.microsoft.azure.cosmos.CosmosDatabaseSettings;
-import com.microsoft.azure.cosmos.CosmosDatabaseForTest;
+/*
+ * The MIT License (MIT)
+ * Copyright (c) 2018 Microsoft Corporation
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+
 import com.microsoft.azure.cosmosdb.ConnectionPolicy;
 import com.microsoft.azure.cosmosdb.Database;
+import com.microsoft.azure.cosmosdb.DatabaseForTest;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.FeedResponse;
+import com.microsoft.azure.cosmosdb.ResourceResponse;
 import com.microsoft.azure.cosmosdb.RetryOptions;
 import com.microsoft.azure.cosmosdb.SqlQuerySpec;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import com.microsoft.azure.cosmosdb.rx.TestConfigurations;
-
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
+import rx.Observable;
 
 public class Utils {
-    public static CosmosClient housekeepingClient() {
+    public static AsyncDocumentClient housekeepingClient() {
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
         RetryOptions options = new RetryOptions();
         options.setMaxRetryAttemptsOnThrottledRequests(100);
         options.setMaxRetryWaitTimeInSeconds(60);
         connectionPolicy.setRetryOptions(options);
-        return new CosmosClient.Builder().endpoint(TestConfigurations.HOST)
-                .key(TestConfigurations.MASTER_KEY)
-                .connectionPolicy(connectionPolicy)
+        return new AsyncDocumentClient.Builder().withServiceEndpoint(TestConfigurations.HOST)
+                .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
+                .withConnectionPolicy(connectionPolicy)
                 .build();
     }
 
@@ -57,19 +76,19 @@ public class Utils {
         return "dbs/" + db.getId() + "/colls/" + collection;
     }
 
-    public static CosmosDatabase createDatabaseForTest(CosmosClient client) {
-        return CosmosDatabaseForTest.create(DatabaseManagerImpl.getInstance(client)).createdDatabase;
+    public static Database createDatabaseForTest(AsyncDocumentClient client) {
+        return DatabaseForTest.create(DatabaseManagerImpl.getInstance(client)).createdDatabase;
     }
 
-    public static void safeCleanDatabases(CosmosClient client) {
+    public static void safeCleanDatabases(AsyncDocumentClient client) {
         if (client != null) {
-            CosmosDatabaseForTest.cleanupStaleTestDatabases(DatabaseManagerImpl.getInstance(client));
+            DatabaseForTest.cleanupStaleTestDatabases(DatabaseManagerImpl.getInstance(client));
         }
     }
 
-    public static void safeClean(CosmosDatabase database) {
+    public static void safeClean(AsyncDocumentClient client, Database database) {
         if (database != null) {
-            database.delete().block();
+            safeClean(client, database.getId());
         }
     }
 
@@ -85,39 +104,40 @@ public class Utils {
     }
 
     public static String generateDatabaseId() {
-        return CosmosDatabaseForTest.generateId();
+        return DatabaseForTest.generateId();
     }
 
-    public static void safeClose(CosmosClient client) {
+    public static void safeClose(AsyncDocumentClient client) {
         if (client != null) {
             client.close();
         }
     }
 
-    private static class DatabaseManagerImpl implements CosmosDatabaseForTest.DatabaseManager {
-        public static DatabaseManagerImpl getInstance(CosmosClient client) {
+    private static class DatabaseManagerImpl implements DatabaseForTest.DatabaseManager {
+        public static DatabaseManagerImpl getInstance(AsyncDocumentClient client) {
             return new DatabaseManagerImpl(client);
         }
 
-        private final CosmosClient client;
+        private final AsyncDocumentClient client;
 
-        private DatabaseManagerImpl(CosmosClient client) {
+        private DatabaseManagerImpl(AsyncDocumentClient client) {
             this.client = client;
         }
 
         @Override
-        public Flux<FeedResponse<CosmosDatabaseSettings>> queryDatabases(SqlQuerySpec query) {
+        public Observable<FeedResponse<Database>> queryDatabases(SqlQuerySpec query) {
             return client.queryDatabases(query, null);
         }
 
         @Override
-        public Mono<CosmosDatabaseResponse> createDatabase(CosmosDatabaseSettings databaseDefinition) {
-            return client.createDatabase(databaseDefinition);
+        public Observable<ResourceResponse<Database>> createDatabase(Database databaseDefinition) {
+            return client.createDatabase(databaseDefinition, null);
         }
 
         @Override
-        public CosmosDatabase getDatabase(String id) {
-            return client.getDatabase(id);
+        public Observable<ResourceResponse<Database>> deleteDatabase(String id) {
+
+            return client.deleteDatabase("dbs/" + id, null);
         }
     }
 }

@@ -51,6 +51,14 @@ public class CosmosItemResponse extends CosmosResponse<CosmosItemSettings>{
      * Gets the CosmosItem
      * @return the cosmos item
      */
+    public CosmosItem getItem() {
+        return itemClient;
+    }
+
+    /**
+     * Gets the CosmosItem
+     * @return the cosmos item
+     */
     public CosmosItem getCosmosItem() {
         return itemClient;
     }

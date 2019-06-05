@@ -40,6 +40,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableList;
 import com.microsoft.azure.cosmosdb.DataType;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.IncludedPath;
@@ -56,6 +57,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import rx.Observable;
 
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
@@ -100,9 +102,9 @@ public class TestSuiteBase {
     private static final int DEFAULT_BULK_INSERT_CONCURRENCY_LEVEL = 500;
     private static final ObjectMapper objectMapper = new ObjectMapper();
     protected static Logger logger = LoggerFactory.getLogger(TestSuiteBase.class.getSimpleName());
-    protected static final int TIMEOUT = 8000;
-    protected static final int FEED_TIMEOUT = 12000;
-    protected static final int SETUP_TIMEOUT = 30000;
+    protected static final int TIMEOUT = 40000;
+    protected static final int FEED_TIMEOUT = 40000;
+    protected static final int SETUP_TIMEOUT = 60000;
     protected static final int SHUTDOWN_TIMEOUT = 12000;
 
     protected static final int SUITE_SETUP_TIMEOUT = 120000;
@@ -110,15 +112,28 @@ public class TestSuiteBase {
 
     protected static final int WAIT_REPLICA_CATCH_UP_IN_MILLIS = 4000;
 
-    protected int subscriberValidationTimeout = TIMEOUT;
-    
-    protected static ConsistencyLevel accountConsistency;
+    protected final static ConsistencyLevel accountConsistency;
+    protected static final ImmutableList<String> preferredLocations;
+    private static final ImmutableList<ConsistencyLevel> desiredConsistencies;
+    private static final ImmutableList<Protocol> protocols;
 
+    protected int subscriberValidationTimeout = TIMEOUT;
     protected Builder clientBuilder;
 
     protected static CosmosDatabase SHARED_DATABASE;
     protected static CosmosContainer SHARED_MULTI_PARTITION_COLLECTION;
     protected static CosmosContainer SHARED_MULTI_PARTITION_COLLECTION_WITH_COMPOSITE_AND_SPATIAL_INDEXES;
+    protected static CosmosContainer SHARED_SINGLE_PARTITION_COLLECTION;
+
+    static {
+        accountConsistency = parseConsistency(TestConfigurations.CONSISTENCY);
+        desiredConsistencies = immutableListOrNull(
+                ObjectUtils.defaultIfNull(parseDesiredConsistencies(TestConfigurations.DESIRED_CONSISTENCIES),
+                                          allEqualOrLowerConsistencies(accountConsistency)));
+        preferredLocations = immutableListOrNull(parsePreferredLocation(TestConfigurations.PREFERRED_LOCATIONS));
+        protocols = ObjectUtils.defaultIfNull(immutableListOrNull(parseProtocols(TestConfigurations.PROTOCOLS)),
+                                              ImmutableList.of(Protocol.Https, Protocol.Tcp));
+    }
 
     protected TestSuiteBase() {
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -128,7 +143,11 @@ public class TestSuiteBase {
         logger.debug("Initializing {} ...", this.getClass().getSimpleName());
     }
 
-    @BeforeMethod(groups = { "simple", "long", "direct", "multi-master", "emulator", "non-emulator" })
+    private static <T> ImmutableList<T> immutableListOrNull(List<T> list) {
+        return list != null ? ImmutableList.copyOf(list) : null;
+    }
+
+    @BeforeMethod(groups = {"simple", "long", "direct", "multi-master", "emulator", "non-emulator"})
     public void beforeMethod(Method method) {
         if (this.clientBuilder != null) {
             logger.info("Starting {}::{} using {} {} mode with {} consistency",
@@ -141,7 +160,7 @@ public class TestSuiteBase {
         logger.info("Starting {}::{}", method.getDeclaringClass().getSimpleName(), method.getName());
     }
 
-    @AfterMethod(groups = { "simple", "long", "direct", "multi-master", "emulator", "non-emulator" })
+    @AfterMethod(groups = {"simple", "long", "direct", "multi-master", "emulator", "non-emulator"})
     public void afterMethod(Method m) {
         Test t = m.getAnnotation(Test.class);
         logger.info("Finished {}:{}.", m.getDeclaringClass().getSimpleName(), m.getName());
@@ -174,7 +193,7 @@ public class TestSuiteBase {
         }
     }
 
-    @BeforeSuite(groups = { "simple", "long", "direct", "multi-master", "emulator", "non-emulator" }, timeOut = SUITE_SETUP_TIMEOUT)
+    @BeforeSuite(groups = {"simple", "long", "direct", "multi-master", "emulator", "non-emulator"}, timeOut = SUITE_SETUP_TIMEOUT)
     public static void beforeSuite() {
         logger.info("beforeSuite Started");
         CosmosClient houseKeepingClient = createGatewayHouseKeepingDocumentClient().build();
@@ -186,7 +205,7 @@ public class TestSuiteBase {
         SHARED_MULTI_PARTITION_COLLECTION_WITH_COMPOSITE_AND_SPATIAL_INDEXES = createCollection(SHARED_DATABASE, getCollectionDefinitionMultiPartitionWithCompositeAndSpatialIndexes(), options);
     }
 
-    @AfterSuite(groups = { "simple", "long", "direct", "multi-master", "emulator", "non-emulator" }, timeOut = SUITE_SHUTDOWN_TIMEOUT)
+    @AfterSuite(groups = {"simple", "long", "direct", "multi-master", "emulator", "non-emulator"}, timeOut = SUITE_SHUTDOWN_TIMEOUT)
     public static void afterSuite() {
         logger.info("afterSuite Started");
         CosmosClient houseKeepingClient = createGatewayHouseKeepingDocumentClient().build();
@@ -654,12 +673,24 @@ public class TestSuiteBase {
         }
     }
 
+    static protected void safeCloseAsync(CosmosClient client) {
+        if (client != null) {
+            new Thread(() -> {
+                try {
+                    client.close();
+                } catch (Exception e) {
+                    logger.error("failed to close client", e);
+                }
+            }).start();
+        }
+    }
+
     static protected void safeClose(CosmosClient client) {
         if (client != null) {
             try {
                 client.close();
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("failed to close client", e);
             }
         }
     }
@@ -808,15 +839,15 @@ public class TestSuiteBase {
 
     @DataProvider
     public static Object[][] clientBuilders() {
-        return new Object[][] { { createGatewayRxDocumentClient(ConsistencyLevel.Session, false, null) } };
+        return new Object[][]{{createGatewayRxDocumentClient(ConsistencyLevel.Session, false, null)}};
     }
 
     @DataProvider
     public static Object[][] clientBuildersWithSessionConsistency() {
-        return new Object[][] {
-                { createGatewayRxDocumentClient(ConsistencyLevel.Session, false, null) },
-                { createDirectRxDocumentClient(ConsistencyLevel.Session, Protocol.Https, false, null) },
-                { createDirectRxDocumentClient(ConsistencyLevel.Session, Protocol.Tcp, false, null) }
+        return new Object[][]{
+                {createGatewayRxDocumentClient(ConsistencyLevel.Session, false, null)},
+                {createDirectRxDocumentClient(ConsistencyLevel.Session, Protocol.Https, false, null)},
+                {createDirectRxDocumentClient(ConsistencyLevel.Session, Protocol.Tcp, false, null)}
         };
     }
 
@@ -833,22 +864,37 @@ public class TestSuiteBase {
         throw new IllegalStateException("Invalid configured test consistency " + consistency);
     }
 
-    private static List<String> parsePreferredLocation(String preferredLocations) {
+    static List<String> parsePreferredLocation(String preferredLocations) {
         if (StringUtils.isEmpty(preferredLocations)) {
             return null;
         }
 
         try {
-            return objectMapper.readValue(preferredLocations, new TypeReference<List<String>>(){});
+            return objectMapper.readValue(preferredLocations, new TypeReference<List<String>>() {
+            });
         } catch (Exception e) {
             logger.error("Invalid configured test preferredLocations [{}].", preferredLocations);
             throw new IllegalStateException("Invalid configured test preferredLocations " + preferredLocations);
         }
     }
 
+    static List<Protocol> parseProtocols(String protocols) {
+        if (StringUtils.isEmpty(protocols)) {
+            return null;
+        }
+
+        try {
+            return objectMapper.readValue(protocols, new TypeReference<List<Protocol>>() {
+            });
+        } catch (Exception e) {
+            logger.error("Invalid configured test protocols [{}].", protocols);
+            throw new IllegalStateException("Invalid configured test protocols " + protocols);
+        }
+    }
+
     @DataProvider
     public static Object[][] simpleClientBuildersWithDirect() {
-        return simpleClientBuildersWithDirect(Protocol.Https, Protocol.Tcp);
+        return simpleClientBuildersWithDirect(toArray(protocols));
     }
 
     @DataProvider
@@ -856,31 +902,11 @@ public class TestSuiteBase {
         return simpleClientBuildersWithDirect(Protocol.Https);
     }
 
-    @DataProvider
-    public static Object[][] simpleClientBuildersWithDirectTcp() {
-        return simpleClientBuildersWithDirect(Protocol.Tcp);
-    }
-
     private static Object[][] simpleClientBuildersWithDirect(Protocol... protocols) {
-
-        accountConsistency = parseConsistency(TestConfigurations.CONSISTENCY);
         logger.info("Max test consistency to use is [{}]", accountConsistency);
-        List<ConsistencyLevel> testConsistencies = new ArrayList<>();
-
-        switch (accountConsistency) {
-            case Strong:
-            case BoundedStaleness:
-            case Session:
-            case ConsistentPrefix:
-            case Eventual:
-                testConsistencies.add(ConsistencyLevel.Eventual);
-                break;
-            default:
-                throw new IllegalStateException("Invalid configured test consistency " + accountConsistency);
-        }
-
-        List<String> preferredLocation = parsePreferredLocation(TestConfigurations.PREFERRED_LOCATIONS);
-        boolean isMultiMasterEnabled = preferredLocation != null && accountConsistency == ConsistencyLevel.Session;
+        List<ConsistencyLevel> testConsistencies = ImmutableList.of(ConsistencyLevel.Eventual);
+        
+        boolean isMultiMasterEnabled = preferredLocations != null && accountConsistency == ConsistencyLevel.Session;
 
         List<Builder> cosmosConfigurations = new ArrayList<>();
         cosmosConfigurations.add(createGatewayRxDocumentClient(ConsistencyLevel.Session, false, null));
@@ -889,7 +915,7 @@ public class TestSuiteBase {
             testConsistencies.forEach(consistencyLevel -> cosmosConfigurations.add(createDirectRxDocumentClient(consistencyLevel,
                                                                                                     protocol,
                                                                                                     isMultiMasterEnabled,
-                                                                                                    preferredLocation)));
+                                                                                                    preferredLocations)));
         }
 
         cosmosConfigurations.forEach(c -> logger.info("Will Use ConnectionMode [{}], Consistency [{}], Protocol [{}]",
@@ -903,7 +929,7 @@ public class TestSuiteBase {
 
     @DataProvider
     public static Object[][] clientBuildersWithDirect() {
-        return clientBuildersWithDirectAllConsistencies(Protocol.Https, Protocol.Tcp);
+        return clientBuildersWithDirectAllConsistencies(toArray(protocols));
     }
 
     @DataProvider
@@ -912,25 +938,41 @@ public class TestSuiteBase {
     }
 
     @DataProvider
-    public static Object[][] clientBuildersWithDirectTcp() {
-        return clientBuildersWithDirectAllConsistencies(Protocol.Tcp);
+    public static Object[][] clientBuildersWithDirectSession() {
+        return clientBuildersWithDirectSession(toArray(protocols));
     }
 
-    @DataProvider
-    public static Object[][] clientBuildersWithDirectSession() {
-        return clientBuildersWithDirectSession(Protocol.Https, Protocol.Tcp);
+    static Protocol[] toArray(List<Protocol> protocols) {
+        return protocols.toArray(new Protocol[protocols.size()]);
     }
-    
+
     private static Object[][] clientBuildersWithDirectSession(Protocol... protocols) {
-        return clientBuildersWithDirect(new ArrayList<ConsistencyLevel>(){{add(ConsistencyLevel.Session);}} , protocols);
+        return clientBuildersWithDirect(new ArrayList<ConsistencyLevel>() {{
+            add(ConsistencyLevel.Session);
+        }}, protocols);
     }
 
     private static Object[][] clientBuildersWithDirectAllConsistencies(Protocol... protocols) {
-        accountConsistency = parseConsistency(TestConfigurations.CONSISTENCY);
         logger.info("Max test consistency to use is [{}]", accountConsistency);
-        List<ConsistencyLevel> testConsistencies = new ArrayList<>();
+        return clientBuildersWithDirect(desiredConsistencies, protocols);
+    }
 
-        /*
+    static List<ConsistencyLevel> parseDesiredConsistencies(String consistencies) {
+        if (StringUtils.isEmpty(consistencies)) {
+            return null;
+        }
+
+        try {
+            return objectMapper.readValue(consistencies, new TypeReference<List<ConsistencyLevel>>() {
+            });
+        } catch (Exception e) {
+            logger.error("Invalid consistency test desiredConsistencies [{}].", consistencies);
+            throw new IllegalStateException("Invalid configured test desiredConsistencies " + consistencies);
+        }
+    }
+
+    static List<ConsistencyLevel> allEqualOrLowerConsistencies(ConsistencyLevel accountConsistency) {
+        List<ConsistencyLevel> testConsistencies = new ArrayList<>();
         switch (accountConsistency) {
         
             case Strong:
@@ -947,25 +989,20 @@ public class TestSuiteBase {
             default:
                 throw new IllegalStateException("Invalid configured test consistency " + accountConsistency);
         }
-        */
-        testConsistencies.add(ConsistencyLevel.Session);
-        
-        return clientBuildersWithDirect(testConsistencies, protocols);
+        return testConsistencies;
     }
-    
-    private static Object[][] clientBuildersWithDirect(List<ConsistencyLevel> testConsistencies, Protocol... protocols) {
 
-        List<String> preferredLocation = parsePreferredLocation(TestConfigurations.PREFERRED_LOCATIONS);
-        boolean isMultiMasterEnabled = preferredLocation != null && accountConsistency == ConsistencyLevel.Session;
+    private static Object[][] clientBuildersWithDirect(List<ConsistencyLevel> testConsistencies, Protocol... protocols) {
+        boolean isMultiMasterEnabled = preferredLocations != null && accountConsistency == ConsistencyLevel.Session;
 
         List<Builder> cosmosConfigurations = new ArrayList<>();
-        cosmosConfigurations.add(createGatewayRxDocumentClient(ConsistencyLevel.Session, isMultiMasterEnabled, preferredLocation));
+        cosmosConfigurations.add(createGatewayRxDocumentClient(ConsistencyLevel.Session, isMultiMasterEnabled, preferredLocations));
 
         for (Protocol protocol : protocols) {
             testConsistencies.forEach(consistencyLevel -> cosmosConfigurations.add(createDirectRxDocumentClient(consistencyLevel,
                                                                                                     protocol,
                                                                                                     isMultiMasterEnabled,
-                                                                                                    preferredLocation)));
+                                                                                                    preferredLocations)));
         }
 
         cosmosConfigurations.forEach(c -> logger.info("Will Use ConnectionMode [{}], Consistency [{}], Protocol [{}]",
