@@ -21,35 +21,23 @@
  * SOFTWARE.
  */
 
-
 package com.microsoft.azure.cosmosdb;
 
-import com.microsoft.azure.cosmosdb.rx.TestConfigurations;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.testng.ITestResult;
-import org.testng.util.RetryAnalyzerCount;
+import org.testng.IAnnotationTransformer;
+import org.testng.IRetryAnalyzer;
+import org.testng.annotations.ITestAnnotation;
 
-import java.util.concurrent.TimeUnit;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 
-public class RetryAnalyzer extends RetryAnalyzerCount {
-    private final Logger logger = LoggerFactory.getLogger(RetryAnalyzer.class);
-    private final int waitBetweenRetriesInSeconds = 180;
-
-    public RetryAnalyzer() {
-        this.setCount(Integer.parseInt(TestConfigurations.MAX_RETRY_LIMIT));
+public class RetryListener implements IAnnotationTransformer {
+    public RetryListener() {
     }
-
     @Override
-    public boolean retryMethod(ITestResult result) {
-        System.out.println("Retry Remaining #" + getCount() + " for test: " + result.getMethod().getMethodName() + ", on thread: " + Thread.currentThread().getName());
-
-        try {
-            TimeUnit.SECONDS.sleep(waitBetweenRetriesInSeconds);
-        } catch (InterruptedException e) {
-            return false;
+    public void transform(ITestAnnotation annotation, Class testClass, Constructor testConstructor, Method testMethod) {
+        IRetryAnalyzer retry = annotation.getRetryAnalyzer();
+        if (retry == null)    {
+            annotation.setRetryAnalyzer(RetryAnalyzer.class);
         }
-
-        return true;
     }
 }
