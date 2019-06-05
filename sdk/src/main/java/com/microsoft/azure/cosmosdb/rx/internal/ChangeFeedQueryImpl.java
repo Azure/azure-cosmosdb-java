@@ -143,14 +143,13 @@ class ChangeFeedQueryImpl<T extends Resource> {
 
         BiFunction<String, Integer, RxDocumentServiceRequest> createRequestFunc = this::createDocumentServiceRequest;
 
-        // TODO: clean up if we want to use single vs observable.
-        Function<RxDocumentServiceRequest, Flux<FeedResponse<T>>> executeFunc = request -> this.executeRequestAsync(request).flux();
+        Function<RxDocumentServiceRequest, Flux<FeedResponse<T>>> executeFunc = this::executeRequestAsync;
 
         return Paginator.getPaginatedChangeFeedQueryResultAsObservable(options, createRequestFunc, executeFunc, klass, options.getMaxItemCount() != null ? options.getMaxItemCount(): -1);
     }
 
-    private Mono<FeedResponse<T>> executeRequestAsync(RxDocumentServiceRequest request) {
-        return client.readFeed(request).single()
+    private Flux<FeedResponse<T>> executeRequestAsync(RxDocumentServiceRequest request) {
+        return client.readFeed(request)
                 .map( rsp -> BridgeInternal.toChaneFeedResponsePage(rsp, klass));
     }
 }

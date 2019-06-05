@@ -48,9 +48,6 @@ import org.mockito.Mockito;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import reactor.core.publisher.Mono;
-import rx.Completable;
-import rx.Single;
-import rx.functions.Action0;
 
 import java.net.URL;
 import java.util.ArrayList;
