@@ -35,7 +35,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 
 public class ErrorUtils {
-    private static final Logger logger = LoggerFactory.getLogger(TransportClient.class);
+    private static final Logger logger = LoggerFactory.getLogger(ErrorUtils.class);
 
     static Mono<String> getErrorResponseAsync(HttpResponse responseMessage, HttpRequest request) {
         Mono<String> responseAsString = responseMessage.bodyAsString(StandardCharsets.UTF_8);

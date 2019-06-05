@@ -28,7 +28,6 @@ import com.microsoft.azure.cosmosdb.internal.directconnectivity.HttpTransportCli
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.ReactorTransportClient;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.ServerStoreModel;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.StoreClient;
-import com.microsoft.azure.cosmosdb.internal.directconnectivity.TransportClient;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentClientImpl;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient;
@@ -73,11 +72,6 @@ public class ReflectionUtils {
     public static ReactorTransportClient getTransportClient(RxDocumentClientImpl client) {
         StoreClient storeClient = getStoreClient(client);
         return get(ReactorTransportClient.class, storeClient, "transportClient");
-    }
-
-    public static void setTransportClient(RxDocumentClientImpl client, TransportClient transportClient) {
-        StoreClient storeClient = getStoreClient(client);
-        set(storeClient, transportClient, "transportClient");
     }
 
     public static HttpClient getDirectHttpsHttpClient(RxDocumentClientImpl client) {
