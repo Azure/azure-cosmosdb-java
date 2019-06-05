@@ -79,6 +79,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.SubStatusCodes;
@@ -94,17 +95,18 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
     private final CompletableFuture<RntbdContext> contextFuture = new CompletableFuture<>();
     private final CompletableFuture<RntbdContextRequest> contextRequestFuture = new CompletableFuture<>();
     private final ConcurrentHashMap<Long, RntbdRequestRecord> pendingRequests;
+    private final int pendingRequestLimit;
 
     private boolean closingExceptionally = false;
-    private ChannelHandlerContext context;
     private RntbdRequestRecord pendingRequest;
     private CoalescingBufferQueue pendingWrites;
 
     // endregion
 
     public RntbdRequestManager(int capacity) {
-        checkState(capacity > 0);
+        checkArgument(capacity > 0, "capacity: %s", capacity);
         this.pendingRequests = new ConcurrentHashMap<>(capacity);
+        this.pendingRequestLimit = capacity;
     }
 
     // region ChannelHandler methods
@@ -141,7 +143,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
      */
     @Override
     public void channelActive(final ChannelHandlerContext context) {
-        this.traceOperation(this.context, "channelActive");
+        this.traceOperation(context, "channelActive");
         context.fireChannelActive();
     }
 
@@ -154,7 +156,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
      */
     @Override
     public void channelInactive(final ChannelHandlerContext context) {
-        this.traceOperation(this.context, "channelInactive");
+        this.traceOperation(context, "channelInactive");
         context.fireChannelInactive();
     }
 
@@ -213,12 +215,8 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
         this.traceOperation(context, "channelRegistered");
 
-        if (!(this.context == null && this.pendingWrites == null)) {
-            throw new IllegalStateException();
-        }
-
+        checkState(this.pendingWrites == null, "pendingWrites: %s", this.pendingWrites);
         this.pendingWrites = new CoalescingBufferQueue(context.channel());
-        this.context = context;
 
         context.fireChannelRegistered();
     }
@@ -233,13 +231,9 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
         this.traceOperation(context, "channelUnregistered");
 
-        if (this.context == null || this.pendingWrites == null) {
-            throw new IllegalStateException();
-        }
-
+        checkState(this.pendingWrites != null, "pendingWrites: null");
         this.completeAllPendingRequestsExceptionally(context, ClosedWithPendingRequestsException.INSTANCE);
         this.pendingWrites = null;
-        this.context = null;
 
         context.fireChannelUnregistered();
     }
@@ -302,7 +296,6 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         this.traceOperation(context, "userEventTriggered", event);
 
         try {
-
             if (event instanceof RntbdContext) {
                 this.contextFuture.complete((RntbdContext)event);
                 this.removeContextNegotiatorAndFlushPendingWrites(context);
@@ -464,9 +457,9 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         return this.contextFuture.getNow(null) != null;
     }
 
-    boolean isServiceable(int capacity) {
-        final int pendingRequestLimit = this.hasRntbdContext() ? capacity : 1;
-        return this.pendingRequests.size() < pendingRequestLimit;
+    boolean isServiceable(final int demand) {
+        final int limit = this.hasRntbdContext() ? this.pendingRequestLimit : Math.min(this.pendingRequestLimit, demand);
+        return this.pendingRequests.size() < limit;
     }
 
     void pendWrite(final ByteBuf out, final ChannelPromise promise) {

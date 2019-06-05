@@ -36,7 +36,6 @@ SOFTWARE.
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <test.groups>unit</test.groups>
     <cosmosdb-sdk.version>2.4.5</cosmosdb-sdk.version>
-    <commons-collections4.version>4.3</commons-collections4.version>
     <guava.version>27.0.1-jre</guava.version>
     <metrics.version>4.0.5</metrics.version>
   </properties>

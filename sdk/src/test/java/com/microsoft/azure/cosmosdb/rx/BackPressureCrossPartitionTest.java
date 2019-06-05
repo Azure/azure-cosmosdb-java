@@ -196,7 +196,7 @@ public class BackPressureCrossPartitionTest extends TestSuiteBase {
         }
     }
 
-    @BeforeClass(groups = { "long" }, timeOut = SETUP_TIMEOUT)
+    @BeforeClass(groups = { "long" }, timeOut = 2 * SETUP_TIMEOUT)
     public void beforeClass() {
         RequestOptions options = new RequestOptions();
         options.setOfferThroughput(20000);
