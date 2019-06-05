@@ -458,7 +458,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
     }
 
     boolean isServiceable(int capacity) {
-        final int pendingRequestLimit = this.hasRntbdContext() ? capacity : 1;
+        final int pendingRequestLimit = this.hasRntbdContext() ? capacity : Math.min(capacity, 5);
         return this.pendingRequests.size() < pendingRequestLimit;
     }
 
