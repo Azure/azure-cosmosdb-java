@@ -33,8 +33,11 @@ import java.util.stream.Collectors;
 
 public class CosmosItemSettings extends Resource {
 
-    private static final ObjectMapper mapper = Utils.getSimpleObjectMapper();
+    final static ObjectMapper mapper = Utils.getSimpleObjectMapper();
 
+
+    public CosmosItemSettings() {}
+    
     /**
      * Initialize a CosmosItemSettings object from json string.
      *
@@ -44,16 +47,26 @@ public class CosmosItemSettings extends Resource {
         super(jsonString);
     }
 
+    
+    /**
+     * Initialize an CosmosItemSettings object from json string.
+     *
+     * @param jsonString the json string that represents the item object.
+     * @param objectMapper the custom object mapper
+     */
+    public CosmosItemSettings(String jsonString, ObjectMapper objectMapper) {
+        super(jsonString, objectMapper);
+    }
+
     /**
      * fromObject retuns Document for compatibility with V2 sdk
-     *
      * @param cosmosItem
      * @return
      */
     static Document fromObject(Object cosmosItem) {
         Document typedItem;
         if (cosmosItem instanceof CosmosItemSettings) {
-            typedItem = new Document(((CosmosItemSettings) cosmosItem).toJson());
+            typedItem = new Document(((CosmosItemSettings)cosmosItem).toJson());
         } else {
             try {
                 return new Document(CosmosItemSettings.mapper.writeValueAsString(cosmosItem));

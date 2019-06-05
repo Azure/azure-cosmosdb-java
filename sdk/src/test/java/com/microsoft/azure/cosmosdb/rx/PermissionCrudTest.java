@@ -43,6 +43,7 @@ import javax.net.ssl.SSLException;
 
 public class PermissionCrudTest extends TestSuiteBase {
 
+    /*
     private Database createdDatabase;
     private User createdUser;
 
@@ -227,4 +228,5 @@ public class PermissionCrudTest extends TestSuiteBase {
     private String getUserLink() {
         return createdUser.getSelfLink();
     }
+    */
 }

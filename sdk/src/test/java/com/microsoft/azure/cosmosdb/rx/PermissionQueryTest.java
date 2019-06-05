@@ -29,12 +29,12 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import com.microsoft.azure.cosmosdb.DatabaseForTest;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
+import com.microsoft.azure.cosmos.CosmosDatabaseForTest;
 import com.microsoft.azure.cosmosdb.Database;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
@@ -50,6 +50,7 @@ import javax.net.ssl.SSLException;
 
 public class PermissionQueryTest extends TestSuiteBase {
 
+    /*
     public final String databaseId = DatabaseForTest.generateId();
 
     private Database createdDatabase;
@@ -198,4 +199,5 @@ public class PermissionQueryTest extends TestSuiteBase {
     private String getUserId() {
         return createdUser.getId();
     }
+    */
 }

@@ -56,6 +56,7 @@ import rx.observers.TestSubscriber;
 
 public class SinglePartitionDocumentQueryTest extends TestSuiteBase {
 
+    /*
     private Database createdDatabase;
     private DocumentCollection createdCollection;
     private List<Document> createdDocuments = new ArrayList<>();
@@ -367,4 +368,5 @@ public class SinglePartitionDocumentQueryTest extends TestSuiteBase {
                 , uuid, cnt, uuid));
         return doc;
     }
+    */
 }

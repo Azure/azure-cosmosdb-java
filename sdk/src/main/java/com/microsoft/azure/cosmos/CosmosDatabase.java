@@ -281,6 +281,55 @@ public class CosmosDatabase extends CosmosResource {
     public CosmosContainer getContainer(String id) {
         return new CosmosContainer(id, this);
     }
+    
+    /** User operations **/
+
+    public Mono<CosmosUserResponse> createUser(CosmosUserSettings settings) {
+        return this.createUser(settings, null);
+    }
+
+    public  Mono<CosmosUserResponse> createUser(CosmosUserSettings settings, RequestOptions options){
+        return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(getDocClientWrapper().createUser(this.getLink(),
+                settings.getV2User(), options).map(response ->
+                new CosmosUserResponse(response, this)).toSingle())); 
+    }
+
+    public Mono<CosmosUserResponse> upsertUser(CosmosUserSettings settings) {
+        return this.upsertUser(settings, null);
+    }
+
+    public Mono<CosmosUserResponse> upsertUser(CosmosUserSettings settings, RequestOptions options){
+        return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(getDocClientWrapper().upsertUser(this.getLink(),
+                settings.getV2User(), options).map(response ->
+                new CosmosUserResponse(response, this)).toSingle()));
+    }
+
+    public Flux<FeedResponse<CosmosUserSettings>> listUsers(FeedOptions options) {
+        //TODO:
+        return RxJava2Adapter.flowableToFlux(RxJavaInterop.toV2Flowable(getDocClientWrapper().readUsers(getLink(), options)
+                .map(response-> BridgeInternal.createFeedResponse(CosmosUserSettings.getFromV2Results(response.getResults()),
+                        response.getResponseHeaders()))));
+    }
+
+    public Flux<FeedResponse<CosmosUserSettings>> listUsers() {
+        return listUsers(new FeedOptions());
+    }
+
+    public Flux<FeedResponse<CosmosUserSettings>> queryUsers(String query, FeedOptions options){
+        return queryUsers(new SqlQuerySpec(query), options);
+    }
+
+    public Flux<FeedResponse<CosmosUserSettings>> queryUsers(SqlQuerySpec querySpec, FeedOptions options){
+        return RxJava2Adapter.flowableToFlux(RxJavaInterop.toV2Flowable(getDocClientWrapper().queryUsers(getLink(), querySpec,
+                                                                                                options)
+                .map(response-> BridgeInternal.createFeedResponse(
+                        CosmosUserSettings.getFromV2Results(response.getResults()),
+                        response.getResponseHeaders()))));
+    }
+
+    public CosmosUser getUser(String id) {
+        return new CosmosUser(id, this);
+    }
 
     CosmosClient getClient() {
         return client;

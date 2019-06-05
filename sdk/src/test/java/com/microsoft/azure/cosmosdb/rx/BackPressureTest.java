@@ -50,6 +50,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class BackPressureTest extends TestSuiteBase {
 
+    /*
     private static final int TIMEOUT = 200000;
     private static final int SETUP_TIMEOUT = 60000;
 
@@ -217,4 +218,5 @@ public class BackPressureTest extends TestSuiteBase {
                 , uuid, cnt, uuid));
         return doc;
     }
+    */
 }

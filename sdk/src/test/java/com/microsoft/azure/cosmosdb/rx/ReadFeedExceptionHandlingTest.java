@@ -27,25 +27,26 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
 
+import com.microsoft.azure.cosmos.CosmosClient;
+import com.microsoft.azure.cosmos.CosmosDatabaseSettings;
 import com.microsoft.azure.cosmosdb.BridgeInternal;
 import org.mockito.Mockito;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
-import com.microsoft.azure.cosmosdb.BridgeUtils;
-import com.microsoft.azure.cosmosdb.Database;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 
-import rx.Observable;
-import rx.Subscriber;
-
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 public class ReadFeedExceptionHandlingTest extends TestSuiteBase {
 
-    public class ExceptionSubscriber extends Subscriber<FeedResponse<Database>> {
+    public class ExceptionSubscriber implements Subscriber<FeedResponse<CosmosDatabaseSettings>> {
 
         public int onNextCount;
         CountDownLatch latch = new CountDownLatch(1);
@@ -54,7 +55,7 @@ public class ReadFeedExceptionHandlingTest extends TestSuiteBase {
         }
 
         @Override
-        public void onCompleted() {
+        public void onComplete() {
             latch.countDown();
         }
 
@@ -67,38 +68,45 @@ public class ReadFeedExceptionHandlingTest extends TestSuiteBase {
         }
 
         @Override
-        public void onNext(FeedResponse<Database> page) {
+        public void onNext(FeedResponse<CosmosDatabaseSettings> page) {
+            System.out.println("size:" + page.getResults().size());
             assertThat(page.getResults().size()).isEqualTo(2);
             onNextCount ++;
         }
+
+        @Override
+        public void onSubscribe(Subscription arg0) {
+            // TODO Auto-generated method stub
+            
+        }
     }
 
-    private AsyncDocumentClient client;
+    private CosmosClient client;
 
     @Factory(dataProvider = "clientBuildersWithDirect")
-    public ReadFeedExceptionHandlingTest(AsyncDocumentClient.Builder clientBuilder) {
+    public ReadFeedExceptionHandlingTest(CosmosClient.Builder clientBuilder) {
         this.clientBuilder = clientBuilder;
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
     public void readFeedException() throws Exception {
 
-        ArrayList<Database> dbs = new ArrayList<Database>();
-        dbs.add(new Database());
-        dbs.add(new Database());
+        ArrayList<CosmosDatabaseSettings> dbs = new ArrayList<CosmosDatabaseSettings>();
+        dbs.add(new CosmosDatabaseSettings("db1"));
+        dbs.add(new CosmosDatabaseSettings("db2"));
 
-        ArrayList<FeedResponse<Database>> frps = new ArrayList<FeedResponse<Database>>();
+        ArrayList<FeedResponse<CosmosDatabaseSettings>> frps = new ArrayList<FeedResponse<CosmosDatabaseSettings>>();
         frps.add(BridgeInternal.createFeedResponse(dbs, null));
         frps.add(BridgeInternal.createFeedResponse(dbs, null));
 
-        Observable<FeedResponse<Database>> response = Observable.from(frps)
-                                                                    .concatWith(Observable.error(new DocumentClientException(0)))
-                                                                    .concatWith(Observable.from(frps));
+        Flux<FeedResponse<CosmosDatabaseSettings>> response = Flux.fromIterable(frps)
+                                                                    .concatWith(Flux.error(new DocumentClientException(0)))
+                                                                    .concatWith(Flux.fromIterable(frps));
 
-        final AsyncDocumentClient mockClient = Mockito.spy(client);
-        Mockito.when(mockClient.readDatabases(null)).thenReturn(response);
+        final CosmosClient mockClient = Mockito.spy(client);
+        Mockito.when(mockClient.listDatabases(null)).thenReturn(response);
         ExceptionSubscriber subscriber = new ExceptionSubscriber();
-        mockClient.readDatabases(null).subscribe(subscriber);
+        mockClient.listDatabases(null).subscribe(subscriber);
         subscriber.latch.await();
         assertThat(subscriber.onNextCount).isEqualTo(2);
     }

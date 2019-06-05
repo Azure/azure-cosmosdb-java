@@ -32,27 +32,26 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
+import com.microsoft.azure.cosmos.CosmosClient;
+import com.microsoft.azure.cosmos.CosmosContainer;
+import com.microsoft.azure.cosmos.CosmosRequestOptions;
+import com.microsoft.azure.cosmos.CosmosUserDefinedFunctionSettings;
 import com.microsoft.azure.cosmosdb.Database;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
-import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
-import com.microsoft.azure.cosmosdb.UserDefinedFunction;
 
-import rx.Observable;
-
-import javax.net.ssl.SSLException;
+import reactor.core.publisher.Flux;
 
 public class ReadFeedUdfsTest extends TestSuiteBase {
 
     private Database createdDatabase;
-    private DocumentCollection createdCollection;
-    private List<UserDefinedFunction> createdUserDefinedFunctions = new ArrayList<>();
+    private CosmosContainer createdCollection;
+    private List<CosmosUserDefinedFunctionSettings> createdUserDefinedFunctions = new ArrayList<>();
 
-    private AsyncDocumentClient client;
+    private CosmosClient client;
 
     @Factory(dataProvider = "clientBuildersWithDirect")
-    public ReadFeedUdfsTest(AsyncDocumentClient.Builder clientBuilder) {
+    public ReadFeedUdfsTest(CosmosClient.Builder clientBuilder) {
         this.clientBuilder = clientBuilder;
     }
 
@@ -62,19 +61,19 @@ public class ReadFeedUdfsTest extends TestSuiteBase {
         FeedOptions options = new FeedOptions();
         options.setMaxItemCount(2);
 
-        Observable<FeedResponse<UserDefinedFunction>> feedObservable = client.readUserDefinedFunctions(getCollectionLink(), options);
+        Flux<FeedResponse<CosmosUserDefinedFunctionSettings>> feedObservable = createdCollection.listUserDefinedFunctions(options);
 
         int expectedPageSize = (createdUserDefinedFunctions.size() + options.getMaxItemCount() - 1) / options.getMaxItemCount();
 
-        FeedResponseListValidator<UserDefinedFunction> validator = new FeedResponseListValidator
-                .Builder<UserDefinedFunction>()
+        FeedResponseListValidator<CosmosUserDefinedFunctionSettings> validator = new FeedResponseListValidator
+                .Builder<CosmosUserDefinedFunctionSettings>()
                 .totalSize(createdUserDefinedFunctions.size())
                 .exactlyContainsInAnyOrder(createdUserDefinedFunctions
                         .stream()
                         .map(d -> d.getResourceId())
                         .collect(Collectors.toList()))
                 .numberOfPages(expectedPageSize)
-                .allPagesSatisfy(new FeedResponseValidator.Builder<UserDefinedFunction>()
+                .allPagesSatisfy(new FeedResponseValidator.Builder<CosmosUserDefinedFunctionSettings>()
                         .requestChargeGreaterThanOrEqualTo(1.0).build())
                 .build();
         validateQuerySuccess(feedObservable, validator, FEED_TIMEOUT);
@@ -83,12 +82,11 @@ public class ReadFeedUdfsTest extends TestSuiteBase {
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
         client = clientBuilder.build();
-        createdDatabase = SHARED_DATABASE;
-        createdCollection = SHARED_SINGLE_PARTITION_COLLECTION_WITHOUT_PARTITION_KEY;
-        truncateCollection(SHARED_SINGLE_PARTITION_COLLECTION_WITHOUT_PARTITION_KEY);
+        createdCollection = SHARED_MULTI_PARTITION_COLLECTION;
+        truncateCollection(SHARED_MULTI_PARTITION_COLLECTION);
 
         for(int i = 0; i < 5; i++) {
-            createdUserDefinedFunctions.add(createUserDefinedFunctions(client));
+            createdUserDefinedFunctions.add(createUserDefinedFunctions(createdCollection));
         }
 
         waitIfNeededForReplicasToCatchUp(clientBuilder);
@@ -99,11 +97,11 @@ public class ReadFeedUdfsTest extends TestSuiteBase {
         safeClose(client);
     }
 
-    public UserDefinedFunction createUserDefinedFunctions(AsyncDocumentClient client) {
-         UserDefinedFunction udf = new UserDefinedFunction();
+    public CosmosUserDefinedFunctionSettings createUserDefinedFunctions(CosmosContainer cosmosContainer) {
+        CosmosUserDefinedFunctionSettings udf = new CosmosUserDefinedFunctionSettings();
          udf.setId(UUID.randomUUID().toString());
          udf.setBody("function() {var x = 10;}");
-        return client.createUserDefinedFunction(getCollectionLink(), udf, null).toBlocking().single().getResource();
+        return cosmosContainer.createUserDefinedFunction(udf, new CosmosRequestOptions()).block().getCosmosUserDefinedFunctionSettings();
     }
 
     private String getCollectionLink() {

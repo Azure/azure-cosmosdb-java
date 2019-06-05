@@ -38,11 +38,11 @@ public class CosmosItemCrudTest extends CosmosTestSuiteBase {
     private final static String CONTAINER_ID2 = getDatabaseId(CosmosItemCrudTest.class) + "_CONTAINER_2";
 
     private CosmosClient client;
-    private CosmosConfiguration.Builder configBuilder;
+    private CosmosClient.Builder clientBuilder;
 
     @Factory(dataProvider = "clientBuilders")
-    public CosmosItemCrudTest(CosmosConfiguration.Builder configBuilder) {
-        this.configBuilder = configBuilder;
+    public CosmosItemCrudTest(CosmosClient.Builder clientBuilder) {
+        this.clientBuilder = clientBuilder;
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
@@ -107,7 +107,7 @@ public class CosmosItemCrudTest extends CosmosTestSuiteBase {
         CosmosContainer container = client.getDatabase(PRE_EXISTING_DATABASE_ID).getContainer(PRE_EXISTING_CONTAINER_ID);
         CosmosItemSettings itemDefinition = getItemDefinition();
         // create the item
-        CosmosItem item = container.createItem(itemDefinition, "mypk").block().getItem();
+        CosmosItem item = container.createItem(itemDefinition, "mypk").block().getCosmosItem();
 
         String newPropValue = UUID.randomUUID().toString();
         itemDefinition.set("newProp", newPropValue);
@@ -123,7 +123,7 @@ public class CosmosItemCrudTest extends CosmosTestSuiteBase {
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
-        client = CosmosClient.create(configBuilder.build());
+        client = clientBuilder.build();
         createDatabase(client, PRE_EXISTING_DATABASE_ID);
         createContainerInDB(client, PRE_EXISTING_CONTAINER_ID, PRE_EXISTING_DATABASE_ID);
     }

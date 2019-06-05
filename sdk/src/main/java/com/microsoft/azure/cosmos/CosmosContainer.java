@@ -66,6 +66,7 @@ public class CosmosContainer extends CosmosResource {
      * The {@link Mono} upon successful completion will contain a single cossmos container response with the read container.
      * In case of failure the {@link Mono} will error.
      *
+     * @param requestOptions        the request options.
      * @return an {@link Mono} containing the single cossmos container response with the read container or an error.
      */
     public Mono<CosmosContainerResponse> read(CosmosContainerRequestOptions options) {
@@ -148,7 +149,7 @@ public class CosmosContainer extends CosmosResource {
      * @return an {@link Mono} containing the single resource response with the created cosmos item or an error.
      */
     public Mono<CosmosItemResponse> createItem(Object item){
-        return createItem(item, null);
+        return createItem(item, new CosmosItemRequestOptions());
     }
 
     /**
@@ -195,6 +196,35 @@ public class CosmosContainer extends CosmosResource {
     }
 
     /**
+     * Upserts an item.
+     *
+     * After subscription the operation will be performed. 
+     * The {@link Mono} upon successful completion will contain a single resource response with the upserted item.
+     * In case of failure the {@link Mono} will error.
+     *
+     * @param item                         the item represented as a POJO or Item object to upsert.
+     * @return an {@link Mono} containing the single resource response with the upserted document or an error.
+     */
+    public Mono<CosmosItemResponse> upsertItem(Object item) {
+        return upsertItem(item, new CosmosItemRequestOptions());
+    }
+
+    /**
+     * Upserts an item.
+     *
+     * After subscription the operation will be performed. 
+     * The {@link Mono} upon successful completion will contain a single resource response with the upserted item.
+     * In case of failure the {@link Mono} will error.
+     *
+     * @param item                         the item represented as a POJO or Item object to upsert.
+     * @param partitionKey                 the partitionKey to be used.
+     * @return an {@link Mono} containing the single resource response with the upserted document or an error.
+     */
+    public Mono<CosmosItemResponse> upsertItem(Object item, Object partitionKey) {
+        return upsertItem(item, new CosmosItemRequestOptions(partitionKey));
+    }
+
+    /**
      * Upserts a cosmos item.
      *
      * After subscription the operation will be performed. 
@@ -214,7 +244,7 @@ public class CosmosContainer extends CosmosResource {
         return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(this.getDatabase()
                                                                             .getDocClientWrapper()
                                                                             .upsertDocument(this.getLink(),
-                                                                                            item,
+                                                                                            CosmosItemSettings.fromObject(item),
                                                                                             options.toRequestOptions(),
                                                                                             true)
                                                                             .map(response -> new CosmosItemResponse(response,
@@ -290,17 +320,31 @@ public class CosmosContainer extends CosmosResource {
                                                            response.getResponseHeaders(),
                                                            response.getQueryMetrics()))));
     }
-
     /**
-     * Gets a CosmosItem object without making a service call
-     * @param id id of the item
-     * @return a cosmos item
+     * Gets a CosmosItem object without making a service call.
+     * @param jsonString body of the item in JSON.
+     * @return a cosmos item.
      */
-    public CosmosItem getItem(String id, Object partitionKey){
+    public CosmosItem getItem(String id, Object partitionKey) {
         return new CosmosItem(id, partitionKey, this);
     }
 
     /* CosmosStoredProcedure operations */
+
+    /**
+     * Creates a cosmos stored procedure.
+     *
+     * After subscription the operation will be performed.
+     * The {@link Mono} upon successful completion will contain a single cosmos stored procedure response with the
+     * created cosmos stored procedure.
+     * In case of failure the {@link Mono} will error.
+     *
+     * @param settings  the cosmos stored procedure settings.
+     * @return an {@link Mono} containing the single cosmos stored procedure resource response or an error.
+     */
+    public Mono<CosmosStoredProcedureResponse> createStoredProcedure(CosmosStoredProcedureSettings settings){
+        return this.createStoredProcedure(settings, new CosmosStoredProcedureRequestOptions());
+    }
 
     /**
      * Creates a cosmos stored procedure.
@@ -386,6 +430,14 @@ public class CosmosContainer extends CosmosResource {
                                                                                                        response.getResponseHeaders()))));
     }
 
+    /**
+     * Gets a CosmosStoredProcedure object without making a service call
+     * @param id id of the stored procedure
+     * @return a cosmos stored procedure
+     */
+    public CosmosStoredProcedure getStoredProcedure(String id){
+        return new CosmosStoredProcedure(id, this);
+    }
 
     /* UDF Operations */
 
@@ -468,6 +520,15 @@ public class CosmosContainer extends CosmosResource {
                                                                                                       response.getResponseHeaders()))));
     }
 
+    /**
+     * Gets a CosmosUserDefinedFunction object without making a service call
+     * @param id id of the user defined function
+     * @return a cosmos user defined function
+     */
+    public CosmosUserDefinedFunction getUserDefinedFunction(String id){
+        return new CosmosUserDefinedFunction(id, this);
+    }
+
     /* Trigger Operations */
     /**
      * Creates a Cosmos trigger.
@@ -476,6 +537,7 @@ public class CosmosContainer extends CosmosResource {
      * The {@link Mono} upon successful completion will contain a cosmos trigger response
      * In case of failure the {@link Mono} will error.
      *
+     * @param settings       the cosmos trigger settings.
      * @param options        the request options.
      * @return an {@link Mono} containing the single resource response with the created trigger or an error.
      */
@@ -543,6 +605,15 @@ public class CosmosContainer extends CosmosResource {
                                                    .queryTriggers(getLink(), querySpec, options)
                                                    .map(response -> BridgeInternal.createFeedResponse(CosmosTriggerSettings.getFromV2Results(response.getResults()),
                                                                                                       response.getResponseHeaders()))));
+    }
+
+    /**
+     * Gets a CosmosTrigger object without making a service call
+     * @param id id of the cosmos trigger
+     * @return a cosmos trigger
+     */
+    public CosmosTrigger getTrigger(String id){
+        return new CosmosTrigger(id, this);
     }
 
     /**

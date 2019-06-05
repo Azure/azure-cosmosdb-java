@@ -27,12 +27,12 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import com.microsoft.azure.cosmosdb.DatabaseForTest;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
+import com.microsoft.azure.cosmos.CosmosDatabaseForTest;
 import com.microsoft.azure.cosmosdb.Database;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
@@ -46,6 +46,7 @@ import javax.net.ssl.SSLException;
 
 public class ReadFeedOffersTest extends TestSuiteBase {
 
+    /*
     protected static final int FEED_TIMEOUT = 60000;
     protected static final int SETUP_TIMEOUT = 60000;
     protected static final int SHUTDOWN_TIMEOUT = 20000;
@@ -114,4 +115,5 @@ public class ReadFeedOffersTest extends TestSuiteBase {
     private String getDatabaseLink() {
         return "dbs/" + createdDatabase.getId();
     }
+    */
 }

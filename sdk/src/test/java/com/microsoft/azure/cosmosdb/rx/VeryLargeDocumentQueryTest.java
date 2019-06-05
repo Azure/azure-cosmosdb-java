@@ -42,6 +42,7 @@ import java.util.UUID;
 import static org.apache.commons.io.FileUtils.ONE_MB;
 
 public class VeryLargeDocumentQueryTest extends TestSuiteBase {
+    /*
     private final static int TIMEOUT = 60000;
     private final static int SETUP_TIMEOUT = 60000;
     private Database createdDatabase;
@@ -116,5 +117,5 @@ public class VeryLargeDocumentQueryTest extends TestSuiteBase {
 
     public String getCollectionLink() {
         return Utils.getCollectionNameLink(createdDatabase.getId(), createdCollection.getId());
-    }
+    }*/
 }

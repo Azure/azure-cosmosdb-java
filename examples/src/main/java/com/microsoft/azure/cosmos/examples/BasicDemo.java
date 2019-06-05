@@ -52,7 +52,10 @@ public class BasicDemo {
 
     private void start(){
         // Get client
-        client = CosmosClient.create(AccountSettings.HOST, AccountSettings.MASTER_KEY);
+        client = new CosmosClient.Builder()
+                .key(AccountSettings.MASTER_KEY)
+                .endpoint(AccountSettings.HOST)
+                .build();
 
         //Create a database and a container
         createDbAndContainerBlocking();
@@ -101,7 +104,7 @@ public class BasicDemo {
                     .doOnError(throwable -> log("Create 3", throwable))
                     .publishOn(Schedulers.elastic())
                     .block()
-                    .getItem();
+                    .getCosmosItem();
         }catch (RuntimeException e){
             log("Couldn't create items due to above exceptions");
         }

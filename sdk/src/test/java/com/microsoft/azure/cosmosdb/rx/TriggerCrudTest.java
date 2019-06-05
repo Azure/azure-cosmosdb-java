@@ -29,44 +29,44 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
-import com.microsoft.azure.cosmosdb.Database;
-import com.microsoft.azure.cosmosdb.DocumentCollection;
-import com.microsoft.azure.cosmosdb.ResourceResponse;
-import com.microsoft.azure.cosmosdb.Trigger;
+import com.microsoft.azure.cosmos.CosmosClient;
+import com.microsoft.azure.cosmos.CosmosContainer;
+import com.microsoft.azure.cosmos.CosmosRequestOptions;
+import com.microsoft.azure.cosmos.CosmosResponse;
+import com.microsoft.azure.cosmos.CosmosResponseValidator;
+import com.microsoft.azure.cosmos.CosmosTrigger;
+import com.microsoft.azure.cosmos.CosmosTriggerResponse;
+import com.microsoft.azure.cosmos.CosmosTriggerSettings;
+import com.microsoft.azure.cosmosdb.RequestOptions;
 import com.microsoft.azure.cosmosdb.TriggerOperation;
 import com.microsoft.azure.cosmosdb.TriggerType;
-import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 
-import rx.Observable;
-
-import javax.net.ssl.SSLException;
-
+import reactor.core.publisher.Mono;
 
 public class TriggerCrudTest extends TestSuiteBase {
-    private Database createdDatabase;
-    private DocumentCollection createdCollection;
+    private CosmosContainer createdCollection;
 
-    private AsyncDocumentClient client;
+    private CosmosClient client;
 
     @Factory(dataProvider = "clientBuildersWithDirect")
-    public TriggerCrudTest(AsyncDocumentClient.Builder clientBuilder) {
+    public TriggerCrudTest(CosmosClient.Builder clientBuilder) {
         this.clientBuilder = clientBuilder;
     }
 
-    @Test(groups = { "simple" }, timeOut = TIMEOUT)
+    @Test(groups = { "simple" }, timeOut = TIMEOUT * 100)
     public void createTrigger() throws Exception {
 
         // create a trigger
-        Trigger trigger = new Trigger();
+        CosmosTriggerSettings trigger = new CosmosTriggerSettings();
         trigger.setId(UUID.randomUUID().toString());
         trigger.setBody("function() {var x = 10;}");
         trigger.setTriggerOperation(TriggerOperation.Create);
         trigger.setTriggerType(TriggerType.Pre);
 
-        Observable<ResourceResponse<Trigger>> createObservable = client.createTrigger(getCollectionLink(), trigger, null);
+        Mono<CosmosTriggerResponse> createObservable = createdCollection.createTrigger(trigger, new CosmosRequestOptions());
 
         // validate trigger creation
-        ResourceResponseValidator<Trigger> validator = new ResourceResponseValidator.Builder<Trigger>()
+        CosmosResponseValidator<CosmosTriggerResponse> validator = new CosmosResponseValidator.Builder<CosmosTriggerResponse>()
                 .withId(trigger.getId())
                 .withTriggerBody("function() {var x = 10;}")
                 .withTriggerInternals(TriggerType.Pre, TriggerOperation.Create)
@@ -78,19 +78,19 @@ public class TriggerCrudTest extends TestSuiteBase {
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
     public void readTrigger() throws Exception {
         // create a trigger
-        Trigger trigger = new Trigger();
+        CosmosTriggerSettings trigger = new CosmosTriggerSettings();
         trigger.setId(UUID.randomUUID().toString());
         trigger.setBody("function() {var x = 10;}");
         trigger.setTriggerOperation(TriggerOperation.Create);
         trigger.setTriggerType(TriggerType.Pre);
-        Trigger readBackTrigger = client.createTrigger(getCollectionLink(), trigger, null).toBlocking().single().getResource();
+        CosmosTrigger readBackTrigger = createdCollection.createTrigger(trigger, new CosmosRequestOptions()).block().getCosmosTrigger();
 
         // read trigger
         waitIfNeededForReplicasToCatchUp(clientBuilder);
-        Observable<ResourceResponse<Trigger>> readObservable = client.readTrigger(readBackTrigger.getSelfLink(), null);
+        Mono<CosmosTriggerResponse> readObservable = readBackTrigger.read(new RequestOptions());
 
         // validate read trigger
-        ResourceResponseValidator<Trigger> validator = new ResourceResponseValidator.Builder<Trigger>()
+        CosmosResponseValidator<CosmosTriggerResponse> validator = new CosmosResponseValidator.Builder<CosmosTriggerResponse>()
                 .withId(trigger.getId())
                 .withTriggerBody("function() {var x = 10;}")
                 .withTriggerInternals(TriggerType.Pre, TriggerOperation.Create)
@@ -102,18 +102,18 @@ public class TriggerCrudTest extends TestSuiteBase {
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
     public void deleteTrigger() throws Exception {
         // create a trigger
-        Trigger trigger = new Trigger();
+        CosmosTriggerSettings trigger = new CosmosTriggerSettings();
         trigger.setId(UUID.randomUUID().toString());
         trigger.setBody("function() {var x = 10;}");
         trigger.setTriggerOperation(TriggerOperation.Create);
         trigger.setTriggerType(TriggerType.Pre);
-        Trigger readBackTrigger = client.createTrigger(getCollectionLink(), trigger, null).toBlocking().single().getResource();
+        CosmosTrigger readBackTrigger = createdCollection.createTrigger(trigger, new CosmosRequestOptions()).block().getCosmosTrigger();
 
         // delete trigger
-        Observable<ResourceResponse<Trigger>> deleteObservable = client.deleteTrigger(readBackTrigger.getSelfLink(), null);
+        Mono<CosmosResponse> deleteObservable = readBackTrigger.delete(new CosmosRequestOptions());
 
         // validate delete trigger
-        ResourceResponseValidator<Trigger> validator = new ResourceResponseValidator.Builder<Trigger>()
+        CosmosResponseValidator<CosmosResponse> validator = new CosmosResponseValidator.Builder<CosmosResponse>()
                 .nullResource()
                 .build();
         validateSuccess(deleteObservable, validator);
@@ -123,16 +123,11 @@ public class TriggerCrudTest extends TestSuiteBase {
     public void beforeClass() {
         client = clientBuilder.build();
 
-        createdDatabase = SHARED_DATABASE;
         createdCollection = SHARED_MULTI_PARTITION_COLLECTION;
     }
 
     @AfterClass(groups = { "simple" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)
     public void afterClass() {
         safeClose(client);
-    }
-
-    private String getCollectionLink() {
-        return createdCollection.getSelfLink();
     }
 }

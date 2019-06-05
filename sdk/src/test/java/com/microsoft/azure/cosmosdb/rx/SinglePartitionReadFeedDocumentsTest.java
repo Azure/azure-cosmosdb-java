@@ -39,6 +39,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class SinglePartitionReadFeedDocumentsTest extends TestSuiteBase {
+    /*
     private Database createdDatabase;
     private DocumentCollection createdCollection;
     private List<Document> createdDocuments;
@@ -111,4 +112,5 @@ public class SinglePartitionReadFeedDocumentsTest extends TestSuiteBase {
     private String getDatabaseId() {
         return createdDatabase.getId();
     }
+    */
 }

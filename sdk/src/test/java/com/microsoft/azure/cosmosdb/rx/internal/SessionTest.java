@@ -26,9 +26,11 @@ import com.microsoft.azure.cosmosdb.ConnectionMode;
 import com.microsoft.azure.cosmosdb.Database;
 import com.microsoft.azure.cosmosdb.Document;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
+import com.microsoft.azure.cosmosdb.PartitionKey;
+import com.microsoft.azure.cosmosdb.PartitionKeyDefinition;
+import com.microsoft.azure.cosmosdb.RequestOptions;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
-import com.microsoft.azure.cosmosdb.rx.TestSuiteBase;
 
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpRequest;
 import io.netty.handler.codec.http.HttpMethod;
@@ -45,6 +47,7 @@ import org.testng.annotations.Test;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 import java.net.URLDecoder;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -60,6 +63,7 @@ public class SessionTest extends TestSuiteBase {
     private SpyClientUnderTestFactory.SpyBaseClass<HttpRequest> spyClient;
     private AsyncDocumentClient houseKeepingClient;
     private ConnectionMode connectionMode;
+    private RequestOptions options;
 
     @Factory(dataProvider = "clientBuildersWithDirectSession")
     public SessionTest(AsyncDocumentClient.Builder clientBuilder) {
@@ -79,9 +83,16 @@ public class SessionTest extends TestSuiteBase {
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
         createdDatabase = SHARED_DATABASE;
-        
+
+        PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition();
+        ArrayList<String> paths = new ArrayList<String>();
+        paths.add("/mypk");
+        partitionKeyDef.setPaths(paths);
+
         DocumentCollection collection = new DocumentCollection();
         collection.setId(collectionId);
+        collection.setPartitionKey(partitionKeyDef);
+
         createdCollection = createCollection(createGatewayHouseKeepingDocumentClient().build(), createdDatabase.getId(),
                 collection, null);
         houseKeepingClient = clientBuilder.build();
@@ -92,6 +103,8 @@ public class SessionTest extends TestSuiteBase {
         } else {
             spyClient = SpyClientUnderTestFactory.createClientUnderTest(clientBuilder);
         }
+        options = new RequestOptions();
+        options.setPartitionKey(PartitionKey.None);
     }
 
     @AfterClass(groups = { "simple" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)
