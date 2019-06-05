@@ -35,8 +35,8 @@ import com.microsoft.azure.cosmos.CosmosDatabase;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.PartitionKeyRange;
+import reactor.core.publisher.Flux;
 
-import rx.Observable;
 
 public class ReadFeedPkrTests extends TestSuiteBase {
 
@@ -56,7 +56,7 @@ public class ReadFeedPkrTests extends TestSuiteBase {
         FeedOptions options = new FeedOptions();
         options.setMaxItemCount(2);
 
-        Observable<FeedResponse<PartitionKeyRange>> feedObservable = client.readPartitionKeyRanges(getCollectionLink(), options);
+        Flux<FeedResponse<PartitionKeyRange>> feedObservable = client.readPartitionKeyRanges(getCollectionLink(), options);
 
         FeedResponseListValidator<PartitionKeyRange> validator = new FeedResponseListValidator.Builder<PartitionKeyRange>()
                 .totalSize(1)

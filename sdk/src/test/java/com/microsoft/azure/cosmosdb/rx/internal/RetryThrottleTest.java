@@ -37,14 +37,12 @@ import com.microsoft.azure.cosmosdb.internal.ResourceType;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import com.microsoft.azure.cosmosdb.rx.ResourceResponseValidator;
 import com.microsoft.azure.cosmosdb.rx.TestConfigurations;
-import com.microsoft.azure.cosmosdb.rx.TestSuiteBase;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import reactor.core.publisher.Flux;
-import rx.Observable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -83,7 +81,7 @@ public class RetryThrottleTest extends TestSuiteBase {
         // create a document to ensure collection is cached
         client.createDocument(getCollectionLink(collection), getDocumentDefinition(), null, false).blockFirst();
 
-        List<Observable<ResourceResponse<Document>>> list = new ArrayList<>();
+        List<Flux<ResourceResponse<Document>>> list = new ArrayList<>();
         for(int i = 0; i < TOTAL_DOCS; i++) {
             Flux<ResourceResponse<Document>> obs = client.createDocument(getCollectionLink(collection), getDocumentDefinition(), null, false);
             list.add(obs);
@@ -102,7 +100,7 @@ public class RetryThrottleTest extends TestSuiteBase {
             return client.getOrigGatewayStoreModel().processMessage(req).doOnNext(rsp -> successCount.incrementAndGet());
         }).when(client.getSpyGatewayStoreModel()).processMessage(anyObject());
 
-        List<ResourceResponse<Document>> rsps = Observable.merge(list, 100).toList().toSingle().toBlocking().value();
+        List<ResourceResponse<Document>> rsps = Flux.merge(Flux.fromIterable(list), 100).collectList().single().block();
         System.out.println("total: " + totalCount.get());
         assertThat(rsps).hasSize(TOTAL_DOCS);
         assertThat(successCount.get()).isEqualTo(TOTAL_DOCS);

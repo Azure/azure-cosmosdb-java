@@ -52,7 +52,6 @@ import com.microsoft.azure.cosmosdb.SqlQuerySpec;
 import com.microsoft.azure.cosmosdb.Undefined;
 import com.microsoft.azure.cosmosdb.internal.PathParser;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.Protocol;
-import com.microsoft.azure.cosmosdb.rx.internal.Configs;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.mockito.stubbing.Answer;

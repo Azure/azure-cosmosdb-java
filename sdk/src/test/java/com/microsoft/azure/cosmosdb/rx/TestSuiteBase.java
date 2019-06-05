@@ -26,8 +26,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -57,7 +55,6 @@ import io.reactivex.subscribers.TestSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
-import rx.Observable;
 
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -96,7 +93,6 @@ import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.PartitionKey;
 import com.microsoft.azure.cosmosdb.PartitionKeyDefinition;
 import com.microsoft.azure.cosmosdb.Resource;
-import com.microsoft.azure.cosmosdb.ResourceResponse;
 
 import org.testng.annotations.Test;
 
@@ -690,56 +686,13 @@ public class TestSuiteBase {
         }
     }
 
-    public static <T extends Resource> void validateFailure(Observable<ResourceResponse<T>> observable,
-            FailureValidator validator, long timeout) {
-
-        VerboseTestSubscriber<ResourceResponse<T>> testSubscriber = new VerboseTestSubscriber<>();
-
-        observable.subscribe(testSubscriber);
-        testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
-        testSubscriber.assertNotCompleted();
-        testSubscriber.assertTerminalEvent();
-        assertThat(testSubscriber.getOnErrorEvents()).hasSize(1);
-        validator.validate(testSubscriber.getOnErrorEvents().get(0));
-    }
-
-    public <T extends Resource> void validateQuerySuccess(Observable<FeedResponse<T>> observable,
-            FeedResponseListValidator<T> validator) {
-        validateQuerySuccess(observable, validator, subscriberValidationTimeout);
-    }
-
-    public static <T extends Resource> void validateQuerySuccess(Observable<FeedResponse<T>> observable,
-            FeedResponseListValidator<T> validator, long timeout) {
-
-        VerboseTestSubscriber<FeedResponse<T>> testSubscriber = new VerboseTestSubscriber<>();
-
-        observable.subscribe(testSubscriber);
-        testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
-        testSubscriber.assertNoErrors();
-        testSubscriber.assertCompleted();
-        validator.validate(testSubscriber.getOnNextEvents());
-    }
-
-    public static <T extends Resource> void validateQueryFailure(Observable<FeedResponse<T>> observable,
-            FailureValidator validator, long timeout) {
-
-        VerboseTestSubscriber<FeedResponse<T>> testSubscriber = new VerboseTestSubscriber<>();
-
-        observable.subscribe(testSubscriber);
-        testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
-        testSubscriber.assertNotCompleted();
-        testSubscriber.assertTerminalEvent();
-        assertThat(testSubscriber.getOnErrorEvents()).hasSize(1);
-        validator.validate(testSubscriber.getOnErrorEvents().get(0));
-    }
-
     public <T extends CosmosResponse> void validateSuccess(Mono<T> single, CosmosResponseValidator<T> validator)
             throws InterruptedException {
         validateSuccess(single.flux(), validator, subscriberValidationTimeout);
     }
 
     public static <T extends CosmosResponse> void validateSuccess(Flux<T> flowable,
-            CosmosResponseValidator<T> validator, long timeout) throws InterruptedException {
+            CosmosResponseValidator<T> validator, long timeout) {
 
         TestSubscriber<T> testSubscriber = new TestSubscriber<>();
 
@@ -1043,25 +996,5 @@ public class TestSuiteBase {
                 {true},
                 {false},
         };
-    }
-
-    public static class VerboseTestSubscriber<T> extends TestSubscriber<T> {
-        @Override
-        public void assertNoErrors() {
-            List<Throwable> onErrorEvents = getOnErrorEvents();
-            StringBuilder errorMessageBuilder = new StringBuilder();
-            if (!onErrorEvents.isEmpty()) {
-                for(Throwable throwable : onErrorEvents) {
-                    StringWriter sw = new StringWriter();
-                    PrintWriter pw = new PrintWriter(sw);
-                    throwable.printStackTrace(pw);
-                    String sStackTrace = sw.toString(); // stack trace as a string
-                    errorMessageBuilder.append(sStackTrace);
-                }
-
-                AssertionError ae = new AssertionError(errorMessageBuilder.toString());
-                throw ae;
-            }
-        }
     }
 }
