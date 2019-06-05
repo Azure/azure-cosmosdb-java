@@ -39,6 +39,7 @@ import com.microsoft.azure.cosmosdb.rx.internal.http.HttpRequest;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpResponse;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.ByteBufUtil;
+import io.reactivex.subscribers.TestSubscriber;
 import org.apache.commons.io.IOUtils;
 import org.mockito.Mockito;
 import org.testng.annotations.AfterClass;
@@ -47,8 +48,6 @@ import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import rx.Single;
-import rx.observers.TestSubscriber;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -126,37 +125,39 @@ public class GatewayServiceConfigurationReaderTest extends TestSuiteBase {
         validateSuccess(databaseAccount);
     }
 
-    public static void validateSuccess(Single<DatabaseAccount> observable) {
+    public static void validateSuccess(Mono<DatabaseAccount> observable) {
         TestSubscriber<DatabaseAccount> testSubscriber = new TestSubscriber<DatabaseAccount>();
 
         observable.subscribe(testSubscriber);
         testSubscriber.awaitTerminalEvent(TIMEOUT, TimeUnit.MILLISECONDS);
         testSubscriber.assertNoErrors();
-        testSubscriber.assertCompleted();
+        testSubscriber.assertComplete();
         testSubscriber.assertValueCount(1);
-        assertThat(BridgeInternal.getQueryEngineConfiuration(testSubscriber.getOnNextEvents().get(0)).size() > 0).isTrue();
-        assertThat(BridgeInternal.getReplicationPolicy(testSubscriber.getOnNextEvents().get(0))).isNotNull();
-        assertThat(BridgeInternal.getSystemReplicationPolicy(testSubscriber.getOnNextEvents().get(0))).isNotNull();
+        DatabaseAccount databaseAccount = (DatabaseAccount) testSubscriber.getEvents().get(0).get(0);
+        assertThat(BridgeInternal.getQueryEngineConfiuration(databaseAccount).size() > 0).isTrue();
+        assertThat(BridgeInternal.getReplicationPolicy(databaseAccount)).isNotNull();
+        assertThat(BridgeInternal.getSystemReplicationPolicy(databaseAccount)).isNotNull();
     }
 
-    public static void validateSuccess(Single<DatabaseAccount> observable, DatabaseAccount expectedDatabaseAccount) {
+    public static void validateSuccess(Mono<DatabaseAccount> observable, DatabaseAccount expectedDatabaseAccount) {
         TestSubscriber<DatabaseAccount> testSubscriber = new TestSubscriber<DatabaseAccount>();
 
         observable.subscribe(testSubscriber);
         testSubscriber.awaitTerminalEvent(TIMEOUT, TimeUnit.MILLISECONDS);
         testSubscriber.assertNoErrors();
-        testSubscriber.assertCompleted();
+        testSubscriber.assertComplete();
         testSubscriber.assertValueCount(1);
-        assertThat(testSubscriber.getOnNextEvents().get(0).getId()).isEqualTo(expectedDatabaseAccount.getId());
-        assertThat(testSubscriber.getOnNextEvents().get(0).getAddressesLink())
+        DatabaseAccount databaseAccount = (DatabaseAccount) testSubscriber.getEvents().get(0).get(0);
+        assertThat(databaseAccount.getId()).isEqualTo(expectedDatabaseAccount.getId());
+        assertThat(databaseAccount.getAddressesLink())
                 .isEqualTo(expectedDatabaseAccount.getAddressesLink());
-        assertThat(testSubscriber.getOnNextEvents().get(0).getWritableLocations().iterator().next().getEndpoint())
+        assertThat(databaseAccount.getWritableLocations().iterator().next().getEndpoint())
                 .isEqualTo(expectedDatabaseAccount.getWritableLocations().iterator().next().getEndpoint());
-        assertThat(BridgeInternal.getSystemReplicationPolicy(testSubscriber.getOnNextEvents().get(0)).getMaxReplicaSetSize())
+        assertThat(BridgeInternal.getSystemReplicationPolicy(databaseAccount).getMaxReplicaSetSize())
                 .isEqualTo(BridgeInternal.getSystemReplicationPolicy(expectedDatabaseAccount).getMaxReplicaSetSize());
-        assertThat(BridgeInternal.getSystemReplicationPolicy(testSubscriber.getOnNextEvents().get(0)).getMaxReplicaSetSize())
+        assertThat(BridgeInternal.getSystemReplicationPolicy(databaseAccount).getMaxReplicaSetSize())
                 .isEqualTo(BridgeInternal.getSystemReplicationPolicy(expectedDatabaseAccount).getMaxReplicaSetSize());
-        assertThat(BridgeInternal.getQueryEngineConfiuration(testSubscriber.getOnNextEvents().get(0)))
+        assertThat(BridgeInternal.getQueryEngineConfiuration(databaseAccount))
                 .isEqualTo(BridgeInternal.getQueryEngineConfiuration(expectedDatabaseAccount));
     }
 

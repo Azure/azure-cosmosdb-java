@@ -25,9 +25,6 @@ package com.microsoft.azure.cosmosdb.rx.internal;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
-
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -729,14 +726,14 @@ public class TestSuiteBase {
     public static <T extends Resource> void validateSuccess(Flux<ResourceResponse<T>> observable,
                                                             ResourceResponseValidator<T> validator, long timeout) {
 
-        VerboseTestSubscriber<ResourceResponse<T>> testSubscriber = new VerboseTestSubscriber<>();
+        TestSubscriber<ResourceResponse<T>> testSubscriber = new TestSubscriber<>();
 
         observable.subscribe(testSubscriber);
         testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
         testSubscriber.assertNoErrors();
-        testSubscriber.assertCompleted();
+        testSubscriber.assertComplete();
         testSubscriber.assertValueCount(1);
-        validator.validate(testSubscriber.getOnNextEvents().get(0));
+        validator.validate((ResourceResponse<T>) testSubscriber.getEvents().get(0).get(0));
     }
 
     public <T extends Resource> void validateFailure(Flux<ResourceResponse<T>> observable,
@@ -747,14 +744,14 @@ public class TestSuiteBase {
     public static <T extends Resource> void validateFailure(Flux<ResourceResponse<T>> observable,
                                                             FailureValidator validator, long timeout) {
 
-        VerboseTestSubscriber<ResourceResponse<T>> testSubscriber = new VerboseTestSubscriber<>();
+        TestSubscriber<ResourceResponse<T>> testSubscriber = new TestSubscriber<>();
 
         observable.subscribe(testSubscriber);
         testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
-        testSubscriber.assertNotCompleted();
-        testSubscriber.assertTerminalEvent();
-        assertThat(testSubscriber.getOnErrorEvents()).hasSize(1);
-        validator.validate(testSubscriber.getOnErrorEvents().get(0));
+        testSubscriber.assertNotComplete();
+        testSubscriber.assertTerminated();
+        assertThat(testSubscriber.errorCount()).isEqualTo(1);
+        validator.validate((Throwable) testSubscriber.getEvents().get(1).get(0));
     }
 
     public <T extends Resource> void validateQuerySuccess(Flux<FeedResponse<T>> observable,
@@ -765,13 +762,13 @@ public class TestSuiteBase {
     public static <T extends Resource> void validateQuerySuccess(Flux<FeedResponse<T>> observable,
                                                                  FeedResponseListValidator<T> validator, long timeout) {
 
-        VerboseTestSubscriber<FeedResponse<T>> testSubscriber = new VerboseTestSubscriber<>();
+        TestSubscriber<FeedResponse<T>> testSubscriber = new TestSubscriber<>();
 
         observable.subscribe(testSubscriber);
         testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
         testSubscriber.assertNoErrors();
-        testSubscriber.assertCompleted();
-        validator.validate(testSubscriber.getOnNextEvents());
+        testSubscriber.assertComplete();
+        validator.validate((List<FeedResponse<T>>) testSubscriber.getEvents().get(0).get(0));
     }
 
     public <T extends Resource> void validateQueryFailure(Flux<FeedResponse<T>> observable,
@@ -782,14 +779,14 @@ public class TestSuiteBase {
     public static <T extends Resource> void validateQueryFailure(Flux<FeedResponse<T>> observable,
                                                                  FailureValidator validator, long timeout) {
 
-        VerboseTestSubscriber<FeedResponse<T>> testSubscriber = new VerboseTestSubscriber<>();
+        TestSubscriber<FeedResponse<T>> testSubscriber = new TestSubscriber<>();
 
         observable.subscribe(testSubscriber);
         testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
-        testSubscriber.assertNotCompleted();
-        testSubscriber.assertTerminalEvent();
-        assertThat(testSubscriber.getOnErrorEvents()).hasSize(1);
-        validator.validate(testSubscriber.getOnErrorEvents().get(0));
+        testSubscriber.assertNotComplete();
+        testSubscriber.assertTerminated();
+        assertThat(testSubscriber.errorCount()).isEqualTo(1);
+        validator.validate((Throwable) testSubscriber.getEvents().get(1).get(0));
     }
 
     @DataProvider
@@ -1030,25 +1027,5 @@ public class TestSuiteBase {
                 {true},
                 {false},
         };
-    }
-
-    public static class VerboseTestSubscriber<T> extends TestSubscriber<T> {
-        @Override
-        public void assertNoErrors() {
-            List<Throwable> onErrorEvents = getOnErrorEvents();
-            StringBuilder errorMessageBuilder = new StringBuilder();
-            if (!onErrorEvents.isEmpty()) {
-                for(Throwable throwable : onErrorEvents) {
-                    StringWriter sw = new StringWriter();
-                    PrintWriter pw = new PrintWriter(sw);
-                    throwable.printStackTrace(pw);
-                    String sStackTrace = sw.toString(); // stack trace as a string
-                    errorMessageBuilder.append(sStackTrace);
-                }
-
-                AssertionError ae = new AssertionError(errorMessageBuilder.toString());
-                throw ae;
-            }
-        }
     }
 }

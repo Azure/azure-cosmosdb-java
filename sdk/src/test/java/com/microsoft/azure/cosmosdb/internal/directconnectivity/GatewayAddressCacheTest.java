@@ -43,6 +43,7 @@ import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
 import com.microsoft.azure.cosmosdb.rx.internal.TestSuiteBase;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpClient;
 import com.microsoft.azure.cosmosdb.rx.internal.http.HttpClientConfig;
+import io.reactivex.subscribers.TestSubscriber;
 import org.mockito.Matchers;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -52,12 +53,13 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
-import rx.observers.TestSubscriber;
+import reactor.core.publisher.Mono;
 
 import java.net.URL;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
@@ -122,7 +124,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
                         collectionLink + "/docs/",
                 getDocumentDefinition(), new HashMap<>());
 
-        Single<List<Address>> addresses = cache.getServerAddressesViaGatewayAsync(
+        Mono<List<Address>> addresses = cache.getServerAddressesViaGatewayAsync(
                 req, createdCollection.getResourceId(), partitionKeyRangeIds, false);
 
         PartitionReplicasAddressesValidator validator = new PartitionReplicasAddressesValidator.Builder()
@@ -151,7 +153,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
                         "/dbs",
                         new Database(), new HashMap<>());
 
-        Single<List<Address>> addresses = cache.getMasterAddressesViaGatewayAsync(req, ResourceType.Database,
+        Mono<List<Address>> addresses = cache.getMasterAddressesViaGatewayAsync(req, ResourceType.Database,
                 null, "/dbs/", false, false, null);
 
         PartitionReplicasAddressesValidator validator = new PartitionReplicasAddressesValidator.Builder()
@@ -196,11 +198,11 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
 
         PartitionKeyRangeIdentity partitionKeyRangeIdentity = new PartitionKeyRangeIdentity(collectionRid, partitionKeyRangeId);
         boolean forceRefreshPartitionAddresses = false;
-        Single<AddressInformation[]> addressesInfosFromCacheObs = cache.tryGetAddresses(req, partitionKeyRangeIdentity, forceRefreshPartitionAddresses);
+        Mono<AddressInformation[]> addressesInfosFromCacheObs = cache.tryGetAddresses(req, partitionKeyRangeIdentity, forceRefreshPartitionAddresses);
 
         ArrayList<AddressInformation> addressInfosFromCache = Lists.newArrayList(getSuccessResult(addressesInfosFromCacheObs, TIMEOUT));
 
-        Single<List<Address>> masterAddressFromGatewayObs = cache.getServerAddressesViaGatewayAsync(req,
+        Mono<List<Address>> masterAddressFromGatewayObs = cache.getServerAddressesViaGatewayAsync(req,
                 collectionRid, ImmutableList.of(partitionKeyRangeId), false);
         List<Address> expectedAddresses = getSuccessResult(masterAddressFromGatewayObs, TIMEOUT);
 
@@ -240,7 +242,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
         List<PartitionKeyRangeIdentity> pkriList = allPartitionKeyRangeIds.stream().map(
                 pkri -> new PartitionKeyRangeIdentity(collectionRid, pkri)).collect(Collectors.toList());
 
-        cache.openAsync(createdCollection, pkriList).await();
+        cache.openAsync(createdCollection, pkriList).block();
 
         assertThat(httpClientWrapper.capturedRequests).asList().hasSize(1);
         httpClientWrapper.capturedRequests.clear();
@@ -252,7 +254,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
 
         PartitionKeyRangeIdentity partitionKeyRangeIdentity = new PartitionKeyRangeIdentity(collectionRid, partitionKeyRangeId);
         boolean forceRefreshPartitionAddresses = false;
-        Single<AddressInformation[]> addressesInfosFromCacheObs = cache.tryGetAddresses(req, partitionKeyRangeIdentity, forceRefreshPartitionAddresses);
+        Mono<AddressInformation[]> addressesInfosFromCacheObs = cache.tryGetAddresses(req, partitionKeyRangeIdentity, forceRefreshPartitionAddresses);
         ArrayList<AddressInformation> addressInfosFromCache = Lists.newArrayList(getSuccessResult(addressesInfosFromCacheObs, TIMEOUT));
 
         // no new request is made
@@ -260,7 +262,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
                 .describedAs("no http request: addresses already cached by openAsync")
                 .asList().hasSize(0);
 
-        Single<List<Address>> masterAddressFromGatewayObs = cache.getServerAddressesViaGatewayAsync(req,
+        Mono<List<Address>> masterAddressFromGatewayObs = cache.getServerAddressesViaGatewayAsync(req,
                 collectionRid, ImmutableList.of(partitionKeyRangeId), false);
         List<Address> expectedAddresses = getSuccessResult(masterAddressFromGatewayObs, TIMEOUT);
 
@@ -295,7 +297,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
         List<PartitionKeyRangeIdentity> pkriList = allPartitionKeyRangeIds.stream().map(
                 pkri -> new PartitionKeyRangeIdentity(collectionRid, pkri)).collect(Collectors.toList());
 
-        cache.openAsync(createdCollection, pkriList).await();
+        cache.openAsync(createdCollection, pkriList).block();
 
         assertThat(httpClientWrapper.capturedRequests).asList().hasSize(1);
         httpClientWrapper.capturedRequests.clear();
@@ -306,7 +308,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
                         new Database(), new HashMap<>());
 
         PartitionKeyRangeIdentity partitionKeyRangeIdentity = new PartitionKeyRangeIdentity(collectionRid, partitionKeyRangeId);
-        Single<AddressInformation[]> addressesInfosFromCacheObs = cache.tryGetAddresses(req, partitionKeyRangeIdentity, true);
+        Mono<AddressInformation[]> addressesInfosFromCacheObs = cache.tryGetAddresses(req, partitionKeyRangeIdentity, true);
         ArrayList<AddressInformation> addressInfosFromCache = Lists.newArrayList(getSuccessResult(addressesInfosFromCacheObs, TIMEOUT));
 
         // no new request is made
@@ -314,7 +316,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
                 .describedAs("force refresh fetched from gateway")
                 .asList().hasSize(1);
 
-        Single<List<Address>> masterAddressFromGatewayObs = cache.getServerAddressesViaGatewayAsync(req,
+        Mono<List<Address>> masterAddressFromGatewayObs = cache.getServerAddressesViaGatewayAsync(req,
                 collectionRid, ImmutableList.of(partitionKeyRangeId), false);
         List<Address> expectedAddresses = getSuccessResult(masterAddressFromGatewayObs, TIMEOUT);
 
@@ -352,7 +354,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
         List<PartitionKeyRangeIdentity> pkriList = allPartitionKeyRangeIds.stream().map(
                 pkri -> new PartitionKeyRangeIdentity(collectionRid, pkri)).collect(Collectors.toList());
 
-        origCache.openAsync(createdCollection, pkriList).await();
+        origCache.openAsync(createdCollection, pkriList).block();
 
         assertThat(httpClientWrapper.capturedRequests).asList().hasSize(1);
         httpClientWrapper.capturedRequests.clear();
@@ -363,7 +365,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
                         new Database(), new HashMap<>());
 
         PartitionKeyRangeIdentity partitionKeyRangeIdentity = new PartitionKeyRangeIdentity(collectionRid, partitionKeyRangeId);
-        Single<AddressInformation[]> addressesInfosFromCacheObs = origCache.tryGetAddresses(req, partitionKeyRangeIdentity, true);
+        Mono<AddressInformation[]> addressesInfosFromCacheObs = origCache.tryGetAddresses(req, partitionKeyRangeIdentity, true);
         ArrayList<AddressInformation> addressInfosFromCache = Lists.newArrayList(getSuccessResult(addressesInfosFromCacheObs, TIMEOUT));
 
         // no new request is made
@@ -376,7 +378,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
         final AtomicInteger fetchCounter = new AtomicInteger(0);
         Mockito.doAnswer(new Answer() {
             @Override
-            public Single<List<Address>> answer(InvocationOnMock invocationOnMock) throws Throwable {
+            public Mono<List<Address>> answer(InvocationOnMock invocationOnMock) throws Throwable {
 
                 RxDocumentServiceRequest req = invocationOnMock.getArgumentAt(0, RxDocumentServiceRequest.class);
                 String collectionRid = invocationOnMock.getArgumentAt(1, String.class);
@@ -386,7 +388,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
                 int cnt = fetchCounter.getAndIncrement();
 
                 if (cnt == 0) {
-                    Single<List<Address>> res = origCache.getServerAddressesViaGatewayAsync(req,
+                    Mono<List<Address>> res = origCache.getServerAddressesViaGatewayAsync(req,
                             collectionRid,
                             partitionKeyRangeIds,
                             forceRefresh);
@@ -455,11 +457,11 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
 
         PartitionKeyRangeIdentity partitionKeyRangeIdentity = new PartitionKeyRangeIdentity("M");
         boolean forceRefreshPartitionAddresses = false;
-        Single<AddressInformation[]> addressesInfosFromCacheObs = cache.tryGetAddresses(req, partitionKeyRangeIdentity, forceRefreshPartitionAddresses);
+        Mono<AddressInformation[]> addressesInfosFromCacheObs = cache.tryGetAddresses(req, partitionKeyRangeIdentity, forceRefreshPartitionAddresses);
 
         ArrayList<AddressInformation> addressInfosFromCache = Lists.newArrayList(getSuccessResult(addressesInfosFromCacheObs, TIMEOUT));
 
-        Single<List<Address>> masterAddressFromGatewayObs = cache.getMasterAddressesViaGatewayAsync(req, ResourceType.Database,
+        Mono<List<Address>> masterAddressFromGatewayObs = cache.getMasterAddressesViaGatewayAsync(req, ResourceType.Database,
                 null, "/dbs/", false, false, null);
         List<Address> expectedAddresses = getSuccessResult(masterAddressFromGatewayObs, TIMEOUT);
 
@@ -506,7 +508,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
         AddressInformation[] expectedAddresses = cache.tryGetAddresses(req,
                 partitionKeyRangeIdentity,
                 forceRefreshPartitionAddresses)
-                .toBlocking().value();
+                .block();
 
         assertThat(clientWrapper.capturedRequests).asList().hasSize(1);
         clientWrapper.capturedRequests.clear();
@@ -514,7 +516,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
 
         TimeUnit.SECONDS.sleep(waitTimeInBetweenAttemptsInSeconds);
 
-        Single<AddressInformation[]> addressesObs = cache.tryGetAddresses(req,
+        Mono<AddressInformation[]> addressesObs = cache.tryGetAddresses(req,
                 partitionKeyRangeIdentity,
                 forceRefreshPartitionAddresses);
 
@@ -551,12 +553,12 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
         AddressInformation[] expectedAddresses = cache.tryGetAddresses(req,
                 partitionKeyRangeIdentity,
                 false)
-                .toBlocking().value();
+                .block();
 
         assertThat(clientWrapper.capturedRequests).asList().hasSize(1);
         clientWrapper.capturedRequests.clear();
 
-        Single<AddressInformation[]> addressesObs = cache.tryGetAddresses(req,
+        Mono<AddressInformation[]> addressesObs = cache.tryGetAddresses(req,
                 partitionKeyRangeIdentity,
                 true);
 
@@ -595,7 +597,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
         final AtomicInteger getMasterAddressesViaGatewayAsyncInvocation = new AtomicInteger(0);
         Mockito.doAnswer(new Answer() {
             @Override
-            public Single<List<Address>> answer(InvocationOnMock invocationOnMock) throws Throwable {
+            public Mono<List<Address>> answer(InvocationOnMock invocationOnMock) throws Throwable {
 
                 RxDocumentServiceRequest request = invocationOnMock.getArgumentAt(0, RxDocumentServiceRequest.class);
                 ResourceType resourceType = invocationOnMock.getArgumentAt(1, ResourceType.class);
@@ -607,7 +609,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
                 int cnt = getMasterAddressesViaGatewayAsyncInvocation.getAndIncrement();
 
                 if (cnt == 0) {
-                    Single<List<Address>> res = origCache.getMasterAddressesViaGatewayAsync(
+                    Mono<List<Address>> res = origCache.getMasterAddressesViaGatewayAsync(
                             request,
                             resourceType,
                             resourceAddress,
@@ -644,12 +646,12 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
         AddressInformation[] expectedAddresses = spyCache.tryGetAddresses(req,
                 partitionKeyRangeIdentity,
                 false)
-                .toBlocking().value();
+                .block();
 
         assertThat(clientWrapper.capturedRequests).asList().hasSize(1);
         clientWrapper.capturedRequests.clear();
 
-        Single<AddressInformation[]> addressesObs = spyCache.tryGetAddresses(req,
+        Mono<AddressInformation[]> addressesObs = spyCache.tryGetAddresses(req,
                 partitionKeyRangeIdentity,
                 false);
 
@@ -685,7 +687,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
         final AtomicInteger getMasterAddressesViaGatewayAsyncInvocation = new AtomicInteger(0);
         Mockito.doAnswer(new Answer() {
             @Override
-            public Single<List<Address>> answer(InvocationOnMock invocationOnMock) throws Throwable {
+            public Mono<List<Address>> answer(InvocationOnMock invocationOnMock) throws Throwable {
 
                 System.out.print("fetch");
 
@@ -699,7 +701,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
                 int cnt = getMasterAddressesViaGatewayAsyncInvocation.getAndIncrement();
 
                 if (cnt == 0) {
-                    Single<List<Address>> res = origCache.getMasterAddressesViaGatewayAsync(
+                    Mono<List<Address>> res = origCache.getMasterAddressesViaGatewayAsync(
                             request,
                             resourceType,
                             resourceAddress,
@@ -735,7 +737,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
         AddressInformation[] subOptimalAddresses = spyCache.tryGetAddresses(req,
                 partitionKeyRangeIdentity,
                 false)
-                .toBlocking().value();
+                .block();
 
         assertThat(getMasterAddressesViaGatewayAsyncInvocation.get()).isEqualTo(1);
         assertThat(subOptimalAddresses).hasSize(ServiceConfig.SystemReplicationPolicy.MaxReplicaSetSize - 1);
@@ -748,7 +750,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
         assertThat(clientWrapper.capturedRequests).asList().hasSize(1);
         clientWrapper.capturedRequests.clear();
 
-        Single<AddressInformation[]> addressesObs = spyCache.tryGetAddresses(req,
+        Mono<AddressInformation[]> addressesObs = spyCache.tryGetAddresses(req,
                 partitionKeyRangeIdentity,
                 false);
 
@@ -760,7 +762,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
         assertThat(actualAddresses).hasSize(ServiceConfig.SystemReplicationPolicy.MaxReplicaSetSize);
 
         List<Address> fetchedAddresses = origCache.getMasterAddressesViaGatewayAsync(req, ResourceType.Database,
-                null, "/dbs/", false, false, null).toBlocking().value();
+                null, "/dbs/", false, false, null).block();
 
         assertSameAs(ImmutableList.copyOf(actualAddresses),  fetchedAddresses);
     }
@@ -796,25 +798,25 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
         }
     }
 
-    public static<T> T getSuccessResult(Single<T> observable, long timeout) {
+    public static<T> T getSuccessResult(Mono<T> observable, long timeout) {
         TestSubscriber<T> testSubscriber = new TestSubscriber<>();
         observable.subscribe(testSubscriber);
         testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
         testSubscriber.assertNoErrors();
-        testSubscriber.assertCompleted();
+        testSubscriber.assertComplete();
         testSubscriber.assertValueCount(1);
-        return testSubscriber.getOnNextEvents().get(0);
+        return (T) testSubscriber.getEvents().get(0).get(0);
     }
 
-    public static void validateSuccess(Single<List<Address>> observable,
+    public static void validateSuccess(Mono<List<Address>> observable,
                                        PartitionReplicasAddressesValidator validator, long timeout) {
         TestSubscriber<List<Address>> testSubscriber = new TestSubscriber<>();
         observable.subscribe(testSubscriber);
         testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
         testSubscriber.assertNoErrors();
-        testSubscriber.assertCompleted();
+        testSubscriber.assertComplete();
         testSubscriber.assertValueCount(1);
-        validator.validate(testSubscriber.getOnNextEvents().get(0));
+        validator.validate((Collection<Address>) testSubscriber.getEvents().get(0).get(0));
     }
     
     @BeforeClass(groups = { "direct" }, timeOut = SETUP_TIMEOUT)

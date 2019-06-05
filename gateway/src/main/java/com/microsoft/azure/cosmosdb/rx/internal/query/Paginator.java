@@ -33,10 +33,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
-import reactor.core.publisher.SynchronousSink;
-import rx.observables.AsyncOnSubscribe;
-
-import java.util.concurrent.Callable;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -81,34 +77,48 @@ public class Paginator {
             Function<RxDocumentServiceRequest, Flux<FeedResponse<T>>> executeFunc, Class<T> resourceType,
             int top, int maxPageSize, boolean isChangeFeed) {
 
-        Flux.push((Consumer<FluxSink<T>>) fluxSink -> {
+        //  TODO: Something along these lines.
+        return Flux.push(new Consumer<FluxSink<FeedResponse<T>>>() {
 
+            Fetcher fetcher = new Fetcher(createRequestFunc, executeFunc, options, isChangeFeed, top, maxPageSize);
+
+            @Override
+            public void accept(FluxSink<FeedResponse<T>> feedResponseFluxSink) {
+
+            }
+
+            @Override
+            public Consumer<FluxSink<FeedResponse<T>>> andThen(Consumer<? super FluxSink<FeedResponse<T>>> after) {
+                return null;
+            }
         });
 
-        Flux<FeedResponse<T>> obs = Flux.defer(() -> {
-            return Flux.create(new AsyncOnSubscribe<Fetcher, FeedResponse<T>>() {
-                @Override
-                protected Fetcher generateState() {
-                    return new Fetcher(createRequestFunc, executeFunc, options, isChangeFeed, top, maxPageSize);
-                }
 
-                @Override
-                protected Fetcher next(Fetcher fetcher, long requested, Subscriber<Flux<? extends FeedResponse<T>>> observer) {
-                    assert requested == 1 : "requested amount expected to be 1"; // as there is a rebatchRequests(1)
-
-                    if (fetcher.shouldFetchMore()) {
-                        Flux<FeedResponse<T>> respObs = fetcher.nextPage();
-                        observer.onNext(respObs);
-                    } else {
-                        logger.debug("No more results");
-                        observer.onComplete();
-                    }
-
-                    return fetcher;
-                }
-            }).rebatchRequests(1);
-        });
-
-        return obs;
+        //  TODO: Remove this commented code after the above implementation is complete
+//        Flux<FeedResponse<T>> obs = Flux.defer(() -> {
+//            return Flux.create(new AsyncOnSubscribe<Fetcher, FeedResponse<T>>() {
+//                @Override
+//                protected Fetcher generateState() {
+//                    return new Fetcher(createRequestFunc, executeFunc, options, isChangeFeed, top, maxPageSize);
+//                }
+//
+//                @Override
+//                protected Fetcher next(Fetcher fetcher, long requested, Subscriber<Flux<? extends FeedResponse<T>>> observer) {
+//                    assert requested == 1 : "requested amount expected to be 1"; // as there is a rebatchRequests(1)
+//
+//                    if (fetcher.shouldFetchMore()) {
+//                        Flux<FeedResponse<T>> respObs = fetcher.nextPage();
+//                        observer.onNext(respObs);
+//                    } else {
+//                        logger.debug("No more results");
+//                        observer.onComplete();
+//                    }
+//
+//                    return fetcher;
+//                }
+//            }).rebatchRequests(1);
+//        });
+//
+//        return obs;
     }
 }
