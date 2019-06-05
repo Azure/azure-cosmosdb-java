@@ -57,7 +57,7 @@ public class CosmosClientBuilder {
     }
 
     /**
-     * The service ednpoint url
+     * The service endpoint url
      * @param serviceEndpoint the service endpoint
      * @return current Builder
      */
