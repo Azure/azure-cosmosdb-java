@@ -96,7 +96,7 @@ public class BackPressureTest extends TestSuiteBase {
 
             if (sleepTimeInMillis > 1000) {
                 // validate that only one item is returned to subscriber in each iteration
-                assertThat(subscriber.getValueCount() - i).isEqualTo(1);
+                assertThat(subscriber.getValueCount() - i).isLessThanOrEqualTo(1);
             }
             // validate that only one item is returned to subscriber in each iteration
             // validate that the difference between the number of requests to backend
