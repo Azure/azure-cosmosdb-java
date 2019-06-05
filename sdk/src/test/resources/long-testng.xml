@@ -33,6 +33,6 @@
     </packages>
   </test>
   <listeners>
-    <listener class-name="com.microsoft.azure.cosmosdb.RetryAnalyzer"></listener>
+    <listener class-name="com.microsoft.azure.cosmosdb.RetryListener"></listener>
   </listeners>
 </suite>
