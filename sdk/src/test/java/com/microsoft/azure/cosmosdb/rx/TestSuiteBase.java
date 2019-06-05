@@ -456,17 +456,15 @@ public class TestSuiteBase {
         return cosmosContainer.createItem(item).block().getCosmosItem();
     }
 
-    // TODO: respect concurrencyLevel;
     public Flux<CosmosItemResponse> bulkInsert(CosmosContainer cosmosContainer,
                                                List<CosmosItemSettings> documentDefinitionList,
                                                int concurrencyLevel) {
-        CosmosItemSettings first = documentDefinitionList.remove(0);
-        Flux<CosmosItemResponse> result = Flux.from(cosmosContainer.createItem(first));
+        List<Mono<CosmosItemResponse>> result = new ArrayList<>(documentDefinitionList.size());
         for (CosmosItemSettings docDef : documentDefinitionList) {
-            result.concatWith(cosmosContainer.createItem(docDef));
+            result.add(cosmosContainer.createItem(docDef));
         }
 
-        return result;
+        return Flux.merge(Flux.fromIterable(result), concurrencyLevel);
     }
     public List<CosmosItemSettings> bulkInsertBlocking(CosmosContainer cosmosContainer,
                                              List<CosmosItemSettings> documentDefinitionList) {
