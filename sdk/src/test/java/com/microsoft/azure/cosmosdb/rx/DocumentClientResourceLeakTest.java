@@ -67,7 +67,6 @@ public class DocumentClientResourceLeakTest extends TestSuiteBase {
 
         for (int i = 0; i < MAX_NUMBER; i++) {
             logger.info("client {}", i);
-            client = clientBuilder.build();
             try {
                 logger.info("creating doc...");
                 createDocument(client.getDatabase(createdDatabase.getId()).getContainer(createdCollection.getId()), getDocumentDefinition());
@@ -85,8 +84,9 @@ public class DocumentClientResourceLeakTest extends TestSuiteBase {
 
     @BeforeClass(groups = {"emulator"}, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
-        createdDatabase = SHARED_DATABASE;
-        createdCollection = SHARED_MULTI_PARTITION_COLLECTION;
+        client = clientBuilder.build();
+        createdDatabase = getSharedCosmosDatabase(client);
+        createdCollection = getSharedMultiPartitionCosmosContainer(client);
     }
 
     private CosmosItemSettings getDocumentDefinition() {

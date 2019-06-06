@@ -224,7 +224,7 @@ public class AggregateQueryTests extends TestSuiteBase {
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT * 100)
     public void beforeClass() throws Exception {
         client = clientBuilder.build();
-        createdCollection = getSharedMultiPartitionCollection(client);
+        createdCollection = getSharedMultiPartitionCosmosContainer(client);
         truncateCollection(createdCollection);
 
         bulkInsert();

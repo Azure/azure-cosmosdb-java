@@ -59,6 +59,7 @@ public class LogLevelTest extends TestSuiteBase {
     public final static String LOG_PATTERN_4 = "CONNECT: ";
 
     private static CosmosContainer createdCollection;
+    private static CosmosClient client;
 
     public LogLevelTest() {
         this.clientBuilder = createGatewayRxDocumentClient();
@@ -66,7 +67,8 @@ public class LogLevelTest extends TestSuiteBase {
 
     @BeforeClass(groups = {"simple"}, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
-        createdCollection = SHARED_MULTI_PARTITION_COLLECTION;
+        client = clientBuilder.build();
+        createdCollection = getSharedMultiPartitionCosmosContainer(client);
     }
 
     /**

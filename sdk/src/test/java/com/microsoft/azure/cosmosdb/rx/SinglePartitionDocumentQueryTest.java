@@ -333,8 +333,8 @@ public class SinglePartitionDocumentQueryTest extends TestSuiteBase {
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() throws Exception {
         client = clientBuilder.build();
-        createdCollection = SHARED_SINGLE_PARTITION_COLLECTION;
-        truncateCollection(SHARED_SINGLE_PARTITION_COLLECTION);
+        createdCollection = getSharedSinglePartitionCosmosContainer(client);
+        truncateCollection(createdCollection);
 
         for(int i = 0; i < 5; i++) {
             createdDocuments.add(createDocument(createdCollection, i));

@@ -28,6 +28,7 @@ import com.microsoft.azure.cosmos.CosmosClient.Builder;
 import com.microsoft.azure.cosmos.CosmosContainer;
 import com.microsoft.azure.cosmos.CosmosContainerRequestOptions;
 import com.microsoft.azure.cosmos.CosmosContainerSettings;
+import com.microsoft.azure.cosmos.CosmosDatabase;
 import com.microsoft.azure.cosmos.CosmosItemSettings;
 import com.microsoft.azure.cosmosdb.Database;
 import com.microsoft.azure.cosmosdb.Document;
@@ -63,7 +64,7 @@ public class BackPressureTest extends TestSuiteBase {
     private static final int TIMEOUT = 200000;
     private static final int SETUP_TIMEOUT = 60000;
 
-    private Database createdDatabase;
+    private CosmosDatabase createdDatabase;
     private CosmosContainer createdCollection;
     private List<CosmosItemSettings> createdDocuments;
 
@@ -173,9 +174,11 @@ public class BackPressureTest extends TestSuiteBase {
 
         CosmosContainerRequestOptions options = new CosmosContainerRequestOptions();
         options.offerThroughput(1000);
-        createdCollection = createCollection(createdDatabase.getId(), getSinglePartitionCollectionDefinition(), options);
-
         client = new ClientUnderTestBuilder(clientBuilder).build();
+        createdDatabase = getSharedCosmosDatabase(client);
+
+        createdCollection = createCollection(createdDatabase, getSinglePartitionCollectionDefinition(), options);
+
         RxDocumentClientUnderTest rxClient = (RxDocumentClientUnderTest)CosmosBridgeInternal.getAsyncDocumentClient(client);
 
         // increase throughput to max for a single partition collection to avoid throttling

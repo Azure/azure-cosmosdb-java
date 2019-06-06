@@ -329,9 +329,8 @@ public class ParallelDocumentQueryTest extends TestSuiteBase {
     @BeforeClass(groups = { "simple", "non-emulator" }, timeOut = 2 * SETUP_TIMEOUT)
     public void beforeClass() {
         client = clientBuilder.build();
-        createdDatabase = SHARED_DATABASE;
-        createdCollection = SHARED_MULTI_PARTITION_COLLECTION;
-        truncateCollection(SHARED_MULTI_PARTITION_COLLECTION);
+        createdCollection = getSharedMultiPartitionCosmosContainer(client);
+        truncateCollection(createdCollection);
         List<CosmosItemSettings> docDefList = new ArrayList<>();
         for(int i = 0; i < 13; i++) {
             docDefList.add(getDocumentDefinition(i));
