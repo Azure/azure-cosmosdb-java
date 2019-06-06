@@ -22,7 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>com.microsoft.azure</groupId>
@@ -40,7 +41,8 @@ SOFTWARE.
     <test.groups>unit</test.groups>
     <cosmosdb-sdk.version>3.0.0-SNAPSHOT</cosmosdb-sdk.version>
     <guava.version>27.0.1-jre</guava.version>
-    </properties>
+    <metrics.version>4.0.5</metrics.version>
+  </properties>
   <profiles>
     <profile>
       <!-- unit test -->
@@ -58,7 +60,7 @@ SOFTWARE.
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
-              </configuration>
+            </configuration>
           </plugin>
         </plugins>
       </build>
@@ -223,7 +225,6 @@ SOFTWARE.
           </classpathContainers>
         </configuration>
       </plugin>
-
       <plugin>
         <artifactId>maven-javadoc-plugin</artifactId>
         <version>3.0.1</version>
@@ -302,6 +303,11 @@ SOFTWARE.
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
       <version>${guava.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.dropwizard.metrics</groupId>
+      <artifactId>metrics-core</artifactId>
+      <version>${metrics.version}</version>
     </dependency>
     <dependency>
       <groupId>io.reactivex.rxjava2</groupId>

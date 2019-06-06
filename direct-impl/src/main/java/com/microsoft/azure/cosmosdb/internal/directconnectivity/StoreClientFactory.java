@@ -54,8 +54,7 @@ public class StoreClientFactory implements AutoCloseable {
         if (protocol == Protocol.Https) {
             this.transportClient = new HttpTransportClient(configs, requestTimeoutInSeconds, userAgent);
         } else if (protocol == Protocol.Tcp){
-            throw new RuntimeException("Not Supported right now");
-//            this.transportClient = new RntbdTransportClient(configs, requestTimeoutInSeconds, userAgent);
+            this.transportClient = new RntbdTransportClient(configs, requestTimeoutInSeconds, userAgent);
         } else {
             throw new IllegalArgumentException(String.format("protocol: %s", this.protocol));
         }
