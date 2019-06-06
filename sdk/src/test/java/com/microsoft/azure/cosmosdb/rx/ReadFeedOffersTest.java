@@ -40,8 +40,6 @@ import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.Offer;
 
-import rx.Observable;
-
 import javax.net.ssl.SSLException;
 
 public class ReadFeedOffersTest extends TestSuiteBase {

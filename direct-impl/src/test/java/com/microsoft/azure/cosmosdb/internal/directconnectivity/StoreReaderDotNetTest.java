@@ -108,7 +108,7 @@ public class StoreReaderDotNetTest {
         }
 
         // create objects for all the dependencies of the StoreReader
-        ReactorTransportClient mockTransportClient = Mockito.mock(ReactorTransportClient.class);
+        TransportClient mockTransportClient = Mockito.mock(TransportClient.class);
 
         // create mock store response object
         StoreResponseBuilder srb = new StoreResponseBuilder();
@@ -137,9 +137,9 @@ public class StoreReaderDotNetTest {
         validator.validate(response);
     }
 
-    private ReactorTransportClient getMockTransportClientDuringUpgrade(AddressInformation[] addressInformation) {
+    private TransportClient getMockTransportClientDuringUpgrade(AddressInformation[] addressInformation) {
         // create objects for all the dependencies of the StoreReader
-        ReactorTransportClient mockTransportClient = Mockito.mock(ReactorTransportClient.class);
+        TransportClient mockTransportClient = Mockito.mock(TransportClient.class);
 
         // create mock store response object
         // set lsn and activityid on the store response.
@@ -201,9 +201,9 @@ public class StoreReaderDotNetTest {
         QuorumNotSelected
     }
 
-    private ReactorTransportClient getMockTransportClientForGlobalStrongReads(AddressInformation[] addressInformation, ReadQuorumResultKind result) {
+    private TransportClient getMockTransportClientForGlobalStrongReads(AddressInformation[] addressInformation, ReadQuorumResultKind result) {
         // create objects for all the dependencies of the StoreReader
-        ReactorTransportClient mockTransportClient = Mockito.mock(ReactorTransportClient.class);
+        TransportClient mockTransportClient = Mockito.mock(TransportClient.class);
 
         // create mock store response object
 
@@ -313,14 +313,14 @@ public class StoreReaderDotNetTest {
         return mockTransportClient;
     }
 
-    private ReactorTransportClient getMockTransportClientForGlobalStrongWrites(
+    private TransportClient getMockTransportClientForGlobalStrongWrites(
             AddressInformation[] addressInformation,
             int indexOfCaughtUpReplica,
             boolean undershootGlobalCommittedLsnDuringBarrier,
             boolean overshootLsnDuringBarrier,
             boolean overshootGlobalCommittedLsnDuringBarrier)
     {
-        ReactorTransportClient mockTransportClient = Mockito.mock(ReactorTransportClient.class);
+        TransportClient mockTransportClient = Mockito.mock(TransportClient.class);
 
         // create mock store response object
 
@@ -484,7 +484,7 @@ public class StoreReaderDotNetTest {
         assertThat(primaryAddress.toString()).isEqualTo(addressInformation[0].getPhysicalUri());
 
         // get mock transport client that returns a sequence of responses to simulate upgrade
-        ReactorTransportClient mockTransportClient = getMockTransportClientDuringUpgrade(addressInformation);
+        TransportClient mockTransportClient = getMockTransportClientDuringUpgrade(addressInformation);
 
         // get response from mock object
         StoreResponse response = mockTransportClient.invokeResourceOperationAsync(URI.create(addressInformation[0].getPhysicalUri()), entity).block();
@@ -612,7 +612,7 @@ public class StoreReaderDotNetTest {
         assertThat(primaryAddress.toString()).isEqualTo(addressInformations[0].getPhysicalUri());
 
         // get mock transport client that returns a sequence of responses to simulate upgrade
-        ReactorTransportClient mockTransportClient = getMockTransportClientDuringUpgrade(addressInformations);
+        TransportClient mockTransportClient = getMockTransportClientDuringUpgrade(addressInformations);
 
         // get response from mock object
         StoreResponse response = mockTransportClient.invokeResourceOperationAsync(new URI(addressInformations[0].getPhysicalUri()), entity).block();
@@ -708,7 +708,7 @@ public class StoreReaderDotNetTest {
                 Matchers.any(), Matchers.anyMap())).thenReturn("dummyauthtoken");
 
         for (int i = 0; i < addressInformations.length; i++) {
-            ReactorTransportClient mockTransportClient = getMockTransportClientForGlobalStrongWrites(addressInformations, i, false, false, false);
+            TransportClient mockTransportClient = getMockTransportClientForGlobalStrongWrites(addressInformations, i, false, false, false);
             StoreReader storeReader = new StoreReader(mockTransportClient, addressSelector, sessionContainer);
             ConsistencyWriter consistencyWriter = new ConsistencyWriter(addressSelector, sessionContainer, mockTransportClient, mockAuthorizationTokenProvider, serviceConfigurationReader, false);
             StoreResponse response = consistencyWriter.writeAsync(entity, new TimeoutHelper(Duration.ofSeconds(30)), false).block();
@@ -788,7 +788,7 @@ public class StoreReaderDotNetTest {
         // Quorum Met scenario Start
         {
             // get mock transport client that returns a sequence of responses to simulate upgrade
-            ReactorTransportClient mockTransportClient = getMockTransportClientForGlobalStrongReads(addressInformations, ReadQuorumResultKind.QuorumMet);
+            TransportClient mockTransportClient = getMockTransportClientForGlobalStrongReads(addressInformations, ReadQuorumResultKind.QuorumMet);
 
             // create a real session container - we don't need session for this test anyway
             SessionContainer sessionContainer = new SessionContainer(StringUtils.EMPTY);
@@ -821,7 +821,7 @@ public class StoreReaderDotNetTest {
         // Quorum Selected scenario
         {
             // get mock transport client that returns a sequence of responses to simulate upgrade
-            ReactorTransportClient mockTransportClient = getMockTransportClientForGlobalStrongReads(addressInformations, ReadQuorumResultKind.QuorumSelected);
+            TransportClient mockTransportClient = getMockTransportClientForGlobalStrongReads(addressInformations, ReadQuorumResultKind.QuorumSelected);
 
             // create a real session container - we don't need session for this test anyway
             SessionContainer sessionContainer = new SessionContainer(StringUtils.EMPTY);
@@ -861,7 +861,7 @@ public class StoreReaderDotNetTest {
         // Quorum not met scenario
         {
             // get mock transport client that returns a sequence of responses to simulate upgrade
-            ReactorTransportClient mockTransportClient = getMockTransportClientForGlobalStrongReads(addressInformations, ReadQuorumResultKind.QuorumNotSelected);
+            TransportClient mockTransportClient = getMockTransportClientForGlobalStrongReads(addressInformations, ReadQuorumResultKind.QuorumNotSelected);
 
             // create a real session container - we don't need session for this test anyway
             SessionContainer sessionContainer = new SessionContainer(StringUtils.EMPTY);

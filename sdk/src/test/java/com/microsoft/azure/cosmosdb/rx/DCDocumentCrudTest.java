@@ -50,7 +50,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
-import rx.Observable;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;

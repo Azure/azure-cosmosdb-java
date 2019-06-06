@@ -43,8 +43,6 @@ import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.Offer;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient.Builder;
 
-import rx.Observable;
-
 public class OfferQueryTest extends TestSuiteBase {
 
     /*

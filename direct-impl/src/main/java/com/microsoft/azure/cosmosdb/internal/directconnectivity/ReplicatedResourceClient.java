@@ -59,7 +59,7 @@ public class ReplicatedResourceClient {
     private final ConsistencyReader consistencyReader;
     private final ConsistencyWriter consistencyWriter;
     private final Protocol protocol;
-    private final ReactorTransportClient transportClient;
+    private final TransportClient transportClient;
     private final boolean enableReadRequestsFallback;
     private final GatewayServiceConfigurationReader serviceConfigReader;
     private final Configs configs;
@@ -68,7 +68,7 @@ public class ReplicatedResourceClient {
             Configs configs,
             AddressSelector addressSelector,
             ISessionContainer sessionContainer,
-            ReactorTransportClient transportClient,
+            TransportClient transportClient,
             GatewayServiceConfigurationReader serviceConfigReader,
             IAuthorizationTokenProvider authorizationTokenProvider, 
             boolean enableReadRequestsFallback,

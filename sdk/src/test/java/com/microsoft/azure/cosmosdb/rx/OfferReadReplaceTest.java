@@ -35,8 +35,6 @@ import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.Offer;
 import com.microsoft.azure.cosmosdb.ResourceResponse;
 
-import rx.Observable;
-
 import javax.net.ssl.SSLException;
 
 public class OfferReadReplaceTest extends TestSuiteBase {

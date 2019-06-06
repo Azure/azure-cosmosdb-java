@@ -48,8 +48,6 @@ import com.microsoft.azure.cosmosdb.RequestOptions;
 import com.microsoft.azure.cosmosdb.ResourceResponse;
 import com.microsoft.azure.cosmosdb.User;
 
-import rx.Observable;
-
 /**
  * This class try to test different scenario related to fetching various
  * resources from resource token directly or via permission feed .

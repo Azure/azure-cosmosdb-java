@@ -62,13 +62,13 @@ import static com.microsoft.azure.cosmosdb.rx.internal.Exceptions.isSubStatusCod
 
 public class StoreReader {
     private final Logger logger = LoggerFactory.getLogger(StoreReader.class);
-    private final ReactorTransportClient transportClient;
+    private final TransportClient transportClient;
     private final AddressSelector addressSelector;
     private final ISessionContainer sessionContainer;
     private String lastReadAddress;
 
     public StoreReader(
-            ReactorTransportClient transportClient,
+            TransportClient transportClient,
             AddressSelector addressSelector,
             ISessionContainer sessionContainer) {
         this.transportClient = transportClient;

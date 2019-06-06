@@ -55,10 +55,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
-import rx.Observable;
-import rx.internal.util.RxRingBuffer;
-import rx.observers.TestSubscriber;
-import rx.schedulers.Schedulers;
 
 import java.util.ArrayList;
 import java.util.Collection;

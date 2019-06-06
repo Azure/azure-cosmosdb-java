@@ -42,8 +42,6 @@ import com.microsoft.azure.cosmosdb.Permission;
 import com.microsoft.azure.cosmosdb.PermissionMode;
 import com.microsoft.azure.cosmosdb.User;
 
-import rx.Observable;
-
 import javax.net.ssl.SSLException;
 
 public class ReadFeedPermissionsTest extends TestSuiteBase {

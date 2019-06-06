@@ -50,10 +50,6 @@ import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient.Builder;
 
-import rx.Observable;
-import rx.observers.TestSubscriber;
-
-
 public class SinglePartitionDocumentQueryTest extends TestSuiteBase {
 
     /*

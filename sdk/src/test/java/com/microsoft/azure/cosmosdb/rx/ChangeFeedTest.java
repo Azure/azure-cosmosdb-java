@@ -58,8 +58,6 @@ import org.testng.annotations.Test;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 
-import rx.Observable;
-
 public class ChangeFeedTest extends TestSuiteBase {
 
     /*

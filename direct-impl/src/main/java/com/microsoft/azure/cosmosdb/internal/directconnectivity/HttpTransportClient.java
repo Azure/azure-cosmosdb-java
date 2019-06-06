@@ -69,7 +69,7 @@ import static com.microsoft.azure.cosmosdb.internal.Utils.trimBeginningAndEnding
 /*
  * The following code only support Document Write without any error handling support.
  */
-public class HttpTransportClient extends ReactorTransportClient {
+public class HttpTransportClient extends TransportClient {
     private final Logger logger = LoggerFactory.getLogger(HttpTransportClient.class);
     private final HttpClient httpClient;
     private final Map<String, String> defaultHeaders;

@@ -37,8 +37,6 @@ import com.microsoft.azure.cosmosdb.ResourceResponse;
 import com.microsoft.azure.cosmosdb.User;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 
-import rx.Observable;
-
 import javax.net.ssl.SSLException;
 
 public class PermissionCrudTest extends TestSuiteBase {

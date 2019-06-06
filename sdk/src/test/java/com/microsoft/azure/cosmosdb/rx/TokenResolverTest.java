@@ -57,7 +57,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
-import rx.Observable;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

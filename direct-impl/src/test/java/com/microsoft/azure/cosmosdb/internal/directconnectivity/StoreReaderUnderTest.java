@@ -38,7 +38,7 @@ public class StoreReaderUnderTest extends StoreReader {
 
     public List<Pair<Method, List<Object>>> invocations = Collections.synchronizedList(new ArrayList<>());
 
-    public StoreReaderUnderTest(ReactorTransportClient transportClient, AddressSelector addressSelector, ISessionContainer sessionContainer) {
+    public StoreReaderUnderTest(TransportClient transportClient, AddressSelector addressSelector, ISessionContainer sessionContainer) {
         super(transportClient, addressSelector, sessionContainer);
     }
 

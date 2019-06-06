@@ -80,7 +80,7 @@ public class ConsistencyWriter {
     private final static int SHORT_BARRIER_RETRY_INTERVAL_IN_MS_FOR_MULTI_REGION = 10;
 
     private final Logger logger = LoggerFactory.getLogger(ConsistencyWriter.class);
-    private final ReactorTransportClient transportClient;
+    private final TransportClient transportClient;
     private final AddressSelector addressSelector;
     private final ISessionContainer sessionContainer;
     private final IAuthorizationTokenProvider authorizationTokenProvider;
@@ -91,7 +91,7 @@ public class ConsistencyWriter {
     public ConsistencyWriter(
             AddressSelector addressSelector,
             ISessionContainer sessionContainer,
-            ReactorTransportClient transportClient,
+            TransportClient transportClient,
             IAuthorizationTokenProvider authorizationTokenProvider,
             GatewayServiceConfigurationReader serviceConfigReader,
             boolean useMultipleWriteLocations) {

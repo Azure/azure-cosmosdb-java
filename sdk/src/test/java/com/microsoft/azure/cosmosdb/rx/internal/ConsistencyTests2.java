@@ -44,8 +44,7 @@ import com.microsoft.azure.cosmosdb.rx.TestConfigurations;
 import org.apache.commons.lang3.Range;
 import org.testng.annotations.Test;
 import reactor.core.publisher.Flux;
-import rx.Completable;
-import rx.functions.Action1;
+import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -259,54 +258,46 @@ public class ConsistencyTests2 extends ConsistencyTestsBase {
                     .blockFirst()
                     .getResource();
 
-            Completable task1 = ParallelAsync.forEachAsync(Range.between(0, 1000), 5, new Action1<Integer>() {
-                @Override
-                public void call(Integer index) {
-                    client.createDocument(createdCollection.getSelfLink(), documents.get(index % documents.size()),
-                                          null, true)
-                            .blockFirst();
-                }
-            });
+            Mono<Void> task1 = ParallelAsync.forEachAsync(Range.between(0, 1000), 5, index -> client.createDocument(createdCollection.getSelfLink(), documents.get(index % documents.size()),
+                                  null, true)
+                    .blockFirst());
             
-            Completable task2 = ParallelAsync.forEachAsync(Range.between(0, 1000), 5, new Action1<Integer>() {
-                @Override
-                public void call(Integer index) {
-                    try {
-                        FeedOptions feedOptions = new FeedOptions();
-                        feedOptions.setEnableCrossPartitionQuery(true);
-                        FeedResponse<Document> queryResponse = client.queryDocuments(createdCollection.getSelfLink(),
-                                                                                     "SELECT * FROM c WHERE c.Id = " +
-                                                                                             "'foo'", feedOptions)
-                                .blockFirst();
-                        String lsnHeaderValue = queryResponse.getResponseHeaders().get(WFConstants.BackendHeaders.LSN);
-                        long lsn = Long.valueOf(lsnHeaderValue);
-                        String sessionTokenHeaderValue = queryResponse.getResponseHeaders().get(HttpConstants.HttpHeaders.SESSION_TOKEN);
-                        ISessionToken sessionToken = SessionTokenHelper.parse(sessionTokenHeaderValue);
-                        logger.info("Session Token = {}, LSN = {}", sessionToken.convertToString(), lsn);
-                        assertThat(lsn).isEqualTo(sessionToken.getLSN());
-                    } catch (Exception ex) {
-                        DocumentClientException clientException = (DocumentClientException) ex.getCause();
-                        if (clientException.getStatusCode() != 0) {
-                            if (clientException.getStatusCode() == HttpConstants.StatusCodes.REQUEST_TIMEOUT) {
-                                // ignore
-                            } else if (clientException.getStatusCode() == HttpConstants.StatusCodes.NOTFOUND) {
-                                String lsnHeaderValue = clientException.getResponseHeaders().get(WFConstants.BackendHeaders.LSN);
-                                long lsn = Long.valueOf(lsnHeaderValue);
-                                String sessionTokenHeaderValue = clientException.getResponseHeaders().get(HttpConstants.HttpHeaders.SESSION_TOKEN);
-                                ISessionToken sessionToken = SessionTokenHelper.parse(sessionTokenHeaderValue);
+            Mono<Void> task2 = ParallelAsync.forEachAsync(Range.between(0, 1000), 5, index -> {
+                try {
+                    FeedOptions feedOptions = new FeedOptions();
+                    feedOptions.setEnableCrossPartitionQuery(true);
+                    FeedResponse<Document> queryResponse = client.queryDocuments(createdCollection.getSelfLink(),
+                                                                                 "SELECT * FROM c WHERE c.Id = " +
+                                                                                         "'foo'", feedOptions)
+                            .blockFirst();
+                    String lsnHeaderValue = queryResponse.getResponseHeaders().get(WFConstants.BackendHeaders.LSN);
+                    long lsn = Long.valueOf(lsnHeaderValue);
+                    String sessionTokenHeaderValue = queryResponse.getResponseHeaders().get(HttpConstants.HttpHeaders.SESSION_TOKEN);
+                    ISessionToken sessionToken = SessionTokenHelper.parse(sessionTokenHeaderValue);
+                    logger.info("Session Token = {}, LSN = {}", sessionToken.convertToString(), lsn);
+                    assertThat(lsn).isEqualTo(sessionToken.getLSN());
+                } catch (Exception ex) {
+                    DocumentClientException clientException = (DocumentClientException) ex.getCause();
+                    if (clientException.getStatusCode() != 0) {
+                        if (clientException.getStatusCode() == HttpConstants.StatusCodes.REQUEST_TIMEOUT) {
+                            // ignore
+                        } else if (clientException.getStatusCode() == HttpConstants.StatusCodes.NOTFOUND) {
+                            String lsnHeaderValue = clientException.getResponseHeaders().get(WFConstants.BackendHeaders.LSN);
+                            long lsn = Long.valueOf(lsnHeaderValue);
+                            String sessionTokenHeaderValue = clientException.getResponseHeaders().get(HttpConstants.HttpHeaders.SESSION_TOKEN);
+                            ISessionToken sessionToken = SessionTokenHelper.parse(sessionTokenHeaderValue);
 
-                                logger.info("Session Token = {}, LSN = {}", sessionToken.convertToString(), lsn);
-                                assertThat(lsn).isEqualTo(sessionToken.getLSN());
-                            } else {
-                                throw ex;
-                            }
+                            logger.info("Session Token = {}, LSN = {}", sessionToken.convertToString(), lsn);
+                            assertThat(lsn).isEqualTo(sessionToken.getLSN());
                         } else {
                             throw ex;
                         }
+                    } else {
+                        throw ex;
                     }
                 }
             });
-            Completable.mergeDelayError(task1, task2).await();
+            Mono.whenDelayError(task1, task2).block();
         } finally {
             safeClose(client);
         }

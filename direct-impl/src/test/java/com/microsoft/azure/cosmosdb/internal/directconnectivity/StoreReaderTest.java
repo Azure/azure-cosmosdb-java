@@ -70,7 +70,7 @@ public class StoreReaderTest {
      */
     @Test(groups = "unit")
     public void startBackgroundAddressRefresh() throws Exception {
-        ReactorTransportClient transportClient = Mockito.mock(ReactorTransportClient.class);
+        TransportClient transportClient = Mockito.mock(TransportClient.class);
         AddressSelector addressSelector = Mockito.mock(AddressSelector.class);
         ISessionContainer sessionContainer = Mockito.mock(ISessionContainer.class);
 
@@ -475,7 +475,7 @@ public class StoreReaderTest {
 
     @Test(groups = "unit")
     public void readPrimaryAsync() {
-        ReactorTransportClient transportClient = Mockito.mock(ReactorTransportClient.class);
+        TransportClient transportClient = Mockito.mock(TransportClient.class);
         AddressSelector addressSelector = Mockito.mock(AddressSelector.class);
         ISessionContainer sessionContainer = Mockito.mock(ISessionContainer.class);
 
@@ -506,7 +506,7 @@ public class StoreReaderTest {
 
     @Test(groups = "unit")
     public void readPrimaryAsync_GoneFromReplica() {
-        ReactorTransportClient transportClient = Mockito.mock(ReactorTransportClient.class);
+        TransportClient transportClient = Mockito.mock(TransportClient.class);
         AddressSelector addressSelector = Mockito.mock(AddressSelector.class);
         ISessionContainer sessionContainer = Mockito.mock(ISessionContainer.class);
 
@@ -533,7 +533,7 @@ public class StoreReaderTest {
 
     @Test(groups = "unit")
     public void readPrimaryAsync_GoneExceptionOnTimeout() {
-        ReactorTransportClient transportClient = Mockito.mock(ReactorTransportClient.class);
+        TransportClient transportClient = Mockito.mock(TransportClient.class);
         AddressSelector addressSelector = Mockito.mock(AddressSelector.class);
         ISessionContainer sessionContainer = Mockito.mock(ISessionContainer.class);
 
