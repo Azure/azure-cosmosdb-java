@@ -97,7 +97,7 @@ public class ProxyHostTest extends TestSuiteBase {
         try {
             ConnectionPolicy connectionPolicy =new ConnectionPolicy();
             connectionPolicy.setProxy(PROXY_HOST, PROXY_PORT);
-            clientWithRightProxy = new CosmosClient.Builder().endpoint(TestConfigurations.HOST)
+            clientWithRightProxy = CosmosClient.builder().endpoint(TestConfigurations.HOST)
                     .key(TestConfigurations.MASTER_KEY)
                     .connectionPolicy(connectionPolicy)
                     .consistencyLevel(ConsistencyLevel.Session).build();
@@ -130,7 +130,7 @@ public class ProxyHostTest extends TestSuiteBase {
 
             ConnectionPolicy connectionPolicy =new ConnectionPolicy();
             connectionPolicy.setProxy(PROXY_HOST, PROXY_PORT);
-            clientWithRightProxy = new CosmosClient.Builder().endpoint(TestConfigurations.HOST)
+            clientWithRightProxy = CosmosClient.builder().endpoint(TestConfigurations.HOST)
                     .key(TestConfigurations.MASTER_KEY)
                     .connectionPolicy(connectionPolicy)
                     .consistencyLevel(ConsistencyLevel.Session).build();

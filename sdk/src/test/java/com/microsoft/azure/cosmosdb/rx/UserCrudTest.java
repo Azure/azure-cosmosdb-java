@@ -25,6 +25,7 @@ package com.microsoft.azure.cosmosdb.rx;
 
 import java.util.UUID;
 
+import com.microsoft.azure.cosmos.CosmosClientBuilder;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
@@ -49,7 +50,7 @@ public class UserCrudTest extends TestSuiteBase {
     private CosmosClient client;
 
     @Factory(dataProvider = "clientBuilders")
-    public UserCrudTest(CosmosClient.Builder clientBuilder) {
+    public UserCrudTest(CosmosClientBuilder clientBuilder) {
         this.clientBuilder = clientBuilder;
     }
 

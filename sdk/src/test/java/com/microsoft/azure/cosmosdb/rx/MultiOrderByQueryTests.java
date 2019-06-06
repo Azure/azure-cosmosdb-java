@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 
+import com.microsoft.azure.cosmos.CosmosClientBuilder;
 import org.apache.commons.collections4.ComparatorUtils;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -40,7 +41,6 @@ import org.testng.annotations.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.microsoft.azure.cosmos.CosmosClient;
-import com.microsoft.azure.cosmos.CosmosClient.Builder;
 import com.microsoft.azure.cosmos.CosmosContainer;
 import com.microsoft.azure.cosmos.CosmosContainerSettings;
 import com.microsoft.azure.cosmos.CosmosItemRequestOptions;
@@ -72,7 +72,7 @@ public class MultiOrderByQueryTests extends TestSuiteBase {
     private static final String PARTITION_KEY = "pk";
     private ArrayList<CosmosItemSettings> documents = new ArrayList<CosmosItemSettings>();
     private CosmosContainer documentCollection;
-    private Builder clientBuilder;
+    private CosmosClientBuilder clientBuilder;
     private CosmosClient client;
 
     class CustomComparator implements Comparator<CosmosItemSettings> {
@@ -131,7 +131,7 @@ public class MultiOrderByQueryTests extends TestSuiteBase {
     }
 
     @Factory(dataProvider = "clientBuilders")
-    public MultiOrderByQueryTests(Builder clientBuilder) {
+    public MultiOrderByQueryTests(CosmosClientBuilder clientBuilder) {
         this.clientBuilder = clientBuilder;
     }
 

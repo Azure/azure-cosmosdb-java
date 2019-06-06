@@ -25,8 +25,6 @@ package com.microsoft.azure.cosmos;
 import com.microsoft.azure.cosmosdb.Document;
 import com.microsoft.azure.cosmosdb.RequestOptions;
 import com.microsoft.azure.cosmosdb.internal.Paths;
-import hu.akarnokd.rxjava.interop.RxJavaInterop;
-import reactor.adapter.rxjava.RxJava2Adapter;
 import reactor.core.publisher.Mono;
 
 public class CosmosItem extends CosmosResource{
@@ -67,10 +65,10 @@ public class CosmosItem extends CosmosResource{
             options = new CosmosItemRequestOptions();
         }
         RequestOptions requestOptions = options.toRequestOptions();
-        return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(container.getDatabase().getDocClientWrapper()
+        return container.getDatabase().getDocClientWrapper()
                 .readDocument(getLink(), requestOptions)
                 .map(response -> new CosmosItemResponse(response, requestOptions.getPartitionKey(), container))
-                .toSingle()));
+                .single();
     }
 
     /**
@@ -104,11 +102,11 @@ public class CosmosItem extends CosmosResource{
             options = new CosmosItemRequestOptions();
         }
         RequestOptions requestOptions = options.toRequestOptions();
-        return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(container.getDatabase()
+        return container.getDatabase()
                 .getDocClientWrapper()
                 .replaceDocument(getLink(), doc, requestOptions)
                 .map(response -> new CosmosItemResponse(response, requestOptions.getPartitionKey(), container))
-                .toSingle()));
+                .single();
     }
 
     /**
@@ -138,12 +136,11 @@ public class CosmosItem extends CosmosResource{
             options = new CosmosItemRequestOptions();
         }
         RequestOptions requestOptions = options.toRequestOptions();
-        return RxJava2Adapter.singleToMono(
-                RxJavaInterop.toV2Single(container.getDatabase()
+        return container.getDatabase()
                         .getDocClientWrapper()
                         .deleteDocument(getLink(), requestOptions)
                         .map(response -> new CosmosItemResponse(response, requestOptions.getPartitionKey(), container))
-                        .toSingle()));
+                        .single();
     }
     
     void setContainer(CosmosContainer container) {

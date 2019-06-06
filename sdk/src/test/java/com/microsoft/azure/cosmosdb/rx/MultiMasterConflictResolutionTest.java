@@ -23,6 +23,7 @@
 package com.microsoft.azure.cosmosdb.rx;
 
 import com.microsoft.azure.cosmos.CosmosClient;
+import com.microsoft.azure.cosmos.CosmosClientBuilder;
 import com.microsoft.azure.cosmos.CosmosContainer;
 import com.microsoft.azure.cosmos.CosmosContainerResponse;
 import com.microsoft.azure.cosmos.CosmosContainerSettings;
@@ -58,7 +59,7 @@ public class MultiMasterConflictResolutionTest extends TestSuiteBase {
     private CosmosDatabase database;
 
     @Factory(dataProvider = "clientBuilders")
-    public MultiMasterConflictResolutionTest(CosmosClient.Builder clientBuilder) {
+    public MultiMasterConflictResolutionTest(CosmosClientBuilder clientBuilder) {
         this.clientBuilder = clientBuilder;
     }
 

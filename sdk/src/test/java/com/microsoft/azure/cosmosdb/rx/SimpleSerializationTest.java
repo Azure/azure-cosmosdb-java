@@ -29,7 +29,7 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.microsoft.azure.cosmos.CosmosClient;
-import com.microsoft.azure.cosmos.CosmosClient.Builder;
+import com.microsoft.azure.cosmos.CosmosClientBuilder;
 import com.microsoft.azure.cosmos.CosmosContainer;
 
 import org.apache.commons.lang3.NotImplementedException;
@@ -68,7 +68,7 @@ public class SimpleSerializationTest extends TestSuiteBase {
     }
 
     @Factory(dataProvider = "clientBuildersWithDirect")
-    public SimpleSerializationTest(Builder clientBuilder) {
+    public SimpleSerializationTest(CosmosClientBuilder clientBuilder) {
         this.clientBuilder = clientBuilder;
     }
 

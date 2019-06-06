@@ -23,6 +23,7 @@
 package com.microsoft.azure.cosmosdb.rx;
 
 import com.microsoft.azure.cosmos.CosmosClient;
+import com.microsoft.azure.cosmos.CosmosClientBuilder;
 import com.microsoft.azure.cosmos.CosmosContainer;
 import com.microsoft.azure.cosmos.CosmosDatabase;
 import com.microsoft.azure.cosmos.CosmosItemSettings;
@@ -51,7 +52,7 @@ public class ReadFeedDocumentsTest extends TestSuiteBase {
     private CosmosClient client;
 
     @Factory(dataProvider = "clientBuildersWithDirect")
-    public ReadFeedDocumentsTest(CosmosClient.Builder clientBuilder) {
+    public ReadFeedDocumentsTest(CosmosClientBuilder clientBuilder) {
         this.clientBuilder = clientBuilder;
     }
 

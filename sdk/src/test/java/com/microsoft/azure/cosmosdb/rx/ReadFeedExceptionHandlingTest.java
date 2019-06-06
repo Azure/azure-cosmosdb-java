@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
 
 import com.microsoft.azure.cosmos.CosmosClient;
+import com.microsoft.azure.cosmos.CosmosClientBuilder;
 import com.microsoft.azure.cosmos.CosmosDatabaseSettings;
 import com.microsoft.azure.cosmosdb.BridgeInternal;
 import org.mockito.Mockito;
@@ -42,7 +43,6 @@ import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 public class ReadFeedExceptionHandlingTest extends TestSuiteBase {
 
@@ -84,7 +84,7 @@ public class ReadFeedExceptionHandlingTest extends TestSuiteBase {
     private CosmosClient client;
 
     @Factory(dataProvider = "clientBuildersWithDirect")
-    public ReadFeedExceptionHandlingTest(CosmosClient.Builder clientBuilder) {
+    public ReadFeedExceptionHandlingTest(CosmosClientBuilder clientBuilder) {
         this.clientBuilder = clientBuilder;
     }
 

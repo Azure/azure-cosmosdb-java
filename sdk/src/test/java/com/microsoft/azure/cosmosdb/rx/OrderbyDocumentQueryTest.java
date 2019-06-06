@@ -35,6 +35,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.microsoft.azure.cosmos.CosmosClientBuilder;
 import com.microsoft.azure.cosmosdb.RetryAnalyzer;
 import org.apache.commons.lang3.StringUtils;
 
@@ -76,7 +77,7 @@ public class OrderbyDocumentQueryTest extends TestSuiteBase {
     private int numberOfPartitions;
 
     @Factory(dataProvider = "clientBuildersWithDirect")
-    public OrderbyDocumentQueryTest(CosmosClient.Builder clientBuilder) {
+    public OrderbyDocumentQueryTest(CosmosClientBuilder clientBuilder) {
         this.clientBuilder = clientBuilder;
     }
 

@@ -29,13 +29,13 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.microsoft.azure.cosmos.CosmosClientBuilder;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 import com.microsoft.azure.cosmos.CosmosClient;
-import com.microsoft.azure.cosmos.CosmosClient.Builder;
 import com.microsoft.azure.cosmos.CosmosContainer;
 import com.microsoft.azure.cosmos.CosmosRequestOptions;
 import com.microsoft.azure.cosmos.CosmosUserDefinedFunctionSettings;
@@ -59,7 +59,7 @@ public class UserDefinedFunctionQueryTest extends TestSuiteBase {
     }
 
     @Factory(dataProvider = "clientBuildersWithDirect")
-    public UserDefinedFunctionQueryTest(Builder clientBuilder) {
+    public UserDefinedFunctionQueryTest(CosmosClientBuilder clientBuilder) {
         this.clientBuilder = clientBuilder;
     }
 

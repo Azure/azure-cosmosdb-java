@@ -24,6 +24,7 @@ package com.microsoft.azure.cosmosdb.rx;
 
 import com.microsoft.azure.cosmos.CosmosBridgeInternal;
 import com.microsoft.azure.cosmos.CosmosClient;
+import com.microsoft.azure.cosmos.CosmosClientBuilder;
 import com.microsoft.azure.cosmos.CosmosContainer;
 import com.microsoft.azure.cosmos.CosmosDatabase;
 import com.microsoft.azure.cosmos.CosmosItemSettings;
@@ -71,7 +72,7 @@ public class ParallelDocumentQueryTest extends TestSuiteBase {
     }
 
     @Factory(dataProvider = "clientBuildersWithDirect")
-    public ParallelDocumentQueryTest(CosmosClient.Builder clientBuilder) {
+    public ParallelDocumentQueryTest(CosmosClientBuilder clientBuilder) {
         this.clientBuilder = clientBuilder;
     }
 

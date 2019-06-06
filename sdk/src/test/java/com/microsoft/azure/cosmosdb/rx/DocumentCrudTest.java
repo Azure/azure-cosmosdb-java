@@ -23,6 +23,7 @@
 package com.microsoft.azure.cosmosdb.rx;
 
 import com.microsoft.azure.cosmos.CosmosClient;
+import com.microsoft.azure.cosmos.CosmosClientBuilder;
 import com.microsoft.azure.cosmos.CosmosContainer;
 import com.microsoft.azure.cosmos.CosmosItem;
 import com.microsoft.azure.cosmos.CosmosItemRequestOptions;
@@ -60,7 +61,7 @@ public class DocumentCrudTest extends TestSuiteBase {
     private CosmosClient client;
     
     @Factory(dataProvider = "clientBuildersWithDirect")
-    public DocumentCrudTest(CosmosClient.Builder clientBuilder) {
+    public DocumentCrudTest(CosmosClientBuilder clientBuilder) {
         this.clientBuilder = clientBuilder;
     }
 

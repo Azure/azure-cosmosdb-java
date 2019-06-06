@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.microsoft.azure.cosmos.CosmosClientBuilder;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
@@ -58,7 +59,7 @@ public class ReadFeedCollectionsTest extends TestSuiteBase {
     private CosmosClient client;
 
     @Factory(dataProvider = "clientBuilders")
-    public ReadFeedCollectionsTest(CosmosClient.Builder clientBuilder) {
+    public ReadFeedCollectionsTest(CosmosClientBuilder clientBuilder) {
         this.clientBuilder = clientBuilder;
     }
 

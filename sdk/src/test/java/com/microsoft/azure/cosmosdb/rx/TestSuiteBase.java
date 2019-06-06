@@ -39,6 +39,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
+import com.microsoft.azure.cosmos.CosmosClientBuilder;
 import com.microsoft.azure.cosmos.CosmosItemResponse;
 import com.microsoft.azure.cosmosdb.DataType;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
@@ -68,7 +69,6 @@ import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.DataProvider;
 
 import com.microsoft.azure.cosmos.CosmosClient;
-import com.microsoft.azure.cosmos.CosmosClient.Builder;
 import com.microsoft.azure.cosmos.CosmosContainer;
 import com.microsoft.azure.cosmos.CosmosContainerRequestOptions;
 import com.microsoft.azure.cosmos.CosmosContainerSettings;
@@ -116,7 +116,7 @@ public class TestSuiteBase {
     private static final ImmutableList<Protocol> protocols;
 
     protected int subscriberValidationTimeout = TIMEOUT;
-    protected Builder clientBuilder;
+    protected CosmosClientBuilder clientBuilder;
 
     protected static CosmosDatabase SHARED_DATABASE;
     protected static CosmosContainer SHARED_MULTI_PARTITION_COLLECTION;
@@ -296,7 +296,7 @@ public class TestSuiteBase {
         logger.info("Finished truncating collection {}.", cosmosContainerId);
     }
 
-    protected static void waitIfNeededForReplicasToCatchUp(Builder clientBuilder) {
+    protected static void waitIfNeededForReplicasToCatchUp(CosmosClientBuilder clientBuilder) {
         switch (clientBuilder.getDesiredConsistencyLevel()) {
             case Eventual:
             case ConsistentPrefix:
@@ -475,10 +475,6 @@ public class TestSuiteBase {
                 .sequential()
                 .collectList()
                 .block();
-    }
-
-    public static ConsistencyLevel getAccountDefaultConsistencyLevel(CosmosClient client) {
-        return client.getDatabaseAccount().block().getConsistencyPolicy().getDefaultConsistencyLevel();
     }
 
     public static CosmosUser createUser(CosmosClient client, String databaseId, CosmosUserSettings userSettings) {
@@ -826,7 +822,7 @@ public class TestSuiteBase {
         
         boolean isMultiMasterEnabled = preferredLocations != null && accountConsistency == ConsistencyLevel.Session;
 
-        List<Builder> cosmosConfigurations = new ArrayList<>();
+        List<CosmosClientBuilder> cosmosConfigurations = new ArrayList<>();
         cosmosConfigurations.add(createGatewayRxDocumentClient(ConsistencyLevel.Session, false, null));
 
         for (Protocol protocol : protocols) {
@@ -913,7 +909,7 @@ public class TestSuiteBase {
     private static Object[][] clientBuildersWithDirect(List<ConsistencyLevel> testConsistencies, Protocol... protocols) {
         boolean isMultiMasterEnabled = preferredLocations != null && accountConsistency == ConsistencyLevel.Session;
 
-        List<Builder> cosmosConfigurations = new ArrayList<>();
+        List<CosmosClientBuilder> cosmosConfigurations = new ArrayList<>();
         cosmosConfigurations.add(createGatewayRxDocumentClient(ConsistencyLevel.Session, isMultiMasterEnabled, preferredLocations));
 
         for (Protocol protocol : protocols) {
@@ -932,34 +928,34 @@ public class TestSuiteBase {
         return cosmosConfigurations.stream().map(c -> new Object[]{c}).collect(Collectors.toList()).toArray(new Object[0][]);
     }
 
-    static protected Builder createGatewayHouseKeepingDocumentClient() {
+    static protected CosmosClientBuilder createGatewayHouseKeepingDocumentClient() {
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
         connectionPolicy.setConnectionMode(ConnectionMode.Gateway);
         RetryOptions options = new RetryOptions();
         options.setMaxRetryWaitTimeInSeconds(SUITE_SETUP_TIMEOUT);
         connectionPolicy.setRetryOptions(options);
-        return new Builder().endpoint(TestConfigurations.HOST)
+        return new CosmosClientBuilder().endpoint(TestConfigurations.HOST)
                 .key(TestConfigurations.MASTER_KEY)
                 .connectionPolicy(connectionPolicy)
                 .consistencyLevel(ConsistencyLevel.Session);
     }
 
-    static protected Builder createGatewayRxDocumentClient(ConsistencyLevel consistencyLevel, boolean multiMasterEnabled, List<String> preferredLocations) {
+    static protected CosmosClientBuilder createGatewayRxDocumentClient(ConsistencyLevel consistencyLevel, boolean multiMasterEnabled, List<String> preferredLocations) {
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
         connectionPolicy.setConnectionMode(ConnectionMode.Gateway);
         connectionPolicy.setUsingMultipleWriteLocations(multiMasterEnabled);
         connectionPolicy.setPreferredLocations(preferredLocations);
-        return new Builder().endpoint(TestConfigurations.HOST)
+        return new CosmosClientBuilder().endpoint(TestConfigurations.HOST)
                 .key(TestConfigurations.MASTER_KEY)
                 .connectionPolicy(connectionPolicy)
                 .consistencyLevel(consistencyLevel);
     }
 
-    static protected Builder createGatewayRxDocumentClient() {
+    static protected CosmosClientBuilder createGatewayRxDocumentClient() {
         return createGatewayRxDocumentClient(ConsistencyLevel.Session, false, null);
     }
 
-    static protected Builder createDirectRxDocumentClient(ConsistencyLevel consistencyLevel,
+    static protected CosmosClientBuilder createDirectRxDocumentClient(ConsistencyLevel consistencyLevel,
                                                                               Protocol protocol,
                                                                               boolean multiMasterEnabled,
                                                                               List<String> preferredLocations) {
@@ -977,7 +973,7 @@ public class TestSuiteBase {
         Configs configs = spy(new Configs());
         doAnswer((Answer<Protocol>)invocation -> protocol).when(configs).getProtocol();
 
-        return new Builder().endpoint(TestConfigurations.HOST)
+        return new CosmosClientBuilder().endpoint(TestConfigurations.HOST)
                 .key(TestConfigurations.MASTER_KEY)
                 .connectionPolicy(connectionPolicy)
                 .consistencyLevel(consistencyLevel)

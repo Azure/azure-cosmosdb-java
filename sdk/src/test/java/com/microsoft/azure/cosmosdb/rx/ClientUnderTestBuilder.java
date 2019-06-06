@@ -26,18 +26,18 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 import com.microsoft.azure.cosmos.CosmosClient;
-import com.microsoft.azure.cosmos.CosmosClient.Builder;
+import com.microsoft.azure.cosmos.CosmosClientBuilder;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentClientUnderTest;
 import com.microsoft.azure.cosmosdb.rx.internal.directconnectivity.ReflectionUtils;
 
-public class ClientUnderTestBuilder extends Builder {
+public class ClientUnderTestBuilder extends CosmosClientBuilder {
 
-    public ClientUnderTestBuilder(Builder builder) {
-        this.setConfigs(builder.getConfigs());
-        this.setConnectionPolicy(builder.getConnectionPolicy());
-        this.setDesiredConsistencyLevel(builder.getDesiredConsistencyLevel());
-        this.setKeyOrResourceToken(builder.getKeyOrResourceToken());
-        this.setServiceEndpoint(builder.getServiceEndpoint());
+    public ClientUnderTestBuilder(CosmosClientBuilder builder) {
+        this.configs(builder.getConfigs())
+                .connectionPolicy(builder.getConnectionPolicy())
+                .consistencyLevel(builder.getDesiredConsistencyLevel())
+                .key(builder.getKeyOrResourceToken())
+                .endpoint(builder.getServiceEndpoint());
     }
 
     @Override

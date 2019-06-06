@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.microsoft.azure.cosmos.CosmosClientBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -36,7 +37,6 @@ import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 import com.microsoft.azure.cosmos.CosmosClient;
-import com.microsoft.azure.cosmos.CosmosClient.Builder;
 import com.microsoft.azure.cosmos.CosmosContainer;
 import com.microsoft.azure.cosmos.CosmosContainerSettings;
 import com.microsoft.azure.cosmos.CosmosDatabase;
@@ -55,7 +55,7 @@ public class CollectionQueryTest extends TestSuiteBase {
     private CosmosDatabase createdDatabase;
 
    @Factory(dataProvider = "clientBuilders")
-    public CollectionQueryTest(Builder clientBuilder) {
+    public CollectionQueryTest(CosmosClientBuilder clientBuilder) {
         this.clientBuilder = clientBuilder;
         this.subscriberValidationTimeout = TIMEOUT;
     }
