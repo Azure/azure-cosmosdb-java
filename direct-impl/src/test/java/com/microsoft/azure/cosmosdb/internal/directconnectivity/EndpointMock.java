@@ -26,7 +26,7 @@ package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 import com.google.common.collect.ImmutableList;
 import com.microsoft.azure.cosmosdb.internal.OperationType;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
-import org.apache.commons.collections.map.HashedMap;
+import org.apache.commons.collections4.map.HashedMap;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -134,7 +134,7 @@ abstract public class EndpointMock {
 
         class QuorumNotMetSecondaryReplicasDisappear {
             URI primary;
-            Map<URI, Function2WithCheckedException<Integer, RxDocumentServiceRequest, Boolean>> disappearDictionary = new HashedMap();
+            Map<URI, Function2WithCheckedException<Integer, RxDocumentServiceRequest, Boolean>> disappearDictionary = new HashedMap<>();
             public QuorumNotMetSecondaryReplicasDisappear primaryReplica(URI primaryReplica) {
                 this.primary = primaryReplica;
                 return this;

@@ -60,7 +60,7 @@ public class RntbdClientChannelHandler extends ChannelInitializer<Channel> imple
      * @param channel a channel that was just acquired
      */
     @Override
-    public void channelAcquired(final Channel channel) throws Exception {
+    public void channelAcquired(final Channel channel) {
         logger.trace("{} CHANNEL ACQUIRED", channel);
     }
 
@@ -72,7 +72,7 @@ public class RntbdClientChannelHandler extends ChannelInitializer<Channel> imple
      * @param channel a channel that was just created
      */
     @Override
-    public void channelCreated(final Channel channel) throws Exception {
+    public void channelCreated(final Channel channel) {
         logger.trace("{} CHANNEL CREATED", channel);
         this.initChannel(channel);
     }
@@ -85,7 +85,7 @@ public class RntbdClientChannelHandler extends ChannelInitializer<Channel> imple
      * @param channel a channel that was just released
      */
     @Override
-    public void channelReleased(final Channel channel) throws Exception {
+    public void channelReleased(final Channel channel) {
         logger.trace("{} CHANNEL RELEASED", channel);
     }
 
@@ -102,7 +102,6 @@ public class RntbdClientChannelHandler extends ChannelInitializer<Channel> imple
      *     (RntbdRequestEncoder#0 = com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdRequestEncoder),
      *     (WriteTimeoutHandler#0 = io.netty.handler.timeout.WriteTimeoutHandler),
      *     (RntbdRequestManager#0 = com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdRequestManager),
-     *     (SimpleChannelPool$1#0 = io.netty.channel.pool.SimpleChannelPool$1)
      * }
      * }</pre>
      *
@@ -113,11 +112,7 @@ public class RntbdClientChannelHandler extends ChannelInitializer<Channel> imple
 
         checkNotNull(channel);
 
-        assert channel.isRegistered();
-        assert channel.isOpen();
-        assert !channel.isActive();
-
-        final RntbdRequestManager requestManager = new RntbdRequestManager();
+        final RntbdRequestManager requestManager = new RntbdRequestManager(this.config.getMaxRequestsPerChannel());
         final long readerIdleTime = this.config.getReceiveHangDetectionTime();
         final long writerIdleTime = this.config.getSendHangDetectionTime();
         final ChannelPipeline pipeline = channel.pipeline();
@@ -141,5 +136,4 @@ public class RntbdClientChannelHandler extends ChannelInitializer<Channel> imple
             new SslHandler(sslEngine)
         );
     }
-
 }

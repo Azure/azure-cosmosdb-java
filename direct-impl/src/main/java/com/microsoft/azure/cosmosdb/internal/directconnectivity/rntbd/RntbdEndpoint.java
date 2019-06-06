@@ -43,7 +43,7 @@ public interface RntbdEndpoint extends AutoCloseable {
     @Override
     void close() throws RuntimeException;
 
-    CompletableFuture<StoreResponse> request(RntbdRequestArgs requestArgs);
+    RntbdRequestRecord request(RntbdRequestArgs requestArgs);
 
     interface Provider extends AutoCloseable {
 
