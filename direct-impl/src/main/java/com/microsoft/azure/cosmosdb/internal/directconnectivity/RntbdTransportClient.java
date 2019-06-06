@@ -28,7 +28,6 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.internal.UserAgentContainer;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdEndpoint;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdMetrics;
@@ -42,6 +41,7 @@ import io.netty.handler.ssl.SslContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.SignalType;
 
 import java.io.IOException;
 import java.net.URI;
@@ -52,7 +52,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdReporter.reportIssueUnless;
 
 @JsonSerialize(using = RntbdTransportClient.JsonSerializer.class)
 public final class RntbdTransportClient extends ReactorTransportClient {
@@ -106,6 +105,7 @@ public final class RntbdTransportClient extends ReactorTransportClient {
 
     @Override
     public Mono<StoreResponse> invokeStoreAsync(final URI physicalAddress, final RxDocumentServiceRequest request) {
+
         checkNotNull(physicalAddress, "physicalAddress");
         checkNotNull(request, "request");
         this.throwIfClosed();
@@ -122,23 +122,15 @@ public final class RntbdTransportClient extends ReactorTransportClient {
 
         final RntbdRequestRecord requestRecord = endpoint.request(requestArgs);
 
-        return Mono.from(emitter -> {
-
+        return Mono.fromCompletionStage(
             requestRecord.whenComplete((response, error) -> {
-
                 requestArgs.traceOperation(logger, null, "emitMono", response, error);
                 this.metrics.incrementResponseCount();
-
-                if (error == null) {
-                    emitter.onNext(response);
-                } else {
-                    reportIssueUnless(error instanceof DocumentClientException, logger, requestRecord, "", error);
-                    this.metrics.incrementErrorResponseCount();
-                    emitter.onError(error);
-                }
-
-                requestArgs.traceOperation(logger, null, "emitMonoComplete");
-            });
+            })
+        ).doFinally(signal -> {
+            if (signal == SignalType.CANCEL) {
+                requestRecord.cancel(false);
+            }
         });
     }
 
