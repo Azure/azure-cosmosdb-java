@@ -162,6 +162,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         this.traceOperation(context, "channelRead");
 
         if (message instanceof RntbdResponse) {
+
             try {
                 this.messageReceived(context, (RntbdResponse)message);
             } catch (Throwable throwable) {
@@ -476,7 +477,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
     private RntbdRequestArgs addPendingRequestRecord(final ChannelHandlerContext context, final RntbdRequestRecord record) {
 
-        this.pendingRequest = this.pendingRequests.compute(record.getTransportRequestId(), (id, current) -> {
+        return this.pendingRequests.compute(record.getTransportRequestId(), (id, current) -> {
 
             reportIssueUnless(current == null, logger, context, "id: {}, current: {}, request: {}", id, current, record);
 
