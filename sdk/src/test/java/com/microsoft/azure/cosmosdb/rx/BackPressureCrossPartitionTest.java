@@ -52,6 +52,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
+import reactor.util.concurrent.Queues;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -125,12 +126,12 @@ public class BackPressureCrossPartitionTest extends TestSuiteBase {
     public Object[][] queryProvider() {
         return new Object[][] {
                 // query, maxItemCount, max expected back pressure buffered, total number of expected query results
-                { "SELECT * FROM r", 1, 2 * RxRingBuffer.SIZE, numberOfDocs},
-                { "SELECT * FROM r", 100, 2 * RxRingBuffer.SIZE, numberOfDocs},
-                { "SELECT * FROM r ORDER BY r.prop", 100, 2 * RxRingBuffer.SIZE + 3 * numberOfPartitions, numberOfDocs},
-                { "SELECT TOP 1000 * FROM r", 1, 2 * RxRingBuffer.SIZE, 1000},
-                { "SELECT TOP 1000 * FROM r", 100, 2 * RxRingBuffer.SIZE, 1000},
-                { "SELECT TOP 1000 * FROM r ORDER BY r.prop", 100, 2 * RxRingBuffer.SIZE + 3 * numberOfPartitions , 1000},
+                { "SELECT * FROM r", 1, 2 * Queues.SMALL_BUFFER_SIZE, numberOfDocs},
+                { "SELECT * FROM r", 100, 2 * Queues.SMALL_BUFFER_SIZE, numberOfDocs},
+                { "SELECT * FROM r ORDER BY r.prop", 100, 2 * Queues.SMALL_BUFFER_SIZE + 3 * numberOfPartitions, numberOfDocs},
+                { "SELECT TOP 1000 * FROM r", 1, 2 * Queues.SMALL_BUFFER_SIZE, 1000},
+                { "SELECT TOP 1000 * FROM r", 100, 2 * Queues.SMALL_BUFFER_SIZE, 1000},
+                { "SELECT TOP 1000 * FROM r ORDER BY r.prop", 100, 2 * Queues.SMALL_BUFFER_SIZE + 3 * numberOfPartitions , 1000},
         };
     }
 

@@ -42,6 +42,7 @@ import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
+import reactor.util.concurrent.Queues;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -107,7 +108,7 @@ public class BackPressureTest extends TestSuiteBase {
             // validate that the difference between the number of requests to backend
             // and the number of returned results is always less than a fixed threshold
             assertThat(rxClient.httpRequests.size() - subscriber.getEvents().get(0).size())
-                .isLessThanOrEqualTo(RxRingBuffer.SIZE);
+                .isLessThanOrEqualTo(Queues.SMALL_BUFFER_SIZE);
 
             subscriber.requestMore(1);
             i++;
@@ -144,7 +145,7 @@ public class BackPressureTest extends TestSuiteBase {
             // validate that the difference between the number of requests to backend
             // and the number of returned results is always less than a fixed threshold
             assertThat(rxClient.httpRequests.size() - subscriber.valueCount())
-                    .isLessThanOrEqualTo(RxRingBuffer.SIZE);
+                    .isLessThanOrEqualTo(Queues.SMALL_BUFFER_SIZE);
 
             subscriber.requestMore(1);
             i++;
