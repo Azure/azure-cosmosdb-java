@@ -20,38 +20,34 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.microsoft.azure.cosmos;
 
-import com.microsoft.azure.cosmosdb.Document;
-import com.microsoft.azure.cosmosdb.PartitionKey;
-import com.microsoft.azure.cosmosdb.ResourceResponse;
 
-public class CosmosItemResponse extends CosmosResponse<CosmosItemSettings>{
-    private CosmosItem itemClient;
+package com.microsoft.azure.cosmosdb;
 
-    CosmosItemResponse(ResourceResponse<Document> response, PartitionKey partitionKey, CosmosContainer container) {
-        super(response);
-        if(response.getResource() == null){
-            super.setResourceSettings(null);
-        }else{
-            super.setResourceSettings(new CosmosItemSettings(response.getResource().toJson()));
-            itemClient = new CosmosItem(response.getResource().getId(),partitionKey, container);
+import com.microsoft.azure.cosmosdb.rx.TestConfigurations;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.testng.ITestResult;
+import org.testng.util.RetryAnalyzerCount;
+
+import java.util.concurrent.TimeUnit;
+
+public class RetryAnalyzer extends RetryAnalyzerCount {
+    private final Logger logger = LoggerFactory.getLogger(RetryAnalyzer.class);
+    private final int waitBetweenRetriesInSeconds = 120;
+
+    public RetryAnalyzer() {
+        this.setCount(Integer.parseInt(TestConfigurations.MAX_RETRY_LIMIT));
+    }
+
+    @Override
+    public boolean retryMethod(ITestResult result) {
+        try {
+            TimeUnit.SECONDS.sleep(waitBetweenRetriesInSeconds);
+        } catch (InterruptedException e) {
+            return false;
         }
-    }
 
-    /**
-     * Gets the itemSettings
-     * @return the itemSettings
-     */
-    public CosmosItemSettings getCosmosItemSettings() {
-        return getResourceSettings();
-    }
-
-    /**
-     * Gets the CosmosItem
-     * @return the cosmos item
-     */
-    public CosmosItem getItem() {
-        return itemClient;
+        return true;
     }
 }

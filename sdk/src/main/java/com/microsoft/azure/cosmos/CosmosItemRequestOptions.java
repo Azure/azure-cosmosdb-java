@@ -54,9 +54,9 @@ public class CosmosItemRequestOptions extends CosmosRequestOptions {
     public CosmosItemRequestOptions(Object partitionKey){
         super();
         if (partitionKey instanceof PartitionKey) {
-            partitionKey((PartitionKey) partitionKey);
+            setPartitionKey((PartitionKey) partitionKey);
         } else {
-            partitionKey(new PartitionKey(partitionKey));
+            setPartitionKey(new PartitionKey(partitionKey));
         }
     }
     
@@ -73,11 +73,9 @@ public class CosmosItemRequestOptions extends CosmosRequestOptions {
      * Sets the consistency level required for the request.
      *
      * @param consistencyLevel the consistency level.
-     * @return the current options
      */
-    public CosmosItemRequestOptions consistencyLevel(ConsistencyLevel consistencyLevel) {
+    public void setConsistencyLevel(ConsistencyLevel consistencyLevel) {
         this.consistencyLevel = consistencyLevel;
-        return this;
     }
 
     /**
@@ -93,11 +91,9 @@ public class CosmosItemRequestOptions extends CosmosRequestOptions {
      * Sets the indexing directive (index, do not index etc).
      *
      * @param indexingDirective the indexing directive.
-     * @return the current options
      */
-    public CosmosItemRequestOptions indexingDirective(IndexingDirective indexingDirective) {
+    public void setIndexingDirective(IndexingDirective indexingDirective) {
         this.indexingDirective = indexingDirective;
-        return this;
     }
 
     /**
@@ -113,11 +109,9 @@ public class CosmosItemRequestOptions extends CosmosRequestOptions {
      * Sets the triggers to be invoked before the operation.
      *
      * @param preTriggerInclude the triggers to be invoked before the operation.
-     * @return the current options
      */
-    public CosmosItemRequestOptions preTriggerInclude(List<String> preTriggerInclude) {
+    public void setPreTriggerInclude(List<String> preTriggerInclude) {
         this.preTriggerInclude = preTriggerInclude;
-        return this;
     }
 
     /**
@@ -133,11 +127,9 @@ public class CosmosItemRequestOptions extends CosmosRequestOptions {
      * Sets the triggers to be invoked after the operation.
      *
      * @param postTriggerInclude the triggers to be invoked after the operation.
-     * @return the current options
      */
-    public CosmosItemRequestOptions postTriggerInclude(List<String> postTriggerInclude) {
+    public void setPostTriggerInclude(List<String> postTriggerInclude) {
         this.postTriggerInclude = postTriggerInclude;
-        return this;
     }
 
     /**
@@ -153,22 +145,25 @@ public class CosmosItemRequestOptions extends CosmosRequestOptions {
      * Sets the token for use with session consistency.
      *
      * @param sessionToken the session token.
-     * @return the current options
      */
-    public CosmosItemRequestOptions sessionToken(String sessionToken) {
+    public void setSessionToken(String sessionToken) {
         this.sessionToken = sessionToken;
-        return this;
     }
 
     /**
      * Sets the partition key
-     *
-     * @param partitionKey {@link PartitionKey} the partition key
-     * @return the current options
+     * @param partitionKey the partition key
      */
-    public CosmosItemRequestOptions partitionKey(PartitionKey partitionKey) {
+    public void setPartitionKey(PartitionKey partitionKey) {
         this.partitionKey = partitionKey;
-        return this;
+    }
+
+    /**
+     * Gets the partition key
+     * @return the partition key
+     */
+    public PartitionKey getPartitionKey() {
+        return partitionKey;
     }
 
     @Override
