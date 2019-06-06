@@ -28,15 +28,14 @@ import com.microsoft.azure.cosmosdb.FeedOptionsBase;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.Resource;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
-import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
+
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 /**
  * While this class is public, but it is not part of our published public APIs.
@@ -78,24 +77,24 @@ public class Paginator {
             Function<RxDocumentServiceRequest, Flux<FeedResponse<T>>> executeFunc, Class<T> resourceType,
             int top, int maxPageSize, boolean isChangeFeed) {
 
-        //  TODO: Something along these lines.
-        return Flux.defer((Supplier<Flux<FeedResponse<T>>>) () -> Flux.push(new Consumer<FluxSink<FeedResponse<T>>>() {
+        Fetcher<T> fetcher = new Fetcher<>(createRequestFunc, executeFunc, options, isChangeFeed, top, maxPageSize);
 
-            final Fetcher fetcher = new Fetcher(createRequestFunc, executeFunc, options, isChangeFeed, top, maxPageSize);
+        Flux<FeedResponse<T>> paginatedQueryResults = Flux.defer(() -> {
 
-            @Override
-            public void accept(FluxSink<FeedResponse<T>> fluxSink) {
+            Flux<Flux<FeedResponse<T>>> fluxSink = Flux.create((Consumer<FluxSink<Flux<FeedResponse<T>>>>) feedResponseFluxSink -> {
                 if (fetcher.shouldFetchMore()) {
                     Flux<FeedResponse<T>> nextPage = fetcher.nextPage();
-                    fluxSink.next(nextPage);
+                    feedResponseFluxSink.next(nextPage);
                 } else {
-                    logger.error("No more results");
-                    fluxSink.complete();
+                    logger.debug("No more results");
                 }
-            }
+                feedResponseFluxSink.complete();
+            }).repeat(fetcher::shouldFetchMore);
 
-        }));
+            return Flux.merge(fluxSink);
+        });
 
+        return paginatedQueryResults;
 
         //  TODO: Remove this commented code after the above implementation is complete
 //        Observable<FeedResponse<T>> obs = Observable.defer(() -> {
