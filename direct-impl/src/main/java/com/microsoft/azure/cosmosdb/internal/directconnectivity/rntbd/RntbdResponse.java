@@ -49,6 +49,7 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdConstants.RntbdResponseHeader;
 import static java.lang.Math.min;
 
@@ -56,6 +57,8 @@ import static java.lang.Math.min;
 public final class RntbdResponse implements ReferenceCounted {
 
     // region Fields
+
+    private static final String simpleClassName = RntbdResponse.class.getSimpleName();
 
     @JsonProperty
     @JsonSerialize(using = PayloadSerializer.class)
@@ -108,6 +111,11 @@ public final class RntbdResponse implements ReferenceCounted {
         return this.frame.getStatus();
     }
 
+    @JsonIgnore
+    public Long getTransportRequestId() {
+        return this.getHeader(RntbdResponseHeader.TransportRequestID);
+    }
+
     static RntbdResponse decode(final ByteBuf in) {
 
         in.markReaderIndex();
@@ -143,10 +151,7 @@ public final class RntbdResponse implements ReferenceCounted {
         this.headers.encode(out);
 
         final int length = out.writerIndex() - start;
-
-        if (length != this.frame.getLength()) {
-            throw new IllegalStateException();
-        }
+        checkState(length == this.frame.getLength());
 
         if (this.hasPayload()) {
             out.writeIntLE(this.content.readableBytes());
@@ -157,9 +162,9 @@ public final class RntbdResponse implements ReferenceCounted {
     }
 
     @JsonIgnore
+    @SuppressWarnings("unchecked")
     public <T> T getHeader(final RntbdResponseHeader header) {
-        final T value = (T)this.headers.get(header).getValue();
-        return value;
+        return (T)this.headers.get(header).getValue();
     }
 
     public boolean hasPayload() {
@@ -238,12 +243,7 @@ public final class RntbdResponse implements ReferenceCounted {
 
     @Override
     public String toString() {
-        final ObjectWriter writer = RntbdObjectMapper.writer();
-        try {
-            return writer.writeValueAsString(this);
-        } catch (final JsonProcessingException error) {
-            throw new CorruptedFrameException(error);
-        }
+        return simpleClassName + '(' + RntbdObjectMapper.toJson(this) + ')';
     }
 
     /**

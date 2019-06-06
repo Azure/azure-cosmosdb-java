@@ -171,9 +171,6 @@ public class ParallelDocumentQueryTest extends TestSuiteBase {
         validateQuerySuccess(queryObservable, validator);
     }
 
-    // TODO: DANOBLE: Investigate Direct TCP performance issue
-    // See: https://msdata.visualstudio.com/CosmosDB/_workitems/edit/367028https://msdata.visualstudio.com/CosmosDB/_workitems/edit/367028
-
     @Test(groups = { "simple" }, timeOut = 2 * TIMEOUT)
     public void queryDocumentsWithPageSize() {
         String query = "SELECT * from root";
@@ -245,10 +242,6 @@ public class ParallelDocumentQueryTest extends TestSuiteBase {
         
         validateQuerySuccess(queryObservable, validator);
     }
-
-    // TODO: DANOBLE: Investigate Direct TCP performance issue
-    // Links: 
-    // https://msdata.visualstudio.com/CosmosDB/_workitems/edit/367028https://msdata.visualstudio.com/CosmosDB/_workitems/edit/367028
 
     @Test(groups = { "simple" }, timeOut = 2 * TIMEOUT)
     public void partitionKeyRangeId() {
@@ -328,15 +321,6 @@ public class ParallelDocumentQueryTest extends TestSuiteBase {
         this.queryWithContinuationTokensAndPageSizes(query, new int[] {1, 10, 100}, expectedDocs);
     }
 	
-    // TODO: DANOBLE: Investigate Direct TCP performance issue
-    // Links:
-    // https://msdata.visualstudio.com/CosmosDB/_workitems/edit/367028https://msdata.visualstudio.com/CosmosDB/_workitems/edit/367028
-    // Notes:
-    // When I've watch this method execute in the debugger and seen that the code sometimes pauses for quite a while in
-    // the middle of the second group of 21 documents. I test against a debug instance of the public emulator and so
-    // what I'm seeing could be the result of a public emulator performance issue. Of course, it might also be the
-    // result of a Tcp protocol performance problem.
-
     @BeforeClass(groups = { "simple", "non-emulator" }, timeOut = 2 * SETUP_TIMEOUT)
     public void beforeClass() {
         client = clientBuilder.build();

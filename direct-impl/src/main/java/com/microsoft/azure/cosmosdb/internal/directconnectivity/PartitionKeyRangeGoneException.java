@@ -29,10 +29,7 @@ import com.microsoft.azure.cosmosdb.Error;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.rx.internal.RMResources;
 import io.reactivex.netty.protocol.http.client.HttpResponseHeaders;
-import org.apache.commons.collections4.CollectionUtils;
 
-import java.net.URL;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
