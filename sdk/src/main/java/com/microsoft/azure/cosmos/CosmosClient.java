@@ -277,6 +277,7 @@ public class CosmosClient {
 
     /**
      * Gets a database object without making a service call.
+     *
      * @param id name of the database
      * @return {@link CosmosDatabase}
      */
