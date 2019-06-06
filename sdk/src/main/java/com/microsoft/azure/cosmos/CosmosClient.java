@@ -130,7 +130,7 @@ public class CosmosClient {
         /**
          * This method accepts the (@link ConsistencyLevel) to be used
          * @param desiredConsistencyLevel (@link ConsistencyLevel)
-         * @return
+         * @return current Builder
          */
         public CosmosClient.Builder consistencyLevel(ConsistencyLevel desiredConsistencyLevel) {
             this.desiredConsistencyLevel = desiredConsistencyLevel;
@@ -139,8 +139,8 @@ public class CosmosClient {
 
         /**
          * The (@link ConnectionPolicy) to be used
-         * @param connectionPolicy
-         * @return
+         * @param connectionPolicy {@link ConnectionPolicy}
+         * @return current Builder
          */
         public CosmosClient.Builder connectionPolicy(ConnectionPolicy connectionPolicy) {
             this.connectionPolicy = connectionPolicy;
@@ -426,8 +426,8 @@ public class CosmosClient {
 
     /**
      * Gets a database object without making a service call.
-     * @param id name of the database
-     * @return
+     * @param id name of the database.
+     * @return an instance of ComosDatabase.
      */
     public CosmosDatabase getDatabase(String id) {
         return new CosmosDatabase(id, this);

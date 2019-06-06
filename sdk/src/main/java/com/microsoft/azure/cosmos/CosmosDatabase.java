@@ -98,6 +98,7 @@ public class CosmosDatabase extends CosmosResource {
      * The {@link Mono} upon successful completion will contain a cosmos database response with the deleted database.
      * In case of failure the {@link Mono} will error.
      *
+     * @param options The Cosmos Request Options.
      * @return an {@link Mono} containing the single cosmos database response
      */
     public Mono<CosmosDatabaseResponse> delete(CosmosRequestOptions options) {
@@ -169,6 +170,7 @@ public class CosmosDatabase extends CosmosResource {
      * or existing collection.
      * In case of failure the {@link Mono} will error.
      *
+     * @param containerSettings   the containerSettings.
      * @return a {@link Mono} containing the cosmos container response with the created or existing container or
      * an error.
      */
@@ -281,12 +283,12 @@ public class CosmosDatabase extends CosmosResource {
         return new CosmosContainer(id, this);
     }
     
-    /** User operations **/
+    /* User operations */
 
     public Mono<CosmosUserResponse> createUser(CosmosUserSettings settings) {
         return this.createUser(settings, null);
     }
-
+    
     public  Mono<CosmosUserResponse> createUser(CosmosUserSettings settings, RequestOptions options){
         return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(getDocClientWrapper().createUser(this.getLink(),
                 settings.getV2User(), options).map(response ->
@@ -304,7 +306,6 @@ public class CosmosDatabase extends CosmosResource {
     }
 
     public Flux<FeedResponse<CosmosUserSettings>> listUsers(FeedOptions options) {
-        //TODO:
         return RxJava2Adapter.flowableToFlux(RxJavaInterop.toV2Flowable(getDocClientWrapper().readUsers(getLink(), options)
                 .map(response-> BridgeInternal.createFeedResponse(CosmosUserSettings.getFromV2Results(response.getResults()),
                         response.getResponseHeaders()))));
