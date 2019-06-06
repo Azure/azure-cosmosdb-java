@@ -67,11 +67,11 @@ public class ReadFeedPkrTests extends TestSuiteBase {
 
     @BeforeClass(groups = { "emulator" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
-        createdDatabase = SHARED_DATABASE;
-        createdCollection = createCollection(createdDatabase.getId(),
+        client = CosmosBridgeInternal.getAsyncDocumentClient(clientBuilder.build());
+        createdDatabase = getSharedCosmosDatabase(clientBuilder.build());
+        createdCollection = createCollection(createdDatabase,
                                              getCollectionDefinition(),
                                              new CosmosContainerRequestOptions());
-        client = CosmosBridgeInternal.getAsyncDocumentClient(clientBuilder.build());
     }
 
     @AfterClass(groups = { "emulator" }, timeOut = SETUP_TIMEOUT, alwaysRun = true)

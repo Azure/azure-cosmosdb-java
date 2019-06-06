@@ -124,19 +124,19 @@ public class TestSuiteBase {
     private static CosmosContainer SHARED_MULTI_PARTITION_COLLECTION_WITH_COMPOSITE_AND_SPATIAL_INDEXES;
     private static CosmosContainer SHARED_SINGLE_PARTITION_COLLECTION;
 
-    protected static CosmosDatabase getSharedDatabase(CosmosClient client) {
+    protected static CosmosDatabase getSharedCosmosDatabase(CosmosClient client) {
         return CosmosBridgeInternal.getCosmosDatabaseWithNewClient(SHARED_DATABASE, client);
     }
 
-    protected static CosmosContainer getSharedMultiPartitionCollection(CosmosClient client) {
+    protected static CosmosContainer getSharedMultiPartitionCosmosContainer(CosmosClient client) {
         return CosmosBridgeInternal.getCosmosContainerWithNewClient(SHARED_MULTI_PARTITION_COLLECTION, SHARED_DATABASE, client);
     }
 
-    protected static CosmosContainer getSharedMultiPartitionCollectionWithCompositeAndSpatialIndexes(CosmosClient client) {
+    protected static CosmosContainer getSharedMultiPartitionCosmosContainerWithCompositeAndSpatialIndexes(CosmosClient client) {
         return CosmosBridgeInternal.getCosmosContainerWithNewClient(SHARED_MULTI_PARTITION_COLLECTION_WITH_COMPOSITE_AND_SPATIAL_INDEXES, SHARED_DATABASE, client);
     }
 
-    protected static CosmosContainer getSharedSinglePartitionCollection(CosmosClient client) {
+    protected static CosmosContainer getSharedSinglePartitionCosmosContainer(CosmosClient client) {
         return CosmosBridgeInternal.getCosmosContainerWithNewClient(SHARED_SINGLE_PARTITION_COLLECTION, SHARED_DATABASE, client);
     }
 
@@ -335,16 +335,6 @@ public class TestSuiteBase {
         }
     }
 
-    public static CosmosContainer createCollection(String databaseId, CosmosContainerSettings cosmosContainerSettings,
-            CosmosContainerRequestOptions options) {
-        CosmosClient client = createGatewayHouseKeepingDocumentClient().build();
-        try {
-            return client.getDatabase(databaseId).createContainer(cosmosContainerSettings, options).block().getContainer();
-        } finally {
-            client.close();
-        }
-    }
-
     public static CosmosContainer createCollection(CosmosDatabase database, CosmosContainerSettings cosmosContainerSettings,
             CosmosContainerRequestOptions options) {
         return database.createContainer(cosmosContainerSettings, options).block().getContainer();
@@ -507,7 +497,7 @@ public class TestSuiteBase {
 
     private static CosmosContainer safeCreateCollection(CosmosClient client, String databaseId, CosmosContainerSettings collection, CosmosContainerRequestOptions options) {
         deleteCollectionIfExists(client, databaseId, collection.getId());
-        return createCollection(databaseId, collection, options);
+        return createCollection(client.getDatabase(databaseId), collection, options);
     }
 
     static protected CosmosContainerSettings getCollectionDefinition() {

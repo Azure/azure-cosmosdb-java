@@ -141,8 +141,7 @@ public class StoredProcedureUpsertReplaceTest extends TestSuiteBase {
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
         client = clientBuilder.build();
-
-        createdCollection = getSharedMultiPartitionCollection(client);
+        createdCollection = getSharedMultiPartitionCosmosContainer(client);
     }
 
     @AfterClass(groups = { "simple" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)

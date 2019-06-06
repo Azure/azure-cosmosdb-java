@@ -74,7 +74,7 @@ public class SinglePartitionReadFeedDocumentsTest extends TestSuiteBase {
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
         client = clientBuilder.build();
-        createdCollection = getSharedSinglePartitionCollection(client);
+        createdCollection = getSharedSinglePartitionCosmosContainer(client);
         truncateCollection(createdCollection);
 
         List<CosmosItemSettings> docDefList = new ArrayList<>();

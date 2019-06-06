@@ -170,7 +170,7 @@ public class StoredProcedureQueryTest extends TestSuiteBase {
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() throws Exception {
         client = clientBuilder.build();
-        createdCollection = getSharedMultiPartitionCollection(client);
+        createdCollection = getSharedMultiPartitionCosmosContainer(client);
         truncateCollection(createdCollection);
 
         for(int i = 0; i < 5; i++) {

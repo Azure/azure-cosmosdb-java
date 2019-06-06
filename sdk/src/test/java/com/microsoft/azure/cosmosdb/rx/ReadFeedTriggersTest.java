@@ -82,10 +82,9 @@ public class ReadFeedTriggersTest extends TestSuiteBase {
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
-
-        this.client = clientBuilder.build();
-        this.createdCollection = SHARED_MULTI_PARTITION_COLLECTION;
-        truncateCollection(SHARED_MULTI_PARTITION_COLLECTION);
+        client = clientBuilder.build();
+        createdCollection = getSharedMultiPartitionCosmosContainer(client);
+        truncateCollection(createdCollection);
 
         for(int i = 0; i < 5; i++) {
             this.createdTriggers.add(this.createTriggers(createdCollection));

@@ -44,8 +44,7 @@ import com.microsoft.azure.cosmosdb.Permission;
 import com.microsoft.azure.cosmosdb.PermissionMode;
 import com.microsoft.azure.cosmosdb.User;
 import com.microsoft.azure.cosmosdb.rx.internal.TestSuiteBase;
-
-import javax.net.ssl.SSLException;
+import reactor.core.publisher.Flux;
 
 //TODO: change to use external TestSuiteBase 
 public class PermissionQueryTest extends TestSuiteBase {
@@ -71,7 +70,7 @@ public class PermissionQueryTest extends TestSuiteBase {
 
         FeedOptions options = new FeedOptions();
         options.setMaxItemCount(5);
-        Observable<FeedResponse<Permission>> queryObservable = client
+        Flux<FeedResponse<Permission>> queryObservable = client
                 .queryPermissions(getUserLink(), query, options);
 
         List<Permission> expectedDocs = createdPermissions.stream().filter(sp -> filterId.equals(sp.getId()) ).collect(Collectors.toList());
@@ -95,7 +94,7 @@ public class PermissionQueryTest extends TestSuiteBase {
         String query = "SELECT * from root r where r.id = '2'";
         FeedOptions options = new FeedOptions();
         options.setEnableCrossPartitionQuery(true);
-        Observable<FeedResponse<Permission>> queryObservable = client
+        Flux<FeedResponse<Permission>> queryObservable = client
                 .queryPermissions(getUserLink(), query, options);
 
         FeedResponseListValidator<Permission> validator = new FeedResponseListValidator.Builder<Permission>()
@@ -114,7 +113,7 @@ public class PermissionQueryTest extends TestSuiteBase {
         FeedOptions options = new FeedOptions();
         options.setMaxItemCount(3);
         options.setEnableCrossPartitionQuery(true);
-        Observable<FeedResponse<Permission>> queryObservable = client
+        Flux<FeedResponse<Permission>> queryObservable = client
                 .queryPermissions(getUserLink(), query, options);
 
         int expectedPageSize = (createdPermissions.size() + options.getMaxItemCount() - 1) / options.getMaxItemCount();
@@ -137,7 +136,7 @@ public class PermissionQueryTest extends TestSuiteBase {
         String query = "I am an invalid query";
         FeedOptions options = new FeedOptions();
         options.setEnableCrossPartitionQuery(true);
-        Observable<FeedResponse<Permission>> queryObservable = client
+        Flux<FeedResponse<Permission>> queryObservable = client
                 .queryPermissions(getUserLink(), query, options);
 
         FailureValidator validator = new FailureValidator.Builder()
@@ -184,7 +183,7 @@ public class PermissionQueryTest extends TestSuiteBase {
         permission.setPermissionMode(PermissionMode.Read);
         permission.setResourceLink("dbs/AQAAAA==/colls/AQAAAJ0fgT" + Integer.toString(index) + "=");
         
-        return client.createPermission(getUserLink(), permission, null).toBlocking().single().getResource();
+        return client.createPermission(getUserLink(), permission, null).single().block().getResource();
     }
 
     private String getUserLink() {

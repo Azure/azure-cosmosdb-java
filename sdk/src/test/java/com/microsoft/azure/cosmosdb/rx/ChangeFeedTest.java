@@ -191,11 +191,11 @@ public class ChangeFeedTest extends TestSuiteBase {
 
         // Waiting for at-least a second to ensure that new document is created after we took the time stamp
         waitAtleastASecond(dateTimeBeforeCreatingDoc);
-        client.createDocument(getCollectionLink(), getDocumentDefinition(partitionKey), null, true).toBlocking().single().getResource();
+        client.createDocument(getCollectionLink(), getDocumentDefinition(partitionKey), null, true).single().block().getResource();
 
         List<FeedResponse<Document>> changeFeedResultList = client.queryDocumentChangeFeed(getCollectionLink(),
-                changeFeedOption).toList()
-                .toBlocking().single();
+                changeFeedOption).collectList()
+                .single().block();
 
         int count = 0;
         for(int i = 0; i < changeFeedResultList.size(); i++) {
@@ -214,7 +214,7 @@ public class ChangeFeedTest extends TestSuiteBase {
         changeFeedOption.setPartitionKey(new PartitionKey(partitionKey));
 
         List<FeedResponse<Document>> changeFeedResultsList = client.queryDocumentChangeFeed(getCollectionLink(), changeFeedOption)
-                .toList().toBlocking().single();
+                .collectList().single().block();
 
         assertThat(changeFeedResultsList).as("only one page").hasSize(1);
         assertThat(changeFeedResultsList.get(0).getResults()).as("no recent changes").isEmpty();
@@ -224,15 +224,15 @@ public class ChangeFeedTest extends TestSuiteBase {
         assertThat(changeFeedContinuation).as("continuation token is not empty").isNotEmpty();
 
         // create some documents
-        client.createDocument(getCollectionLink(), getDocumentDefinition(partitionKey), null, true).toBlocking().single();
-        client.createDocument(getCollectionLink(), getDocumentDefinition(partitionKey), null, true).toBlocking().single();
+        client.createDocument(getCollectionLink(), getDocumentDefinition(partitionKey), null, true).single().block();
+        client.createDocument(getCollectionLink(), getDocumentDefinition(partitionKey), null, true).single().block();
 
         // Read change feed from continuation
         changeFeedOption.setRequestContinuation(changeFeedContinuation);
 
 
         FeedResponse<Document> changeFeedResults2 = client.queryDocumentChangeFeed(getCollectionLink(), changeFeedOption)
-                .toBlocking().first();
+                .blockFirst();
 
         assertThat(changeFeedResults2.getResults()).as("change feed should contain newly inserted docs.").hasSize(2);
         assertThat(changeFeedResults2.getResponseContinuation()).as("Response continuation should not be null").isNotNull();
@@ -242,17 +242,17 @@ public class ChangeFeedTest extends TestSuiteBase {
         Document docDefinition = getDocumentDefinition(partitionKey);
 
         Document createdDocument = client
-                .createDocument(getCollectionLink(), docDefinition, null, false).toBlocking().single().getResource();
+                .createDocument(getCollectionLink(), docDefinition, null, false).single().block().getResource();
         partitionKeyToDocuments.put(partitionKey, createdDocument);
     }
 
     public List<Document> bulkInsert(AsyncDocumentClient client, List<Document> docs) {
-        ArrayList<Observable<ResourceResponse<Document>>> result = new ArrayList<Observable<ResourceResponse<Document>>>();
+        ArrayList<Flux<ResourceResponse<Document>>> result = new ArrayList<Flux<ResourceResponse<Document>>>();
         for (int i = 0; i < docs.size(); i++) {
             result.add(client.createDocument("dbs/" + createdDatabase.getId() + "/colls/" + createdCollection.getId(), docs.get(i), null, false));
         }
 
-        return Observable.merge(result, 100).map(r -> r.getResource()).toList().toBlocking().single();
+        return Flux.merge(Flux.fromIterable(result), 100).map(ResourceResponse::getResource).collectList().single().block();
     }
 
     @AfterMethod(groups = { "simple" }, timeOut = SETUP_TIMEOUT)

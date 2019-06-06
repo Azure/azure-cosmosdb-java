@@ -48,6 +48,7 @@ import com.microsoft.azure.cosmosdb.RequestOptions;
 import com.microsoft.azure.cosmosdb.ResourceResponse;
 import com.microsoft.azure.cosmosdb.User;
 import com.microsoft.azure.cosmosdb.rx.internal.TestSuiteBase;
+import reactor.core.publisher.Flux;
 
 /**
  * This class try to test different scenario related to fetching various
@@ -125,42 +126,42 @@ public class ResourceTokenTest extends TestSuiteBase {
         // Create user
         createdUser = createUser(client, createdDatabase.getId(), getUserDefinition());
         // Create permission for collection
-        createdCollPermission = client.createPermission(getUserLink(), getCollPermission(), null).toBlocking().single()
+        createdCollPermission = client.createPermission(getUserLink(), getCollPermission(), null).single().block()
                 .getResource();
-        createdCollPermissionWithName = client.createPermission(getUserLink(), getCollPermissionWithName(), null).toBlocking().single()
+        createdCollPermissionWithName = client.createPermission(getUserLink(), getCollPermissionWithName(), null).single().block()
                 .getResource();
         // Create permission for document
-        createdDocPermission = client.createPermission(getUserLink(), getDocPermission(), null).toBlocking().single()
+        createdDocPermission = client.createPermission(getUserLink(), getDocPermission(), null).single().block()
                 .getResource();
-        createdDocPermissionWithName = client.createPermission(getUserLink(), getDocPermissionWithName(), null).toBlocking().single()
+        createdDocPermissionWithName = client.createPermission(getUserLink(), getDocPermissionWithName(), null).single().block()
                 .getResource();
         // Create permission for document with partition key
         createdDocPermissionWithPartitionKey = client
-                .createPermission(getUserLink(), getDocPermissionWithPartitionKey(), null).toBlocking().single()
+                .createPermission(getUserLink(), getDocPermissionWithPartitionKey(), null).single().block()
                 .getResource();
         createdDocPermissionWithPartitionKeyWithName = client
-                .createPermission(getUserLink(), getDocPermissionWithPartitionKeyWithName(), null).toBlocking().single()
+                .createPermission(getUserLink(), getDocPermissionWithPartitionKeyWithName(), null).single().block()
                 .getResource();
         // Create permission for document with partition key 2
         createdDocPermissionWithPartitionKey2 = client
-                .createPermission(getUserLink(), getDocPermissionWithPartitionKey2(), null).toBlocking().single()
+                .createPermission(getUserLink(), getDocPermissionWithPartitionKey2(), null).single().block()
                 .getResource();
         createdDocPermissionWithPartitionKey2WithName = client
-                .createPermission(getUserLink(), getDocPermissionWithPartitionKey2WithName(), null).toBlocking().single()
+                .createPermission(getUserLink(), getDocPermissionWithPartitionKey2WithName(), null).single().block()
                 .getResource();
         // Create permission for collection with partition key
         createdColPermissionWithPartitionKey = client
-                .createPermission(getUserLink(), getColPermissionWithPartitionKey(), null).toBlocking().single()
+                .createPermission(getUserLink(), getColPermissionWithPartitionKey(), null).single().block()
                 .getResource();
         createdColPermissionWithPartitionKeyWithName = client
-                .createPermission(getUserLink(), getColPermissionWithPartitionKeyWithName(), null).toBlocking().single()
+                .createPermission(getUserLink(), getColPermissionWithPartitionKeyWithName(), null).single().block()
                 .getResource();
         // Create permission for collection with partition key
         createdColPermissionWithPartitionKey2 = client
-                .createPermission(getUserLink(), getColPermissionWithPartitionKey2(), null).toBlocking().single()
+                .createPermission(getUserLink(), getColPermissionWithPartitionKey2(), null).single().block()
                 .getResource();
         createdColPermissionWithPartitionKey2WithName = client
-                .createPermission(getUserLink(), getColPermissionWithPartitionKey2WithName(), null).toBlocking().single()
+                .createPermission(getUserLink(), getColPermissionWithPartitionKey2WithName(), null).single().block()
                 .getResource();
     }
 
@@ -257,7 +258,7 @@ public class ResourceTokenTest extends TestSuiteBase {
             asyncClientResourceToken = new AsyncDocumentClient.Builder().withServiceEndpoint(TestConfigurations.HOST)
                     .withPermissionFeed(permissionFeed).withConnectionPolicy(ConnectionPolicy.GetDefault())
                     .withConsistencyLevel(ConsistencyLevel.Session).build();
-            Observable<ResourceResponse<DocumentCollection>> readObservable = asyncClientResourceToken
+            Flux<ResourceResponse<DocumentCollection>> readObservable = asyncClientResourceToken
                     .readCollection(collectionUrl, null);
 
             ResourceResponseValidator<DocumentCollection> validator = new ResourceResponseValidator.Builder<DocumentCollection>()
@@ -287,7 +288,7 @@ public class ResourceTokenTest extends TestSuiteBase {
                 options = new RequestOptions();
                 options.setPartitionKey(new PartitionKey(partitionKey));
             }
-            Observable<ResourceResponse<Document>> readObservable = asyncClientResourceToken
+            Flux<ResourceResponse<Document>> readObservable = asyncClientResourceToken
                     .readDocument(documentUrl, options);
             ResourceResponseValidator<Document> validator = new ResourceResponseValidator.Builder<Document>()
                     .withId(documentId).build();
@@ -310,7 +311,7 @@ public class ResourceTokenTest extends TestSuiteBase {
                     .withMasterKeyOrResourceToken(resourceToken)
                     .withConnectionPolicy(ConnectionPolicy.GetDefault()).withConsistencyLevel(ConsistencyLevel.Session)
                     .build();
-            Observable<ResourceResponse<Document>> readObservable = asyncClientResourceToken
+            Flux<ResourceResponse<Document>> readObservable = asyncClientResourceToken
                     .readDocument(createdDocument.getSelfLink(), null);
             ResourceResponseValidator<Document> validator = new ResourceResponseValidator.Builder<Document>()
                     .withId(createdDocument.getId()).build();
@@ -337,7 +338,7 @@ public class ResourceTokenTest extends TestSuiteBase {
                     .withConsistencyLevel(ConsistencyLevel.Session).build();
             RequestOptions options = new RequestOptions();
             options.setPartitionKey(new PartitionKey(partitionKey));
-            Observable<ResourceResponse<Document>> readObservable = asyncClientResourceToken
+            Flux<ResourceResponse<Document>> readObservable = asyncClientResourceToken
                     .readDocument(documentUrl, options);
             ResourceResponseValidator<Document> validator = new ResourceResponseValidator.Builder<Document>()
                     .withId(documentId).build();
@@ -364,7 +365,7 @@ public class ResourceTokenTest extends TestSuiteBase {
                     .withConsistencyLevel(ConsistencyLevel.Session).build();
             RequestOptions options = new RequestOptions();
             options.setPartitionKey(new PartitionKey(partitionKey));
-            Observable<ResourceResponse<Document>> readObservable = asyncClientResourceToken
+            Flux<ResourceResponse<Document>> readObservable = asyncClientResourceToken
                     .readDocument(documentUrl, options);
             FailureValidator validator = new FailureValidator.Builder().resourceNotFound().build();
             validateFailure(readObservable, validator);
@@ -393,7 +394,7 @@ public class ResourceTokenTest extends TestSuiteBase {
                 .build();
             RequestOptions options = new RequestOptions();
             options.setPartitionKey(new PartitionKey(PARTITION_KEY_VALUE_2));
-            Observable<ResourceResponse<Document>> readObservable = asyncClientResourceToken
+            Flux<ResourceResponse<Document>> readObservable = asyncClientResourceToken
                     .readDocument(createdDocumentWithPartitionKey.getSelfLink(), options);
             FailureValidator validator = new FailureValidator.Builder().resourceTokenNotFound().build();
             validateFailure(readObservable, validator);

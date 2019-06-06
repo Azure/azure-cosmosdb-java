@@ -206,10 +206,9 @@ public class BackPressureCrossPartitionTest extends TestSuiteBase {
     public void beforeClass() {
         CosmosContainerRequestOptions options = new CosmosContainerRequestOptions();
         options.offerThroughput(20000);
-        createdDatabase = SHARED_DATABASE;
-        createdCollection = createCollection(createdDatabase.getId(), getCollectionDefinition(), options);
-
         client = new ClientUnderTestBuilder(clientBuilder).build();
+        createdDatabase = getSharedCosmosDatabase(client);
+        createdCollection = createCollection(createdDatabase, getCollectionDefinition(), options);
 
         ArrayList<CosmosItemSettings> docDefList = new ArrayList<>();
         for(int i = 0; i < numberOfDocs; i++) {
