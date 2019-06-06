@@ -70,7 +70,7 @@ public class BackPressureTest extends TestSuiteBase {
         return collectionDefinition;
     }
 
-    @Factory(dataProvider = "simpleClientBuildersWithDirectHttps")
+    @Factory(dataProvider = "simpleClientBuildersWithDirect")
     public BackPressureTest(Builder clientBuilder) {
         this.clientBuilder = clientBuilder;
     }
@@ -151,10 +151,6 @@ public class BackPressureTest extends TestSuiteBase {
         assertThat(subscriber.getOnNextEvents()).hasSize(createdDocuments.size());
     }
 
-    // TODO: DANOBLE: Investigate Direct TCP performance issue
-    // NOTE: This method requires multiple SHUTDOWN_TIMEOUT intervals
-    // SEE: https://msdata.visualstudio.com/CosmosDB/_workitems/edit/367028https://msdata.visualstudio.com/CosmosDB/_workitems/edit/367028
-
     @BeforeClass(groups = { "long" }, timeOut = 2 * SETUP_TIMEOUT)
     public void beforeClass() throws Exception {
 
@@ -196,10 +192,6 @@ public class BackPressureTest extends TestSuiteBase {
         // ensure collection is cached
         client.queryDocuments(getCollectionLink(), "SELECT * from r", null).first().toBlocking().single();
     }
-
-    // TODO: DANOBLE: Investigate Direct TCP performance issue
-    // NOTE: This method requires multiple SHUTDOWN_TIMEOUT intervals
-    // SEE: https://msdata.visualstudio.com/CosmosDB/_workitems/edit/367028https://msdata.visualstudio.com/CosmosDB/_workitems/edit/367028
 
     @AfterClass(groups = { "long" }, timeOut = 2 * SHUTDOWN_TIMEOUT, alwaysRun = true)
     public void afterClass() {

@@ -37,6 +37,7 @@ import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdConte
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdContextNegotiator;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdContextRequest;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdEndpoint;
+import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdRequest;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdRequestArgs;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdRequestEncoder;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdRequestManager;
@@ -82,6 +83,7 @@ import java.util.stream.Stream;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.HttpHeaders;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.HttpMethods;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.SubStatusCodes;
+import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
@@ -126,7 +128,8 @@ public final class RntbdTransportClientTest {
                     400,
                     ImmutableMap.of(
                         HttpHeaders.LSN, Integer.toString(lsn),
-                        HttpHeaders.PARTITION_KEY_RANGE_ID, partitionKeyRangeId
+                        HttpHeaders.PARTITION_KEY_RANGE_ID, partitionKeyRangeId,
+                        HttpHeaders.TRANSPORT_REQUEST_ID, Long.toString(1L)
                     ),
                     noContent)
             },
@@ -151,7 +154,8 @@ public final class RntbdTransportClientTest {
                     401,
                     ImmutableMap.of(
                         HttpHeaders.LSN, Integer.toString(lsn),
-                        HttpHeaders.PARTITION_KEY_RANGE_ID, partitionKeyRangeId
+                        HttpHeaders.PARTITION_KEY_RANGE_ID, partitionKeyRangeId,
+                        HttpHeaders.TRANSPORT_REQUEST_ID, Long.toString(2L)
                     ),
                     noContent)
             },
@@ -176,7 +180,8 @@ public final class RntbdTransportClientTest {
                     403,
                     ImmutableMap.of(
                         HttpHeaders.LSN, Integer.toString(lsn),
-                        HttpHeaders.PARTITION_KEY_RANGE_ID, partitionKeyRangeId
+                        HttpHeaders.PARTITION_KEY_RANGE_ID, partitionKeyRangeId,
+                        HttpHeaders.TRANSPORT_REQUEST_ID, Long.toString(3L)
                     ),
                     noContent)
             },
@@ -201,7 +206,8 @@ public final class RntbdTransportClientTest {
                     404,
                     ImmutableMap.of(
                         HttpHeaders.LSN, Integer.toString(lsn),
-                        HttpHeaders.PARTITION_KEY_RANGE_ID, partitionKeyRangeId
+                        HttpHeaders.PARTITION_KEY_RANGE_ID, partitionKeyRangeId,
+                        HttpHeaders.TRANSPORT_REQUEST_ID, Long.toString(4L)
                     ),
                     noContent)
             },
@@ -226,7 +232,8 @@ public final class RntbdTransportClientTest {
                     405,
                     ImmutableMap.of(
                         HttpHeaders.LSN, Integer.toString(lsn),
-                        HttpHeaders.PARTITION_KEY_RANGE_ID, partitionKeyRangeId
+                        HttpHeaders.PARTITION_KEY_RANGE_ID, partitionKeyRangeId,
+                        HttpHeaders.TRANSPORT_REQUEST_ID, Long.toString(5L)
                     ),
                     noContent)
             },
@@ -251,7 +258,8 @@ public final class RntbdTransportClientTest {
                     408,
                     ImmutableMap.of(
                         HttpHeaders.LSN, Integer.toString(lsn),
-                        HttpHeaders.PARTITION_KEY_RANGE_ID, partitionKeyRangeId
+                        HttpHeaders.PARTITION_KEY_RANGE_ID, partitionKeyRangeId,
+                        HttpHeaders.TRANSPORT_REQUEST_ID, Long.toString(6L)
                     ),
                     noContent)
             },
@@ -276,7 +284,8 @@ public final class RntbdTransportClientTest {
                     409,
                     ImmutableMap.of(
                         HttpHeaders.LSN, Integer.toString(lsn),
-                        HttpHeaders.PARTITION_KEY_RANGE_ID, partitionKeyRangeId
+                        HttpHeaders.PARTITION_KEY_RANGE_ID, partitionKeyRangeId,
+                        HttpHeaders.TRANSPORT_REQUEST_ID, Long.toString(7L)
                     ),
                     noContent)
             },
@@ -302,7 +311,8 @@ public final class RntbdTransportClientTest {
                     ImmutableMap.of(
                         HttpHeaders.LSN, Integer.toString(lsn),
                         HttpHeaders.PARTITION_KEY_RANGE_ID, partitionKeyRangeId,
-                        HttpHeaders.SUB_STATUS, Integer.toString(SubStatusCodes.NAME_CACHE_IS_STALE)
+                        HttpHeaders.SUB_STATUS, Integer.toString(SubStatusCodes.NAME_CACHE_IS_STALE),
+                        HttpHeaders.TRANSPORT_REQUEST_ID, Long.toString(8L)
                     ),
                     noContent)
             },
@@ -328,7 +338,8 @@ public final class RntbdTransportClientTest {
                     ImmutableMap.of(
                         HttpHeaders.LSN, Integer.toString(lsn),
                         HttpHeaders.PARTITION_KEY_RANGE_ID, partitionKeyRangeId,
-                        HttpHeaders.SUB_STATUS, Integer.toString(SubStatusCodes.PARTITION_KEY_RANGE_GONE)
+                        HttpHeaders.SUB_STATUS, Integer.toString(SubStatusCodes.PARTITION_KEY_RANGE_GONE),
+                        HttpHeaders.TRANSPORT_REQUEST_ID, Long.toString(9L)
                     ),
                     noContent)
             },
@@ -354,7 +365,8 @@ public final class RntbdTransportClientTest {
                     ImmutableMap.of(
                         HttpHeaders.LSN, Integer.toString(lsn),
                         HttpHeaders.PARTITION_KEY_RANGE_ID, partitionKeyRangeId,
-                        HttpHeaders.SUB_STATUS, Integer.toString(SubStatusCodes.COMPLETING_SPLIT)
+                        HttpHeaders.SUB_STATUS, Integer.toString(SubStatusCodes.COMPLETING_SPLIT),
+                        HttpHeaders.TRANSPORT_REQUEST_ID, Long.toString(10L)
                     ),
                     noContent)
             },
@@ -380,7 +392,8 @@ public final class RntbdTransportClientTest {
                     ImmutableMap.of(
                         HttpHeaders.LSN, Integer.toString(lsn),
                         HttpHeaders.PARTITION_KEY_RANGE_ID, partitionKeyRangeId,
-                        HttpHeaders.SUB_STATUS, Integer.toString(SubStatusCodes.COMPLETING_PARTITION_MIGRATION)
+                        HttpHeaders.SUB_STATUS, Integer.toString(SubStatusCodes.COMPLETING_PARTITION_MIGRATION),
+                        HttpHeaders.TRANSPORT_REQUEST_ID, Long.toString(11L)
                     ),
                     noContent)
             },
@@ -406,7 +419,9 @@ public final class RntbdTransportClientTest {
                     ImmutableMap.of(
                         HttpHeaders.LSN, Integer.toString(lsn),
                         HttpHeaders.PARTITION_KEY_RANGE_ID, partitionKeyRangeId,
-                        HttpHeaders.SUB_STATUS, String.valueOf(SubStatusCodes.UNKNOWN)),
+                        HttpHeaders.SUB_STATUS, String.valueOf(SubStatusCodes.UNKNOWN),
+                        HttpHeaders.TRANSPORT_REQUEST_ID, Long.toString(12L)
+                    ),
                     noContent)
             },
             {
@@ -430,7 +445,8 @@ public final class RntbdTransportClientTest {
                     412,
                     ImmutableMap.of(
                         HttpHeaders.LSN, Integer.toString(lsn),
-                        HttpHeaders.PARTITION_KEY_RANGE_ID, partitionKeyRangeId
+                        HttpHeaders.PARTITION_KEY_RANGE_ID, partitionKeyRangeId,
+                        HttpHeaders.TRANSPORT_REQUEST_ID, Long.toString(13L)
                     ),
                     noContent)
             },
@@ -455,7 +471,8 @@ public final class RntbdTransportClientTest {
                     413,
                     ImmutableMap.of(
                         HttpHeaders.LSN, Integer.toString(lsn),
-                        HttpHeaders.PARTITION_KEY_RANGE_ID, partitionKeyRangeId
+                        HttpHeaders.PARTITION_KEY_RANGE_ID, partitionKeyRangeId,
+                        HttpHeaders.TRANSPORT_REQUEST_ID, Long.toString(14L)
                     ),
                     noContent)
             },
@@ -480,7 +497,8 @@ public final class RntbdTransportClientTest {
                     423,
                     ImmutableMap.of(
                         HttpHeaders.LSN, Integer.toString(lsn),
-                        HttpHeaders.PARTITION_KEY_RANGE_ID, partitionKeyRangeId
+                        HttpHeaders.PARTITION_KEY_RANGE_ID, partitionKeyRangeId,
+                        HttpHeaders.TRANSPORT_REQUEST_ID, Long.toString(15L)
                     ),
                     noContent)
             },
@@ -505,7 +523,8 @@ public final class RntbdTransportClientTest {
                     429,
                     ImmutableMap.of(
                         HttpHeaders.LSN, Integer.toString(lsn),
-                        HttpHeaders.PARTITION_KEY_RANGE_ID, partitionKeyRangeId
+                        HttpHeaders.PARTITION_KEY_RANGE_ID, partitionKeyRangeId,
+                        HttpHeaders.TRANSPORT_REQUEST_ID, Long.toString(16L)
                     ),
                     noContent)
             },
@@ -530,7 +549,8 @@ public final class RntbdTransportClientTest {
                     449,
                     ImmutableMap.of(
                         HttpHeaders.LSN, Integer.toString(lsn),
-                        HttpHeaders.PARTITION_KEY_RANGE_ID, partitionKeyRangeId
+                        HttpHeaders.PARTITION_KEY_RANGE_ID, partitionKeyRangeId,
+                        HttpHeaders.TRANSPORT_REQUEST_ID, Long.toString(17L)
                     ),
                     noContent)
             },
@@ -555,7 +575,8 @@ public final class RntbdTransportClientTest {
                     500,
                     ImmutableMap.of(
                         HttpHeaders.LSN, Integer.toString(lsn),
-                        HttpHeaders.PARTITION_KEY_RANGE_ID, partitionKeyRangeId
+                        HttpHeaders.PARTITION_KEY_RANGE_ID, partitionKeyRangeId,
+                        HttpHeaders.TRANSPORT_REQUEST_ID, Long.toString(18L)
                     ),
                     noContent)
             },
@@ -580,7 +601,8 @@ public final class RntbdTransportClientTest {
                     503,
                     ImmutableMap.of(
                         HttpHeaders.LSN, Integer.toString(lsn),
-                        HttpHeaders.PARTITION_KEY_RANGE_ID, partitionKeyRangeId
+                        HttpHeaders.PARTITION_KEY_RANGE_ID, partitionKeyRangeId,
+                        HttpHeaders.TRANSPORT_REQUEST_ID, Long.toString(19L)
                     ),
                     noContent)
             },
@@ -698,11 +720,9 @@ public final class RntbdTransportClientTest {
             final Single<StoreResponse> responseSingle;
 
             try {
-                responseSingle = client.invokeStoreAsync(
-                    physicalAddress, new ResourceOperation(request.getOperationType(), request.getResourceType()), request
-                );
+                responseSingle = client.invokeStoreAsync(physicalAddress, null, request);
             } catch (final Exception error) {
-                throw new AssertionError(String.format("%s: %s", error.getClass(), error.getMessage()));
+                throw new AssertionError(String.format("%s: %s", error.getClass(), error));
             }
 
             this.validateFailure(responseSingle, builder.build());
@@ -784,6 +804,7 @@ public final class RntbdTransportClientTest {
 
             } else {
 
+                final RntbdRequest rntbdRequest = RntbdRequest.decode(in.copy());
                 final RntbdResponse rntbdResponse;
 
                 try {
@@ -792,6 +813,7 @@ public final class RntbdTransportClientTest {
                     throw new AssertionError(String.format("%s: %s", error.getClass(), error.getMessage()));
                 }
 
+                assertEquals(rntbdRequest.getTransportRequestId(), rntbdResponse.getTransportRequestId());
                 rntbdResponse.encode(out);
                 out.setBytes(8, in.slice(8, 16));  // Overwrite activityId
             }
@@ -815,7 +837,7 @@ public final class RntbdTransportClientTest {
                 expected.length, true, Arrays.asList(expected)
             );
 
-            RntbdRequestManager requestManager = new RntbdRequestManager();
+            RntbdRequestManager requestManager = new RntbdRequestManager(30);
             this.physicalAddress = physicalAddress;
             this.requestTimer = timer;
 
