@@ -19,18 +19,35 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
- *
  */
 
-package com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd;
 
-import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
+package com.microsoft.azure.cosmosdb;
 
-import java.nio.ByteOrder;
+import com.microsoft.azure.cosmosdb.rx.TestConfigurations;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.testng.ITestResult;
+import org.testng.util.RetryAnalyzerCount;
 
-public final class RntbdRequestFramer extends LengthFieldBasedFrameDecoder {
+import java.util.concurrent.TimeUnit;
 
-    public RntbdRequestFramer() {
-        super(ByteOrder.LITTLE_ENDIAN, Integer.MAX_VALUE, 0, Integer.BYTES, -Integer.BYTES, 0, true);
+public class RetryAnalyzier extends RetryAnalyzerCount {
+    private final Logger logger = LoggerFactory.getLogger(RetryAnalyzier.class);
+    private final int waitBetweenRetriesInSeconds = 120;
+
+    public RetryAnalyzier() {
+        this.setCount(Integer.parseInt(TestConfigurations.MAX_RETRY_LIMIT));
+    }
+
+    @Override
+    public boolean retryMethod(ITestResult result) {
+        try {
+            TimeUnit.SECONDS.sleep(waitBetweenRetriesInSeconds);
+        } catch (InterruptedException e) {
+            return false;
+        }
+
+        return true;
     }
 }
