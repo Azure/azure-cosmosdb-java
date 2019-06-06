@@ -42,7 +42,7 @@ public class RetryAnalyzer extends RetryAnalyzerCount {
 
     @Override
     public boolean retryMethod(ITestResult result) {
-        System.out.println("Retry Remaining #" + getCount() + " for test: " + result.getMethod().getMethodName() + ", on thread: " + Thread.currentThread().getName());
+        System.out.println("Retry remaining #" + getCount() + " for test: " + result.getMethod().getMethodName() + ", on thread: " + Thread.currentThread().getName());
 
         try {
             TimeUnit.SECONDS.sleep(waitBetweenRetriesInSeconds);
