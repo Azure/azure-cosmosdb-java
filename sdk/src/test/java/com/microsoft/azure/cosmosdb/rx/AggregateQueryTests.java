@@ -70,7 +70,6 @@ public class AggregateQueryTests extends TestSuiteBase {
         }
     }
 
-    private CosmosDatabase createdDatabase;
     private CosmosContainer createdCollection;
     private ArrayList<CosmosItemSettings> docs = new ArrayList<CosmosItemSettings>();
     private ArrayList<QueryConfig> queryConfigs = new ArrayList<QueryConfig>();
@@ -225,9 +224,8 @@ public class AggregateQueryTests extends TestSuiteBase {
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT * 100)
     public void beforeClass() throws Exception {
         client = clientBuilder.build();
-        createdDatabase = SHARED_DATABASE;
-        createdCollection = SHARED_MULTI_PARTITION_COLLECTION;
-        truncateCollection(SHARED_MULTI_PARTITION_COLLECTION);
+        createdCollection = getSharedMultiPartitionCollection(client);
+        truncateCollection(createdCollection);
 
         bulkInsert();
         generateTestConfigs();

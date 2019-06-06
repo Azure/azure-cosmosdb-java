@@ -68,6 +68,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.DataProvider;
 
+import com.microsoft.azure.cosmos.CosmosBridgeInternal;
 import com.microsoft.azure.cosmos.CosmosClient;
 import com.microsoft.azure.cosmos.CosmosContainer;
 import com.microsoft.azure.cosmos.CosmosContainerRequestOptions;
@@ -118,10 +119,26 @@ public class TestSuiteBase {
     protected int subscriberValidationTimeout = TIMEOUT;
     protected CosmosClientBuilder clientBuilder;
 
-    protected static CosmosDatabase SHARED_DATABASE;
-    protected static CosmosContainer SHARED_MULTI_PARTITION_COLLECTION;
-    protected static CosmosContainer SHARED_MULTI_PARTITION_COLLECTION_WITH_COMPOSITE_AND_SPATIAL_INDEXES;
-    protected static CosmosContainer SHARED_SINGLE_PARTITION_COLLECTION;
+    private static CosmosDatabase SHARED_DATABASE;
+    private static CosmosContainer SHARED_MULTI_PARTITION_COLLECTION;
+    private static CosmosContainer SHARED_MULTI_PARTITION_COLLECTION_WITH_COMPOSITE_AND_SPATIAL_INDEXES;
+    private static CosmosContainer SHARED_SINGLE_PARTITION_COLLECTION;
+
+    protected static CosmosDatabase getSharedDatabase(CosmosClient client) {
+        return CosmosBridgeInternal.getCosmosDatabaseWithNewClient(SHARED_DATABASE, client);
+    }
+
+    protected static CosmosContainer getSharedMultiPartitionCollection(CosmosClient client) {
+        return CosmosBridgeInternal.getCosmosContainerWithNewClient(SHARED_MULTI_PARTITION_COLLECTION, SHARED_DATABASE, client);
+    }
+
+    protected static CosmosContainer getSharedMultiPartitionCollectionWithCompositeAndSpatialIndexes(CosmosClient client) {
+        return CosmosBridgeInternal.getCosmosContainerWithNewClient(SHARED_MULTI_PARTITION_COLLECTION_WITH_COMPOSITE_AND_SPATIAL_INDEXES, SHARED_DATABASE, client);
+    }
+
+    protected static CosmosContainer getSharedSinglePartitionCollection(CosmosClient client) {
+        return CosmosBridgeInternal.getCosmosContainerWithNewClient(SHARED_SINGLE_PARTITION_COLLECTION, SHARED_DATABASE, client);
+    }
 
     static {
         accountConsistency = parseConsistency(TestConfigurations.CONSISTENCY);
@@ -201,6 +218,8 @@ public class TestSuiteBase {
         options.offerThroughput(10100);
         SHARED_MULTI_PARTITION_COLLECTION = createCollection(SHARED_DATABASE, getCollectionDefinitionWithRangeRangeIndex(), options);
         SHARED_MULTI_PARTITION_COLLECTION_WITH_COMPOSITE_AND_SPATIAL_INDEXES = createCollection(SHARED_DATABASE, getCollectionDefinitionMultiPartitionWithCompositeAndSpatialIndexes(), options);
+        options.offerThroughput(6000);
+        SHARED_SINGLE_PARTITION_COLLECTION = createCollection(SHARED_DATABASE, getCollectionDefinitionWithRangeRangeIndex(), options);
     }
 
     @AfterSuite(groups = {"simple", "long", "direct", "multi-master", "emulator", "non-emulator"}, timeOut = SUITE_SHUTDOWN_TIMEOUT)

@@ -36,12 +36,13 @@ import com.microsoft.azure.cosmosdb.PermissionMode;
 import com.microsoft.azure.cosmosdb.ResourceResponse;
 import com.microsoft.azure.cosmosdb.User;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
+import com.microsoft.azure.cosmosdb.rx.internal.TestSuiteBase;
 
 import javax.net.ssl.SSLException;
 
+//TODO: change to use external TestSuiteBase 
 public class PermissionCrudTest extends TestSuiteBase {
 
-    /*
     private Database createdDatabase;
     private User createdUser;
 
@@ -226,5 +227,4 @@ public class PermissionCrudTest extends TestSuiteBase {
     private String getUserLink() {
         return createdUser.getSelfLink();
     }
-    */
 }

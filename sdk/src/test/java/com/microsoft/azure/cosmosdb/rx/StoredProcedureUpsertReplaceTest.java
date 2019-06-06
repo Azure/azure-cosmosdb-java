@@ -142,7 +142,7 @@ public class StoredProcedureUpsertReplaceTest extends TestSuiteBase {
     public void beforeClass() {
         client = clientBuilder.build();
 
-        createdCollection = SHARED_MULTI_PARTITION_COLLECTION;
+        createdCollection = getSharedMultiPartitionCollection(client);
     }
 
     @AfterClass(groups = { "simple" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)

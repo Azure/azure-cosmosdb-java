@@ -29,23 +29,23 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.microsoft.azure.cosmos.CosmosClientBuilder;
 import org.assertj.core.util.Strings;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
-import com.microsoft.azure.cosmos.CosmosDatabaseForTest;
 import com.microsoft.azure.cosmosdb.Database;
+import com.microsoft.azure.cosmosdb.DatabaseForTest;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.Offer;
-import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient.Builder;
+import reactor.core.publisher.Flux;
 
 public class OfferQueryTest extends TestSuiteBase {
 
-    /*
     public final static int SETUP_TIMEOUT = 40000;
     public final String databaseId = DatabaseForTest.generateId();
 
@@ -58,7 +58,7 @@ public class OfferQueryTest extends TestSuiteBase {
     }
 
     @Factory(dataProvider = "clientBuilders")
-    public OfferQueryTest(Builder clientBuilder) {
+    public OfferQueryTest(CosmosClientBuilder clientBuilder) {
         this.clientBuilder = clientBuilder;
     }
 
@@ -69,9 +69,9 @@ public class OfferQueryTest extends TestSuiteBase {
 
         FeedOptions options = new FeedOptions();
         options.setMaxItemCount(2);
-        Observable<FeedResponse<Offer>> queryObservable = client.queryOffers(query, null);
+        Flux<FeedResponse<Offer>> queryObservable = client.queryOffers(query, null);
 
-        List<Offer> allOffers = client.readOffers(null).flatMap(f -> Observable.from(f.getResults())).toList().toBlocking().single();
+        List<Offer> allOffers = client.readOffers(null).flatMap(f -> Flux.fromIterable(f.getResults())).collectList().toBlocking().single();
         List<Offer> expectedOffers = allOffers.stream().filter(o -> collectionResourceId.equals(o.getString("offerResourceId"))).collect(Collectors.toList());
 
         assertThat(expectedOffers).isNotEmpty();
@@ -155,5 +155,4 @@ public class OfferQueryTest extends TestSuiteBase {
         safeDeleteDatabase(client, databaseId);
         safeClose(client);
     }
-    */
 }

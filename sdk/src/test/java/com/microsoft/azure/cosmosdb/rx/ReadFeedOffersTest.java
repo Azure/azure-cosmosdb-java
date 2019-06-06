@@ -32,19 +32,20 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
-import com.microsoft.azure.cosmos.CosmosDatabaseForTest;
 import com.microsoft.azure.cosmosdb.Database;
+import com.microsoft.azure.cosmosdb.DatabaseForTest;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.Offer;
+import com.microsoft.azure.cosmosdb.rx.internal.TestSuiteBase;
 
 import javax.net.ssl.SSLException;
 
+//TODO: change to use external TestSuiteBase 
 public class ReadFeedOffersTest extends TestSuiteBase {
 
-    /*
     protected static final int FEED_TIMEOUT = 60000;
     protected static final int SETUP_TIMEOUT = 60000;
     protected static final int SHUTDOWN_TIMEOUT = 20000;
@@ -113,5 +114,4 @@ public class ReadFeedOffersTest extends TestSuiteBase {
     private String getDatabaseLink() {
         return "dbs/" + createdDatabase.getId();
     }
-    */
 }

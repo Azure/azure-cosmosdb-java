@@ -31,23 +31,18 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
-import com.microsoft.azure.cosmos.CosmosClient;
-import com.microsoft.azure.cosmos.CosmosContainer;
-import com.microsoft.azure.cosmos.CosmosContainerRequestOptions;
-import com.microsoft.azure.cosmos.CosmosContainerSettings;
-import com.microsoft.azure.cosmos.CosmosDatabase;
-import com.microsoft.azure.cosmos.CosmosItemSettings;
 import com.microsoft.azure.cosmosdb.BridgeInternal;
 import com.microsoft.azure.cosmosdb.ChangeFeedOptions;
 import com.microsoft.azure.cosmosdb.Database;
 import com.microsoft.azure.cosmosdb.Document;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.PartitionKey;
 import com.microsoft.azure.cosmosdb.PartitionKeyDefinition;
 import com.microsoft.azure.cosmosdb.RequestOptions;
+import com.microsoft.azure.cosmosdb.Resource;
 import com.microsoft.azure.cosmosdb.ResourceResponse;
+import com.microsoft.azure.cosmosdb.rx.internal.TestSuiteBase;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -57,32 +52,33 @@ import org.testng.annotations.Test;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+import reactor.core.publisher.Flux;
 
+//TODO: change to use external TestSuiteBase 
 public class ChangeFeedTest extends TestSuiteBase {
 
-    /*
     private static final int SETUP_TIMEOUT = 40000;
     private static final int TIMEOUT = 30000;
     private static final String PartitionKeyFieldName = "mypk";
-    private CosmosDatabase createdDatabase;
-    private CosmosContainer createdCollection;
-    private Multimap<String, CosmosItemSettings> partitionKeyToDocuments = ArrayListMultimap.create();
+    private Database createdDatabase;
+    private DocumentCollection createdCollection;
+    private Multimap<String, Document> partitionKeyToDocuments = ArrayListMultimap.create();
 
-    private CosmosClient client;
+    private AsyncDocumentClient client;
 
     public String getCollectionLink() {
         return Utils.getCollectionNameLink(createdDatabase.getId(), createdCollection.getId());
     }
 
-    static protected CosmosContainerSettings getCollectionDefinition() {
+    static protected DocumentCollection getCollectionDefinition() {
         PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition();
         ArrayList<String> paths = new ArrayList<String>();
         paths.add("/" + PartitionKeyFieldName);
         partitionKeyDef.setPaths(paths);
 
-        CosmosContainerSettings collectionDefinition = new CosmosContainerSettings(
-                UUID.randomUUID().toString(),
-                partitionKeyDef);
+        DocumentCollection collectionDefinition = new DocumentCollection();
+        collectionDefinition.setId(UUID.randomUUID().toString());
+        collectionDefinition.setPartitionKey(partitionKeyDef);
 
         return collectionDefinition;
     }
@@ -95,7 +91,7 @@ public class ChangeFeedTest extends TestSuiteBase {
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
     public void changeFeed_fromBeginning() throws Exception {
         String partitionKey = partitionKeyToDocuments.keySet().iterator().next();
-        Collection<CosmosItemSettings> expectedDocuments = partitionKeyToDocuments.get(partitionKey);
+        Collection<Document> expectedDocuments = partitionKeyToDocuments.get(partitionKey);
 
         ChangeFeedOptions changeFeedOption = new ChangeFeedOptions();
         changeFeedOption.setMaxItemCount(3);
@@ -103,7 +99,7 @@ public class ChangeFeedTest extends TestSuiteBase {
         changeFeedOption.setStartFromBeginning(true);
 
         List<FeedResponse<Document>> changeFeedResultList = client.queryDocumentChangeFeed(getCollectionLink(), changeFeedOption)
-                .toList().toBlocking().single();
+                .collectList().single().block();
 
         int count = 0;
         for(int i = 0; i < changeFeedResultList.size(); i++) {
@@ -121,11 +117,11 @@ public class ChangeFeedTest extends TestSuiteBase {
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
     public void changesFromPartitionKeyRangeId_FromBeginning() throws Exception {
         List<String> partitionKeyRangeIds = client.readPartitionKeyRanges(getCollectionLink(), null)
-                .flatMap(p -> Observable.from(p.getResults()), 1)
-                .map(pkr -> pkr.getId())
-                .toList()
-                .toBlocking()
-                .single();
+                .flatMap(p -> Flux.fromIterable(p.getResults()), 1)
+                .map(Resource::getId)
+                .collectList()
+                .single()
+                .block();
         
         assertThat(partitionKeyRangeIds.size()).isGreaterThan(1);
 
@@ -136,7 +132,7 @@ public class ChangeFeedTest extends TestSuiteBase {
         changeFeedOption.setPartitionKeyRangeId(pkRangeId);
         changeFeedOption.setStartFromBeginning(true);
         List<FeedResponse<Document>> changeFeedResultList = client.queryDocumentChangeFeed(getCollectionLink(), changeFeedOption)
-                .toList().toBlocking().single();
+                .collectList().single().block();
         
         int count = 0;
         for(int i = 0; i < changeFeedResultList.size(); i++) {
@@ -164,10 +160,10 @@ public class ChangeFeedTest extends TestSuiteBase {
         changeFeedOption.setPartitionKey(new PartitionKey(partitionKey));
 
         List<FeedResponse<Document>> changeFeedResultsList = client.queryDocumentChangeFeed(getCollectionLink(), changeFeedOption)
-                .toList()
-                .toBlocking().single();
+                .collectList()
+                .single().block();
 
-        FeedResponseListValidator<Document> validator = new FeedResponseListValidator.Builder().totalSize(0).build();
+        FeedResponseListValidator<Document> validator = new FeedResponseListValidator.Builder<Document>().totalSize(0).build();
         validator.validate(changeFeedResultsList);
         assertThat(changeFeedResultsList.get(changeFeedResultsList.size() -1 ).
                 getResponseContinuation()).as("Response continuation should not be null").isNotNull();
@@ -177,7 +173,7 @@ public class ChangeFeedTest extends TestSuiteBase {
     public void changeFeed_fromStartDate() throws Exception {
 
         //setStartDateTime is not currently supported in multimaster mode. So skipping the test
-        if(BridgeInternal.isEnableMultipleWriteLocations(client.getDatabaseAccount().toBlocking().single())){
+        if(BridgeInternal.isEnableMultipleWriteLocations(client.getDatabaseAccount().single().block())){
             throw new SkipException("StartTime/IfModifiedSince is not currently supported when EnableMultipleWriteLocations is set");
         }
 
@@ -250,10 +246,19 @@ public class ChangeFeedTest extends TestSuiteBase {
         partitionKeyToDocuments.put(partitionKey, createdDocument);
     }
 
+    public List<Document> bulkInsert(AsyncDocumentClient client, List<Document> docs) {
+        ArrayList<Observable<ResourceResponse<Document>>> result = new ArrayList<Observable<ResourceResponse<Document>>>();
+        for (int i = 0; i < docs.size(); i++) {
+            result.add(client.createDocument("dbs/" + createdDatabase.getId() + "/colls/" + createdCollection.getId(), docs.get(i), null, false));
+        }
+
+        return Observable.merge(result, 100).map(r -> r.getResource()).toList().toBlocking().single();
+    }
+
     @AfterMethod(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void removeCollection() {
         if (createdCollection != null) {
-            deleteCollection(createdCollection);
+            deleteCollection(client, getCollectionLink());
         }
     }
 
@@ -262,11 +267,11 @@ public class ChangeFeedTest extends TestSuiteBase {
         super.beforeMethod(method);
         partitionKeyToDocuments.clear();
 
-        CosmosContainerRequestOptions options = new CosmosContainerRequestOptions();
-        options.offerThroughput(10100);
-        createdCollection = createCollection(createdDatabase, getCollectionDefinition(), options);
+        RequestOptions options = new RequestOptions();
+        options.setOfferThroughput(10100);
+        createdCollection = createCollection(client, createdDatabase.getId(), getCollectionDefinition(), options);
 
-        List<CosmosItemSettings> docs = new ArrayList<>();
+        List<Document> docs = new ArrayList<>();
         
         for (int i = 0; i < 200; i++) {
             String partitionKey = UUID.randomUUID().toString();
@@ -275,8 +280,8 @@ public class ChangeFeedTest extends TestSuiteBase {
             }
         }
 
-        List<CosmosItemSettings> insertedDocs = bulkInsertBlocking(createdCollection, docs);
-        for(CosmosItemSettings doc: insertedDocs) {
+        List<Document> insertedDocs = bulkInsert(client, docs);
+        for(Document doc: insertedDocs) {
             partitionKeyToDocuments.put(doc.getString(PartitionKeyFieldName), doc);
         }
     }
@@ -293,9 +298,9 @@ public class ChangeFeedTest extends TestSuiteBase {
         safeClose(client);
     }
 
-    private static CosmosItemSettings getDocumentDefinition(String partitionKey) {
+    private static Document getDocumentDefinition(String partitionKey) {
         String uuid = UUID.randomUUID().toString();
-        CosmosItemSettings doc = new CosmosItemSettings();
+        Document doc = new Document();
         doc.setId(uuid);
         doc.set("mypk", partitionKey);
         doc.set("prop", uuid);
@@ -307,5 +312,4 @@ public class ChangeFeedTest extends TestSuiteBase {
             Thread.sleep(100);
         }
     }
-    */
 }

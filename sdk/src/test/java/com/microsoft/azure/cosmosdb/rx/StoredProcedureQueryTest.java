@@ -170,8 +170,8 @@ public class StoredProcedureQueryTest extends TestSuiteBase {
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() throws Exception {
         client = clientBuilder.build();
-        createdCollection = SHARED_MULTI_PARTITION_COLLECTION;
-        truncateCollection(SHARED_MULTI_PARTITION_COLLECTION);
+        createdCollection = getSharedMultiPartitionCollection(client);
+        truncateCollection(createdCollection);
 
         for(int i = 0; i < 5; i++) {
             createdStoredProcs.add(createStoredProc(createdCollection));
