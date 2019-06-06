@@ -68,7 +68,6 @@ import io.netty.util.concurrent.EventExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.math.BigDecimal;
 import java.net.SocketAddress;
 import java.util.Map;
 import java.util.Optional;
@@ -76,8 +75,6 @@ import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
@@ -98,7 +95,6 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
     private final int pendingRequestLimit;
 
     private boolean closingExceptionally = false;
-    private RntbdRequestRecord pendingRequest;
     private CoalescingBufferQueue pendingWrites;
 
     // endregion
@@ -166,6 +162,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         this.traceOperation(context, "channelRead");
 
         if (message instanceof RntbdResponse) {
+
             try {
                 this.messageReceived(context, (RntbdResponse)message);
             } catch (Throwable throwable) {
@@ -174,15 +171,18 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
             } finally {
                 ReferenceCountUtil.release(message);
             }
-            this.traceOperation(context, "channelReadComplete");
-            return;
+
+        } else {
+
+            final IllegalStateException error = new IllegalStateException(
+                Strings.lenientFormat("expected message of %s, not %s: %s",
+                    RntbdResponse.class, message.getClass(), message
+                )
+            );
+
+            reportIssue(logger, context, "", error);
+            this.exceptionCaught(context, error);
         }
-
-        final String reason = Strings.lenientFormat("expected message of type %s, not %s: %s", RntbdResponse.class, message.getClass(), message);
-        final IllegalStateException error = new IllegalStateException(reason);
-        reportIssue(logger, context, "", error);
-
-        this.exceptionCaught(context, error);
     }
 
     /**
@@ -327,7 +327,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
      */
     @Override
     public void bind(final ChannelHandlerContext context, final SocketAddress localAddress, final ChannelPromise promise) {
-        this.traceOperation(context, "bind");
+        this.traceOperation(context, "bind", localAddress);
         context.bind(localAddress, promise);
     }
 
@@ -368,7 +368,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         final ChannelHandlerContext context, final SocketAddress remoteAddress, final SocketAddress localAddress,
         final ChannelPromise promise
     ) {
-        this.traceOperation(context, "connect");
+        this.traceOperation(context, "connect", remoteAddress, localAddress);
         context.connect(remoteAddress, localAddress, promise);
     }
 
@@ -438,10 +438,19 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         this.traceOperation(context, "write", message);
 
         if (message instanceof RntbdRequestRecord) {
+
             context.write(this.addPendingRequestRecord(context, (RntbdRequestRecord)message), promise);
+
         } else {
-            final String reason = Strings.lenientFormat("Expected message of type %s, not %s", RntbdRequestArgs.class, message.getClass());
-            this.exceptionCaught(context, new IllegalStateException(reason));
+
+            final IllegalStateException error = new IllegalStateException(
+                Strings.lenientFormat("expected message of %s, not %s: %s",
+                    RntbdRequestRecord.class, message.getClass(), message
+                )
+            );
+
+            reportIssue(logger, context, "", error);
+            this.exceptionCaught(context, error);
         }
     }
 
@@ -468,7 +477,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
     private RntbdRequestArgs addPendingRequestRecord(final ChannelHandlerContext context, final RntbdRequestRecord record) {
 
-        this.pendingRequest = this.pendingRequests.compute(record.getTransportRequestId(), (id, current) -> {
+        return this.pendingRequests.compute(record.getTransportRequestId(), (id, current) -> {
 
             reportIssueUnless(current == null, logger, context, "id: {}, current: {}, request: {}", id, current, record);
 
@@ -491,9 +500,8 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
             });
 
             return record;
-        });
 
-        return this.pendingRequest.getArgs();
+        }).getArgs();
     }
 
     private Optional<RntbdContext> getRntbdContext() {
@@ -739,10 +747,6 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
                     break;
             }
 
-            logger.trace("\n  {}\n  [transportRequestId: {}, activityId: {}, statusCode: {}, subStatusCode: {}]\n  ",
-                context.channel(), transportRequestId, cause.getActivityId(), cause.getStatusCode(),
-                cause.getSubStatusCode(), cause);
-
             pendingRequest.completeExceptionally(cause);
         }
     }
@@ -759,25 +763,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
     }
 
     private void traceOperation(final ChannelHandlerContext context, final String operationName, final Object... args) {
-
-        if (logger.isTraceEnabled()) {
-
-            final long birthTime;
-            final BigDecimal lifetime;
-
-            if (this.pendingRequest == null) {
-                birthTime = System.nanoTime();
-                lifetime = BigDecimal.ZERO;
-            } else {
-                birthTime = this.pendingRequest.getBirthTime();
-                lifetime = BigDecimal.valueOf(this.pendingRequest.getLifetime().toNanos(), 6);
-            }
-
-            logger.trace("{},{},\"{}({})\",\"{}\",\"{}\"", birthTime, lifetime, operationName, Stream.of(args).map(arg ->
-                    arg == null ? "null" : arg.toString()).collect(Collectors.joining(",")
-                ), this.pendingRequest, context
-            );
-        }
+        logger.trace("{}\n{}\n{}", operationName, context, args);
     }
 
     // endregion
