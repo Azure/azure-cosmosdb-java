@@ -25,12 +25,10 @@
 package com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd;
 
 import com.microsoft.azure.cosmosdb.internal.UserAgentContainer;
-import com.microsoft.azure.cosmosdb.internal.directconnectivity.StoreResponse;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.ssl.SslContext;
 
 import java.net.URI;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkNotNull;

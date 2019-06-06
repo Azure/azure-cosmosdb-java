@@ -28,8 +28,6 @@ import com.microsoft.azure.cosmosdb.internal.directconnectivity.RequestTimeoutEx
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.StoreResponse;
 import io.netty.util.Timeout;
 import io.netty.util.TimerTask;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.UUID;
