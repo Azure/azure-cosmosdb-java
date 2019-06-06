@@ -38,15 +38,14 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
-import com.microsoft.azure.cosmos.CosmosClient;
-import com.microsoft.azure.cosmos.CosmosClient.Builder;
 import com.microsoft.azure.cosmosdb.BridgeInternal;
 import com.microsoft.azure.cosmosdb.ConnectionPolicy;
 import com.microsoft.azure.cosmosdb.DatabaseAccount;
 import com.microsoft.azure.cosmosdb.internal.BaseAuthorizationTokenProvider;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
+import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient.Builder;
 import com.microsoft.azure.cosmosdb.rx.TestConfigurations;
-import com.microsoft.azure.cosmosdb.rx.TestSuiteBase;
+import com.microsoft.azure.cosmosdb.rx.internal.TestSuiteBase;
 import com.microsoft.azure.cosmosdb.rx.internal.SpyClientUnderTestFactory;
 import com.microsoft.azure.cosmosdb.rx.internal.SpyClientUnderTestFactory.ClientUnderTest;
 
@@ -76,7 +75,7 @@ public class GatewayServiceConfigurationReaderTest extends TestSuiteBase {
     private ConnectionPolicy connectionPolicy;
     private GatewayServiceConfigurationReader mockGatewayServiceConfigurationReader;
     private GatewayServiceConfigurationReader gatewayServiceConfigurationReader;
-    private CosmosClient client;
+    private AsyncDocumentClient client;
     private String databaseAccountJson;
     private DatabaseAccount expectedDatabaseAccount;
 
@@ -87,15 +86,10 @@ public class GatewayServiceConfigurationReaderTest extends TestSuiteBase {
 
     @BeforeClass(groups = "simple")
     public void setup() throws Exception {
+        client = clientBuilder.build();
         mockHttpClient = (CompositeHttpClient<ByteBuf, ByteBuf>) Mockito.mock(CompositeHttpClient.class);
 
-        AsyncDocumentClient.Builder builder = new AsyncDocumentClient.Builder()
-                .withConfigs(this.clientBuilder.getConfigs())
-                .withConnectionPolicy(this.clientBuilder.getConnectionPolicy())
-                .withConsistencyLevel(this.clientBuilder.getDesiredConsistencyLevel())
-                .withMasterKeyOrResourceToken(this.clientBuilder.getKeyOrResourceToken())
-                .withServiceEndpoint(this.clientBuilder.getServiceEndpoint());
-        ClientUnderTest clientUnderTest = SpyClientUnderTestFactory.createClientUnderTest(builder);
+        ClientUnderTest clientUnderTest = SpyClientUnderTestFactory.createClientUnderTest(this.clientBuilder);
         httpClient = clientUnderTest.getSpyHttpClient();
         baseAuthorizationTokenProvider = new BaseAuthorizationTokenProvider(TestConfigurations.MASTER_KEY);
         connectionPolicy = ConnectionPolicy.GetDefault();

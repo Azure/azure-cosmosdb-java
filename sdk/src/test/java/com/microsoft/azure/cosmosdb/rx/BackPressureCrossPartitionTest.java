@@ -22,7 +22,7 @@
  */
 package com.microsoft.azure.cosmosdb.rx;
 
-import com.microsoft.azure.cosmos.BridgeInternal;
+import com.microsoft.azure.cosmos.CosmosBridgeInternal;
 import com.microsoft.azure.cosmos.CosmosClient;
 import com.microsoft.azure.cosmos.CosmosClient.Builder;
 import com.microsoft.azure.cosmos.CosmosContainer;
@@ -46,7 +46,9 @@ import com.microsoft.azure.cosmosdb.internal.directconnectivity.Protocol;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentClientUnderTest;
 import com.microsoft.azure.cosmosdb.rx.internal.directconnectivity.ReflectionUtils;
 
+import io.reactivex.subscribers.TestSubscriber;
 import reactor.core.publisher.Flux;
+import reactor.core.scheduler.Schedulers;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,8 +60,6 @@ import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 import rx.Observable;
 import rx.internal.util.RxRingBuffer;
-import rx.observers.TestSubscriber;
-import rx.schedulers.Schedulers;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -70,7 +70,6 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class BackPressureCrossPartitionTest extends TestSuiteBase {
-    /*
     private final Logger log = LoggerFactory.getLogger(BackPressureCrossPartitionTest.class);
 
     private static final int TIMEOUT = 1800000;
@@ -79,7 +78,7 @@ public class BackPressureCrossPartitionTest extends TestSuiteBase {
     private int numberOfDocs = 4000;
     private CosmosDatabase createdDatabase;
     private CosmosContainer createdCollection;
-    private List<Document> createdDocuments;
+    private List<CosmosItemSettings> createdDocuments;
 
     private CosmosClient client;
     private int numberOfPartitions;
@@ -154,18 +153,18 @@ public class BackPressureCrossPartitionTest extends TestSuiteBase {
         options.setMaxDegreeOfParallelism(2);
         Flux<FeedResponse<CosmosItemSettings>> queryObservable = createdCollection.queryItems(query, options);
 
-        RxDocumentClientUnderTest rxClient = (RxDocumentClientUnderTest)BridgeInternal.getAsyncDocumentClient(client);
+        RxDocumentClientUnderTest rxClient = (RxDocumentClientUnderTest)CosmosBridgeInternal.getAsyncDocumentClient(client);
         rxClient.httpRequests.clear();
 
         log.info("instantiating subscriber ...");
-        TestSubscriber<FeedResponse<Document>> subscriber = new TestSubscriber<>(1);
-        queryObservable.observeOn(Schedulers.io(), 1).subscribe(subscriber);
+        TestSubscriber<FeedResponse<CosmosItemSettings>> subscriber = new TestSubscriber<>(1);
+        queryObservable.publishOn(Schedulers.elastic()).subscribe(subscriber);
         int sleepTimeInMillis = 40000;
         int i = 0;
 
         // use a test subscriber and request for more result and sleep in between
         try {
-            while(subscriber.getCompletions() == 0 && subscriber.getOnErrorEvents().isEmpty()) {
+            while(subscriber.completions() == 0 && subscriber.getEvents().get(1).isEmpty()) {
                 log.debug("loop " + i);
 
                 TimeUnit.MILLISECONDS.sleep(sleepTimeInMillis);
@@ -173,15 +172,15 @@ public class BackPressureCrossPartitionTest extends TestSuiteBase {
 
                 if (sleepTimeInMillis > 4000) {
                     // validate that only one item is returned to subscriber in each iteration
-                    assertThat(subscriber.getValueCount() - i).isEqualTo(1);
+                    assertThat(subscriber.valueCount() - i).isEqualTo(1);
                 }
 
-                log.debug("subscriber.getValueCount(): " + subscriber.getValueCount());
-                log.debug("client.httpRequests.size(): " + client.httpRequests.size());
+                log.debug("subscriber.getValueCount(): " + subscriber.valueCount());
+                log.debug("client.httpRequests.size(): " + rxClient.httpRequests.size());
                 // validate that the difference between the number of requests to backend
                 // and the number of returned results is always less than a fixed threshold
 
-                assertThat(client.httpRequests.size() - subscriber.getValueCount())
+                assertThat(rxClient.httpRequests.size() - subscriber.valueCount())
                         .isLessThanOrEqualTo(maxExpectedBufferedCountForBackPressure);
 
                 log.debug("requesting more");
@@ -199,8 +198,8 @@ public class BackPressureCrossPartitionTest extends TestSuiteBase {
 
         try {
             subscriber.assertNoErrors();
-            subscriber.assertCompleted();
-            assertThat(subscriber.getOnNextEvents().stream().mapToInt(p -> p.getResults().size()).sum()).isEqualTo(expectedNumberOfResults);
+            subscriber.assertComplete();
+            assertThat(subscriber.getEvents().get(0).stream().mapToInt(p -> ((FeedResponse<CosmosItemSettings>)p).getResults().size()).sum()).isEqualTo(expectedNumberOfResults);
         } catch (Throwable error) {
             if (this.clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {
                 String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
@@ -220,19 +219,16 @@ public class BackPressureCrossPartitionTest extends TestSuiteBase {
 
         client = new ClientUnderTestBuilder(clientBuilder).build();
 
-        ArrayList<Document> docDefList = new ArrayList<>();
+        ArrayList<CosmosItemSettings> docDefList = new ArrayList<>();
         for(int i = 0; i < numberOfDocs; i++) {
             docDefList.add(getDocumentDefinition(i));
         }
 
-        Observable<ResourceResponse<Document>> documentBulkInsertObs = bulkInsert(
+        createdDocuments = bulkInsertBlocking(
                 createdCollection,
-                docDefList,
-                1000);
+                docDefList);
 
-        createdDocuments = documentBulkInsertObs.map(ResourceResponse::getResource).toList().toBlocking().single();
-
-        numberOfPartitions = client.readPartitionKeyRanges(getCollectionLink(), null)
+        numberOfPartitions = CosmosBridgeInternal.getAsyncDocumentClient(client).readPartitionKeyRanges(getCollectionLink(), null)
                 .flatMap(p -> Observable.from(p.getResults())).toList().toBlocking().single().size();
 
         waitIfNeededForReplicasToCatchUp(clientBuilder);
@@ -248,9 +244,9 @@ public class BackPressureCrossPartitionTest extends TestSuiteBase {
         safeClose(client);
     }
 
-    private static Document getDocumentDefinition(int cnt) {
+    private static CosmosItemSettings getDocumentDefinition(int cnt) {
         String uuid = UUID.randomUUID().toString();
-        Document doc = new Document(String.format("{ "
+        CosmosItemSettings doc = new CosmosItemSettings(String.format("{ "
             + "\"id\": \"%s\", "
             + "\"prop\" : %d, "
             + "\"mypk\": \"%s\", "
@@ -259,5 +255,4 @@ public class BackPressureCrossPartitionTest extends TestSuiteBase {
             , uuid, cnt, uuid));
         return doc;
     }
-    */
 }
