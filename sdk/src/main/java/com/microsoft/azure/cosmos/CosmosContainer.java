@@ -65,7 +65,7 @@ public class CosmosContainer extends CosmosResource {
      * After subscription the operation will be performed.
      * The {@link Mono} upon successful completion will contain a single cossmos container response with the read container.
      * In case of failure the {@link Mono} will error.
-     * @param requestOptions the cosmos container request options
+     * @param options the cosmos container request options
      * @return an {@link Mono} containing the single cossmos container response with the read container or an error.
      */
     public Mono<CosmosContainerResponse> read(CosmosContainerRequestOptions options) {
@@ -293,7 +293,9 @@ public class CosmosContainer extends CosmosResource {
 
     /**
      * Gets a CosmosItem object without making a service call
-     * @param id id of the item
+     *
+     * @param id           id of the item
+     * @param partitionKey the partition key
      * @return a cosmos item
      */
     public CosmosItem getItem(String id, Object partitionKey){
