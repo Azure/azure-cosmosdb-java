@@ -22,12 +22,10 @@
  */
 package com.microsoft.azure.cosmos.changefeed.internal;
 
-import com.microsoft.azure.cosmos.CosmosClient;
 import com.microsoft.azure.cosmos.CosmosContainer;
-import com.microsoft.azure.cosmos.CosmosDatabase;
 import com.microsoft.azure.cosmos.CosmosItem;
+import com.microsoft.azure.cosmos.CosmosItemSettings;
 import com.microsoft.azure.cosmos.changefeed.ChangeFeedContextClient;
-import com.microsoft.azure.cosmos.changefeed.ContainerConnectionInfo;
 import com.microsoft.azure.cosmos.changefeed.Lease;
 import com.microsoft.azure.cosmos.changefeed.LeaseStore;
 import com.microsoft.azure.cosmos.changefeed.LeaseStoreManager;
@@ -41,7 +39,6 @@ import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.SqlParameter;
 import com.microsoft.azure.cosmosdb.SqlParameterCollection;
 import com.microsoft.azure.cosmosdb.SqlQuerySpec;
-import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
@@ -190,7 +187,7 @@ public class LeaseStoreManagerImpl implements LeaseStoreManager, LeaseStoreManag
             .map(documentResourceResponse -> {
                 if (documentResourceResponse == null) return null;
 
-                CosmosItem document = documentResourceResponse.getItem();
+                CosmosItemSettings document = documentResourceResponse.getCosmosItemSettings();
                 return documentServiceLease
                     .withId(document.getId())
                     .withEtag(document.getETag())
@@ -266,7 +263,7 @@ public class LeaseStoreManagerImpl implements LeaseStoreManager, LeaseStoreManag
                 Mono.error(ex);
                 return Mono.empty();
             })
-            .map( documentResourceResponse -> ServiceItemLease.fromDocument(documentResourceResponse.getItem()))
+            .map( documentResourceResponse -> ServiceItemLease.fromDocument(documentResourceResponse.getCosmosItemSettings()))
             .flatMap( refreshedLease -> self.leaseUpdater.updateLease(
                 refreshedLease,
                 self.createItemForLease(refreshedLease.getId()),
@@ -307,7 +304,7 @@ public class LeaseStoreManagerImpl implements LeaseStoreManager, LeaseStoreManag
                 Mono.error(ex);
                 return Mono.empty();
             })
-            .map( documentResourceResponse -> ServiceItemLease.fromDocument(documentResourceResponse.getItem()))
+            .map( documentResourceResponse -> ServiceItemLease.fromDocument(documentResourceResponse.getCosmosItemSettings()))
             .flatMap( refreshedLease -> self.leaseUpdater.updateLease(
                 refreshedLease,
                 self.createItemForLease(refreshedLease.getId()),
@@ -408,7 +405,7 @@ public class LeaseStoreManagerImpl implements LeaseStoreManager, LeaseStoreManag
             })
             .map( documentResourceResponse -> {
                 if (documentResourceResponse == null) return null;
-                return ServiceItemLease.fromDocument(documentResourceResponse.getItem());
+                return ServiceItemLease.fromDocument(documentResourceResponse.getCosmosItemSettings());
             });
     }
 
@@ -424,7 +421,7 @@ public class LeaseStoreManagerImpl implements LeaseStoreManager, LeaseStoreManag
             "SELECT * FROM c WHERE STARTSWITH(c.id, @PartitionLeasePrefix)",
             new SqlParameterCollection(param));
 
-        Flux<FeedResponse<CosmosItem>> query = this.leaseDocumentClient.queryItems(
+        Flux<FeedResponse<CosmosItemSettings>> query = this.leaseDocumentClient.queryItems(
             this.settings.getLeaseCollectionLink(),
             querySpec,
             this.requestOptionsFactory.createFeedOptions());
@@ -444,6 +441,6 @@ public class LeaseStoreManagerImpl implements LeaseStoreManager, LeaseStoreManag
     }
 
     private CosmosItem createItemForLease(String leaseId) {
-        return this.leaseDocumentClient.getContainerClient().getItem(leaseId);
+        return this.leaseDocumentClient.getContainerClient().getItem(leaseId, "/id");
     }
 }

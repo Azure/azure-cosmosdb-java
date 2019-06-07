@@ -26,6 +26,7 @@ import com.microsoft.azure.cosmos.ChangeFeedObserver;
 import com.microsoft.azure.cosmos.ChangeFeedObserverCloseReason;
 import com.microsoft.azure.cosmos.ChangeFeedObserverContext;
 import com.microsoft.azure.cosmos.CosmosItem;
+import com.microsoft.azure.cosmos.CosmosItemSettings;
 import com.microsoft.azure.cosmos.changefeed.CheckpointFrequency;
 
 import java.time.Duration;
@@ -62,7 +63,7 @@ public class AutoCheckpointer implements ChangeFeedObserver {
     }
 
     @Override
-    public void processChanges(ChangeFeedObserverContext context, List<CosmosItem> docs) {
+    public void processChanges(ChangeFeedObserverContext context, List<CosmosItemSettings> docs) {
         this.observer.processChanges(context, docs);
         this.processedDocCount ++;
 

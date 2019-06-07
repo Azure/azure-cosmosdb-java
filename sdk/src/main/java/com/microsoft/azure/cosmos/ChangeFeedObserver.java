@@ -49,5 +49,5 @@ public interface ChangeFeedObserver {
      * @param context the context specifying partition for this observer, etc.
      * @param docs the documents changed.
      */
-    void processChanges(ChangeFeedObserverContext context, List<CosmosItem> docs);
+    void processChanges(ChangeFeedObserverContext context, List<CosmosItemSettings> docs);
 }

@@ -32,6 +32,7 @@ import com.microsoft.azure.cosmos.CosmosDatabaseResponse;
 import com.microsoft.azure.cosmos.CosmosItem;
 import com.microsoft.azure.cosmos.CosmosItemRequestOptions;
 import com.microsoft.azure.cosmos.CosmosItemResponse;
+import com.microsoft.azure.cosmos.CosmosItemSettings;
 import com.microsoft.azure.cosmosdb.ChangeFeedOptions;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
@@ -63,7 +64,7 @@ public interface ChangeFeedContextClient {
      * @param feedOptions The options for processing the query results feed.
      * @return an {@link Flux} containing one or several feed response pages of the obtained items or an error.
      */
-    Flux<FeedResponse<CosmosItem>> createDocumentChangeFeedQuery(CosmosContainer collectionLink, ChangeFeedOptions feedOptions);
+    Flux<FeedResponse<CosmosItemSettings>> createDocumentChangeFeedQuery(CosmosContainer collectionLink, ChangeFeedOptions feedOptions);
 
     /**
      * Reads a database.
@@ -134,7 +135,7 @@ public interface ChangeFeedContextClient {
      * @return an {@link Flux} containing one or several feed response pages of the obtained items or an error.
      */
     //Observable<FeedResponse<Document>> queryDocuments(String collectionLink, SqlQuerySpec querySpec, FeedOptions options);
-    Flux<FeedResponse<CosmosItem>> queryItems(CosmosContainer containerLink, SqlQuerySpec querySpec, FeedOptions options);
+    Flux<FeedResponse<CosmosItemSettings>> queryItems(CosmosContainer containerLink, SqlQuerySpec querySpec, FeedOptions options);
 
     /**
      * @return the Cosmos client's service endpoint.

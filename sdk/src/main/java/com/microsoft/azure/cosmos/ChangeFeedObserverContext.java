@@ -42,7 +42,7 @@ public interface ChangeFeedObserverContext {
      *
      * @return the response from the underlying DocumentQuery ExecuteNextAsync call.
      */
-    FeedResponse<CosmosItem> getFeedResponse();
+    FeedResponse<CosmosItemSettings> getFeedResponse();
 
     /**
      * Checkpoints progress of a stream. This method is valid only if manual checkpoint was configured.

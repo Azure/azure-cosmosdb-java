@@ -25,6 +25,7 @@ package com.microsoft.azure.cosmos.changefeed.internal;
 import com.microsoft.azure.cosmos.ChangeFeedObserver;
 import com.microsoft.azure.cosmos.ChangeFeedObserverContext;
 import com.microsoft.azure.cosmos.CosmosItem;
+import com.microsoft.azure.cosmos.CosmosItemSettings;
 import com.microsoft.azure.cosmos.changefeed.CancellationToken;
 import com.microsoft.azure.cosmos.changefeed.ChangeFeedContextClient;
 import com.microsoft.azure.cosmos.changefeed.PartitionCheckpointer;
@@ -84,11 +85,11 @@ public class PartitionProcessorImpl implements PartitionProcessor {
 
                 try {
                     self.options.setRequestContinuation(self.lastContinuation);
-                    List<FeedResponse<CosmosItem>> documentFeedResponseList = self.documentClient.createDocumentChangeFeedQuery(self.settings.getCollectionSelfLink(), self.options)
+                    List<FeedResponse<CosmosItemSettings>> documentFeedResponseList = self.documentClient.createDocumentChangeFeedQuery(self.settings.getCollectionSelfLink(), self.options)
                         .collectList()
                         .block();
 
-                    for (FeedResponse<CosmosItem> documentFeedResponse : documentFeedResponseList) {
+                    for (FeedResponse<CosmosItemSettings> documentFeedResponse : documentFeedResponseList) {
                         self.lastContinuation = documentFeedResponse.getResponseContinuation();
                         if (documentFeedResponse.getResults() != null && documentFeedResponse.getResults().size() > 0) {
                             self.dispatchChanges(documentFeedResponse);
@@ -165,7 +166,7 @@ public class PartitionProcessorImpl implements PartitionProcessor {
         return this.resultException;
     }
 
-    private void dispatchChanges(FeedResponse<CosmosItem> response) {
+    private void dispatchChanges(FeedResponse<CosmosItemSettings> response) {
         ChangeFeedObserverContext context = new ChangeFeedObserverContextImpl(this.settings.getPartitionKeyRangeId(), response, this.checkpointer);
 
         this.observer.processChanges(context, response.getResults());

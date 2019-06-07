@@ -339,13 +339,13 @@ public class CosmosContainer extends CosmosResource {
      * @param changeFeedOptions        the feed options.
      * @return an {@link Flux} containing one or several feed response pages of the obtained items or an error.
      */
-    public Flux<FeedResponse<CosmosItem>> queryChangeFeedItems(ChangeFeedOptions changeFeedOptions){
+    public Flux<FeedResponse<CosmosItemSettings>> queryChangeFeedItems(ChangeFeedOptions changeFeedOptions){
         return RxJava2Adapter.flowableToFlux(
             RxJavaInterop.toV2Flowable(getDatabase()
                 .getDocClientWrapper()
                 .queryDocumentChangeFeed(getLink(), changeFeedOptions)
                 .map(response-> BridgeInternal.createFeedResponseWithQueryMetrics(
-                    CosmosItem.getFromV2Results(response.getResults(), this),
+                    CosmosItemSettings.getFromV2Results(response.getResults()),
                     response.getResponseHeaders(), response.getQueryMetrics()))));
     }
 

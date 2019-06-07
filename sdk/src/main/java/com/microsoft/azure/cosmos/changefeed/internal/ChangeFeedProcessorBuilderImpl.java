@@ -301,7 +301,7 @@ public class ChangeFeedProcessorBuilderImpl implements ChangeFeedProcessor.Build
         }
 
         this.initializeCollectionPropertiesForBuild().block();
-        LeaseStoreManager leaseStoreManager = this.getLeaseStoreManager(true).block();
+        LeaseStoreManager leaseStoreManager = this.getLeaseStoreManager().block();
         this.partitionManager = this.buildPartitionManager(leaseStoreManager).block();
 
         return Mono.just(this);
@@ -348,7 +348,7 @@ public class ChangeFeedProcessorBuilderImpl implements ChangeFeedProcessor.Build
         return Mono.empty();
     }
 
-    private Mono<LeaseStoreManager> getLeaseStoreManager(boolean isPartitionKeyByIdRequiredIfPartitioned) {
+    private Mono<LeaseStoreManager> getLeaseStoreManager() {
         ChangeFeedProcessorBuilderImpl self = this;
 
         if (this.leaseStoreManager == null) {
@@ -359,15 +359,12 @@ public class ChangeFeedProcessorBuilderImpl implements ChangeFeedProcessor.Build
                         collectionSettings.getPartitionKey() != null &&
                             collectionSettings.getPartitionKey().getPaths() != null &&
                             collectionSettings.getPartitionKey().getPaths().size() > 0;
-                    if (isPartitioned && isPartitionKeyByIdRequiredIfPartitioned &&
-                        (collectionSettings.getPartitionKey().getPaths().size() != 1 || !collectionSettings.getPartitionKey().getPaths().get(0).equals("/id"))) {
+                    if (!isPartitioned || (collectionSettings.getPartitionKey().getPaths().size() != 1 || !collectionSettings.getPartitionKey().getPaths().get(0).equals("/id"))) {
 //                        throw new IllegalArgumentException("The lease collection, if partitioned, must have partition key equal to id.");
-                        Mono.error(new IllegalArgumentException("The lease collection, if partitioned, must have partition key equal to id."));
+                        Mono.error(new IllegalArgumentException("The lease collection must have partition key equal to id."));
                     }
 
-                    RequestOptionsFactory requestOptionsFactory = isPartitioned ?
-                        new PartitionedByIdCollectionRequestOptionsFactory() :
-                        new SinglePartitionRequestOptionsFactory();
+                    RequestOptionsFactory requestOptionsFactory = new PartitionedByIdCollectionRequestOptionsFactory();
 
                     String leasePrefix = self.getLeasePrefix();
 

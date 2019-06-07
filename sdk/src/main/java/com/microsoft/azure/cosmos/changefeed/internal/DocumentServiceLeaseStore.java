@@ -25,6 +25,7 @@ package com.microsoft.azure.cosmos.changefeed.internal;
 import com.microsoft.azure.cosmos.CosmosContainer;
 import com.microsoft.azure.cosmos.CosmosItem;
 import com.microsoft.azure.cosmos.CosmosItemRequestOptions;
+import com.microsoft.azure.cosmos.CosmosItemSettings;
 import com.microsoft.azure.cosmos.changefeed.ChangeFeedContextClient;
 import com.microsoft.azure.cosmos.changefeed.LeaseStore;
 import com.microsoft.azure.cosmos.changefeed.RequestOptionsFactory;
@@ -67,12 +68,14 @@ public class DocumentServiceLeaseStore implements LeaseStore {
     public Mono<Boolean> isInitialized() {
         String markerDocId = this.getStoreMarkerName();
 
-        CosmosItem doc = this.client.getContainerClient().getItem(markerDocId);
+        CosmosItemSettings doc = new CosmosItemSettings();
+        doc.setId(markerDocId);
 
         CosmosItemRequestOptions requestOptions = this.requestOptionsFactory.createRequestOptions(
             ServiceItemLease.fromDocument(doc));
 
-        return this.client.readItem(doc, requestOptions)
+        CosmosItem docItem = this.client.getContainerClient().getItem(markerDocId, "/id");
+        return this.client.readItem(docItem, requestOptions)
             .flatMap(documentResourceResponse -> Mono.just(documentResourceResponse.getItem() != null))
             .onErrorResume(throwable -> {
                 if (throwable instanceof DocumentClientException) {
@@ -89,7 +92,7 @@ public class DocumentServiceLeaseStore implements LeaseStore {
     @Override
     public Mono<Boolean> markInitialized() {
         String markerDocId = this.getStoreMarkerName();
-        CosmosItem containerDocument = new CosmosItem();
+        CosmosItemSettings containerDocument = new CosmosItemSettings();
         containerDocument.setId(markerDocId);
 
         return this.client.createItem(this.leaseCollectionLink, containerDocument, null, false)
@@ -116,7 +119,7 @@ public class DocumentServiceLeaseStore implements LeaseStore {
         return this.client.createItem(this.leaseCollectionLink, containerDocument, null, false)
             .map(documentResourceResponse -> {
                 if (documentResourceResponse.getItem() != null) {
-                    self.lockETag = documentResourceResponse.getItem().getETag();
+                    self.lockETag = documentResourceResponse.getCosmosItemSettings().getETag();
                     return true;
                 } else {
                     return false;
@@ -137,7 +140,8 @@ public class DocumentServiceLeaseStore implements LeaseStore {
     @Override
     public Mono<Boolean> releaseInitializationLock() {
         String lockId = this.getStoreLockName();
-        CosmosItem doc = this.client.getContainerClient().getItem(lockId);
+        CosmosItemSettings doc = new CosmosItemSettings();
+        doc.setId(lockId);
 
         CosmosItemRequestOptions requestOptions = this.requestOptionsFactory.createRequestOptions(
             ServiceItemLease.fromDocument(doc));
@@ -152,7 +156,8 @@ public class DocumentServiceLeaseStore implements LeaseStore {
         requestOptions.setAccessCondition(accessCondition);
         DocumentServiceLeaseStore self = this;
 
-        return this.client.deleteItem(doc, requestOptions)
+        CosmosItem docItem = this.client.getContainerClient().getItem(lockId, "/id");
+        return this.client.deleteItem(docItem, requestOptions)
             .map(documentResourceResponse -> {
                 if (documentResourceResponse.getItem() != null) {
                     self.lockETag = null;

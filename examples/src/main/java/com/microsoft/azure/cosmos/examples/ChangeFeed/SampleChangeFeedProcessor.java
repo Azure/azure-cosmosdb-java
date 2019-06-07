@@ -31,6 +31,7 @@ import com.microsoft.azure.cosmos.CosmosContainerResponse;
 import com.microsoft.azure.cosmos.CosmosContainerSettings;
 import com.microsoft.azure.cosmos.CosmosDatabase;
 import com.microsoft.azure.cosmos.CosmosItem;
+import com.microsoft.azure.cosmos.CosmosItemSettings;
 import com.microsoft.azure.cosmosdb.ConnectionPolicy;
 import com.microsoft.azure.cosmosdb.ConsistencyLevel;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
@@ -221,11 +222,11 @@ public class SampleChangeFeedProcessor {
     public static void createNewDocuments(CosmosContainer containerClient, int count, Duration delay) {
         String suffix = RandomStringUtils.randomAlphabetic(10);
         for (int i = 0; i <= count; i++) {
-            CosmosItem document = new CosmosItem();
+            CosmosItemSettings document = new CosmosItemSettings();
             document.setId(String.format("0%d-%s", i, suffix));
 
             containerClient.createItem(document).subscribe(doc -> {
-                System.out.println("---->DOCUMENT WRITE: " + doc.getItem().toJson(SerializationFormattingPolicy.Indented));
+                System.out.println("---->DOCUMENT WRITE: " + doc.getCosmosItemSettings().toJson(SerializationFormattingPolicy.Indented));
             });
 
             long remainingWork = delay.toMillis();

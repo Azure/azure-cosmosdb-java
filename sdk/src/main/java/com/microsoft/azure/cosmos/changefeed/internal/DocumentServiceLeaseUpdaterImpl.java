@@ -25,6 +25,7 @@ package com.microsoft.azure.cosmos.changefeed.internal;
 import com.microsoft.azure.cosmos.CosmosItem;
 import com.microsoft.azure.cosmos.CosmosItemRequestOptions;
 import com.microsoft.azure.cosmos.CosmosItemResponse;
+import com.microsoft.azure.cosmos.CosmosItemSettings;
 import com.microsoft.azure.cosmos.changefeed.ChangeFeedContextClient;
 import com.microsoft.azure.cosmos.changefeed.Lease;
 import com.microsoft.azure.cosmos.changefeed.ServiceItemLease;
@@ -73,18 +74,18 @@ public class DocumentServiceLeaseUpdaterImpl implements ServiceItemLeaseUpdater 
             }
 
             lease.setTimestamp(ZonedDateTime.now(ZoneId.of("UTC")));
-            CosmosItem leaseDocument = this.tryReplaceLease(lease, itemLink);
+            CosmosItemSettings leaseDocument = this.tryReplaceLease(lease, itemLink);
 
             if (leaseDocument != null) {
                 return Mono.just(ServiceItemLease.fromDocument(leaseDocument));
             }
 
             // Partition lease update conflict. Reading the current version of lease.
-            CosmosItem document = null;
+            CosmosItemSettings document = null;
             try {
                 CosmosItemResponse response = this.client.readItem(itemLink, requestOptions)
                     .block();
-                document = response.getItem();
+                document = response.getCosmosItemSettings();
             } catch (RuntimeException re) {
                 if (re.getCause() instanceof DocumentClientException) {
                     DocumentClientException ex = (DocumentClientException) re.getCause();
@@ -111,11 +112,11 @@ public class DocumentServiceLeaseUpdaterImpl implements ServiceItemLeaseUpdater 
         throw new LeaseLostException(lease);
     }
 
-    private CosmosItem tryReplaceLease(Lease lease, CosmosItem itemLink) throws LeaseLostException {
+    private CosmosItemSettings tryReplaceLease(Lease lease, CosmosItem itemLink) throws LeaseLostException {
         try {
             CosmosItemResponse response = this.client.replaceItem(itemLink, lease, this.getCreateIfMatchOptions(lease))
                 .block();
-            return response.getItem();
+            return response.getCosmosItemSettings();
         } catch (RuntimeException re) {
             if (re.getCause() instanceof DocumentClientException) {
                 DocumentClientException ex = (DocumentClientException) re.getCause();
