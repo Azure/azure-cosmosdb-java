@@ -27,10 +27,10 @@ SOFTWARE.
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>com.microsoft.azure</groupId>
-    <artifactId>azure-cosmosdb-parent</artifactId>
-    <version>3.0.0-SNAPSHOT</version>
+    <artifactId>azure-cosmos-parent</artifactId>
+    <version>3.0.0-a1</version>
   </parent>
-  <artifactId>azure-cosmosdb-commons-test-utils</artifactId>
+  <artifactId>azure-cosmos-commons-test-utils</artifactId>
   <name>Common Test Components for Testing Async SDK for SQL API of Azure Cosmos DB Service</name>
   <description>Common Test Components for Testing Async SDK for SQL API of Azure Cosmos DB Service</description>
   <packaging>jar</packaging>
@@ -94,7 +94,7 @@ SOFTWARE.
   <dependencies>
     <dependency>
       <groupId>com.microsoft.azure</groupId>
-      <artifactId>azure-cosmosdb-commons</artifactId>
+      <artifactId>azure-cosmos-commons</artifactId>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
