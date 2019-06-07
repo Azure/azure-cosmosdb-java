@@ -805,7 +805,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
         testSubscriber.assertNoErrors();
         testSubscriber.assertComplete();
         testSubscriber.assertValueCount(1);
-        return (T) testSubscriber.getEvents().get(0).get(0);
+        return testSubscriber.values().get(0);
     }
 
     public static void validateSuccess(Mono<List<Address>> observable,
@@ -816,7 +816,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
         testSubscriber.assertNoErrors();
         testSubscriber.assertComplete();
         testSubscriber.assertValueCount(1);
-        validator.validate((Collection<Address>) testSubscriber.getEvents().get(0).get(0));
+        validator.validate(testSubscriber.values().get(0));
     }
     
     @BeforeClass(groups = { "direct" }, timeOut = SETUP_TIMEOUT)

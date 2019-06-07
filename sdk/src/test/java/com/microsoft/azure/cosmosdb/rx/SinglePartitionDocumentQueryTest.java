@@ -281,7 +281,7 @@ public class SinglePartitionDocumentQueryTest extends TestSuiteBase {
         subscriber.assertComplete();
         subscriber.assertNoErrors();
         assertThat(subscriber.valueCount()).isEqualTo(1);
-        FeedResponse<CosmosItemSettings> page = ((FeedResponse<CosmosItemSettings>) subscriber.getEvents().get(0).get(0));
+        FeedResponse<CosmosItemSettings> page = subscriber.values().get(0);
         assertThat(page.getResults()).hasSize(3);
         
         assertThat(page.getResponseContinuation()).isNotEmpty();

@@ -204,7 +204,7 @@ public class DocumentProducerTest {
                 .distinct().collect(Collectors.toList())).containsExactlyElementsOf(Collections.singleton(initialPageSize));
 
         // expected results
-        validateSplitResults((List<DocumentProducer<Document>.DocumentProducerFeedResponse>)(Object)subscriber.getEvents().get(0).get(0),
+        validateSplitResults(subscriber.values(),
                              parentPartitionId, leftChildPartitionId,
                              rightChildPartitionId, resultFromParentPartition, resultFromLeftChildPartition,
                              resultFromRightChildPartition, false);
@@ -287,7 +287,7 @@ public class DocumentProducerTest {
         assertThat(requestCreator.invocations.stream().map(i -> i.maxItemCount).distinct().collect(Collectors.toList())).containsExactlyElementsOf(Collections.singleton(initialPageSize));
 
         // expected results
-        validateSplitResults((List<DocumentProducer<Document>.DocumentProducerFeedResponse>)subscriber.getEvents().get(0).get(0),
+        validateSplitResults(subscriber.values(),
                              parentPartitionId, leftChildPartitionId,
                              rightChildPartitionId, resultFromParentPartition, resultFromLeftChildPartition,
                              resultFromRightChildPartition, true);
@@ -400,11 +400,11 @@ public class DocumentProducerTest {
         assertThat(requestCreator.invocations.stream().map(i -> i.sourcePartition).distinct().collect(Collectors.toList())).containsExactlyElementsOf(Collections.singletonList(targetRange));
 
         List<String> resultContinuationToken =
-                subscriber.getEvents().get(0).stream().map(r -> ((DocumentProducer.DocumentProducerFeedResponse)r).pageResult.getResponseContinuation()).collect(Collectors.toList());
+                subscriber.values().stream().map(r -> r.pageResult.getResponseContinuation()).collect(Collectors.toList());
         List<String> beforeExceptionContinuationTokens =
-                responsesBeforeThrottle.stream().map(r -> r.getResponseContinuation()).collect(Collectors.toList());
+                responsesBeforeThrottle.stream().map(FeedResponse::getResponseContinuation).collect(Collectors.toList());
         List<String> afterExceptionContinuationTokens =
-                responsesAfterThrottle.stream().map(r -> r.getResponseContinuation()).collect(Collectors.toList());
+                responsesAfterThrottle.stream().map(FeedResponse::getResponseContinuation).collect(Collectors.toList());
 
         assertThat(resultContinuationToken).containsExactlyElementsOf(Iterables.concat(beforeExceptionContinuationTokens, afterExceptionContinuationTokens));
 

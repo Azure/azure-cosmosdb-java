@@ -107,7 +107,7 @@ public class BackPressureTest extends TestSuiteBase {
             // validate that only one item is returned to subscriber in each iteration
             // validate that the difference between the number of requests to backend
             // and the number of returned results is always less than a fixed threshold
-            assertThat(rxClient.httpRequests.size() - subscriber.getEvents().get(0).size())
+            assertThat(rxClient.httpRequests.size() - subscriber.valueCount())
                 .isLessThanOrEqualTo(Queues.SMALL_BUFFER_SIZE);
 
             subscriber.requestMore(1);
@@ -116,7 +116,7 @@ public class BackPressureTest extends TestSuiteBase {
 
         subscriber.assertNoErrors();
         subscriber.assertComplete();
-        assertThat(subscriber.getEvents().get(0)).hasSize(createdDocuments.size());
+        assertThat(subscriber.valueCount()).isEqualTo(createdDocuments.size());
     }
 
     @Test(groups = { "long" }, timeOut = TIMEOUT)
@@ -154,7 +154,7 @@ public class BackPressureTest extends TestSuiteBase {
         subscriber.assertNoErrors();
         subscriber.assertComplete();
 
-        assertThat(subscriber.getEvents().get(0)).hasSize(createdDocuments.size());
+        assertThat(subscriber.valueCount()).isEqualTo(createdDocuments.size());
     }
 
     // TODO: DANOBLE: Investigate Direct TCP performance issue

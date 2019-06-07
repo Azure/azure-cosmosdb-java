@@ -188,7 +188,7 @@ public class TopQueryTests extends TestSuiteBase {
             testSubscriber.assertNoErrors();
             testSubscriber.assertComplete();
 
-            FeedResponse<CosmosItemSettings> firstPage = (FeedResponse<CosmosItemSettings>) testSubscriber.getEvents().get(0).get(0);
+            FeedResponse<CosmosItemSettings> firstPage = testSubscriber.values().get(0);
             requestContinuation = firstPage.getResponseContinuation();
             receivedDocuments.addAll(firstPage.getResults());
             continuationTokens.add(requestContinuation);

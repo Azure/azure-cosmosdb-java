@@ -192,7 +192,7 @@ public class BackPressureCrossPartitionTest extends TestSuiteBase {
         try {
             subscriber.assertNoErrors();
             subscriber.assertComplete();
-            assertThat(subscriber.getEvents().get(0).stream().mapToInt(p -> ((FeedResponse<CosmosItemSettings>)p).getResults().size()).sum()).isEqualTo(expectedNumberOfResults);
+            assertThat(subscriber.values().stream().mapToInt(p -> p.getResults().size()).sum()).isEqualTo(expectedNumberOfResults);
         } catch (Throwable error) {
             if (this.clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {
                 String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());

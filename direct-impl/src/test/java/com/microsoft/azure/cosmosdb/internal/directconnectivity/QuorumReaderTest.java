@@ -654,7 +654,7 @@ public class QuorumReaderTest {
         testSubscriber.assertNoErrors();
         testSubscriber.assertComplete();
         testSubscriber.assertValueCount(1);
-        validator.validate((List<StoreResult>) testSubscriber.getEvents().get(0).get(0));
+        validator.validate(testSubscriber.values().get(0));
     }
 
     public static void validateSuccess(Mono<StoreResponse> single,
@@ -672,6 +672,6 @@ public class QuorumReaderTest {
         testSubscriber.assertNoErrors();
         testSubscriber.assertComplete();
         testSubscriber.assertValueCount(1);
-        validator.validate((StoreResponse) testSubscriber.getEvents().get(0).get(0));
+        validator.validate(testSubscriber.values().get(0));
     }
 }

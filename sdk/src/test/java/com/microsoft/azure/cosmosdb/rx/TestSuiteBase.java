@@ -40,12 +40,14 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import com.microsoft.azure.cosmos.CosmosClientBuilder;
+import com.microsoft.azure.cosmos.CosmosContainerResponse;
 import com.microsoft.azure.cosmos.CosmosItemResponse;
 import com.microsoft.azure.cosmosdb.DataType;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.IncludedPath;
 import com.microsoft.azure.cosmosdb.Index;
 import com.microsoft.azure.cosmosdb.IndexingPolicy;
+import com.microsoft.azure.cosmosdb.ResourceResponse;
 import com.microsoft.azure.cosmosdb.RetryOptions;
 import com.microsoft.azure.cosmosdb.SqlQuerySpec;
 import com.microsoft.azure.cosmosdb.internal.PathParser;
@@ -477,12 +479,19 @@ public class TestSuiteBase {
     }
     public List<CosmosItemSettings> bulkInsertBlocking(CosmosContainer cosmosContainer,
                                              List<CosmosItemSettings> documentDefinitionList) {
+//        return bulkInsert(cosmosContainer, documentDefinitionList, DEFAULT_BULK_INSERT_CONCURRENCY_LEVEL)
+//                .parallel()
+//                .runOn(Schedulers.parallel())
+//                .map(CosmosItemResponse::getCosmosItemSettings)
+//                .sequential()
+//                .collectList()
+//                .block();
+
         return bulkInsert(cosmosContainer, documentDefinitionList, DEFAULT_BULK_INSERT_CONCURRENCY_LEVEL)
-                .parallel()
-                .runOn(Schedulers.parallel())
+                .publishOn(Schedulers.parallel())
                 .map(CosmosItemResponse::getCosmosItemSettings)
-                .sequential()
                 .collectList()
+                .single()
                 .block();
     }
 
@@ -643,8 +652,13 @@ public class TestSuiteBase {
                     .collectList()
                     .block();
 
-            for(CosmosContainerSettings collection: collections) {
-                database.getContainer(collection.getId()).read().block().getContainer().delete().block();
+            if (collections != null) {
+                for(CosmosContainerSettings collection: collections) {
+                    CosmosContainerResponse cosmosContainer = database.getContainer(collection.getId()).read().block();
+                    if (cosmosContainer != null) {
+                        cosmosContainer.getContainer().delete().block();
+                    }
+                }
             }
         }
     }
@@ -739,8 +753,7 @@ public class TestSuiteBase {
         testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
         testSubscriber.assertNoErrors();
         testSubscriber.assertComplete();
-        validator.validate(testSubscriber.getEvents().get(0).stream().map(object -> (FeedResponse<T>) object)
-                .collect(Collectors.toList()));
+        validator.validate(testSubscriber.values());
     }
 
     public <T extends Resource> void validateQueryFailure(Flux<FeedResponse<T>> flowable, FailureValidator validator) {

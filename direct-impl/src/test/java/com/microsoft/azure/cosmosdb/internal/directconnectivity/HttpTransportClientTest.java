@@ -612,7 +612,7 @@ public class HttpTransportClientTest {
         testSubscriber.assertNoErrors();
         testSubscriber.assertComplete();
         testSubscriber.assertValueCount(1);
-        validator.validate((StoreResponse) testSubscriber.getEvents().get(0).get(0));
+        validator.validate(testSubscriber.values().get(0));
     }
 
     public void validateFailure(Mono<StoreResponse> single,

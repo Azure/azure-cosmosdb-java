@@ -148,7 +148,7 @@ public class GatewayServiceConfigurationReaderTest extends TestSuiteBase {
         testSubscriber.assertNoErrors();
         testSubscriber.assertComplete();
         testSubscriber.assertValueCount(1);
-        DatabaseAccount databaseAccount = (DatabaseAccount) testSubscriber.getEvents().get(0).get(0);
+        DatabaseAccount databaseAccount = testSubscriber.values().get(0);
         assertThat(BridgeInternal.getQueryEngineConfiuration(databaseAccount).size() > 0).isTrue();
         assertThat(BridgeInternal.getReplicationPolicy(databaseAccount)).isNotNull();
         assertThat(BridgeInternal.getSystemReplicationPolicy(databaseAccount)).isNotNull();
@@ -162,7 +162,7 @@ public class GatewayServiceConfigurationReaderTest extends TestSuiteBase {
         testSubscriber.assertNoErrors();
         testSubscriber.assertComplete();
         testSubscriber.assertValueCount(1);
-        DatabaseAccount databaseAccount = (DatabaseAccount) testSubscriber.getEvents().get(0).get(0);
+        DatabaseAccount databaseAccount = testSubscriber.values().get(0);
         assertThat(databaseAccount.getId()).isEqualTo(expectedDatabaseAccount.getId());
         assertThat(databaseAccount.getAddressesLink())
                 .isEqualTo(expectedDatabaseAccount.getAddressesLink());
