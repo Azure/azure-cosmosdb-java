@@ -37,8 +37,8 @@ public class Configs {
     private static final Logger logger = LoggerFactory.getLogger(Configs.class);
     private final SslContext sslContext;
 
-    private static final String PROTOCOL = "COSMOS.PROTOCOL";
-    private static final Protocol DEFAULT_PROTOCOL = Protocol.Https;
+    private static final String PROTOCOL = "cosmos.directModeProtocol";
+    private static final Protocol DEFAULT_PROTOCOL = Protocol.Tcp;
 
     private static final String UNAVAILABLE_LOCATIONS_EXPIRATION_TIME_IN_SECONDS = "COSMOS.UNAVAILABLE_LOCATIONS_EXPIRATION_TIME_IN_SECONDS";
 
