@@ -287,7 +287,7 @@ public class OrderbyDocumentQueryTest extends TestSuiteBase {
         Flux<FeedResponse<CosmosItemSettings>> queryObservable = createdCollection.queryItems(query, options);
 
         TestSubscriber<FeedResponse<CosmosItemSettings>> subscriber = new TestSubscriber<>();
-        queryObservable.subscribe(subscriber);
+        queryObservable.take(1).subscribe(subscriber);
 
         subscriber.awaitTerminalEvent();
         subscriber.assertComplete();
@@ -436,6 +436,7 @@ public class OrderbyDocumentQueryTest extends TestSuiteBase {
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() throws Exception {
         client = clientBuilder.build();
+        createdDatabase = getSharedCosmosDatabase(client);
         createdCollection = getSharedMultiPartitionCosmosContainer(client);
         truncateCollection(createdCollection);
 

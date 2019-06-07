@@ -34,8 +34,6 @@ import org.testng.annotations.Test;
 
 import com.microsoft.azure.cosmosdb.Database;
 import com.microsoft.azure.cosmosdb.DatabaseForTest;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
-import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.Permission;
@@ -44,8 +42,6 @@ import com.microsoft.azure.cosmosdb.User;
 import com.microsoft.azure.cosmosdb.rx.internal.TestSuiteBase;
 
 import rx.Observable;
-
-import javax.net.ssl.SSLException;
 
 //TODO: change to use external TestSuiteBase 
 public class ReadFeedPermissionsTest extends TestSuiteBase {
@@ -111,8 +107,6 @@ public class ReadFeedPermissionsTest extends TestSuiteBase {
     }
 
     public Permission createPermissions(AsyncDocumentClient client, int index) {
-        DocumentCollection collection = new DocumentCollection();
-        collection.setId(UUID.randomUUID().toString());
         Permission permission = new Permission();
         permission.setId(UUID.randomUUID().toString());
         permission.setPermissionMode(PermissionMode.Read);

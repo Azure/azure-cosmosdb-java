@@ -279,7 +279,7 @@ public class SinglePartitionDocumentQueryTest extends TestSuiteBase {
         Flux<FeedResponse<CosmosItemSettings>> queryObservable = createdCollection.queryItems(query, options);
         
         TestSubscriber<FeedResponse<CosmosItemSettings>> subscriber = new TestSubscriber<>();
-        queryObservable.subscribe(subscriber);
+        queryObservable.take(1).subscribe(subscriber);
         
         subscriber.awaitTerminalEvent();
         subscriber.assertComplete();

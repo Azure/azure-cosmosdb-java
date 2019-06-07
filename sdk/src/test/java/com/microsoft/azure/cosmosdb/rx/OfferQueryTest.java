@@ -41,6 +41,7 @@ import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.Offer;
+import com.microsoft.azure.cosmosdb.PartitionKeyDefinition;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient.Builder;
 import com.microsoft.azure.cosmosdb.rx.internal.TestSuiteBase;
 
@@ -149,6 +150,13 @@ public class OfferQueryTest extends TestSuiteBase {
         for(int i = 0; i < 3; i++) {
             DocumentCollection collection = new DocumentCollection();
             collection.setId(UUID.randomUUID().toString());
+            
+            PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition();
+            ArrayList<String> paths = new ArrayList<String>();
+            paths.add("/mypk");
+            partitionKeyDef.setPaths(paths);
+            collection.setPartitionKey(partitionKeyDef);
+            
             createdCollections.add(createCollection(client, databaseId, collection));
         }        
     }

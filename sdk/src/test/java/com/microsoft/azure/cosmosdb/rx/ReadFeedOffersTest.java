@@ -39,6 +39,7 @@ import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.Offer;
+import com.microsoft.azure.cosmosdb.PartitionKeyDefinition;
 import com.microsoft.azure.cosmosdb.rx.internal.TestSuiteBase;
 
 import rx.Observable;
@@ -110,6 +111,13 @@ public class ReadFeedOffersTest extends TestSuiteBase {
     public DocumentCollection createCollections(AsyncDocumentClient client) {
         DocumentCollection collection = new DocumentCollection();
         collection.setId(UUID.randomUUID().toString());
+        
+        PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition();
+        ArrayList<String> paths = new ArrayList<String>();
+        paths.add("/mypk");
+        partitionKeyDef.setPaths(paths);
+        collection.setPartitionKey(partitionKeyDef);
+
         return client.createCollection(getDatabaseLink(), collection, null).toBlocking().single().getResource();
     }
 

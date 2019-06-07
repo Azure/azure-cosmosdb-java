@@ -149,7 +149,7 @@ public class TestSuiteBase {
                                           allEqualOrLowerConsistencies(accountConsistency)));
         preferredLocations = immutableListOrNull(parsePreferredLocation(TestConfigurations.PREFERRED_LOCATIONS));
         protocols = ObjectUtils.defaultIfNull(immutableListOrNull(parseProtocols(TestConfigurations.PROTOCOLS)),
-                                              ImmutableList.of(Protocol.Https, Protocol.Tcp));
+                                              ImmutableList.of(/*Protocol.Https, Protocol.Tcp*/));
     }
 
     protected TestSuiteBase() {
@@ -659,7 +659,7 @@ public class TestSuiteBase {
                     .block();
 
             for(CosmosContainerSettings collection: collections) {
-                database.getContainer(collection.getId()).read().block().getContainer().delete().block();
+                database.getContainer(collection.getId()).delete().block();
             }
         }
     }

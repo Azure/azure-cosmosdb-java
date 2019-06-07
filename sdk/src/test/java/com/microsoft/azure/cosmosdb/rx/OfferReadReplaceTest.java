@@ -38,8 +38,6 @@ import com.microsoft.azure.cosmosdb.rx.internal.TestSuiteBase;
 
 import rx.Observable;
 
-import javax.net.ssl.SSLException;
-
 //TODO: change to use external TestSuiteBase 
 public class OfferReadReplaceTest extends TestSuiteBase {
 
