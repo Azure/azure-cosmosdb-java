@@ -29,13 +29,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.testng.annotations.Test;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 
 public class DocumentTests {
 
     @Test(groups = { "unit" })
     public void timestamp()  {
         Document d = new Document();
-        OffsetDateTime time = OffsetDateTime.now();
+        OffsetDateTime time = OffsetDateTime.of(2019, 8, 6, 12, 53, 29, 0, ZoneOffset.UTC);
         d.setTimestamp(time);
         assertThat(d.getTimestamp()).isEqualTo(time);
     }
