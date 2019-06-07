@@ -24,6 +24,7 @@ package com.microsoft.azure.cosmosdb.rx;
 
 import com.microsoft.azure.cosmos.CosmosClient;
 import com.microsoft.azure.cosmos.CosmosContainer;
+import com.microsoft.azure.cosmos.CosmosContainerRequestOptions;
 import com.microsoft.azure.cosmos.CosmosContainerResponse;
 import com.microsoft.azure.cosmos.CosmosContainerSettings;
 import com.microsoft.azure.cosmos.CosmosDatabase;
@@ -67,7 +68,7 @@ public class MultiMasterConflictResolutionTest extends TestSuiteBase {
 
         // default last writer wins, path _ts
         CosmosContainerSettings collectionSettings = new CosmosContainerSettings(UUID.randomUUID().toString(), partitionKeyDef);
-        CosmosContainer collection = database.createContainer(collectionSettings, null).block().getContainer();
+        CosmosContainer collection = database.createContainer(collectionSettings, new CosmosContainerRequestOptions()).block().getContainer();
         collectionSettings = collection.read().block().getCosmosContainerSettings();
 
         assertThat(collectionSettings.getConflictResolutionPolicy().getConflictResolutionMode()).isEqualTo(ConflictResolutionMode.LastWriterWins);
@@ -161,7 +162,7 @@ public class MultiMasterConflictResolutionTest extends TestSuiteBase {
 
         Mono<CosmosContainerResponse> createObservable = database.createContainer(
                 collection,
-                null);
+                new CosmosContainerRequestOptions());
 
         FailureValidator validator = new FailureValidator.Builder()
                 .instanceOf(DocumentClientException.class)
@@ -183,7 +184,7 @@ public class MultiMasterConflictResolutionTest extends TestSuiteBase {
 
         Mono<CosmosContainerResponse> createObservable = database.createContainer(
                 collection,
-                null);
+                new CosmosContainerRequestOptions());
 
         FailureValidator validator = new FailureValidator.Builder()
                 .instanceOf(DocumentClientException.class)

@@ -66,6 +66,7 @@ public class DocumentClientResourceLeakTest extends TestSuiteBase {
 
 
         for (int i = 0; i < MAX_NUMBER; i++) {
+            client = clientBuilder.build();
             logger.info("client {}", i);
             try {
                 logger.info("creating doc...");
