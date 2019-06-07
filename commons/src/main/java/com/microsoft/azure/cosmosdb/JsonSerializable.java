@@ -58,7 +58,8 @@ public class JsonSerializable {
      * @param jsonString the json string that represents the JsonSerializable.
      * @param objectMapper the custom object mapper
      */
-    protected JsonSerializable(String jsonString, ObjectMapper objectMapper) {
+    JsonSerializable(String jsonString, ObjectMapper objectMapper) {
+        // TODO: Made package private due to #153. #171 adding custom serialization options back.
         this.propertyBag = fromJson(jsonString);
         this.om = objectMapper;
     }
@@ -81,8 +82,9 @@ public class JsonSerializable {
         this.propertyBag = objectNode;
     }
 
-    protected ObjectMapper getMapper() {
-    if (this.om != null) { return this.om; }
+    ObjectMapper getMapper() {
+        // TODO: Made package private due to #153. #171 adding custom serialization options back.
+        if (this.om != null) { return this.om; }
         return OBJECT_MAPPER;
     }
         
