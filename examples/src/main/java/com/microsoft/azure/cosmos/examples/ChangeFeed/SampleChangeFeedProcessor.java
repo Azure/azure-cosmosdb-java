@@ -36,6 +36,7 @@ import com.microsoft.azure.cosmosdb.ConsistencyLevel;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.SerializationFormattingPolicy;
 import org.apache.commons.lang3.RandomStringUtils;
+import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 
@@ -45,8 +46,12 @@ import java.time.Duration;
  */
 public class SampleChangeFeedProcessor {
 
+    public static int WAIT_FOR_WORK = 60;
     public static final String DATABASE_NAME = "db_" + RandomStringUtils.randomAlphabetic(7);
     public static final String COLLECTION_NAME = "coll_" + RandomStringUtils.randomAlphabetic(7);
+
+    private static ChangeFeedProcessor changeFeedProcessorInstance;
+    private static boolean isWorkCompleted = false;
 
     public static void main (String[]args) {
         System.out.println("BEGIN Sample");
@@ -65,22 +70,34 @@ public class SampleChangeFeedProcessor {
             System.out.println("-->Create container for lease: " + COLLECTION_NAME + "-leases");
             CosmosContainer leaseContainer = createNewLeaseCollection(client, DATABASE_NAME, COLLECTION_NAME + "-leases");
 
-            ChangeFeedProcessor changeFeedProcessor1 = getChangeFeedProcessor("SampleHost_1", feedContainer, leaseContainer);
+            Mono<ChangeFeedProcessor> changeFeedProcessor1 = getChangeFeedProcessor("SampleHost_1", feedContainer, leaseContainer);
 
-            changeFeedProcessor1.start().block();
+            changeFeedProcessor1.subscribe(changeFeedProcessor -> {
+                    changeFeedProcessorInstance = changeFeedProcessor;
+                    changeFeedProcessor.start().subscribe(aVoid -> {
+                        createNewDocuments(feedContainer, 10, Duration.ofSeconds(3));
+                        isWorkCompleted = true;
+                    });
+                });
 
-            createNewDocuments(feedContainer, 10, Duration.ofSeconds(3));
+            long remainingWork = WAIT_FOR_WORK;
+            while (!isWorkCompleted && remainingWork > 0) {
+                Thread.sleep(100);
+                remainingWork -= 100;
+            }
 
-            Thread.sleep(15000);
-
-            changeFeedProcessor1.stop().block();
+            if (isWorkCompleted) {
+                if (changeFeedProcessorInstance != null) {
+                    changeFeedProcessorInstance.stop().wait(10000);
+                }
+            } else {
+                throw new RuntimeException("The change feed processor initialization and automatic create document feeding process did not complete in the expected time");
+            }
 
             System.out.println("-->Delete sample's database: " + DATABASE_NAME);
             deleteDatabase(cosmosDatabase);
 
             Thread.sleep(15000);
-
-            client.close();
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -90,13 +107,13 @@ public class SampleChangeFeedProcessor {
         System.exit(0);
     }
 
-    public static ChangeFeedProcessor getChangeFeedProcessor(String hostName, CosmosContainer feedContainer, CosmosContainer leaseContainer) {
+    public static Mono<ChangeFeedProcessor> getChangeFeedProcessor(String hostName, CosmosContainer feedContainer, CosmosContainer leaseContainer) {
         return ChangeFeedProcessor.Builder()
             .withHostName(hostName)
             .withFeedContainerClient(feedContainer)
             .withLeaseContainerClient(leaseContainer)
             .withChangeFeedObserver(SampleObserverImpl.class)
-            .build().block();
+            .build();
     }
 
     public static CosmosClient getCosmosClient() {
@@ -207,9 +224,9 @@ public class SampleChangeFeedProcessor {
             CosmosItem document = new CosmosItem();
             document.setId(String.format("0%d-%s", i, suffix));
 
-            document = containerClient.createItem(document).block().getItem();
-
-            System.out.println("---->DOCUMENT WRITE: " + document.toJson(SerializationFormattingPolicy.Indented));
+            containerClient.createItem(document).subscribe(doc -> {
+                System.out.println("---->DOCUMENT WRITE: " + doc.getItem().toJson(SerializationFormattingPolicy.Indented));
+            });
 
             long remainingWork = delay.toMillis();
             try {
@@ -223,4 +240,19 @@ public class SampleChangeFeedProcessor {
             }
         }
     }
+
+    public static boolean ensureWorkIsDone(Duration delay) {
+        long remainingWork = delay.toMillis();
+        try {
+            while (!isWorkCompleted && remainingWork > 0) {
+                Thread.sleep(100);
+                remainingWork -= 100;
+            }
+        } catch (InterruptedException iex) {
+            return false;
+        }
+
+        return remainingWork > 0;
+    }
+
 }
