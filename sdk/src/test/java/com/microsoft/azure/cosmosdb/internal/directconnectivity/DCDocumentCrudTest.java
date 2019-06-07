@@ -38,7 +38,6 @@ import com.microsoft.azure.cosmosdb.StoredProcedureResponse;
 import com.microsoft.azure.cosmosdb.internal.OperationType;
 import com.microsoft.azure.cosmosdb.internal.ResourceType;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.Protocol;
-import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import com.microsoft.azure.cosmosdb.rx.DocumentServiceRequestValidator;
 import com.microsoft.azure.cosmosdb.rx.FeedResponseListValidator;
 import com.microsoft.azure.cosmosdb.rx.ResourceResponseValidator;

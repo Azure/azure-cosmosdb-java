@@ -85,13 +85,13 @@ public class CosmosPartitionKeyTests extends TestSuiteBase {
         this.clientBuilder = clientBuilder;
     }
 
-    @BeforeClass(groups = { "cosmosv3" }, timeOut = SETUP_TIMEOUT)
+    @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() throws URISyntaxException, IOException {
         client = clientBuilder.build();
         createdDatabase = getSharedCosmosDatabase(client);
     }
 
-    @AfterClass(groups = { "cosmosv3" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)
+    @AfterClass(groups = { "simple" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)
     public void afterClass() {
         safeDeleteDatabase(createdDatabase);
         safeClose(client);
@@ -177,7 +177,7 @@ public class CosmosPartitionKeyTests extends TestSuiteBase {
         assertThat(createdItemAsString).contains("\"id\":\"" + NON_PARTITIONED_CONTAINER_DOCUEMNT_ID + "\"");
     }
 
-    @Test(groups = { "cosmosv3" }, timeOut = TIMEOUT)
+    @Test(groups = { "simple" }, timeOut = TIMEOUT)
     public void testNonPartitionedCollectionOperations() throws Exception {
         createContainerWithoutPk();
         CosmosContainer createdContainer = createdDatabase.getContainer(NON_PARTITIONED_CONTAINER_ID);
@@ -298,7 +298,7 @@ public class CosmosPartitionKeyTests extends TestSuiteBase {
         validateQuerySuccess(queryFlux, queryValidator);
     }
 
-    @Test(groups = { "cosmosv3" }, timeOut = TIMEOUT*100)
+    @Test(groups = { "simple" }, timeOut = TIMEOUT*100)
     public void testMultiPartitionCollectionReadDocumentWithNoPk() throws InterruptedException {
         String partitionedCollectionId = "PartitionedCollection" + UUID.randomUUID().toString();
         String IdOfDocumentWithNoPk = UUID.randomUUID().toString();

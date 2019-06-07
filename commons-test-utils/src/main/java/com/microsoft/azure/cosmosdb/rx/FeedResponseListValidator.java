@@ -204,11 +204,11 @@ public interface FeedResponseListValidator<T extends Resource> {
         }
 
         public Builder<T> withAggregateValue(Object value) {
-            validators.add(new FeedResponseListValidator<Document>() {
+            validators.add(new FeedResponseListValidator<CosmosItemSettings>() {
                 @Override
-                public void validate(List<FeedResponse<Document>> feedList) {
-                    List<Document> list = feedList.get(0).getResults();
-                    Document result = list.size() > 0 ? list.get(0) : null;
+                public void validate(List<FeedResponse<CosmosItemSettings>> feedList) {
+                    List<CosmosItemSettings> list = feedList.get(0).getResults();
+                    CosmosItemSettings result = list.size() > 0 ? list.get(0) : null;
 
                     if (result != null) {
                         if (value instanceof Double) {
