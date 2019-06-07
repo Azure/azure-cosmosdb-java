@@ -25,16 +25,17 @@ package com.microsoft.azure.cosmosdb;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Date;
 
 import org.testng.annotations.Test;
+
+import java.time.OffsetDateTime;
 
 public class DocumentTests {
 
     @Test(groups = { "unit" })
     public void timestamp()  {
         Document d = new Document();
-        Date time = new Date(86400 * 1000);
+        OffsetDateTime time = OffsetDateTime.now();
         d.setTimestamp(time);
         assertThat(d.getTimestamp()).isEqualTo(time);
     }
