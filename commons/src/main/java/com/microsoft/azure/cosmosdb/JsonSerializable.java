@@ -24,15 +24,9 @@
 package com.microsoft.azure.cosmosdb;
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -115,7 +109,7 @@ public class JsonSerializable {
      *
      * @return the HashMap.
      */
-    public HashMap<String, Object> getHashMap() {
+    public Map<String, Object> getMap() {
         return getMapper().convertValue(this.propertyBag, HashMap.class);
     }
 
