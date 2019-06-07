@@ -34,8 +34,6 @@ import com.microsoft.azure.cosmosdb.Trigger;
 import com.microsoft.azure.cosmosdb.TriggerOperation;
 import com.microsoft.azure.cosmosdb.TriggerType;
 import com.microsoft.azure.cosmosdb.UserDefinedFunction;
-import com.microsoft.azure.cosmosdb.rx.ResourceResponseValidator;
-import com.microsoft.azure.cosmosdb.rx.ResourceResponseValidator.Builder;
 
 import java.util.ArrayList;
 import java.util.Collection;

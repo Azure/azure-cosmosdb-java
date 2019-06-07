@@ -982,6 +982,7 @@ public class TestSuiteBase {
 
     static List<ConsistencyLevel> allEqualOrLowerConsistencies(ConsistencyLevel accountConsistency) {
         List<ConsistencyLevel> testConsistencies = new ArrayList<>();
+        /*
         switch (accountConsistency) {
         
             case Strong:
@@ -998,6 +999,7 @@ public class TestSuiteBase {
             default:
                 throw new IllegalStateException("Invalid configured test consistency " + accountConsistency);
         }
+        */
         return testConsistencies;
     }
 

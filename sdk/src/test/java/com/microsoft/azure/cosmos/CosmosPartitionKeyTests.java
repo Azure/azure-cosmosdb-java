@@ -57,6 +57,7 @@ import com.microsoft.azure.cosmosdb.internal.ResourceType;
 import com.microsoft.azure.cosmosdb.internal.Utils;
 import com.microsoft.azure.cosmosdb.rx.FeedResponseListValidator;
 import com.microsoft.azure.cosmosdb.rx.TestConfigurations;
+import com.microsoft.azure.cosmosdb.rx.TestSuiteBase;
 import com.microsoft.azure.cosmosdb.rx.internal.Configs;
 import com.microsoft.azure.cosmosdb.rx.internal.HttpClientFactory;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
@@ -70,13 +71,13 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import rx.Observable;
 
-public class CosmosPartitionKeyTests extends CosmosTestSuiteBase {
+public class CosmosPartitionKeyTests extends TestSuiteBase {
 
-    private final static String PRE_EXISTING_DATABASE_ID = getDatabaseId(CosmosItemCrudTest.class) + "db1";
     private final static String NON_PARTITIONED_CONTAINER_ID = "NonPartitionContainer" + UUID.randomUUID().toString();
     private final static String NON_PARTITIONED_CONTAINER_DOCUEMNT_ID = "NonPartitionContainer_Document" + UUID.randomUUID().toString();
 
     private CosmosClient client;
+    private CosmosDatabase createdDatabase;
     private CosmosClient.Builder clientBuilder;
 
     @Factory(dataProvider = "clientBuilders")
@@ -87,12 +88,12 @@ public class CosmosPartitionKeyTests extends CosmosTestSuiteBase {
     @BeforeClass(groups = { "cosmosv3" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() throws URISyntaxException, IOException {
         client = clientBuilder.build();
-        createDatabase(client, PRE_EXISTING_DATABASE_ID);
+        createdDatabase = getSharedCosmosDatabase(client);
     }
 
     @AfterClass(groups = { "cosmosv3" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)
     public void afterClass() {
-        safeDeleteDatabase(client, PRE_EXISTING_DATABASE_ID);
+        safeDeleteDatabase(createdDatabase);
         safeClose(client);
     }
 
@@ -107,8 +108,8 @@ public class CosmosPartitionKeyTests extends CosmosTestSuiteBase {
         CompositeHttpClient<ByteBuf, ByteBuf> httpClient = factory.toHttpClientBuilder().build();
         
         // Create a non partitioned collection using the rest API and older version
-        String resourceId = Paths.DATABASES_PATH_SEGMENT + "/" + PRE_EXISTING_DATABASE_ID;
-        String path = Paths.DATABASES_PATH_SEGMENT + "/" + PRE_EXISTING_DATABASE_ID + "/" + Paths.COLLECTIONS_PATH_SEGMENT + "/";
+        String resourceId = Paths.DATABASES_PATH_SEGMENT + "/" + createdDatabase.getId();
+        String path = Paths.DATABASES_PATH_SEGMENT + "/" + createdDatabase.getId() + "/" + Paths.COLLECTIONS_PATH_SEGMENT + "/";
         DocumentCollection collection = new DocumentCollection();
         collection.setId(NON_PARTITIONED_CONTAINER_ID);
         
@@ -123,7 +124,7 @@ public class CosmosPartitionKeyTests extends CosmosTestSuiteBase {
 
         String[] baseUrlSplit = TestConfigurations.HOST.split(":");
         String resourceUri = baseUrlSplit[0] + ":" + baseUrlSplit[1] + ":" + baseUrlSplit[2].split("/")[
-            0] + "//" + Paths.DATABASES_PATH_SEGMENT + "/" + PRE_EXISTING_DATABASE_ID + "/" + Paths.COLLECTIONS_PATH_SEGMENT + "/";
+            0] + "//" + Paths.DATABASES_PATH_SEGMENT + "/" + createdDatabase.getId() + "/" + Paths.COLLECTIONS_PATH_SEGMENT + "/";
         URI uri = new URI(resourceUri);
 
         HttpClientRequest<ByteBuf> httpRequest = HttpClientRequest.create(HttpMethod.POST, uri.toString());
@@ -144,8 +145,8 @@ public class CosmosPartitionKeyTests extends CosmosTestSuiteBase {
         assertThat(createdContainerAsString).contains("\"id\":\"" + NON_PARTITIONED_CONTAINER_ID + "\"");
         
         // Create a document in the non partitioned collection using the rest API and older version
-        resourceId = Paths.DATABASES_PATH_SEGMENT + "/" + PRE_EXISTING_DATABASE_ID + "/" + Paths.COLLECTIONS_PATH_SEGMENT + "/" + collection.getId();
-        path = Paths.DATABASES_PATH_SEGMENT + "/" + PRE_EXISTING_DATABASE_ID + "/" + Paths.COLLECTIONS_PATH_SEGMENT 
+        resourceId = Paths.DATABASES_PATH_SEGMENT + "/" + createdDatabase.getId() + "/" + Paths.COLLECTIONS_PATH_SEGMENT + "/" + collection.getId();
+        path = Paths.DATABASES_PATH_SEGMENT + "/" + createdDatabase.getId() + "/" + Paths.COLLECTIONS_PATH_SEGMENT 
                 + "/" + collection.getId() + "/" + Paths.DOCUMENTS_PATH_SEGMENT + "/";
         Document document = new Document();
         document.setId(NON_PARTITIONED_CONTAINER_DOCUEMNT_ID);
@@ -156,7 +157,7 @@ public class CosmosPartitionKeyTests extends CosmosTestSuiteBase {
                 document, headers, new RequestOptions());
 
         resourceUri = baseUrlSplit[0] + ":" + baseUrlSplit[1] + ":" + baseUrlSplit[2].split("/")[0] + "//" + Paths.DATABASES_PATH_SEGMENT + "/"
-                + PRE_EXISTING_DATABASE_ID + "/" + Paths.COLLECTIONS_PATH_SEGMENT + "/" + collection.getId() + "/" + Paths.DOCUMENTS_PATH_SEGMENT + "/";
+                + createdDatabase.getId() + "/" + Paths.COLLECTIONS_PATH_SEGMENT + "/" + collection.getId() + "/" + Paths.DOCUMENTS_PATH_SEGMENT + "/";
         uri = new URI(resourceUri);
 
         httpRequest = HttpClientRequest.create(HttpMethod.POST, uri.toString());
@@ -179,7 +180,7 @@ public class CosmosPartitionKeyTests extends CosmosTestSuiteBase {
     @Test(groups = { "cosmosv3" }, timeOut = TIMEOUT)
     public void testNonPartitionedCollectionOperations() throws Exception {
         createContainerWithoutPk();
-        CosmosContainer createdContainer = client.getDatabase(PRE_EXISTING_DATABASE_ID).getContainer(NON_PARTITIONED_CONTAINER_ID);
+        CosmosContainer createdContainer = createdDatabase.getContainer(NON_PARTITIONED_CONTAINER_ID);
 
         Mono<CosmosItemResponse> readMono = createdContainer.getItem(NON_PARTITIONED_CONTAINER_DOCUEMNT_ID, PartitionKey.None).read();
         CosmosResponseValidator<CosmosItemResponse> validator = new CosmosResponseValidator.Builder<CosmosItemResponse>()
@@ -301,7 +302,6 @@ public class CosmosPartitionKeyTests extends CosmosTestSuiteBase {
     public void testMultiPartitionCollectionReadDocumentWithNoPk() throws InterruptedException {
         String partitionedCollectionId = "PartitionedCollection" + UUID.randomUUID().toString();
         String IdOfDocumentWithNoPk = UUID.randomUUID().toString();
-        CosmosDatabase createdDatabase = this.client.getDatabase(PRE_EXISTING_DATABASE_ID).read().block().getDatabase();
         CosmosContainerSettings containerSettings = new CosmosContainerSettings(partitionedCollectionId, "/mypk");
         CosmosContainer createdContainer = createdDatabase.createContainer(containerSettings).block().getContainer();
         CosmosItem createdItem = createdContainer.createItem(new CosmosItemSettings("{'id':'" + IdOfDocumentWithNoPk + "'}")).block().getCosmosItem();

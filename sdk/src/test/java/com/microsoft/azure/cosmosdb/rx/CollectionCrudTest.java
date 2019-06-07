@@ -179,7 +179,7 @@ public class CollectionCrudTest extends TestSuiteBase {
         collection.setIndexingPolicy(indexingPolicy);
         
         Mono<CosmosContainerResponse> createObservable = database
-                .createContainer(collection, null);
+                .createContainer(collection, new CosmosContainerRequestOptions());
 
         CosmosResponseValidator<CosmosContainerResponse> validator = new CosmosResponseValidator.Builder<CosmosContainerResponse>()
                 .withId(collection.getId())
