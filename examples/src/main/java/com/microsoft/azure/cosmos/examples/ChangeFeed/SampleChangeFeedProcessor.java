@@ -24,13 +24,11 @@ package com.microsoft.azure.cosmos.examples.ChangeFeed;
 
 import com.microsoft.azure.cosmos.ChangeFeedProcessor;
 import com.microsoft.azure.cosmos.CosmosClient;
-import com.microsoft.azure.cosmos.CosmosConfiguration;
 import com.microsoft.azure.cosmos.CosmosContainer;
 import com.microsoft.azure.cosmos.CosmosContainerRequestOptions;
 import com.microsoft.azure.cosmos.CosmosContainerResponse;
 import com.microsoft.azure.cosmos.CosmosContainerSettings;
 import com.microsoft.azure.cosmos.CosmosDatabase;
-import com.microsoft.azure.cosmos.CosmosItem;
 import com.microsoft.azure.cosmos.CosmosItemSettings;
 import com.microsoft.azure.cosmosdb.ConnectionPolicy;
 import com.microsoft.azure.cosmosdb.ConsistencyLevel;
@@ -118,13 +116,13 @@ public class SampleChangeFeedProcessor {
     }
 
     public static CosmosClient getCosmosClient() {
-        return CosmosClient.create(new CosmosConfiguration.Builder()
-            .withServiceEndpoint(SampleConfigurations.HOST)
-            .withKeyOrResourceToken(SampleConfigurations.MASTER_KEY)
-            .withConnectionPolicy(ConnectionPolicy.GetDefault())
-            .withConsistencyLevel(ConsistencyLevel.Eventual)
-            .build()
-        );
+
+        return CosmosClient.builder()
+                .endpoint(SampleConfigurations.HOST)
+                .key(SampleConfigurations.MASTER_KEY)
+                .connectionPolicy(ConnectionPolicy.GetDefault())
+                .consistencyLevel(ConsistencyLevel.Eventual)
+                .build();
     }
 
     public static CosmosDatabase createNewDatabase(CosmosClient client, String databaseName) {
@@ -161,7 +159,7 @@ public class SampleChangeFeedProcessor {
         CosmosContainerSettings containerSettings = new CosmosContainerSettings(collectionName, "/id");
 
         CosmosContainerRequestOptions requestOptions = new CosmosContainerRequestOptions();
-        requestOptions.setOfferThroughput(10000);
+        requestOptions.offerThroughput(10000);
 
         containerResponse = databaseLink.createContainer(containerSettings, requestOptions).block();
 
@@ -203,7 +201,7 @@ public class SampleChangeFeedProcessor {
 
         CosmosContainerSettings containerSettings = new CosmosContainerSettings(leaseCollectionName, "/id");
         CosmosContainerRequestOptions requestOptions = new CosmosContainerRequestOptions();
-        requestOptions.setOfferThroughput(400);
+        requestOptions.offerThroughput(400);
 
         leaseContainerResponse = databaseLink.createContainer(containerSettings, requestOptions).block();
 

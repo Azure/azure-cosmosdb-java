@@ -145,7 +145,7 @@ public class DocumentServiceLeaseUpdaterImpl implements ServiceItemLeaseUpdater 
         ifMatchCondition.setCondition(lease.getConcurrencyToken());
 
         CosmosItemRequestOptions createIfMatchOptions = new CosmosItemRequestOptions();
-        createIfMatchOptions.setAccessCondition(ifMatchCondition);
+        createIfMatchOptions.accessCondition(ifMatchCondition);
 
         return createIfMatchOptions;
     }

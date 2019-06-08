@@ -153,7 +153,7 @@ public class DocumentServiceLeaseStore implements LeaseStore {
         AccessCondition accessCondition = new AccessCondition();
         accessCondition.setType(AccessConditionType.IfMatch);
         accessCondition.setCondition(this.lockETag);
-        requestOptions.setAccessCondition(accessCondition);
+        requestOptions.accessCondition(accessCondition);
         DocumentServiceLeaseStore self = this;
 
         CosmosItem docItem = this.client.getContainerClient().getItem(lockId, "/id");
