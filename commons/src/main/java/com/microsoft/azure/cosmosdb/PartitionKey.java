@@ -37,7 +37,7 @@ public class PartitionKey {
     PartitionKey(PartitionKeyInternal partitionKeyInternal) {
         this.internalPartitionKey = partitionKeyInternal;
     }
-    
+
     /**
      * Constructor. Create a new instance of the PartitionKey object.
      *
