@@ -118,18 +118,13 @@ public class SampleChangeFeedProcessor {
     }
 
     public static CosmosClient getCosmosClient() {
-        try {
-            return CosmosClient.create(new CosmosConfiguration.Builder()
-                .withServiceEndpoint(SampleConfigurations.HOST)
-                .withKeyOrResourceToken(SampleConfigurations.MASTER_KEY)
-                .withConnectionPolicy(ConnectionPolicy.GetDefault())
-                .withConsistencyLevel(ConsistencyLevel.Eventual)
-                .build()
-            );
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
+        return CosmosClient.create(new CosmosConfiguration.Builder()
+            .withServiceEndpoint(SampleConfigurations.HOST)
+            .withKeyOrResourceToken(SampleConfigurations.MASTER_KEY)
+            .withConnectionPolicy(ConnectionPolicy.GetDefault())
+            .withConsistencyLevel(ConsistencyLevel.Eventual)
+            .build()
+        );
     }
 
     public static CosmosDatabase createNewDatabase(CosmosClient client, String databaseName) {
