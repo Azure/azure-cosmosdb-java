@@ -603,10 +603,9 @@ public class TestSuiteBase {
     }
 
     public static void deleteUserIfExists(AsyncDocumentClient client, String databaseId, String userId) {
-        List<User> res = client
-                .queryUsers("dbs/" + databaseId, String.format("SELECT * FROM root r where r.id = '%s'", userId), null)
-                .single().block().getResults();
-        if (!res.isEmpty()) {
+        FeedResponse<User> block = client.queryUsers("dbs/" + databaseId, String.format("SELECT * FROM root r where r.id = '%s'", userId), null)
+                .blockFirst();
+        if (block != null && !block.getResults().isEmpty()) {
             deleteUser(client, Utils.getUserNameLink(databaseId, userId));
         }
     }
