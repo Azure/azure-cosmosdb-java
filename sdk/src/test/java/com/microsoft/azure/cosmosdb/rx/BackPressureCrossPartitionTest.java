@@ -22,9 +22,10 @@
  */
 package com.microsoft.azure.cosmosdb.rx;
 
+import com.microsoft.azure.cosmos.ClientUnderTestBuilder;
 import com.microsoft.azure.cosmos.CosmosBridgeInternal;
 import com.microsoft.azure.cosmos.CosmosClient;
-import com.microsoft.azure.cosmos.CosmosClient.Builder;
+import com.microsoft.azure.cosmos.CosmosClientBuilder;
 import com.microsoft.azure.cosmos.CosmosContainer;
 import com.microsoft.azure.cosmos.CosmosContainerRequestOptions;
 import com.microsoft.azure.cosmos.CosmosContainerSettings;
@@ -112,7 +113,7 @@ public class BackPressureCrossPartitionTest extends TestSuiteBase {
     }
 
     @Factory(dataProvider = "simpleClientBuildersWithDirectHttps")
-    public BackPressureCrossPartitionTest(Builder clientBuilder) {
+    public BackPressureCrossPartitionTest(CosmosClientBuilder clientBuilder) {
         this.clientBuilder = clientBuilder;
     }
 

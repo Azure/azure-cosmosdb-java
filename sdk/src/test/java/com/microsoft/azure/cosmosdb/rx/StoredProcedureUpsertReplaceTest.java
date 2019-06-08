@@ -26,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.UUID;
 
+import com.microsoft.azure.cosmos.CosmosClientBuilder;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.Protocol;
 
 import reactor.core.publisher.Mono;
@@ -53,7 +54,7 @@ public class StoredProcedureUpsertReplaceTest extends TestSuiteBase {
     private CosmosClient client;
 
     @Factory(dataProvider = "clientBuildersWithDirect")
-    public StoredProcedureUpsertReplaceTest(CosmosClient.Builder clientBuilder) {
+    public StoredProcedureUpsertReplaceTest(CosmosClientBuilder clientBuilder) {
         this.clientBuilder = clientBuilder;
     }
 

@@ -23,6 +23,7 @@
 package com.microsoft.azure.cosmos;
 
 import com.microsoft.azure.cosmosdb.BridgeInternal;
+import com.microsoft.azure.cosmosdb.ChangeFeedOptions;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.RequestOptions;
@@ -32,6 +33,7 @@ import com.microsoft.azure.cosmosdb.Trigger;
 import com.microsoft.azure.cosmosdb.UserDefinedFunction;
 import com.microsoft.azure.cosmosdb.internal.Constants;
 import com.microsoft.azure.cosmosdb.internal.Paths;
+import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import com.microsoft.azure.cosmosdb.internal.routing.PartitionKeyInternal;
 
 import hu.akarnokd.rxjava.interop.RxJavaInterop;
@@ -48,11 +50,47 @@ public class CosmosContainer extends CosmosResource {
         this.database = database;
     }
 
+    AsyncDocumentClient getContextClient() {
+        if(this.database == null || this.database.getClient() == null) {
+            return null;
+        }
+
+        return this.database.getClient().getContextClient();
+    }
+
+    /**
+     * Gets the context client.
+     *
+     * @param cosmosContainer the container client.
+     * @return the context client.
+     */
+    public static AsyncDocumentClient getContextClient(CosmosContainer cosmosContainer) {
+        if(cosmosContainer == null) {
+            return null;
+        }
+
+        return cosmosContainer.getContextClient();
+    }
+
+    /**
+     * Gets the self link to the container.
+     *
+     * @param cosmosContainer the container client.
+     * @return the self link.
+     */
+    public static String getSelfLink(CosmosContainer cosmosContainer) {
+        if(cosmosContainer == null) {
+            return null;
+        }
+
+        return cosmosContainer.getLink();
+    }
+
     /**
      * Reads the document container
      *
      * After subscription the operation will be performed.
-     * The {@link Mono} upon successful completion will contain a single cosmos container response with the read 
+     * The {@link Mono} upon successful completion will contain a single cosmos container response with the read
      * container.
      * In case of failure the {@link Mono} will error.
      *
@@ -201,7 +239,7 @@ public class CosmosContainer extends CosmosResource {
     /**
      * Upserts an item.
      *
-     * After subscription the operation will be performed. 
+     * After subscription the operation will be performed.
      * The {@link Mono} upon successful completion will contain a single resource response with the upserted item.
      * In case of failure the {@link Mono} will error.
      *
@@ -215,7 +253,7 @@ public class CosmosContainer extends CosmosResource {
     /**
      * Upserts an item.
      *
-     * After subscription the operation will be performed. 
+     * After subscription the operation will be performed.
      * The {@link Mono} upon successful completion will contain a single resource response with the upserted item.
      * In case of failure the {@link Mono} will error.
      *
@@ -247,7 +285,7 @@ public class CosmosContainer extends CosmosResource {
         return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(this.getDatabase()
                                                                             .getDocClientWrapper()
                                                                             .upsertDocument(this.getLink(),
-                                                                                            CosmosItemSettings.fromObject(item),
+                                                                                            item,
                                                                                             options.toRequestOptions(),
                                                                                             true)
                                                                             .map(response -> new CosmosItemResponse(response,
@@ -323,13 +361,35 @@ public class CosmosContainer extends CosmosResource {
                                                            response.getResponseHeaders(),
                                                            response.getQueryMetrics()))));
     }
+
     /**
-     * Gets a CosmosItem object without making a service call.
-     * @param id Id of the cosmos item.
-     * @param partitionKey partition key of the cosmos item.
-     * @return a cosmos item.
+     * Query for documents in a items in a container
+     *
+     * After subscription the operation will be performed.
+     * The {@link Flux} will contain one or several feed response of the obtained items.
+     * In case of failure the {@link Flux} will error.
+     *
+     * @param changeFeedOptions        the feed options.
+     * @return an {@link Flux} containing one or several feed response pages of the obtained items or an error.
      */
-    public CosmosItem getItem(String id, Object partitionKey) {
+    public Flux<FeedResponse<CosmosItemSettings>> queryChangeFeedItems(ChangeFeedOptions changeFeedOptions){
+        return RxJava2Adapter.flowableToFlux(
+            RxJavaInterop.toV2Flowable(getDatabase()
+                .getDocClientWrapper()
+                .queryDocumentChangeFeed(getLink(), changeFeedOptions)
+                .map(response-> BridgeInternal.createFeedResponseWithQueryMetrics(
+                    CosmosItemSettings.getFromV2Results(response.getResults()),
+                    response.getResponseHeaders(), response.getQueryMetrics()))));
+    }
+
+    /**
+     * Gets a CosmosItem object without making a service call
+     *
+     * @param id           id of the item
+     * @param partitionKey the partition key
+     * @return a cosmos item
+     */
+    public CosmosItem getItem(String id, Object partitionKey){
         return new CosmosItem(id, partitionKey, this);
     }
 
@@ -443,6 +503,7 @@ public class CosmosContainer extends CosmosResource {
         return new CosmosStoredProcedure(id, this);
     }
 
+
     /* UDF Operations */
 
     /**
@@ -541,7 +602,7 @@ public class CosmosContainer extends CosmosResource {
      * The {@link Mono} upon successful completion will contain a cosmos trigger response
      * In case of failure the {@link Mono} will error.
      *
-     * @param settings       the cosmos trigger settings.
+     * @param settings the cosmos trigger settings
      * @param options        the request options.
      * @return an {@link Mono} containing the single resource response with the created trigger or an error.
      */
@@ -622,12 +683,12 @@ public class CosmosContainer extends CosmosResource {
 
     /**
      * Gets the parent Database
+     *
      * @return the (@link CosmosDatabase)
      */
     public CosmosDatabase getDatabase() {
         return database;
     }
-
 
     @Override
     protected String getURIPathSegment() {

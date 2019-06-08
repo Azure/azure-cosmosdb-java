@@ -41,7 +41,8 @@ public class CosmosTriggerResponse extends CosmosResponse<CosmosTriggerSettings>
 
     /**
      * Gets the cosmos trigger settings or null
-     * @return instance of CosmosTriggerSettings.
+     *
+     * @return {@link CosmosTriggerSettings}
      */
     public CosmosTriggerSettings getCosmosTriggerSettings() {
         return cosmosTriggerSettings;
@@ -49,7 +50,8 @@ public class CosmosTriggerResponse extends CosmosResponse<CosmosTriggerSettings>
 
     /**
      * Gets the cosmos trigger object or null
-     * @return instance of CosmosTriggerSettings.
+     *
+     * @return {@link CosmosTrigger}
      */
     public CosmosTrigger getCosmosTrigger() {
         return cosmosTrigger;

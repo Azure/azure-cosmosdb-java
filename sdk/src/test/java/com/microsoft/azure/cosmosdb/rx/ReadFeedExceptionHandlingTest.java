@@ -26,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
 
+import com.microsoft.azure.cosmos.CosmosClientBuilder;
 import org.mockito.Mockito;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -46,7 +47,7 @@ public class ReadFeedExceptionHandlingTest extends TestSuiteBase {
     private CosmosClient client;
 
     @Factory(dataProvider = "clientBuildersWithDirect")
-    public ReadFeedExceptionHandlingTest(CosmosClient.Builder clientBuilder) {
+    public ReadFeedExceptionHandlingTest(CosmosClientBuilder clientBuilder) {
         this.clientBuilder = clientBuilder;
     }
 

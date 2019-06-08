@@ -24,6 +24,7 @@ package com.microsoft.azure.cosmosdb.rx;
 
 import java.util.UUID;
 
+import com.microsoft.azure.cosmos.CosmosClientBuilder;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
@@ -48,7 +49,7 @@ public class TriggerUpsertReplaceTest extends TestSuiteBase {
     private CosmosClient client;
 
     @Factory(dataProvider = "clientBuildersWithDirect")
-    public TriggerUpsertReplaceTest(CosmosClient.Builder clientBuilder) {
+    public TriggerUpsertReplaceTest(CosmosClientBuilder clientBuilder) {
         this.clientBuilder = clientBuilder;
     }
 

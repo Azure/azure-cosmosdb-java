@@ -22,13 +22,13 @@
  */
 package com.microsoft.azure.cosmosdb.rx;
 
+import com.microsoft.azure.cosmos.CosmosClientBuilder;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 import com.microsoft.azure.cosmos.CosmosBridgeInternal;
-import com.microsoft.azure.cosmos.CosmosClient;
 import com.microsoft.azure.cosmos.CosmosContainer;
 import com.microsoft.azure.cosmos.CosmosContainerRequestOptions;
 import com.microsoft.azure.cosmos.CosmosDatabase;
@@ -46,7 +46,7 @@ public class ReadFeedPkrTests extends TestSuiteBase {
     private AsyncDocumentClient client;
     
     @Factory(dataProvider = "clientBuildersWithDirect")
-    public ReadFeedPkrTests(CosmosClient.Builder clientBuilder) {
+    public ReadFeedPkrTests(CosmosClientBuilder clientBuilder) {
         this.clientBuilder = clientBuilder;
     }
 

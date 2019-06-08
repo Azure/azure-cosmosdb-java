@@ -23,7 +23,7 @@
 package com.microsoft.azure.cosmosdb.rx;
 
 import com.microsoft.azure.cosmos.CosmosClient;
-import com.microsoft.azure.cosmos.CosmosClient.Builder;
+import com.microsoft.azure.cosmos.CosmosClientBuilder;
 import com.microsoft.azure.cosmos.CosmosContainer;
 import com.microsoft.azure.cosmos.CosmosItemRequestOptions;
 import com.microsoft.azure.cosmos.CosmosItemResponse;
@@ -56,7 +56,7 @@ public class VeryLargeDocumentQueryTest extends TestSuiteBase {
     private CosmosClient client;
 
     @Factory(dataProvider = "simpleClientBuildersWithDirect")
-    public VeryLargeDocumentQueryTest(Builder clientBuilder) {
+    public VeryLargeDocumentQueryTest(CosmosClientBuilder clientBuilder) {
         this.clientBuilder = clientBuilder;
     }
 
