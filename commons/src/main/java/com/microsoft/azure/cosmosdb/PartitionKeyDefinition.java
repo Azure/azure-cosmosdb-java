@@ -143,10 +143,9 @@ public final class PartitionKeyDefinition extends JsonSerializable {
      */
     Boolean isSystemKey() {
         if (this.systemKey == null) {
-            try {
+            if (super.has(Constants.Properties.SYSTEM_KEY)) {
                 this.systemKey = super.getBoolean(Constants.Properties.SYSTEM_KEY);
-            } catch (Exception e) {
-                // system_key might not be returned from backend for older collections.
+            } else {
                 this.systemKey = false;
             }
         }

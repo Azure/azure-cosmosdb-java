@@ -90,7 +90,7 @@ public class DocumentQueryExecutionContextFactory {
         Observable<ProxyDocumentQueryExecutionContext<T>> proxyQueryExecutionContext =
                 collectionObs.flatMap(collection -> {
                     if (feedOptions != null && feedOptions.getPartitionKey() != null && feedOptions.getPartitionKey().equals(PartitionKey.None)) {
-                        feedOptions.setPartitionKey(new PartitionKey(BridgeInternal.getNonePartitionKey(collection.getPartitionKey())));
+                        feedOptions.setPartitionKey(BridgeInternal.getPartitionKey(BridgeInternal.getNonePartitionKey(collection.getPartitionKey())));
                     }
                     return ProxyDocumentQueryExecutionContext.createAsync(
                             client,

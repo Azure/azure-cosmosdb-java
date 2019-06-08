@@ -287,4 +287,8 @@ public class BridgeInternal {
     public static PartitionKeyInternal getNonePartitionKey(PartitionKeyDefinition partitionKeyDefinition) {
         return partitionKeyDefinition.getNonePartitionKeyValue();
     }
+    
+    public static PartitionKey getPartitionKey(PartitionKeyInternal partitionKeyInternal) {
+        return new PartitionKey(partitionKeyInternal);
+    }
 }

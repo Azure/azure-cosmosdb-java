@@ -177,7 +177,7 @@ public class CosmosPartitionKeyTests extends TestSuiteBase {
         assertThat(createdItemAsString).contains("\"id\":\"" + NON_PARTITIONED_CONTAINER_DOCUEMNT_ID + "\"");
     }
 
-    @Test(groups = { "simple" }, timeOut = TIMEOUT)
+    @Test(groups = { "simple" }, timeOut = 10 * TIMEOUT)
     public void testNonPartitionedCollectionOperations() throws Exception {
         createContainerWithoutPk();
         CosmosContainer createdContainer = createdDatabase.getContainer(NON_PARTITIONED_CONTAINER_ID);
@@ -304,8 +304,12 @@ public class CosmosPartitionKeyTests extends TestSuiteBase {
         String IdOfDocumentWithNoPk = UUID.randomUUID().toString();
         CosmosContainerSettings containerSettings = new CosmosContainerSettings(partitionedCollectionId, "/mypk");
         CosmosContainer createdContainer = createdDatabase.createContainer(containerSettings).block().getContainer();
-        CosmosItem createdItem = createdContainer.createItem(new CosmosItemSettings("{'id':'" + IdOfDocumentWithNoPk + "'}")).block().getCosmosItem();
-        Mono<CosmosItemResponse> readMono = createdItem.read();
+        CosmosItemSettings cosmosItemSettings = new CosmosItemSettings();
+        cosmosItemSettings.setId(IdOfDocumentWithNoPk);
+        CosmosItem createdItem = createdContainer.createItem(cosmosItemSettings).block().getCosmosItem();
+        CosmosItemRequestOptions options = new CosmosItemRequestOptions();
+        options.setPartitionKey(PartitionKey.None);
+        Mono<CosmosItemResponse> readMono = createdItem.read(options);
         CosmosResponseValidator<CosmosItemResponse> validator = new CosmosResponseValidator.Builder<CosmosItemResponse>()
                 .withId(IdOfDocumentWithNoPk).build();
         validateSuccess(readMono, validator);
