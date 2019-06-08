@@ -149,7 +149,7 @@ public class TestSuiteBase {
                                           allEqualOrLowerConsistencies(accountConsistency)));
         preferredLocations = immutableListOrNull(parsePreferredLocation(TestConfigurations.PREFERRED_LOCATIONS));
         protocols = ObjectUtils.defaultIfNull(immutableListOrNull(parseProtocols(TestConfigurations.PROTOCOLS)),
-                                              ImmutableList.of(/*Protocol.Https, Protocol.Tcp*/));
+                                              ImmutableList.of(Protocol.Https, Protocol.Tcp));
     }
 
     protected TestSuiteBase() {
@@ -982,7 +982,6 @@ public class TestSuiteBase {
 
     static List<ConsistencyLevel> allEqualOrLowerConsistencies(ConsistencyLevel accountConsistency) {
         List<ConsistencyLevel> testConsistencies = new ArrayList<>();
-        /*
         switch (accountConsistency) {
         
             case Strong:
@@ -999,7 +998,6 @@ public class TestSuiteBase {
             default:
                 throw new IllegalStateException("Invalid configured test consistency " + accountConsistency);
         }
-        */
         return testConsistencies;
     }
 
