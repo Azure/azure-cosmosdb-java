@@ -498,7 +498,7 @@ public class TestSuiteBase {
     }
 
     public static ConsistencyLevel getAccountDefaultConsistencyLevel(CosmosClient client) {
-        return client.getDatabaseAccount().block().getConsistencyPolicy().getDefaultConsistencyLevel();
+        return CosmosBridgeInternal.getDatabaseAccount(client).block().getConsistencyPolicy().getDefaultConsistencyLevel();
     }
 
     public static CosmosUser createUser(CosmosClient client, String databaseId, CosmosUserSettings userSettings) {

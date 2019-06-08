@@ -25,6 +25,7 @@ package com.microsoft.azure.cosmosdb.rx.internal.query;
 import java.util.List;
 import java.util.UUID;
 
+import com.microsoft.azure.cosmosdb.BridgeInternal;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.PartitionKey;
@@ -89,7 +90,7 @@ public class DocumentQueryExecutionContextFactory {
         Observable<ProxyDocumentQueryExecutionContext<T>> proxyQueryExecutionContext =
                 collectionObs.flatMap(collection -> {
                     if (feedOptions != null && feedOptions.getPartitionKey() != null && feedOptions.getPartitionKey().equals(PartitionKey.None)) {
-                        feedOptions.setPartitionKey(new PartitionKey(collection.getPartitionKey().getNonePartitionKeyValue()));
+                        feedOptions.setPartitionKey(new PartitionKey(BridgeInternal.getNonePartitionKey(collection.getPartitionKey())));
                     }
                     return ProxyDocumentQueryExecutionContext.createAsync(
                             client,

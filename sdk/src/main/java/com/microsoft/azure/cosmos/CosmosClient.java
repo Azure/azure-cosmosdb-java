@@ -420,7 +420,7 @@ public class CosmosClient {
                         response.getResponseHeaders()))));
     }
 
-    public Mono<DatabaseAccount> getDatabaseAccount() {
+    Mono<DatabaseAccount> getDatabaseAccount() {
         return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(asyncDocumentClient.getDatabaseAccount().toSingle()));
     }
 

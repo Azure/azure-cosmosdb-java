@@ -30,7 +30,10 @@ import com.microsoft.azure.cosmosdb.SqlQuerySpec;
 import com.microsoft.azure.cosmosdb.StoredProcedure;
 import com.microsoft.azure.cosmosdb.Trigger;
 import com.microsoft.azure.cosmosdb.UserDefinedFunction;
+import com.microsoft.azure.cosmosdb.internal.Constants;
 import com.microsoft.azure.cosmosdb.internal.Paths;
+import com.microsoft.azure.cosmosdb.internal.routing.PartitionKeyInternal;
+
 import hu.akarnokd.rxjava.interop.RxJavaInterop;
 import reactor.adapter.rxjava.RxJava2Adapter;
 import reactor.core.publisher.Flux;
@@ -624,6 +627,7 @@ public class CosmosContainer extends CosmosResource {
     public CosmosDatabase getDatabase() {
         return database;
     }
+
 
     @Override
     protected String getURIPathSegment() {

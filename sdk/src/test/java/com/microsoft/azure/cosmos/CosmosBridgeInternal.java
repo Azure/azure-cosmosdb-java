@@ -1,7 +1,10 @@
 package com.microsoft.azure.cosmos;
 
+import com.microsoft.azure.cosmosdb.DatabaseAccount;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
+
+import reactor.core.publisher.Mono;
 
 public class CosmosBridgeInternal {
 
@@ -23,5 +26,9 @@ public class CosmosBridgeInternal {
     
     public static CosmosContainer getCosmosContainerWithNewClient(CosmosContainer cosmosContainer, CosmosDatabase cosmosDatabase, CosmosClient client) {
         return new CosmosContainer(cosmosContainer.getId(), CosmosBridgeInternal.getCosmosDatabaseWithNewClient(cosmosDatabase, client));
+    }
+
+    public static Mono<DatabaseAccount> getDatabaseAccount(CosmosClient client) {
+        return client.getDatabaseAccount();
     }
 }

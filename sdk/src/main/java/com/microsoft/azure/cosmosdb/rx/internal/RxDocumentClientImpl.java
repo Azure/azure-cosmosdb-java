@@ -969,7 +969,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
 
         PartitionKeyInternal partitionKeyInternal = null;
         if (options != null && options.getPartitionKey() != null && options.getPartitionKey().equals(PartitionKey.None)){
-            partitionKeyInternal = partitionKeyDefinition.getNonePartitionKeyValue();
+            partitionKeyInternal = BridgeInternal.getNonePartitionKey(partitionKeyDefinition);
         } else if (options != null && options.getPartitionKey() != null) {
             partitionKeyInternal = options.getPartitionKey().getInternalPartitionKey();
         } else if (partitionKeyDefinition == null || partitionKeyDefinition.getPaths().size() == 0) {
@@ -1007,7 +1007,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
             if (parts.size() >= 1) {
                 Object value = document.getObjectByPath(parts);
                 if (value == null || value.getClass() == ObjectNode.class) {
-                    value = partitionKeyDefinition.getNonePartitionKeyValue();
+                    value = BridgeInternal.getNonePartitionKey(partitionKeyDefinition);
                 }
 
                 if (value instanceof PartitionKeyInternal) {
