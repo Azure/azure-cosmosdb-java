@@ -230,7 +230,7 @@ public class AddressResolverTest {
         request.forceNameCacheRefresh = forceNameCacheRefresh;
         request.forcePartitionKeyRangeRefresh = forceRoutingMapRefresh;
         request.getHeaders().put(HttpConstants.HttpHeaders.PARTITION_KEY, new PartitionKey("foo").toString());
-        AddressInformation[] resolvedAddresses = null;
+        AddressInformation[] resolvedAddresses;
         try {
             resolvedAddresses = this.addressResolver.resolveAsync(request, forceAddressRefresh).block();
         } catch (RuntimeException e) {
@@ -380,7 +380,7 @@ public class AddressResolverTest {
             CollectionRoutingMap previousValue = invocationOnMock.getArgumentAt(1, CollectionRoutingMap.class);
 
             if (previousValue == null) {
-                return Mono.just(currentRoutingMap.containsKey(collectionRid) ? currentRoutingMap.get(collectionRid) : null);
+                return Mono.justOrEmpty(currentRoutingMap.getOrDefault(collectionRid, null));
             }
 
             if (previousValue != null && currentRoutingMap.containsKey(previousValue.getCollectionUniqueId()) &&

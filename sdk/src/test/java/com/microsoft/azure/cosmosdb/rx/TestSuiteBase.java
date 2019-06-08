@@ -654,10 +654,7 @@ public class TestSuiteBase {
 
             if (collections != null) {
                 for(CosmosContainerSettings collection: collections) {
-                    CosmosContainerResponse cosmosContainer = database.getContainer(collection.getId()).read().block();
-                    if (cosmosContainer != null) {
-                        cosmosContainer.getContainer().delete().block();
-                    }
+                    safeDeleteCollection(database, collection.getId());
                 }
             }
         }
@@ -675,7 +672,7 @@ public class TestSuiteBase {
     static protected void safeDeleteCollection(CosmosDatabase database, String collectionId) {
         if (database != null && collectionId != null) {
             try {
-                database.getContainer(collectionId).read().block().getContainer().delete().block();
+                database.getContainer(collectionId).delete().block();
             } catch (Exception e) {
             }
         }

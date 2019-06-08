@@ -28,10 +28,16 @@ import com.microsoft.azure.cosmosdb.FeedOptionsBase;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.Resource;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
+import hu.akarnokd.rxjava.interop.RxJavaInterop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.adapter.rxjava.RxJava2Adapter;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
+import rx.Observable;
+import rx.Observer;
+import rx.Subscriber;
+import rx.observables.AsyncOnSubscribe;
 
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -79,48 +85,46 @@ public class Paginator {
 
         Fetcher<T> fetcher = new Fetcher<>(createRequestFunc, executeFunc, options, isChangeFeed, top, maxPageSize);
 
-        Flux<FeedResponse<T>> paginatedQueryResults = Flux.defer(() -> {
+//        return Flux.defer(() -> {
+//
+//            Flux<Flux<FeedResponse<T>>> fluxSink = Flux.create((Consumer<FluxSink<Flux<FeedResponse<T>>>>) feedResponseFluxSink -> {
+//                if (fetcher.shouldFetchMore()) {
+//                    Flux<FeedResponse<T>> nextPage = fetcher.nextPage();
+//                    feedResponseFluxSink.next(nextPage);
+//                } else {
+//                    logger.debug("No more results");
+//                }
+//                feedResponseFluxSink.complete();
+//            }).repeat(fetcher::shouldFetchMore);
+//
+//            return fluxSink.single().block();
+//        });
 
-            Flux<Flux<FeedResponse<T>>> fluxSink = Flux.create((Consumer<FluxSink<Flux<FeedResponse<T>>>>) feedResponseFluxSink -> {
-                if (fetcher.shouldFetchMore()) {
-                    Flux<FeedResponse<T>> nextPage = fetcher.nextPage();
-                    feedResponseFluxSink.next(nextPage);
-                } else {
-                    logger.debug("No more results");
+//        //  TODO: Remove this commented code after the above implementation is complete
+        Observable<FeedResponse<T>> obs = Observable.defer(() -> {
+            return Observable.create(new AsyncOnSubscribe<Fetcher, FeedResponse<T>>() {
+                @Override
+                protected Fetcher generateState() {
+                    return new Fetcher(createRequestFunc, executeFunc, options, isChangeFeed, top, maxPageSize);
                 }
-                feedResponseFluxSink.complete();
-            }).repeat(fetcher::shouldFetchMore);
 
-            return Flux.merge(fluxSink);
+                @Override
+                protected Fetcher next(Fetcher fetcher, long requested, Observer<Observable<? extends FeedResponse<T>>> observer) {
+                    assert requested == 1 : "requested amount expected to be 1"; // as there is a rebatchRequests(1)
+
+                    if (fetcher.shouldFetchMore()) {
+                        Observable<FeedResponse<T>> respObs = RxJavaInterop.<FeedResponse<T>>toV1Observable(fetcher.nextPage());
+                        observer.onNext(respObs);
+                    } else {
+                        logger.debug("No more results");
+                        observer.onCompleted();
+                    }
+
+                    return fetcher;
+                }
+            }).rebatchRequests(1);
         });
 
-        return paginatedQueryResults;
-
-        //  TODO: Remove this commented code after the above implementation is complete
-//        Observable<FeedResponse<T>> obs = Observable.defer(() -> {
-//            return Observable.create(new AsyncOnSubscribe<Fetcher, FeedResponse<T>>() {
-//                @Override
-//                protected Fetcher generateState() {
-//                    return new Fetcher(createRequestFunc, executeFunc, options, isChangeFeed, top, maxPageSize);
-//                }
-//
-//                @Override
-//                protected Fetcher next(Fetcher fetcher, long requested, Subscriber<Observable<? extends FeedResponse<T>>> observer) {
-//                    assert requested == 1 : "requested amount expected to be 1"; // as there is a rebatchRequests(1)
-//
-//                    if (fetcher.shouldFetchMore()) {
-//                        Observable<FeedResponse<T>> respObs = fetcher.nextPage();
-//                        observer.onNext(respObs);
-//                    } else {
-//                        logger.debug("No more results");
-//                        observer.onComplete();
-//                    }
-//
-//                    return fetcher;
-//                }
-//            }).rebatchRequests(1);
-//        });
-//
-//        return obs;
+        return RxJava2Adapter.flowableToFlux(RxJavaInterop.toV2Flowable(obs));
     }
 }

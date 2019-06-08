@@ -594,20 +594,15 @@ public class AddressResolver implements IAddressResolver {
             new PartitionKeyRangeIdentity(collection.getResourceId(), request.getPartitionKeyRangeIdentity().getPartitionKeyRangeId()),
             forceRefreshPartitionAddresses);
 
-        return addressesObs.flatMap(addresses -> {
+        return addressesObs.flatMap(addresses -> Mono.just(new ResolutionResult(partitionKeyRange, addresses))).switchIfEmpty(Mono.defer(() -> {
+            logger.debug("Cannot resolve addresses for range '{}'", request.getPartitionKeyRangeIdentity().toHeader());
 
-            if (addresses == null) {
-                logger.debug("Cannot resolve addresses for range '{}'", request.getPartitionKeyRangeIdentity().toHeader());
-
-                try {
-                    return Mono.justOrEmpty(this.handleRangeAddressResolutionFailure(request, collectionCacheIsUpToDate, routingMapCacheIsUpToDate, routingMap));
-                } catch (DocumentClientException e) {
-                    return Mono.error(e);
-                }
+            try {
+                return Mono.justOrEmpty(this.handleRangeAddressResolutionFailure(request, collectionCacheIsUpToDate, routingMapCacheIsUpToDate, routingMap));
+            } catch (DocumentClientException e) {
+                return Mono.error(e);
             }
-
-            return Mono.just(new ResolutionResult(partitionKeyRange, addresses));
-        });
+        }));
     }
 
     private PartitionKeyRange tryResolveServerPartitionByPartitionKey(
