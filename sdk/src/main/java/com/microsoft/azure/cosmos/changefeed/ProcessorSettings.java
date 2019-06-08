@@ -57,11 +57,11 @@ public class ProcessorSettings {
         return this;
     }
 
-    public Integer getMaxItemCount() {
+    public int getMaxItemCount() {
         return this.maxItemCount;
     }
 
-    public ProcessorSettings withMaxItemCount(Integer maxItemCount) {
+    public ProcessorSettings withMaxItemCount(int maxItemCount) {
         this.maxItemCount = maxItemCount;
         return this;
     }

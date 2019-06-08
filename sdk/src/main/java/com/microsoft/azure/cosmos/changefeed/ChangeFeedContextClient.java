@@ -93,8 +93,6 @@ public interface ChangeFeedContextClient {
      * @param disableAutomaticIdGeneration the flag for disabling automatic id generation.
      * @return an {@link Mono} containing the single resource response with the created cosmos item or an error.
      */
-//    Observable<ResourceResponse<Document>> createDocument(String collectionLink, Object document, RequestOptions options,
-//                                                          boolean disableAutomaticIdGeneration);
     Mono<CosmosItemResponse> createItem(CosmosContainer containerLink, Object document, CosmosItemRequestOptions options,
                                         boolean disableAutomaticIdGeneration);
 
@@ -134,7 +132,6 @@ public interface ChangeFeedContextClient {
      * @param options        the feed options.
      * @return an {@link Flux} containing one or several feed response pages of the obtained items or an error.
      */
-    //Observable<FeedResponse<Document>> queryDocuments(String collectionLink, SqlQuerySpec querySpec, FeedOptions options);
     Flux<FeedResponse<CosmosItemSettings>> queryItems(CosmosContainer containerLink, SqlQuerySpec querySpec, FeedOptions options);
 
     /**

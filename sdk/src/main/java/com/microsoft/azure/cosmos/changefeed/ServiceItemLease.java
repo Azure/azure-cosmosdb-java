@@ -142,12 +142,10 @@ public class ServiceItemLease implements Lease {
         this.withTimestamp(timestamp);
     }
 
-    @Override
     public void setTimestamp(Date date) {
         this.withTimestamp(date.toInstant().atZone(ZoneId.systemDefault()));
     }
 
-    @Override
     public void setTimestamp(Date date, ZoneId zoneId) {
         this.withTimestamp(date.toInstant().atZone(zoneId));
     }

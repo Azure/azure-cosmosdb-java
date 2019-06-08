@@ -119,27 +119,6 @@ public interface Lease {
     void setTimestamp(ZonedDateTime timestamp);
 
     /**
-     * Sets the timestamp of the lease.
-     *
-     * <p>
-     * The timestamp is used to determine lease expiration.
-     *
-     * @param date the timestamp of the lease.
-     */
-    void setTimestamp(Date date);
-
-    /**
-     * Sets the timestamp of the lease.
-     *
-     * <p>
-     * The timestamp is used to determine lease expiration.
-     *
-     * @param date the timestamp of the lease.
-     * @param zoneId the timezone
-     */
-    void setTimestamp(Date date, ZoneId zoneId);
-
-    /**
      * Sets the lease ID.
      *
      *

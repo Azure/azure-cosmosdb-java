@@ -205,7 +205,7 @@ public class ChangeFeedProcessorOptions {
      *
      * @return the maximum number of items to be returned in the enumeration operation in the Azure Cosmos DB service.
      */
-    public Integer getMaxItemCount() {
+    public int getMaxItemCount() {
         return this.maxItemCount;
     }
 
@@ -215,7 +215,7 @@ public class ChangeFeedProcessorOptions {
      * @param maxItemCount the maximum number of items to be returned in the enumeration operation.
      * @return the current ChangeFeedProcessorOptions instance.
      */
-    public ChangeFeedProcessorOptions withMaxItemCount(Integer maxItemCount) {
+    public ChangeFeedProcessorOptions withMaxItemCount(int maxItemCount) {
         this.maxItemCount = maxItemCount;
         return this;
     }

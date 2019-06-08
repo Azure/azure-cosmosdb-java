@@ -75,7 +75,7 @@ public class AutoCheckpointer implements ChangeFeedObserver {
     }
 
     private boolean isCheckpointNeeded() {
-        if (this.checkpointFrequency.getProcessedDocumentCount() == null && this.checkpointFrequency.getTimeInterval() == null) {
+        if (this.checkpointFrequency.getProcessedDocumentCount() == 0 && this.checkpointFrequency.getTimeInterval() == null) {
             return true;
         }
 

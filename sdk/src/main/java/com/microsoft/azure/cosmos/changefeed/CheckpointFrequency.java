@@ -29,12 +29,13 @@ import java.time.Duration;
  */
 public class CheckpointFrequency {
     private boolean explicitCheckpoint;
-    private Integer processedDocumentCount;
+    private int processedDocumentCount;
     private Duration timeInterval;
 
     public CheckpointFrequency() {
         this.explicitCheckpoint = false;
-        processedDocumentCount = null;
+        // Default to always checkpoint after processing each feed batch.
+        processedDocumentCount = 0;
         timeInterval = null;
     }
 
@@ -55,7 +56,7 @@ public class CheckpointFrequency {
      *
      * @return the value that specifies to checkpoint every specified number of docs.
      */
-    public Integer getProcessedDocumentCount() {
+    public int getProcessedDocumentCount() {
         return this.processedDocumentCount;
     }
 
@@ -94,7 +95,7 @@ public class CheckpointFrequency {
      * @param processedDocumentCount the value that specifies to checkpoint every specified number of docs.
      * @return current {@link CheckpointFrequency}.
      */
-    public CheckpointFrequency withProcessedDocumentCount(Integer processedDocumentCount) {
+    public CheckpointFrequency withProcessedDocumentCount(int processedDocumentCount) {
         this.processedDocumentCount = processedDocumentCount;
         return this;
     }

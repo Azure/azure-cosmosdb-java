@@ -38,9 +38,9 @@ public interface ChangeFeedObserverContext {
     String getPartitionKeyRangeId();
 
     /**
-     * Gets the response from the underlying DocumentQuery ExecuteNextAsync call.
+     * Gets the response from the underlying call.
      *
-     * @return the response from the underlying DocumentQuery ExecuteNextAsync call.
+     * @return the response from the underlying call.
      */
     FeedResponse<CosmosItemSettings> getFeedResponse();
 

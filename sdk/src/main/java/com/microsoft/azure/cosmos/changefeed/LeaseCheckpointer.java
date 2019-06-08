@@ -28,14 +28,6 @@ import reactor.core.publisher.Mono;
  * Interface for check-pointing the lease.
  */
 public interface LeaseCheckpointer {
-    /// <summary>
-    /// Checkpoint the lease.
-    /// </summary>
-    /// <param name="lease">Lease to renew</param>
-    /// <param name="continuationToken">Continuation token</param>
-    /// <returns>Updated renewed lease</returns>
-    /// <exception cref="LeaseLostException">Thrown if other host acquired the lease or lease was deleted</exception>
-
     /**
      * Check-points the lease.
      * <p>
