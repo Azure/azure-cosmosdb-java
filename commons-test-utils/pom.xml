@@ -28,7 +28,7 @@ SOFTWARE.
   <parent>
     <groupId>com.microsoft.azure</groupId>
     <artifactId>azure-cosmos-parent</artifactId>
-    <version>3.0.0-a1</version>
+    <version>3.0.0-a1-SNAPSHOT</version>
   </parent>
   <artifactId>azure-cosmos-commons-test-utils</artifactId>
   <name>Common Test Components for Testing Async SDK for SQL API of Azure Cosmos DB Service</name>
@@ -69,6 +69,21 @@ SOFTWARE.
             </goals>
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>1.8</version>
+        <inherited>false</inherited>
+        <executions>
+          <execution>
+            <phase>none</phase>
+            <id>default-cli</id>
+          </execution>
+        </executions>
+        <configuration>
+          <skip>true</skip>
+        </configuration>
       </plugin>
     </plugins>
   </build>

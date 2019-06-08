@@ -29,7 +29,7 @@
   <parent>
     <groupId>com.microsoft.azure</groupId>
     <artifactId>azure-cosmos-parent</artifactId>
-    <version>3.0.0-a1</version>
+    <version>3.0.0-a1-SNAPSHOT</version>
   </parent>
   
   <artifactId>azure-cosmos-benchmark</artifactId>
@@ -94,6 +94,21 @@
               org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8
             </classpathContainer>
           </classpathContainers>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>1.8</version>
+        <inherited>false</inherited>
+        <executions>
+          <execution>
+            <phase>none</phase>
+            <id>default-cli</id>
+          </execution>
+        </executions>
+        <configuration>
+          <skip>true</skip>
         </configuration>
       </plugin>
     </plugins>
