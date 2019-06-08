@@ -122,12 +122,14 @@ public final class RntbdTransportClient extends TransportClient {
 
         final RntbdRequestRecord requestRecord = endpoint.request(requestArgs);
 
-        return Mono.fromCompletionStage(
-            requestRecord.whenComplete((response, error) -> {
-                requestArgs.traceOperation(logger, null, "emitMono", response, error);
-                this.metrics.incrementResponseCount();
-            })
-        ).doFinally(signal -> {
+        requestRecord.whenComplete((response, error) -> {
+            this.metrics.incrementResponseCount();
+            if (error != null) {
+                this.metrics.incrementErrorResponseCount();
+            }
+        });
+
+        return Mono.fromFuture(requestRecord).doFinally(signal -> {
             if (signal == SignalType.CANCEL) {
                 requestRecord.cancel(false);
             }

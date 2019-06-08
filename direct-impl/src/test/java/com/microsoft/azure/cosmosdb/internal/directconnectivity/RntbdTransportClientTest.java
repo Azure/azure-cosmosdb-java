@@ -63,7 +63,6 @@ import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.reactivex.subscribers.TestSubscriber;
 import org.apache.commons.lang3.StringUtils;
-import org.assertj.core.api.Assertions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.DataProvider;
@@ -77,12 +76,12 @@ import java.util.Arrays;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.HttpHeaders;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.HttpMethods;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.SubStatusCodes;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
@@ -748,9 +747,11 @@ public final class RntbdTransportClientTest {
 
         final TestSubscriber<StoreResponse> subscriber = new TestSubscriber<>();
         mono.subscribe(subscriber);
+
         subscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
+        assertThat(subscriber.errorCount()).isEqualTo(1);
         subscriber.assertSubscribed();
-        subscriber.assertValueCount(1);
+        subscriber.assertNoValues();
         validator.validate(subscriber.errors().get(0));
     }
 
