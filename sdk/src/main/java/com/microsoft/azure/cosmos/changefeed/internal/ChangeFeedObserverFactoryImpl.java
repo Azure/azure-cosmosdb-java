@@ -24,6 +24,7 @@ package com.microsoft.azure.cosmos.changefeed.internal;
 
 import com.microsoft.azure.cosmos.ChangeFeedObserver;
 import com.microsoft.azure.cosmos.ChangeFeedObserverFactory;
+import com.microsoft.azure.cosmos.changefeed.exceptions.ObserverException;
 
 /**
  * Default implementation for {@link ChangeFeedObserverFactory}.
@@ -40,7 +41,7 @@ public class ChangeFeedObserverFactoryImpl implements ChangeFeedObserverFactory 
         try {
             return (ChangeFeedObserver) observerType.newInstance();
         } catch (IllegalAccessException | InstantiationException ex) {
-            return null;
+            throw new ObserverException(ex);
         }
     }
 }
