@@ -103,7 +103,7 @@ public class CosmosContainer extends CosmosResource {
      * After subscription the operation will be performed.
      * The {@link Mono} upon successful completion will contain a single cossmos container response with the read container.
      * In case of failure the {@link Mono} will error.
-     *
+     * @param options the cosmos container request options
      * @return an {@link Mono} containing the single cossmos container response with the read container or an error.
      */
     public Mono<CosmosContainerResponse> read(CosmosContainerRequestOptions options) {
@@ -351,7 +351,9 @@ public class CosmosContainer extends CosmosResource {
 
     /**
      * Gets a CosmosItem object without making a service call
-     * @param id id of the item
+     *
+     * @param id           id of the item
+     * @param partitionKey the partition key
      * @return a cosmos item
      */
     public CosmosItem getItem(String id, Object partitionKey){
@@ -444,6 +446,15 @@ public class CosmosContainer extends CosmosResource {
                                                                                                        response.getResponseHeaders()))));
     }
 
+    /**
+     * Gets a CosmosStoredProcedure object without making a service call
+     * @param id id of the stored procedure
+     * @return a cosmos stored procedure
+     */
+    public CosmosStoredProcedure getStoredProcedure(String id){
+        return new CosmosStoredProcedure(id, this);
+    }
+
 
     /* UDF Operations */
 
@@ -526,6 +537,15 @@ public class CosmosContainer extends CosmosResource {
                                                                                                       response.getResponseHeaders()))));
     }
 
+    /**
+     * Gets a CosmosUserDefinedFunction object without making a service call
+     * @param id id of the user defined function
+     * @return a cosmos user defined function
+     */
+    public CosmosUserDefinedFunction getUserDefinedFunction(String id){
+        return new CosmosUserDefinedFunction(id, this);
+    }
+
     /* Trigger Operations */
     /**
      * Creates a Cosmos trigger.
@@ -534,6 +554,7 @@ public class CosmosContainer extends CosmosResource {
      * The {@link Mono} upon successful completion will contain a cosmos trigger response
      * In case of failure the {@link Mono} will error.
      *
+     * @param settings the cosmos trigger settings
      * @param options        the request options.
      * @return an {@link Mono} containing the single resource response with the created trigger or an error.
      */
@@ -601,6 +622,15 @@ public class CosmosContainer extends CosmosResource {
                                                    .queryTriggers(getLink(), querySpec, options)
                                                    .map(response -> BridgeInternal.createFeedResponse(CosmosTriggerSettings.getFromV2Results(response.getResults()),
                                                                                                       response.getResponseHeaders()))));
+    }
+
+    /**
+     * Gets a CosmosTrigger object without making a service call
+     * @param id id of the cosmos trigger
+     * @return a cosmos trigger
+     */
+    public CosmosTrigger getTrigger(String id){
+        return new CosmosTrigger(id, this);
     }
 
     /**

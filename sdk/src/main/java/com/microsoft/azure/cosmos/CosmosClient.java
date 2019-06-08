@@ -23,10 +23,13 @@
 package com.microsoft.azure.cosmos;
 
 import com.microsoft.azure.cosmosdb.BridgeInternal;
+import com.microsoft.azure.cosmosdb.ConnectionPolicy;
+import com.microsoft.azure.cosmosdb.ConsistencyLevel;
 import com.microsoft.azure.cosmosdb.Database;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
+import com.microsoft.azure.cosmosdb.Permission;
 import com.microsoft.azure.cosmosdb.SqlQuerySpec;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
@@ -35,15 +38,37 @@ import reactor.adapter.rxjava.RxJava2Adapter;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
 /**
  * Provides a client-side logical representation of the Azure Cosmos database service.
  * This asynchronous client is used to configure and execute requests
  * against the service.
  */
- public class CosmosClient {
+public class CosmosClient {
 
     //Document client wrapper
-    private AsyncDocumentClient asyncDocumentClient;
+    private final AsyncDocumentClient asyncDocumentClient;
+    private final String serviceEndpoint;
+    private final String keyOrResourceToken;
+    private final ConnectionPolicy connectionPolicy;
+    private final ConsistencyLevel desiredConsistencyLevel;
+    private final List<Permission> permissions;
+
+
+     CosmosClient(CosmosClientBuilder builder) {
+        this.serviceEndpoint = builder.getServiceEndpoint();
+        this.keyOrResourceToken = builder.getKeyOrResourceToken();
+        this.connectionPolicy = builder.getConnectionPolicy();
+        this.desiredConsistencyLevel = builder.getDesiredConsistencyLevel();
+        this.permissions = builder.getPermissions();
+        this.asyncDocumentClient = new AsyncDocumentClient.Builder()
+                .withServiceEndpoint(this.serviceEndpoint)
+                .withMasterKeyOrResourceToken(this.keyOrResourceToken)
+                .withConnectionPolicy(this.connectionPolicy)
+                .withConsistencyLevel(this.desiredConsistencyLevel)
+                .build();
+    }
 
     AsyncDocumentClient getContextClient() {
         return this.asyncDocumentClient;
@@ -54,38 +79,51 @@ import reactor.core.publisher.Mono;
     }
 
     /**
-     * Creates a cosmos client with given cosmosConfiguration
-     * @param cosmosConfiguration the cosmosConfiguration
-     * @return cosmos client
+     * Instantiate the cosmos client builder to build cosmos client
+     * @return {@link CosmosClientBuilder}
      */
-    public static CosmosClient create(CosmosConfiguration cosmosConfiguration) {
-        return new CosmosClient(cosmosConfiguration);
+    public static CosmosClientBuilder builder(){
+         return new CosmosClientBuilder();
     }
 
     /**
-     * Creates a cosmos client with given endpoint and key
-     * @param endpoint the service end point
-     * @param key the key
-     * @return cosmos clients
+     * Get the service endpoint
+     * @return the service endpoint
      */
-    public static CosmosClient create(String endpoint, String key) {
-        CosmosConfiguration cosmosConfiguration = new CosmosConfiguration.Builder()
-                .withServiceEndpoint(endpoint)
-                .withKeyOrResourceToken(key).build();
-        return create(cosmosConfiguration);
+    public String getServiceEndpoint() {
+        return serviceEndpoint;
     }
 
     /**
-     * Creates a cosmos client with given cosmos configuration
-     * @param cosmosConfiguration the cosmos configuration
+     * Gets the key or resource token
+     * @return get the key or resource token
      */
-    private CosmosClient(CosmosConfiguration cosmosConfiguration) {
-        this.asyncDocumentClient = new AsyncDocumentClient.Builder()
-                .withServiceEndpoint(cosmosConfiguration.getServiceEndpoint().toString())
-                .withMasterKeyOrResourceToken(cosmosConfiguration.getKeyOrResourceToken())
-                .withConnectionPolicy(cosmosConfiguration.getConnectionPolicy())
-                .withConsistencyLevel(cosmosConfiguration.getDesiredConsistencyLevel())
-                .build();
+    String getKeyOrResourceToken() {
+        return keyOrResourceToken;
+    }
+
+    /**
+     * Get the connection policy
+     * @return {@link ConnectionPolicy}
+     */
+    public ConnectionPolicy getConnectionPolicy() {
+        return connectionPolicy;
+    }
+
+    /**
+     * Gets the consistency level
+     * @return the (@link ConsistencyLevel)
+     */
+    public ConsistencyLevel getDesiredConsistencyLevel() {
+        return desiredConsistencyLevel;
+    }
+
+    /**
+     * Gets the permission list
+     * @return the permission list
+     */
+    public List<Permission> getPermissions() {
+        return permissions;
     }
 
     AsyncDocumentClient getDocClientWrapper(){
@@ -247,8 +285,9 @@ import reactor.core.publisher.Mono;
 
     /**
      * Gets a database object without making a service call.
+     *
      * @param id name of the database
-     * @return
+     * @return {@link CosmosDatabase}
      */
     public CosmosDatabase getDatabase(String id) {
         return new CosmosDatabase(id, this);
