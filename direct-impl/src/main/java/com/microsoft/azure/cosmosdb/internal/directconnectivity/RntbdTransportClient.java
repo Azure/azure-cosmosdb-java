@@ -54,7 +54,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 @JsonSerialize(using = RntbdTransportClient.JsonSerializer.class)
-public final class RntbdTransportClient extends ReactorTransportClient {
+public final class RntbdTransportClient extends TransportClient {
 
     // region Fields
 

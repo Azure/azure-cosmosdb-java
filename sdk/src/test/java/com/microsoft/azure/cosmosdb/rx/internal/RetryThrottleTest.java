@@ -148,7 +148,7 @@ public class RetryThrottleTest extends TestSuiteBase {
     public void beforeClass() {
         // set up the client
         database = SHARED_DATABASE;
-        collection = SHARED_SINGLE_PARTITION_COLLECTION_WITHOUT_PARTITION_KEY;
+        collection = SHARED_SINGLE_PARTITION_COLLECTION;
     }
 
     private Document getDocumentDefinition() {

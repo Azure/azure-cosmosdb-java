@@ -70,7 +70,7 @@ public class StoreReaderTest {
      */
     @Test(groups = "unit")
     public void startBackgroundAddressRefresh() throws Exception {
-        ReactorTransportClient transportClient = Mockito.mock(ReactorTransportClient.class);
+        TransportClient transportClient = Mockito.mock(TransportClient.class);
         AddressSelector addressSelector = Mockito.mock(AddressSelector.class);
         ISessionContainer sessionContainer = Mockito.mock(ISessionContainer.class);
 
@@ -475,7 +475,7 @@ public class StoreReaderTest {
 
     @Test(groups = "unit")
     public void readPrimaryAsync() {
-        ReactorTransportClient transportClient = Mockito.mock(ReactorTransportClient.class);
+        TransportClient transportClient = Mockito.mock(TransportClient.class);
         AddressSelector addressSelector = Mockito.mock(AddressSelector.class);
         ISessionContainer sessionContainer = Mockito.mock(ISessionContainer.class);
 
@@ -506,7 +506,7 @@ public class StoreReaderTest {
 
     @Test(groups = "unit")
     public void readPrimaryAsync_GoneFromReplica() {
-        ReactorTransportClient transportClient = Mockito.mock(ReactorTransportClient.class);
+        TransportClient transportClient = Mockito.mock(TransportClient.class);
         AddressSelector addressSelector = Mockito.mock(AddressSelector.class);
         ISessionContainer sessionContainer = Mockito.mock(ISessionContainer.class);
 
@@ -533,7 +533,7 @@ public class StoreReaderTest {
 
     @Test(groups = "unit")
     public void readPrimaryAsync_GoneExceptionOnTimeout() {
-        ReactorTransportClient transportClient = Mockito.mock(ReactorTransportClient.class);
+        TransportClient transportClient = Mockito.mock(TransportClient.class);
         AddressSelector addressSelector = Mockito.mock(AddressSelector.class);
         ISessionContainer sessionContainer = Mockito.mock(ISessionContainer.class);
 
@@ -776,7 +776,7 @@ public class StoreReaderTest {
         testSubscriber.assertNoErrors();
         testSubscriber.assertComplete();
         testSubscriber.assertValueCount(1);
-        validator.validate((List<StoreResult>) testSubscriber.getEvents().get(0).get(0));
+        validator.validate(testSubscriber.values().get(0));
     }
 
     public static void validateSuccess(Mono<StoreResult> single,
@@ -793,7 +793,7 @@ public class StoreReaderTest {
         testSubscriber.assertNoErrors();
         testSubscriber.assertComplete();
         testSubscriber.assertValueCount(1);
-        validator.validate((StoreResult) testSubscriber.getEvents().get(0).get(0));
+        validator.validate(testSubscriber.values().get(0));
     }
 
     public static <T> void validateException(Mono<T> single,

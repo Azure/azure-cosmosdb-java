@@ -44,7 +44,7 @@ import java.util.concurrent.TimeUnit;
 public class ReplicatedResourceClientTest {
     protected static final int TIMEOUT = 60000;
     private IAddressResolver addressResolver;
-    private ReactorTransportClient transportClient;
+    private TransportClient transportClient;
     private boolean enableReadRequestsFallback;
     public boolean forceAddressRefresh;
     private GatewayServiceConfigurationReader serviceConfigReader;
@@ -53,7 +53,7 @@ public class ReplicatedResourceClientTest {
     @BeforeClass(groups = "unit")
     public void setup() throws Exception {
         addressResolver = Mockito.mock(IAddressResolver.class);
-        transportClient = Mockito.mock(ReactorTransportClient.class);
+        transportClient = Mockito.mock(TransportClient.class);
         serviceConfigReader = Mockito.mock(GatewayServiceConfigurationReader.class);
         authorizationTokenProvider = Mockito.mock(IAuthorizationTokenProvider.class);
     }

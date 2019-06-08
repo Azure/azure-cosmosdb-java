@@ -27,6 +27,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.logging.LogLevel;
+import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
 import org.reactivestreams.Publisher;
@@ -43,10 +44,14 @@ import reactor.netty.http.client.HttpClientRequest;
 import reactor.netty.http.client.HttpClientResponse;
 import reactor.netty.resources.ConnectionProvider;
 import reactor.netty.tcp.ProxyProvider;
+import reactor.netty.tcp.SslProvider;
 import reactor.netty.tcp.TcpResources;
 
+import javax.net.ssl.SSLEngine;
 import java.nio.charset.Charset;
+import java.time.Duration;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 
 import static com.microsoft.azure.cosmosdb.rx.internal.http.HttpClientConfig.REACTOR_NETWORK_LOG_CATEGORY;
@@ -69,7 +74,7 @@ class ReactorNettyClient implements HttpClient {
         this.connectionProvider = connectionProvider;
         this.httpClientConfig = httpClientConfig;
         this.httpClient = reactor.netty.http.client.HttpClient.create(connectionProvider);
-//        configureChannelPipelineHandlers();
+        configureChannelPipelineHandlers();
     }
 
     private void configureChannelPipelineHandlers() {
@@ -87,6 +92,18 @@ class ReactorNettyClient implements HttpClient {
             //  .... Last should be Write Timeout
 
             tcpClient = tcpClient.bootstrap(bootstrap -> {
+
+                SslProvider sslProvider = SslProvider.builder()
+                        .sslContext(configs.getSslContext())
+                        .handshakeTimeout(Duration.ofSeconds(60))
+                        .handlerConfigurator(sslHandler -> {
+                            SSLEngine engine = sslHandler.engine();
+                            engine.setUseClientMode(true);
+                            engine.setEnableSessionCreation(true);
+                        })
+                        .build();
+                sslProvider = SslProvider.updateDefaultConfiguration(sslProvider, SslProvider.DefaultConfigurationType.TCP);
+                SslProvider.setBootstrap(bootstrap, sslProvider);
                 if (this.httpClientConfig.getMaxIdleConnectionTimeoutInMillis() != null) {
                     BootstrapHandlers.updateConfiguration(bootstrap,
                             NettyPipeline.OnChannelReadIdle,
@@ -97,10 +114,20 @@ class ReactorNettyClient implements HttpClient {
                             (connectionObserver, channel) ->
                                     channel.pipeline().addLast(new WriteTimeoutHandler(this.httpClientConfig.getMaxIdleConnectionTimeoutInMillis() / 1000)));
                 }
+//                BootstrapHandlers.updateConfiguration(bootstrap,
+//                        NettyPipeline.SslHandler,
+//                        ((connectionObserver, channel) -> {
+//                            SSLEngine sslEngine = configs.getSslContext().newEngine(channel.alloc());
+//                            sslEngine.setUseClientMode(true);
+//                            sslEngine.setEnableSessionCreation(true);
+//                            SslHandler sslHandler = new SslHandler(sslEngine);
+//                            sslHandler.setHandshakeTimeoutMillis(60000);
+//                            channel.pipeline().addFirst(sslHandler);
+//                        }));
                 return bootstrap;
             });
             return tcpClient;
-        }).secure(sslContextSpec -> sslContextSpec.sslContext(configs.getSslContext()).build());
+        });
     }
 
     @Override
@@ -108,10 +135,6 @@ class ReactorNettyClient implements HttpClient {
         Objects.requireNonNull(request.httpMethod());
         Objects.requireNonNull(request.uri());
         Objects.requireNonNull(this.httpClientConfig);
-
-        //  TODO: Start with basic HttpClient
-        //  Figure out the pipeline.
-        //  If need to add anything else, then add it, otherwise just use it as is.
 
         return this.httpClient
                 .port(request.port())

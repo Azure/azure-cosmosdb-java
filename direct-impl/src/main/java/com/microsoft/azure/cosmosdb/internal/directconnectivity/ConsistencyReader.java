@@ -177,7 +177,7 @@ public class ConsistencyReader {
             Configs configs,
             AddressSelector addressSelector,
             ISessionContainer sessionContainer,
-            ReactorTransportClient transportClient,
+            TransportClient transportClient,
             GatewayServiceConfigurationReader serviceConfigReader,
             IAuthorizationTokenProvider authorizationTokenProvider) {
         this.configs = configs;
@@ -403,7 +403,7 @@ public class ConsistencyReader {
         }
     }
 
-    StoreReader createStoreReader(ReactorTransportClient transportClient,
+    StoreReader createStoreReader(TransportClient transportClient,
                                   AddressSelector addressSelector,
                                   ISessionContainer sessionContainer) {
         return new StoreReader(transportClient,
@@ -411,7 +411,7 @@ public class ConsistencyReader {
                                sessionContainer);
     }
 
-    QuorumReader createQuorumReader(ReactorTransportClient transportClient,
+    QuorumReader createQuorumReader(TransportClient transportClient,
                                     AddressSelector addressSelector,
                                     StoreReader storeReader,
                                     GatewayServiceConfigurationReader serviceConfigurationReader,

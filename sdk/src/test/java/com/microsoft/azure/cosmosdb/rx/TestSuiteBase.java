@@ -39,12 +39,15 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
+import com.microsoft.azure.cosmos.CosmosClientBuilder;
+import com.microsoft.azure.cosmos.CosmosContainerResponse;
 import com.microsoft.azure.cosmos.CosmosItemResponse;
 import com.microsoft.azure.cosmosdb.DataType;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.IncludedPath;
 import com.microsoft.azure.cosmosdb.Index;
 import com.microsoft.azure.cosmosdb.IndexingPolicy;
+import com.microsoft.azure.cosmosdb.ResourceResponse;
 import com.microsoft.azure.cosmosdb.RetryOptions;
 import com.microsoft.azure.cosmosdb.SqlQuerySpec;
 import com.microsoft.azure.cosmosdb.internal.PathParser;
@@ -67,8 +70,8 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.DataProvider;
 
+import com.microsoft.azure.cosmos.CosmosBridgeInternal;
 import com.microsoft.azure.cosmos.CosmosClient;
-import com.microsoft.azure.cosmos.CosmosClient.Builder;
 import com.microsoft.azure.cosmos.CosmosContainer;
 import com.microsoft.azure.cosmos.CosmosContainerRequestOptions;
 import com.microsoft.azure.cosmos.CosmosContainerSettings;
@@ -116,12 +119,28 @@ public class TestSuiteBase {
     private static final ImmutableList<Protocol> protocols;
 
     protected int subscriberValidationTimeout = TIMEOUT;
-    protected Builder clientBuilder;
+    protected CosmosClientBuilder clientBuilder;
 
-    protected static CosmosDatabase SHARED_DATABASE;
-    protected static CosmosContainer SHARED_MULTI_PARTITION_COLLECTION;
-    protected static CosmosContainer SHARED_MULTI_PARTITION_COLLECTION_WITH_COMPOSITE_AND_SPATIAL_INDEXES;
-    protected static CosmosContainer SHARED_SINGLE_PARTITION_COLLECTION;
+    private static CosmosDatabase SHARED_DATABASE;
+    private static CosmosContainer SHARED_MULTI_PARTITION_COLLECTION;
+    private static CosmosContainer SHARED_MULTI_PARTITION_COLLECTION_WITH_COMPOSITE_AND_SPATIAL_INDEXES;
+    private static CosmosContainer SHARED_SINGLE_PARTITION_COLLECTION;
+
+    protected static CosmosDatabase getSharedCosmosDatabase(CosmosClient client) {
+        return CosmosBridgeInternal.getCosmosDatabaseWithNewClient(SHARED_DATABASE, client);
+    }
+
+    protected static CosmosContainer getSharedMultiPartitionCosmosContainer(CosmosClient client) {
+        return CosmosBridgeInternal.getCosmosContainerWithNewClient(SHARED_MULTI_PARTITION_COLLECTION, SHARED_DATABASE, client);
+    }
+
+    protected static CosmosContainer getSharedMultiPartitionCosmosContainerWithCompositeAndSpatialIndexes(CosmosClient client) {
+        return CosmosBridgeInternal.getCosmosContainerWithNewClient(SHARED_MULTI_PARTITION_COLLECTION_WITH_COMPOSITE_AND_SPATIAL_INDEXES, SHARED_DATABASE, client);
+    }
+
+    protected static CosmosContainer getSharedSinglePartitionCosmosContainer(CosmosClient client) {
+        return CosmosBridgeInternal.getCosmosContainerWithNewClient(SHARED_SINGLE_PARTITION_COLLECTION, SHARED_DATABASE, client);
+    }
 
     static {
         accountConsistency = parseConsistency(TestConfigurations.CONSISTENCY);
@@ -201,6 +220,8 @@ public class TestSuiteBase {
         options.offerThroughput(10100);
         SHARED_MULTI_PARTITION_COLLECTION = createCollection(SHARED_DATABASE, getCollectionDefinitionWithRangeRangeIndex(), options);
         SHARED_MULTI_PARTITION_COLLECTION_WITH_COMPOSITE_AND_SPATIAL_INDEXES = createCollection(SHARED_DATABASE, getCollectionDefinitionMultiPartitionWithCompositeAndSpatialIndexes(), options);
+        options.offerThroughput(6000);
+        SHARED_SINGLE_PARTITION_COLLECTION = createCollection(SHARED_DATABASE, getCollectionDefinitionWithRangeRangeIndex(), options);
     }
 
     @AfterSuite(groups = {"simple", "long", "direct", "multi-master", "emulator", "non-emulator"}, timeOut = SUITE_SHUTDOWN_TIMEOUT)
@@ -296,7 +317,7 @@ public class TestSuiteBase {
         logger.info("Finished truncating collection {}.", cosmosContainerId);
     }
 
-    protected static void waitIfNeededForReplicasToCatchUp(Builder clientBuilder) {
+    protected static void waitIfNeededForReplicasToCatchUp(CosmosClientBuilder clientBuilder) {
         switch (clientBuilder.getDesiredConsistencyLevel()) {
             case Eventual:
             case ConsistentPrefix:
@@ -313,16 +334,6 @@ public class TestSuiteBase {
             case Strong:
             default:
                 break;
-        }
-    }
-
-    public static CosmosContainer createCollection(String databaseId, CosmosContainerSettings cosmosContainerSettings,
-            CosmosContainerRequestOptions options) {
-        CosmosClient client = createGatewayHouseKeepingDocumentClient().build();
-        try {
-            return client.getDatabase(databaseId).createContainer(cosmosContainerSettings, options).block().getContainer();
-        } finally {
-            client.close();
         }
     }
 
@@ -468,17 +479,20 @@ public class TestSuiteBase {
     }
     public List<CosmosItemSettings> bulkInsertBlocking(CosmosContainer cosmosContainer,
                                              List<CosmosItemSettings> documentDefinitionList) {
-        return bulkInsert(cosmosContainer, documentDefinitionList, DEFAULT_BULK_INSERT_CONCURRENCY_LEVEL)
-                .parallel()
-                .runOn(Schedulers.parallel())
-                .map(CosmosItemResponse::getCosmosItemSettings)
-                .sequential()
-                .collectList()
-                .block();
-    }
+//        return bulkInsert(cosmosContainer, documentDefinitionList, DEFAULT_BULK_INSERT_CONCURRENCY_LEVEL)
+//                .parallel()
+//                .runOn(Schedulers.parallel())
+//                .map(CosmosItemResponse::getCosmosItemSettings)
+//                .sequential()
+//                .collectList()
+//                .block();
 
-    public static ConsistencyLevel getAccountDefaultConsistencyLevel(CosmosClient client) {
-        return client.getDatabaseAccount().block().getConsistencyPolicy().getDefaultConsistencyLevel();
+        return bulkInsert(cosmosContainer, documentDefinitionList, DEFAULT_BULK_INSERT_CONCURRENCY_LEVEL)
+                .publishOn(Schedulers.parallel())
+                .map(CosmosItemResponse::getCosmosItemSettings)
+                .collectList()
+                .single()
+                .block();
     }
 
     public static CosmosUser createUser(CosmosClient client, String databaseId, CosmosUserSettings userSettings) {
@@ -492,7 +506,7 @@ public class TestSuiteBase {
 
     private static CosmosContainer safeCreateCollection(CosmosClient client, String databaseId, CosmosContainerSettings collection, CosmosContainerRequestOptions options) {
         deleteCollectionIfExists(client, databaseId, collection.getId());
-        return createCollection(databaseId, collection, options);
+        return createCollection(client.getDatabase(databaseId), collection, options);
     }
 
     static protected CosmosContainerSettings getCollectionDefinition() {
@@ -638,8 +652,13 @@ public class TestSuiteBase {
                     .collectList()
                     .block();
 
-            for(CosmosContainerSettings collection: collections) {
-                database.getContainer(collection.getId()).read().block().getContainer().delete().block();
+            if (collections != null) {
+                for(CosmosContainerSettings collection: collections) {
+                    CosmosContainerResponse cosmosContainer = database.getContainer(collection.getId()).read().block();
+                    if (cosmosContainer != null) {
+                        cosmosContainer.getContainer().delete().block();
+                    }
+                }
             }
         }
     }
@@ -734,8 +753,7 @@ public class TestSuiteBase {
         testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
         testSubscriber.assertNoErrors();
         testSubscriber.assertComplete();
-        validator.validate(testSubscriber.getEvents().get(0).stream().map(object -> (FeedResponse<T>) object)
-                .collect(Collectors.toList()));
+        validator.validate(testSubscriber.values());
     }
 
     public <T extends Resource> void validateQueryFailure(Flux<FeedResponse<T>> flowable, FailureValidator validator) {
@@ -826,7 +844,7 @@ public class TestSuiteBase {
         
         boolean isMultiMasterEnabled = preferredLocations != null && accountConsistency == ConsistencyLevel.Session;
 
-        List<Builder> cosmosConfigurations = new ArrayList<>();
+        List<CosmosClientBuilder> cosmosConfigurations = new ArrayList<>();
         cosmosConfigurations.add(createGatewayRxDocumentClient(ConsistencyLevel.Session, false, null));
 
         for (Protocol protocol : protocols) {
@@ -913,7 +931,7 @@ public class TestSuiteBase {
     private static Object[][] clientBuildersWithDirect(List<ConsistencyLevel> testConsistencies, Protocol... protocols) {
         boolean isMultiMasterEnabled = preferredLocations != null && accountConsistency == ConsistencyLevel.Session;
 
-        List<Builder> cosmosConfigurations = new ArrayList<>();
+        List<CosmosClientBuilder> cosmosConfigurations = new ArrayList<>();
         cosmosConfigurations.add(createGatewayRxDocumentClient(ConsistencyLevel.Session, isMultiMasterEnabled, preferredLocations));
 
         for (Protocol protocol : protocols) {
@@ -932,34 +950,34 @@ public class TestSuiteBase {
         return cosmosConfigurations.stream().map(c -> new Object[]{c}).collect(Collectors.toList()).toArray(new Object[0][]);
     }
 
-    static protected Builder createGatewayHouseKeepingDocumentClient() {
+    static protected CosmosClientBuilder createGatewayHouseKeepingDocumentClient() {
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
         connectionPolicy.setConnectionMode(ConnectionMode.Gateway);
         RetryOptions options = new RetryOptions();
         options.setMaxRetryWaitTimeInSeconds(SUITE_SETUP_TIMEOUT);
         connectionPolicy.setRetryOptions(options);
-        return new Builder().endpoint(TestConfigurations.HOST)
+        return new CosmosClientBuilder().endpoint(TestConfigurations.HOST)
                 .key(TestConfigurations.MASTER_KEY)
                 .connectionPolicy(connectionPolicy)
                 .consistencyLevel(ConsistencyLevel.Session);
     }
 
-    static protected Builder createGatewayRxDocumentClient(ConsistencyLevel consistencyLevel, boolean multiMasterEnabled, List<String> preferredLocations) {
+    static protected CosmosClientBuilder createGatewayRxDocumentClient(ConsistencyLevel consistencyLevel, boolean multiMasterEnabled, List<String> preferredLocations) {
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
         connectionPolicy.setConnectionMode(ConnectionMode.Gateway);
         connectionPolicy.setUsingMultipleWriteLocations(multiMasterEnabled);
         connectionPolicy.setPreferredLocations(preferredLocations);
-        return new Builder().endpoint(TestConfigurations.HOST)
+        return new CosmosClientBuilder().endpoint(TestConfigurations.HOST)
                 .key(TestConfigurations.MASTER_KEY)
                 .connectionPolicy(connectionPolicy)
                 .consistencyLevel(consistencyLevel);
     }
 
-    static protected Builder createGatewayRxDocumentClient() {
+    static protected CosmosClientBuilder createGatewayRxDocumentClient() {
         return createGatewayRxDocumentClient(ConsistencyLevel.Session, false, null);
     }
 
-    static protected Builder createDirectRxDocumentClient(ConsistencyLevel consistencyLevel,
+    static protected CosmosClientBuilder createDirectRxDocumentClient(ConsistencyLevel consistencyLevel,
                                                                               Protocol protocol,
                                                                               boolean multiMasterEnabled,
                                                                               List<String> preferredLocations) {
@@ -977,7 +995,7 @@ public class TestSuiteBase {
         Configs configs = spy(new Configs());
         doAnswer((Answer<Protocol>)invocation -> protocol).when(configs).getProtocol();
 
-        return new Builder().endpoint(TestConfigurations.HOST)
+        return new CosmosClientBuilder().endpoint(TestConfigurations.HOST)
                 .key(TestConfigurations.MASTER_KEY)
                 .connectionPolicy(connectionPolicy)
                 .consistencyLevel(consistencyLevel)

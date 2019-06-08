@@ -22,13 +22,13 @@
  */
 package com.microsoft.azure.cosmosdb.rx;
 
+import com.microsoft.azure.cosmos.CosmosClientBuilder;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 import com.microsoft.azure.cosmos.CosmosClient;
-import com.microsoft.azure.cosmos.CosmosClient.Builder;
 import com.microsoft.azure.cosmos.CosmosDatabase;
 import com.microsoft.azure.cosmos.CosmosDatabaseRequestOptions;
 import com.microsoft.azure.cosmos.CosmosDatabaseResponse;
@@ -48,7 +48,7 @@ public class DatabaseCrudTest extends TestSuiteBase {
     private CosmosDatabase createdDatabase;
 
     @Factory(dataProvider = "clientBuilders")
-    public DatabaseCrudTest(Builder clientBuilder) {
+    public DatabaseCrudTest(CosmosClientBuilder clientBuilder) {
         this.clientBuilder = clientBuilder;
     }
 

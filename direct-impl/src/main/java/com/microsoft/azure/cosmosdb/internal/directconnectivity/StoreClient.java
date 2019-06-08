@@ -64,7 +64,7 @@ public class StoreClient implements IStoreClient {
 
     private final SessionContainer sessionContainer;
     private final ReplicatedResourceClient replicatedResourceClient;
-    private final ReactorTransportClient transportClient;
+    private final TransportClient transportClient;
     private final String ZERO_PARTITION_KEY_RANGE = "0";
 
     public StoreClient(
@@ -72,7 +72,7 @@ public class StoreClient implements IStoreClient {
             IAddressResolver addressResolver,
             SessionContainer sessionContainer,
             GatewayServiceConfigurationReader serviceConfigurationReader, IAuthorizationTokenProvider userTokenProvider,
-            ReactorTransportClient transportClient,
+            TransportClient transportClient,
             boolean useMultipleWriteLocations) {
         this.transportClient = transportClient;
         this.sessionContainer = sessionContainer;

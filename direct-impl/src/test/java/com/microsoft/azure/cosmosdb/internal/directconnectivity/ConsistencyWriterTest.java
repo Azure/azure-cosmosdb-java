@@ -61,7 +61,7 @@ public class ConsistencyWriterTest {
 
     private AddressSelector addressSelector;
     private ISessionContainer sessionContainer;
-    private ReactorTransportClient transportClient;
+    private TransportClient transportClient;
     private GatewayServiceConfigurationReader serviceConfigReader;
     private ConsistencyWriter consistencyWriter;
 
@@ -268,7 +268,7 @@ public class ConsistencyWriterTest {
     private void initializeConsistencyWriter(boolean useMultipleWriteLocation) {
         addressSelector = Mockito.mock(AddressSelector.class);
         sessionContainer = Mockito.mock(ISessionContainer.class);
-        transportClient = Mockito.mock(ReactorTransportClient.class);
+        transportClient = Mockito.mock(TransportClient.class);
         IAuthorizationTokenProvider authorizationTokenProvider = Mockito.mock(IAuthorizationTokenProvider.class);
         serviceConfigReader = Mockito.mock(GatewayServiceConfigurationReader.class);
 

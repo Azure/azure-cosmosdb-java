@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.UUID;
 
+import com.microsoft.azure.cosmos.CosmosClientBuilder;
 import com.microsoft.azure.cosmosdb.PartitionKeyDefinition;
 import com.microsoft.azure.cosmosdb.RetryAnalyzer;
 import org.testng.annotations.AfterClass;
@@ -67,7 +68,7 @@ public class CollectionCrudTest extends TestSuiteBase {
     private CosmosDatabase database;
 
     @Factory(dataProvider = "clientBuildersWithDirect")
-    public CollectionCrudTest(CosmosClient.Builder clientBuilder) {
+    public CollectionCrudTest(CosmosClientBuilder clientBuilder) {
         this.clientBuilder = clientBuilder;
         this.subscriberValidationTimeout = TIMEOUT;
     }
@@ -179,7 +180,7 @@ public class CollectionCrudTest extends TestSuiteBase {
         collection.setIndexingPolicy(indexingPolicy);
         
         Mono<CosmosContainerResponse> createObservable = database
-                .createContainer(collection, null);
+                .createContainer(collection, new CosmosContainerRequestOptions());
 
         CosmosResponseValidator<CosmosContainerResponse> validator = new CosmosResponseValidator.Builder<CosmosContainerResponse>()
                 .withId(collection.getId())

@@ -24,6 +24,7 @@ package com.microsoft.azure.cosmosdb.rx;
 
 import com.microsoft.azure.cosmos.CosmosBridgeInternal;
 import com.microsoft.azure.cosmos.CosmosClient;
+import com.microsoft.azure.cosmos.CosmosClientBuilder;
 import com.microsoft.azure.cosmos.CosmosContainer;
 import com.microsoft.azure.cosmos.CosmosDatabase;
 import com.microsoft.azure.cosmos.CosmosItemSettings;
@@ -71,7 +72,7 @@ public class ParallelDocumentQueryTest extends TestSuiteBase {
     }
 
     @Factory(dataProvider = "clientBuildersWithDirect")
-    public ParallelDocumentQueryTest(CosmosClient.Builder clientBuilder) {
+    public ParallelDocumentQueryTest(CosmosClientBuilder clientBuilder) {
         this.clientBuilder = clientBuilder;
     }
 
@@ -329,9 +330,8 @@ public class ParallelDocumentQueryTest extends TestSuiteBase {
     @BeforeClass(groups = { "simple", "non-emulator" }, timeOut = 2 * SETUP_TIMEOUT)
     public void beforeClass() {
         client = clientBuilder.build();
-        createdDatabase = SHARED_DATABASE;
-        createdCollection = SHARED_MULTI_PARTITION_COLLECTION;
-        truncateCollection(SHARED_MULTI_PARTITION_COLLECTION);
+        createdCollection = getSharedMultiPartitionCosmosContainer(client);
+        truncateCollection(createdCollection);
         List<CosmosItemSettings> docDefList = new ArrayList<>();
         for(int i = 0; i < 13; i++) {
             docDefList.add(getDocumentDefinition(i));
@@ -418,7 +418,7 @@ public class ParallelDocumentQueryTest extends TestSuiteBase {
             testSubscriber.assertNoErrors();
             testSubscriber.assertComplete();
 
-            FeedResponse<CosmosItemSettings> firstPage = (FeedResponse<CosmosItemSettings>) testSubscriber.getEvents().get(0).get(0);
+            FeedResponse<CosmosItemSettings> firstPage = testSubscriber.values().get(0);
             requestContinuation = firstPage.getResponseContinuation();
             receivedDocuments.addAll(firstPage.getResults());
             continuationTokens.add(requestContinuation);

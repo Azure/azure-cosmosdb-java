@@ -150,8 +150,8 @@ public final class PartitionKeyDefinition extends JsonSerializable {
     }
 
     public PartitionKeyInternal getNonePartitionKeyValue() {
-        if (this.getPaths().size() == 0 || this.isSystemKey()) {
-            return PartitionKeyInternal.Empty;
+        if (this.getPaths().size() == 1 || this.isSystemKey()) {
+            return PartitionKeyInternal.UndefinedPartitionKey;
         } else {
             return PartitionKeyInternal.UndefinedPartitionKey;
         }

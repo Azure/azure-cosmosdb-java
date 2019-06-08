@@ -29,25 +29,23 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.microsoft.azure.cosmosdb.rx.internal.TestSuiteBase;
 import org.assertj.core.util.Strings;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
-import com.microsoft.azure.cosmos.CosmosDatabaseForTest;
 import com.microsoft.azure.cosmosdb.Database;
+import com.microsoft.azure.cosmosdb.DatabaseForTest;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.Offer;
-import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient.Builder;
-
-import rx.Observable;
+import reactor.core.publisher.Flux;
 
 public class OfferQueryTest extends TestSuiteBase {
 
-    /*
     public final static int SETUP_TIMEOUT = 40000;
     public final String databaseId = DatabaseForTest.generateId();
 
@@ -60,7 +58,7 @@ public class OfferQueryTest extends TestSuiteBase {
     }
 
     @Factory(dataProvider = "clientBuilders")
-    public OfferQueryTest(Builder clientBuilder) {
+    public OfferQueryTest(AsyncDocumentClient.Builder clientBuilder) {
         this.clientBuilder = clientBuilder;
     }
 
@@ -71,9 +69,9 @@ public class OfferQueryTest extends TestSuiteBase {
 
         FeedOptions options = new FeedOptions();
         options.setMaxItemCount(2);
-        Observable<FeedResponse<Offer>> queryObservable = client.queryOffers(query, null);
+        Flux<FeedResponse<Offer>> queryObservable = client.queryOffers(query, null);
 
-        List<Offer> allOffers = client.readOffers(null).flatMap(f -> Observable.from(f.getResults())).toList().toBlocking().single();
+        List<Offer> allOffers = client.readOffers(null).flatMap(f -> Flux.fromIterable(f.getResults())).collectList().single().block();
         List<Offer> expectedOffers = allOffers.stream().filter(o -> collectionResourceId.equals(o.getString("offerResourceId"))).collect(Collectors.toList());
 
         assertThat(expectedOffers).isNotEmpty();
@@ -100,9 +98,11 @@ public class OfferQueryTest extends TestSuiteBase {
 
         FeedOptions options = new FeedOptions();
         options.setMaxItemCount(1);
-        Observable<FeedResponse<Offer>> queryObservable = client.queryOffers(query, options);
+        Flux<FeedResponse<Offer>> queryObservable = client.queryOffers(query, options);
 
-        List<Offer> expectedOffers = client.readOffers(null).flatMap(f -> Observable.from(f.getResults())).toList().toBlocking().single()
+        List<Offer> expectedOffers = client.readOffers(null).flatMap(f -> Flux.fromIterable(f.getResults()))
+                .collectList()
+                .single().block()
                 .stream().filter(o -> collectionResourceIds.contains(o.getOfferResourceId()))
                 .collect(Collectors.toList());
 
@@ -126,7 +126,7 @@ public class OfferQueryTest extends TestSuiteBase {
 
         String query = "SELECT * from root r where r.id = '2'";
         FeedOptions options = new FeedOptions();
-        Observable<FeedResponse<DocumentCollection>> queryObservable = client.queryCollections(getDatabaseLink(), query, options);
+        Flux<FeedResponse<DocumentCollection>> queryObservable = client.queryCollections(getDatabaseLink(), query, options);
 
         FeedResponseListValidator<DocumentCollection> validator = new FeedResponseListValidator.Builder<DocumentCollection>()
                 .containsExactly(new ArrayList<>())
@@ -157,5 +157,4 @@ public class OfferQueryTest extends TestSuiteBase {
         safeDeleteDatabase(client, databaseId);
         safeClose(client);
     }
-    */
 }

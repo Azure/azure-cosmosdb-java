@@ -22,7 +22,9 @@
  */
 package com.microsoft.azure.cosmosdb.rx.internal.query;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -69,8 +71,9 @@ class OrderByUtils {
                                     targetRangeToOrderByContinuationTokenMap,
                                     consumeComparer.getSortOrders()))
                             .collect(Collectors.toList());
-                    Flux<OrderByRowResult<T>>[] sources = (Flux<OrderByRowResult<T>>[]) collectedFluxes.toArray();
-                    return Flux.mergeOrdered(consumeComparer, sources);
+                    Flux<OrderByRowResult<T>>[] arrayFlux = (Flux<OrderByRowResult<T>>[]) Array.newInstance(Flux.class, 0);
+                    Flux<OrderByRowResult<T>>[] fluxes = collectedFluxes.toArray(arrayFlux);
+                    return Flux.mergeOrdered(consumeComparer, fluxes);
                 });
     }
 

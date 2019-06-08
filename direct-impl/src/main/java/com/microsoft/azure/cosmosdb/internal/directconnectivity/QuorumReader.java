@@ -107,7 +107,7 @@ public class QuorumReader {
 
     public QuorumReader(
             Configs configs,
-            ReactorTransportClient transportClient,
+            TransportClient transportClient,
             AddressSelector addressSelector,
             StoreReader storeReader,
             GatewayServiceConfigurationReader serviceConfigReader,
@@ -127,7 +127,7 @@ public class QuorumReader {
     }
 
     public QuorumReader(
-            ReactorTransportClient transportClient,
+            TransportClient transportClient,
             AddressSelector addressSelector,
             StoreReader storeReader,
             GatewayServiceConfigurationReader serviceConfigReader,

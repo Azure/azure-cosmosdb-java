@@ -23,6 +23,21 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.net.URI;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.commons.io.IOUtils;
+import org.mockito.Matchers;
+import org.mockito.Mockito;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Factory;
+import org.testng.annotations.Test;
+
 import com.microsoft.azure.cosmosdb.BridgeInternal;
 import com.microsoft.azure.cosmosdb.ConnectionPolicy;
 import com.microsoft.azure.cosmosdb.DatabaseAccount;
@@ -133,7 +148,7 @@ public class GatewayServiceConfigurationReaderTest extends TestSuiteBase {
         testSubscriber.assertNoErrors();
         testSubscriber.assertComplete();
         testSubscriber.assertValueCount(1);
-        DatabaseAccount databaseAccount = (DatabaseAccount) testSubscriber.getEvents().get(0).get(0);
+        DatabaseAccount databaseAccount = testSubscriber.values().get(0);
         assertThat(BridgeInternal.getQueryEngineConfiuration(databaseAccount).size() > 0).isTrue();
         assertThat(BridgeInternal.getReplicationPolicy(databaseAccount)).isNotNull();
         assertThat(BridgeInternal.getSystemReplicationPolicy(databaseAccount)).isNotNull();
@@ -147,7 +162,7 @@ public class GatewayServiceConfigurationReaderTest extends TestSuiteBase {
         testSubscriber.assertNoErrors();
         testSubscriber.assertComplete();
         testSubscriber.assertValueCount(1);
-        DatabaseAccount databaseAccount = (DatabaseAccount) testSubscriber.getEvents().get(0).get(0);
+        DatabaseAccount databaseAccount = testSubscriber.values().get(0);
         assertThat(databaseAccount.getId()).isEqualTo(expectedDatabaseAccount.getId());
         assertThat(databaseAccount.getAddressesLink())
                 .isEqualTo(expectedDatabaseAccount.getAddressesLink());

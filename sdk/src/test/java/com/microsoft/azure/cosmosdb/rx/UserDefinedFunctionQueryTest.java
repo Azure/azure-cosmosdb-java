@@ -29,17 +29,17 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.microsoft.azure.cosmos.CosmosClientBuilder;
+import com.microsoft.azure.cosmos.CosmosDatabase;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 import com.microsoft.azure.cosmos.CosmosClient;
-import com.microsoft.azure.cosmos.CosmosClient.Builder;
 import com.microsoft.azure.cosmos.CosmosContainer;
 import com.microsoft.azure.cosmos.CosmosRequestOptions;
 import com.microsoft.azure.cosmos.CosmosUserDefinedFunctionSettings;
-import com.microsoft.azure.cosmosdb.Database;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
@@ -48,7 +48,7 @@ import reactor.core.publisher.Flux;
 
 public class UserDefinedFunctionQueryTest extends TestSuiteBase {
 
-    private Database createdDatabase;
+    private CosmosDatabase createdDatabase;
     private CosmosContainer createdCollection;
     private List<CosmosUserDefinedFunctionSettings> createdUDF = new ArrayList<>();
 
@@ -59,7 +59,7 @@ public class UserDefinedFunctionQueryTest extends TestSuiteBase {
     }
 
     @Factory(dataProvider = "clientBuildersWithDirect")
-    public UserDefinedFunctionQueryTest(Builder clientBuilder) {
+    public UserDefinedFunctionQueryTest(CosmosClientBuilder clientBuilder) {
         this.clientBuilder = clientBuilder;
     }
 
@@ -155,8 +155,9 @@ public class UserDefinedFunctionQueryTest extends TestSuiteBase {
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() throws Exception {
         client = clientBuilder.build();
-        createdCollection = SHARED_MULTI_PARTITION_COLLECTION;
-        truncateCollection(SHARED_MULTI_PARTITION_COLLECTION);
+        createdDatabase = getSharedCosmosDatabase(client);
+        createdCollection = getSharedMultiPartitionCosmosContainer(client);
+        truncateCollection(createdCollection);
 
         for(int i = 0; i < 5; i++) {
             createdUDF.add(createUserDefinedFunction(createdCollection));

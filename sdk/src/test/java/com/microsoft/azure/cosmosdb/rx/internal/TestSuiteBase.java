@@ -113,7 +113,6 @@ public class TestSuiteBase {
     protected static Database SHARED_DATABASE;
     protected static DocumentCollection SHARED_MULTI_PARTITION_COLLECTION;
     protected static DocumentCollection SHARED_SINGLE_PARTITION_COLLECTION;
-    protected static DocumentCollection SHARED_SINGLE_PARTITION_COLLECTION_WITHOUT_PARTITION_KEY;
     protected static DocumentCollection SHARED_MULTI_PARTITION_COLLECTION_WITH_COMPOSITE_AND_SPATIAL_INDEXES;
 
     static {
@@ -196,7 +195,6 @@ public class TestSuiteBase {
             options.setOfferThroughput(10100);
             SHARED_MULTI_PARTITION_COLLECTION = createCollection(houseKeepingClient, SHARED_DATABASE.getId(), getCollectionDefinitionWithRangeRangeIndex(), options);
             SHARED_SINGLE_PARTITION_COLLECTION = createCollection(houseKeepingClient, SHARED_DATABASE.getId(), getCollectionDefinition(), null);
-            SHARED_SINGLE_PARTITION_COLLECTION_WITHOUT_PARTITION_KEY = createCollection(houseKeepingClient, SHARED_DATABASE.getId(), getCollectionDefinitionSinglePartitionWithoutPartitionKey());
             SHARED_MULTI_PARTITION_COLLECTION_WITH_COMPOSITE_AND_SPATIAL_INDEXES = createCollection(houseKeepingClient, SHARED_DATABASE.getId(), getCollectionDefinitionMultiPartitionWithCompositeAndSpatialIndexes(), options);
         } finally {
             houseKeepingClient.close();
@@ -344,7 +342,7 @@ public class TestSuiteBase {
 
     public static DocumentCollection createCollection(AsyncDocumentClient client, String databaseId,
                                                       DocumentCollection collection) {
-        return client.createCollection("dbs/" + databaseId, collection, null).single().block().getResource();
+        return client.createCollection("dbs/" + databaseId, collection, new RequestOptions()).single().block().getResource();
     }
 
     private static DocumentCollection getCollectionDefinitionMultiPartitionWithCompositeAndSpatialIndexes() {
@@ -733,7 +731,7 @@ public class TestSuiteBase {
         testSubscriber.assertNoErrors();
         testSubscriber.assertComplete();
         testSubscriber.assertValueCount(1);
-        validator.validate((ResourceResponse<T>) testSubscriber.getEvents().get(0).get(0));
+        validator.validate(testSubscriber.values().get(0));
     }
 
     public <T extends Resource> void validateFailure(Flux<ResourceResponse<T>> observable,
@@ -768,7 +766,7 @@ public class TestSuiteBase {
         testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
         testSubscriber.assertNoErrors();
         testSubscriber.assertComplete();
-        validator.validate((List<FeedResponse<T>>) testSubscriber.getEvents().get(0).get(0));
+        validator.validate(testSubscriber.values());
     }
 
     public <T extends Resource> void validateQueryFailure(Flux<FeedResponse<T>> observable,

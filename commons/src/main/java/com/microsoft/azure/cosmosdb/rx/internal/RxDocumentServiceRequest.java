@@ -48,7 +48,6 @@ import com.microsoft.azure.cosmosdb.internal.ResourceType;
 import com.microsoft.azure.cosmosdb.internal.Utils;
 import com.microsoft.azure.cosmosdb.internal.routing.PartitionKeyRangeIdentity;
 import reactor.core.publisher.Flux;
-import rx.observables.StringObservable;
 
 /**
  * This is core Transport/Connection agnostic request to the Azure Cosmos DB database service.

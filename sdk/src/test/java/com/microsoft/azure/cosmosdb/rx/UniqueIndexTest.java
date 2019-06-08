@@ -41,7 +41,6 @@ import org.testng.annotations.Test;
 import com.google.common.collect.ImmutableList;
 import com.microsoft.azure.cosmos.CosmosClient;
 import com.microsoft.azure.cosmos.CosmosContainer;
-import com.microsoft.azure.cosmos.CosmosContainerRequestOptions;
 import com.microsoft.azure.cosmos.CosmosContainerSettings;
 import com.microsoft.azure.cosmos.CosmosDatabase;
 import com.microsoft.azure.cosmos.CosmosDatabaseForTest;
@@ -232,7 +231,7 @@ public class UniqueIndexTest extends TestSuiteBase {
     @BeforeClass(groups = { "long" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
         // set up the client
-        client = new CosmosClient.Builder()
+        client = CosmosClient.builder()
                 .endpoint(TestConfigurations.HOST)
                 .key(TestConfigurations.MASTER_KEY)
                 .connectionPolicy(ConnectionPolicy.GetDefault())

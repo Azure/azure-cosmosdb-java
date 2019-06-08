@@ -37,7 +37,7 @@ public class StoreClientFactory implements AutoCloseable {
     private final int maxConcurrentConnectionOpenRequests;
     private final int requestTimeoutInSeconds;
     private final Protocol protocol;
-    private final ReactorTransportClient transportClient;
+    private final TransportClient transportClient;
     private volatile boolean isClosed;
 
     public StoreClientFactory(

@@ -2,8 +2,6 @@ package com.microsoft.azure.cosmos;
 
 import com.microsoft.azure.cosmosdb.RequestOptions;
 import com.microsoft.azure.cosmosdb.internal.Paths;
-import hu.akarnokd.rxjava.interop.RxJavaInterop;
-import reactor.adapter.rxjava.RxJava2Adapter;
 import reactor.core.publisher.Mono;
 
 public class CosmosUser extends CosmosResource {
@@ -15,40 +13,48 @@ public class CosmosUser extends CosmosResource {
 
     /**
      * Reads a cosmos user
-     * @param options
-     * @return
+     *
+     * @return a {@link Mono} containing the single resource response with the read user or an error.
      */
     public Mono<CosmosUserResponse> read() {
         return this.read(null);
     }
 
+    /**
+     * Reads a cosmos user
+     *
+     * @param options the request options
+     * @return a {@link Mono} containing the single resource response with the read user or an error.
+     */
     public Mono<CosmosUserResponse> read(RequestOptions options) {
-        return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(this.database.getDocClientWrapper()
+        return this.database.getDocClientWrapper()
                 .readUser(getLink(), options)
-                .map(response -> new CosmosUserResponse(response, database)).toSingle()));
+                .map(response -> new CosmosUserResponse(response, database)).single();
     }
 
     /**
      * Replace a cosmos user
-     * @param userSettings
-     * @param options
-     * @return
+     *
+     * @param userSettings the user settings to use
+     * @param options      the request options
+     * @return a {@link Mono} containing the single resource response with the replaced user or an error.
      */
     public Mono<CosmosUserResponse> replace(CosmosUserSettings userSettings, RequestOptions options) {
-        return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(this.database.getDocClientWrapper()
+        return this.database.getDocClientWrapper()
                 .replaceUser(userSettings.getV2User(), options)
-                .map(response -> new CosmosUserResponse(response, database)).toSingle()));
+                .map(response -> new CosmosUserResponse(response, database)).single();
     }
 
     /**
      * Delete a cosmos user
-     * @param options
-     * @return
+     *
+     * @param options the request options
+     * @return a {@link Mono} containing the single resource response with the deleted user or an error.
      */
     public Mono<CosmosUserResponse> delete(RequestOptions options) {
-        return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(this.database.getDocClientWrapper()
+        return this.database.getDocClientWrapper()
                 .deleteUser(getLink(), options)
-                .map(response -> new CosmosUserResponse(response, database)).toSingle()));
+                .map(response -> new CosmosUserResponse(response, database)).single();
     }
 
     @Override

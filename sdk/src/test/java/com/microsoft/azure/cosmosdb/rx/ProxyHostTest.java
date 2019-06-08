@@ -78,8 +78,7 @@ public class ProxyHostTest extends TestSuiteBase {
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() throws Exception {
         client = clientBuilder.build();
-        createdDatabase = SHARED_DATABASE;
-        createdCollection = SHARED_MULTI_PARTITION_COLLECTION;
+        createdCollection = getSharedMultiPartitionCosmosContainer(client);
         httpProxyServer = new HttpProxyServer();
         httpProxyServer.start();
         // wait for proxy server to be ready
@@ -97,7 +96,7 @@ public class ProxyHostTest extends TestSuiteBase {
         try {
             ConnectionPolicy connectionPolicy =new ConnectionPolicy();
             connectionPolicy.setProxy(PROXY_HOST, PROXY_PORT);
-            clientWithRightProxy = new CosmosClient.Builder().endpoint(TestConfigurations.HOST)
+            clientWithRightProxy = CosmosClient.builder().endpoint(TestConfigurations.HOST)
                     .key(TestConfigurations.MASTER_KEY)
                     .connectionPolicy(connectionPolicy)
                     .consistencyLevel(ConsistencyLevel.Session).build();
@@ -130,7 +129,7 @@ public class ProxyHostTest extends TestSuiteBase {
 
             ConnectionPolicy connectionPolicy =new ConnectionPolicy();
             connectionPolicy.setProxy(PROXY_HOST, PROXY_PORT);
-            clientWithRightProxy = new CosmosClient.Builder().endpoint(TestConfigurations.HOST)
+            clientWithRightProxy = CosmosClient.builder().endpoint(TestConfigurations.HOST)
                     .key(TestConfigurations.MASTER_KEY)
                     .connectionPolicy(connectionPolicy)
                     .consistencyLevel(ConsistencyLevel.Session).build();

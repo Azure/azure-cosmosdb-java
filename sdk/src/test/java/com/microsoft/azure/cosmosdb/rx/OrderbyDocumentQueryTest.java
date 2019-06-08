@@ -35,6 +35,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.microsoft.azure.cosmos.CosmosClientBuilder;
 import com.microsoft.azure.cosmosdb.RetryAnalyzer;
 import org.apache.commons.lang3.StringUtils;
 
@@ -76,7 +77,7 @@ public class OrderbyDocumentQueryTest extends TestSuiteBase {
     private int numberOfPartitions;
 
     @Factory(dataProvider = "clientBuildersWithDirect")
-    public OrderbyDocumentQueryTest(CosmosClient.Builder clientBuilder) {
+    public OrderbyDocumentQueryTest(CosmosClientBuilder clientBuilder) {
         this.clientBuilder = clientBuilder;
     }
 
@@ -292,7 +293,7 @@ public class OrderbyDocumentQueryTest extends TestSuiteBase {
         subscriber.assertComplete();
         subscriber.assertNoErrors();
         assertThat(subscriber.valueCount()).isEqualTo(1);
-        FeedResponse<CosmosItemSettings> page = (FeedResponse<CosmosItemSettings>) subscriber.getEvents().get(0).get(0);
+        FeedResponse<CosmosItemSettings> page = subscriber.values().get(0);
         assertThat(page.getResults()).hasSize(3);
 
         assertThat(page.getResponseContinuation()).isNotEmpty();
@@ -435,9 +436,8 @@ public class OrderbyDocumentQueryTest extends TestSuiteBase {
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() throws Exception {
         client = clientBuilder.build();
-        createdDatabase = SHARED_DATABASE;
-        createdCollection = SHARED_MULTI_PARTITION_COLLECTION;
-        truncateCollection(SHARED_MULTI_PARTITION_COLLECTION);
+        createdCollection = getSharedMultiPartitionCosmosContainer(client);
+        truncateCollection(createdCollection);
 
         List<Map<String, Object>> keyValuePropsList = new ArrayList<>();
         Map<String, Object> props;
@@ -535,7 +535,7 @@ public class OrderbyDocumentQueryTest extends TestSuiteBase {
             testSubscriber.assertNoErrors();
             testSubscriber.assertComplete();
 
-            FeedResponse<CosmosItemSettings> firstPage = (FeedResponse<CosmosItemSettings>) testSubscriber.getEvents().get(0).get(0);
+            FeedResponse<CosmosItemSettings> firstPage = testSubscriber.values().get(0);
             requestContinuation = firstPage.getResponseContinuation();
             receivedDocuments.addAll(firstPage.getResults());
             continuationTokens.add(requestContinuation);

@@ -29,19 +29,17 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
-import com.microsoft.azure.cosmos.CosmosDatabaseForTest;
 import com.microsoft.azure.cosmosdb.Database;
+import com.microsoft.azure.cosmosdb.DatabaseForTest;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.Offer;
 import com.microsoft.azure.cosmosdb.ResourceResponse;
+import com.microsoft.azure.cosmosdb.rx.internal.TestSuiteBase;
+import reactor.core.publisher.Flux;
 
-import rx.Observable;
-
-import javax.net.ssl.SSLException;
-
+//TODO: change to use external TestSuiteBase 
 public class OfferReadReplaceTest extends TestSuiteBase {
 
-    /*
     public final String databaseId = DatabaseForTest.generateId();
 
     private Database createdDatabase;
@@ -57,7 +55,7 @@ public class OfferReadReplaceTest extends TestSuiteBase {
     @Test(groups = { "emulator" }, timeOut = TIMEOUT)
     public void readAndReplaceOffer() {
 
-        client.readOffers(null).toBlocking().subscribe((offersFeed) -> {
+        client.readOffers(null).subscribe((offersFeed) -> {
             try {
                 int i;
                 List<Offer> offers = offersFeed.getResults();
@@ -67,10 +65,10 @@ public class OfferReadReplaceTest extends TestSuiteBase {
                     }
                 }
 
-                Offer rOffer = client.readOffer(offers.get(i).getSelfLink()).toBlocking().single().getResource();
+                Offer rOffer = client.readOffer(offers.get(i).getSelfLink()).single().block().getResource();
                 int oldThroughput = rOffer.getThroughput();
                 
-                Observable<ResourceResponse<Offer>> readObservable = client.readOffer(offers.get(i).getSelfLink());
+                Flux<ResourceResponse<Offer>> readObservable = client.readOffer(offers.get(i).getSelfLink());
 
                 // validate offer read
                 ResourceResponseValidator<Offer> validatorForRead = new ResourceResponseValidator.Builder<Offer>()
@@ -83,7 +81,7 @@ public class OfferReadReplaceTest extends TestSuiteBase {
                 // update offer
                 int newThroughput = oldThroughput + 100;
                 offers.get(i).setThroughput(newThroughput);
-                Observable<ResourceResponse<Offer>> replaceObservable = client.replaceOffer(offers.get(i));
+                Flux<ResourceResponse<Offer>> replaceObservable = client.replaceOffer(offers.get(i));
 
                 // validate offer replace
                 ResourceResponseValidator<Offer> validatorForReplace = new ResourceResponseValidator.Builder<Offer>()
@@ -113,5 +111,4 @@ public class OfferReadReplaceTest extends TestSuiteBase {
         safeDeleteDatabase(client, createdDatabase);
         safeClose(client);
     }
-*/
 }

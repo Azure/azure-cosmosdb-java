@@ -23,6 +23,7 @@
 package com.microsoft.azure.cosmosdb.rx;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -32,21 +33,18 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
-import com.microsoft.azure.cosmos.CosmosDatabaseForTest;
 import com.microsoft.azure.cosmosdb.Database;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.DatabaseForTest;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.Offer;
+import com.microsoft.azure.cosmosdb.rx.internal.TestSuiteBase;
+import reactor.core.publisher.Flux;
 
-import rx.Observable;
-
-import javax.net.ssl.SSLException;
-
+//TODO: change to use external TestSuiteBase
 public class ReadFeedOffersTest extends TestSuiteBase {
 
-    /*
     protected static final int FEED_TIMEOUT = 60000;
     protected static final int SETUP_TIMEOUT = 60000;
     protected static final int SHUTDOWN_TIMEOUT = 20000;
@@ -69,7 +67,7 @@ public class ReadFeedOffersTest extends TestSuiteBase {
         FeedOptions options = new FeedOptions();
         options.setMaxItemCount(2);
 
-        Observable<FeedResponse<Offer>> feedObservable = client.readOffers(options);
+        Flux<FeedResponse<Offer>> feedObservable = client.readOffers(options);
 
         int expectedPageSize = (allOffers.size() + options.getMaxItemCount() - 1) / options.getMaxItemCount();
 
@@ -93,11 +91,11 @@ public class ReadFeedOffersTest extends TestSuiteBase {
         }
 
         allOffers = client.readOffers(null)
-                          .map(frp -> frp.getResults())
-                          .toList()
-                          .map(list -> list.stream().flatMap(x -> x.stream()).collect(Collectors.toList()))
-                          .toBlocking()
-                          .single();
+                          .map(FeedResponse::getResults)
+                          .collectList()
+                          .map(list -> list.stream().flatMap(Collection::stream).collect(Collectors.toList()))
+                          .single()
+                          .block();
     }
 
     @AfterClass(groups = { "emulator" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)
@@ -109,11 +107,10 @@ public class ReadFeedOffersTest extends TestSuiteBase {
     public DocumentCollection createCollections(AsyncDocumentClient client) {
         DocumentCollection collection = new DocumentCollection();
         collection.setId(UUID.randomUUID().toString());
-        return client.createCollection(getDatabaseLink(), collection, null).toBlocking().single().getResource();
+        return client.createCollection(getDatabaseLink(), collection, null).single().block().getResource();
     }
 
     private String getDatabaseLink() {
         return "dbs/" + createdDatabase.getId();
     }
-    */
 }

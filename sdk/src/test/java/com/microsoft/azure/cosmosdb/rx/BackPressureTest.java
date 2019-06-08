@@ -22,24 +22,27 @@
  */
 package com.microsoft.azure.cosmosdb.rx;
 
-import com.microsoft.azure.cosmosdb.Database;
-import com.microsoft.azure.cosmosdb.Document;
-import com.microsoft.azure.cosmosdb.DocumentCollection;
+import com.microsoft.azure.cosmos.CosmosBridgeInternal;
+import com.microsoft.azure.cosmos.CosmosClient;
+import com.microsoft.azure.cosmos.CosmosClientBuilder;
+import com.microsoft.azure.cosmos.CosmosContainer;
+import com.microsoft.azure.cosmos.CosmosContainerRequestOptions;
+import com.microsoft.azure.cosmos.CosmosContainerSettings;
+import com.microsoft.azure.cosmos.CosmosDatabase;
+import com.microsoft.azure.cosmos.CosmosItemSettings;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.Offer;
-import com.microsoft.azure.cosmosdb.RequestOptions;
-import com.microsoft.azure.cosmosdb.ResourceResponse;
-import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient.Builder;
+import com.microsoft.azure.cosmosdb.PartitionKeyDefinition;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentClientUnderTest;
+import io.reactivex.subscribers.TestSubscriber;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
-import rx.Observable;
-import rx.internal.util.RxRingBuffer;
-import rx.observers.TestSubscriber;
-import rx.schedulers.Schedulers;
+import reactor.core.publisher.Flux;
+import reactor.core.scheduler.Schedulers;
+import reactor.util.concurrent.Queues;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,28 +53,31 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class BackPressureTest extends TestSuiteBase {
 
-    /*
     private static final int TIMEOUT = 200000;
     private static final int SETUP_TIMEOUT = 60000;
 
-    private Database createdDatabase;
-    private DocumentCollection createdCollection;
-    private List<Document> createdDocuments;
+    private CosmosDatabase createdDatabase;
+    private CosmosContainer createdCollection;
+    private List<CosmosItemSettings> createdDocuments;
 
-    private RxDocumentClientUnderTest client;
+    private CosmosClient client;
 
     public String getCollectionLink() {
         return Utils.getCollectionNameLink(createdDatabase.getId(), createdCollection.getId());
     }
 
-    private static DocumentCollection getSinglePartitionCollectionDefinition() {
-        DocumentCollection collectionDefinition = new DocumentCollection();
-        collectionDefinition.setId(UUID.randomUUID().toString());
+    private static CosmosContainerSettings getSinglePartitionCollectionDefinition() {
+        PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition();
+        ArrayList<String> paths = new ArrayList<String>();
+        paths.add("/mypk");
+        partitionKeyDef.setPaths(paths);
+
+        CosmosContainerSettings collectionDefinition = new CosmosContainerSettings(UUID.randomUUID().toString(), partitionKeyDef);
         return collectionDefinition;
     }
 
     @Factory(dataProvider = "simpleClientBuildersWithDirectHttps")
-    public BackPressureTest(Builder clientBuilder) {
+    public BackPressureTest(CosmosClientBuilder clientBuilder) {
         this.clientBuilder = clientBuilder;
     }
 
@@ -79,76 +85,76 @@ public class BackPressureTest extends TestSuiteBase {
     public void readFeed() throws Exception {
         FeedOptions options = new FeedOptions();
         options.setMaxItemCount(1);
-        Observable<FeedResponse<Document>> queryObservable = client
-            .readDocuments(getCollectionLink(), options);
+        Flux<FeedResponse<CosmosItemSettings>> queryObservable = createdCollection.listItems(options);
 
-        client.httpRequests.clear();
+        RxDocumentClientUnderTest rxClient = (RxDocumentClientUnderTest)CosmosBridgeInternal.getAsyncDocumentClient(client);
+        rxClient.httpRequests.clear();
 
-        TestSubscriber subscriber = new TestSubscriber(1);
-        queryObservable.observeOn(Schedulers.io(), 1).subscribe(subscriber);
+        TestSubscriber<FeedResponse<CosmosItemSettings>> subscriber = new TestSubscriber<FeedResponse<CosmosItemSettings>>(1);
+        queryObservable.publishOn(Schedulers.elastic()).subscribe(subscriber);
         int sleepTimeInMillis = 10000; // 10 seconds
 
         int i = 0;
         // use a test subscriber and request for more result and sleep in between
-        while (subscriber.getCompletions() == 0 && subscriber.getOnErrorEvents().isEmpty()) {
+        while (subscriber.completions() == 0 && subscriber.getEvents().get(1).isEmpty()) {
             TimeUnit.MILLISECONDS.sleep(sleepTimeInMillis);
             sleepTimeInMillis /= 2;
 
             if (sleepTimeInMillis > 1000) {
                 // validate that only one item is returned to subscriber in each iteration
-                assertThat(subscriber.getValueCount() - i).isEqualTo(1);
+                assertThat(subscriber.valueCount() - i).isEqualTo(1);
             }
             // validate that only one item is returned to subscriber in each iteration
             // validate that the difference between the number of requests to backend
             // and the number of returned results is always less than a fixed threshold
-            assertThat(client.httpRequests.size() - subscriber.getOnNextEvents().size())
-                .isLessThanOrEqualTo(RxRingBuffer.SIZE);
+            assertThat(rxClient.httpRequests.size() - subscriber.valueCount())
+                .isLessThanOrEqualTo(Queues.SMALL_BUFFER_SIZE);
 
             subscriber.requestMore(1);
             i++;
         }
 
         subscriber.assertNoErrors();
-        subscriber.assertCompleted();
-        assertThat(subscriber.getOnNextEvents()).hasSize(createdDocuments.size());
+        subscriber.assertComplete();
+        assertThat(subscriber.valueCount()).isEqualTo(createdDocuments.size());
     }
 
     @Test(groups = { "long" }, timeOut = TIMEOUT)
     public void query() throws Exception {
         FeedOptions options = new FeedOptions();
         options.setMaxItemCount(1);
-        Observable<FeedResponse<Document>> queryObservable = client
-                .queryDocuments(getCollectionLink(), "SELECT * from r", options);
+        Flux<FeedResponse<CosmosItemSettings>> queryObservable = createdCollection.queryItems("SELECT * from r", options);
 
-        client.httpRequests.clear();
+        RxDocumentClientUnderTest rxClient = (RxDocumentClientUnderTest)CosmosBridgeInternal.getAsyncDocumentClient(client);
+        rxClient.httpRequests.clear();
 
-        TestSubscriber subscriber = new TestSubscriber(1);
-        queryObservable.observeOn(Schedulers.io(), 1).subscribe(subscriber);
+        TestSubscriber<FeedResponse<CosmosItemSettings>> subscriber = new TestSubscriber<FeedResponse<CosmosItemSettings>>(1);
+        queryObservable.publishOn(Schedulers.elastic()).subscribe(subscriber);
         int sleepTimeInMillis = 10000;
 
         int i = 0;
         // use a test subscriber and request for more result and sleep in between
-        while(subscriber.getCompletions() == 0 && subscriber.getOnErrorEvents().isEmpty()) {
+        while(subscriber.completions() == 0 && subscriber.getEvents().get(1).isEmpty()) {
             TimeUnit.MILLISECONDS.sleep(sleepTimeInMillis);
             sleepTimeInMillis /= 2;
 
             if (sleepTimeInMillis > 1000) {
                 // validate that only one item is returned to subscriber in each iteration
-                assertThat(subscriber.getValueCount() - i).isEqualTo(1);
+                assertThat(subscriber.valueCount() - i).isEqualTo(1);
             }
             // validate that the difference between the number of requests to backend
             // and the number of returned results is always less than a fixed threshold
-            assertThat(client.httpRequests.size() - subscriber.getValueCount())
-                    .isLessThanOrEqualTo(RxRingBuffer.SIZE);
+            assertThat(rxClient.httpRequests.size() - subscriber.valueCount())
+                    .isLessThanOrEqualTo(Queues.SMALL_BUFFER_SIZE);
 
             subscriber.requestMore(1);
             i++;
         }
 
         subscriber.assertNoErrors();
-        subscriber.assertCompleted();
+        subscriber.assertComplete();
 
-        assertThat(subscriber.getOnNextEvents()).hasSize(createdDocuments.size());
+        assertThat(subscriber.valueCount()).isEqualTo(createdDocuments.size());
     }
 
     // TODO: DANOBLE: Investigate Direct TCP performance issue
@@ -158,35 +164,31 @@ public class BackPressureTest extends TestSuiteBase {
     @BeforeClass(groups = { "long" }, timeOut = 2 * SETUP_TIMEOUT)
     public void beforeClass() throws Exception {
 
-        RequestOptions options = new RequestOptions();
-        options.setOfferThroughput(1000);
-        createdDatabase = SHARED_DATABASE;
-        createdCollection = createCollection(createdDatabase.getId(), getSinglePartitionCollectionDefinition(), options);
-
+        CosmosContainerRequestOptions options = new CosmosContainerRequestOptions();
+        options.offerThroughput(1000);
         client = new ClientUnderTestBuilder(clientBuilder).build();
+        createdDatabase = getSharedCosmosDatabase(client);
+
+        createdCollection = createCollection(createdDatabase, getSinglePartitionCollectionDefinition(), options);
+
+        RxDocumentClientUnderTest rxClient = (RxDocumentClientUnderTest)CosmosBridgeInternal.getAsyncDocumentClient(client);
 
         // increase throughput to max for a single partition collection to avoid throttling
         // for bulk insert and later queries.
-        Offer offer = client.queryOffers(
+        Offer offer = rxClient.queryOffers(
                 String.format("SELECT * FROM r WHERE r.offerResourceId = '%s'",
-                        createdCollection.getResourceId())
-                        , null).first().map(FeedResponse::getResults).toBlocking().single().get(0);
+                        createdCollection.read().block().getCosmosContainerSettings().getResourceId())
+                        , null).take(1).map(FeedResponse::getResults).single().block().get(0);
         offer.setThroughput(6000);
-        offer = client.replaceOffer(offer).toBlocking().single().getResource();
+        offer = rxClient.replaceOffer(offer).single().block().getResource();
         assertThat(offer.getThroughput()).isEqualTo(6000);
 
-        ArrayList<Document> docDefList = new ArrayList<>();
+        ArrayList<CosmosItemSettings> docDefList = new ArrayList<>();
         for(int i = 0; i < 1000; i++) {
             docDefList.add(getDocumentDefinition(i));
         }
 
-        Observable<ResourceResponse<Document>> documentBulkInsertObs = bulkInsert(
-                client,
-                getCollectionLink(),
-                docDefList,
-                200);
-
-        createdDocuments = documentBulkInsertObs.map(ResourceResponse::getResource).toList().toBlocking().single();
+        createdDocuments = bulkInsertBlocking(createdCollection, docDefList);
 
         waitIfNeededForReplicasToCatchUp(clientBuilder);
         warmUp();
@@ -194,7 +196,7 @@ public class BackPressureTest extends TestSuiteBase {
 
     private void warmUp() {
         // ensure collection is cached
-        client.queryDocuments(getCollectionLink(), "SELECT * from r", null).first().toBlocking().single();
+        createdCollection.queryItems("SELECT * from r", null).blockFirst();
     }
 
     // TODO: DANOBLE: Investigate Direct TCP performance issue
@@ -203,13 +205,13 @@ public class BackPressureTest extends TestSuiteBase {
 
     @AfterClass(groups = { "long" }, timeOut = 2 * SHUTDOWN_TIMEOUT, alwaysRun = true)
     public void afterClass() {
-        safeDeleteCollection(client, createdCollection);
+        safeDeleteCollection(createdCollection);
         safeClose(client);
     }
 
-    private static Document getDocumentDefinition(int cnt) {
+    private static CosmosItemSettings getDocumentDefinition(int cnt) {
         String uuid = UUID.randomUUID().toString();
-        Document doc = new Document(String.format("{ "
+        CosmosItemSettings doc = new CosmosItemSettings(String.format("{ "
                 + "\"id\": \"%s\", "
                 + "\"prop\" : %d, "
                 + "\"mypk\": \"%s\", "
@@ -218,5 +220,4 @@ public class BackPressureTest extends TestSuiteBase {
                 , uuid, cnt, uuid));
         return doc;
     }
-    */
 }

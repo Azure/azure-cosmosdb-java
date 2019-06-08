@@ -133,8 +133,8 @@ public class RetryUtilsTest {
         TestSubscriber<StoreResponse> testSubscriber = new TestSubscriber<>();
         single.subscribe(testSubscriber);
         testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
-        assertThat(testSubscriber.getEvents().get(0)).hasSize(1);
-        validator.validate((StoreResponse) testSubscriber.getEvents().get(0).get(0));
+        assertThat(testSubscriber.valueCount()).isEqualTo(1);
+        validator.validate(testSubscriber.values().get(0));
     }
 
     private void toggleMockFuncBtwFailureSuccess(

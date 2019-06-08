@@ -80,7 +80,7 @@ public class ConsistencyReaderTest {
                                ConsistencyLevel expectedConsistencyToUse, boolean expectedToUseSession) throws DocumentClientException {
         AddressSelector addressSelector = Mockito.mock(AddressSelector.class);
         ISessionContainer sessionContainer = Mockito.mock(ISessionContainer.class);
-        ReactorTransportClient transportClient = Mockito.mock(ReactorTransportClient.class);
+        TransportClient transportClient = Mockito.mock(TransportClient.class);
         GatewayServiceConfiguratorReaderMock gatewayServiceConfigurationReaderWrapper = GatewayServiceConfiguratorReaderMock.from(accountConsistencyLevel);
         IAuthorizationTokenProvider authorizationTokenProvider = Mockito.mock(IAuthorizationTokenProvider.class);
         ConsistencyReader consistencyReader = new ConsistencyReader(configs,
@@ -126,7 +126,7 @@ public class ConsistencyReaderTest {
                                      boolean isReadingFromMasterOperation) {
         AddressSelector addressSelector = Mockito.mock(AddressSelector.class);
         ISessionContainer sessionContainer = Mockito.mock(ISessionContainer.class);
-        ReactorTransportClient transportClient = Mockito.mock(ReactorTransportClient.class);
+        TransportClient transportClient = Mockito.mock(TransportClient.class);
         GatewayServiceConfiguratorReaderMock gatewayServiceConfigurationReaderWrapper = GatewayServiceConfiguratorReaderMock.from(ConsistencyLevel.Strong,
                                                                                                                         systemMaxReplicaCount,
                                                                                                                         systemMinReplicaCount,
@@ -734,7 +734,7 @@ public class ConsistencyReaderTest {
         testSubscriber.assertNoErrors();
         testSubscriber.assertComplete();
         testSubscriber.assertValueCount(1);
-        validator.validate((List<StoreResult>) testSubscriber.getEvents().get(0).get(0));
+        validator.validate(testSubscriber.values().get(0));
     }
 
     public static void validateSuccess(Mono<StoreResponse> single,
@@ -752,7 +752,7 @@ public class ConsistencyReaderTest {
         testSubscriber.assertNoErrors();
         testSubscriber.assertComplete();
         testSubscriber.assertValueCount(1);
-        validator.validate((StoreResponse) testSubscriber.getEvents().get(0).get(0));
+        validator.validate(testSubscriber.values().get(0));
     }
 
 

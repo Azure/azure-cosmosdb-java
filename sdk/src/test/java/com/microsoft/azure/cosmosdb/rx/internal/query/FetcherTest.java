@@ -204,7 +204,7 @@ public class FetcherTest {
         subscriber.assertComplete();
         subscriber.assertNoErrors();
         subscriber.assertValueCount(1);
-        return (FeedResponse<Document>) subscriber.getEvents().get(0).get(0);
+        return subscriber.values().get(0);
     }
 
     private String getExpectedContinuationTokenInRequest(FeedOptionsBase options,

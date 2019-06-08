@@ -136,6 +136,6 @@ public class ClientRetryPolicyTest {
         testSubscriber.assertComplete();
         testSubscriber.assertNoErrors();
         testSubscriber.assertValueCount(1);
-        validator.validate((IRetryPolicy.ShouldRetryResult)testSubscriber.getEvents().get(0).get(0));
+        validator.validate(testSubscriber.values().get(0));
     }
 }

@@ -27,28 +27,26 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.microsoft.azure.cosmosdb.Resource;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
-import com.microsoft.azure.cosmos.CosmosDatabaseForTest;
 import com.microsoft.azure.cosmosdb.Database;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.DatabaseForTest;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.Permission;
 import com.microsoft.azure.cosmosdb.PermissionMode;
 import com.microsoft.azure.cosmosdb.User;
+import com.microsoft.azure.cosmosdb.rx.internal.TestSuiteBase;
+import reactor.core.publisher.Flux;
 
-import rx.Observable;
-
-import javax.net.ssl.SSLException;
-
+//TODO: change to use external TestSuiteBase
 public class ReadFeedPermissionsTest extends TestSuiteBase {
 
-    /*
     public final String databaseId = DatabaseForTest.generateId();
 
     private Database createdDatabase;
@@ -68,14 +66,14 @@ public class ReadFeedPermissionsTest extends TestSuiteBase {
         FeedOptions options = new FeedOptions();
         options.setMaxItemCount(2);
 
-        Observable<FeedResponse<Permission>> feedObservable = client.readPermissions(getUserLink(), options);
+        Flux<FeedResponse<Permission>> feedObservable = client.readPermissions(getUserLink(), options);
 
         int expectedPageSize = (createdPermissions.size() + options.getMaxItemCount() - 1) / options.getMaxItemCount();
 
         FeedResponseListValidator<Permission> validator = new FeedResponseListValidator.Builder<Permission>()
                 .totalSize(createdPermissions.size())
                 .numberOfPages(expectedPageSize)
-                .exactlyContainsInAnyOrder(createdPermissions.stream().map(d -> d.getResourceId()).collect(Collectors.toList()))
+                .exactlyContainsInAnyOrder(createdPermissions.stream().map(Resource::getResourceId).collect(Collectors.toList()))
                 .allPagesSatisfy(new FeedResponseValidator.Builder<Permission>()
                         .requestChargeGreaterThanOrEqualTo(1.0).build())
                 .build();
@@ -116,7 +114,7 @@ public class ReadFeedPermissionsTest extends TestSuiteBase {
         permission.setId(UUID.randomUUID().toString());
         permission.setPermissionMode(PermissionMode.Read);
         permission.setResourceLink("dbs/AQAAAA==/colls/AQAAAJ0fgT" + Integer.toString(index) + "=");
-        return client.createPermission(getUserLink(), permission, null).toBlocking().single().getResource();
+        return client.createPermission(getUserLink(), permission, null).single().block().getResource();
     }
 
     private String getUserLink() {
@@ -130,5 +128,4 @@ public class ReadFeedPermissionsTest extends TestSuiteBase {
     private String getUserId() {
         return createdUser.getId();
     }
-    */
 }

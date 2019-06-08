@@ -25,7 +25,6 @@ package com.microsoft.azure.cosmosdb.rx.internal;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -38,10 +37,8 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
-import com.microsoft.azure.cosmosdb.DataType;
 import com.microsoft.azure.cosmosdb.Database;
 import com.microsoft.azure.cosmosdb.Document;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
@@ -52,10 +49,7 @@ import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient.Builder;
 import com.microsoft.azure.cosmosdb.rx.SpyClientBuilder;
 import com.microsoft.azure.cosmosdb.rx.Utils;
 
-import io.netty.buffer.ByteBuf;
 import reactor.core.publisher.Flux;
-import reactor.netty.http.client.HttpClientRequest;
-import rx.Observable;
 
 public class DocumentQuerySpyWireContentTest extends TestSuiteBase {
     private Database createdDatabase;
