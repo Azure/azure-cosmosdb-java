@@ -22,8 +22,8 @@
  SOFTWARE.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" 
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.microsoft.azure</groupId>
   <artifactId>azure-cosmosdb-parent-outer</artifactId>
@@ -44,26 +44,23 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <assertj.version>3.11.1</assertj.version>
     <commons-io.version>2.5</commons-io.version>
     <commons-lang3.version>3.8.1</commons-lang3.version>
-    <commons-validator.version>1.6</commons-validator.version>
     <commons-text.version>1.6</commons-text.version>
+    <guava.version>27.0.1-jre</guava.version>
     <jackson-databind.version>2.9.9</jackson-databind.version>
     <java-uuid-generator.version>3.1.4</java-uuid-generator.version>
-    <slf4j.version>1.7.6</slf4j.version>
     <log4j.version>1.2.17</log4j.version>
     <metrics.version>4.0.5</metrics.version>
     <mockito.version>1.10.19</mockito.version>
-    <netty.version>4.1.32.Final</netty.version>
-    <rxnetty.version>0.4.20</rxnetty.version>
-    <rxjava.version>1.3.8</rxjava.version>
+    <netty.version>4.1.36.Final</netty.version>
     <rxjava-extras.version>0.8.0.17</rxjava-extras.version>
     <rxjava-string.version>1.1.1</rxjava-string.version>
+    <rxjava.version>1.3.8</rxjava.version>
+    <rxnetty.version>0.4.20</rxnetty.version>
+    <slf4j.version>1.7.6</slf4j.version>
     <testng.version>6.14.3</testng.version>
-    <assertj.version>3.11.1</assertj.version>
-    <mockito.version>1.10.19</mockito.version>
-    <guava.version>27.0.1-jre</guava.version>
-    <commons-validator-version>1.6</commons-validator-version>
     <test.groups>unit</test.groups>
     <sdk-version>2.4.5</sdk-version>
     <direct-connectivity-version>2.4.5</direct-connectivity-version>
@@ -435,14 +432,7 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
-  <dependencies>
-    <dependency>
-      <groupId>org.testng</groupId>
-      <artifactId>testng</artifactId>
-      <version>${testng.version}</version>
-      <scope>test</scope>
-    </dependency>
-  </dependencies>
+  <dependencies />
   <licenses>
     <license>
       <name>MIT License</name>

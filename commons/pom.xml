@@ -102,11 +102,6 @@ SOFTWARE.
       <version>${commons-io.version}</version>
     </dependency>
     <dependency>
-      <groupId>commons-validator</groupId>
-      <artifactId>commons-validator</artifactId>
-      <version>${commons-validator.version}</version>
-    </dependency>
-    <dependency>
       <groupId>com.github.davidmoten</groupId>
       <artifactId>rxjava-extras</artifactId>
       <version>${rxjava-extras.version}</version>
