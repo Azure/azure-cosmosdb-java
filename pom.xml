@@ -180,20 +180,20 @@
       </build>
     </profile>
     <profile>
-       <!-- integration tests, requires Cosmos DB Emulator Endpoint -->
-       <id>emulator</id>
-       <properties>
-         <test.groups>emulator</test.groups>
-       </properties>
-       <build>
-         <plugins>
-           <plugin>
-             <groupId>org.apache.maven.plugins</groupId>
-             <artifactId>maven-failsafe-plugin</artifactId>
-           </plugin>
-         </plugins>
-       </build>
-     </profile>
+      <!-- integration tests, requires Cosmos DB Emulator Endpoint -->
+      <id>emulator</id>
+      <properties>
+        <test.groups>emulator</test.groups>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
     <profile>
       <!-- integration tests, requires Cosmos DB Emulator Endpoint -->
       <id>non-emulator</id>

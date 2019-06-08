@@ -27,8 +27,6 @@ import com.microsoft.azure.cosmos.CosmosClientBuilder;
 import com.microsoft.azure.cosmos.CosmosContainer;
 import com.microsoft.azure.cosmos.CosmosDatabase;
 import com.microsoft.azure.cosmos.CosmosItemSettings;
-import com.microsoft.azure.cosmosdb.internal.directconnectivity.Protocol;
-import org.testng.SkipException;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
@@ -56,29 +54,29 @@ public class DocumentClientResourceLeakTest extends TestSuiteBase {
     //TODO : FIX tests
     @Test(groups = {"emulator"}, timeOut = TIMEOUT)
     public void resourceLeak() throws Exception {
-        //TODO FIXME DANOBLE this test doesn't pass on RNTBD
-        if (clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {
-            throw new SkipException("RNTBD");
-        }
+
         System.gc();
         TimeUnit.SECONDS.sleep(10);
         long usedMemoryInBytesBefore = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory());
 
-
         for (int i = 0; i < MAX_NUMBER; i++) {
-            logger.info("client {}", i);
+            logger.info("CLIENT {}", i);
+            client = clientBuilder.build();
             try {
-                logger.info("creating doc...");
-                createDocument(client.getDatabase(createdDatabase.getId()).getContainer(createdCollection.getId()), getDocumentDefinition());
+                logger.info("creating document");
+                createDocument(client.getDatabase(createdDatabase.getId()).getContainer(createdCollection.getId()),
+                    getDocumentDefinition());
             } finally {
-                logger.info("closing client...");
+                logger.info("closing client");
                 client.close();
             }
         }
+
         System.gc();
         TimeUnit.SECONDS.sleep(10);
-        long usedMemoryInBytesAfter = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory());
 
+        long usedMemoryInBytesAfter = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory());
+        logger.info("memory delta: {} MB", (usedMemoryInBytesAfter - usedMemoryInBytesBefore) / (double)ONE_MB);
         assertThat(usedMemoryInBytesAfter - usedMemoryInBytesBefore).isLessThan(50 * ONE_MB);
     }
 
