@@ -49,7 +49,7 @@ import java.util.List;
  */
 public class CosmosClientBuilder {
 
-    private Configs configs;
+    private Configs configs = new Configs();
     private String serviceEndpoint;
     private String keyOrResourceToken;
     private ConnectionPolicy connectionPolicy;
