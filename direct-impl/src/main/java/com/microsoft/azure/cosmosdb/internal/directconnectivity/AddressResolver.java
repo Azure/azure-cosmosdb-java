@@ -257,17 +257,12 @@ public class AddressResolver implements IAddressResolver {
                 new PartitionKeyRangeIdentity(collection.getResourceId(), range.getId()),
                 forceRefreshPartitionAddresses);
 
-            return addressesObs.flatMap(addresses -> {
-
-                if (addresses == null) {
-                    logger.info(
+            return addressesObs.flatMap(addresses -> Mono.just(new ResolutionResult(range, addresses))).switchIfEmpty(Mono.defer(() -> {
+                logger.info(
                         "Could not resolve addresses for identity {}/{}. Potentially collection cache or routing map cache is outdated. Return empty - upper logic will refresh and retry. ",
                         new PartitionKeyRangeIdentity(collection.getResourceId(), range.getId()));
-                    return Mono.empty();
-                }
-
-                return Mono.just(new ResolutionResult(range, addresses));
-            });
+                return Mono.empty();
+            }));
 
         } catch (Exception e) {
             return Mono.error(e);
@@ -541,7 +536,9 @@ public class AddressResolver implements IAddressResolver {
 
                     } else {
                         return ensureCollectionRoutingMapCacheIsUptoDateFunc.apply(state)
-                                .flatMap(resolveServerPartition).flatMap(onNullThrowNotFound).flatMap(addCollectionRidIfNameBased);
+                                .flatMap(resolveServerPartition)
+                                .flatMap(onNullThrowNotFound)
+                                .flatMap(addCollectionRidIfNameBased);
                     }
                 }));
             }

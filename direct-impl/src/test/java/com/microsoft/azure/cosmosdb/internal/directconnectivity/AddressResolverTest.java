@@ -52,6 +52,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
@@ -86,6 +87,7 @@ public class AddressResolverTest {
 
     @BeforeClass(groups = "unit")
     public void setup() throws Exception {
+        Hooks.onOperatorDebug();
         this.addressResolver = new AddressResolver();
         this.collectionCache = Mockito.mock(RxCollectionCache.class);
         this.collectionRoutingMapCache = Mockito.mock(ICollectionRoutingMapCache.class);
@@ -380,7 +382,7 @@ public class AddressResolverTest {
             CollectionRoutingMap previousValue = invocationOnMock.getArgumentAt(1, CollectionRoutingMap.class);
 
             if (previousValue == null) {
-                return Mono.justOrEmpty(currentRoutingMap.getOrDefault(collectionRid, null));
+                return Mono.justOrEmpty(currentRoutingMap.get(collectionRid));
             }
 
             if (previousValue != null && currentRoutingMap.containsKey(previousValue.getCollectionUniqueId()) &&
@@ -404,7 +406,7 @@ public class AddressResolverTest {
                 }
 
 
-                return Mono.just(currentRoutingMap.containsKey(collectionRid) ? currentRoutingMap.get(collectionRid) : null);
+                return Mono.justOrEmpty(currentRoutingMap.get(collectionRid));
             }
 
             return Mono.error(new NotImplementedException("not mocked"));
@@ -449,7 +451,7 @@ public class AddressResolverTest {
 
 
                 // TODO: what to return in this case if it is null!!
-                return Mono.just(currentAddresses.containsKey(si) ? currentAddresses.get(si) : null);
+                return Mono.justOrEmpty(currentAddresses.get(si));
             }
         }).when(fabricAddressCache).tryGetAddresses(Mockito.any(RxDocumentServiceRequest.class), Mockito.any(PartitionKeyRangeIdentity.class), Mockito.anyBoolean());
     }

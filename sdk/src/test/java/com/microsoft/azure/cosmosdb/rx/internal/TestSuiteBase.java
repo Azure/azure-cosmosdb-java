@@ -142,15 +142,15 @@ public class TestSuiteBase {
 
         if (this.clientBuilder != null) {
 
-            ConnectionMode connectionMode = this.clientBuilder.connectionPolicy.getConnectionMode();
-            Protocol protocol = connectionMode == ConnectionMode.Direct ? this.clientBuilder.configs.getProtocol() : Protocol.Https;
+            ConnectionMode connectionMode = this.clientBuilder.getConnectionPolicy().getConnectionMode();
+            Protocol protocol = connectionMode == ConnectionMode.Direct ? this.clientBuilder.getConfigs().getProtocol() : Protocol.Https;
 
             logger.info("Starting {}::{} using {} {} mode with {} consistency",
                 method.getDeclaringClass().getSimpleName(),
                 method.getName(),
                 connectionMode,
                 protocol,
-                this.clientBuilder.desiredConsistencyLevel
+                this.clientBuilder.getDesiredConsistencyLevel()
             );
             return;
         }
