@@ -44,6 +44,7 @@ import com.microsoft.azure.cosmos.CosmosContainerResponse;
 import com.microsoft.azure.cosmos.CosmosContainerSettings;
 import com.microsoft.azure.cosmos.CosmosDatabase;
 import com.microsoft.azure.cosmos.CosmosItem;
+import com.microsoft.azure.cosmos.CosmosItemRequestOptions;
 import com.microsoft.azure.cosmos.CosmosItemResponse;
 import com.microsoft.azure.cosmos.CosmosItemSettings;
 import com.microsoft.azure.cosmos.CosmosResponseValidator;
@@ -53,6 +54,7 @@ import com.microsoft.azure.cosmosdb.CompositePathSortOrder;
 import com.microsoft.azure.cosmosdb.Database;
 import com.microsoft.azure.cosmosdb.IndexingMode;
 import com.microsoft.azure.cosmosdb.IndexingPolicy;
+import com.microsoft.azure.cosmosdb.PartitionKey;
 import com.microsoft.azure.cosmosdb.SpatialSpec;
 import com.microsoft.azure.cosmosdb.SpatialType;
 
@@ -280,7 +282,9 @@ public class CollectionCrudTest extends TestSuiteBase {
             document.set("name", "New Document");
             document.set("mypk", "mypkValue");
             CosmosItem item = createDocument(collection, document);
-            CosmosItemResponse readDocumentResponse = item.read().block();
+            CosmosItemRequestOptions options = new CosmosItemRequestOptions();
+            options.setPartitionKey(new PartitionKey("mypkValue"));
+            CosmosItemResponse readDocumentResponse = item.read(options).block();
             logger.info("Client 1 Read Document Client Side Request Statistics {}", readDocumentResponse.getRequestDiagnosticsString());
             logger.info("Client 1 Read Document Latency {}", readDocumentResponse.getRequestLatency());
 
