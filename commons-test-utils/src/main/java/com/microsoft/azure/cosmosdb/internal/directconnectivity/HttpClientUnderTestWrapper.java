@@ -37,6 +37,7 @@ import static org.mockito.Mockito.doAnswer;
  * This is a helper class for capturing requests sent over a httpClient.
  */
 public class HttpClientUnderTestWrapper {
+
     final private HttpClient origHttpClient;
     final private HttpClient spyHttpClient;
 
@@ -45,7 +46,6 @@ public class HttpClientUnderTestWrapper {
     public HttpClientUnderTestWrapper(HttpClient origHttpClient) {
         this.origHttpClient = origHttpClient;
         this.spyHttpClient = Mockito.spy(origHttpClient);
-
         initRequestCapture(spyHttpClient);
     }
 

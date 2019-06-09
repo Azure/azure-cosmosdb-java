@@ -28,6 +28,7 @@ import com.microsoft.azure.cosmosdb.ConsistencyLevel;
 import com.microsoft.azure.cosmosdb.ISessionContainer;
 import com.microsoft.azure.cosmosdb.internal.QueryCompatibilityMode;
 import com.microsoft.azure.cosmosdb.internal.UserAgentContainer;
+import com.microsoft.azure.cosmosdb.internal.directconnectivity.Protocol;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import com.microsoft.azure.cosmosdb.rx.SpyClientBuilder;
 import com.microsoft.azure.cosmosdb.rx.internal.directconnectivity.ReflectionUtils;
@@ -49,6 +50,7 @@ import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.spy;
 
 public class SpyClientUnderTestFactory {
 
@@ -61,6 +63,12 @@ public class SpyClientUnderTestFactory {
         public abstract List<T> getCapturedRequests();
         
         public abstract void clearCapturedRequests();
+
+        protected static Configs createConfigsSpy(final Protocol protocol) {
+            final Configs configs = spy(new Configs());
+            doAnswer((Answer<Protocol>) invocation -> protocol).when(configs).getProtocol();
+            return configs;
+        }
     }
     
     public static class ClientWithGatewaySpy extends SpyBaseClass<RxDocumentServiceRequest> {
@@ -96,7 +104,7 @@ public class SpyClientUnderTestFactory {
                     globalEndpointManager,
                     rxClient);
             this.requests = Collections.synchronizedList(new ArrayList<>());
-            this.spyRxGatewayStoreModel = Mockito.spy(this.origRxGatewayStoreModel);
+            this.spyRxGatewayStoreModel = spy(this.origRxGatewayStoreModel);
             this.initRequestCapture();
             return this.spyRxGatewayStoreModel;
         }
@@ -186,12 +194,11 @@ public class SpyClientUnderTestFactory {
                 Collections.synchronizedList(new ArrayList<>());
 
         DirectHttpsClientUnderTest(URI serviceEndpoint, String masterKey, ConnectionPolicy connectionPolicy, ConsistencyLevel consistencyLevel) {
-            // TODO: DANOBLE: ensure the configs instance instantiated here specifies Protocol.Https
-            super(serviceEndpoint, masterKey, connectionPolicy, consistencyLevel, new Configs());
+            super(serviceEndpoint, masterKey, connectionPolicy, consistencyLevel, createConfigsSpy(Protocol.Https));
             assert connectionPolicy.getConnectionMode() == ConnectionMode.Direct;
             init();
             this.origHttpClient = ReflectionUtils.getDirectHttpsHttpClient(this);
-            this.spyHttpClient = Mockito.spy(this.origHttpClient);
+            this.spyHttpClient = spy(this.origHttpClient);
             ReflectionUtils.setDirectHttpsHttpClient(this, this.spyHttpClient);
             this.initRequestCapture(this.spyHttpClient);
         }
@@ -272,7 +279,7 @@ public class SpyClientUnderTestFactory {
                                                      GlobalEndpointManager globalEndpointManager,
                                                      HttpClient rxClient) {
 
-                HttpClient spy = Mockito.spy(rxClient);
+                HttpClient spy = spy(rxClient);
 
                 this.origHttpClient = rxClient;
                 this.spyHttpClient = spy;

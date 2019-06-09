@@ -114,16 +114,7 @@ public class AggregateQueryTests extends TestSuiteBase {
                 .hasValidQueryMetrics(qmEnabled)
                 .build();
 
-            try {
-                validateQuerySuccess(queryObservable, validator);
-            } catch (Throwable error) {
-                if (this.clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {
-                    String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
-                    logger.info(message, error);
-                    throw new SkipException(message, error);
-                }
-                throw error;
-            }
+            validateQuerySuccess(queryObservable, validator);
         }
     }
 
