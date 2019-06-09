@@ -24,7 +24,8 @@
 package com.azure.data.cosmos;
 
 /**
- * Specifies the options associated with feed methods (enumeration operations) in the Azure Cosmos DB database service.
+ * Specifies the options associated with feed methods (enumeration operations)
+ * in the Azure Cosmos DB database service.
  */
 public final class FeedOptions extends FeedOptionsBase {
     private String sessionToken;
@@ -36,7 +37,8 @@ public final class FeedOptions extends FeedOptionsBase {
     private int maxBufferedItemCount;
     private int responseContinuationTokenLimitInKb;
 
-    public FeedOptions() {}
+    public FeedOptions() {
+    }
 
     public FeedOptions(FeedOptions options) {
         super(options);
@@ -63,8 +65,7 @@ public final class FeedOptions extends FeedOptionsBase {
     /**
      * Sets the partitionKeyRangeId.
      *
-     * @param partitionKeyRangeId
-     *           the partitionKeyRangeId.
+     * @param partitionKeyRangeId the partitionKeyRangeId.
      */
     public FeedOptions partitionKeyRangeIdInternal(String partitionKeyRangeId) {
         this.partitionKeyRangeId = partitionKeyRangeId;
@@ -83,8 +84,7 @@ public final class FeedOptions extends FeedOptionsBase {
     /**
      * Sets the session token for use with session consistency.
      *
-     * @param sessionToken
-     *            the session token.
+     * @param sessionToken the session token.
      */
     public FeedOptions sessionToken(String sessionToken) {
         this.sessionToken = sessionToken;
@@ -105,8 +105,7 @@ public final class FeedOptions extends FeedOptionsBase {
      * Sets the option to allow scan on the queries which couldn't be served as
      * indexing was opted out on the requested paths.
      *
-     * @param enableScanInQuery
-     *            the option of enable scan in query.
+     * @param enableScanInQuery the option of enable scan in query.
      */
     public FeedOptions enableScanInQuery(Boolean enableScanInQuery) {
         this.enableScanInQuery = enableScanInQuery;
@@ -127,8 +126,7 @@ public final class FeedOptions extends FeedOptionsBase {
      * Sets the option to allow queries to emit out verbose traces for
      * investigation.
      *
-     * @param emitVerboseTracesInQuery
-     *            the emit verbose traces in query.
+     * @param emitVerboseTracesInQuery the emit verbose traces in query.
      */
     public FeedOptions emitVerboseTracesInQuery(Boolean emitVerboseTracesInQuery) {
         this.emitVerboseTracesInQuery = emitVerboseTracesInQuery;
@@ -150,9 +148,8 @@ public final class FeedOptions extends FeedOptionsBase {
      * Sets the option to allow queries to run across all partitions of the
      * collection.
      *
-     * @param enableCrossPartitionQuery
-     *            whether to allow queries to run across all partitions of the
-     *            collection.
+     * @param enableCrossPartitionQuery whether to allow queries to run across all
+     *                                  partitions of the collection.
      */
     public FeedOptions enableCrossPartitionQuery(Boolean enableCrossPartitionQuery) {
         this.enableCrossPartitionQuery = enableCrossPartitionQuery;
@@ -163,8 +160,8 @@ public final class FeedOptions extends FeedOptionsBase {
      * Gets the number of concurrent operations run client side during parallel
      * query execution.
      *
-     * @return number of concurrent operations run client side during parallel
-     *         query execution.
+     * @return number of concurrent operations run client side during parallel query
+     *         execution.
      */
     public int maxDegreeOfParallelism() {
         return maxDegreeOfParallelism;
@@ -174,8 +171,7 @@ public final class FeedOptions extends FeedOptionsBase {
      * Sets the number of concurrent operations run client side during parallel
      * query execution.
      *
-     * @param maxDegreeOfParallelism
-     *            number of concurrent operations.
+     * @param maxDegreeOfParallelism number of concurrent operations.
      */
     public FeedOptions maxDegreeOfParallelism(int maxDegreeOfParallelism) {
         this.maxDegreeOfParallelism = maxDegreeOfParallelism;
@@ -197,8 +193,7 @@ public final class FeedOptions extends FeedOptionsBase {
      * Sets the maximum number of items that can be buffered client side during
      * parallel query execution.
      *
-     * @param maxBufferedItemCount
-     *            maximum number of items.
+     * @param maxBufferedItemCount maximum number of items.
      */
     public FeedOptions maxBufferedItemCount(int maxBufferedItemCount) {
         this.maxBufferedItemCount = maxBufferedItemCount;
@@ -206,18 +201,21 @@ public final class FeedOptions extends FeedOptionsBase {
     }
 
     /**
-     * Sets the ResponseContinuationTokenLimitInKb request option for document query requests
-     * in the Azure Cosmos DB service.
+     * Sets the ResponseContinuationTokenLimitInKb request option for document query
+     * requests in the Azure Cosmos DB service.
      *
-     * ResponseContinuationTokenLimitInKb is used to limit the length of continuation token in the query response.
-     * Valid values are &gt;= 1.
+     * ResponseContinuationTokenLimitInKb is used to limit the length of
+     * continuation token in the query response. Valid values are &gt;= 1.
      *
-     * The continuation token contains both required and optional fields.
-     * The required fields are necessary for resuming the execution from where it was stooped.
-     * The optional fields may contain serialized index lookup work that was done but not yet utilized.
-     * This avoids redoing the work again in subsequent continuations and hence improve the query performance.
-     * Setting the maximum continuation size to 1KB, the Azure Cosmos DB service will only serialize required fields.
-     * Starting from 2KB, the Azure Cosmos DB service would serialize as much as it could fit till it reaches the maximum specified size.
+     * The continuation token contains both required and optional fields. The
+     * required fields are necessary for resuming the execution from where it was
+     * stooped. The optional fields may contain serialized index lookup work that
+     * was done but not yet utilized. This avoids redoing the work again in
+     * subsequent continuations and hence improve the query performance. Setting the
+     * maximum continuation size to 1KB, the Azure Cosmos DB service will only
+     * serialize required fields. Starting from 2KB, the Azure Cosmos DB service
+     * would serialize as much as it could fit till it reaches the maximum specified
+     * size.
      *
      * @param limitInKb continuation token size limit.
      */
@@ -227,11 +225,11 @@ public final class FeedOptions extends FeedOptionsBase {
     }
 
     /**
-     * Gets the ResponseContinuationTokenLimitInKb request option for document query requests
-     * in the Azure Cosmos DB service. If not already set returns 0.
+     * Gets the ResponseContinuationTokenLimitInKb request option for document query
+     * requests in the Azure Cosmos DB service. If not already set returns 0.
      *
-     * ResponseContinuationTokenLimitInKb is used to limit the length of continuation token in the query response.
-     * Valid values are &gt;= 1.
+     * ResponseContinuationTokenLimitInKb is used to limit the length of
+     * continuation token in the query response. Valid values are &gt;= 1.
      *
      * @return return set ResponseContinuationTokenLimitInKb, or 0 if not set
      */

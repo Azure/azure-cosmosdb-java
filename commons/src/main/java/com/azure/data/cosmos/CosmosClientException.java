@@ -34,17 +34,19 @@ import com.azure.data.cosmos.internal.HttpConstants;
 
 /**
  * This class defines a custom exception type for all operations on
- * DocumentClient in the Azure Cosmos DB database service. Applications are expected to catch CosmosClientException
- * and handle errors as appropriate when calling methods on DocumentClient.
+ * DocumentClient in the Azure Cosmos DB database service. Applications are
+ * expected to catch CosmosClientException and handle errors as appropriate when
+ * calling methods on DocumentClient.
  * <p>
  * Errors coming from the service during normal execution are converted to
- * CosmosClientException before returning to the application with the following exception:
+ * CosmosClientException before returning to the application with the following
+ * exception:
  * <p>
- * When a BE error is encountered during a QueryIterable&lt;T&gt; iteration, an IllegalStateException
- * is thrown instead of CosmosClientException.
+ * When a BE error is encountered during a QueryIterable&lt;T&gt; iteration, an
+ * IllegalStateException is thrown instead of CosmosClientException.
  * <p>
- * When a transport level error happens that request is not able to reach the service,
- * an IllegalStateException is thrown instead of CosmosClientException.
+ * When a transport level error happens that request is not able to reach the
+ * service, an IllegalStateException is thrown instead of CosmosClientException.
  */
 public class CosmosClientException extends Exception {
     private static final long serialVersionUID = 1L;
@@ -109,13 +111,15 @@ public class CosmosClientException extends Exception {
     /**
      * Creates a new instance of the CosmosClientException class.
      *
-     * @param resourceAddress the address of the resource the request is associated with.
+     * @param resourceAddress the address of the resource the request is associated
+     *                        with.
      * @param statusCode      the http status code of the response.
      * @param errorResource   the error resource object.
      * @param responseHeaders the response headers.
      */
 
-    public CosmosClientException(String resourceAddress, int statusCode, Error errorResource, Map<String, String> responseHeaders) {
+    public CosmosClientException(String resourceAddress, int statusCode, Error errorResource,
+            Map<String, String> responseHeaders) {
 
         super(errorResource == null ? null : errorResource.getMessage());
 
@@ -125,14 +129,18 @@ public class CosmosClientException extends Exception {
         this.error = errorResource;
     }
 
-    /** Creates a new instance of the CosmosClientException class.
+    /**
+     * Creates a new instance of the CosmosClientException class.
+     * 
      * @param message         the string message.
      * @param statusCode      the http status code of the response.
      * @param exception       the exception object.
      * @param responseHeaders the response headers.
-     * @param resourceAddress the address of the resource the request is associated with.
+     * @param resourceAddress the address of the resource the request is associated
+     *                        with.
      */
-    public CosmosClientException(String message, Exception exception, Map<String, String> responseHeaders, int statusCode, String resourceAddress) {
+    public CosmosClientException(String message, Exception exception, Map<String, String> responseHeaders,
+            int statusCode, String resourceAddress) {
 
         super(message, exception);
 
@@ -202,11 +210,11 @@ public class CosmosClientException extends Exception {
     }
 
     /**
-     * Gets the recommended time interval after which the client can retry
-     * failed requests
+     * Gets the recommended time interval after which the client can retry failed
+     * requests
      *
-     * @return the recommended time interval after which the client can retry
-     * failed requests.
+     * @return the recommended time interval after which the client can retry failed
+     *         requests.
      */
     public long retryAfterInMilliseconds() {
         long retryIntervalInMilliseconds = 0;
@@ -264,15 +272,9 @@ public class CosmosClientException extends Exception {
 
     @Override
     public String toString() {
-        return getClass().getSimpleName() + "{" +
-                "error=" + error +
-                ", resourceAddress='" + resourceAddress + '\'' +
-                ", statusCode=" + statusCode +
-                ", message=" + getMessage() +
-                ", causeInfo=" + causeInfo() +
-                ", responseHeaders=" + responseHeaders +
-                ", requestHeaders=" + requestHeaders +
-                '}';
+        return getClass().getSimpleName() + "{" + "error=" + error + ", resourceAddress='" + resourceAddress + '\''
+                + ", statusCode=" + statusCode + ", message=" + getMessage() + ", causeInfo=" + causeInfo()
+                + ", responseHeaders=" + responseHeaders + ", requestHeaders=" + requestHeaders + '}';
     }
 
     String innerErrorMessage() {

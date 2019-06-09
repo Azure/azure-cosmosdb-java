@@ -39,6 +39,7 @@ public class Resource extends JsonSerializable {
 
     /**
      * Copy constructor.
+     * 
      * @param resource resource to by copied.
      */
     protected Resource(Resource resource) {
@@ -60,7 +61,8 @@ public class Resource extends JsonSerializable {
     /**
      * Constructor.
      *
-     * @param objectNode the {@link ObjectNode} that represent the {@link JsonSerializable}
+     * @param objectNode the {@link ObjectNode} that represent the
+     *                   {@link JsonSerializable}
      */
     Resource(ObjectNode objectNode) {
         super(objectNode);
@@ -69,14 +71,14 @@ public class Resource extends JsonSerializable {
     /**
      * Constructor.
      *
-     * @param jsonString the json string that represents the resource.
+     * @param jsonString   the json string that represents the resource.
      * @param objectMapper the custom object mapper
      */
     Resource(String jsonString, ObjectMapper objectMapper) {
         // TODO: Made package private due to #153. #171 adding custom serialization options back.
         super(jsonString, objectMapper);
     }
-    
+
     /**
      * Constructor.
      *
@@ -151,7 +153,8 @@ public class Resource extends JsonSerializable {
      */
     public OffsetDateTime timestamp() {
         Long seconds = super.getLong(Constants.Properties.LAST_MODIFIED);
-        if (seconds == null) return null;
+        if (seconds == null)
+            return null;
         return OffsetDateTime.ofInstant(Instant.ofEpochSecond(seconds.longValue()), ZoneOffset.UTC);
     }
 
@@ -186,7 +189,9 @@ public class Resource extends JsonSerializable {
     }
 
     /**
-     * Sets the alt-link associated with the resource from the Azure Cosmos DB service.
+     * Sets the alt-link associated with the resource from the Azure Cosmos DB
+     * service.
+     * 
      * @param altLink
      */
     Resource altLink(String altLink) {
@@ -195,7 +200,8 @@ public class Resource extends JsonSerializable {
     }
 
     /**
-     * Gets the alt-link associated with the resource from the Azure Cosmos DB service.
+     * Gets the alt-link associated with the resource from the Azure Cosmos DB
+     * service.
      */
     String altLink() {
         return this.altLink;

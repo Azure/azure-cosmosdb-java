@@ -27,8 +27,8 @@ import com.azure.data.cosmos.internal.routing.PartitionKeyInternal;
 import com.azure.data.cosmos.internal.Utils;
 
 /**
- * Represents a partition key value in the Azure Cosmos DB database service. A partition key identifies the partition
- * where the document is stored in.
+ * Represents a partition key value in the Azure Cosmos DB database service. A
+ * partition key identifies the partition where the document is stored in.
  */
 public class PartitionKey {
 
@@ -45,11 +45,12 @@ public class PartitionKey {
      */
     @SuppressWarnings("serial")
     public PartitionKey(final Object key) {
-        this.internalPartitionKey = PartitionKeyInternal.fromObjectArray(new Object[] {key}, true);
+        this.internalPartitionKey = PartitionKeyInternal.fromObjectArray(new Object[] { key }, true);
     }
 
     /**
-     * CREATE a new instance of the PartitionKey object from a serialized JSON partition key.
+     * CREATE a new instance of the PartitionKey object from a serialized JSON
+     * partition key.
      *
      * @param jsonString the JSON string representation of this PartitionKey object.
      * @return the PartitionKey instance.
@@ -75,7 +76,9 @@ public class PartitionKey {
     }
 
     /**
-     * Overrides the Equal operator for object comparisons between two instances of {@link PartitionKey}
+     * Overrides the Equal operator for object comparisons between two instances of
+     * {@link PartitionKey}
+     * 
      * @param other The object to compare with.
      * @return True if two object instance are considered equal.
      */

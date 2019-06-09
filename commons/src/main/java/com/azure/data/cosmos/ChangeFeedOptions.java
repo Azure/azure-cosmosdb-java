@@ -26,14 +26,16 @@ package com.azure.data.cosmos;
 import java.time.OffsetDateTime;
 
 /**
- * Specifies the options associated with change feed methods (enumeration operations) in the Azure Cosmos DB database service.
+ * Specifies the options associated with change feed methods (enumeration
+ * operations) in the Azure Cosmos DB database service.
  */
 public final class ChangeFeedOptions extends FeedOptionsBase {
     private String partitionKeyRangeId;
     private boolean startFromBeginning;
     private OffsetDateTime startDateTime;
 
-    public ChangeFeedOptions() {}
+    public ChangeFeedOptions() {
+    }
 
     public ChangeFeedOptions(ChangeFeedOptions options) {
         super(options);
@@ -41,12 +43,14 @@ public final class ChangeFeedOptions extends FeedOptionsBase {
         this.startFromBeginning = options.startFromBeginning;
         this.startDateTime = options.startDateTime;
     }
+
     // TODO: Make private
     /**
      * Get the partition key range id for the current request
      * <p>
      * ChangeFeed requests can be executed against specific partition key ranges.
-     * This is used to process the change feed in parallel across multiple consumers.
+     * This is used to process the change feed in parallel across multiple
+     * consumers.
      * </p>
      *
      * @return a string indicating the partition key range ID
@@ -61,7 +65,8 @@ public final class ChangeFeedOptions extends FeedOptionsBase {
      * Set the partition key range id for the current request
      * <p>
      * ChangeFeed requests can be executed against specific partition key ranges.
-     * This is used to process the change feed in parallel across multiple consumers.
+     * This is used to process the change feed in parallel across multiple
+     * consumers.
      * </p>
      *
      * @param partitionKeyRangeId a string indicating the partition key range ID
@@ -73,20 +78,22 @@ public final class ChangeFeedOptions extends FeedOptionsBase {
     }
 
     /**
-     * Get whether change feed should start from beginning (true) or from current (false).
-     * By default it's start from current (false).
+     * Get whether change feed should start from beginning (true) or from current
+     * (false). By default it's start from current (false).
      *
-     * @return a boolean value indicating change feed should start from beginning or not
+     * @return a boolean value indicating change feed should start from beginning or
+     *         not
      */
     public boolean startFromBeginning() {
         return startFromBeginning;
     }
 
     /**
-     * Set whether change feed should start from beginning (true) or from current (false).
-     * By default it's start from current (false).
+     * Set whether change feed should start from beginning (true) or from current
+     * (false). By default it's start from current (false).
      *
-     * @param startFromBeginning a boolean value indicating change feed should start from beginning or not
+     * @param startFromBeginning a boolean value indicating change feed should start
+     *                           from beginning or not
      */
     public ChangeFeedOptions startFromBeginning(boolean startFromBeginning) {
         this.startFromBeginning = startFromBeginning;
@@ -95,15 +102,18 @@ public final class ChangeFeedOptions extends FeedOptionsBase {
 
     /**
      * Gets the zoned date time to start looking for changes after.
-     * @return a zoned date time to start looking for changes after, if set or null otherwise
+     * 
+     * @return a zoned date time to start looking for changes after, if set or null
+     *         otherwise
      */
     public OffsetDateTime startDateTime() {
         return startDateTime;
     }
 
     /**
-     * Sets the zoned date time (exclusive) to start looking for changes after.
-     * If this is specified, startFromBeginning is ignored.
+     * Sets the zoned date time (exclusive) to start looking for changes after. If
+     * this is specified, startFromBeginning is ignored.
+     * 
      * @param startDateTime a zoned date time to start looking for changes after.
      */
     public ChangeFeedOptions startDateTime(OffsetDateTime startDateTime) {
