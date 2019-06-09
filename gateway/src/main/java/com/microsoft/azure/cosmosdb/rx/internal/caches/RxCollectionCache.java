@@ -95,7 +95,7 @@ public abstract class RxCollectionCache {
             }));
         } else {
             return resolveByPartitionKeyRangeIdentityAsync(request.getPartitionKeyRangeIdentity(),request.properties)
-                    .flatMap(Mono::just).switchIfEmpty(Mono.defer(() -> this.resolveByRidAsync(request.getResourceAddress(), request.properties)));
+                    .flatMap(Mono::just).switchIfEmpty(this.resolveByRidAsync(request.getResourceAddress(), request.properties));
         }
     }
 

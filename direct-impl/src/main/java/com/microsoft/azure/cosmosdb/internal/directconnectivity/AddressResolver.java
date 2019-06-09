@@ -96,7 +96,7 @@ public class AddressResolver implements IAddressResolver {
             request.requestContext.resolvedPartitionKeyRange = result.TargetPartitionKeyRange;
 
             return Mono.just(result.Addresses);
-        });
+        }).switchIfEmpty(Mono.defer(Mono::empty));
     }
 
     private static boolean isSameCollection(PartitionKeyRange initiallyResolved, PartitionKeyRange newlyResolved) {
@@ -363,7 +363,13 @@ public class AddressResolver implements IAddressResolver {
                 }
 
                 return Mono.just(state);
-            });
+            }).switchIfEmpty(Mono.defer(() -> {
+                if (request.forcePartitionKeyRangeRefresh) {
+                    state.collectionRoutingMapCacheIsUptoDate = true;
+                    request.forcePartitionKeyRangeRefresh = false;
+                }
+                return Mono.just(state);
+            }));
         });
 
         return stateObs.flatMap(newState -> {
@@ -401,7 +407,10 @@ public class AddressResolver implements IAddressResolver {
         return routingMapSingle.map(r -> {
             state.routingMap = r;
             return state;
-        });
+        }).switchIfEmpty(Mono.fromSupplier(() -> {
+            state.routingMap = null;
+            return state;
+        }));
     }
 
     /**

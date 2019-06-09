@@ -52,7 +52,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
@@ -87,7 +86,6 @@ public class AddressResolverTest {
 
     @BeforeClass(groups = "unit")
     public void setup() throws Exception {
-        Hooks.onOperatorDebug();
         this.addressResolver = new AddressResolver();
         this.collectionCache = Mockito.mock(RxCollectionCache.class);
         this.collectionRoutingMapCache = Mockito.mock(ICollectionRoutingMapCache.class);
@@ -236,7 +234,6 @@ public class AddressResolverTest {
         try {
             resolvedAddresses = this.addressResolver.resolveAsync(request, forceAddressRefresh).block();
         } catch (RuntimeException e) {
-            logger.error("Error occurred ", e);
             throw (Exception) e.getCause();
         } finally {
             assertThat(collectionCacheRefreshed).isEqualTo(collectionCacheRefreshedCount).describedAs("collection cache refresh count mismath");
@@ -361,7 +358,7 @@ public class AddressResolverTest {
                 return Mono.just(currentCollection.getValue());
             }
 
-            return null;
+            return Mono.empty();
         }).when(this.collectionCache).resolveCollectionAsync(Mockito.any(RxDocumentServiceRequest.class));
 
         // Routing map cache
@@ -426,7 +423,7 @@ public class AddressResolverTest {
             Boolean forceRefresh = invocationOnMock.getArgumentAt(2, Boolean.class);
 
             if (!forceRefresh) {
-                return Mono.just(currentAddresses.get(findMatchingServiceIdentity(currentAddresses, pkri)));
+                return Mono.justOrEmpty(currentAddresses.get(findMatchingServiceIdentity(currentAddresses, pkri)));
             } else {
 
                 ServiceIdentity si;
@@ -448,7 +445,6 @@ public class AddressResolverTest {
                 } else {
                     addressesRefreshCount.put(si, addressesRefreshCount.get(si) + 1);
                 }
-
 
                 // TODO: what to return in this case if it is null!!
                 return Mono.justOrEmpty(currentAddresses.get(si));
@@ -858,7 +854,7 @@ public class AddressResolverTest {
         } catch (PartitionKeyRangeGoneException e) {
         }
 
-        logger.info("Name Based.Routing map cache is outdated because split happend.");
+        logger.info("Name Based.Routing map cache is outdated because split happened.");
         this.TestCacheRefreshWhileRouteByPartitionKeyRangeId(
             this.collection1,
             this.collection1,
