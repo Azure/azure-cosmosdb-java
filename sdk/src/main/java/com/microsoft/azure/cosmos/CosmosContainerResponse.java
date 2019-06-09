@@ -32,26 +32,44 @@ public class CosmosContainerResponse extends CosmosResponse<CosmosContainerSetti
     CosmosContainerResponse(ResourceResponse<DocumentCollection> response, CosmosDatabase database) {
         super(response);
         if(response.getResource() == null){
-            super.setResourceSettings(null);
+            super.resourceSettings(null);
         }else{
-            super.setResourceSettings(new CosmosContainerSettings(response));
-            container = new CosmosContainer(getResourceSettings().getId(), database);
+            super.resourceSettings(new CosmosContainerSettings(response));
+            container = new CosmosContainer(resourceSettings().id(), database);
         }
+    }
+
+    /**
+     * Gets the progress of an index transformation, if one is underway.
+     *
+     * @return the progress of an index transformation.
+     */
+    public long indexTransformationProgress() {
+        return resourceResponseWrapper.getIndexTransformationProgress();
+    }
+
+    /**
+     * Gets the progress of lazy indexing.
+     *
+     * @return the progress of lazy indexing.
+     */
+    public long lazyIndexingProgress() {
+        return resourceResponseWrapper.getLazyIndexingProgress();
     }
 
     /**
      * Gets the container settings
      * @return the cosmos container settings
      */
-    public CosmosContainerSettings getCosmosContainerSettings() {
-        return getResourceSettings();
+    public CosmosContainerSettings settings() {
+        return resourceSettings();
     }
 
     /**
      * Gets the Container object
      * @return the Cosmos container object
      */
-    public CosmosContainer getContainer() {
+    public CosmosContainer container() {
         return container;
     }
 }

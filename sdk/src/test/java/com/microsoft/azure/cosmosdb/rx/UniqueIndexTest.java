@@ -34,33 +34,15 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import com.microsoft.azure.cosmos.*;
+import com.microsoft.azure.cosmosdb.*;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.google.common.collect.ImmutableList;
-import com.microsoft.azure.cosmos.CosmosClient;
-import com.microsoft.azure.cosmos.CosmosContainer;
-import com.microsoft.azure.cosmos.CosmosContainerRequestOptions;
-import com.microsoft.azure.cosmos.CosmosContainerSettings;
-import com.microsoft.azure.cosmos.CosmosDatabase;
-import com.microsoft.azure.cosmos.CosmosDatabaseForTest;
-import com.microsoft.azure.cosmos.CosmosItem;
-import com.microsoft.azure.cosmos.CosmosItemRequestOptions;
-import com.microsoft.azure.cosmos.CosmosItemSettings;
-import com.microsoft.azure.cosmosdb.ConnectionPolicy;
-import com.microsoft.azure.cosmosdb.ConsistencyLevel;
-import com.microsoft.azure.cosmosdb.DataType;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
-import com.microsoft.azure.cosmosdb.ExcludedPath;
-import com.microsoft.azure.cosmosdb.HashIndex;
-import com.microsoft.azure.cosmosdb.IncludedPath;
-import com.microsoft.azure.cosmosdb.IndexingMode;
-import com.microsoft.azure.cosmosdb.IndexingPolicy;
-import com.microsoft.azure.cosmosdb.PartitionKey;
-import com.microsoft.azure.cosmosdb.PartitionKeyDefinition;
-import com.microsoft.azure.cosmosdb.UniqueKey;
-import com.microsoft.azure.cosmosdb.UniqueKeyPolicy;
+import com.microsoft.azure.cosmos.CosmosItemProperties;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 
 public class UniqueIndexTest extends TestSuiteBase {
@@ -79,30 +61,30 @@ public class UniqueIndexTest extends TestSuiteBase {
         PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition();
         ArrayList<String> paths = new ArrayList<String>();
         paths.add("/mypk");
-        partitionKeyDef.setPaths(paths);
+        partitionKeyDef.paths(paths);
 
         CosmosContainerSettings collectionDefinition = new CosmosContainerSettings(UUID.randomUUID().toString(), partitionKeyDef);
         UniqueKeyPolicy uniqueKeyPolicy = new UniqueKeyPolicy();
         UniqueKey uniqueKey = new UniqueKey();
-        uniqueKey.setPaths(ImmutableList.of("/name", "/description"));
-        uniqueKeyPolicy.setUniqueKeys(Collections.singleton(uniqueKey));
-        collectionDefinition.setUniqueKeyPolicy(uniqueKeyPolicy);
+        uniqueKey.paths(ImmutableList.of("/name", "/description"));
+        uniqueKeyPolicy.uniqueKeys(Collections.singleton(uniqueKey));
+        collectionDefinition.uniqueKeyPolicy(uniqueKeyPolicy);
 
         IndexingPolicy indexingPolicy = new IndexingPolicy();
-        indexingPolicy.setIndexingMode(IndexingMode.Consistent);
+        indexingPolicy.indexingMode(IndexingMode.CONSISTENT);
         ExcludedPath excludedPath = new ExcludedPath();
-        excludedPath.setPath("/*");
-        indexingPolicy.setExcludedPaths(Collections.singletonList(excludedPath));
+        excludedPath.path("/*");
+        indexingPolicy.excludedPaths(Collections.singletonList(excludedPath));
 
         IncludedPath includedPath1 = new IncludedPath();
-        includedPath1.setPath("/name/?");
-        includedPath1.setIndexes(Collections.singletonList(new HashIndex(DataType.String, 7)));
+        includedPath1.path("/name/?");
+        includedPath1.indexes(Collections.singletonList(new HashIndex(DataType.STRING, 7)));
 
         IncludedPath includedPath2 = new IncludedPath();
-        includedPath2.setPath("/description/?");
-        includedPath2.setIndexes(Collections.singletonList(new HashIndex(DataType.String, 7)));
+        includedPath2.path("/description/?");
+        includedPath2.indexes(Collections.singletonList(new HashIndex(DataType.STRING, 7)));
         indexingPolicy.setIncludedPaths(ImmutableList.of(includedPath1, includedPath2));
-        collectionDefinition.setIndexingPolicy(indexingPolicy);
+        collectionDefinition.indexingPolicy(indexingPolicy);
 
         ObjectMapper om = new ObjectMapper();
 
@@ -110,20 +92,20 @@ public class UniqueIndexTest extends TestSuiteBase {
         JsonNode doc2 = om.readValue("{\"name\":\"Alexander Pushkin\",\"description\":\"playwright\",\"id\": \"" + UUID.randomUUID().toString() + "\"}", JsonNode.class);
         JsonNode doc3 = om.readValue("{\"name\":\"حافظ شیرازی\",\"description\":\"poet\",\"id\": \"" + UUID.randomUUID().toString() + "\"}", JsonNode.class);
 
-        collection = database.createContainer(collectionDefinition).block().getContainer();
+        collection = database.createContainer(collectionDefinition).block().container();
 
-        CosmosItem item = collection.createItem(doc1).block().getCosmosItem();
+        CosmosItem item = collection.createItem(doc1).block().item();
 
         CosmosItemRequestOptions options = new CosmosItemRequestOptions();
-        options.setPartitionKey(PartitionKey.None);
-        CosmosItemSettings itemSettings = item.read(options).block().getCosmosItemSettings();
-        assertThat(itemSettings.getId()).isEqualTo(doc1.get("id").textValue());
+        options.partitionKey(PartitionKey.None);
+        CosmosItemProperties itemSettings = item.read(options).block().properties();
+        assertThat(itemSettings.id()).isEqualTo(doc1.get("id").textValue());
 
         try {
             collection.createItem(doc1).block();
             fail("Did not throw due to unique constraint (create)");
         } catch (RuntimeException e) {
-            assertThat(getDocumentClientException(e).getStatusCode()).isEqualTo(HttpConstants.StatusCodes.CONFLICT);
+            assertThat(getDocumentClientException(e).statusCode()).isEqualTo(HttpConstants.StatusCodes.CONFLICT);
         }
 
         collection.createItem(doc2).block();
@@ -135,16 +117,16 @@ public class UniqueIndexTest extends TestSuiteBase {
         PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition();
         ArrayList<String> paths = new ArrayList<String>();
         paths.add("/mypk");
-        partitionKeyDef.setPaths(paths);
+        partitionKeyDef.paths(paths);
 
         CosmosContainerSettings collectionDefinition = new CosmosContainerSettings(UUID.randomUUID().toString(), partitionKeyDef);
         UniqueKeyPolicy uniqueKeyPolicy = new UniqueKeyPolicy();
         UniqueKey uniqueKey = new UniqueKey();
-        uniqueKey.setPaths(ImmutableList.of("/name", "/description"));
-        uniqueKeyPolicy.setUniqueKeys(Collections.singleton(uniqueKey));
-        collectionDefinition.setUniqueKeyPolicy(uniqueKeyPolicy);
+        uniqueKey.paths(ImmutableList.of("/name", "/description"));
+        uniqueKeyPolicy.uniqueKeys(Collections.singleton(uniqueKey));
+        collectionDefinition.uniqueKeyPolicy(uniqueKeyPolicy);
 
-        collection = database.createContainer(collectionDefinition).block().getContainer();
+        collection = database.createContainer(collectionDefinition).block().container();
 
         ObjectMapper om = new ObjectMapper();
 
@@ -152,26 +134,26 @@ public class UniqueIndexTest extends TestSuiteBase {
         ObjectNode doc3 = om.readValue("{\"name\":\"Rabindranath Tagore\",\"description\":\"poet\",\"id\": \""+ UUID.randomUUID().toString() +"\"}", ObjectNode.class);
         ObjectNode doc2 = om.readValue("{\"name\":\"عمر خیّام\",\"description\":\"mathematician\",\"id\": \""+ UUID.randomUUID().toString() +"\"}", ObjectNode.class);
 
-        CosmosItemSettings doc1Inserted = collection.createItem(doc1, new CosmosItemRequestOptions()).block().getCosmosItemSettings();
+        CosmosItemProperties doc1Inserted = collection.createItem(doc1, new CosmosItemRequestOptions()).block().properties();
 
-        collection.getItem(doc1.get("id").asText(), PartitionKey.None).replace(doc1Inserted, new CosmosItemRequestOptions()).block().getCosmosItemSettings();     // Replace with same values -- OK.
+        collection.getItem(doc1.get("id").asText(), PartitionKey.None).replace(doc1Inserted, new CosmosItemRequestOptions()).block().properties();     // REPLACE with same values -- OK.
 
-        CosmosItemSettings doc2Inserted =  collection.createItem(doc2, new CosmosItemRequestOptions()).block().getCosmosItemSettings();
-        CosmosItemSettings doc2Replacement = new CosmosItemSettings(doc1Inserted.toJson());
-        doc2Replacement.setId( doc2Inserted.getId());
+        CosmosItemProperties doc2Inserted =  collection.createItem(doc2, new CosmosItemRequestOptions()).block().properties();
+        CosmosItemProperties doc2Replacement = new CosmosItemProperties(doc1Inserted.toJson());
+        doc2Replacement.id( doc2Inserted.id());
 
         try {
-            collection.getItem(doc2Inserted.getId(), PartitionKey.None).replace(doc2Replacement, new CosmosItemRequestOptions()).block(); // Replace doc2 with values from doc1 -- Conflict.
+            collection.getItem(doc2Inserted.id(), PartitionKey.None).replace(doc2Replacement, new CosmosItemRequestOptions()).block(); // REPLACE doc2 with values from doc1 -- Conflict.
             fail("Did not throw due to unique constraint");
         }
         catch (RuntimeException ex) {
-            assertThat(getDocumentClientException(ex).getStatusCode()).isEqualTo(HttpConstants.StatusCodes.CONFLICT);
+            assertThat(getDocumentClientException(ex).statusCode()).isEqualTo(HttpConstants.StatusCodes.CONFLICT);
         }
 
-        doc3.put("id", doc1Inserted.getId());
-        collection.getItem(doc1Inserted.getId(), PartitionKey.None).replace(doc3).block();             // Replace with values from doc3 -- OK.
+        doc3.put("id", doc1Inserted.id());
+        collection.getItem(doc1Inserted.id(), PartitionKey.None).replace(doc3).block();             // REPLACE with values from doc3 -- OK.
 
-        collection.getItem(doc1Inserted.getId(), PartitionKey.None).delete().block();
+        collection.getItem(doc1Inserted.id(), PartitionKey.None).delete().block();
         collection.createItem(doc1, new CosmosItemRequestOptions()).block();
     }
 
@@ -180,48 +162,48 @@ public class UniqueIndexTest extends TestSuiteBase {
         PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition();
         ArrayList<String> paths = new ArrayList<String>();
         paths.add("/mypk");
-        partitionKeyDef.setPaths(paths);
+        partitionKeyDef.paths(paths);
 
         CosmosContainerSettings collectionDefinition = new CosmosContainerSettings(UUID.randomUUID().toString(), partitionKeyDef);
         UniqueKeyPolicy uniqueKeyPolicy = new UniqueKeyPolicy();
         UniqueKey uniqueKey = new UniqueKey();
-        uniqueKey.setPaths(ImmutableList.of("/name", "/description"));
-        uniqueKeyPolicy.setUniqueKeys(Collections.singleton(uniqueKey));
-        collectionDefinition.setUniqueKeyPolicy(uniqueKeyPolicy);
+        uniqueKey.paths(ImmutableList.of("/name", "/description"));
+        uniqueKeyPolicy.uniqueKeys(Collections.singleton(uniqueKey));
+        collectionDefinition.uniqueKeyPolicy(uniqueKeyPolicy);
 
         IndexingPolicy indexingPolicy = new IndexingPolicy();
-        indexingPolicy.setIndexingMode(IndexingMode.Consistent);
+        indexingPolicy.indexingMode(IndexingMode.CONSISTENT);
         ExcludedPath excludedPath = new ExcludedPath();
-        excludedPath.setPath("/*");
-        indexingPolicy.setExcludedPaths(Collections.singletonList(excludedPath));
+        excludedPath.path("/*");
+        indexingPolicy.excludedPaths(Collections.singletonList(excludedPath));
 
         IncludedPath includedPath1 = new IncludedPath();
-        includedPath1.setPath("/name/?");
-        includedPath1.setIndexes(Collections.singletonList(new HashIndex(DataType.String, 7)));
+        includedPath1.path("/name/?");
+        includedPath1.indexes(Collections.singletonList(new HashIndex(DataType.STRING, 7)));
 
         IncludedPath includedPath2 = new IncludedPath();
-        includedPath2.setPath("/description/?");
-        includedPath2.setIndexes(Collections.singletonList(new HashIndex(DataType.String, 7)));
+        includedPath2.path("/description/?");
+        includedPath2.indexes(Collections.singletonList(new HashIndex(DataType.STRING, 7)));
         indexingPolicy.setIncludedPaths(ImmutableList.of(includedPath1, includedPath2));
 
-        collectionDefinition.setIndexingPolicy(indexingPolicy);
+        collectionDefinition.indexingPolicy(indexingPolicy);
 
-        CosmosContainer createdCollection = database.createContainer(collectionDefinition).block().getContainer();
+        CosmosContainer createdCollection = database.createContainer(collectionDefinition).block().container();
 
-        CosmosContainerSettings collection = createdCollection.read().block().getCosmosContainerSettings();
+        CosmosContainerSettings collection = createdCollection.read().block().settings();
 
-        assertThat(collection.getUniqueKeyPolicy()).isNotNull();
-        assertThat(collection.getUniqueKeyPolicy().getUniqueKeys()).isNotNull();
-        assertThat(collection.getUniqueKeyPolicy().getUniqueKeys())
-                .hasSameSizeAs(collectionDefinition.getUniqueKeyPolicy().getUniqueKeys());
-        assertThat(collection.getUniqueKeyPolicy().getUniqueKeys()
-                .stream().map(ui -> ui.getPaths()).collect(Collectors.toList()))
+        assertThat(collection.uniqueKeyPolicy()).isNotNull();
+        assertThat(collection.uniqueKeyPolicy().uniqueKeys()).isNotNull();
+        assertThat(collection.uniqueKeyPolicy().uniqueKeys())
+                .hasSameSizeAs(collectionDefinition.uniqueKeyPolicy().uniqueKeys());
+        assertThat(collection.uniqueKeyPolicy().uniqueKeys()
+                .stream().map(ui -> ui.paths()).collect(Collectors.toList()))
                 .containsExactlyElementsOf(
                         ImmutableList.of(ImmutableList.of("/name", "/description")));
     }
 
-    private DocumentClientException getDocumentClientException(RuntimeException e) {
-        DocumentClientException dce = com.microsoft.azure.cosmosdb.rx.internal.Utils.as(e.getCause(), DocumentClientException.class);
+    private CosmosClientException getDocumentClientException(RuntimeException e) {
+        CosmosClientException dce = com.microsoft.azure.cosmosdb.rx.internal.Utils.as(e.getCause(), CosmosClientException.class);
         assertThat(dce).isNotNull();
         return dce;
     }
@@ -232,8 +214,8 @@ public class UniqueIndexTest extends TestSuiteBase {
         client = CosmosClient.builder()
                 .endpoint(TestConfigurations.HOST)
                 .key(TestConfigurations.MASTER_KEY)
-                .connectionPolicy(ConnectionPolicy.GetDefault())
-                .consistencyLevel(ConsistencyLevel.Session).build();
+                .connectionPolicy(ConnectionPolicy.defaultPolicy())
+                .consistencyLevel(ConsistencyLevel.SESSION).build();
 
         database = createDatabase(client, databaseId);
     }

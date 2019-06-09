@@ -27,7 +27,7 @@ import com.microsoft.azure.cosmos.ChangeFeedObserverFactory;
 import com.microsoft.azure.cosmos.changefeed.exceptions.ObserverException;
 
 /**
- * Default implementation for {@link ChangeFeedObserverFactory}.
+ * DEFAULT implementation for {@link ChangeFeedObserverFactory}.
  */
 public class ChangeFeedObserverFactoryImpl implements ChangeFeedObserverFactory {
     private final Class observerType;

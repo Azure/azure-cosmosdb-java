@@ -65,11 +65,11 @@ class ChangeFeedQueryImpl<T extends Resource> {
         changeFeedOptions = changeFeedOptions != null ? changeFeedOptions: new ChangeFeedOptions();
         
 
-        if (resourceType.isPartitioned() && changeFeedOptions.getPartitionKeyRangeId() == null && changeFeedOptions.getPartitionKey() == null) {
+        if (resourceType.isPartitioned() && changeFeedOptions.getPartitionKeyRangeId() == null && changeFeedOptions.partitionKey() == null) {
             throw new IllegalArgumentException(RMResources.PartitionKeyRangeIdOrPartitionKeyMustBeSpecified);
         }
 
-        if (changeFeedOptions.getPartitionKey() != null && 
+        if (changeFeedOptions.partitionKey() != null &&
                 !Strings.isNullOrEmpty(changeFeedOptions.getPartitionKeyRangeId())) {
 
             throw new IllegalArgumentException(String.format(
@@ -80,12 +80,12 @@ class ChangeFeedQueryImpl<T extends Resource> {
         String initialNextIfNoneMatch = null;
         
         boolean canUseStartFromBeginning = true;
-        if (changeFeedOptions.getRequestContinuation() != null) {
-            initialNextIfNoneMatch = changeFeedOptions.getRequestContinuation();
+        if (changeFeedOptions.requestContinuation() != null) {
+            initialNextIfNoneMatch = changeFeedOptions.requestContinuation();
             canUseStartFromBeginning = false;
         }
 
-        if(changeFeedOptions.getStartDateTime() != null){
+        if(changeFeedOptions.startDateTime() != null){
             canUseStartFromBeginning = false;
         }
 
@@ -99,24 +99,24 @@ class ChangeFeedQueryImpl<T extends Resource> {
     private RxDocumentServiceRequest createDocumentServiceRequest(String continuationToken, int pageSize) {
         Map<String, String> headers = new HashMap<>();
 
-        if (options.getMaxItemCount() != null) {
-            headers.put(HttpConstants.HttpHeaders.PAGE_SIZE, String.valueOf(options.getMaxItemCount()));
+        if (options.maxItemCount() != null) {
+            headers.put(HttpConstants.HttpHeaders.PAGE_SIZE, String.valueOf(options.maxItemCount()));
         }
 
-        // On REST level, change feed is using IfNoneMatch/ETag instead of continuation.
+        // On REST level, change feed is using IF_NONE_MATCH/ETag instead of continuation.
         if(continuationToken != null) {
             headers.put(HttpConstants.HttpHeaders.IF_NONE_MATCH, continuationToken);
         }
 
         headers.put(HttpConstants.HttpHeaders.A_IM, HttpConstants.A_IMHeaderValues.INCREMENTAL_FEED);
 
-        if (options.getPartitionKey() != null) {
-            PartitionKeyInternal partitionKey = options.getPartitionKey().getInternalPartitionKey();
+        if (options.partitionKey() != null) {
+            PartitionKeyInternal partitionKey = options.partitionKey().getInternalPartitionKey();
             headers.put(HttpConstants.HttpHeaders.PARTITION_KEY, partitionKey.toJson());
         }
 
-        if(options.getStartDateTime() != null){
-            String dateTimeInHttpFormat = Utils.zonedDateTimeAsUTCRFC1123(options.getStartDateTime());
+        if(options.startDateTime() != null){
+            String dateTimeInHttpFormat = Utils.zonedDateTimeAsUTCRFC1123(options.startDateTime());
             headers.put(HttpConstants.HttpHeaders.IF_MODIFIED_SINCE, dateTimeInHttpFormat);
         }
 
@@ -136,7 +136,7 @@ class ChangeFeedQueryImpl<T extends Resource> {
 
     private ChangeFeedOptions getChangeFeedOptions(ChangeFeedOptions options, String continuationToken) {
         ChangeFeedOptions newOps = new ChangeFeedOptions(options);
-        newOps.setRequestContinuation(continuationToken);
+        newOps.requestContinuation(continuationToken);
         return newOps;
     }
     
@@ -147,7 +147,7 @@ class ChangeFeedQueryImpl<T extends Resource> {
         // TODO: clean up if we want to use single vs observable.
         Func1<RxDocumentServiceRequest, Observable<FeedResponse<T>>> executeFunc = request -> this.executeRequestAsync(request).toObservable();
 
-        return Paginator.getPaginatedChangeFeedQueryResultAsObservable(options, createRequestFunc, executeFunc, klass, options.getMaxItemCount() != null ? options.getMaxItemCount(): -1);
+        return Paginator.getPaginatedChangeFeedQueryResultAsObservable(options, createRequestFunc, executeFunc, klass, options.maxItemCount() != null ? options.maxItemCount(): -1);
     }
 
     private Single<FeedResponse<T>> executeRequestAsync(RxDocumentServiceRequest request) {

@@ -22,17 +22,11 @@
  */
 package com.microsoft.azure.cosmos.examples.ChangeFeed;
 
-import com.microsoft.azure.cosmos.ChangeFeedProcessor;
-import com.microsoft.azure.cosmos.CosmosClient;
-import com.microsoft.azure.cosmos.CosmosContainer;
-import com.microsoft.azure.cosmos.CosmosContainerRequestOptions;
-import com.microsoft.azure.cosmos.CosmosContainerResponse;
-import com.microsoft.azure.cosmos.CosmosContainerSettings;
-import com.microsoft.azure.cosmos.CosmosDatabase;
-import com.microsoft.azure.cosmos.CosmosItemSettings;
+import com.microsoft.azure.cosmos.*;
+import com.microsoft.azure.cosmos.CosmosItemProperties;
 import com.microsoft.azure.cosmosdb.ConnectionPolicy;
 import com.microsoft.azure.cosmosdb.ConsistencyLevel;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.SerializationFormattingPolicy;
 import org.apache.commons.lang3.RandomStringUtils;
 import reactor.core.publisher.Mono;
@@ -57,16 +51,16 @@ public class SampleChangeFeedProcessor {
 
         try {
 
-            System.out.println("-->Create DocumentClient");
+            System.out.println("-->CREATE DocumentClient");
             CosmosClient client = getCosmosClient();
 
-            System.out.println("-->Create sample's database: " + DATABASE_NAME);
+            System.out.println("-->CREATE sample's database: " + DATABASE_NAME);
             CosmosDatabase cosmosDatabase = createNewDatabase(client, DATABASE_NAME);
 
-            System.out.println("-->Create container for documents: " + COLLECTION_NAME);
+            System.out.println("-->CREATE container for documents: " + COLLECTION_NAME);
             CosmosContainer feedContainer = createNewCollection(client, DATABASE_NAME, COLLECTION_NAME);
 
-            System.out.println("-->Create container for lease: " + COLLECTION_NAME + "-leases");
+            System.out.println("-->CREATE container for lease: " + COLLECTION_NAME + "-leases");
             CosmosContainer leaseContainer = createNewLeaseCollection(client, DATABASE_NAME, COLLECTION_NAME + "-leases");
 
             Mono<ChangeFeedProcessor> changeFeedProcessor1 = getChangeFeedProcessor("SampleHost_1", feedContainer, leaseContainer);
@@ -93,7 +87,7 @@ public class SampleChangeFeedProcessor {
                 throw new RuntimeException("The change feed processor initialization and automatic create document feeding process did not complete in the expected time");
             }
 
-            System.out.println("-->Delete sample's database: " + DATABASE_NAME);
+            System.out.println("-->DELETE sample's database: " + DATABASE_NAME);
             deleteDatabase(cosmosDatabase);
 
             Thread.sleep(15000);
@@ -120,13 +114,13 @@ public class SampleChangeFeedProcessor {
         return CosmosClient.builder()
                 .endpoint(SampleConfigurations.HOST)
                 .key(SampleConfigurations.MASTER_KEY)
-                .connectionPolicy(ConnectionPolicy.GetDefault())
-                .consistencyLevel(ConsistencyLevel.Eventual)
+                .connectionPolicy(ConnectionPolicy.defaultPolicy())
+                .consistencyLevel(ConsistencyLevel.EVENTUAL)
                 .build();
     }
 
     public static CosmosDatabase createNewDatabase(CosmosClient client, String databaseName) {
-        return client.createDatabaseIfNotExists(databaseName).block().getDatabase();
+        return client.createDatabaseIfNotExists(databaseName).block().database();
     }
 
     public static void deleteDatabase(CosmosDatabase cosmosDatabase) {
@@ -145,10 +139,10 @@ public class SampleChangeFeedProcessor {
                 throw new IllegalArgumentException(String.format("Collection %s already exists in database %s.", collectionName, databaseName));
             }
         } catch (RuntimeException ex) {
-            if (ex.getCause() instanceof DocumentClientException) {
-                DocumentClientException documentClientException = (DocumentClientException) ex.getCause();
+            if (ex.getCause() instanceof CosmosClientException) {
+                CosmosClientException cosmosClientException = (CosmosClientException) ex.getCause();
 
-                if (documentClientException.getStatusCode() != 404) {
+                if (cosmosClientException.statusCode() != 404) {
                     throw ex;
                 }
             } else {
@@ -167,7 +161,7 @@ public class SampleChangeFeedProcessor {
             throw new RuntimeException(String.format("Failed to create collection %s in database %s.", collectionName, databaseName));
         }
 
-        return containerResponse.getContainer();
+        return containerResponse.container();
     }
 
     public static CosmosContainer createNewLeaseCollection(CosmosClient client, String databaseName, String leaseCollectionName) {
@@ -188,10 +182,10 @@ public class SampleChangeFeedProcessor {
                 }
             }
         } catch (RuntimeException ex) {
-            if (ex.getCause() instanceof DocumentClientException) {
-                DocumentClientException documentClientException = (DocumentClientException) ex.getCause();
+            if (ex.getCause() instanceof CosmosClientException) {
+                CosmosClientException cosmosClientException = (CosmosClientException) ex.getCause();
 
-                if (documentClientException.getStatusCode() != 404) {
+                if (cosmosClientException.statusCode() != 404) {
                     throw ex;
                 }
             } else {
@@ -209,17 +203,17 @@ public class SampleChangeFeedProcessor {
             throw new RuntimeException(String.format("Failed to create collection %s in database %s.", leaseCollectionName, databaseName));
         }
 
-        return leaseContainerResponse.getContainer();
+        return leaseContainerResponse.container();
     }
 
     public static void createNewDocuments(CosmosContainer containerClient, int count, Duration delay) {
         String suffix = RandomStringUtils.randomAlphabetic(10);
         for (int i = 0; i <= count; i++) {
-            CosmosItemSettings document = new CosmosItemSettings();
-            document.setId(String.format("0%d-%s", i, suffix));
+            CosmosItemProperties document = new CosmosItemProperties();
+            document.id(String.format("0%d-%s", i, suffix));
 
             containerClient.createItem(document).subscribe(doc -> {
-                System.out.println("---->DOCUMENT WRITE: " + doc.getCosmosItemSettings().toJson(SerializationFormattingPolicy.Indented));
+                System.out.println("---->DOCUMENT WRITE: " + doc.properties().toJson(SerializationFormattingPolicy.INDENTED));
             });
 
             long remainingWork = delay.toMillis();

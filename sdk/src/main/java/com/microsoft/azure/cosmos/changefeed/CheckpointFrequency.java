@@ -34,7 +34,7 @@ public class CheckpointFrequency {
 
     public CheckpointFrequency() {
         this.explicitCheckpoint = false;
-        // Default to always checkpoint after processing each feed batch.
+        // DEFAULT to always checkpoint after processing each feed batch.
         processedDocumentCount = 0;
         timeInterval = null;
     }

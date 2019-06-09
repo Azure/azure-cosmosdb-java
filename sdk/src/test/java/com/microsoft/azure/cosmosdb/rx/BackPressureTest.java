@@ -22,15 +22,8 @@
  */
 package com.microsoft.azure.cosmosdb.rx;
 
-import com.microsoft.azure.cosmos.ClientUnderTestBuilder;
-import com.microsoft.azure.cosmos.CosmosBridgeInternal;
-import com.microsoft.azure.cosmos.CosmosClient;
-import com.microsoft.azure.cosmos.CosmosClientBuilder;
-import com.microsoft.azure.cosmos.CosmosContainer;
-import com.microsoft.azure.cosmos.CosmosContainerRequestOptions;
-import com.microsoft.azure.cosmos.CosmosContainerSettings;
-import com.microsoft.azure.cosmos.CosmosDatabase;
-import com.microsoft.azure.cosmos.CosmosItemSettings;
+import com.microsoft.azure.cosmos.*;
+import com.microsoft.azure.cosmos.CosmosItemProperties;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.Offer;
@@ -61,19 +54,19 @@ public class BackPressureTest extends TestSuiteBase {
 
     private CosmosDatabase createdDatabase;
     private CosmosContainer createdCollection;
-    private List<CosmosItemSettings> createdDocuments;
+    private List<CosmosItemProperties> createdDocuments;
 
     private CosmosClient client;
 
     public String getCollectionLink() {
-        return Utils.getCollectionNameLink(createdDatabase.getId(), createdCollection.getId());
+        return Utils.getCollectionNameLink(createdDatabase.id(), createdCollection.id());
     }
 
     private static CosmosContainerSettings getSinglePartitionCollectionDefinition() {
         PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition();
         ArrayList<String> paths = new ArrayList<String>();
         paths.add("/mypk");
-        partitionKeyDef.setPaths(paths);
+        partitionKeyDef.paths(paths);
 
         CosmosContainerSettings collectionDefinition = new CosmosContainerSettings(UUID.randomUUID().toString(), partitionKeyDef);
         return collectionDefinition;
@@ -87,14 +80,14 @@ public class BackPressureTest extends TestSuiteBase {
     @Test(groups = { "long" }, timeOut = TIMEOUT)
     public void readFeed() throws Exception {
         FeedOptions options = new FeedOptions();
-        options.setMaxItemCount(1);
-        options.setEnableCrossPartitionQuery(true);
-        Flux<FeedResponse<CosmosItemSettings>> queryObservable = createdCollection.listItems(options);
+        options.maxItemCount(1);
+        options.enableCrossPartitionQuery(true);
+        Flux<FeedResponse<CosmosItemProperties>> queryObservable = createdCollection.listItems(options);
 
         RxDocumentClientUnderTest rxClient = (RxDocumentClientUnderTest)CosmosBridgeInternal.getAsyncDocumentClient(client);
         rxClient.httpRequests.clear();
 
-        TestSubscriber<FeedResponse<CosmosItemSettings>> subscriber = new TestSubscriber<FeedResponse<CosmosItemSettings>>(1);
+        TestSubscriber<FeedResponse<CosmosItemProperties>> subscriber = new TestSubscriber<FeedResponse<CosmosItemProperties>>(1);
         queryObservable.publishOn(Schedulers.elastic()).subscribe(subscriber);
         int sleepTimeInMillis = 10000; // 10 seconds
 
@@ -126,14 +119,14 @@ public class BackPressureTest extends TestSuiteBase {
     @Test(groups = { "long" }, timeOut = TIMEOUT)
     public void query() throws Exception {
         FeedOptions options = new FeedOptions();
-        options.setMaxItemCount(1);
-        options.setEnableCrossPartitionQuery(true);
-        Flux<FeedResponse<CosmosItemSettings>> queryObservable = createdCollection.queryItems("SELECT * from r", options);
+        options.maxItemCount(1);
+        options.enableCrossPartitionQuery(true);
+        Flux<FeedResponse<CosmosItemProperties>> queryObservable = createdCollection.queryItems("SELECT * from r", options);
 
         RxDocumentClientUnderTest rxClient = (RxDocumentClientUnderTest)CosmosBridgeInternal.getAsyncDocumentClient(client);
         rxClient.httpRequests.clear();
 
-        TestSubscriber<FeedResponse<CosmosItemSettings>> subscriber = new TestSubscriber<FeedResponse<CosmosItemSettings>>(1);
+        TestSubscriber<FeedResponse<CosmosItemProperties>> subscriber = new TestSubscriber<FeedResponse<CosmosItemProperties>>(1);
         queryObservable.publishOn(Schedulers.elastic()).subscribe(subscriber);
         int sleepTimeInMillis = 10000;
 
@@ -162,7 +155,7 @@ public class BackPressureTest extends TestSuiteBase {
         assertThat(subscriber.getEvents().get(0)).hasSize(createdDocuments.size());
     }
 
-    // TODO: DANOBLE: Investigate Direct TCP performance issue
+    // TODO: DANOBLE: Investigate DIRECT TCP performance issue
     // NOTE: This method requires multiple SHUTDOWN_TIMEOUT intervals
     // SEE: https://msdata.visualstudio.com/CosmosDB/_workitems/edit/367028https://msdata.visualstudio.com/CosmosDB/_workitems/edit/367028
 
@@ -182,13 +175,13 @@ public class BackPressureTest extends TestSuiteBase {
         // for bulk insert and later queries.
         Offer offer = rxClient.queryOffers(
                 String.format("SELECT * FROM r WHERE r.offerResourceId = '%s'",
-                        createdCollection.read().block().getCosmosContainerSettings().getResourceId())
-                        , null).first().map(FeedResponse::getResults).toBlocking().single().get(0);
+                        createdCollection.read().block().settings().resourceId())
+                        , null).first().map(FeedResponse::results).toBlocking().single().get(0);
         offer.setThroughput(6000);
         offer = rxClient.replaceOffer(offer).toBlocking().single().getResource();
         assertThat(offer.getThroughput()).isEqualTo(6000);
 
-        ArrayList<CosmosItemSettings> docDefList = new ArrayList<>();
+        ArrayList<CosmosItemProperties> docDefList = new ArrayList<>();
         for(int i = 0; i < 1000; i++) {
             docDefList.add(getDocumentDefinition(i));
         }
@@ -202,11 +195,11 @@ public class BackPressureTest extends TestSuiteBase {
     private void warmUp() {
         // ensure collection is cached
         FeedOptions options = new FeedOptions();
-        options.setEnableCrossPartitionQuery(true);
+        options.enableCrossPartitionQuery(true);
         createdCollection.queryItems("SELECT * from r", options).blockFirst();
     }
 
-    // TODO: DANOBLE: Investigate Direct TCP performance issue
+    // TODO: DANOBLE: Investigate DIRECT TCP performance issue
     // NOTE: This method requires multiple SHUTDOWN_TIMEOUT intervals
     // SEE: https://msdata.visualstudio.com/CosmosDB/_workitems/edit/367028https://msdata.visualstudio.com/CosmosDB/_workitems/edit/367028
 
@@ -216,9 +209,9 @@ public class BackPressureTest extends TestSuiteBase {
         safeClose(client);
     }
 
-    private static CosmosItemSettings getDocumentDefinition(int cnt) {
+    private static CosmosItemProperties getDocumentDefinition(int cnt) {
         String uuid = UUID.randomUUID().toString();
-        CosmosItemSettings doc = new CosmosItemSettings(String.format("{ "
+        CosmosItemProperties doc = new CosmosItemProperties(String.format("{ "
                 + "\"id\": \"%s\", "
                 + "\"prop\" : %d, "
                 + "\"mypk\": \"%s\", "

@@ -24,7 +24,7 @@
 package com.microsoft.azure.cosmosdb.rx.internal;
 
 import com.microsoft.azure.cosmosdb.ConsistencyLevel;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.ISessionContainer;
 import com.microsoft.azure.cosmosdb.internal.OperationType;
 import com.microsoft.azure.cosmosdb.internal.QueryCompatibilityMode;
@@ -63,7 +63,7 @@ public class RxGatewayStoreModelTest {
 
         RxGatewayStoreModel storeModel = new RxGatewayStoreModel(
                 sessionContainer,
-                ConsistencyLevel.Session,
+                ConsistencyLevel.SESSION,
                 queryCompatibilityMode,
                 userAgentContainer,
                 globalEndpointManager,
@@ -76,7 +76,7 @@ public class RxGatewayStoreModelTest {
 
         Observable<RxDocumentServiceResponse> resp = storeModel.processMessage(dsr);
         validateFailure(resp, FailureValidator.builder()
-                .instanceOf(DocumentClientException.class)
+                .instanceOf(CosmosClientException.class)
                 .causeInstanceOf(ReadTimeoutException.class)
                 .documentClientExceptionHeaderRequestContainsEntry("key", "value")
                 .statusCode(0).build());

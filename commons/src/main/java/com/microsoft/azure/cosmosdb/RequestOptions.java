@@ -291,7 +291,7 @@ public class RequestOptions {
      * Sets the custom request option value by key
      *
      * @param name  a string representing the custom option's name
-     * @param value a String representing the custom option's value
+     * @param value a STRING representing the custom option's value
      */
     public void setHeader(String name, String value) {
         if (this.customOptions == null) {

@@ -60,18 +60,18 @@ public class ReadFeedTriggersTest extends TestSuiteBase {
     public void readTriggers() throws Exception {
 
         FeedOptions options = new FeedOptions();
-        options.setMaxItemCount(2);
+        options.maxItemCount(2);
 
         Flux<FeedResponse<CosmosTriggerSettings>> feedObservable = createdCollection.listTriggers(options);
 
-        int expectedPageSize = (createdTriggers.size() + options.getMaxItemCount() - 1) / options.getMaxItemCount();
+        int expectedPageSize = (createdTriggers.size() + options.maxItemCount() - 1) / options.maxItemCount();
 
         FeedResponseListValidator<CosmosTriggerSettings> validator = new FeedResponseListValidator
                 .Builder<CosmosTriggerSettings>()
                 .totalSize(createdTriggers.size())
                 .exactlyContainsInAnyOrder(createdTriggers
                         .stream()
-                        .map(d -> d.getResourceId())
+                        .map(d -> d.resourceId())
                         .collect(Collectors.toList()))
                 .numberOfPages(expectedPageSize)
                 .allPagesSatisfy(new FeedResponseValidator.Builder<CosmosTriggerSettings>()
@@ -100,10 +100,10 @@ public class ReadFeedTriggersTest extends TestSuiteBase {
 
     public CosmosTriggerSettings createTriggers(CosmosContainer cosmosContainer) {
         CosmosTriggerSettings trigger = new CosmosTriggerSettings();
-        trigger.setId(UUID.randomUUID().toString());
-        trigger.setBody("function() {var x = 10;}");
-        trigger.setTriggerOperation(TriggerOperation.Create);
-        trigger.setTriggerType(TriggerType.Pre);
-        return cosmosContainer.createTrigger(trigger, new CosmosRequestOptions()).block().getCosmosTriggerSettings();
+        trigger.id(UUID.randomUUID().toString());
+        trigger.body("function() {var x = 10;}");
+        trigger.triggerOperation(TriggerOperation.CREATE);
+        trigger.triggerType(TriggerType.PRE);
+        return cosmosContainer.createTrigger(trigger, new CosmosRequestOptions()).block().settings();
     }
 }

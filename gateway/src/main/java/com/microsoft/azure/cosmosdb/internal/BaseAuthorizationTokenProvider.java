@@ -41,7 +41,7 @@ import com.microsoft.azure.cosmosdb.internal.directconnectivity.HttpUtils;
 import com.microsoft.azure.cosmosdb.rx.internal.RMResources;
 
 /**
- * This class is used internally by both client (for generating the auth header with master/system key) and by the Gateway when
+ * This class is used internally by both client (for generating the auth header with master/system key) and by the GATEWAY when
  * verifying the auth header in the Azure Cosmos DB database service.
  */
 public class BaseAuthorizationTokenProvider implements AuthorizationTokenProvider {

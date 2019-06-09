@@ -90,7 +90,7 @@ public class GlobalAddressResolverTest {
         urlforWrite3 = new URL("http://testWrite3.com/");
 
         connectionPolicy = new ConnectionPolicy();
-        connectionPolicy.setEnableReadRequestsFallback(true);
+        connectionPolicy.enableReadRequestsFallback(true);
         httpClient = Mockito.mock(CompositeHttpClient.class);
         endpointManager = Mockito.mock(GlobalEndpointManager.class);
 
@@ -112,7 +112,7 @@ public class GlobalAddressResolverTest {
         authorizationTokenProvider = Mockito.mock(IAuthorizationTokenProvider.class);
 
         DocumentCollection collectionDefinition = new DocumentCollection();
-        collectionDefinition.setId(UUID.randomUUID().toString());
+        collectionDefinition.id(UUID.randomUUID().toString());
         collectionCache = Mockito.mock(RxCollectionCache.class);
         Mockito.when(collectionCache.resolveCollectionAsync(Matchers.any(RxDocumentServiceRequest.class))).thenReturn(Single.just(collectionDefinition));
         routingMapProvider = Mockito.mock(RxPartitionKeyRangeCache.class);
@@ -163,8 +163,8 @@ public class GlobalAddressResolverTest {
 
 
         DocumentCollection documentCollection = new DocumentCollection();
-        documentCollection.setId("TestColl");
-        documentCollection.setResourceId("IXYFAOHEBPM=");
+        documentCollection.id("TestColl");
+        documentCollection.resourceId("IXYFAOHEBPM=");
         CollectionRoutingMap collectionRoutingMap = Mockito.mock(CollectionRoutingMap.class);
         PartitionKeyRange range = new PartitionKeyRange("0", PartitionKeyInternalHelper.MinimumInclusiveEffectivePartitionKey,
                 PartitionKeyInternalHelper.MaximumExclusiveEffectivePartitionKey);
@@ -176,7 +176,7 @@ public class GlobalAddressResolverTest {
 
         List<PartitionKeyRangeIdentity> ranges = new ArrayList<>();
         for (PartitionKeyRange partitionKeyRange : (List<PartitionKeyRange>) collectionRoutingMap.getOrderedPartitionKeyRanges()) {
-            PartitionKeyRangeIdentity partitionKeyRangeIdentity = new PartitionKeyRangeIdentity(documentCollection.getResourceId(), partitionKeyRange.getId());
+            PartitionKeyRangeIdentity partitionKeyRangeIdentity = new PartitionKeyRangeIdentity(documentCollection.resourceId(), partitionKeyRange.id());
             ranges.add(partitionKeyRangeIdentity);
         }
         Completable completable = Completable.fromAction(new Action0() {

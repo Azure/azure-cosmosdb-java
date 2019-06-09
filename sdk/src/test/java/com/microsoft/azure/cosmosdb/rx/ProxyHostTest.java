@@ -48,7 +48,7 @@ import com.microsoft.azure.cosmos.CosmosContainer;
 import com.microsoft.azure.cosmos.CosmosDatabase;
 import com.microsoft.azure.cosmos.CosmosItemRequestOptions;
 import com.microsoft.azure.cosmos.CosmosItemResponse;
-import com.microsoft.azure.cosmos.CosmosItemSettings;
+import com.microsoft.azure.cosmos.CosmosItemProperties;
 import com.microsoft.azure.cosmos.CosmosResponseValidator;
 import com.microsoft.azure.cosmosdb.ConnectionPolicy;
 import com.microsoft.azure.cosmosdb.ConsistencyLevel;
@@ -96,16 +96,16 @@ public class ProxyHostTest extends TestSuiteBase {
         CosmosClient clientWithRightProxy = null;
         try {
             ConnectionPolicy connectionPolicy =new ConnectionPolicy();
-            connectionPolicy.setProxy(PROXY_HOST, PROXY_PORT);
+            connectionPolicy.proxy(PROXY_HOST, PROXY_PORT);
             clientWithRightProxy = CosmosClient.builder().endpoint(TestConfigurations.HOST)
                     .key(TestConfigurations.MASTER_KEY)
                     .connectionPolicy(connectionPolicy)
-                    .consistencyLevel(ConsistencyLevel.Session).build();
-            CosmosItemSettings docDefinition = getDocumentDefinition();
-            Mono<CosmosItemResponse> createObservable = clientWithRightProxy.getDatabase(createdDatabase.getId()).getContainer(createdCollection.getId())
+                    .consistencyLevel(ConsistencyLevel.SESSION).build();
+            CosmosItemProperties docDefinition = getDocumentDefinition();
+            Mono<CosmosItemResponse> createObservable = clientWithRightProxy.getDatabase(createdDatabase.id()).getContainer(createdCollection.id())
                     .createItem(docDefinition, new CosmosItemRequestOptions());
             CosmosResponseValidator<CosmosItemResponse> validator = new CosmosResponseValidator.Builder<CosmosItemResponse>()
-                    .withId(docDefinition.getId())
+                    .withId(docDefinition.id())
                     .build();
             validateSuccess(createObservable, validator);
         } finally {
@@ -129,16 +129,16 @@ public class ProxyHostTest extends TestSuiteBase {
             Logger.getLogger(LogLevelTest.NETWORK_LOGGING_CATEGORY).addAppender(appender);
 
             ConnectionPolicy connectionPolicy =new ConnectionPolicy();
-            connectionPolicy.setProxy(PROXY_HOST, PROXY_PORT);
+            connectionPolicy.proxy(PROXY_HOST, PROXY_PORT);
             clientWithRightProxy = CosmosClient.builder().endpoint(TestConfigurations.HOST)
                     .key(TestConfigurations.MASTER_KEY)
                     .connectionPolicy(connectionPolicy)
-                    .consistencyLevel(ConsistencyLevel.Session).build();
-            CosmosItemSettings docDefinition = getDocumentDefinition();
-            Mono<CosmosItemResponse> createObservable = clientWithRightProxy.getDatabase(createdDatabase.getId()).getContainer(createdCollection.getId())
+                    .consistencyLevel(ConsistencyLevel.SESSION).build();
+            CosmosItemProperties docDefinition = getDocumentDefinition();
+            Mono<CosmosItemResponse> createObservable = clientWithRightProxy.getDatabase(createdDatabase.id()).getContainer(createdCollection.id())
                     .createItem(docDefinition, new CosmosItemRequestOptions());
             CosmosResponseValidator<CosmosItemResponse> validator = new CosmosResponseValidator.Builder<CosmosItemResponse>()
-                    .withId(docDefinition.getId())
+                    .withId(docDefinition.id())
                     .build();
             validateSuccess(createObservable, validator);
 
@@ -174,9 +174,9 @@ public class ProxyHostTest extends TestSuiteBase {
         PropertyConfigurator.configure(this.getClass().getClassLoader().getResource("log4j.properties"));
     }
 
-    private CosmosItemSettings getDocumentDefinition() {
+    private CosmosItemProperties getDocumentDefinition() {
         String uuid = UUID.randomUUID().toString();
-        CosmosItemSettings doc = new CosmosItemSettings(String.format("{ "
+        CosmosItemProperties doc = new CosmosItemProperties(String.format("{ "
                 + "\"id\": \"%s\", "
                 + "\"mypk\": \"%s\", "
                 + "\"sgmts\": [[6519456, 1471916863], [2498434, 1455671440]]"

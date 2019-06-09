@@ -22,12 +22,7 @@
  */
 package com.microsoft.azure.cosmos.changefeed.internal;
 
-import com.microsoft.azure.cosmos.CosmosContainer;
-import com.microsoft.azure.cosmos.CosmosContainerRequestOptions;
-import com.microsoft.azure.cosmos.CosmosContainerResponse;
-import com.microsoft.azure.cosmos.changefeed.ChangeFeedContextClient;
 import com.microsoft.azure.cosmos.changefeed.ContainerConnectionInfo;
-import reactor.core.publisher.Mono;
 
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -58,10 +53,10 @@ public class ChangeFeedHelper {
         if (leaseCollectionLocation == null || leaseCollectionLocation.getConnectionPolicy() == null) {
             throw new IllegalArgumentException("leaseCollectionLocation");
         }
-        if (leaseCollectionLocation.getConnectionPolicy().getUserAgentSuffix() == null
-            || leaseCollectionLocation.getConnectionPolicy().getUserAgentSuffix().isEmpty()) {
+        if (leaseCollectionLocation.getConnectionPolicy().userAgentSuffix() == null
+            || leaseCollectionLocation.getConnectionPolicy().userAgentSuffix().isEmpty()) {
             result = new ContainerConnectionInfo(leaseCollectionLocation);
-            result.getConnectionPolicy().setUserAgentSuffix(DEFAULT_USER_AGENT_SUFFIX);
+            result.getConnectionPolicy().userAgentSuffix(DEFAULT_USER_AGENT_SUFFIX);
         }
 
         return result;

@@ -99,7 +99,7 @@ public class CosmosItem extends CosmosResource{
      * @return an {@link Mono} containing the  cosmos item resource response with the replaced item or an error.
      */
     public Mono<CosmosItemResponse> replace(Object item, CosmosItemRequestOptions options){
-        Document doc = CosmosItemSettings.fromObject(item);
+        Document doc = CosmosItemProperties.fromObject(item);
         if (options == null) {
             options = new CosmosItemRequestOptions();
         }
@@ -151,12 +151,12 @@ public class CosmosItem extends CosmosResource{
     }
 
     @Override
-    protected String getURIPathSegment() {
+    protected String URIPathSegment() {
         return Paths.DOCUMENTS_PATH_SEGMENT;
     }
 
     @Override
-    protected String getParentLink() {
+    protected String parentLink() {
         return this.container.getLink();
     }
 }

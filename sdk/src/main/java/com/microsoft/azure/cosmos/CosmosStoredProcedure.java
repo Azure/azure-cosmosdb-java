@@ -39,17 +39,17 @@ public class CosmosStoredProcedure extends CosmosResource {
     }
 
     @Override
-    protected String getURIPathSegment() {
+    protected String URIPathSegment() {
         return Paths.STORED_PROCEDURES_PATH_SEGMENT;
     }
 
     @Override
-    protected String getParentLink() {
+    protected String parentLink() {
         return cosmosContainer.getLink();
     }
 
     /**
-     * Read a stored procedure by the stored procedure link.
+     * READ a stored procedure by the stored procedure link.
      * <p>
      * After subscription the operation will be performed.
      * The {@link Mono} upon successful completion will contain a single resource response with the read stored 

@@ -100,62 +100,62 @@ public class BridgeInternal {
 
         Map<String, String> headers = new HashMap<>();
 
-        if (options.getMaxItemCount() != null) {
-            headers.put(HttpConstants.HttpHeaders.PAGE_SIZE, options.getMaxItemCount().toString());
+        if (options.maxItemCount() != null) {
+            headers.put(HttpConstants.HttpHeaders.PAGE_SIZE, options.maxItemCount().toString());
         }
 
         if (options instanceof ChangeFeedOptions) {
             ChangeFeedOptions changeFeedOptions = (ChangeFeedOptions) options;
 
             String ifNoneMatchValue = null;
-            if (changeFeedOptions.getRequestContinuation() != null) {
-                ifNoneMatchValue = changeFeedOptions.getRequestContinuation();
+            if (changeFeedOptions.requestContinuation() != null) {
+                ifNoneMatchValue = changeFeedOptions.requestContinuation();
             } else if (!changeFeedOptions.isStartFromBeginning()) {
                 ifNoneMatchValue = "*";
             }
-            // On REST level, change feed is using IfNoneMatch/ETag instead of
+            // On REST level, change feed is using IF_NONE_MATCH/ETag instead of
             // continuation.
             if (ifNoneMatchValue != null) {
                 headers.put(HttpConstants.HttpHeaders.IF_NONE_MATCH, ifNoneMatchValue);
             }
 
             headers.put(HttpConstants.HttpHeaders.A_IM, INCREMENTAL_FEED_HEADER_VALUE);
-        } else if (options.getRequestContinuation() != null) {
-            headers.put(HttpConstants.HttpHeaders.CONTINUATION, options.getRequestContinuation());
+        } else if (options.requestContinuation() != null) {
+            headers.put(HttpConstants.HttpHeaders.CONTINUATION, options.requestContinuation());
         }
 
         FeedOptions feedOptions = options instanceof FeedOptions ? (FeedOptions) options : null;
         if (feedOptions != null) {
-            if (feedOptions.getSessionToken() != null) {
-                headers.put(HttpConstants.HttpHeaders.SESSION_TOKEN, feedOptions.getSessionToken());
+            if (feedOptions.sessionToken() != null) {
+                headers.put(HttpConstants.HttpHeaders.SESSION_TOKEN, feedOptions.sessionToken());
             }
 
-            if (feedOptions.getEnableScanInQuery() != null) {
+            if (feedOptions.enableScanInQuery() != null) {
                 headers.put(HttpConstants.HttpHeaders.ENABLE_SCAN_IN_QUERY,
-                        feedOptions.getEnableScanInQuery().toString());
+                        feedOptions.enableScanInQuery().toString());
             }
 
-            if (feedOptions.getEmitVerboseTracesInQuery() != null) {
+            if (feedOptions.emitVerboseTracesInQuery() != null) {
                 headers.put(HttpConstants.HttpHeaders.EMIT_VERBOSE_TRACES_IN_QUERY,
-                        feedOptions.getEmitVerboseTracesInQuery().toString());
+                        feedOptions.emitVerboseTracesInQuery().toString());
             }
 
-            if (feedOptions.getEnableCrossPartitionQuery() != null) {
+            if (feedOptions.enableCrossPartitionQuery() != null) {
                 headers.put(HttpConstants.HttpHeaders.ENABLE_CROSS_PARTITION_QUERY,
-                        feedOptions.getEnableCrossPartitionQuery().toString());
+                        feedOptions.enableCrossPartitionQuery().toString());
             }
 
-            if (feedOptions.getMaxDegreeOfParallelism() != 0) {
+            if (feedOptions.maxDegreeOfParallelism() != 0) {
                 headers.put(HttpConstants.HttpHeaders.PARALLELIZE_CROSS_PARTITION_QUERY, Boolean.TRUE.toString());
             }
 
-            if (feedOptions.getResponseContinuationTokenLimitInKb() > 0) {
+            if (feedOptions.responseContinuationTokenLimitInKb() > 0) {
                 headers.put(HttpConstants.HttpHeaders.RESPONSE_CONTINUATION_TOKEN_LIMIT_IN_KB,
-                        Strings.toString(feedOptions.getResponseContinuationTokenLimitInKb()));
+                        Strings.toString(feedOptions.responseContinuationTokenLimitInKb()));
             }
 
-            if(feedOptions.getPopulateQueryMetrics()){
-                headers.put(HttpConstants.HttpHeaders.POPULATE_QUERY_METRICS, String.valueOf(feedOptions.getPopulateQueryMetrics()));
+            if(feedOptions.populateQueryMetrics()){
+                headers.put(HttpConstants.HttpHeaders.POPULATE_QUERY_METRICS, String.valueOf(feedOptions.populateQueryMetrics()));
             }
         }
 
@@ -178,29 +178,29 @@ public class BridgeInternal {
         return new FeedResponse<>(results, headers, queryMetricsMap);
     }
 
-    public static <E extends  DocumentClientException> E setResourceAddress(E e, String resourceAddress) {
+    public static <E extends CosmosClientException> E setResourceAddress(E e, String resourceAddress) {
         e.resourceAddress = resourceAddress;
         return e;
     }
 
-    public static <E extends  DocumentClientException> long getLSN(E e) {
+    public static <E extends CosmosClientException> long getLSN(E e) {
         return e.lsn;
     }
 
-    public static <E extends  DocumentClientException> String getPartitionKeyRangeId(E e) {
+    public static <E extends CosmosClientException> String getPartitionKeyRangeId(E e) {
         return e.partitionKeyRangeId;
     }
 
-    public static <E extends  DocumentClientException> String getResourceAddress(E e) {
+    public static <E extends CosmosClientException> String getResourceAddress(E e) {
         return e.resourceAddress;
     }
 
-    public static <E extends  DocumentClientException> E setLSN(E e, long lsn) {
+    public static <E extends CosmosClientException> E setLSN(E e, long lsn) {
         e.lsn = lsn;
         return e;
     }
 
-    public static <E extends  DocumentClientException> E setPartitionKeyRangeId(E e, String partitionKeyRangeId) {
+    public static <E extends CosmosClientException> E setPartitionKeyRangeId(E e, String partitionKeyRangeId) {
         e.partitionKeyRangeId = partitionKeyRangeId;
         return e;
     }
@@ -210,23 +210,23 @@ public class BridgeInternal {
     }
 
     public static boolean getUseMultipleWriteLocations(ConnectionPolicy policy) {
-        return policy.isUsingMultipleWriteLocations();
+        return policy.usingMultipleWriteLocations();
     }
 
     public static void setUseMultipleWriteLocations(ConnectionPolicy policy, boolean value) {
-        policy.setUsingMultipleWriteLocations(value);
+        policy.usingMultipleWriteLocations(value);
     }
 
-    public static <E extends  DocumentClientException> URI getRequestUri(DocumentClientException documentClientException) {
-        return documentClientException.requestUri;
+    public static <E extends CosmosClientException> URI getRequestUri(CosmosClientException cosmosClientException) {
+        return cosmosClientException.requestUri;
     }
 
-    public static <E extends  DocumentClientException> void setRequestHeaders(DocumentClientException documentClientException, Map<String, String> requestHeaders) {
-        documentClientException.requestHeaders = requestHeaders;
+    public static <E extends CosmosClientException> void setRequestHeaders(CosmosClientException cosmosClientException, Map<String, String> requestHeaders) {
+        cosmosClientException.requestHeaders = requestHeaders;
     }
 
-    public static <E extends  DocumentClientException> Map<String, String> getRequestHeaders(DocumentClientException documentClientException) {
-        return documentClientException.requestHeaders;
+    public static <E extends CosmosClientException> Map<String, String> getRequestHeaders(CosmosClientException cosmosClientException) {
+        return cosmosClientException.requestHeaders;
     }
 
     public static Map<String, Object> getQueryEngineConfiuration(DatabaseAccount databaseAccount) {
@@ -246,11 +246,11 @@ public class BridgeInternal {
     }
 
     public static String getAltLink(Resource resource) {
-        return resource.getAltLink();
+        return resource.altLink();
     }
 
     public static void setAltLink(Resource resource, String altLink) {
-        resource.setAltLink(altLink);
+        resource.altLink(altLink);
     }
 
     public static void setMaxReplicaSetSize(ReplicationPolicy replicationPolicy, int value) {
@@ -260,7 +260,7 @@ public class BridgeInternal {
     public static <T extends Resource> void putQueryMetricsIntoMap(FeedResponse<T> response,
                                                                    String partitionKeyRangeId,
                                                                    QueryMetrics queryMetrics){
-        response.getQueryMetricsMap().put(partitionKeyRangeId, queryMetrics);
+        response.queryMetricsMap().put(partitionKeyRangeId, queryMetrics);
     }
 
     public static QueryMetrics createQueryMetricsFromDelimitedStringAndClientSideMetrics(String queryMetricsDelimitedString,
@@ -277,11 +277,11 @@ public class BridgeInternal {
         return queryMetrics.getClientSideMetrics();
     }
 
-    public static String getInnerErrorMessage(DocumentClientException documentClientException) {
-        if (documentClientException == null) {
+    public static String getInnerErrorMessage(CosmosClientException cosmosClientException) {
+        if (cosmosClientException == null) {
             return null;
         }
-        return documentClientException.getInnerErrorMessage();
+        return cosmosClientException.innerErrorMessage();
     }
     
     public static PartitionKeyInternal getNonePartitionKey(PartitionKeyDefinition partitionKeyDefinition) {

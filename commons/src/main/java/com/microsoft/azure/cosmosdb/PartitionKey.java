@@ -39,7 +39,7 @@ public class PartitionKey {
     }
 
     /**
-     * Constructor. Create a new instance of the PartitionKey object.
+     * Constructor. CREATE a new instance of the PartitionKey object.
      *
      * @param key the value of the partition key.
      */
@@ -49,7 +49,7 @@ public class PartitionKey {
     }
 
     /**
-     * Create a new instance of the PartitionKey object from a serialized JSON partition key.
+     * CREATE a new instance of the PartitionKey object from a serialized JSON partition key.
      *
      * @param jsonString the JSON string representation of this PartitionKey object.
      * @return the PartitionKey instance.
@@ -69,7 +69,7 @@ public class PartitionKey {
         return this.internalPartitionKey.toJson();
     }
 
-    public PartitionKeyInternal getInternalPartitionKey() {
+    PartitionKeyInternal getInternalPartitionKey() {
         return internalPartitionKey;
     }
 

@@ -39,7 +39,7 @@ public class CosmosContainerRequestOptions extends CosmosRequestOptions {
      *
      * @return the throughput value.
      */
-    public Integer getOfferThroughput() {
+    public Integer offerThroughput() {
         return offerThroughput;
     }
 
@@ -61,7 +61,7 @@ public class CosmosContainerRequestOptions extends CosmosRequestOptions {
      *
      * @return true if PopulateQuotaInfo is enabled
      */
-    public boolean isPopulateQuotaInfo() {
+    public boolean populateQuotaInfo() {
         return populateQuotaInfo;
     }
 
@@ -83,7 +83,7 @@ public class CosmosContainerRequestOptions extends CosmosRequestOptions {
      *
      * @return the consistency level.
      */
-    public ConsistencyLevel getConsistencyLevel() {
+    public ConsistencyLevel consistencyLevel() {
         return consistencyLevel;
     }
 
@@ -103,7 +103,7 @@ public class CosmosContainerRequestOptions extends CosmosRequestOptions {
      *
      * @return the session token.
      */
-    public String getSessionToken() {
+    public String sessionToken() {
         return sessionToken;
     }
 

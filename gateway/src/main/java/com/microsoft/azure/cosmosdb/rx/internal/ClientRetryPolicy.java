@@ -23,7 +23,7 @@
 package com.microsoft.azure.cosmosdb.rx.internal;
 
 import com.microsoft.azure.cosmosdb.ClientSideRequestStatistics;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.RetryOptions;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.WebExceptionUtility;
@@ -66,8 +66,8 @@ public class ClientRetryPolicy implements IDocumentClientRetryPolicy {
                              RetryOptions retryOptions) {
 
         this.throttlingRetry = new ResourceThrottleRetryPolicy(
-                retryOptions.getMaxRetryAttemptsOnThrottledRequests(),
-                retryOptions.getMaxRetryWaitTimeInSeconds());
+                retryOptions.maxRetryAttemptsOnThrottledRequests(),
+                retryOptions.maxRetryWaitTimeInSeconds());
         this.rxNettyConnectionPoolExhaustedRetry = new ConnectionPoolExhaustedRetry();
         this.globalEndpointManager = globalEndpointManager;
         this.failoverRetryCount = 0;
@@ -92,9 +92,9 @@ public class ClientRetryPolicy implements IDocumentClientRetryPolicy {
 
         this.retryContext = null;
         // Received 403.3 on write region, initiate the endpoint re-discovery
-        DocumentClientException clientException = Utils.as(e, DocumentClientException.class);
-        if (clientException != null && clientException.getClientSideRequestStatistics() != null) {
-            this.clientSideRequestStatistics = clientException.getClientSideRequestStatistics();
+        CosmosClientException clientException = Utils.as(e, CosmosClientException.class);
+        if (clientException != null && clientException.clientSideRequestStatistics() != null) {
+            this.clientSideRequestStatistics = clientException.clientSideRequestStatistics();
         }
         if (clientException != null && 
                 Exceptions.isStatusCode(clientException, HttpConstants.StatusCodes.FORBIDDEN) &&

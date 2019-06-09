@@ -29,15 +29,10 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.microsoft.azure.cosmosdb.*;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
-import com.microsoft.azure.cosmosdb.BridgeInternal;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
-import com.microsoft.azure.cosmosdb.FeedOptions;
-import com.microsoft.azure.cosmosdb.FeedResponse;
-import com.microsoft.azure.cosmosdb.PartitionKeyRange;
-import com.microsoft.azure.cosmosdb.Resource;
-import com.microsoft.azure.cosmosdb.SqlQuerySpec;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.internal.RequestChargeTracker;
 import com.microsoft.azure.cosmosdb.internal.ResourceType;
@@ -109,9 +104,9 @@ public class ParallelDocumentQueryExecutionContext<T extends Resource>
             context.initialize(collectionRid,
                     targetRanges,
                     initialPageSize,
-                    feedOptions.getRequestContinuation());
+                    feedOptions.requestContinuation());
             return Observable.just(context);
-        } catch (DocumentClientException dce) {
+        } catch (CosmosClientException dce) {
             return Observable.error(dce);
         }
     }
@@ -120,7 +115,7 @@ public class ParallelDocumentQueryExecutionContext<T extends Resource>
             String collectionRid,
             List<PartitionKeyRange> targetRanges,
             int initialPageSize,
-            String continuationToken) throws DocumentClientException {
+            String continuationToken) throws CosmosClientException {
         // Generate the corresponding continuation token map.
         Map<PartitionKeyRange, String> partitionKeyRangeToContinuationTokenMap = new HashMap<PartitionKeyRange, String>();
         if (continuationToken == null) {
@@ -136,17 +131,17 @@ public class ParallelDocumentQueryExecutionContext<T extends Resource>
             // If a continuation token is given then we need to figure out partition key
             // range it maps to
             // in order to filter the partition key ranges.
-            // For example if suppliedCompositeContinuationToken.Range.Min ==
-            // partition3.Range.Min,
+            // For example if suppliedCompositeContinuationToken.RANGE.Min ==
+            // partition3.RANGE.Min,
             // then we know that partitions 0, 1, 2 are fully drained.
 
             // Check to see if composite continuation token is a valid JSON.
             ValueHolder<CompositeContinuationToken> outCompositeContinuationToken = new ValueHolder<CompositeContinuationToken>();
             if (!CompositeContinuationToken.tryParse(continuationToken,
                     outCompositeContinuationToken)) {
-                String message = String.format("Invalid JSON in continuation token %s for Parallel~Context",
+                String message = String.format("INVALID JSON in continuation token %s for Parallel~Context",
                         continuationToken);
-                throw new DocumentClientException(HttpConstants.StatusCodes.BADREQUEST,
+                throw new CosmosClientException(HttpConstants.StatusCodes.BADREQUEST,
                         message);
             }
 
@@ -177,7 +172,7 @@ public class ParallelDocumentQueryExecutionContext<T extends Resource>
 
     private List<PartitionKeyRange> getPartitionKeyRangesForContinuation(
             CompositeContinuationToken compositeContinuationToken,
-            List<PartitionKeyRange> partitionKeyRanges) throws DocumentClientException {
+            List<PartitionKeyRange> partitionKeyRanges) throws CosmosClientException {
         // Find the partition key range we left off on
         int startIndex = this.FindTargetRangeAndExtractContinuationTokens(partitionKeyRanges,
                 compositeContinuationToken.getRange());
@@ -210,12 +205,12 @@ public class ParallelDocumentQueryExecutionContext<T extends Resource>
                 DocumentProducer<T>.DocumentProducerFeedResponse documentProducerFeedResponse,
                 double charge) {
             FeedResponse<T> page = documentProducerFeedResponse.pageResult;
-            Map<String, String> headers = new HashMap<>(page.getResponseHeaders());
-            double pageCharge = page.getRequestCharge();
+            Map<String, String> headers = new HashMap<>(page.responseHeaders());
+            double pageCharge = page.requestCharge();
             pageCharge += charge;
             headers.put(HttpConstants.HttpHeaders.REQUEST_CHARGE,
                     String.valueOf(pageCharge));
-            FeedResponse<T> newPage = BridgeInternal.createFeedResponseWithQueryMetrics(page.getResults(),
+            FeedResponse<T> newPage = BridgeInternal.createFeedResponseWithQueryMetrics(page.results(),
                     headers,
                     page.getQueryMetrics());
             documentProducerFeedResponse.pageResult = newPage;
@@ -226,10 +221,10 @@ public class ParallelDocumentQueryExecutionContext<T extends Resource>
                 DocumentProducer<T>.DocumentProducerFeedResponse documentProducerFeedResponse,
                 String compositeContinuationToken) {
             FeedResponse<T> page = documentProducerFeedResponse.pageResult;
-            Map<String, String> headers = new HashMap<>(page.getResponseHeaders());
+            Map<String, String> headers = new HashMap<>(page.responseHeaders());
             headers.put(HttpConstants.HttpHeaders.CONTINUATION,
                     compositeContinuationToken);
-            FeedResponse<T> newPage = BridgeInternal.createFeedResponseWithQueryMetrics(page.getResults(),
+            FeedResponse<T> newPage = BridgeInternal.createFeedResponseWithQueryMetrics(page.results(),
                     headers,
                     page.getQueryMetrics());
             documentProducerFeedResponse.pageResult = newPage;
@@ -246,9 +241,9 @@ public class ParallelDocumentQueryExecutionContext<T extends Resource>
         public Observable<FeedResponse<T>> call(
                 Observable<DocumentProducer<T>.DocumentProducerFeedResponse> source) {
             return source.filter(documentProducerFeedResponse -> {
-                if (documentProducerFeedResponse.pageResult.getResults().isEmpty()) {
+                if (documentProducerFeedResponse.pageResult.results().isEmpty()) {
                     // filter empty pages and accumulate charge
-                    tracker.addCharge(documentProducerFeedResponse.pageResult.getRequestCharge());
+                    tracker.addCharge(documentProducerFeedResponse.pageResult.requestCharge());
                     return false;
                 }
                 return true;
@@ -266,7 +261,7 @@ public class ParallelDocumentQueryExecutionContext<T extends Resource>
                 // results.
                 return Observable.just(null);
             })).map(documentProducerFeedResponse -> {
-                // Create pairs from the stream to allow the observables downstream to "peek"
+                // CREATE pairs from the stream to allow the observables downstream to "peek"
                 // 1, 2, 3, null -> (null, 1), (1, 2), (2, 3), (3, null)
                 ImmutablePair<DocumentProducer<T>.DocumentProducerFeedResponse, DocumentProducer<T>.DocumentProducerFeedResponse> previousCurrent = new ImmutablePair<DocumentProducer<T>.DocumentProducerFeedResponse, DocumentProducer<T>.DocumentProducerFeedResponse>(
                         this.previousPage,
@@ -280,7 +275,7 @@ public class ParallelDocumentQueryExecutionContext<T extends Resource>
                 DocumentProducer<T>.DocumentProducerFeedResponse next = currentNext.right;
 
                 String compositeContinuationToken;
-                String backendContinuationToken = current.pageResult.getResponseContinuation();
+                String backendContinuationToken = current.pageResult.continuationToken();
                 if (backendContinuationToken == null) {
                     // We just finished reading the last document from a partition
                     if (next == null) {
@@ -338,7 +333,7 @@ public class ParallelDocumentQueryExecutionContext<T extends Resource>
 
     @Override
     public Observable<FeedResponse<T>> executeAsync() {
-        return this.drainAsync(feedOptions.getMaxItemCount());
+        return this.drainAsync(feedOptions.maxItemCount());
     }
 
     protected DocumentProducer<T> createDocumentProducer(

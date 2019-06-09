@@ -24,10 +24,10 @@ package com.microsoft.azure.cosmosdb.rx.internal;
 
 import java.time.Duration;
 
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 
 import rx.Single;
@@ -107,12 +107,12 @@ public class ResourceThrottleRetryPolicy implements IDocumentClientRetryPolicy{
     private Duration checkIfRetryNeeded(Exception exception) {
         Duration retryDelay = Duration.ZERO;
 
-        DocumentClientException dce = Utils.as(exception, DocumentClientException.class);
+        CosmosClientException dce = Utils.as(exception, CosmosClientException.class);
 
         if (dce != null){
 
             if (Exceptions.isStatusCode(dce, HttpConstants.StatusCodes.TOO_MANY_REQUESTS))  {
-                retryDelay = Duration.ofMillis(dce.getRetryAfterInMilliseconds());
+                retryDelay = Duration.ofMillis(dce.retryAfterInMilliseconds());
                 if (this.backoffDelayFactor > 1) {
                     retryDelay = Duration.ofNanos(retryDelay.toNanos() * this.backoffDelayFactor);
                 }

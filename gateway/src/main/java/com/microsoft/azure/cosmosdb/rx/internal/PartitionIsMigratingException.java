@@ -23,7 +23,7 @@
 package com.microsoft.azure.cosmosdb.rx.internal;
 
 import com.microsoft.azure.cosmosdb.BridgeInternal;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.Error;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.HttpUtils;
@@ -36,7 +36,7 @@ import java.util.Map;
  * While this class is public, but it is not part of our published public APIs.
  * This is meant to be internally used only by our sdk.
  */
-public class PartitionIsMigratingException extends DocumentClientException {
+public class PartitionIsMigratingException extends CosmosClientException {
 
     private static final long serialVersionUID = 1L;
 
@@ -82,7 +82,7 @@ public class PartitionIsMigratingException extends DocumentClientException {
     }
 
     private void setSubStatus() {
-        this.getResponseHeaders().put(
+        this.responseHeaders().put(
                 WFConstants.BackendHeaders.SUB_STATUS,
                 Integer.toString(HttpConstants.SubStatusCodes.COMPLETING_PARTITION_MIGRATION));
     }

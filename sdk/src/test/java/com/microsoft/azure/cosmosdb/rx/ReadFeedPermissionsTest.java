@@ -63,16 +63,16 @@ public class ReadFeedPermissionsTest extends TestSuiteBase {
     public void readPermissions() throws Exception {
 
         FeedOptions options = new FeedOptions();
-        options.setMaxItemCount(2);
+        options.maxItemCount(2);
 
         Observable<FeedResponse<Permission>> feedObservable = client.readPermissions(getUserLink(), options);
 
-        int expectedPageSize = (createdPermissions.size() + options.getMaxItemCount() - 1) / options.getMaxItemCount();
+        int expectedPageSize = (createdPermissions.size() + options.maxItemCount() - 1) / options.maxItemCount();
 
         FeedResponseListValidator<Permission> validator = new FeedResponseListValidator.Builder<Permission>()
                 .totalSize(createdPermissions.size())
                 .numberOfPages(expectedPageSize)
-                .exactlyContainsInAnyOrder(createdPermissions.stream().map(d -> d.getResourceId()).collect(Collectors.toList()))
+                .exactlyContainsInAnyOrder(createdPermissions.stream().map(d -> d.resourceId()).collect(Collectors.toList()))
                 .allPagesSatisfy(new FeedResponseValidator.Builder<Permission>()
                         .requestChargeGreaterThanOrEqualTo(1.0).build())
                 .build();
@@ -83,9 +83,9 @@ public class ReadFeedPermissionsTest extends TestSuiteBase {
     public void beforeClass() {
         client = clientBuilder.build();
         Database d = new Database();
-        d.setId(databaseId);
+        d.id(databaseId);
         createdDatabase = createDatabase(client, d);
-        createdUser = safeCreateUser(client, createdDatabase.getId(), getUserDefinition());
+        createdUser = safeCreateUser(client, createdDatabase.id(), getUserDefinition());
 
         for(int i = 0; i < 5; i++) {
             createdPermissions.add(createPermissions(client, i));
@@ -102,14 +102,14 @@ public class ReadFeedPermissionsTest extends TestSuiteBase {
 
     private static User getUserDefinition() {
         User user = new User();
-        user.setId(UUID.randomUUID().toString());
+        user.id(UUID.randomUUID().toString());
         return user;
     }
 
     public Permission createPermissions(AsyncDocumentClient client, int index) {
         Permission permission = new Permission();
-        permission.setId(UUID.randomUUID().toString());
-        permission.setPermissionMode(PermissionMode.Read);
+        permission.id(UUID.randomUUID().toString());
+        permission.setPermissionMode(PermissionMode.READ);
         permission.setResourceLink("dbs/AQAAAA==/colls/AQAAAJ0fgT" + Integer.toString(index) + "=");
         return client.createPermission(getUserLink(), permission, null).toBlocking().single().getResource();
     }
@@ -119,10 +119,10 @@ public class ReadFeedPermissionsTest extends TestSuiteBase {
     }
 
     private String getDatabaseId() {
-        return createdDatabase.getId();
+        return createdDatabase.id();
     }
 
     private String getUserId() {
-        return createdUser.getId();
+        return createdUser.id();
     }
 }

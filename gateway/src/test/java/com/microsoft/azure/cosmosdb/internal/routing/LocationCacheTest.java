@@ -167,9 +167,9 @@ public class LocationCacheTest {
         this.cache.onDatabaseAccountRead(this.databaseAccount);
 
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
-        connectionPolicy.setEnableEndpointDiscovery(enableEndpointDiscovery);
+        connectionPolicy.enableEndpointDiscovery(enableEndpointDiscovery);
         BridgeInternal.setUseMultipleWriteLocations(connectionPolicy, useMultipleWriteLocations);
-        connectionPolicy.setPreferredLocations(this.preferredLocations);
+        connectionPolicy.preferredLocations(this.preferredLocations);
 
         this.endpointManager = new GlobalEndpointManager(mockedClient, connectionPolicy, configs);
     }
@@ -398,7 +398,7 @@ public class LocationCacheTest {
                     createUrl(Iterables.get(this.databaseAccount.getWritableLocations(), 1).getEndpoint());
 
         // If current write endpoint is unavailable, write endpoints order doesn't change
-        // All write requests flip-flop between current write and alternate write endpoint
+        // ALL write requests flip-flop between current write and alternate write endpoint
         UnmodifiableList<URL> writeEndpoints = this.cache.getWriteEndpoints();
 
         assertThat(firstAvailableWriteEndpoint).isEqualTo(writeEndpoints.get(0));

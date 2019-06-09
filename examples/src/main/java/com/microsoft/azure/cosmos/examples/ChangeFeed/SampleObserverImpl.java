@@ -22,11 +22,8 @@
  */
 package com.microsoft.azure.cosmos.examples.ChangeFeed;
 
-import com.microsoft.azure.cosmos.ChangeFeedObserver;
-import com.microsoft.azure.cosmos.ChangeFeedObserverCloseReason;
-import com.microsoft.azure.cosmos.ChangeFeedObserverContext;
-import com.microsoft.azure.cosmos.CosmosItem;
-import com.microsoft.azure.cosmos.CosmosItemSettings;
+import com.microsoft.azure.cosmos.*;
+import com.microsoft.azure.cosmos.CosmosItemProperties;
 import com.microsoft.azure.cosmosdb.SerializationFormattingPolicy;
 
 import java.util.List;
@@ -46,11 +43,11 @@ public class SampleObserverImpl implements ChangeFeedObserver {
     }
 
     @Override
-    public void processChanges(ChangeFeedObserverContext context, List<CosmosItemSettings> docs) {
+    public void processChanges(ChangeFeedObserverContext context, List<CosmosItemProperties> docs) {
         System.out.println("--->SampleObserverImpl::processChanges() START");
 
-        for (CosmosItemSettings document : docs) {
-            System.out.println("---->DOCUMENT RECEIVED: " + document.toJson(SerializationFormattingPolicy.Indented));
+        for (CosmosItemProperties document : docs) {
+            System.out.println("---->DOCUMENT RECEIVED: " + document.toJson(SerializationFormattingPolicy.INDENTED));
         }
         System.out.println("--->SampleObserverImpl::processChanges() END");
     }

@@ -40,7 +40,7 @@ import com.google.common.base.Strings;
  * If none of the above is set, emulator endpoint will be used.
  */
 public final class TestConfigurations {
-    // Replace MASTER_KEY and HOST with values from your Azure Cosmos DB account.
+    // REPLACE MASTER_KEY and HOST with values from your Azure Cosmos DB account.
     // The default values are credentials of the local emulator, which are not used in any production environment.
     // <!--[SuppressMessage("Microsoft.Security", "CS002:SecretInNextLine")]-->
     public static String MASTER_KEY =
@@ -58,7 +58,7 @@ public final class TestConfigurations {
     public static String CONSISTENCY =
             System.getProperty("ACCOUNT_CONSISTENCY",
                                StringUtils.defaultString(Strings.emptyToNull(
-                                       System.getenv().get("ACCOUNT_CONSISTENCY")), "Strong"));
+                                       System.getenv().get("ACCOUNT_CONSISTENCY")), "STRONG"));
 
     public static String PREFERRED_LOCATIONS =
             System.getProperty("PREFERRED_LOCATIONS",

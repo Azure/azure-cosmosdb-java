@@ -24,7 +24,7 @@
 package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
 import com.microsoft.azure.cosmosdb.BridgeInternal;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.PartitionKeyRange;
 import com.microsoft.azure.cosmosdb.internal.Constants;
@@ -57,7 +57,6 @@ import rx.Observable;
 import rx.Single;
 
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.time.Duration;
@@ -224,7 +223,7 @@ public class GatewayAddressCache implements IAddressCache {
 
                     return addresses;
                 }).onErrorResumeNext(ex -> {
-            DocumentClientException dce = com.microsoft.azure.cosmosdb.rx.internal.Utils.as(ex, DocumentClientException.class);
+            CosmosClientException dce = com.microsoft.azure.cosmosdb.rx.internal.Utils.as(ex, CosmosClientException.class);
             if (dce == null) {
                 if (forceRefreshPartitionAddressesModified) {
                     this.suboptimalServerPartitionTimestamps.remove(partitionKeyRangeIdentity);
@@ -478,7 +477,7 @@ public class GatewayAddressCache implements IAddressCache {
         RxDocumentServiceRequest request = RxDocumentServiceRequest.create(
                 OperationType.Read,
                 //    collection.AltLink,
-                collection.getResourceId(),
+                collection.resourceId(),
                 ResourceType.DocumentCollection,
                 //       AuthorizationTokenType.PrimaryMasterKey
                 Collections.EMPTY_MAP);
@@ -490,7 +489,7 @@ public class GatewayAddressCache implements IAddressCache {
 
             tasks.add(this.getServerAddressesViaGatewayAsync(
                     request,
-                    collection.getResourceId(),
+                    collection.resourceId(),
 
                     partitionKeyRangeIdentities.subList(i, endIndex).
                             stream().map(range -> range.getPartitionKeyRangeId()).collect(Collectors.toList()),
@@ -502,12 +501,12 @@ public class GatewayAddressCache implements IAddressCache {
                     List<Pair<PartitionKeyRangeIdentity, AddressInformation[]>> addressInfos = list.stream()
                             .filter(addressInfo -> this.protocolScheme.equals(addressInfo.getProtocolScheme()))
                             .collect(Collectors.groupingBy(address -> address.getParitionKeyRangeId()))
-                            .entrySet().stream().map(group -> toPartitionAddressAndRange(collection.getResourceId(), group.getValue()))
+                            .entrySet().stream().map(group -> toPartitionAddressAndRange(collection.resourceId(), group.getValue()))
                             .collect(Collectors.toList());
 
                     for (Pair<PartitionKeyRangeIdentity, AddressInformation[]> addressInfo : addressInfos) {
                         this.serverPartitionAddressCache.set(
-                                new PartitionKeyRangeIdentity(collection.getResourceId(), addressInfo.getLeft().getPartitionKeyRangeId()),
+                                new PartitionKeyRangeIdentity(collection.resourceId(), addressInfo.getLeft().getPartitionKeyRangeId()),
                                 addressInfo.getRight());
                     }
                 }).toCompletable();

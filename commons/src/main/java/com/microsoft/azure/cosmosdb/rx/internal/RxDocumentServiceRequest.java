@@ -32,8 +32,6 @@ import java.util.Map;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.WFConstants;
 import org.apache.commons.lang3.StringUtils;
 
-import com.microsoft.azure.cosmosdb.ChangeFeedOptions;
-import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedOptionsBase;
 import com.microsoft.azure.cosmosdb.RequestOptions;
 import com.microsoft.azure.cosmosdb.Resource;
@@ -475,14 +473,14 @@ public class RxDocumentServiceRequest {
         String queryText;
         switch (queryCompatibilityMode) {
         case SqlQuery:
-            if (querySpec.getParameters() != null && querySpec.getParameters().size() > 0) {
+            if (querySpec.parameters() != null && querySpec.parameters().size() > 0) {
                 throw new IllegalArgumentException(
                         String.format("Unsupported argument in query compatibility mode '{%s}'",
                                 queryCompatibilityMode.name()));
             }
 
             operation = OperationType.SqlQuery;
-            queryText = querySpec.getQueryText();
+            queryText = querySpec.queryText();
             break;
 
         case Default:
@@ -1052,7 +1050,7 @@ public class RxDocumentServiceRequest {
         } else if (options instanceof RequestOptions) {
             return ((RequestOptions) options).getProperties();
         } else if (options instanceof FeedOptionsBase) {
-            return ((FeedOptionsBase) options).getProperties();
+            return ((FeedOptionsBase) options).properties();
         } else {
             return null;
         }

@@ -24,7 +24,7 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.internal.OperationType;
 import com.microsoft.azure.cosmosdb.internal.ResourceType;
@@ -121,8 +121,8 @@ public class GoneAndRetryWithRetryPolicyTest {
         shouldRetryResult = goneAndRetryWithRetryPolicy.shouldRetry(new InvalidPartitionException()).toBlocking()
                 .value();
         assertThat(shouldRetryResult.shouldRetry).isFalse();
-        DocumentClientException clientException = (DocumentClientException) shouldRetryResult.exception;
-        assertThat(clientException.getStatusCode()).isEqualTo(HttpConstants.StatusCodes.SERVICE_UNAVAILABLE);
+        CosmosClientException clientException = (CosmosClientException) shouldRetryResult.exception;
+        assertThat(clientException.statusCode()).isEqualTo(HttpConstants.StatusCodes.SERVICE_UNAVAILABLE);
 
     }
 

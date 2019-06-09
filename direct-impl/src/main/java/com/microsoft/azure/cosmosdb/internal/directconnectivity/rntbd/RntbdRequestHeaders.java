@@ -174,7 +174,7 @@ final class RntbdRequestHeaders extends RntbdTokenStream<RntbdRequestHeader> {
         this.fillTokenFromHeader(headers, this::getTransportRequestID, HttpHeaders.TRANSPORT_REQUEST_ID);
 
         // Will be null in case of direct, which is fine - BE will use the value slice the connection context this.
-        // When this is used in Gateway, the header value will be populated with the proxied HTTP request's header,
+        // When this is used in GATEWAY, the header value will be populated with the proxied HTTP request's header,
         // and BE will respect the per-request value.
 
         this.fillTokenFromHeader(headers, this::getClientVersion, HttpHeaders.VERSION);
@@ -648,19 +648,19 @@ final class RntbdRequestHeaders extends RntbdTokenStream<RntbdRequestHeader> {
             }
 
             switch (level) {
-                case Strong:
+                case STRONG:
                     this.getConsistencyLevel().setValue(RntbdConsistencyLevel.Strong.id());
                     break;
-                case BoundedStaleness:
+                case BOUNDED_STALENESS:
                     this.getConsistencyLevel().setValue(RntbdConsistencyLevel.BoundedStaleness.id());
                     break;
-                case Session:
+                case SESSION:
                     this.getConsistencyLevel().setValue(RntbdConsistencyLevel.Session.id());
                     break;
-                case Eventual:
+                case EVENTUAL:
                     this.getConsistencyLevel().setValue(RntbdConsistencyLevel.Eventual.id());
                     break;
-                case ConsistentPrefix:
+                case CONSISTENT_PREFIX:
                     this.getConsistencyLevel().setValue(RntbdConsistencyLevel.ConsistentPrefix.id());
                     break;
                 default:
@@ -842,13 +842,13 @@ final class RntbdRequestHeaders extends RntbdTokenStream<RntbdRequestHeader> {
             }
 
             switch (directive) {
-                case Default:
+                case DEFAULT:
                     this.getIndexingDirective().setValue(RntbdIndexingDirective.Default.id());
                     break;
-                case Exclude:
+                case EXCLUDE:
                     this.getIndexingDirective().setValue(RntbdIndexingDirective.Exclude.id());
                     break;
-                case Include:
+                case INCLUDE:
                     this.getIndexingDirective().setValue(RntbdIndexingDirective.Include.id());
                     break;
                 default:
@@ -1278,7 +1278,7 @@ final class RntbdRequestHeaders extends RntbdTokenStream<RntbdRequestHeader> {
                 }
                 default: {
                     assert false : "Recognized header has neither special-case nor default handling to convert "
-                        + "from header String to RNTBD token";
+                        + "from header STRING to RNTBD token";
                     break;
                 }
             }

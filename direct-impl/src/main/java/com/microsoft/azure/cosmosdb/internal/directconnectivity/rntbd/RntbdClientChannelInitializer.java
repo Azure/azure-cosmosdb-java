@@ -88,7 +88,7 @@ final public class RntbdClientChannelInitializer extends ChannelInitializer<NioS
         final SSLEngine sslEngine = this.sslContext.newEngine(channel.alloc());
 
         pipeline.addFirst(
-            // TODO: DANOBLE: Utilize Read/WriteTimeoutHandler for receive/send hang detection
+            // TODO: DANOBLE: Utilize READ/WriteTimeoutHandler for receive/send hang detection
             //  Links:
             //  https://msdata.visualstudio.com/CosmosDB/_workitems/edit/331552
             //  https://msdata.visualstudio.com/CosmosDB/_workitems/edit/331593

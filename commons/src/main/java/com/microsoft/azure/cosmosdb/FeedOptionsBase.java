@@ -50,7 +50,7 @@ public abstract class FeedOptionsBase {
      *
      * @return the max number of items.
      */
-    public Integer getMaxItemCount() {
+    public Integer maxItemCount() {
         return this.maxItemCount;
     }
 
@@ -60,8 +60,9 @@ public abstract class FeedOptionsBase {
      *
      * @param maxItemCount the max number of items.
      */
-    public void setMaxItemCount(Integer maxItemCount) {
+    public FeedOptionsBase maxItemCount(Integer maxItemCount) {
         this.maxItemCount = maxItemCount;
+        return this;
     }
 
     /**
@@ -69,7 +70,7 @@ public abstract class FeedOptionsBase {
      *
      * @return the request continuation.
      */
-    public String getRequestContinuation() {
+    public String requestContinuation() {
         return this.requestContinuation;
     }
 
@@ -79,8 +80,9 @@ public abstract class FeedOptionsBase {
      * @param requestContinuation
      *            the request continuation.
      */
-    public void setRequestContinuation(String requestContinuation) {
+    public FeedOptionsBase requestContinuation(String requestContinuation) {
         this.requestContinuation = requestContinuation;
+        return this;
     }
     
     /**
@@ -89,7 +91,7 @@ public abstract class FeedOptionsBase {
      *
      * @return the partition key.
      */
-    public PartitionKey getPartitionKey() {
+    public PartitionKey partitionKey() {
         return this.partitionkey;
     }
 
@@ -100,15 +102,16 @@ public abstract class FeedOptionsBase {
      * @param partitionkey
      *            the partition key value.
      */
-    public void setPartitionKey(PartitionKey partitionkey) {
+    public FeedOptionsBase partitionKey(PartitionKey partitionkey) {
         this.partitionkey = partitionkey;
+        return this;
     }
 
     /**
      * Gets the option to enable populate query metrics
      * @return whether to enable populate query metrics
      */
-    public boolean getPopulateQueryMetrics() {
+    public boolean populateQueryMetrics() {
         return populateQueryMetrics;
     }
 
@@ -116,8 +119,9 @@ public abstract class FeedOptionsBase {
      * Sets the option to enable/disable getting metrics relating to query execution on document query requests
      * @param populateQueryMetrics whether to enable or disable query metrics
      */
-    public void setPopulateQueryMetrics(boolean populateQueryMetrics) {
+    public FeedOptionsBase populateQueryMetrics(boolean populateQueryMetrics) {
         this.populateQueryMetrics = populateQueryMetrics;
+        return this;
     }
 
     /**
@@ -125,7 +129,7 @@ public abstract class FeedOptionsBase {
      *
      * @return Map of request options properties
      */
-    public Map<String, Object> getProperties() {
+    public Map<String, Object> properties() {
         return properties;
     }
 
@@ -134,7 +138,8 @@ public abstract class FeedOptionsBase {
      *
      * @param properties the properties.
      */
-    public void setProperties(Map<String, Object> properties) {
+    public FeedOptionsBase properties(Map<String, Object> properties) {
         this.properties = properties;
+        return this;
     }
 }

@@ -51,7 +51,7 @@ public class BarrierRequestHelperTest {
 
             for (OperationType operationType : OperationType.values()) {
                 Document randomResource = new Document();
-                randomResource.setId(UUID.randomUUID().toString());
+                randomResource.id(UUID.randomUUID().toString());
                 RxDocumentServiceRequest request =
                         RxDocumentServiceRequest.create(operationType, resourceType, "/dbs/7mVFAA==/colls/7mVFAP1jpeU=", randomResource, (Map<String, String>) null);
 
@@ -79,7 +79,7 @@ public class BarrierRequestHelperTest {
         OperationType operationType = OperationType.Query;
 
         Document randomResource = new Document();
-        randomResource.setId(UUID.randomUUID().toString());
+        randomResource.id(UUID.randomUUID().toString());
         RxDocumentServiceRequest request =
                 RxDocumentServiceRequest.create(operationType, resourceType, "/dbs/7mVFAA==/colls/7mVFAP1jpeU=", randomResource, (Map<String, String>) null);
 
@@ -101,7 +101,7 @@ public class BarrierRequestHelperTest {
         OperationType operationType = OperationType.Query;
 
         Document randomResource = new Document();
-        randomResource.setId(UUID.randomUUID().toString());
+        randomResource.id(UUID.randomUUID().toString());
         RxDocumentServiceRequest request =
                 RxDocumentServiceRequest.create(operationType, resourceType, "/dbs/dbname/colls/collname", randomResource, (Map<String, String>) null);
 
@@ -123,7 +123,7 @@ public class BarrierRequestHelperTest {
         OperationType operationType = OperationType.Read;
 
         Document randomResource = new Document();
-        randomResource.setId(UUID.randomUUID().toString());
+        randomResource.id(UUID.randomUUID().toString());
         RxDocumentServiceRequest request =
                 RxDocumentServiceRequest.create(operationType, resourceType, "/dbs/dbname/colls/collname", randomResource, (Map<String, String>) null);
 
@@ -147,7 +147,7 @@ public class BarrierRequestHelperTest {
         OperationType operationType = OperationType.Read;
 
         Document randomResource = new Document();
-        randomResource.setId(UUID.randomUUID().toString());
+        randomResource.id(UUID.randomUUID().toString());
         RxDocumentServiceRequest request =
                 RxDocumentServiceRequest.create(operationType, "7mVFAA==", resourceType, (Map<String, String>) null);
 

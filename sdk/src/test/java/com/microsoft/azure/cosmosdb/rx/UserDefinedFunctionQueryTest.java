@@ -30,6 +30,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import com.microsoft.azure.cosmos.CosmosClientBuilder;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
@@ -40,7 +41,6 @@ import com.microsoft.azure.cosmos.CosmosContainer;
 import com.microsoft.azure.cosmos.CosmosRequestOptions;
 import com.microsoft.azure.cosmos.CosmosUserDefinedFunctionSettings;
 import com.microsoft.azure.cosmosdb.Database;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 
@@ -55,7 +55,7 @@ public class UserDefinedFunctionQueryTest extends TestSuiteBase {
     private CosmosClient client;
 
     public  String getCollectionLink() {
-        return Utils.getCollectionNameLink(createdDatabase.getId(), createdCollection.getId());
+        return Utils.getCollectionNameLink(createdDatabase.id(), createdCollection.id());
     }
 
     @Factory(dataProvider = "clientBuildersWithDirect")
@@ -66,21 +66,21 @@ public class UserDefinedFunctionQueryTest extends TestSuiteBase {
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
     public void queryWithFilter() throws Exception {
 
-        String filterId = createdUDF.get(0).getId();
+        String filterId = createdUDF.get(0).id();
         String query = String.format("SELECT * from c where c.id = '%s'", filterId);
 
         FeedOptions options = new FeedOptions();
-        options.setMaxItemCount(5);
+        options.maxItemCount(5);
         Flux<FeedResponse<CosmosUserDefinedFunctionSettings>> queryObservable = createdCollection.queryUserDefinedFunctions(query, options);
 
-        List<CosmosUserDefinedFunctionSettings> expectedDocs = createdUDF.stream().filter(sp -> filterId.equals(sp.getId()) ).collect(Collectors.toList());
+        List<CosmosUserDefinedFunctionSettings> expectedDocs = createdUDF.stream().filter(sp -> filterId.equals(sp.id()) ).collect(Collectors.toList());
         assertThat(expectedDocs).isNotEmpty();
 
-        int expectedPageSize = (expectedDocs.size() + options.getMaxItemCount() - 1) / options.getMaxItemCount();
+        int expectedPageSize = (expectedDocs.size() + options.maxItemCount() - 1) / options.maxItemCount();
 
         FeedResponseListValidator<CosmosUserDefinedFunctionSettings> validator = new FeedResponseListValidator.Builder<CosmosUserDefinedFunctionSettings>()
                 .totalSize(expectedDocs.size())
-                .exactlyContainsInAnyOrder(expectedDocs.stream().map(d -> d.getResourceId()).collect(Collectors.toList()))
+                .exactlyContainsInAnyOrder(expectedDocs.stream().map(d -> d.resourceId()).collect(Collectors.toList()))
                 .numberOfPages(expectedPageSize)
                 .pageSatisfy(0, new FeedResponseValidator.Builder<CosmosUserDefinedFunctionSettings>()
                         .requestChargeGreaterThanOrEqualTo(1.0).build())
@@ -94,7 +94,7 @@ public class UserDefinedFunctionQueryTest extends TestSuiteBase {
 
         String query = "SELECT * from root r where r.id = '2'";
         FeedOptions options = new FeedOptions();
-        options.setEnableCrossPartitionQuery(true);
+        options.enableCrossPartitionQuery(true);
         Flux<FeedResponse<CosmosUserDefinedFunctionSettings>> queryObservable = createdCollection.queryUserDefinedFunctions(query, options);
 
         FeedResponseListValidator<CosmosUserDefinedFunctionSettings> validator = new FeedResponseListValidator.Builder<CosmosUserDefinedFunctionSettings>()
@@ -111,19 +111,19 @@ public class UserDefinedFunctionQueryTest extends TestSuiteBase {
 
         String query = "SELECT * from root";
         FeedOptions options = new FeedOptions();
-        options.setMaxItemCount(3);
-        options.setEnableCrossPartitionQuery(true);
+        options.maxItemCount(3);
+        options.enableCrossPartitionQuery(true);
         Flux<FeedResponse<CosmosUserDefinedFunctionSettings>> queryObservable = createdCollection.queryUserDefinedFunctions(query, options);
 
         List<CosmosUserDefinedFunctionSettings> expectedDocs = createdUDF;      
 
-        int expectedPageSize = (expectedDocs.size() + options.getMaxItemCount() - 1) / options.getMaxItemCount();
+        int expectedPageSize = (expectedDocs.size() + options.maxItemCount() - 1) / options.maxItemCount();
 
         FeedResponseListValidator<CosmosUserDefinedFunctionSettings> validator = new FeedResponseListValidator
                 .Builder<CosmosUserDefinedFunctionSettings>()
                 .exactlyContainsInAnyOrder(expectedDocs
                         .stream()
-                        .map(d -> d.getResourceId())
+                        .map(d -> d.resourceId())
                         .collect(Collectors.toList()))
                 .numberOfPages(expectedPageSize)
                 .allPagesSatisfy(new FeedResponseValidator.Builder<CosmosUserDefinedFunctionSettings>()
@@ -136,11 +136,11 @@ public class UserDefinedFunctionQueryTest extends TestSuiteBase {
     public void invalidQuerySytax() throws Exception {
         String query = "I am an invalid query";
         FeedOptions options = new FeedOptions();
-        options.setEnableCrossPartitionQuery(true);
+        options.enableCrossPartitionQuery(true);
         Flux<FeedResponse<CosmosUserDefinedFunctionSettings>> queryObservable = createdCollection.queryUserDefinedFunctions(query, options);
 
         FailureValidator validator = new FailureValidator.Builder()
-                .instanceOf(DocumentClientException.class)
+                .instanceOf(CosmosClientException.class)
                 .statusCode(400)
                 .notNullActivityId()
                 .build();
@@ -149,7 +149,7 @@ public class UserDefinedFunctionQueryTest extends TestSuiteBase {
 
     public CosmosUserDefinedFunctionSettings createUserDefinedFunction(CosmosContainer cosmosContainer) {
         CosmosUserDefinedFunctionSettings storedProcedure = getUserDefinedFunctionDef();
-        return cosmosContainer.createUserDefinedFunction(storedProcedure, new CosmosRequestOptions()).block().getCosmosUserDefinedFunctionSettings();
+        return cosmosContainer.createUserDefinedFunction(storedProcedure, new CosmosRequestOptions()).block().settings();
     }
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
@@ -172,8 +172,8 @@ public class UserDefinedFunctionQueryTest extends TestSuiteBase {
 
     private static CosmosUserDefinedFunctionSettings getUserDefinedFunctionDef() {
         CosmosUserDefinedFunctionSettings udf = new CosmosUserDefinedFunctionSettings();
-        udf.setId(UUID.randomUUID().toString());
-        udf.setBody("function() {var x = 10;}");
+        udf.id(UUID.randomUUID().toString());
+        udf.body("function() {var x = 10;}");
         return udf;
     }
 }

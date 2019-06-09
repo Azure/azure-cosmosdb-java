@@ -60,7 +60,7 @@ class Fetcher<T extends Resource> {
         this.executeFunc = executeFunc;
         this.isChangeFeed = isChangeFeed;
 
-        this.continuationToken = options.getRequestContinuation();
+        this.continuationToken = options.requestContinuation();
         this.top = top;
         if (top == -1) {
             this.maxItemCount = maxItemCount;
@@ -81,9 +81,9 @@ class Fetcher<T extends Resource> {
     }
 
     private void updateState(FeedResponse<T> response) {
-        continuationToken = response.getResponseContinuation();
+        continuationToken = response.continuationToken();
         if (top != -1) {
-            top -= response.getResults().size();
+            top -= response.results().size();
             if (top < 0) {
                 // this shouldn't happen
                 // this means backend retrieved more items than requested
@@ -108,7 +108,7 @@ class Fetcher<T extends Resource> {
         if (!shouldFetchMore) {
             // this should never happen
             logger.error("invalid state, trying to fetch more after completion");
-            throw new IllegalStateException("Invalid state, trying to fetch more after completion");
+            throw new IllegalStateException("INVALID state, trying to fetch more after completion");
         }
 
         return createRequestFunc.call(continuationToken, maxItemCount);

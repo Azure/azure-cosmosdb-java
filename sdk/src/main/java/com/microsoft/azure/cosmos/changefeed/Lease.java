@@ -33,7 +33,7 @@ import java.util.Map;
  * Represents a lease that is persisted as a document in the lease collection.
  * <p>
  * Leases are used to:
- * Keep track of the {@link ChangeFeedProcessor} progress for a particular Partition Key Range.
+ * Keep track of the {@link ChangeFeedProcessor} progress for a particular Partition Key RANGE.
  * Distribute load between different instances of {@link ChangeFeedProcessor}.
  * Ensure reliable recovery for cases when an instance of {@link ChangeFeedProcessor} gets disconnected, hangs or crashes.
  */
@@ -49,7 +49,7 @@ public interface Lease {
      * Gets the host name owner of the lease.
      *
      * <p>
-     * The Owner keeps track which {@link ChangeFeedProcessor} is currently processing that Partition Key Range.
+     * The Owner keeps track which {@link ChangeFeedProcessor} is currently processing that Partition Key RANGE.
      *
      * @return the host name owner of the lease.
      */
@@ -92,9 +92,9 @@ public interface Lease {
     String getConcurrencyToken();
 
     /**
-     * Gets the custom lease properties which can be managed from {@link PartitionLoadBalancingStrategy}.
+     * Gets the custom lease item which can be managed from {@link PartitionLoadBalancingStrategy}.
      *
-     * @return the custom lease properties.
+     * @return the custom lease item.
      */
     Map<String, String> getProperties();
 
@@ -102,7 +102,7 @@ public interface Lease {
      * Sets the host name owner of the lease.
      *
      * <p>
-     * The Owner keeps track which {@link ChangeFeedProcessor} is currently processing that Partition Key Range.
+     * The Owner keeps track which {@link ChangeFeedProcessor} is currently processing that Partition Key RANGE.
      *
      * @param owner the host name owner of the lease.
      */
@@ -135,10 +135,10 @@ public interface Lease {
     void setConcurrencyToken(String concurrencyToken);
 
     /**
-     * Sets the custom lease properties which can be managed from {@link PartitionLoadBalancingStrategy}.
+     * Sets the custom lease item which can be managed from {@link PartitionLoadBalancingStrategy}.
      *
      *
-     * @param properties the custom lease properties.
+     * @param properties the custom lease item.
      */
     void setProperties(Map<String,String> properties);
 }

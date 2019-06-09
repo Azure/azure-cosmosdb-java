@@ -74,13 +74,13 @@ public class Trigger extends Resource {
      * @return the trigger type.
      */
     public TriggerType getTriggerType() {
-        TriggerType result = TriggerType.Pre;
+        TriggerType result = TriggerType.PRE;
         try {
             result = TriggerType.valueOf(
                     WordUtils.capitalize(super.getString(Constants.Properties.TRIGGER_TYPE)));
         } catch (IllegalArgumentException e) {
             // ignore the exception and return the default
-            this.getLogger().warn("Invalid triggerType value {}.", super.getString(Constants.Properties.TRIGGER_TYPE));
+            this.getLogger().warn("INVALID triggerType value {}.", super.getString(Constants.Properties.TRIGGER_TYPE));
         }
         return result;
     }
@@ -100,13 +100,13 @@ public class Trigger extends Resource {
      * @return the trigger operation.
      */
     public TriggerOperation getTriggerOperation() {
-        TriggerOperation result = TriggerOperation.Create;
+        TriggerOperation result = TriggerOperation.CREATE;
         try {
             result = TriggerOperation.valueOf(
                     WordUtils.capitalize(super.getString(Constants.Properties.TRIGGER_OPERATION)));
         } catch (IllegalArgumentException e) {
             // ignore the exception and return the default
-            this.getLogger().warn("Invalid triggerOperation value {}.", super.getString(Constants.Properties.TRIGGER_OPERATION));
+            this.getLogger().warn("INVALID triggerOperation value {}.", super.getString(Constants.Properties.TRIGGER_OPERATION));
         }
         return result;
     }

@@ -215,7 +215,7 @@ public final class DocumentCollection extends Resource {
      */
     public String getDocumentsLink() {
         return String.format("%s/%s",
-                StringUtils.stripEnd(super.getSelfLink(), "/"),
+                StringUtils.stripEnd(super.selfLink(), "/"),
                 super.getString(Constants.Properties.DOCUMENTS_LINK));
     }
 
@@ -226,7 +226,7 @@ public final class DocumentCollection extends Resource {
      */
     public String getStoredProceduresLink() {
         return String.format("%s/%s",
-                StringUtils.stripEnd(super.getSelfLink(), "/"),
+                StringUtils.stripEnd(super.selfLink(), "/"),
                 super.getString(Constants.Properties.STORED_PROCEDURES_LINK));
     }
 
@@ -236,7 +236,7 @@ public final class DocumentCollection extends Resource {
      * @return the trigger link.
      */
     public String getTriggersLink() {
-        return StringUtils.removeEnd(this.getSelfLink(), "/") +
+        return StringUtils.removeEnd(this.selfLink(), "/") +
                 "/" + super.getString(Constants.Properties.TRIGGERS_LINK);
     }
 
@@ -246,7 +246,7 @@ public final class DocumentCollection extends Resource {
      * @return the user defined functions link.
      */
     public String getUserDefinedFunctionsLink() {
-        return StringUtils.removeEnd(this.getSelfLink(), "/") +
+        return StringUtils.removeEnd(this.selfLink(), "/") +
                 "/" + super.getString(Constants.Properties.USER_DEFINED_FUNCTIONS_LINK);
     }
 
@@ -256,7 +256,7 @@ public final class DocumentCollection extends Resource {
      * @return the conflicts link.
      */
     public String getConflictsLink() {
-        return StringUtils.removeEnd(this.getSelfLink(), "/") +
+        return StringUtils.removeEnd(this.selfLink(), "/") +
                 "/" + super.getString(Constants.Properties.CONFLICTS_LINK);
     }
 
@@ -287,11 +287,11 @@ public final class DocumentCollection extends Resource {
         }
 
         DocumentCollection typedObj = (DocumentCollection) obj;
-        return typedObj.getResourceId().equals(this.getResourceId());
+        return typedObj.resourceId().equals(this.resourceId());
     }
 
     @Override
     public int hashCode() {
-        return this.getResourceId().hashCode();
+        return this.resourceId().hashCode();
     }
 }

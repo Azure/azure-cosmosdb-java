@@ -105,7 +105,7 @@ public class RoutingMapProviderHelperTest {
         Function<PartitionKeyRange, String> func = new Function<PartitionKeyRange, String>() {
             @Override
             public String apply(PartitionKeyRange range) {
-                return range.getId();
+                return range.id();
             }
         };
 

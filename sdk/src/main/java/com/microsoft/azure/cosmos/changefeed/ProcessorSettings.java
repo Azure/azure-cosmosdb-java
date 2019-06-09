@@ -37,7 +37,7 @@ public class ProcessorSettings {
     private Duration feedPollDelay;
     private String startContinuation;
     private ZonedDateTime startTime;
-//    private String sessionToken;
+//    private STRING sessionToken;
 
     public CosmosContainer getCollectionSelfLink() {
         return this.collectionSelfLink;
@@ -105,11 +105,11 @@ public class ProcessorSettings {
     }
 
     // This is not currently supported in Java implementation.
-//    public String getSessionToken() {
+//    public STRING sessionToken() {
 //        return this.sessionToken;
 //    }
 //
-//    public ProcessorSettings withSessionToken(String sessionToken) {
+//    public ProcessorSettings sessionToken(STRING sessionToken) {
 //        this.sessionToken = sessionToken;
 //        return this;
 //    }

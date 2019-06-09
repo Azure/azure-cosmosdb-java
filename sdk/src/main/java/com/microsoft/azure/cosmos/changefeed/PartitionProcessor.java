@@ -31,7 +31,7 @@ import reactor.core.publisher.Mono;
  * <p>
  * Created by {@link PartitionProcessorFactory}.create() after some lease is acquired by the current host.
  *  Processing can perform the following tasks in a loop:
- *    1. Read some data from the resource partition.
+ *    1. READ some data from the resource partition.
  *    2. Handle possible problems with the read.
  *    3. Pass the obtained data to an observer by calling {@link ChangeFeedObserver}.processChangesAsync{} with the context {@link ChangeFeedObserverContext}.
  */

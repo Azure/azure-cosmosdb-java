@@ -152,21 +152,21 @@ public class PartitionKeyInternalHelper {
             return MaximumExclusiveEffectivePartitionKey;
         }
 
-        if (partitionKeyInternal.components.size() < partitionKeyDefinition.getPaths().size()) {
+        if (partitionKeyInternal.components.size() < partitionKeyDefinition.paths().size()) {
             throw new IllegalArgumentException(RMResources.TooFewPartitionKeyComponents);
         }
 
-        if (partitionKeyInternal.components.size() > partitionKeyDefinition.getPaths().size() && strict) {
+        if (partitionKeyInternal.components.size() > partitionKeyDefinition.paths().size() && strict) {
             throw new IllegalArgumentException(RMResources.TooManyPartitionKeyComponents);
         }
 
-        PartitionKind kind = partitionKeyDefinition.getKind();
+        PartitionKind kind = partitionKeyDefinition.kind();
         if (kind == null) {
-            kind = PartitionKind.Hash;
+            kind = PartitionKind.HASH;
         }
 
         switch (kind) {
-            case Hash:
+            case HASH:
                 if (CommonsBridgeInternal.isV2(partitionKeyDefinition)) {
                     // V2
                     return getEffectivePartitionKeyForHashPartitioningV2(partitionKeyInternal);

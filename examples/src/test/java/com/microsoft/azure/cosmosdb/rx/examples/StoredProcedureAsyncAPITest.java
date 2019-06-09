@@ -50,8 +50,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 
-import javax.net.ssl.SSLException;
-
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.core.Is.is;
@@ -70,18 +68,18 @@ public class StoredProcedureAsyncAPITest {
     @BeforeClass(groups = "samples", timeOut = TIMEOUT)
     public void setUp() {
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
-        connectionPolicy.setConnectionMode(ConnectionMode.Direct);
+        connectionPolicy.connectionMode(ConnectionMode.DIRECT);
         asyncClient = new AsyncDocumentClient.Builder()
                 .withServiceEndpoint(TestConfigurations.HOST)
                 .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
                 .withConnectionPolicy(connectionPolicy)
-                .withConsistencyLevel(ConsistencyLevel.Session)
+                .withConsistencyLevel(ConsistencyLevel.SESSION)
                 .build();
 
         createdDatabase = Utils.createDatabaseForTest(asyncClient);
 
         createdCollection = asyncClient
-                .createCollection("dbs/" + createdDatabase.getId(), getMultiPartitionCollectionDefinition(), null)
+                .createCollection("dbs/" + createdDatabase.id(), getMultiPartitionCollectionDefinition(), null)
                 .toBlocking().single().getResource();
     }
 
@@ -96,7 +94,7 @@ public class StoredProcedureAsyncAPITest {
      */
     @Test(groups = "samples", timeOut = TIMEOUT)
     public void scriptConsoleLogEnabled() throws Exception {
-        // Create a stored procedure
+        // CREATE a stored procedure
         StoredProcedure storedProcedure = new StoredProcedure(
                 "{" +
                         "  'id':'storedProcedureSample'," +
@@ -106,10 +104,10 @@ public class StoredProcedureAsyncAPITest {
                         "        var myval = 1;" +
                         "        try {" +
                         "            console.log(\"The value of %s is %s.\", mytext, myval);" +
-                        "            getContext().getResponse().setBody(\"Success!\");" +
+                        "            getContext().getResponse().body(\"Success!\");" +
                         "        }" +
                         "        catch(err) {" +
-                        "            getContext().getResponse().setBody(\"inline err: [\" + err.number + \"] \" + err);" +
+                        "            getContext().getResponse().body(\"inline err: [\" + err.number + \"] \" + err);" +
                         "        }" +
                         "    }'" +
                         "}");
@@ -149,13 +147,13 @@ public class StoredProcedureAsyncAPITest {
      */
     @Test(groups = "samples", timeOut = TIMEOUT)
     public void executeStoredProcWithArgs() throws Exception {
-        // Create stored procedure
+        // CREATE stored procedure
         StoredProcedure storedProcedure = new StoredProcedure(
                 "{" +
                         "  'id': 'multiplySample'," +
                         "  'body':" +
                         "    'function (value, num) {" +
-                        "      getContext().getResponse().setBody(" +
+                        "      getContext().getResponse().body(" +
                         "          \"2*\" + value + \" is \" + num * 2 );" +
                         "    }'" +
                         "}");
@@ -195,7 +193,7 @@ public class StoredProcedureAsyncAPITest {
                         "  'id': 'storedProcedurePojoSample'," +
                         "  'body':" +
                         "    'function (value) {" +
-                        "      getContext().getResponse().setBody(" +
+                        "      getContext().getResponse().body(" +
                         "          \"a is \" + value.temp);" +
                         "    }'" +
                         "}");
@@ -232,30 +230,30 @@ public class StoredProcedureAsyncAPITest {
 
     private static DocumentCollection getMultiPartitionCollectionDefinition() {
         DocumentCollection collectionDefinition = new DocumentCollection();
-        collectionDefinition.setId(UUID.randomUUID().toString());
+        collectionDefinition.id(UUID.randomUUID().toString());
 
         // Set the partitionKeyDefinition for a partitioned collection
         // Here, we are setting the partitionKey of the Collection to be /city
         PartitionKeyDefinition partitionKeyDefinition = new PartitionKeyDefinition();
         List<String> paths = new ArrayList<String>();
         paths.add("/city");
-        partitionKeyDefinition.setPaths(paths);
+        partitionKeyDefinition.paths(paths);
         collectionDefinition.setPartitionKey(partitionKeyDefinition);
 
         // Set indexing policy to be range range for string and number
         IndexingPolicy indexingPolicy = new IndexingPolicy();
         Collection<IncludedPath> includedPaths = new ArrayList<IncludedPath>();
         IncludedPath includedPath = new IncludedPath();
-        includedPath.setPath("/*");
+        includedPath.path("/*");
         Collection<Index> indexes = new ArrayList<Index>();
-        Index stringIndex = Index.Range(DataType.String);
+        Index stringIndex = Index.Range(DataType.STRING);
         stringIndex.set("precision", -1);
         indexes.add(stringIndex);
 
-        Index numberIndex = Index.Range(DataType.Number);
+        Index numberIndex = Index.Range(DataType.NUMBER);
         numberIndex.set("precision", -1);
         indexes.add(numberIndex);
-        includedPath.setIndexes(indexes);
+        includedPath.indexes(indexes);
         includedPaths.add(includedPath);
         indexingPolicy.setIncludedPaths(includedPaths);
         collectionDefinition.setIndexingPolicy(indexingPolicy);
@@ -264,10 +262,10 @@ public class StoredProcedureAsyncAPITest {
     }
 
     private String getCollectionLink() {
-        return "dbs/" + createdDatabase.getId() + "/colls/" + createdCollection.getId();
+        return "dbs/" + createdDatabase.id() + "/colls/" + createdCollection.id();
     }
 
     private String getSprocLink(StoredProcedure sproc) {
-        return "dbs/" + createdDatabase.getId() + "/colls/" + createdCollection.getId() + "/sprocs/" + sproc.getId();
+        return "dbs/" + createdDatabase.id() + "/colls/" + createdCollection.id() + "/sprocs/" + sproc.id();
     }
 }

@@ -30,30 +30,30 @@ public enum DataType {
     /**
      * Represents a numeric data type.
      */
-    Number,
+    NUMBER,
 
     /**
      * Represents a string data type.
      */
-    String,
+    STRING,
 
     /**
      * Represent a point data type.
      */
-    Point,
+    POINT,
 
     /**
      * Represents a line string data type.
      */
-    LineString,
+    LINE_STRING,
 
     /**
      * Represent a polygon data type.
      */
-    Polygon,
+    POLYGON,
     
     /**
      * Represent a multi-polygon data type.
      */
-    MultiPolygon
+    MULTI_POLYGON
 }

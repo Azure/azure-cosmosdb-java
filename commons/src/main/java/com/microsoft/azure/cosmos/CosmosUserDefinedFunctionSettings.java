@@ -22,13 +22,15 @@
  */
 package com.microsoft.azure.cosmos;
 
+import com.microsoft.azure.cosmosdb.Resource;
 import com.microsoft.azure.cosmosdb.ResourceResponse;
 import com.microsoft.azure.cosmosdb.UserDefinedFunction;
+import com.microsoft.azure.cosmosdb.internal.Constants;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class CosmosUserDefinedFunctionSettings extends UserDefinedFunction {
+public class CosmosUserDefinedFunctionSettings extends Resource {
 
     /**
      * Constructor
@@ -48,6 +50,25 @@ public class CosmosUserDefinedFunctionSettings extends UserDefinedFunction {
      */
     public CosmosUserDefinedFunctionSettings(String jsonString) {
         super(jsonString);
+    }
+
+    /**
+     * Get the body of the user defined function.
+     *
+     * @return the body.
+     */
+    public String body() {
+        return super.getString(Constants.Properties.BODY);
+    }
+
+    /**
+     * Set the body of the user defined function.
+     *
+     * @param body the body.
+     */
+    public CosmosUserDefinedFunctionSettings body(String body) {
+        super.set(Constants.Properties.BODY, body);
+        return this;
     }
 
     static List<CosmosUserDefinedFunctionSettings> getFromV2Results(List<UserDefinedFunction> results) {

@@ -47,7 +47,7 @@ public final class PartitionKeyDefinition extends JsonSerializable {
      * Constructor. Creates a new instance of the PartitionKeyDefinition object.
      */
     public PartitionKeyDefinition() {
-        this.setKind(PartitionKind.Hash);
+        this.kind(PartitionKind.HASH);
     }
 
     /**
@@ -65,7 +65,7 @@ public final class PartitionKeyDefinition extends JsonSerializable {
      *
      * @return the partition algorithm.
      */
-    public PartitionKind getKind() {
+    public PartitionKind kind() {
         if (this.kind == null) {
             this.kind = super.getObject(Constants.Properties.PARTITION_KIND, PartitionKind.class);
         }
@@ -78,11 +78,12 @@ public final class PartitionKeyDefinition extends JsonSerializable {
      *
      * @param kind the partition algorithm.
      */
-    public void setKind(PartitionKind kind) {
+    public PartitionKeyDefinition kind(PartitionKind kind) {
         this.kind = kind;
+        return this;
     }
 
-    public PartitionKeyDefinitionVersion getVersion() {
+    public PartitionKeyDefinitionVersion version() {
         if (this.version == null) {
             Object versionObject = super.getObject(Constants.Properties.PARTITION_KEY_DEFINITION_VERSION, Object.class);
             if (versionObject == null) {
@@ -102,8 +103,9 @@ public final class PartitionKeyDefinition extends JsonSerializable {
         return this.version;
     }
 
-    public void setVersion(PartitionKeyDefinitionVersion version) {
+    public PartitionKeyDefinition version(PartitionKeyDefinitionVersion version) {
         this.version = version;
+        return this;
     }
 
     /**
@@ -111,7 +113,7 @@ public final class PartitionKeyDefinition extends JsonSerializable {
      *
      * @return the paths to the document properties that form the partition key.
      */
-    public List<String> getPaths() {
+    public List<String> paths() {
         if (this.paths == null) {
             if (super.has(Constants.Properties.PARTITION_KEY_PATHS)) {
                 paths = super.getList(Constants.Properties.PARTITION_KEY_PATHS, String.class);
@@ -128,12 +130,13 @@ public final class PartitionKeyDefinition extends JsonSerializable {
      *
      * @param paths the paths to document properties that form the partition key.
      */
-    public void setPaths(List<String> paths) {
+    public PartitionKeyDefinition paths(List<String> paths) {
         if (paths == null || paths.size() == 0) {
             throw new IllegalArgumentException("paths must not be null or empty.");
         }
 
         this.paths = paths;
+        return this;
     }
 
     /**
@@ -154,7 +157,7 @@ public final class PartitionKeyDefinition extends JsonSerializable {
     }
 
     PartitionKeyInternal getNonePartitionKeyValue() {
-        if (this.getPaths().size() == 0 || this.isSystemKey()) {
+        if (this.paths().size() == 0 || this.isSystemKey()) {
             return PartitionKeyInternal.Empty;
         } else {
             return PartitionKeyInternal.UndefinedPartitionKey;

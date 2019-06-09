@@ -39,7 +39,7 @@ import org.apache.commons.lang3.StringUtils;
  * If none of the above is set, emulator endpoint will be used.
  */
 public final class SampleConfigurations {
-    // Replace MASTER_KEY and HOST with values from your Azure Cosmos DB account.
+    // REPLACE MASTER_KEY and HOST with values from your Azure Cosmos DB account.
     // The default values are credentials of the local emulator, which are not used in any production environment.
     // <!--[SuppressMessage("Microsoft.Security", "CS002:SecretInNextLine")]-->
     public static String MASTER_KEY =

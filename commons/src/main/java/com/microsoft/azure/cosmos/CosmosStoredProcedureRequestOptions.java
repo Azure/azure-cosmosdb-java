@@ -39,7 +39,7 @@ public class CosmosStoredProcedureRequestOptions extends CosmosRequestOptions {
      *
      * @return the consistency level.
      */
-    public ConsistencyLevel getConsistencyLevel() {
+    public ConsistencyLevel consistencyLevel() {
         return consistencyLevel;
     }
 
@@ -48,8 +48,9 @@ public class CosmosStoredProcedureRequestOptions extends CosmosRequestOptions {
      *
      * @param consistencyLevel the consistency level.
      */
-    public void setConsistencyLevel(ConsistencyLevel consistencyLevel) {
+    public CosmosStoredProcedureRequestOptions consistencyLevel(ConsistencyLevel consistencyLevel) {
         this.consistencyLevel = consistencyLevel;
+        return this;
     }
 
     /**
@@ -57,7 +58,7 @@ public class CosmosStoredProcedureRequestOptions extends CosmosRequestOptions {
      *
      * @return the partition key value.
      */
-    public PartitionKey getPartitionKey() {
+    public PartitionKey partitionKey() {
         return partitionKey;
     }
 
@@ -66,8 +67,9 @@ public class CosmosStoredProcedureRequestOptions extends CosmosRequestOptions {
      *
      * @param partitionKey the partition key value.
      */
-    public void setPartitionKey(PartitionKey partitionKey) {
+    public CosmosStoredProcedureRequestOptions partitionKey(PartitionKey partitionKey) {
         this.partitionKey = partitionKey;
+        return this;
     }
 
     /**
@@ -75,7 +77,7 @@ public class CosmosStoredProcedureRequestOptions extends CosmosRequestOptions {
      *
      * @return the session token.
      */
-    public String getSessionToken() {
+    public String sessionToken() {
         return sessionToken;
     }
 
@@ -84,14 +86,15 @@ public class CosmosStoredProcedureRequestOptions extends CosmosRequestOptions {
      *
      * @param sessionToken the session token.
      */
-    public void setSessionToken(String sessionToken) {
+    public CosmosStoredProcedureRequestOptions sessionToken(String sessionToken) {
         this.sessionToken = sessionToken;
+        return this;
     }
 
     @Override
     protected RequestOptions toRequestOptions() {
         super.toRequestOptions();
-        requestOptions.setConsistencyLevel(getConsistencyLevel());
+        requestOptions.setConsistencyLevel(consistencyLevel());
         requestOptions.setPartitionKey(partitionKey);
         requestOptions.setSessionToken(sessionToken);
         return requestOptions;

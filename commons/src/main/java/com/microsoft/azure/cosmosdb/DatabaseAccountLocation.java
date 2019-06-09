@@ -31,7 +31,7 @@ import com.microsoft.azure.cosmosdb.internal.Constants;
 public class DatabaseAccountLocation extends JsonSerializable {
 
     /**
-     * Default Constructor. Creates a new instance of the
+     * DEFAULT Constructor. Creates a new instance of the
      * DatabaseAccountLocation object.
      */
     DatabaseAccountLocation() {

@@ -88,18 +88,18 @@ public class SessionTest extends TestSuiteBase {
         PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition();
         ArrayList<String> paths = new ArrayList<String>();
         paths.add("/mypk");
-        partitionKeyDef.setPaths(paths);
+        partitionKeyDef.paths(paths);
 
         DocumentCollection collection = new DocumentCollection();
-        collection.setId(collectionId);
+        collection.id(collectionId);
         collection.setPartitionKey(partitionKeyDef);
 
-        createdCollection = createCollection(createGatewayHouseKeepingDocumentClient().build(), createdDatabase.getId(),
+        createdCollection = createCollection(createGatewayHouseKeepingDocumentClient().build(), createdDatabase.id(),
                 collection, null);
         houseKeepingClient = clientBuilder.build();
-        connectionMode = houseKeepingClient.getConnectionPolicy().getConnectionMode();
+        connectionMode = houseKeepingClient.getConnectionPolicy().connectionMode();
 
-        if (connectionMode == ConnectionMode.Direct) {
+        if (connectionMode == ConnectionMode.DIRECT) {
             spyClient = SpyClientUnderTestFactory.createDirectHttpsClientUnderTest(clientBuilder);
         } else {
             spyClient = SpyClientUnderTestFactory.createClientUnderTest(clientBuilder);
@@ -138,8 +138,8 @@ public class SessionTest extends TestSuiteBase {
             Document documentCreated = spyClient.createDocument(getCollectionLink(isNameBased), new Document(), null, false)
                     .toBlocking().single().getResource();
 
-            // We send session tokens on Writes in Gateway mode
-            if (connectionMode == ConnectionMode.Gateway) {
+            // We send session tokens on Writes in GATEWAY mode
+            if (connectionMode == ConnectionMode.GATEWAY) {
                 assertThat(getSessionTokensInRequests()).hasSize(3 * i + 1);
                 assertThat(getSessionTokensInRequests().get(3 * i + 0)).isNotEmpty();
             }
@@ -159,7 +159,7 @@ public class SessionTest extends TestSuiteBase {
     @Test(groups = { "simple" }, timeOut = TIMEOUT, dataProvider = "sessionTestArgProvider")
     public void sessionTokenInDocumentRead(boolean isNameBased) throws UnsupportedEncodingException {
         Document document = new Document();
-        document.setId(UUID.randomUUID().toString());
+        document.id(UUID.randomUUID().toString());
         document.set("pk", "pk");
         document = spyClient.createDocument(getCollectionLink(isNameBased), document, null, false).toBlocking().single()
                 .getResource();
@@ -179,14 +179,14 @@ public class SessionTest extends TestSuiteBase {
                     }
                 }).collect(Collectors.toList());
 
-        // Direct mode may make more than one call (multiple replicas)
+        // DIRECT mode may make more than one call (multiple replicas)
         assertThat(documentReadHttpRequests.size() >= 1).isTrue();
         assertThat(documentReadHttpRequests.get(0).getHeaders().get(HttpConstants.HttpHeaders.SESSION_TOKEN)).isNotEmpty();
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT, dataProvider = "sessionTestArgProvider")
     public void sessionTokenRemovedForMasterResource(boolean isNameBased) throws UnsupportedEncodingException {
-        if (connectionMode == ConnectionMode.Direct) {
+        if (connectionMode == ConnectionMode.DIRECT) {
             throw new SkipException("Master resource access is only through gateway");
         }
         String collectionLink = getCollectionLink(isNameBased);
@@ -209,12 +209,12 @@ public class SessionTest extends TestSuiteBase {
     }
 
     private String getCollectionLink(boolean isNameBased) {
-        return isNameBased ? "dbs/" + createdDatabase.getId() + "/colls/" + createdCollection.getId():
-            createdCollection.getSelfLink();
+        return isNameBased ? "dbs/" + createdDatabase.id() + "/colls/" + createdCollection.id():
+            createdCollection.selfLink();
     }
     
     private String getDocumentLink(Document doc, boolean isNameBased) {
-        return isNameBased ? "dbs/" + createdDatabase.getId() + "/colls/" + createdCollection.getId() + "/docs/" + doc.getId() :
-            "dbs/" + createdDatabase.getResourceId() + "/colls/" + createdCollection.getResourceId() + "/docs/" + doc.getResourceId() + "/";
+        return isNameBased ? "dbs/" + createdDatabase.id() + "/colls/" + createdCollection.id() + "/docs/" + doc.id() :
+            "dbs/" + createdDatabase.resourceId() + "/colls/" + createdCollection.resourceId() + "/docs/" + doc.resourceId() + "/";
     }
 }

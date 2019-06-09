@@ -100,18 +100,18 @@ public class CosmosPartitionKeyTests extends TestSuiteBase {
     private void createContainerWithoutPk() throws URISyntaxException, IOException {
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
         HttpClientFactory factory = new HttpClientFactory(new Configs())
-                .withMaxIdleConnectionTimeoutInMillis(connectionPolicy.getIdleConnectionTimeoutInMillis())
-                .withPoolSize(connectionPolicy.getMaxPoolSize())
-                .withHttpProxy(connectionPolicy.getProxy())
-                .withRequestTimeoutInMillis(connectionPolicy.getRequestTimeoutInMillis());
+                .withMaxIdleConnectionTimeoutInMillis(connectionPolicy.idleConnectionTimeoutInMillis())
+                .withPoolSize(connectionPolicy.maxPoolSize())
+                .withHttpProxy(connectionPolicy.proxy())
+                .withRequestTimeoutInMillis(connectionPolicy.requestTimeoutInMillis());
 
         CompositeHttpClient<ByteBuf, ByteBuf> httpClient = factory.toHttpClientBuilder().build();
         
-        // Create a non partitioned collection using the rest API and older version
-        String resourceId = Paths.DATABASES_PATH_SEGMENT + "/" + createdDatabase.getId();
-        String path = Paths.DATABASES_PATH_SEGMENT + "/" + createdDatabase.getId() + "/" + Paths.COLLECTIONS_PATH_SEGMENT + "/";
+        // CREATE a non partitioned collection using the rest API and older version
+        String resourceId = Paths.DATABASES_PATH_SEGMENT + "/" + createdDatabase.id();
+        String path = Paths.DATABASES_PATH_SEGMENT + "/" + createdDatabase.id() + "/" + Paths.COLLECTIONS_PATH_SEGMENT + "/";
         DocumentCollection collection = new DocumentCollection();
-        collection.setId(NON_PARTITIONED_CONTAINER_ID);
+        collection.id(NON_PARTITIONED_CONTAINER_ID);
         
         HashMap<String, String> headers = new HashMap<String, String>();
         headers.put(HttpConstants.HttpHeaders.X_DATE, Utils.nowAsRFC1123());
@@ -124,7 +124,7 @@ public class CosmosPartitionKeyTests extends TestSuiteBase {
 
         String[] baseUrlSplit = TestConfigurations.HOST.split(":");
         String resourceUri = baseUrlSplit[0] + ":" + baseUrlSplit[1] + ":" + baseUrlSplit[2].split("/")[
-            0] + "//" + Paths.DATABASES_PATH_SEGMENT + "/" + createdDatabase.getId() + "/" + Paths.COLLECTIONS_PATH_SEGMENT + "/";
+            0] + "//" + Paths.DATABASES_PATH_SEGMENT + "/" + createdDatabase.id() + "/" + Paths.COLLECTIONS_PATH_SEGMENT + "/";
         URI uri = new URI(resourceUri);
 
         HttpClientRequest<ByteBuf> httpRequest = HttpClientRequest.create(HttpMethod.POST, uri.toString());
@@ -144,12 +144,12 @@ public class CosmosPartitionKeyTests extends TestSuiteBase {
         String createdContainerAsString = IOUtils.readLines(responseStream, "UTF-8").get(0);
         assertThat(createdContainerAsString).contains("\"id\":\"" + NON_PARTITIONED_CONTAINER_ID + "\"");
         
-        // Create a document in the non partitioned collection using the rest API and older version
-        resourceId = Paths.DATABASES_PATH_SEGMENT + "/" + createdDatabase.getId() + "/" + Paths.COLLECTIONS_PATH_SEGMENT + "/" + collection.getId();
-        path = Paths.DATABASES_PATH_SEGMENT + "/" + createdDatabase.getId() + "/" + Paths.COLLECTIONS_PATH_SEGMENT 
-                + "/" + collection.getId() + "/" + Paths.DOCUMENTS_PATH_SEGMENT + "/";
+        // CREATE a document in the non partitioned collection using the rest API and older version
+        resourceId = Paths.DATABASES_PATH_SEGMENT + "/" + createdDatabase.id() + "/" + Paths.COLLECTIONS_PATH_SEGMENT + "/" + collection.id();
+        path = Paths.DATABASES_PATH_SEGMENT + "/" + createdDatabase.id() + "/" + Paths.COLLECTIONS_PATH_SEGMENT
+                + "/" + collection.id() + "/" + Paths.DOCUMENTS_PATH_SEGMENT + "/";
         Document document = new Document();
-        document.setId(NON_PARTITIONED_CONTAINER_DOCUEMNT_ID);
+        document.id(NON_PARTITIONED_CONTAINER_DOCUEMNT_ID);
 
         authorization = base.generateKeyAuthorizationSignature(HttpConstants.HttpMethods.POST, resourceId, Paths.DOCUMENTS_PATH_SEGMENT, headers);
         headers.put(HttpConstants.HttpHeaders.AUTHORIZATION, URLEncoder.encode(authorization, "UTF-8"));
@@ -157,7 +157,7 @@ public class CosmosPartitionKeyTests extends TestSuiteBase {
                 document, headers, new RequestOptions());
 
         resourceUri = baseUrlSplit[0] + ":" + baseUrlSplit[1] + ":" + baseUrlSplit[2].split("/")[0] + "//" + Paths.DATABASES_PATH_SEGMENT + "/"
-                + createdDatabase.getId() + "/" + Paths.COLLECTIONS_PATH_SEGMENT + "/" + collection.getId() + "/" + Paths.DOCUMENTS_PATH_SEGMENT + "/";
+                + createdDatabase.id() + "/" + Paths.COLLECTIONS_PATH_SEGMENT + "/" + collection.id() + "/" + Paths.DOCUMENTS_PATH_SEGMENT + "/";
         uri = new URI(resourceUri);
 
         httpRequest = HttpClientRequest.create(HttpMethod.POST, uri.toString());
@@ -188,7 +188,7 @@ public class CosmosPartitionKeyTests extends TestSuiteBase {
         validateSuccess(readMono, validator);
 
         String createdItemId = UUID.randomUUID().toString();
-        Mono<CosmosItemResponse> createMono = createdContainer.createItem(new CosmosItemSettings("{'id':'" + createdItemId + "'}"));
+        Mono<CosmosItemResponse> createMono = createdContainer.createItem(new CosmosItemProperties("{'id':'" + createdItemId + "'}"));
         validator = new CosmosResponseValidator.Builder<CosmosItemResponse>()
                 .withId(createdItemId).build();
         validateSuccess(createMono, validator);
@@ -198,10 +198,10 @@ public class CosmosPartitionKeyTests extends TestSuiteBase {
                 .withId(createdItemId).build();
         validateSuccess(readMono, validator);
 
-        CosmosItem itemToReplace = createdContainer.getItem(createdItemId, PartitionKey.None).read().block().getCosmosItem();
-        CosmosItemSettings itemSettingsToReplace = itemToReplace.read().block().getCosmosItemSettings();
+        CosmosItem itemToReplace = createdContainer.getItem(createdItemId, PartitionKey.None).read().block().item();
+        CosmosItemProperties itemSettingsToReplace = itemToReplace.read().block().properties();
         String replacedItemId = UUID.randomUUID().toString();
-        itemSettingsToReplace.setId(replacedItemId);
+        itemSettingsToReplace.id(replacedItemId);
         Mono<CosmosItemResponse> replaceMono = itemToReplace.replace(itemSettingsToReplace);
         validator = new CosmosResponseValidator.Builder<CosmosItemResponse>()
                 .withId(replacedItemId).build();
@@ -209,20 +209,20 @@ public class CosmosPartitionKeyTests extends TestSuiteBase {
 
         String upsertedItemId = UUID.randomUUID().toString();
 
-        Mono<CosmosItemResponse> upsertMono = createdContainer.upsertItem(new CosmosItemSettings("{'id':'" + upsertedItemId + "'}"));
+        Mono<CosmosItemResponse> upsertMono = createdContainer.upsertItem(new CosmosItemProperties("{'id':'" + upsertedItemId + "'}"));
         validator = new CosmosResponseValidator.Builder<CosmosItemResponse>()
                 .withId(upsertedItemId).build();
         validateSuccess(upsertMono, validator);
 
         // one document was created during setup, one with create (which was replaced) and one with upsert
         FeedOptions feedOptions = new FeedOptions();
-        feedOptions.setPartitionKey(PartitionKey.None);
+        feedOptions.partitionKey(PartitionKey.None);
         ArrayList<String> expectedIds = new ArrayList<String>();
         expectedIds.add(NON_PARTITIONED_CONTAINER_DOCUEMNT_ID);
         expectedIds.add(replacedItemId);
         expectedIds.add(upsertedItemId);
-        Flux<FeedResponse<CosmosItemSettings>> queryFlux = createdContainer.queryItems("SELECT * from c", feedOptions);
-        FeedResponseListValidator<CosmosItemSettings> queryValidator = new FeedResponseListValidator.Builder<CosmosItemSettings>()
+        Flux<FeedResponse<CosmosItemProperties>> queryFlux = createdContainer.queryItems("SELECT * from c", feedOptions);
+        FeedResponseListValidator<CosmosItemProperties> queryValidator = new FeedResponseListValidator.Builder<CosmosItemProperties>()
                 .totalSize(3)
                 .numberOfPages(1)
                 .containsExactlyIds(expectedIds)
@@ -230,7 +230,7 @@ public class CosmosPartitionKeyTests extends TestSuiteBase {
         validateQuerySuccess(queryFlux, queryValidator);
 
         queryFlux = createdContainer.listItems(feedOptions);
-        queryValidator = new FeedResponseListValidator.Builder<CosmosItemSettings>()
+        queryValidator = new FeedResponseListValidator.Builder<CosmosItemProperties>()
                 .totalSize(3)
                 .numberOfPages(1)
                 .containsExactlyIds(expectedIds)
@@ -244,26 +244,26 @@ public class CosmosPartitionKeyTests extends TestSuiteBase {
                         "  'body':'" +
                         "   function() {" +
                         "   var client = getContext().getCollection();" +
-                        "   var doc = client.createDocument(client.getSelfLink(), { \\'id\\': \\'" + documentCreatedBySprocId + "\\'}, {}, function(err, docCreated, options) { " +
+                        "   var doc = client.createDocument(client.selfLink(), { \\'id\\': \\'" + documentCreatedBySprocId + "\\'}, {}, function(err, docCreated, options) { " +
                         "   if(err) throw new Error(\\'Error while creating document: \\' + err.message);" +
                         "   else {" +
-                        "   getContext().getResponse().setBody(1);" +
+                        "   getContext().getResponse().body(1);" +
                         "      }" +
                         "    });" +
                         "}'" +
                 "}");
-        CosmosStoredProcedure createdSproc = createdContainer.createStoredProcedure(sproc).block().getStoredProcedure();
+        CosmosStoredProcedure createdSproc = createdContainer.createStoredProcedure(sproc).block().storedProcedure();
 
         // Partiton Key value same as what is specified in the stored procedure body
         RequestOptions options = new RequestOptions();
         options.setPartitionKey(PartitionKey.None);
-        int result = Integer.parseInt(createdSproc.execute(null, options).block().getResponseAsString());
+        int result = Integer.parseInt(createdSproc.execute(null, options).block().responseAsString());
         assertThat(result).isEqualTo(1);
 
         // 3 previous items + 1 created from the sproc
         expectedIds.add(documentCreatedBySprocId);
         queryFlux = createdContainer.listItems(feedOptions);
-        queryValidator = new FeedResponseListValidator.Builder<CosmosItemSettings>()
+        queryValidator = new FeedResponseListValidator.Builder<CosmosItemProperties>()
                 .totalSize(4)
                 .numberOfPages(1)
                 .containsExactlyIds(expectedIds)
@@ -291,7 +291,7 @@ public class CosmosPartitionKeyTests extends TestSuiteBase {
         validateSuccess(deleteMono, validator);
 
         queryFlux = createdContainer.listItems(feedOptions);
-        queryValidator = new FeedResponseListValidator.Builder<CosmosItemSettings>()
+        queryValidator = new FeedResponseListValidator.Builder<CosmosItemProperties>()
                 .totalSize(0)
                 .numberOfPages(1)
                 .build();
@@ -303,12 +303,12 @@ public class CosmosPartitionKeyTests extends TestSuiteBase {
         String partitionedCollectionId = "PartitionedCollection" + UUID.randomUUID().toString();
         String IdOfDocumentWithNoPk = UUID.randomUUID().toString();
         CosmosContainerSettings containerSettings = new CosmosContainerSettings(partitionedCollectionId, "/mypk");
-        CosmosContainer createdContainer = createdDatabase.createContainer(containerSettings).block().getContainer();
-        CosmosItemSettings cosmosItemSettings = new CosmosItemSettings();
-        cosmosItemSettings.setId(IdOfDocumentWithNoPk);
-        CosmosItem createdItem = createdContainer.createItem(cosmosItemSettings).block().getCosmosItem();
+        CosmosContainer createdContainer = createdDatabase.createContainer(containerSettings).block().container();
+        CosmosItemProperties cosmosItemProperties = new CosmosItemProperties();
+        cosmosItemProperties.id(IdOfDocumentWithNoPk);
+        CosmosItem createdItem = createdContainer.createItem(cosmosItemProperties).block().item();
         CosmosItemRequestOptions options = new CosmosItemRequestOptions();
-        options.setPartitionKey(PartitionKey.None);
+        options.partitionKey(PartitionKey.None);
         Mono<CosmosItemResponse> readMono = createdItem.read(options);
         CosmosResponseValidator<CosmosItemResponse> validator = new CosmosResponseValidator.Builder<CosmosItemResponse>()
                 .withId(IdOfDocumentWithNoPk).build();

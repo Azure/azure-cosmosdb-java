@@ -23,7 +23,7 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.Error;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceResponse;
@@ -48,7 +48,7 @@ public class HttpClientUtils {
         }
     }
 
-    private static Single<DocumentClientException> createDocumentClientException(HttpClientResponse<ByteBuf> responseMessage) {
+    private static Single<CosmosClientException> createDocumentClientException(HttpClientResponse<ByteBuf> responseMessage) {
         Single<String> readStream = ResponseUtils.toString(responseMessage.getContent()).toSingle();
 
         return readStream.map(body -> {
@@ -56,7 +56,7 @@ public class HttpClientUtils {
 
             // TODO: we should set resource address in the Document Client Exception
 
-            return new DocumentClientException(responseMessage.getStatus().code(), error,
+            return new CosmosClientException(responseMessage.getStatus().code(), error,
                     HttpUtils.asMap(responseMessage.getHeaders()));
         });
     }

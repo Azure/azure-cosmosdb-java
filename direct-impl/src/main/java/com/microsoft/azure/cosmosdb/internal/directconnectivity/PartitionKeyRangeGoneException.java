@@ -24,15 +24,12 @@
 package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
 import com.microsoft.azure.cosmosdb.BridgeInternal;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.Error;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.rx.internal.RMResources;
 import io.reactivex.netty.protocol.http.client.HttpResponseHeaders;
-import org.apache.commons.collections4.CollectionUtils;
 
-import java.net.URL;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -42,7 +39,7 @@ import java.util.Map;
  * No retries should be made in this case, as either split or merge might have happened and query/readfeed
  * must take appropriate actions.
  */
-public class PartitionKeyRangeGoneException extends DocumentClientException {
+public class PartitionKeyRangeGoneException extends CosmosClientException {
 
     public PartitionKeyRangeGoneException() {
         this(RMResources.Gone);
@@ -79,6 +76,6 @@ public class PartitionKeyRangeGoneException extends DocumentClientException {
     }
 
     private void setSubstatus() {
-        this.getResponseHeaders().put(WFConstants.BackendHeaders.SUB_STATUS, Integer.toString(HttpConstants.SubStatusCodes.PARTITION_KEY_RANGE_GONE));
+        this.responseHeaders().put(WFConstants.BackendHeaders.SUB_STATUS, Integer.toString(HttpConstants.SubStatusCodes.PARTITION_KEY_RANGE_GONE));
     }
 }

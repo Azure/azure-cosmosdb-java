@@ -37,7 +37,6 @@ import com.microsoft.azure.cosmosdb.StoredProcedure;
 import com.microsoft.azure.cosmosdb.StoredProcedureResponse;
 import com.microsoft.azure.cosmosdb.internal.OperationType;
 import com.microsoft.azure.cosmosdb.internal.ResourceType;
-import com.microsoft.azure.cosmosdb.internal.directconnectivity.Protocol;
 import com.microsoft.azure.cosmosdb.rx.DocumentServiceRequestValidator;
 import com.microsoft.azure.cosmosdb.rx.FeedResponseListValidator;
 import com.microsoft.azure.cosmosdb.rx.ResourceResponseValidator;
@@ -89,7 +88,7 @@ public class DCDocumentCrudTest extends TestSuiteBase {
     static Builder createDCBuilder(Protocol protocol) {
 
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
-        connectionPolicy.setConnectionMode(ConnectionMode.Direct);
+        connectionPolicy.connectionMode(ConnectionMode.DIRECT);
 
         Configs configs = spy(new Configs());
         doAnswer((Answer<Protocol>) invocation -> protocol).when(configs).getProtocol();
@@ -98,7 +97,7 @@ public class DCDocumentCrudTest extends TestSuiteBase {
             .withServiceEndpoint(TestConfigurations.HOST)
             .withConfigs(configs)
             .withConnectionPolicy(connectionPolicy)
-            .withConsistencyLevel(ConsistencyLevel.Session)
+            .withConsistencyLevel(ConsistencyLevel.SESSION)
             .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY);
     }
 
@@ -110,14 +109,14 @@ public class DCDocumentCrudTest extends TestSuiteBase {
     @Test(groups = { "direct" }, timeOut = TIMEOUT)
     public void executeStoredProc() {
         StoredProcedure storedProcedure = new StoredProcedure();
-        storedProcedure.setId(UUID.randomUUID().toString());
+        storedProcedure.id(UUID.randomUUID().toString());
         storedProcedure.setBody("function() {var x = 10;}");
 
         Observable<ResourceResponse<StoredProcedure>> createObservable = client
                 .createStoredProcedure(getCollectionLink(), storedProcedure, null);
 
         ResourceResponseValidator<StoredProcedure> validator = new ResourceResponseValidator.Builder<StoredProcedure>()
-                .withId(storedProcedure.getId())
+                .withId(storedProcedure.id())
                 .build();
 
         validateSuccess(createObservable, validator, TIMEOUT);
@@ -127,7 +126,7 @@ public class DCDocumentCrudTest extends TestSuiteBase {
         client.getCapturedRequests().clear();
 
         // execute the created storedProc and ensure it goes through direct connectivity stack
-        String storedProcLink = "dbs/" + createdDatabase.getId() + "/colls/" + createdCollection.getId() + "/sprocs/" + storedProcedure.getId();
+        String storedProcLink = "dbs/" + createdDatabase.id() + "/colls/" + createdCollection.id() + "/sprocs/" + storedProcedure.id();
 
         RequestOptions options = new RequestOptions();
         options.setPartitionKey(new PartitionKey("dummy"));
@@ -151,7 +150,7 @@ public class DCDocumentCrudTest extends TestSuiteBase {
             this.getCollectionLink(), docDefinition, null, false);
 
         ResourceResponseValidator<Document> validator = new ResourceResponseValidator.Builder<Document>()
-            .withId(docDefinition.getId())
+            .withId(docDefinition.id())
             .build();
 
         validateSuccess(createObservable, validator, TIMEOUT);
@@ -176,10 +175,10 @@ public class DCDocumentCrudTest extends TestSuiteBase {
         options.setPartitionKey(new PartitionKey(pkValue));
 
         String docLink =
-                String.format("dbs/%s/colls/%s/docs/%s", createdDatabase.getId(), createdCollection.getId(), document.getId());
+                String.format("dbs/%s/colls/%s/docs/%s", createdDatabase.id(), createdCollection.id(), document.id());
 
         ResourceResponseValidator<Document> validator = new ResourceResponseValidator.Builder<Document>()
-                .withId(docDefinition.getId())
+                .withId(docDefinition.id())
                 .build();
 
         validateSuccess(client.readDocument(docLink, options), validator, TIMEOUT);
@@ -240,14 +239,14 @@ public class DCDocumentCrudTest extends TestSuiteBase {
         waitIfNeededForReplicasToCatchUp(clientBuilder);
 
         FeedOptions options = new FeedOptions();
-        options.setEnableCrossPartitionQuery(true);
-        options.setMaxDegreeOfParallelism(-1);
-        options.setMaxItemCount(100);
+        options.enableCrossPartitionQuery(true);
+        options.maxDegreeOfParallelism(-1);
+        options.maxItemCount(100);
         Observable<FeedResponse<Document>> results = client.queryDocuments(getCollectionLink(), "SELECT * FROM r", options);
 
         FeedResponseListValidator<Document> validator = new FeedResponseListValidator.Builder<Document>()
                 .totalSize(documentList.size())
-                .exactlyContainsInAnyOrder(documentList.stream().map(Document::getResourceId).collect(Collectors.toList())).build();
+                .exactlyContainsInAnyOrder(documentList.stream().map(Document::resourceId).collect(Collectors.toList())).build();
 
         try {
             validateQuerySuccess(results, validator, QUERY_TIMEOUT);
@@ -256,7 +255,7 @@ public class DCDocumentCrudTest extends TestSuiteBase {
             assertThat(client.getCapturedRequests().stream().filter(r -> r.getResourceType() == ResourceType.Document)).hasSize(1);
         } catch (Throwable error) {
             if (clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {
-                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
+                String message = String.format("DIRECT TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
                 logger.info(message, error);
                 throw new SkipException(message, error);
             }
@@ -318,7 +317,7 @@ public class DCDocumentCrudTest extends TestSuiteBase {
         RequestOptions options = new RequestOptions();
         options.setOfferThroughput(10100);
         createdDatabase = SHARED_DATABASE;
-        createdCollection = createCollection(createdDatabase.getId(), getCollectionDefinition(), options);
+        createdCollection = createCollection(createdDatabase.id(), getCollectionDefinition(), options);
         client = SpyClientUnderTestFactory.createClientWithGatewaySpy(clientBuilder);
 
         assertThat(client.getCapturedRequests()).isNotEmpty();
@@ -336,12 +335,12 @@ public class DCDocumentCrudTest extends TestSuiteBase {
     }
 
     private String getCollectionLink() {
-        return String.format("/dbs/%s/colls/%s", createdDatabase.getId(), createdCollection.getId());
+        return String.format("/dbs/%s/colls/%s", createdDatabase.id(), createdCollection.id());
     }
 
     private Document getDocumentDefinition() {
         Document doc = new Document();
-        doc.setId(UUID.randomUUID().toString());
+        doc.id(UUID.randomUUID().toString());
         doc.set(PARTITION_KEY_FIELD_NAME, UUID.randomUUID().toString());
         doc.set("name", "Hafez");
         return doc;

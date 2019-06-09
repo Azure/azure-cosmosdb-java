@@ -26,7 +26,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
- * Read DocDB partitions and create leases if they do not exist.
+ * READ DocDB partitions and create leases if they do not exist.
  */
 public interface PartitionSynchronizer {
     /**

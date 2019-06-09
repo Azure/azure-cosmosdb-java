@@ -59,17 +59,17 @@ public class OfferReadReplaceTest extends TestSuiteBase {
         client.readOffers(null).toBlocking().subscribe((offersFeed) -> {
             try {
                 int i;
-                List<Offer> offers = offersFeed.getResults();
+                List<Offer> offers = offersFeed.results();
                 for (i = 0; i < offers.size(); i++) {
-                    if (offers.get(i).getOfferResourceId().equals(createdCollection.getResourceId())) {
+                    if (offers.get(i).getOfferResourceId().equals(createdCollection.resourceId())) {
                         break;
                     }
                 }
 
-                Offer rOffer = client.readOffer(offers.get(i).getSelfLink()).toBlocking().single().getResource();
+                Offer rOffer = client.readOffer(offers.get(i).selfLink()).toBlocking().single().getResource();
                 int oldThroughput = rOffer.getThroughput();
                 
-                Observable<ResourceResponse<Offer>> readObservable = client.readOffer(offers.get(i).getSelfLink());
+                Observable<ResourceResponse<Offer>> readObservable = client.readOffer(offers.get(i).selfLink());
 
                 // validate offer read
                 ResourceResponseValidator<Offer> validatorForRead = new ResourceResponseValidator.Builder<Offer>()
@@ -103,7 +103,7 @@ public class OfferReadReplaceTest extends TestSuiteBase {
     public void beforeClass() {
         client = clientBuilder.build();
         createdDatabase = createDatabase(client, databaseId);
-        createdCollection = createCollection(client, createdDatabase.getId(),
+        createdCollection = createCollection(client, createdDatabase.id(),
                 getCollectionDefinition());
     }
 

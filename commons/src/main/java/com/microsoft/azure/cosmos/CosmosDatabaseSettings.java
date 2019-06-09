@@ -44,7 +44,7 @@ public class CosmosDatabaseSettings extends Resource {
      * @param id id of the database
      */
     public CosmosDatabaseSettings(String id) {
-        super.setId(id);
+        super.id(id);
     }
 
     CosmosDatabaseSettings(ResourceResponse<Database> response) {

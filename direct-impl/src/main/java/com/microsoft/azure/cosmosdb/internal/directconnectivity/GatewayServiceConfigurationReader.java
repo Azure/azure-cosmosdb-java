@@ -128,7 +128,7 @@ public class GatewayServiceConfigurationReader {
         httpRequest.withHeader(HttpConstants.HttpHeaders.VERSION, HttpConstants.Versions.CURRENT_VERSION);
 
         UserAgentContainer userAgentContainer = new UserAgentContainer();
-        String userAgentSuffix = this.connectionPolicy.getUserAgentSuffix();
+        String userAgentSuffix = this.connectionPolicy.userAgentSuffix();
         if (userAgentSuffix != null && userAgentSuffix.length() > 0) {
             userAgentContainer.setSuffix(userAgentSuffix);
         }
@@ -160,7 +160,7 @@ public class GatewayServiceConfigurationReader {
         try {
             return GlobalEndpointManager.getDatabaseAccountFromAnyLocationsAsync(this.serviceEndpoint.toURL(),
 
-                    new ArrayList<>(this.connectionPolicy.getPreferredLocations()), url -> {
+                    new ArrayList<>(this.connectionPolicy.preferredLocations()), url -> {
                         try {
                             return getDatabaseAccountAsync(url.toURI());
                         } catch (URISyntaxException e) {

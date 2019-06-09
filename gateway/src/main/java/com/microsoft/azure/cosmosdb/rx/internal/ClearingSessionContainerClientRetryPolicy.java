@@ -22,7 +22,7 @@
  */
 package com.microsoft.azure.cosmosdb.rx.internal;
 
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.ISessionContainer;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import org.slf4j.Logger;
@@ -66,7 +66,7 @@ public class ClearingSessionContainerClientRetryPolicy implements IDocumentClien
 
             if (!shouldRetryResult.shouldRetry && !this.hasTriggered)
             {
-                DocumentClientException clientException = Utils.as(e, DocumentClientException.class);
+                CosmosClientException clientException = Utils.as(e, CosmosClientException.class);
 
                 if (this.request == null) {
                     // someone didn't call OnBeforeSendRequest - nothing we can do

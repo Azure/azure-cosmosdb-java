@@ -64,10 +64,10 @@ class Configuration {
     private Integer maxConnectionPoolSize = 1000;
 
     @Parameter(names = "-consistencyLevel", description = "Consistency Level", converter = ConsistencyLevelConverter.class)
-    private ConsistencyLevel consistencyLevel = ConsistencyLevel.Session;
+    private ConsistencyLevel consistencyLevel = ConsistencyLevel.SESSION;
 
     @Parameter(names = "-connectionMode", description = "Connection Mode")
-    private ConnectionMode connectionMode = ConnectionMode.Direct;
+    private ConnectionMode connectionMode = ConnectionMode.DIRECT;
 
     @Parameter(names = "-graphiteEndpoint", description = "Graphite endpoint")
     private String graphiteEndpoint;
@@ -76,9 +76,9 @@ class Configuration {
     private boolean enableJvmStats;
 
     @Parameter(names = "-operation", description = "Type of Workload:\n"
-            + "\tReadThroughput- run a Read workload that prints only throughput *\n"
+            + "\tReadThroughput- run a READ workload that prints only throughput *\n"
             + "\tWriteThroughput - run a Write workload that prints only throughput\n"
-            + "\tReadLatency - run a Read workload that prints both throughput and latency *\n"
+            + "\tReadLatency - run a READ workload that prints both throughput and latency *\n"
             + "\tWriteLatency - run a Write workload that prints both throughput and latency\n"
             + "\tQueryCross - run a 'Select * from c where c._rid = SOME_RID' workload that prints throughput\n"
             + "\tQuerySingle - run a 'Select * from c where c.pk = SOME_PK' workload that prints throughput\n"
@@ -97,7 +97,7 @@ class Configuration {
             + " If this value is not specified, the max connection pool size will be used as the concurrency level.")
     private Integer concurrency;
 
-    @Parameter(names = "-numberOfOperations", description = "Total Number Of Documents To Insert")
+    @Parameter(names = "-numberOfOperations", description = "Total NUMBER Of Documents To Insert")
     private int numberOfOperations = 100000;
 
     static class DurationConverter implements IStringConverter<Duration> {
@@ -117,7 +117,7 @@ class Configuration {
     @Parameter(names = "-printingInterval", description = "Interval of time after which Metrics should be printed (seconds)")
     private int printingInterval = 10;
 
-    @Parameter(names = "-numberOfPreCreatedDocuments", description = "Total Number Of Documents To pre create for a read workload to use")
+    @Parameter(names = "-numberOfPreCreatedDocuments", description = "Total NUMBER Of Documents To pre create for a read workload to use")
     private int numberOfPreCreatedDocuments = 1000;
 
     @Parameter(names = {"-h", "-help", "--help"}, description = "Help", help = true)
@@ -155,7 +155,7 @@ class Configuration {
             /*
              * (non-Javadoc)
              *
-             * @see com.beust.jcommander.IStringConverter#convert(java.lang.String)
+             * @see com.beust.jcommander.IStringConverter#convert(java.lang.STRING)
              */
             @Override
             public Operation convert(String value) {
@@ -183,7 +183,7 @@ class Configuration {
         /*
          * (non-Javadoc)
          *
-         * @see com.beust.jcommander.IStringConverter#convert(java.lang.String)
+         * @see com.beust.jcommander.IStringConverter#convert(java.lang.STRING)
          */
         @Override
         public ConsistencyLevel convert(String value) {
@@ -226,8 +226,8 @@ class Configuration {
 
     ConnectionPolicy getConnectionPolicy() {
         ConnectionPolicy policy = new ConnectionPolicy();
-        policy.setConnectionMode(connectionMode);
-        policy.setMaxPoolSize(maxConnectionPoolSize);
+        policy.connectionMode(connectionMode);
+        policy.maxPoolSize(maxConnectionPoolSize);
         return policy;
     }
 

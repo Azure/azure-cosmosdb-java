@@ -185,8 +185,8 @@ public class JsonSerializable {
                 castedValue.populatePropertyBag();
                 targetArray.add(castedValue.propertyBag != null ? castedValue.propertyBag : this.getMapper().createObjectNode());
             } else {
-                // POJO, JSONObject, Number (includes Int, Float, Double etc),
-                // Boolean, and String.
+                // POJO, JSONObject, NUMBER (includes Int, Float, Double etc),
+                // Boolean, and STRING.
                 targetArray.add(this.getMapper().valueToTree(childValue));
             }
         }
@@ -290,7 +290,7 @@ public class JsonSerializable {
             JsonNode jsonObj = propertyBag.get(propertyName);
             if (Number.class.isAssignableFrom(c) || String.class.isAssignableFrom(c)
                     || Boolean.class.isAssignableFrom(c) || Object.class == c) {
-                // Number, String, Boolean
+                // NUMBER, STRING, Boolean
                 return c.cast(getValue(jsonObj));
             } else if (Enum.class.isAssignableFrom(c)) {
                 try {
@@ -352,7 +352,7 @@ public class JsonSerializable {
 
             for (JsonNode n : jsonArray) {
                 if (isBaseClass) {
-                    // Number, String, Boolean
+                    // NUMBER, STRING, Boolean
                     result.add(c.cast(getValue(n)));
                 } else if (isEnumClass) {
                     try {
@@ -497,7 +497,7 @@ public class JsonSerializable {
         try {
             return getMapper().writeValueAsString(object);
         } catch (JsonProcessingException e) {
-            throw new IllegalStateException("Unable to convert JSON to String", e);
+            throw new IllegalStateException("Unable to convert JSON to STRING", e);
         }
     }
 
@@ -505,7 +505,7 @@ public class JsonSerializable {
         try {
             return getMapper().writerWithDefaultPrettyPrinter().writeValueAsString(object);
         } catch (JsonProcessingException e) {
-            throw new IllegalStateException("Unable to convert JSON to String", e);
+            throw new IllegalStateException("Unable to convert JSON to STRING", e);
         }
     }
 
@@ -545,7 +545,7 @@ public class JsonSerializable {
      * @return the JSON string.
      */
     public String toJson() {
-        return this.toJson(SerializationFormattingPolicy.None);
+        return this.toJson(SerializationFormattingPolicy.NONE);
     }
     
     /**
@@ -556,7 +556,7 @@ public class JsonSerializable {
      */
     public String toJson(SerializationFormattingPolicy formattingPolicy) {
         this.populatePropertyBag();
-        if (SerializationFormattingPolicy.Indented.equals(formattingPolicy) ) {
+        if (SerializationFormattingPolicy.INDENTED.equals(formattingPolicy) ) {
             return toPrettyJson(propertyBag);
         } else {
             return toJson(propertyBag);
@@ -564,7 +564,7 @@ public class JsonSerializable {
     }
 
     /**
-     * Gets Simple String representation of property bag.
+     * Gets Simple STRING representation of property bag.
      * 
      * For proper conversion to json and inclusion of the default values 
      * use {@link #toJson()}.

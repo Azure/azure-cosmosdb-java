@@ -41,18 +41,10 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
-import com.microsoft.azure.cosmosdb.DataType;
-import com.microsoft.azure.cosmosdb.DatabaseForTest;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
-import com.microsoft.azure.cosmosdb.IncludedPath;
-import com.microsoft.azure.cosmosdb.Index;
-import com.microsoft.azure.cosmosdb.IndexingPolicy;
-import com.microsoft.azure.cosmosdb.RetryOptions;
-import com.microsoft.azure.cosmosdb.SqlQuerySpec;
-import com.microsoft.azure.cosmosdb.Undefined;
+import com.microsoft.azure.cosmosdb.*;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.internal.PathParser;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.Protocol;
-import com.microsoft.azure.cosmosdb.rx.internal.Configs;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.mockito.stubbing.Answer;
@@ -64,22 +56,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.DataProvider;
 
-import com.microsoft.azure.cosmosdb.CompositePath;
-import com.microsoft.azure.cosmosdb.CompositePathSortOrder;
-import com.microsoft.azure.cosmosdb.ConnectionMode;
-import com.microsoft.azure.cosmosdb.ConnectionPolicy;
-import com.microsoft.azure.cosmosdb.ConsistencyLevel;
-import com.microsoft.azure.cosmosdb.Database;
-import com.microsoft.azure.cosmosdb.Document;
-import com.microsoft.azure.cosmosdb.DocumentCollection;
-import com.microsoft.azure.cosmosdb.FeedOptions;
-import com.microsoft.azure.cosmosdb.FeedResponse;
-import com.microsoft.azure.cosmosdb.PartitionKey;
-import com.microsoft.azure.cosmosdb.PartitionKeyDefinition;
-import com.microsoft.azure.cosmosdb.RequestOptions;
-import com.microsoft.azure.cosmosdb.Resource;
-import com.microsoft.azure.cosmosdb.ResourceResponse;
-import com.microsoft.azure.cosmosdb.User;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient.Builder;
 import com.microsoft.azure.cosmosdb.rx.FailureValidator;
@@ -146,7 +122,7 @@ public class TestSuiteBase {
         if (this.clientBuilder != null) {
             logger.info("Starting {}::{} using {} {} mode with {} consistency",
                         method.getDeclaringClass().getSimpleName(), method.getName(),
-                        this.clientBuilder.getConnectionPolicy().getConnectionMode(),
+                        this.clientBuilder.getConnectionPolicy().connectionMode(),
                         this.clientBuilder.getConfigs().getProtocol(),
                         this.clientBuilder.getDesiredConsistencyLevel());
             return;
@@ -197,9 +173,9 @@ public class TestSuiteBase {
             SHARED_DATABASE = dbForTest.createdDatabase;
             RequestOptions options = new RequestOptions();
             options.setOfferThroughput(10100);
-            SHARED_MULTI_PARTITION_COLLECTION = createCollection(houseKeepingClient, SHARED_DATABASE.getId(), getCollectionDefinitionWithRangeRangeIndex(), options);
-            SHARED_SINGLE_PARTITION_COLLECTION = createCollection(houseKeepingClient, SHARED_DATABASE.getId(), getCollectionDefinition(), null);
-            SHARED_MULTI_PARTITION_COLLECTION_WITH_COMPOSITE_AND_SPATIAL_INDEXES = createCollection(houseKeepingClient, SHARED_DATABASE.getId(), getCollectionDefinitionMultiPartitionWithCompositeAndSpatialIndexes(), options);
+            SHARED_MULTI_PARTITION_COLLECTION = createCollection(houseKeepingClient, SHARED_DATABASE.id(), getCollectionDefinitionWithRangeRangeIndex(), options);
+            SHARED_SINGLE_PARTITION_COLLECTION = createCollection(houseKeepingClient, SHARED_DATABASE.id(), getCollectionDefinition(), null);
+            SHARED_MULTI_PARTITION_COLLECTION_WITH_COMPOSITE_AND_SPATIAL_INDEXES = createCollection(houseKeepingClient, SHARED_DATABASE.id(), getCollectionDefinitionMultiPartitionWithCompositeAndSpatialIndexes(), options);
         } finally {
             houseKeepingClient.close();
         }
@@ -218,20 +194,20 @@ public class TestSuiteBase {
     }
 
     protected static void truncateCollection(DocumentCollection collection) {
-        logger.info("Truncating collection {} ...", collection.getId());
+        logger.info("Truncating collection {} ...", collection.id());
         AsyncDocumentClient houseKeepingClient = createGatewayHouseKeepingDocumentClient().build();
         try {
-            List<String> paths = collection.getPartitionKey().getPaths();
+            List<String> paths = collection.getPartitionKey().paths();
 
             FeedOptions options = new FeedOptions();
-            options.setMaxDegreeOfParallelism(-1);
-            options.setEnableCrossPartitionQuery(true);
-            options.setMaxItemCount(100);
+            options.maxDegreeOfParallelism(-1);
+            options.enableCrossPartitionQuery(true);
+            options.maxItemCount(100);
 
-            logger.info("Truncating collection {} documents ...", collection.getId());
+            logger.info("Truncating collection {} documents ...", collection.id());
 
-            houseKeepingClient.queryDocuments(collection.getSelfLink(), "SELECT * FROM root", options)
-                    .flatMap(page -> Observable.from(page.getResults()))
+            houseKeepingClient.queryDocuments(collection.selfLink(), "SELECT * FROM root", options)
+                    .flatMap(page -> Observable.from(page.results()))
                     .flatMap(doc -> {
                         RequestOptions requestOptions = new RequestOptions();
 
@@ -245,66 +221,66 @@ public class TestSuiteBase {
                             requestOptions.setPartitionKey(new PartitionKey(propertyValue));
                         }
 
-                        return houseKeepingClient.deleteDocument(doc.getSelfLink(), requestOptions);
+                        return houseKeepingClient.deleteDocument(doc.selfLink(), requestOptions);
                     }).toCompletable().await();
 
-            logger.info("Truncating collection {} triggers ...", collection.getId());
+            logger.info("Truncating collection {} triggers ...", collection.id());
 
-            houseKeepingClient.queryTriggers(collection.getSelfLink(), "SELECT * FROM root", options)
-                    .flatMap(page -> Observable.from(page.getResults()))
+            houseKeepingClient.queryTriggers(collection.selfLink(), "SELECT * FROM root", options)
+                    .flatMap(page -> Observable.from(page.results()))
                     .flatMap(trigger -> {
                         RequestOptions requestOptions = new RequestOptions();
 
 //                    if (paths != null && !paths.isEmpty()) {
 //                        Object propertyValue = trigger.getObjectByPath(PathParser.getPathParts(paths.get(0)));
-//                        requestOptions.setPartitionKey(new PartitionKey(propertyValue));
+//                        requestOptions.partitionKey(new PartitionKey(propertyValue));
 //                    }
 
-                        return houseKeepingClient.deleteTrigger(trigger.getSelfLink(), requestOptions);
+                        return houseKeepingClient.deleteTrigger(trigger.selfLink(), requestOptions);
                     }).toCompletable().await();
 
-            logger.info("Truncating collection {} storedProcedures ...", collection.getId());
+            logger.info("Truncating collection {} storedProcedures ...", collection.id());
 
-            houseKeepingClient.queryStoredProcedures(collection.getSelfLink(), "SELECT * FROM root", options)
-                    .flatMap(page -> Observable.from(page.getResults()))
+            houseKeepingClient.queryStoredProcedures(collection.selfLink(), "SELECT * FROM root", options)
+                    .flatMap(page -> Observable.from(page.results()))
                     .flatMap(storedProcedure -> {
                         RequestOptions requestOptions = new RequestOptions();
 
 //                    if (paths != null && !paths.isEmpty()) {
 //                        Object propertyValue = storedProcedure.getObjectByPath(PathParser.getPathParts(paths.get(0)));
-//                        requestOptions.setPartitionKey(new PartitionKey(propertyValue));
+//                        requestOptions.partitionKey(new PartitionKey(propertyValue));
 //                    }
 
-                        return houseKeepingClient.deleteStoredProcedure(storedProcedure.getSelfLink(), requestOptions);
+                        return houseKeepingClient.deleteStoredProcedure(storedProcedure.selfLink(), requestOptions);
                     }).toCompletable().await();
 
-            logger.info("Truncating collection {} udfs ...", collection.getId());
+            logger.info("Truncating collection {} udfs ...", collection.id());
 
-            houseKeepingClient.queryUserDefinedFunctions(collection.getSelfLink(), "SELECT * FROM root", options)
-                    .flatMap(page -> Observable.from(page.getResults()))
+            houseKeepingClient.queryUserDefinedFunctions(collection.selfLink(), "SELECT * FROM root", options)
+                    .flatMap(page -> Observable.from(page.results()))
                     .flatMap(udf -> {
                         RequestOptions requestOptions = new RequestOptions();
 
 //                    if (paths != null && !paths.isEmpty()) {
 //                        Object propertyValue = udf.getObjectByPath(PathParser.getPathParts(paths.get(0)));
-//                        requestOptions.setPartitionKey(new PartitionKey(propertyValue));
+//                        requestOptions.partitionKey(new PartitionKey(propertyValue));
 //                    }
 
-                        return houseKeepingClient.deleteUserDefinedFunction(udf.getSelfLink(), requestOptions);
+                        return houseKeepingClient.deleteUserDefinedFunction(udf.selfLink(), requestOptions);
                     }).toCompletable().await();
 
         } finally {
             houseKeepingClient.close();
         }
 
-        logger.info("Finished truncating collection {}.", collection.getId());
+        logger.info("Finished truncating collection {}.", collection.id());
     }
 
     protected static void waitIfNeededForReplicasToCatchUp(Builder clientBuilder) {
         switch (clientBuilder.getDesiredConsistencyLevel()) {
-            case Eventual:
-            case ConsistentPrefix:
-                logger.info(" additional wait in Eventual mode so the replica catch up");
+            case EVENTUAL:
+            case CONSISTENT_PREFIX:
+                logger.info(" additional wait in EVENTUAL mode so the replica catch up");
                 // give times to replicas to catch up after a write
                 try {
                     TimeUnit.MILLISECONDS.sleep(WAIT_REPLICA_CATCH_UP_IN_MILLIS);
@@ -312,9 +288,9 @@ public class TestSuiteBase {
                     logger.error("unexpected failure", e);
                 }
 
-            case Session:
-            case BoundedStaleness:
-            case Strong:
+            case SESSION:
+            case BOUNDED_STALENESS:
+            case STRONG:
             default:
                 break;
         }
@@ -363,12 +339,12 @@ public class TestSuiteBase {
         //Simple
         ArrayList<CompositePath> compositeIndexSimple = new ArrayList<CompositePath>();
         CompositePath compositePath1 = new CompositePath();
-        compositePath1.setPath("/" + NUMBER_FIELD);
-        compositePath1.setOrder(CompositePathSortOrder.Ascending);
+        compositePath1.path("/" + NUMBER_FIELD);
+        compositePath1.order(CompositePathSortOrder.ASCENDING);
 
         CompositePath compositePath2 = new CompositePath();
-        compositePath2.setPath("/" + STRING_FIELD);
-        compositePath2.setOrder(CompositePathSortOrder.Descending);
+        compositePath2.path("/" + STRING_FIELD);
+        compositePath2.order(CompositePathSortOrder.DESCENDING);
 
         compositeIndexSimple.add(compositePath1);
         compositeIndexSimple.add(compositePath2);
@@ -376,20 +352,20 @@ public class TestSuiteBase {
         //Max Columns
         ArrayList<CompositePath> compositeIndexMaxColumns = new ArrayList<CompositePath>();
         CompositePath compositePath3 = new CompositePath();
-        compositePath3.setPath("/" + NUMBER_FIELD);
-        compositePath3.setOrder(CompositePathSortOrder.Descending);
+        compositePath3.path("/" + NUMBER_FIELD);
+        compositePath3.order(CompositePathSortOrder.DESCENDING);
 
         CompositePath compositePath4 = new CompositePath();
-        compositePath4.setPath("/" + STRING_FIELD);
-        compositePath4.setOrder(CompositePathSortOrder.Ascending);
+        compositePath4.path("/" + STRING_FIELD);
+        compositePath4.order(CompositePathSortOrder.ASCENDING);
 
         CompositePath compositePath5 = new CompositePath();
-        compositePath5.setPath("/" + NUMBER_FIELD_2);
-        compositePath5.setOrder(CompositePathSortOrder.Descending);
+        compositePath5.path("/" + NUMBER_FIELD_2);
+        compositePath5.order(CompositePathSortOrder.DESCENDING);
 
         CompositePath compositePath6 = new CompositePath();
-        compositePath6.setPath("/" + STRING_FIELD_2);
-        compositePath6.setOrder(CompositePathSortOrder.Ascending);
+        compositePath6.path("/" + STRING_FIELD_2);
+        compositePath6.order(CompositePathSortOrder.ASCENDING);
 
         compositeIndexMaxColumns.add(compositePath3);
         compositeIndexMaxColumns.add(compositePath4);
@@ -399,20 +375,20 @@ public class TestSuiteBase {
         //Primitive Values
         ArrayList<CompositePath> compositeIndexPrimitiveValues = new ArrayList<CompositePath>();
         CompositePath compositePath7 = new CompositePath();
-        compositePath7.setPath("/" + NUMBER_FIELD);
-        compositePath7.setOrder(CompositePathSortOrder.Descending);
+        compositePath7.path("/" + NUMBER_FIELD);
+        compositePath7.order(CompositePathSortOrder.DESCENDING);
 
         CompositePath compositePath8 = new CompositePath();
-        compositePath8.setPath("/" + STRING_FIELD);
-        compositePath8.setOrder(CompositePathSortOrder.Ascending);
+        compositePath8.path("/" + STRING_FIELD);
+        compositePath8.order(CompositePathSortOrder.ASCENDING);
 
         CompositePath compositePath9 = new CompositePath();
-        compositePath9.setPath("/" + BOOL_FIELD);
-        compositePath9.setOrder(CompositePathSortOrder.Descending);
+        compositePath9.path("/" + BOOL_FIELD);
+        compositePath9.order(CompositePathSortOrder.DESCENDING);
 
         CompositePath compositePath10 = new CompositePath();
-        compositePath10.setPath("/" + NULL_FIELD);
-        compositePath10.setOrder(CompositePathSortOrder.Ascending);
+        compositePath10.path("/" + NULL_FIELD);
+        compositePath10.order(CompositePathSortOrder.ASCENDING);
 
         compositeIndexPrimitiveValues.add(compositePath7);
         compositeIndexPrimitiveValues.add(compositePath8);
@@ -422,16 +398,16 @@ public class TestSuiteBase {
         //Long Strings
         ArrayList<CompositePath> compositeIndexLongStrings = new ArrayList<CompositePath>();
         CompositePath compositePath11 = new CompositePath();
-        compositePath11.setPath("/" + STRING_FIELD);
+        compositePath11.path("/" + STRING_FIELD);
 
         CompositePath compositePath12 = new CompositePath();
-        compositePath12.setPath("/" + SHORT_STRING_FIELD);
+        compositePath12.path("/" + SHORT_STRING_FIELD);
 
         CompositePath compositePath13 = new CompositePath();
-        compositePath13.setPath("/" + MEDIUM_STRING_FIELD);
+        compositePath13.path("/" + MEDIUM_STRING_FIELD);
 
         CompositePath compositePath14 = new CompositePath();
-        compositePath14.setPath("/" + LONG_STRING_FIELD);
+        compositePath14.path("/" + LONG_STRING_FIELD);
 
         compositeIndexLongStrings.add(compositePath11);
         compositeIndexLongStrings.add(compositePath12);
@@ -443,16 +419,16 @@ public class TestSuiteBase {
         compositeIndexes.add(compositeIndexPrimitiveValues);
         compositeIndexes.add(compositeIndexLongStrings);
 
-        indexingPolicy.setCompositeIndexes(compositeIndexes);
+        indexingPolicy.compositeIndexes(compositeIndexes);
         documentCollection.setIndexingPolicy(indexingPolicy);
 
         PartitionKeyDefinition partitionKeyDefinition = new PartitionKeyDefinition();
         ArrayList<String> partitionKeyPaths = new ArrayList<String>();
         partitionKeyPaths.add("/" + PARTITION_KEY);
-        partitionKeyDefinition.setPaths(partitionKeyPaths);
+        partitionKeyDefinition.paths(partitionKeyPaths);
         documentCollection.setPartitionKey(partitionKeyDefinition);
 
-        documentCollection.setId(UUID.randomUUID().toString());
+        documentCollection.id(UUID.randomUUID().toString());
 
         return documentCollection;
     }
@@ -502,27 +478,27 @@ public class TestSuiteBase {
     }
 
     public static User safeCreateUser(AsyncDocumentClient client, String databaseId, User user) {
-        deleteUserIfExists(client, databaseId, user.getId());
+        deleteUserIfExists(client, databaseId, user.id());
         return createUser(client, databaseId, user);
     }
 
     private static DocumentCollection safeCreateCollection(AsyncDocumentClient client, String databaseId, DocumentCollection collection, RequestOptions options) {
-        deleteCollectionIfExists(client, databaseId, collection.getId());
+        deleteCollectionIfExists(client, databaseId, collection.id());
         return createCollection(client, databaseId, collection, options);
     }
 
     public static String getCollectionLink(DocumentCollection collection) {
-        return collection.getSelfLink();
+        return collection.selfLink();
     }
 
     static protected DocumentCollection getCollectionDefinition() {
         PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition();
         ArrayList<String> paths = new ArrayList<String>();
         paths.add("/mypk");
-        partitionKeyDef.setPaths(paths);
+        partitionKeyDef.paths(paths);
 
         DocumentCollection collectionDefinition = new DocumentCollection();
-        collectionDefinition.setId(UUID.randomUUID().toString());
+        collectionDefinition.id(UUID.randomUUID().toString());
         collectionDefinition.setPartitionKey(partitionKeyDef);
 
         return collectionDefinition;
@@ -532,26 +508,26 @@ public class TestSuiteBase {
         PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition();
         ArrayList<String> paths = new ArrayList<>();
         paths.add("/mypk");
-        partitionKeyDef.setPaths(paths);
+        partitionKeyDef.paths(paths);
         IndexingPolicy indexingPolicy = new IndexingPolicy();
         Collection<IncludedPath> includedPaths = new ArrayList<>();
         IncludedPath includedPath = new IncludedPath();
-        includedPath.setPath("/*");
+        includedPath.path("/*");
         Collection<Index> indexes = new ArrayList<>();
-        Index stringIndex = Index.Range(DataType.String);
+        Index stringIndex = Index.Range(DataType.STRING);
         stringIndex.set("precision", -1);
         indexes.add(stringIndex);
 
-        Index numberIndex = Index.Range(DataType.Number);
+        Index numberIndex = Index.Range(DataType.NUMBER);
         numberIndex.set("precision", -1);
         indexes.add(numberIndex);
-        includedPath.setIndexes(indexes);
+        includedPath.indexes(indexes);
         includedPaths.add(includedPath);
         indexingPolicy.setIncludedPaths(includedPaths);
 
         DocumentCollection collectionDefinition = new DocumentCollection();
         collectionDefinition.setIndexingPolicy(indexingPolicy);
-        collectionDefinition.setId(UUID.randomUUID().toString());
+        collectionDefinition.id(UUID.randomUUID().toString());
         collectionDefinition.setPartitionKey(partitionKeyDef);
 
         return collectionDefinition;
@@ -560,7 +536,7 @@ public class TestSuiteBase {
     public static void deleteCollectionIfExists(AsyncDocumentClient client, String databaseId, String collectionId) {
         List<DocumentCollection> res = client.queryCollections("dbs/" + databaseId,
                                                                String.format("SELECT * FROM root r where r.id = '%s'", collectionId), null).toBlocking().single()
-                .getResults();
+                .results();
         if (!res.isEmpty()) {
             deleteCollection(client, Utils.getCollectionNameLink(databaseId, collectionId));
         }
@@ -572,10 +548,10 @@ public class TestSuiteBase {
 
     public static void deleteDocumentIfExists(AsyncDocumentClient client, String databaseId, String collectionId, String docId) {
         FeedOptions options = new FeedOptions();
-        options.setPartitionKey(new PartitionKey(docId));
+        options.partitionKey(new PartitionKey(docId));
         List<Document> res = client
                 .queryDocuments(Utils.getCollectionNameLink(databaseId, collectionId), String.format("SELECT * FROM root r where r.id = '%s'", docId), options)
-                .toBlocking().single().getResults();
+                .toBlocking().single().results();
         if (!res.isEmpty()) {
             deleteDocument(client, Utils.getDocumentNameLink(databaseId, collectionId, docId));
         }
@@ -586,8 +562,8 @@ public class TestSuiteBase {
             try {
                 client.deleteDocument(documentLink, options).toBlocking().single();
             } catch (Exception e) {
-                DocumentClientException dce = com.microsoft.azure.cosmosdb.rx.internal.Utils.as(e, DocumentClientException.class);
-                if (dce == null || dce.getStatusCode() != 404) {
+                CosmosClientException dce = com.microsoft.azure.cosmosdb.rx.internal.Utils.as(e, CosmosClientException.class);
+                if (dce == null || dce.statusCode() != 404) {
                     throw e;
                 }
             }
@@ -601,7 +577,7 @@ public class TestSuiteBase {
     public static void deleteUserIfExists(AsyncDocumentClient client, String databaseId, String userId) {
         List<User> res = client
                 .queryUsers("dbs/" + databaseId, String.format("SELECT * FROM root r where r.id = '%s'", userId), null)
-                .toBlocking().single().getResults();
+                .toBlocking().single().results();
         if (!res.isEmpty()) {
             deleteUser(client, Utils.getUserNameLink(databaseId, userId));
         }
@@ -612,11 +588,11 @@ public class TestSuiteBase {
     }
 
     public static String getDatabaseLink(Database database) {
-        return database.getSelfLink();
+        return database.selfLink();
     }
 
     static private Database safeCreateDatabase(AsyncDocumentClient client, Database database) {
-        safeDeleteDatabase(client, database.getId());
+        safeDeleteDatabase(client, database.id());
         return createDatabase(client, database);
     }
 
@@ -627,16 +603,16 @@ public class TestSuiteBase {
 
     static protected Database createDatabase(AsyncDocumentClient client, String databaseId) {
         Database databaseDefinition = new Database();
-        databaseDefinition.setId(databaseId);
+        databaseDefinition.id(databaseId);
         return createDatabase(client, databaseDefinition);
     }
 
     static protected Database createDatabaseIfNotExists(AsyncDocumentClient client, String databaseId) {
-        return client.queryDatabases(String.format("SELECT * FROM r where r.id = '%s'", databaseId), null).flatMap(p -> Observable.from(p.getResults())).switchIfEmpty(
+        return client.queryDatabases(String.format("SELECT * FROM r where r.id = '%s'", databaseId), null).flatMap(p -> Observable.from(p.results())).switchIfEmpty(
                 Observable.defer(() -> {
 
                     Database databaseDefinition = new Database();
-                    databaseDefinition.setId(databaseId);
+                    databaseDefinition.id(databaseId);
 
                     return client.createDatabase(databaseDefinition, null).map(ResourceResponse::getResource);
                 })
@@ -645,7 +621,7 @@ public class TestSuiteBase {
 
     static protected void safeDeleteDatabase(AsyncDocumentClient client, Database database) {
         if (database != null) {
-            safeDeleteDatabase(client, database.getId());
+            safeDeleteDatabase(client, database.id());
         }
     }
 
@@ -660,14 +636,14 @@ public class TestSuiteBase {
 
     static protected void safeDeleteAllCollections(AsyncDocumentClient client, Database database) {
         if (database != null) {
-            List<DocumentCollection> collections = client.readCollections(database.getSelfLink(), null)
-                    .flatMap(p -> Observable.from(p.getResults()))
+            List<DocumentCollection> collections = client.readCollections(database.selfLink(), null)
+                    .flatMap(p -> Observable.from(p.results()))
                     .toList()
                     .toBlocking()
                     .single();
 
             for (DocumentCollection collection : collections) {
-                client.deleteCollection(collection.getSelfLink(), null).toBlocking().single().getResource();
+                client.deleteCollection(collection.selfLink(), null).toBlocking().single().getResource();
             }
         }
     }
@@ -675,7 +651,7 @@ public class TestSuiteBase {
     static protected void safeDeleteCollection(AsyncDocumentClient client, DocumentCollection collection) {
         if (client != null && collection != null) {
             try {
-                client.deleteCollection(collection.getSelfLink(), null).toBlocking().single();
+                client.deleteCollection(collection.selfLink(), null).toBlocking().single();
             } catch (Exception e) {
             }
         }
@@ -785,15 +761,15 @@ public class TestSuiteBase {
 
     @DataProvider
     public static Object[][] clientBuilders() {
-        return new Object[][]{{createGatewayRxDocumentClient(ConsistencyLevel.Session, false, null)}};
+        return new Object[][]{{createGatewayRxDocumentClient(ConsistencyLevel.SESSION, false, null)}};
     }
 
     @DataProvider
     public static Object[][] clientBuildersWithSessionConsistency() {
         return new Object[][]{
-                {createGatewayRxDocumentClient(ConsistencyLevel.Session, false, null)},
-                {createDirectRxDocumentClient(ConsistencyLevel.Session, Protocol.Https, false, null)},
-                {createDirectRxDocumentClient(ConsistencyLevel.Session, Protocol.Tcp, false, null)}
+                {createGatewayRxDocumentClient(ConsistencyLevel.SESSION, false, null)},
+                {createDirectRxDocumentClient(ConsistencyLevel.SESSION, Protocol.Https, false, null)},
+                {createDirectRxDocumentClient(ConsistencyLevel.SESSION, Protocol.Tcp, false, null)}
         };
     }
 
@@ -806,8 +782,8 @@ public class TestSuiteBase {
             }
         }
 
-        logger.error("Invalid configured test consistency [{}].", consistency);
-        throw new IllegalStateException("Invalid configured test consistency " + consistency);
+        logger.error("INVALID configured test consistency [{}].", consistency);
+        throw new IllegalStateException("INVALID configured test consistency " + consistency);
     }
 
     static List<String> parsePreferredLocation(String preferredLocations) {
@@ -819,8 +795,8 @@ public class TestSuiteBase {
             return objectMapper.readValue(preferredLocations, new TypeReference<List<String>>() {
             });
         } catch (Exception e) {
-            logger.error("Invalid configured test preferredLocations [{}].", preferredLocations);
-            throw new IllegalStateException("Invalid configured test preferredLocations " + preferredLocations);
+            logger.error("INVALID configured test preferredLocations [{}].", preferredLocations);
+            throw new IllegalStateException("INVALID configured test preferredLocations " + preferredLocations);
         }
     }
 
@@ -833,8 +809,8 @@ public class TestSuiteBase {
             return objectMapper.readValue(protocols, new TypeReference<List<Protocol>>() {
             });
         } catch (Exception e) {
-            logger.error("Invalid configured test protocols [{}].", protocols);
-            throw new IllegalStateException("Invalid configured test protocols " + protocols);
+            logger.error("INVALID configured test protocols [{}].", protocols);
+            throw new IllegalStateException("INVALID configured test protocols " + protocols);
         }
     }
 
@@ -850,12 +826,12 @@ public class TestSuiteBase {
 
     private static Object[][] simpleClientBuildersWithDirect(Protocol... protocols) {
         logger.info("Max test consistency to use is [{}]", accountConsistency);
-        List<ConsistencyLevel> testConsistencies = ImmutableList.of(ConsistencyLevel.Eventual);
+        List<ConsistencyLevel> testConsistencies = ImmutableList.of(ConsistencyLevel.EVENTUAL);
         
-        boolean isMultiMasterEnabled = preferredLocations != null && accountConsistency == ConsistencyLevel.Session;
+        boolean isMultiMasterEnabled = preferredLocations != null && accountConsistency == ConsistencyLevel.SESSION;
 
         List<Builder> builders = new ArrayList<>();
-        builders.add(createGatewayRxDocumentClient(ConsistencyLevel.Session, false, null));
+        builders.add(createGatewayRxDocumentClient(ConsistencyLevel.SESSION, false, null));
 
         for (Protocol protocol : protocols) {
             testConsistencies.forEach(consistencyLevel -> builders.add(createDirectRxDocumentClient(consistencyLevel,
@@ -865,7 +841,7 @@ public class TestSuiteBase {
         }
 
         builders.forEach(b -> logger.info("Will Use ConnectionMode [{}], Consistency [{}], Protocol [{}]",
-                                          b.getConnectionPolicy().getConnectionMode(),
+                                          b.getConnectionPolicy().connectionMode(),
                                           b.getDesiredConsistencyLevel(),
                                           b.getConfigs().getProtocol()
         ));
@@ -894,7 +870,7 @@ public class TestSuiteBase {
 
     private static Object[][] clientBuildersWithDirectSession(Protocol... protocols) {
         return clientBuildersWithDirect(new ArrayList<ConsistencyLevel>() {{
-            add(ConsistencyLevel.Session);
+            add(ConsistencyLevel.SESSION);
         }}, protocols);
     }
 
@@ -912,36 +888,36 @@ public class TestSuiteBase {
             return objectMapper.readValue(consistencies, new TypeReference<List<ConsistencyLevel>>() {
             });
         } catch (Exception e) {
-            logger.error("Invalid consistency test desiredConsistencies [{}].", consistencies);
-            throw new IllegalStateException("Invalid configured test desiredConsistencies " + consistencies);
+            logger.error("INVALID consistency test desiredConsistencies [{}].", consistencies);
+            throw new IllegalStateException("INVALID configured test desiredConsistencies " + consistencies);
         }
     }
 
     static List<ConsistencyLevel> allEqualOrLowerConsistencies(ConsistencyLevel accountConsistency) {
         List<ConsistencyLevel> testConsistencies = new ArrayList<>();
         switch (accountConsistency) {
-            case Strong:
-                testConsistencies.add(ConsistencyLevel.Strong);
-            case BoundedStaleness:
-                testConsistencies.add(ConsistencyLevel.BoundedStaleness);
-            case Session:
-                testConsistencies.add(ConsistencyLevel.Session);
-            case ConsistentPrefix:
-                testConsistencies.add(ConsistencyLevel.ConsistentPrefix);
-            case Eventual:
-                testConsistencies.add(ConsistencyLevel.Eventual);
+            case STRONG:
+                testConsistencies.add(ConsistencyLevel.STRONG);
+            case BOUNDED_STALENESS:
+                testConsistencies.add(ConsistencyLevel.BOUNDED_STALENESS);
+            case SESSION:
+                testConsistencies.add(ConsistencyLevel.SESSION);
+            case CONSISTENT_PREFIX:
+                testConsistencies.add(ConsistencyLevel.CONSISTENT_PREFIX);
+            case EVENTUAL:
+                testConsistencies.add(ConsistencyLevel.EVENTUAL);
                 break;
             default:
-                throw new IllegalStateException("Invalid configured test consistency " + accountConsistency);
+                throw new IllegalStateException("INVALID configured test consistency " + accountConsistency);
         }
         return testConsistencies;
     }
 
     private static Object[][] clientBuildersWithDirect(List<ConsistencyLevel> testConsistencies, Protocol... protocols) {
-        boolean isMultiMasterEnabled = preferredLocations != null && accountConsistency == ConsistencyLevel.Session;
+        boolean isMultiMasterEnabled = preferredLocations != null && accountConsistency == ConsistencyLevel.SESSION;
 
         List<Builder> builders = new ArrayList<>();
-        builders.add(createGatewayRxDocumentClient(ConsistencyLevel.Session, isMultiMasterEnabled, preferredLocations));
+        builders.add(createGatewayRxDocumentClient(ConsistencyLevel.SESSION, isMultiMasterEnabled, preferredLocations));
 
         for (Protocol protocol : protocols) {
             testConsistencies.forEach(consistencyLevel -> builders.add(createDirectRxDocumentClient(consistencyLevel,
@@ -951,7 +927,7 @@ public class TestSuiteBase {
         }
 
         builders.forEach(b -> logger.info("Will Use ConnectionMode [{}], Consistency [{}], Protocol [{}]",
-                                          b.getConnectionPolicy().getConnectionMode(),
+                                          b.getConnectionPolicy().connectionMode(),
                                           b.getDesiredConsistencyLevel(),
                                           b.getConfigs().getProtocol()
         ));
@@ -961,21 +937,21 @@ public class TestSuiteBase {
 
     static protected Builder createGatewayHouseKeepingDocumentClient() {
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
-        connectionPolicy.setConnectionMode(ConnectionMode.Gateway);
+        connectionPolicy.connectionMode(ConnectionMode.GATEWAY);
         RetryOptions options = new RetryOptions();
-        options.setMaxRetryWaitTimeInSeconds(SUITE_SETUP_TIMEOUT);
-        connectionPolicy.setRetryOptions(options);
+        options.maxRetryWaitTimeInSeconds(SUITE_SETUP_TIMEOUT);
+        connectionPolicy.retryOptions(options);
         return new Builder().withServiceEndpoint(TestConfigurations.HOST)
                 .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
                 .withConnectionPolicy(connectionPolicy)
-                .withConsistencyLevel(ConsistencyLevel.Session);
+                .withConsistencyLevel(ConsistencyLevel.SESSION);
     }
 
     static protected Builder createGatewayRxDocumentClient(ConsistencyLevel consistencyLevel, boolean multiMasterEnabled, List<String> preferredLocations) {
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
-        connectionPolicy.setConnectionMode(ConnectionMode.Gateway);
-        connectionPolicy.setUsingMultipleWriteLocations(multiMasterEnabled);
-        connectionPolicy.setPreferredLocations(preferredLocations);
+        connectionPolicy.connectionMode(ConnectionMode.GATEWAY);
+        connectionPolicy.usingMultipleWriteLocations(multiMasterEnabled);
+        connectionPolicy.preferredLocations(preferredLocations);
         return new Builder().withServiceEndpoint(TestConfigurations.HOST)
                 .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
                 .withConnectionPolicy(connectionPolicy)
@@ -983,7 +959,7 @@ public class TestSuiteBase {
     }
 
     static protected Builder createGatewayRxDocumentClient() {
-        return createGatewayRxDocumentClient(ConsistencyLevel.Session, false, null);
+        return createGatewayRxDocumentClient(ConsistencyLevel.SESSION, false, null);
     }
 
     static protected Builder createDirectRxDocumentClient(ConsistencyLevel consistencyLevel,
@@ -991,14 +967,14 @@ public class TestSuiteBase {
                                                                               boolean multiMasterEnabled,
                                                                               List<String> preferredLocations) {
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
-        connectionPolicy.setConnectionMode(ConnectionMode.Direct);
+        connectionPolicy.connectionMode(ConnectionMode.DIRECT);
 
         if (preferredLocations != null) {
-            connectionPolicy.setPreferredLocations(preferredLocations);
+            connectionPolicy.preferredLocations(preferredLocations);
         }
 
-        if (multiMasterEnabled && consistencyLevel == ConsistencyLevel.Session) {
-            connectionPolicy.setUsingMultipleWriteLocations(true);
+        if (multiMasterEnabled && consistencyLevel == ConsistencyLevel.SESSION) {
+            connectionPolicy.usingMultipleWriteLocations(true);
         }
 
         Configs configs = spy(new Configs());

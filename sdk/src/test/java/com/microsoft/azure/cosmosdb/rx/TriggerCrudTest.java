@@ -59,18 +59,18 @@ public class TriggerCrudTest extends TestSuiteBase {
 
         // create a trigger
         CosmosTriggerSettings trigger = new CosmosTriggerSettings();
-        trigger.setId(UUID.randomUUID().toString());
-        trigger.setBody("function() {var x = 10;}");
-        trigger.setTriggerOperation(TriggerOperation.Create);
-        trigger.setTriggerType(TriggerType.Pre);
+        trigger.id(UUID.randomUUID().toString());
+        trigger.body("function() {var x = 10;}");
+        trigger.triggerOperation(TriggerOperation.CREATE);
+        trigger.triggerType(TriggerType.PRE);
 
         Mono<CosmosTriggerResponse> createObservable = createdCollection.createTrigger(trigger, new CosmosRequestOptions());
 
         // validate trigger creation
         CosmosResponseValidator<CosmosTriggerResponse> validator = new CosmosResponseValidator.Builder<CosmosTriggerResponse>()
-                .withId(trigger.getId())
+                .withId(trigger.id())
                 .withTriggerBody("function() {var x = 10;}")
-                .withTriggerInternals(TriggerType.Pre, TriggerOperation.Create)
+                .withTriggerInternals(TriggerType.PRE, TriggerOperation.CREATE)
                 .notNullEtag()
                 .build();
         validateSuccess(createObservable, validator);
@@ -80,11 +80,11 @@ public class TriggerCrudTest extends TestSuiteBase {
     public void readTrigger() throws Exception {
         // create a trigger
         CosmosTriggerSettings trigger = new CosmosTriggerSettings();
-        trigger.setId(UUID.randomUUID().toString());
-        trigger.setBody("function() {var x = 10;}");
-        trigger.setTriggerOperation(TriggerOperation.Create);
-        trigger.setTriggerType(TriggerType.Pre);
-        CosmosTrigger readBackTrigger = createdCollection.createTrigger(trigger, new CosmosRequestOptions()).block().getCosmosTrigger();
+        trigger.id(UUID.randomUUID().toString());
+        trigger.body("function() {var x = 10;}");
+        trigger.triggerOperation(TriggerOperation.CREATE);
+        trigger.triggerType(TriggerType.PRE);
+        CosmosTrigger readBackTrigger = createdCollection.createTrigger(trigger, new CosmosRequestOptions()).block().trigger();
 
         // read trigger
         waitIfNeededForReplicasToCatchUp(clientBuilder);
@@ -92,9 +92,9 @@ public class TriggerCrudTest extends TestSuiteBase {
 
         // validate read trigger
         CosmosResponseValidator<CosmosTriggerResponse> validator = new CosmosResponseValidator.Builder<CosmosTriggerResponse>()
-                .withId(trigger.getId())
+                .withId(trigger.id())
                 .withTriggerBody("function() {var x = 10;}")
-                .withTriggerInternals(TriggerType.Pre, TriggerOperation.Create)
+                .withTriggerInternals(TriggerType.PRE, TriggerOperation.CREATE)
                 .notNullEtag()
                 .build();
         validateSuccess(readObservable, validator);
@@ -104,11 +104,11 @@ public class TriggerCrudTest extends TestSuiteBase {
     public void deleteTrigger() throws Exception {
         // create a trigger
         CosmosTriggerSettings trigger = new CosmosTriggerSettings();
-        trigger.setId(UUID.randomUUID().toString());
-        trigger.setBody("function() {var x = 10;}");
-        trigger.setTriggerOperation(TriggerOperation.Create);
-        trigger.setTriggerType(TriggerType.Pre);
-        CosmosTrigger readBackTrigger = createdCollection.createTrigger(trigger, new CosmosRequestOptions()).block().getCosmosTrigger();
+        trigger.id(UUID.randomUUID().toString());
+        trigger.body("function() {var x = 10;}");
+        trigger.triggerOperation(TriggerOperation.CREATE);
+        trigger.triggerType(TriggerType.PRE);
+        CosmosTrigger readBackTrigger = createdCollection.createTrigger(trigger, new CosmosRequestOptions()).block().trigger();
 
         // delete trigger
         Mono<CosmosResponse> deleteObservable = readBackTrigger.delete(new CosmosRequestOptions());

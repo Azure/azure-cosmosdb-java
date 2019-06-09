@@ -28,7 +28,7 @@ package com.microsoft.azure.cosmosdb;
  */
 public final class AccessCondition {
 
-    private AccessConditionType type = AccessConditionType.IfMatch;
+    private AccessConditionType type = AccessConditionType.IF_MATCH;
     private String condition;
 
     /**
@@ -36,7 +36,7 @@ public final class AccessCondition {
      *
      * @return the condition type.
      */
-    public AccessConditionType getType() {
+    public AccessConditionType type() {
         return this.type;
     }
 
@@ -45,8 +45,9 @@ public final class AccessCondition {
      *
      * @param type the condition type to use.
      */
-    public void setType(AccessConditionType type) {
+    public AccessCondition type(AccessConditionType type) {
         this.type = type;
+        return this;
     }
 
     /**
@@ -55,7 +56,7 @@ public final class AccessCondition {
      *
      * @return the condition.
      */
-    public String getCondition() {
+    public String condition() {
         return this.condition;
     }
 
@@ -65,7 +66,8 @@ public final class AccessCondition {
      *
      * @param condition the condition to use.
      */
-    public void setCondition(String condition) {
+    public AccessCondition condition(String condition) {
         this.condition = condition;
+        return this;
     }
 }

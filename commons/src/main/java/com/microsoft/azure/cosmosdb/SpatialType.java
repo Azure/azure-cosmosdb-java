@@ -31,21 +31,21 @@ public enum SpatialType {
     /**
      * Represent a point data type.
      */
-    Point,
+    POINT,
 
     /**
      * Represent a line string data type.
      */
-    LineString,
+    LINE_STRING,
 
     /**
      * Represent a polygon data type.
      */
-    Polygon,
+    POLYGON,
 
     /**
      * Represent a multi-polygon data type.
      */
-    MultiPolygon
+    MULTI_POLYGON
 }
 

@@ -101,7 +101,7 @@ public interface PartitionReplicasAddressesValidator {
 
                     AddressValidator validator = new AddressValidator.Builder()
                             .withPartitionKeyRangeId(partitionKeyRangeId)
-                            .withRid(a.getResourceId())
+                            .withRid(a.resourceId())
                             .build();
 
                     for (Address address : addresses) {
@@ -125,7 +125,7 @@ public interface PartitionReplicasAddressesValidator {
 
                     AddressValidator validator = new AddressValidator.Builder()
                             .withPartitionKeyRangeId(a.getParitionKeyRangeId())
-                            .withRid(a.getResourceId())
+                            .withRid(a.resourceId())
                             .build();
 
                     for (Address address : addresses) {

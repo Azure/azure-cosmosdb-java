@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 import com.microsoft.azure.cosmosdb.BridgeInternal;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.Resource;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
@@ -57,9 +57,9 @@ public class TopDocumentQueryExecutionContext<T extends Resource> implements IDo
         } else {
             ValueHolder<TakeContinuationToken> outTakeContinuationToken = new ValueHolder<TakeContinuationToken>();
             if (!TakeContinuationToken.tryParse(topContinuationToken, outTakeContinuationToken)) {
-                String message = String.format("Invalid JSON in continuation token %s for Top~Context",
+                String message = String.format("INVALID JSON in continuation token %s for Top~Context",
                         topContinuationToken);
-                DocumentClientException dce = new DocumentClientException(HttpConstants.StatusCodes.BADREQUEST,
+                CosmosClientException dce = new CosmosClientException(HttpConstants.StatusCodes.BADREQUEST,
                         message);
                 return Observable.error(dce);
             }
@@ -71,7 +71,7 @@ public class TopDocumentQueryExecutionContext<T extends Resource> implements IDo
             String message = String.format(
                     "top count in continuation token: %d can not be greater than the top count in the query: %d.",
                     takeContinuationToken.getTakeCount(), topCount);
-            DocumentClientException dce = new DocumentClientException(HttpConstants.StatusCodes.BADREQUEST, message);
+            CosmosClientException dce = new CosmosClientException(HttpConstants.StatusCodes.BADREQUEST, message);
             return Observable.error(dce);
         }
 
@@ -100,7 +100,7 @@ public class TopDocumentQueryExecutionContext<T extends Resource> implements IDo
             @Override
             public Boolean call(FeedResponse<T> frp) {
 
-                fetchedItems += frp.getResults().size();
+                fetchedItems += frp.results().size();
 
                 // take until we have at least top many elements fetched
                 return fetchedItems >= top;
@@ -113,13 +113,13 @@ public class TopDocumentQueryExecutionContext<T extends Resource> implements IDo
             @Override
             public FeedResponse<T> call(FeedResponse<T> t) {
 
-                if (collectedItems + t.getResults().size() <= top) {
-                    collectedItems += t.getResults().size();
+                if (collectedItems + t.results().size() <= top) {
+                    collectedItems += t.results().size();
 
-                    Map<String, String> headers = new HashMap<>(t.getResponseHeaders());
+                    Map<String, String> headers = new HashMap<>(t.responseHeaders());
                     if (top != collectedItems) {
                         // Add Take Continuation Token
-                        String sourceContinuationToken = t.getResponseContinuation();
+                        String sourceContinuationToken = t.continuationToken();
                         TakeContinuationToken takeContinuationToken = new TakeContinuationToken(top - collectedItems,
                                 sourceContinuationToken);
                         headers.put(HttpConstants.HttpHeaders.CONTINUATION, takeContinuationToken.toJson());
@@ -128,7 +128,7 @@ public class TopDocumentQueryExecutionContext<T extends Resource> implements IDo
                         headers.put(HttpConstants.HttpHeaders.CONTINUATION, null);
                     }
 
-                    return BridgeInternal.createFeedResponseWithQueryMetrics(t.getResults(), headers,
+                    return BridgeInternal.createFeedResponseWithQueryMetrics(t.results(), headers,
                             t.getQueryMetrics());
                 } else {
                     assert lastPage == false;
@@ -137,10 +137,10 @@ public class TopDocumentQueryExecutionContext<T extends Resource> implements IDo
                     collectedItems += lastPageSize;
 
                     // Null out the continuation token
-                    Map<String, String> headers = new HashMap<>(t.getResponseHeaders());
+                    Map<String, String> headers = new HashMap<>(t.responseHeaders());
                     headers.put(HttpConstants.HttpHeaders.CONTINUATION, null);
 
-                    return BridgeInternal.createFeedResponseWithQueryMetrics(t.getResults().subList(0, lastPageSize),
+                    return BridgeInternal.createFeedResponseWithQueryMetrics(t.results().subList(0, lastPageSize),
                             headers, t.getQueryMetrics());
                 }
             }

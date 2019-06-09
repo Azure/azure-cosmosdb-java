@@ -24,7 +24,7 @@
 package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
 import com.microsoft.azure.cosmosdb.ConsistencyLevel;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.rx.internal.BadRequestException;
 import com.microsoft.azure.cosmosdb.rx.internal.RMResources;
@@ -34,7 +34,7 @@ import org.apache.commons.lang3.EnumUtils;
 
 public class RequestHelper {
     public static ConsistencyLevel GetConsistencyLevelToUse(GatewayServiceConfigurationReader serviceConfigReader,
-                                                            RxDocumentServiceRequest request) throws DocumentClientException {
+                                                            RxDocumentServiceRequest request) throws CosmosClientException {
         ConsistencyLevel consistencyLevelToUse = serviceConfigReader.getDefaultConsistencyLevel();
 
         String requestConsistencyLevelHeaderValue = request.getHeaders().get(HttpConstants.HttpHeaders.CONSISTENCY_LEVEL);

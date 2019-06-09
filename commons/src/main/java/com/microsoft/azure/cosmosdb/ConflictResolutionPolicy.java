@@ -13,10 +13,10 @@ import org.apache.commons.text.WordUtils;
  * A collection with custom conflict resolution with no user-registered stored procedure.
  * <pre>{@code
  * DocumentCollection collectionSpec = new DocumentCollection();
- * collectionSpec.setId("Multi-master collection");
+ * collectionSpec.id("Multi-master collection");
  *
  * ConflictResolutionPolicy policy = ConflictResolutionPolicy.createCustomPolicy();
- * collectionSpec.setConflictResolutionPolicy(policy);
+ * collectionSpec.conflictResolutionPolicy(policy);
  *
  * DocumentCollection collection = client.createCollection(databaseLink, collectionSpec, null)
  *         .toBlocking().single().getResource();
@@ -27,10 +27,10 @@ import org.apache.commons.text.WordUtils;
  * A collection with custom conflict resolution with a user-registered stored procedure.
  * <pre>{@code
  * DocumentCollection collectionSpec = new DocumentCollection();
- * collectionSpec.setId("Multi-master collection");
+ * collectionSpec.id("Multi-master collection");
  *
  * ConflictResolutionPolicy policy = ConflictResolutionPolicy.createCustomPolicy(conflictResolutionSprocName);
- * collectionSpec.setConflictResolutionPolicy(policy);
+ * collectionSpec.conflictResolutionPolicy(policy);
  *
  * DocumentCollection collection = client.createCollection(databaseLink, collectionSpec, null)
  *         .toBlocking().single().getResource();
@@ -42,10 +42,10 @@ import org.apache.commons.text.WordUtils;
  * A collection with custom conflict resolution with a user-registered stored procedure.
  * <pre>{@code
  * DocumentCollection collectionSpec = new DocumentCollection();
- * collectionSpec.setId("Multi-master collection");
+ * collectionSpec.id("Multi-master collection");
  *
  * ConflictResolutionPolicy policy = ConflictResolutionPolicy.createLastWriterWinsPolicy("/path/for/conflict/resolution");
- * collectionSpec.setConflictResolutionPolicy(policy);
+ * collectionSpec.conflictResolutionPolicy(policy);
  *
  * DocumentCollection collection = client.createCollection(databaseLink, collectionSpec, null)
  *         .toBlocking().single().getResource();
@@ -56,22 +56,22 @@ import org.apache.commons.text.WordUtils;
 public class ConflictResolutionPolicy extends JsonSerializable {
 
     /**
-     * Creates a LastWriterWins {@link ConflictResolutionPolicy} with "/_ts" as the resolution path.
+     * Creates a LAST_WRITER_WINS {@link ConflictResolutionPolicy} with "/_ts" as the resolution path.
      *
      * In case of a conflict occurring on a document, the document with the higher integer value in the default path
-     * {@link Resource#getTimestamp()}, i.e., "/_ts" will be used.
+     * {@link Resource#timestamp()}, i.e., "/_ts" will be used.
      *
      * @return ConflictResolutionPolicy.
      */
     public static ConflictResolutionPolicy createLastWriterWinsPolicy() {
         ConflictResolutionPolicy policy = new ConflictResolutionPolicy();
-        policy.setMode(ConflictResolutionMode.LastWriterWins);
+        policy.mode(ConflictResolutionMode.LAST_WRITER_WINS);
         return policy;
     }
 
     /**
      *
-     * Creates a LastWriterWins {@link ConflictResolutionPolicy} with path as the resolution path.
+     * Creates a LAST_WRITER_WINS {@link ConflictResolutionPolicy} with path as the resolution path.
      *
      * The specified path must be present in each document and must be an integer value.
      * In case of a conflict occurring on a document, the document with the higher integer value in the specified path
@@ -83,15 +83,15 @@ public class ConflictResolutionPolicy extends JsonSerializable {
      */
     public static ConflictResolutionPolicy createLastWriterWinsPolicy(String conflictResolutionPath) {
         ConflictResolutionPolicy policy = new ConflictResolutionPolicy();
-        policy.setMode(ConflictResolutionMode.LastWriterWins);
+        policy.mode(ConflictResolutionMode.LAST_WRITER_WINS);
         if (conflictResolutionPath != null) {
-            policy.setConflictResolutionPath(conflictResolutionPath);
+            policy.conflictResolutionPath(conflictResolutionPath);
         }
         return policy;
     }
 
     /**
-     * Creates a Custom {@link ConflictResolutionPolicy} which uses the specified stored procedure
+     * Creates a CUSTOM {@link ConflictResolutionPolicy} which uses the specified stored procedure
      * to perform conflict resolution
      *
      * This stored procedure may be created after the {@link DocumentCollection} is created and can be changed as required.
@@ -99,22 +99,22 @@ public class ConflictResolutionPolicy extends JsonSerializable {
      * <ul>
      * <li>In case the stored procedure fails or throws an exception,
      * the conflict resolution will default to registering conflicts in the conflicts feed</li>
-     * <li>The user can provide the stored procedure @see {@link Resource#getId()}</li>
+     * <li>The user can provide the stored procedure @see {@link Resource#id()}</li>
      * </ul>
      * @param conflictResolutionSprocName stored procedure to perform conflict resolution.
      * @return ConflictResolutionPolicy.
      */
     public static ConflictResolutionPolicy createCustomPolicy(String conflictResolutionSprocName) {
         ConflictResolutionPolicy policy = new ConflictResolutionPolicy();
-        policy.setMode(ConflictResolutionMode.Custom);
+        policy.mode(ConflictResolutionMode.CUSTOM);
         if (conflictResolutionSprocName != null) {
-            policy.setConflictResolutionProcedure(conflictResolutionSprocName);
+            policy.conflictResolutionProcedure(conflictResolutionSprocName);
         }
         return policy;
     }
 
     /**
-     * Creates a Custom {@link ConflictResolutionPolicy} without any {@link StoredProcedure}. User manually
+     * Creates a CUSTOM {@link ConflictResolutionPolicy} without any {@link StoredProcedure}. User manually
      * should resolve conflicts.
      *
      * The conflicts will be registered in the conflicts feed and the user should manually resolve them.
@@ -123,7 +123,7 @@ public class ConflictResolutionPolicy extends JsonSerializable {
      */
     public static ConflictResolutionPolicy createCustomPolicy() {
         ConflictResolutionPolicy policy = new ConflictResolutionPolicy();
-        policy.setMode(ConflictResolutionMode.Custom);
+        policy.mode(ConflictResolutionMode.CUSTOM);
         return policy;
     }
 
@@ -138,11 +138,11 @@ public class ConflictResolutionPolicy extends JsonSerializable {
 
     /**
      * Gets the {@link ConflictResolutionMode} in the Azure Cosmos DB service.
-     * By default it is {@link ConflictResolutionMode#LastWriterWins}.
+     * By default it is {@link ConflictResolutionMode#LAST_WRITER_WINS}.
      *
      * @return ConflictResolutionMode.
      */
-    public ConflictResolutionMode getConflictResolutionMode() {
+    public ConflictResolutionMode mode() {
 
         String strValue = super.getString(Constants.Properties.MODE);
 
@@ -150,36 +150,37 @@ public class ConflictResolutionPolicy extends JsonSerializable {
             try {
                 return ConflictResolutionMode.valueOf(WordUtils.capitalize(super.getString(Constants.Properties.MODE)));
             } catch (IllegalArgumentException e) {
-                this.getLogger().warn("Invalid ConflictResolutionMode value {}.", super.getString(Constants.Properties.MODE));
-                return ConflictResolutionMode.Invalid;
+                this.getLogger().warn("INVALID ConflictResolutionMode value {}.", super.getString(Constants.Properties.MODE));
+                return ConflictResolutionMode.INVALID;
             }
         }
 
-        return ConflictResolutionMode.Invalid;
+        return ConflictResolutionMode.INVALID;
     }
 
     /**
      * Sets the {@link ConflictResolutionMode} in the Azure Cosmos DB service.
-     * By default it is {@link ConflictResolutionMode#LastWriterWins}.
+     * By default it is {@link ConflictResolutionMode#LAST_WRITER_WINS}.
      *
      * @param mode One of the values of the {@link ConflictResolutionMode} enum.
      */
-    void setMode(ConflictResolutionMode mode) {
+    ConflictResolutionPolicy mode(ConflictResolutionMode mode) {
         super.set(Constants.Properties.MODE, mode.name());
+        return this;
     }
 
     /**
      * Gets the path which is present in each document in the Azure Cosmos DB service for last writer wins conflict-resolution.
      * This path must be present in each document and must be an integer value.
      * In case of a conflict occurring on a document, the document with the higher integer value in the specified path will be picked.
-     * If the path is unspecified, by default the {@link Resource#getTimestamp()} path will be used.
+     * If the path is unspecified, by default the {@link Resource#timestamp()} path will be used.
      *
-     * This value should only be set when using {@link ConflictResolutionMode#LastWriterWins}
+     * This value should only be set when using {@link ConflictResolutionMode#LAST_WRITER_WINS}
      *
      * @return The path to check values for last-writer wins conflict resolution.
      * That path is a rooted path of the property in the document, such as "/name/first".
      */
-    public String getConflictResolutionPath() {
+    public String conflictResolutionPath() {
         return super.getString(Constants.Properties.CONFLICT_RESOLUTION_PATH);
     }
 
@@ -187,15 +188,16 @@ public class ConflictResolutionPolicy extends JsonSerializable {
      * Sets the path which is present in each document in the Azure Cosmos DB service for last writer wins conflict-resolution.
      * This path must be present in each document and must be an integer value.
      * In case of a conflict occurring on a document, the document with the higher integer value in the specified path will be picked.
-     * If the path is unspecified, by default the {@link Resource#getTimestamp()} path will be used.
+     * If the path is unspecified, by default the {@link Resource#timestamp()} path will be used.
      *
-     * This value should only be set when using {@link ConflictResolutionMode#LastWriterWins}
+     * This value should only be set when using {@link ConflictResolutionMode#LAST_WRITER_WINS}
      *
      * @param value The path to check values for last-writer wins conflict resolution.
      *              That path is a rooted path of the property in the document, such as "/name/first".
      */
-    void setConflictResolutionPath(String value) {
+    ConflictResolutionPolicy conflictResolutionPath(String value) {
         super.set(Constants.Properties.CONFLICT_RESOLUTION_PATH, value);
+        return this;
     }
 
     /**
@@ -203,19 +205,20 @@ public class ConflictResolutionPolicy extends JsonSerializable {
      * This stored procedure may be created after the {@link DocumentCollection} is created and can be changed as required.
      *
      * <ul>
-     * <li>This value should only be set when using {@link ConflictResolutionMode#Custom}</li>
+     * <li>This value should only be set when using {@link ConflictResolutionMode#CUSTOM}</li>
      * <li>In case the stored procedure fails or throws an exception,
      * the conflict resolution will default to registering conflicts in the conflicts feed</li>
-     * <li>The user can provide the stored procedure @see {@link Resource#getId()}</li>
+     * <li>The user can provide the stored procedure @see {@link Resource#id()}</li>
      * </ul>
      **
      * @return the stored procedure to perform conflict resolution.]
      */
-    public String getConflictResolutionProcedure() {
+    public String conflictResolutionProcedure() {
         return super.getString(Constants.Properties.CONFLICT_RESOLUTION_PROCEDURE);
     }
 
-    void setConflictResolutionProcedure(String value) {
+    ConflictResolutionPolicy conflictResolutionProcedure(String value) {
         super.set(Constants.Properties.CONFLICT_RESOLUTION_PROCEDURE, value);
+        return this;
     }
 }

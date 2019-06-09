@@ -24,7 +24,7 @@
 package com.microsoft.azure.cosmosdb.internal;
 
 
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.rx.internal.RMResources;
 import com.microsoft.azure.cosmosdb.rx.internal.Strings;
 import com.microsoft.azure.cosmosdb.rx.internal.Utils;
@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
 import static com.microsoft.azure.cosmosdb.rx.internal.Utils.ValueHolder;
 
 /**
- * Models vector clock bases session token. Session token has the following format:
+ * Models vector clock bases session token. SESSION token has the following format:
  * {Version}#{GlobalLSN}#{RegionId1}={LocalLsn1}#{RegionId2}={LocalLsn2}....#{RegionIdN}={LocalLsnN}
  * 'Version' captures the configuration number of the partition which returned this session token.
  * 'Version' is incremented everytime topology of the partition is updated (say due to Add/Remove/Failover).
@@ -134,7 +134,7 @@ public class VectorSessionToken implements ISessionToken {
                 && this.areRegionProgressEqual(other.localLsnByRegion);
     }
 
-    public boolean isValid(ISessionToken otherSessionToken) throws DocumentClientException {
+    public boolean isValid(ISessionToken otherSessionToken) throws CosmosClientException {
         VectorSessionToken other = Utils.as(otherSessionToken, VectorSessionToken.class);
 
         if (other == null) {
@@ -177,7 +177,7 @@ public class VectorSessionToken implements ISessionToken {
     }
 
     // Merge is commutative operation, so a.Merge(b).Equals(b.Merge(a))
-    public ISessionToken merge(ISessionToken obj) throws DocumentClientException {
+    public ISessionToken merge(ISessionToken obj) throws CosmosClientException {
         VectorSessionToken other = Utils.as(obj, VectorSessionToken.class);
 
         if (other == null) {
@@ -258,7 +258,7 @@ public class VectorSessionToken implements ISessionToken {
         globalLsn.v = -1L;
 
         if (Strings.isNullOrEmpty(sessionToken)) {
-            logger.warn("Session token is empty");
+            logger.warn("SESSION token is empty");
             return false;
         }
 

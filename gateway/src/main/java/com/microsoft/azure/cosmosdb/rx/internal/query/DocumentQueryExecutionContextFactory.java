@@ -61,7 +61,7 @@ public class DocumentQueryExecutionContextFactory {
                 OperationType.Query,
                 resourceTypeEnum,
                 resourceLink, null
-                // TODO      AuthorizationTokenType.Invalid)
+                // TODO      AuthorizationTokenType.INVALID)
                 ); //this request doesnt actually go to server
         return collectionCache.resolveCollectionAsync(request);
     }
@@ -84,13 +84,13 @@ public class DocumentQueryExecutionContextFactory {
         }
 
         // We create a ProxyDocumentQueryExecutionContext that will be initialized with DefaultDocumentQueryExecutionContext
-        // which will be used to send the query to Gateway and on getting 400(bad request) with 1004(cross parition query not servable), we initialize it with
-        // PipelinedDocumentQueryExecutionContext by providing the partition query execution info that's needed(which we get from the exception returned from Gateway).
+        // which will be used to send the query to GATEWAY and on getting 400(bad request) with 1004(cross parition query not servable), we initialize it with
+        // PipelinedDocumentQueryExecutionContext by providing the partition query execution info that's needed(which we get from the exception returned from GATEWAY).
 
         Observable<ProxyDocumentQueryExecutionContext<T>> proxyQueryExecutionContext =
                 collectionObs.flatMap(collection -> {
-                    if (feedOptions != null && feedOptions.getPartitionKey() != null && feedOptions.getPartitionKey().equals(PartitionKey.None)) {
-                        feedOptions.setPartitionKey(BridgeInternal.getPartitionKey(BridgeInternal.getNonePartitionKey(collection.getPartitionKey())));
+                    if (feedOptions != null && feedOptions.partitionKey() != null && feedOptions.partitionKey().equals(PartitionKey.None)) {
+                        feedOptions.partitionKey(BridgeInternal.getPartitionKey(BridgeInternal.getNonePartitionKey(collection.getPartitionKey())));
                     }
                     return ProxyDocumentQueryExecutionContext.createAsync(
                             client,
@@ -120,10 +120,10 @@ public class DocumentQueryExecutionContextFactory {
             String collectionRid,
             UUID correlatedActivityId) {
 
-        int initialPageSize = Utils.getValueOrDefault(feedOptions.getMaxItemCount(), ParallelQueryConfig.ClientInternalPageSize);
+        int initialPageSize = Utils.getValueOrDefault(feedOptions.maxItemCount(), ParallelQueryConfig.ClientInternalPageSize);
 
         BadRequestException validationError = Utils.checkRequestOrReturnException
-                (initialPageSize > 0, "MaxItemCount", "Invalid MaxItemCount %s", initialPageSize);
+                (initialPageSize > 0, "MaxItemCount", "INVALID MaxItemCount %s", initialPageSize);
         if (validationError != null) {
             return Observable.error(validationError);
         }

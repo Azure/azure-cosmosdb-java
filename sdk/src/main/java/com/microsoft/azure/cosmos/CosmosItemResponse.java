@@ -26,16 +26,16 @@ import com.microsoft.azure.cosmosdb.Document;
 import com.microsoft.azure.cosmosdb.PartitionKey;
 import com.microsoft.azure.cosmosdb.ResourceResponse;
 
-public class CosmosItemResponse extends CosmosResponse<CosmosItemSettings>{
+public class CosmosItemResponse extends CosmosResponse<CosmosItemProperties>{
     private CosmosItem itemClient;
 
     CosmosItemResponse(ResourceResponse<Document> response, PartitionKey partitionKey, CosmosContainer container) {
         super(response);
         if(response.getResource() == null){
-            super.setResourceSettings(null);
+            super.resourceSettings(null);
         }else{
-            super.setResourceSettings(new CosmosItemSettings(response.getResource().toJson()));
-            itemClient = new CosmosItem(response.getResource().getId(),partitionKey, container);
+            super.resourceSettings(new CosmosItemProperties(response.getResource().toJson()));
+            itemClient = new CosmosItem(response.getResource().id(),partitionKey, container);
         }
     }
 
@@ -43,23 +43,15 @@ public class CosmosItemResponse extends CosmosResponse<CosmosItemSettings>{
      * Gets the itemSettings
      * @return the itemSettings
      */
-    public CosmosItemSettings getCosmosItemSettings() {
-        return getResourceSettings();
+    public CosmosItemProperties properties() {
+        return resourceSettings();
     }
 
     /**
      * Gets the CosmosItem
      * @return the cosmos item
      */
-    public CosmosItem getItem() {
-        return itemClient;
-    }
-
-    /**
-     * Gets the CosmosItem
-     * @return the cosmos item
-     */
-    public CosmosItem getCosmosItem() {
+    public CosmosItem item() {
         return itemClient;
     }
 }

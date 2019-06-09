@@ -25,7 +25,7 @@ package com.microsoft.azure.cosmosdb.rx.internal;
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.RequestOptions;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.rx.internal.caches.RxClientCollectionCache;
@@ -75,7 +75,7 @@ public class PartitionKeyMismatchRetryPolicy implements IDocumentClientRetryPoli
     /// <param name="cancellationToken"></param>
     /// <returns>True indicates caller should retry, False otherwise</returns>
     public Single<ShouldRetryResult> shouldRetry(Exception exception) {
-        DocumentClientException clientException = Utils.as(exception, DocumentClientException.class) ;
+        CosmosClientException clientException = Utils.as(exception, CosmosClientException.class) ;
 
         if (clientException != null && 
                 Exceptions.isStatusCode(clientException, HttpConstants.StatusCodes.BADREQUEST) &&

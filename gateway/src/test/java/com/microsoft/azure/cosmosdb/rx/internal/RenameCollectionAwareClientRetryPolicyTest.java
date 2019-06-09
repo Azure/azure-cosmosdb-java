@@ -48,7 +48,7 @@ public class RenameCollectionAwareClientRetryPolicyTest {
         GlobalEndpointManager endpointManager = Mockito.mock(GlobalEndpointManager.class);
         Mockito.doReturn(Completable.complete()).when(endpointManager).refreshLocationAsync(Mockito.eq(null));
 
-        IRetryPolicyFactory retryPolicyFactory = new RetryPolicy(endpointManager, ConnectionPolicy.GetDefault());
+        IRetryPolicyFactory retryPolicyFactory = new RetryPolicy(endpointManager, ConnectionPolicy.defaultPolicy());
         RxClientCollectionCache rxClientCollectionCache = Mockito.mock(RxClientCollectionCache.class);
 
         ISessionContainer sessionContainer = Mockito.mock(ISessionContainer.class);
@@ -75,7 +75,7 @@ public class RenameCollectionAwareClientRetryPolicyTest {
     public void shouldRetryWithNotFoundStatusCode() {
         GlobalEndpointManager endpointManager = Mockito.mock(GlobalEndpointManager.class);
         Mockito.doReturn(Completable.complete()).when(endpointManager).refreshLocationAsync(Mockito.eq(null));
-        IRetryPolicyFactory retryPolicyFactory = new RetryPolicy(endpointManager, ConnectionPolicy.GetDefault());
+        IRetryPolicyFactory retryPolicyFactory = new RetryPolicy(endpointManager, ConnectionPolicy.defaultPolicy());
         RxClientCollectionCache rxClientCollectionCache = Mockito.mock(RxClientCollectionCache.class);
 
         ISessionContainer sessionContainer = Mockito.mock(ISessionContainer.class);
@@ -101,7 +101,7 @@ public class RenameCollectionAwareClientRetryPolicyTest {
     public void shouldRetryWithNotFoundStatusCodeAndReadSessionNotAvailableSubStatusCode() {
         GlobalEndpointManager endpointManager = Mockito.mock(GlobalEndpointManager.class);
         Mockito.doReturn(Completable.complete()).when(endpointManager).refreshLocationAsync(Mockito.eq(null));
-        IRetryPolicyFactory retryPolicyFactory = new RetryPolicy(endpointManager, ConnectionPolicy.GetDefault());
+        IRetryPolicyFactory retryPolicyFactory = new RetryPolicy(endpointManager, ConnectionPolicy.defaultPolicy());
         RxClientCollectionCache rxClientCollectionCache = Mockito.mock(RxClientCollectionCache.class);
 
         ISessionContainer sessionContainer = Mockito.mock(ISessionContainer.class);
@@ -115,11 +115,11 @@ public class RenameCollectionAwareClientRetryPolicyTest {
         renameCollectionAwareClientRetryPolicy.onBeforeSendRequest(request);
 
         NotFoundException notFoundException = new NotFoundException();
-        notFoundException.getResponseHeaders().put(WFConstants.BackendHeaders.SUB_STATUS,
+        notFoundException.responseHeaders().put(WFConstants.BackendHeaders.SUB_STATUS,
                 Integer.toString(HttpConstants.SubStatusCodes.READ_SESSION_NOT_AVAILABLE));
 
         DocumentCollection documentCollection = new DocumentCollection();
-        documentCollection.setResourceId("rid_1");
+        documentCollection.resourceId("rid_1");
 
         Mockito.when(rxClientCollectionCache.resolveCollectionAsync(request)).thenReturn(Single.just(documentCollection));
 
@@ -138,7 +138,7 @@ public class RenameCollectionAwareClientRetryPolicyTest {
     public void shouldRetryWithGenericException() {
         GlobalEndpointManager endpointManager = Mockito.mock(GlobalEndpointManager.class);
         Mockito.doReturn(Completable.complete()).when(endpointManager).refreshLocationAsync(Mockito.eq(null));
-        IRetryPolicyFactory retryPolicyFactory = new RetryPolicy(endpointManager, ConnectionPolicy.GetDefault());
+        IRetryPolicyFactory retryPolicyFactory = new RetryPolicy(endpointManager, ConnectionPolicy.defaultPolicy());
         RxClientCollectionCache rxClientCollectionCache = Mockito.mock(RxClientCollectionCache.class);
 
         ISessionContainer sessionContainer = Mockito.mock(ISessionContainer.class);

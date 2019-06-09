@@ -13,7 +13,7 @@ import reactor.core.publisher.Mono;
 
 public class CosmosUser extends CosmosResource {
     CosmosDatabase database;
-    public CosmosUser(String id, CosmosDatabase database) {
+    CosmosUser(String id, CosmosDatabase database) {
         super(id);
         this.database = database;
     }
@@ -38,7 +38,7 @@ public class CosmosUser extends CosmosResource {
     }
 
     /**
-     * Replace a cosmos user
+     * REPLACE a cosmos user
      *
      * @param userSettings the user settings to use
      * @param options      the request options
@@ -51,7 +51,7 @@ public class CosmosUser extends CosmosResource {
     }
 
     /**
-     * Delete a cosmos user
+     * DELETE a cosmos user
      *
      * @param options the request options
      * @return a {@link Mono} containing the single resource response with the deleted user or an error.
@@ -121,8 +121,8 @@ public class CosmosUser extends CosmosResource {
         return RxJava2Adapter.flowableToFlux(
                 RxJavaInterop.toV2Flowable(getDatabase().getDocClientWrapper()
                         .readPermissions(getLink(), options)
-                        .map(response-> BridgeInternal.createFeedResponse(CosmosPermissionSettings.getFromV2Results(response.getResults()),
-                                response.getResponseHeaders()))));
+                        .map(response-> BridgeInternal.createFeedResponse(CosmosPermissionSettings.getFromV2Results(response.results()),
+                                response.responseHeaders()))));
     }
 
     /**
@@ -140,21 +140,21 @@ public class CosmosUser extends CosmosResource {
         return RxJava2Adapter.flowableToFlux(
                 RxJavaInterop.toV2Flowable(getDatabase().getDocClientWrapper()
                         .queryPermissions(getLink(), query, options)
-                        .map(response-> BridgeInternal.createFeedResponse(CosmosPermissionSettings.getFromV2Results(response.getResults()),
-                                response.getResponseHeaders()))));
+                        .map(response-> BridgeInternal.createFeedResponse(CosmosPermissionSettings.getFromV2Results(response.results()),
+                                response.responseHeaders()))));
     }
     
     @Override
-    protected String getURIPathSegment() {
+    protected String URIPathSegment() {
         return Paths.USERS_PATH_SEGMENT;
     }
 
     @Override
-    protected String getParentLink() {
+    protected String parentLink() {
         return database.getLink()   ;
     }
 
-    CosmosDatabase getDatabase() {
+    public CosmosDatabase getDatabase() {
         return database;
     }
 }

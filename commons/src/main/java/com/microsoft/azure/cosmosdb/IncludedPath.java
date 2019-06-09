@@ -60,7 +60,7 @@ public class IncludedPath extends JsonSerializable {
      *
      * @return the path.
      */
-    public String getPath() {
+    public String path() {
         return super.getString(Constants.Properties.PATH);
     }
 
@@ -69,8 +69,9 @@ public class IncludedPath extends JsonSerializable {
      *
      * @param path the path.
      */
-    public void setPath(String path) {
+    public IncludedPath path(String path) {
         super.set(Constants.Properties.PATH, path);
+        return this;
     }
 
     /**
@@ -78,9 +79,9 @@ public class IncludedPath extends JsonSerializable {
      *
      * @return the included paths.
      */
-    public Collection<Index> getIndexes() {
+    public Collection<Index> indexes() {
         if (this.indexes == null) {
-            this.indexes = this.getIndexCollection();
+            this.indexes = this.indexCollection();
 
             if (this.indexes == null) {
                 this.indexes = new ArrayList<Index>();
@@ -90,11 +91,12 @@ public class IncludedPath extends JsonSerializable {
         return this.indexes;
     }
 
-    public void setIndexes(Collection<Index> indexes) {
+    public IncludedPath indexes(Collection<Index> indexes) {
         this.indexes = indexes;
+        return this;
     }
 
-    private Collection<Index> getIndexCollection() {
+    private Collection<Index> indexCollection() {
         if (this.propertyBag != null && this.propertyBag.has(Constants.Properties.INDEXES)) {
             ArrayNode jsonArray = (ArrayNode) this.propertyBag.get(Constants.Properties.INDEXES);
             Collection<Index> result = new ArrayList<Index>();
@@ -105,13 +107,13 @@ public class IncludedPath extends JsonSerializable {
                 IndexKind indexKind = IndexKind.valueOf(WordUtils.capitalize(
                         jsonObject.get(Constants.Properties.INDEX_KIND).asText()));
                 switch (indexKind) {
-                case Hash:
+                case HASH:
                     result.add(new HashIndex(jsonObject.toString()));
                     break;
-                case Range:
+                case RANGE:
                     result.add(new RangeIndex(jsonObject.toString()));
                     break;
-                case Spatial:
+                case SPATIAL:
                     result.add(new SpatialIndex(jsonObject.toString()));
                     break;
                 }

@@ -22,11 +22,8 @@
  */
 package com.microsoft.azure.cosmosdb.rx;
 
-import com.microsoft.azure.cosmos.CosmosClient;
-import com.microsoft.azure.cosmos.CosmosClientBuilder;
-import com.microsoft.azure.cosmos.CosmosContainer;
-import com.microsoft.azure.cosmos.CosmosDatabase;
-import com.microsoft.azure.cosmos.CosmosItemSettings;
+import com.microsoft.azure.cosmos.*;
+import com.microsoft.azure.cosmos.CosmosItemProperties;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.Protocol;
 import org.testng.SkipException;
 import org.testng.annotations.BeforeClass;
@@ -70,7 +67,7 @@ public class DocumentClientResourceLeakTest extends TestSuiteBase {
             logger.info("client {}", i);
             try {
                 logger.info("creating doc...");
-                createDocument(client.getDatabase(createdDatabase.getId()).getContainer(createdCollection.getId()), getDocumentDefinition());
+                createDocument(client.getDatabase(createdDatabase.id()).getContainer(createdCollection.id()), getDocumentDefinition());
             } finally {
                 logger.info("closing client...");
                 client.close();
@@ -90,9 +87,9 @@ public class DocumentClientResourceLeakTest extends TestSuiteBase {
         createdCollection = getSharedMultiPartitionCosmosContainer(client);
     }
 
-    private CosmosItemSettings getDocumentDefinition() {
+    private CosmosItemProperties getDocumentDefinition() {
         String uuid = UUID.randomUUID().toString();
-        CosmosItemSettings doc = new CosmosItemSettings(String.format("{ "
+        CosmosItemProperties doc = new CosmosItemProperties(String.format("{ "
                                                           + "\"id\": \"%s\", "
                                                           + "\"mypk\": \"%s\", "
                                                           + "\"sgmts\": [[6519456, 1471916863], [2498434, 1455671440]]"

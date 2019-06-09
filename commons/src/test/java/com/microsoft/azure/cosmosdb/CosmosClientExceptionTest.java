@@ -30,55 +30,55 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class DocumentClientExceptionTest {
+public class CosmosClientExceptionTest {
 
     @Test(groups = { "unit" })
     public void headerNotNull1() {
-        DocumentClientException dce = new DocumentClientException(0);
-        assertThat(dce.getResponseHeaders()).isNotNull();
-        assertThat(dce.getResponseHeaders()).isEmpty();
+        CosmosClientException dce = new CosmosClientException(0);
+        assertThat(dce.responseHeaders()).isNotNull();
+        assertThat(dce.responseHeaders()).isEmpty();
     }
 
     @Test(groups = { "unit" })
     public void headerNotNull2() {
-        DocumentClientException dce = new DocumentClientException(0, "dummy");
-        assertThat(dce.getResponseHeaders()).isNotNull();
-        assertThat(dce.getResponseHeaders()).isEmpty();
+        CosmosClientException dce = new CosmosClientException(0, "dummy");
+        assertThat(dce.responseHeaders()).isNotNull();
+        assertThat(dce.responseHeaders()).isEmpty();
     }
 
     @Test(groups = { "unit" })
     public void headerNotNull3() {
-        DocumentClientException dce = new DocumentClientException(0, new RuntimeException());
-        assertThat(dce.getResponseHeaders()).isNotNull();
-        assertThat(dce.getResponseHeaders()).isEmpty();
+        CosmosClientException dce = new CosmosClientException(0, new RuntimeException());
+        assertThat(dce.responseHeaders()).isNotNull();
+        assertThat(dce.responseHeaders()).isEmpty();
     }
 
     @Test(groups = { "unit" })
     public void headerNotNull4() {
-        DocumentClientException dce = new DocumentClientException(0, (Error) null, (Map) null);
-        assertThat(dce.getResponseHeaders()).isNotNull();
-        assertThat(dce.getResponseHeaders()).isEmpty();
+        CosmosClientException dce = new CosmosClientException(0, (Error) null, (Map) null);
+        assertThat(dce.responseHeaders()).isNotNull();
+        assertThat(dce.responseHeaders()).isEmpty();
     }
 
     @Test(groups = { "unit" })
     public void headerNotNull5() {
-        DocumentClientException dce = new DocumentClientException((String) null, 0, (Error) null, (Map) null);
-        assertThat(dce.getResponseHeaders()).isNotNull();
-        assertThat(dce.getResponseHeaders()).isEmpty();
+        CosmosClientException dce = new CosmosClientException((String) null, 0, (Error) null, (Map) null);
+        assertThat(dce.responseHeaders()).isNotNull();
+        assertThat(dce.responseHeaders()).isEmpty();
     }
 
     @Test(groups = { "unit" })
     public void headerNotNull6() {
-        DocumentClientException dce = new DocumentClientException((String) null, (Exception) null, (Map) null, 0, (String) null);
-        assertThat(dce.getResponseHeaders()).isNotNull();
-        assertThat(dce.getResponseHeaders()).isEmpty();
+        CosmosClientException dce = new CosmosClientException((String) null, (Exception) null, (Map) null, 0, (String) null);
+        assertThat(dce.responseHeaders()).isNotNull();
+        assertThat(dce.responseHeaders()).isEmpty();
     }
 
     @Test(groups = { "unit" })
     public void headerNotNull7() {
         ImmutableMap<String, String> respHeaders = ImmutableMap.of("key", "value");
-        DocumentClientException dce = new DocumentClientException((String) null, (Exception) null, respHeaders, 0, (String) null);
-        assertThat(dce.getResponseHeaders()).isNotNull();
-        assertThat(dce.getResponseHeaders()).contains(respHeaders.entrySet().iterator().next());
+        CosmosClientException dce = new CosmosClientException((String) null, (Exception) null, respHeaders, 0, (String) null);
+        assertThat(dce.responseHeaders()).isNotNull();
+        assertThat(dce.responseHeaders()).contains(respHeaders.entrySet().iterator().next());
     }
 }

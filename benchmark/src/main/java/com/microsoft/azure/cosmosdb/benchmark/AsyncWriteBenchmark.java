@@ -36,8 +36,6 @@ import rx.Observable;
 import rx.Subscriber;
 import rx.schedulers.Schedulers;
 
-import javax.net.ssl.SSLException;
-
 class AsyncWriteBenchmark extends AsyncBenchmark<ResourceResponse<Document>> {
 
     private final String uuid;
@@ -81,7 +79,7 @@ class AsyncWriteBenchmark extends AsyncBenchmark<ResourceResponse<Document>> {
 
         String idString = uuid + i;
         Document newDoc = new Document();
-        newDoc.setId(idString);
+        newDoc.id(idString);
         newDoc.set(partitionKey, idString);
         newDoc.set("dataField1", dataFieldValue);
         newDoc.set("dataField2", dataFieldValue);

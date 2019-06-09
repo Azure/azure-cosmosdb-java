@@ -24,7 +24,7 @@
 package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
 import com.microsoft.azure.cosmosdb.ConsistencyLevel;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.PartitionKeyRange;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.internal.OperationType;
@@ -55,9 +55,9 @@ public class ReplicatedResourceClientPartitionSplitTest {
     public Object[][] partitionIsSplittingArgProvider() {
         return new Object[][]{
                 // Consistency mode, number of partition splitting exception till split migration completes
-                { ConsistencyLevel.Eventual, 1},
-                { ConsistencyLevel.Eventual, 2},
-                { ConsistencyLevel.Eventual, Integer.MAX_VALUE }, // server side partition split operation never completes
+                { ConsistencyLevel.EVENTUAL, 1},
+                { ConsistencyLevel.EVENTUAL, 2},
+                { ConsistencyLevel.EVENTUAL, Integer.MAX_VALUE }, // server side partition split operation never completes
         };
     }
 
@@ -121,7 +121,7 @@ public class ReplicatedResourceClientPartitionSplitTest {
 
         TransportClientWrapper transportClientWrapper = transportClientWrapperBuilder.build();
 
-        GatewayServiceConfiguratorReaderMock gatewayServiceConfigurationReaderWrapper = GatewayServiceConfiguratorReaderMock.from(ConsistencyLevel.Strong,
+        GatewayServiceConfiguratorReaderMock gatewayServiceConfigurationReaderWrapper = GatewayServiceConfiguratorReaderMock.from(ConsistencyLevel.STRONG,
                                                                                                                                   4,
                                                                                                                                   3,
                                                                                                                                   4,
@@ -158,7 +158,7 @@ public class ReplicatedResourceClientPartitionSplitTest {
 
             addressSelectorWrapper.verifyNumberOfForceCacheRefreshGreaterThanOrEqualTo(1);
         } else {
-            FailureValidator validator = FailureValidator.builder().instanceOf(DocumentClientException.class)
+            FailureValidator validator = FailureValidator.builder().instanceOf(CosmosClientException.class)
                     .statusCode(503).build();
             validateFailure(storeResponseObs, validator, TIMEOUT);
         }
@@ -212,7 +212,7 @@ public class ReplicatedResourceClientPartitionSplitTest {
 
     private PartitionKeyRange partitionKeyRangeWithId(String id) {
         PartitionKeyRange partitionKeyRange = Mockito.mock(PartitionKeyRange.class);
-        Mockito.doReturn(id).when(partitionKeyRange).getId();
+        Mockito.doReturn(id).when(partitionKeyRange).id();
         return partitionKeyRange;
     }
 }

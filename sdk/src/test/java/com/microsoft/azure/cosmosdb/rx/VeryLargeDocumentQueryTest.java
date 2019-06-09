@@ -69,12 +69,12 @@ public class VeryLargeDocumentQueryTest extends TestSuiteBase {
 
         try {
             FeedOptions options = new FeedOptions();
-            options.setEnableCrossPartitionQuery(true);
+            options.enableCrossPartitionQuery(true);
             validateQuerySuccess(createdCollection.queryItems("SELECT * FROM r", options),
                 new FeedResponseListValidator.Builder().totalSize(cnt).build());
         } catch (Throwable error) {
             if (this.clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {
-                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
+                String message = String.format("DIRECT TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
                 logger.info(message, error);
                 throw new SkipException(message, error);
             }
@@ -92,7 +92,7 @@ public class VeryLargeDocumentQueryTest extends TestSuiteBase {
         Mono<CosmosItemResponse> createObservable = createdCollection.createItem(docDefinition, new CosmosItemRequestOptions());
 
         CosmosResponseValidator<CosmosItemResponse> validator = new CosmosResponseValidator.Builder<CosmosItemResponse>()
-                .withId(docDefinition.getId())
+                .withId(docDefinition.id())
                 .build();
 
         validateSuccess(createObservable, validator);
@@ -121,6 +121,6 @@ public class VeryLargeDocumentQueryTest extends TestSuiteBase {
     }
 
     public String getCollectionLink() {
-        return Utils.getCollectionNameLink(createdDatabase.getId(), createdCollection.getId());
+        return Utils.getCollectionNameLink(createdDatabase.id(), createdCollection.id());
     }
 }

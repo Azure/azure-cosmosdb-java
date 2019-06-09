@@ -63,23 +63,23 @@ public class CollectionQueryTest extends TestSuiteBase {
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
     public void queryCollectionsWithFilter() throws Exception {
         
-        String filterCollectionId = createdCollections.get(0).getId();
+        String filterCollectionId = createdCollections.get(0).id();
         String query = String.format("SELECT * from c where c.id = '%s'", filterCollectionId);
 
         FeedOptions options = new FeedOptions();
-        options.setMaxItemCount(2);
+        options.maxItemCount(2);
         Flux<FeedResponse<CosmosContainerSettings>> queryObservable = createdDatabase.queryContainers(query, options);
 
         List<CosmosContainer> expectedCollections = createdCollections.stream()
-                .filter(c -> StringUtils.equals(filterCollectionId, c.getId()) ).collect(Collectors.toList());
+                .filter(c -> StringUtils.equals(filterCollectionId, c.id()) ).collect(Collectors.toList());
 
         assertThat(expectedCollections).isNotEmpty();
 
-        int expectedPageSize = (expectedCollections.size() + options.getMaxItemCount() - 1) / options.getMaxItemCount();
+        int expectedPageSize = (expectedCollections.size() + options.maxItemCount() - 1) / options.maxItemCount();
 
         FeedResponseListValidator<CosmosContainerSettings> validator = new FeedResponseListValidator.Builder<CosmosContainerSettings>()
                 .totalSize(expectedCollections.size())
-                .exactlyContainsInAnyOrder(expectedCollections.stream().map(d -> d.read().block().getCosmosContainerSettings().getResourceId()).collect(Collectors.toList()))
+                .exactlyContainsInAnyOrder(expectedCollections.stream().map(d -> d.read().block().settings().resourceId()).collect(Collectors.toList()))
                 .numberOfPages(expectedPageSize)
                 .pageSatisfy(0, new FeedResponseValidator.Builder<CosmosContainerSettings>()
                         .requestChargeGreaterThanOrEqualTo(1.0).build())
@@ -94,18 +94,18 @@ public class CollectionQueryTest extends TestSuiteBase {
         String query = "SELECT * from c";
 
         FeedOptions options = new FeedOptions();
-        options.setMaxItemCount(2);
+        options.maxItemCount(2);
         Flux<FeedResponse<CosmosContainerSettings>> queryObservable = createdDatabase.queryContainers(query, options);
 
         List<CosmosContainer> expectedCollections = createdCollections;
 
         assertThat(expectedCollections).isNotEmpty();
 
-        int expectedPageSize = (expectedCollections.size() + options.getMaxItemCount() - 1) / options.getMaxItemCount();
+        int expectedPageSize = (expectedCollections.size() + options.maxItemCount() - 1) / options.maxItemCount();
 
         FeedResponseListValidator<CosmosContainerSettings> validator = new FeedResponseListValidator.Builder<CosmosContainerSettings>()
                 .totalSize(expectedCollections.size())
-                .exactlyContainsInAnyOrder(expectedCollections.stream().map(d -> d.read().block().getCosmosContainerSettings().getResourceId()).collect(Collectors.toList()))
+                .exactlyContainsInAnyOrder(expectedCollections.stream().map(d -> d.read().block().settings().resourceId()).collect(Collectors.toList()))
                 .numberOfPages(expectedPageSize)
                 .pageSatisfy(0, new FeedResponseValidator.Builder<CosmosContainerSettings>()
                         .requestChargeGreaterThanOrEqualTo(1.0).build())
@@ -119,7 +119,7 @@ public class CollectionQueryTest extends TestSuiteBase {
 
         String query = "SELECT * from root r where r.id = '2'";
         FeedOptions options = new FeedOptions();
-        options.setEnableCrossPartitionQuery(true);
+        options.enableCrossPartitionQuery(true);
         Flux<FeedResponse<CosmosContainerSettings>> queryObservable = createdDatabase.queryContainers(query, options);
 
         FeedResponseListValidator<CosmosContainerSettings> validator = new FeedResponseListValidator.Builder<CosmosContainerSettings>()
@@ -139,7 +139,7 @@ public class CollectionQueryTest extends TestSuiteBase {
         PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition();
         ArrayList<String> paths = new ArrayList<String>();
         paths.add("/mypk");
-        partitionKeyDef.setPaths(paths);
+        partitionKeyDef.paths(paths);
 
         CosmosContainerSettings collection = new CosmosContainerSettings(UUID.randomUUID().toString(), partitionKeyDef);
         createdCollections.add(createCollection(client, databaseId, collection));

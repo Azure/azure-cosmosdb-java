@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.PartitionKeyRange;
@@ -71,7 +71,7 @@ public abstract class ParallelDocumentQueryExecutionContextBase<T extends Resour
         this.partitionKeyRanges = partitionKeyRanges;
 
         if (!Strings.isNullOrEmpty(rewrittenQuery)) {
-            this.querySpec = new SqlQuerySpec(rewrittenQuery, super.query.getParameters());
+            this.querySpec = new SqlQuerySpec(rewrittenQuery, super.query.parameters());
         } else {
             this.querySpec = super.query;
         }
@@ -106,7 +106,7 @@ public abstract class ParallelDocumentQueryExecutionContextBase<T extends Resour
     }
 
     protected <TContinuationToken> int FindTargetRangeAndExtractContinuationTokens(
-            List<PartitionKeyRange> partitionKeyRanges, Range<String> range) throws DocumentClientException {
+            List<PartitionKeyRange> partitionKeyRanges, Range<String> range) throws CosmosClientException {
         if (partitionKeyRanges == null) {
             throw new IllegalArgumentException("partitionKeyRanges can not be null.");
         }
@@ -131,7 +131,7 @@ public abstract class ParallelDocumentQueryExecutionContextBase<T extends Resour
         }
 
         if (minIndex == partitionKeyRanges.size()) {
-            throw new DocumentClientException(HttpConstants.StatusCodes.BADREQUEST,
+            throw new CosmosClientException(HttpConstants.StatusCodes.BADREQUEST,
                     String.format("Could not find partition key range for continuation token: {0}", needle));
         }
 

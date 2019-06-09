@@ -58,16 +58,16 @@ public class UserDefinedFunctionUpsertReplaceTest extends TestSuiteBase {
 
         // create a udf
         CosmosUserDefinedFunctionSettings udf = new CosmosUserDefinedFunctionSettings();
-        udf.setId(UUID.randomUUID().toString());
-        udf.setBody("function() {var x = 10;}");
+        udf.id(UUID.randomUUID().toString());
+        udf.body("function() {var x = 10;}");
 
         CosmosUserDefinedFunctionSettings readBackUdf = null;
 
         try {
-            readBackUdf = createdCollection.createUserDefinedFunction(udf, new CosmosRequestOptions()).block().getCosmosUserDefinedFunctionSettings();
+            readBackUdf = createdCollection.createUserDefinedFunction(udf, new CosmosRequestOptions()).block().settings();
         } catch (Throwable error) {
             if (this.clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {
-                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
+                String message = String.format("DIRECT TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
                 logger.info(message, error);
                 throw new SkipException(message, error);
             }
@@ -76,24 +76,24 @@ public class UserDefinedFunctionUpsertReplaceTest extends TestSuiteBase {
         
         // read udf to validate creation
         waitIfNeededForReplicasToCatchUp(clientBuilder);
-        Mono<CosmosUserDefinedFunctionResponse> readObservable = createdCollection.getUserDefinedFunction(readBackUdf.getId()).read(new RequestOptions());
+        Mono<CosmosUserDefinedFunctionResponse> readObservable = createdCollection.getUserDefinedFunction(readBackUdf.id()).read(new RequestOptions());
 
         // validate udf creation
         CosmosResponseValidator<CosmosUserDefinedFunctionResponse> validatorForRead = new CosmosResponseValidator.Builder<CosmosUserDefinedFunctionResponse>()
-                .withId(readBackUdf.getId())
+                .withId(readBackUdf.id())
                 .withUserDefinedFunctionBody("function() {var x = 10;}")
                 .notNullEtag()
                 .build();
         validateSuccess(readObservable, validatorForRead);
         
         //update udf
-        readBackUdf.setBody("function() {var x = 11;}");
+        readBackUdf.body("function() {var x = 11;}");
 
-        Mono<CosmosUserDefinedFunctionResponse> replaceObservable = createdCollection.getUserDefinedFunction(readBackUdf.getId()).replace(readBackUdf, new RequestOptions());
+        Mono<CosmosUserDefinedFunctionResponse> replaceObservable = createdCollection.getUserDefinedFunction(readBackUdf.id()).replace(readBackUdf, new RequestOptions());
 
         //validate udf replace
         CosmosResponseValidator<CosmosUserDefinedFunctionResponse> validatorForReplace = new CosmosResponseValidator.Builder<CosmosUserDefinedFunctionResponse>()
-                .withId(readBackUdf.getId())
+                .withId(readBackUdf.id())
                 .withUserDefinedFunctionBody("function() {var x = 11;}")
                 .notNullEtag()
                 .build();

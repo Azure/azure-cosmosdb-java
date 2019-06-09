@@ -48,12 +48,13 @@ public class CosmosResponse<T extends Resource> {
     CosmosResponse(StoredProcedureResponse response) {
     }
 
-    protected T getResourceSettings() {
+    protected T resourceSettings() {
         return resourceSettings;
     }
     
-    protected void setResourceSettings(T resourceSettings){
+    protected CosmosResponse<T> resourceSettings(T resourceSettings){
         this.resourceSettings = resourceSettings;
+        return this;
     }
 
     /**
@@ -62,7 +63,7 @@ public class CosmosResponse<T extends Resource> {
      *
      * @return the max resource quota.
      */
-    public String getMaxResourceQuota() {
+    public String maxResourceQuota() {
         return resourceResponseWrapper.getMaxResourceQuota();
     }
 
@@ -71,7 +72,7 @@ public class CosmosResponse<T extends Resource> {
      *
      * @return the current resource quota usage.
      */
-    public String getCurrentResourceQuotaUsage() {
+    public String currentResourceQuotaUsage() {
         return resourceResponseWrapper.getCurrentResourceQuotaUsage();
     }
 
@@ -80,7 +81,7 @@ public class CosmosResponse<T extends Resource> {
      *
      * @return the activity id.
      */
-    public String getActivityId() {
+    public String activityId() {
         return resourceResponseWrapper.getActivityId();
     }
 
@@ -89,26 +90,8 @@ public class CosmosResponse<T extends Resource> {
      *
      * @return the request charge.
      */
-    public double getRequestCharge() {
+    public double requestCharge() {
         return resourceResponseWrapper.getRequestCharge();
-    }
-
-    /**
-     * Gets the progress of an index transformation, if one is underway.
-     *
-     * @return the progress of an index transformation.
-     */
-    public long getIndexTransformationProgress() {
-        return resourceResponseWrapper.getIndexTransformationProgress();
-    }
-
-    /**
-     * Gets the progress of lazy indexing.
-     *
-     * @return the progress of lazy indexing.
-     */
-    public long getLazyIndexingProgress() {
-        return resourceResponseWrapper.getLazyIndexingProgress();
     }
 
     /**
@@ -116,7 +99,7 @@ public class CosmosResponse<T extends Resource> {
      *
      * @return the status code.
      */
-    public int getStatusCode() {
+    public int statusCode() {
         return resourceResponseWrapper.getStatusCode();
     }
 
@@ -125,7 +108,7 @@ public class CosmosResponse<T extends Resource> {
      *
      * @return the session token.
      */
-    public String getSessionToken(){
+    public String sessionToken(){
         return resourceResponseWrapper.getSessionToken();
     }
 
@@ -134,7 +117,7 @@ public class CosmosResponse<T extends Resource> {
      *
      * @return the response headers.
      */
-    public Map<String, String> getResponseHeaders() {
+    public Map<String, String> responseHeaders() {
         return resourceResponseWrapper.getResponseHeaders();
     }
     
@@ -143,7 +126,7 @@ public class CosmosResponse<T extends Resource> {
      *
      * @return diagnostics information for the current request to Azure Cosmos DB service.
      */
-    public String getRequestDiagnosticsString() {
+    public String requestDiagnosticsString() {
         return resourceResponseWrapper.getRequestDiagnosticsString();
     }
 
@@ -152,7 +135,7 @@ public class CosmosResponse<T extends Resource> {
      *
      * @return end-to-end request latency for the current request to Azure Cosmos DB service.
      */
-    public Duration getRequestLatency() {
+    public Duration requestLatency() {
         return resourceResponseWrapper.getRequestLatency();
     }    
 }

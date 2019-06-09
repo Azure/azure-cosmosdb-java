@@ -125,7 +125,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
                 getDocumentDefinition(), new HashMap<>());
 
         Single<List<Address>> addresses = cache.getServerAddressesViaGatewayAsync(
-                req, createdCollection.getResourceId(), partitionKeyRangeIds, false);
+                req, createdCollection.resourceId(), partitionKeyRangeIds, false);
 
         PartitionReplicasAddressesValidator validator = new PartitionReplicasAddressesValidator.Builder()
                 .withProtocol(protocol)
@@ -194,7 +194,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
                         collectionLink,
                        new Database(), new HashMap<>());
 
-        String collectionRid = createdCollection.getResourceId();
+        String collectionRid = createdCollection.resourceId();
 
         PartitionKeyRangeIdentity partitionKeyRangeIdentity = new PartitionKeyRangeIdentity(collectionRid, partitionKeyRangeId);
         boolean forceRefreshPartitionAddresses = false;
@@ -237,7 +237,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
                                                             null,
                                                             httpClientWrapper.getSpyHttpClient());
 
-        String collectionRid = createdCollection.getResourceId();
+        String collectionRid = createdCollection.resourceId();
 
         List<PartitionKeyRangeIdentity> pkriList = allPartitionKeyRangeIds.stream().map(
                 pkri -> new PartitionKeyRangeIdentity(collectionRid, pkri)).collect(Collectors.toList());
@@ -292,7 +292,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
                                                             null,
                                                             httpClientWrapper.getSpyHttpClient());
 
-        String collectionRid = createdCollection.getResourceId();
+        String collectionRid = createdCollection.resourceId();
 
         List<PartitionKeyRangeIdentity> pkriList = allPartitionKeyRangeIds.stream().map(
                 pkri -> new PartitionKeyRangeIdentity(collectionRid, pkri)).collect(Collectors.toList());
@@ -349,7 +349,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
                                                                 httpClientWrapper.getSpyHttpClient(),
                                                                 suboptimalRefreshTime);
 
-        String collectionRid = createdCollection.getResourceId();
+        String collectionRid = createdCollection.resourceId();
 
         List<PartitionKeyRangeIdentity> pkriList = allPartitionKeyRangeIds.stream().map(
                 pkri -> new PartitionKeyRangeIdentity(collectionRid, pkri)).collect(Collectors.toList());
@@ -826,7 +826,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
 
         RequestOptions options = new RequestOptions();
         options.setOfferThroughput(30000);
-        createdCollection = createCollection(client, createdDatabase.getId(), getCollectionDefinition(), options);
+        createdCollection = createCollection(client, createdDatabase.id(), getCollectionDefinition(), options);
     }
 
     @AfterClass(groups = { "direct" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)
@@ -839,10 +839,10 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
         PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition();
         ArrayList<String> paths = new ArrayList<>();
         paths.add("/mypk");
-        partitionKeyDef.setPaths(paths);
+        partitionKeyDef.paths(paths);
 
         DocumentCollection collectionDefinition = new DocumentCollection();
-        collectionDefinition.setId("mycol");
+        collectionDefinition.id("mycol");
         collectionDefinition.setPartitionKey(partitionKeyDef);
 
         return collectionDefinition;
@@ -860,11 +860,11 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
     }
 
     public String getNameBasedCollectionLink() {
-        return "dbs/" + createdDatabase.getId() + "/colls/" + createdCollection.getId();
+        return "dbs/" + createdDatabase.id() + "/colls/" + createdCollection.id();
     }
 
     public String getCollectionSelfLink() {
-        return createdCollection.getSelfLink();
+        return createdCollection.selfLink();
     }
 
     private Document getDocumentDefinition() {

@@ -91,7 +91,7 @@ public class Main {
 
         } catch (ParameterException e) {
             // if any error in parsing the cmd-line options print out the usage help
-            System.err.println("Invalid Usage: " + e.getMessage());
+            System.err.println("INVALID Usage: " + e.getMessage());
             System.err.println("Try '-help' for more information.");
             throw e;
         }

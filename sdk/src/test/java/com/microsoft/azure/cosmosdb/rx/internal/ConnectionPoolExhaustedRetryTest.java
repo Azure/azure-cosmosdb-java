@@ -23,7 +23,7 @@
 
 package com.microsoft.azure.cosmosdb.rx.internal;
 
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.RetryOptions;
 import io.reactivex.netty.client.PoolExhaustedException;
 import org.mockito.Mockito;
@@ -41,7 +41,7 @@ public class ConnectionPoolExhaustedRetryTest {
     public Object[][] exceptionProvider() {
         return new Object[][]{
                 {Mockito.mock(PoolExhaustedException.class)},
-                {new DocumentClientException(-1, Mockito.mock(PoolExhaustedException.class))},
+                {new CosmosClientException(-1, Mockito.mock(PoolExhaustedException.class))},
         };
     }
 

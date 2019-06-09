@@ -28,7 +28,7 @@ import java.util.List;
 
 import com.microsoft.azure.cosmosdb.ClientSideRequestStatistics;
 import com.microsoft.azure.cosmosdb.ConsistencyLevel;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.ISessionContainer;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.internal.ISessionToken;
@@ -48,16 +48,16 @@ import rx.Single;
 /*
  ConsistencyLevel      Replication Mode         Desired ReadMode
  -------------------   --------------------     ---------------------------------------------------------------------------
- Strong                  Synchronous              Read from Read Quorum
+ STRONG                  Synchronous              READ from READ Quorum
                          Asynchronous             Not supported
 
- Bounded Staleness       Synchronous              Read from Read Quorum
-                         Asynchronous             Read from Read Quorum. Performing read barrier on Primary is unsupported.
+ Bounded Staleness       Synchronous              READ from READ Quorum
+                         Asynchronous             READ from READ Quorum. Performing read barrier on Primary is unsupported.
 
- Session                 Sync/Async               Read Any (With LSN Cookie)
-                                                  Default to Primary as last resort (which should succeed always)
+ SESSION                 Sync/Async               READ Any (With LSN Cookie)
+                                                  DEFAULT to Primary as last resort (which should succeed always)
 
- Eventual                Sync/Async               Read Any
+ EVENTUAL                Sync/Async               READ Any
 
  Client does validation of unsupported combinations.
 
@@ -66,7 +66,7 @@ import rx.Single;
  =============
  1. We do primary copy/single master replication.
  2. We do sync or async replication depending on the value of DefaultConsistencyLevel on a database account.
- If the database account is configured with DefaultConsistencyLevel = Strong, we do sync replication. By default, for all other values of DefaultConsistencyLevel, we do asynchronous replication.
+ If the database account is configured with DefaultConsistencyLevel = STRONG, we do sync replication. By default, for all other values of DefaultConsistencyLevel, we do asynchronous replication.
 
  Replica set
  ===========
@@ -90,8 +90,8 @@ import rx.Single;
 
  Quorums
  =======
- W = Write Quorum = Number of replicas which acknowledge a write before the primary can ack the client. It is majority set i.e. N/2 + 1
- R = Read Quorum = Set of replicas such that there is non-empty intersection between W and R that constitute N i.e. R = N -W + 1
+ W = Write Quorum = NUMBER of replicas which acknowledge a write before the primary can ack the client. It is majority set i.e. N/2 + 1
+ R = READ Quorum = Set of replicas such that there is non-empty intersection between W and R that constitute N i.e. R = N -W + 1
 
  For sync replication, W is used as a majority quorum.
  For async replication, W = 1. We have two LSNs, one is quorum acknowledged LSN (LSN-Q) and another is what is visible to the client (LSN-C).
@@ -106,14 +106,14 @@ import rx.Single;
  N from read standpoint means number of address from BE which is returning successful response.
  Successful reponse: Any BE response containing LSN response header is considered successful reponse. Typically every response other than 410 is treated as succesful response.
 
- Strong Consistency
+ STRONG Consistency
  ==================
- Strong Read requires following guarantees.
- * Read value is the latest that has been written. If a write operation finished. Any subsequent reads should see that value.
+ STRONG READ requires following guarantees.
+ * READ value is the latest that has been written. If a write operation finished. Any subsequent reads should see that value.
  * Monotonic guarantee. Any read that starts after a previous read operation, should see atleast return equal or higher version of the value.
 
- To perform strong read we require that atleast R i.e. Read Quorum number of replicas have the value committed. To acheve that such read :
- * Read R replicas. If they have the same LSN, use the read result
+ To perform strong read we require that atleast R i.e. READ Quorum number of replicas have the value committed. To acheve that such read :
+ * READ R replicas. If they have the same LSN, use the read result
  * If they don't have the same LSN, we will either return the result with the highest LSN observed from those R replicas, after ensuring that LSN
    becomes available with R replicas.
  * Secondary replicas are always preferred for reading. If R secondaries have returned the result but cannot agree on the resulting LSN, we can include Primary to satisfy read quorum.
@@ -122,13 +122,13 @@ import rx.Single;
  Bounded Staleness
  =================
  Sync Replication:
- Bounded staleness uses the same logic as Strong for cases where the server is using sync replication.
+ Bounded staleness uses the same logic as STRONG for cases where the server is using sync replication.
 
  Async Replication:
  For async replication, we make sure that we do not use the Primary as barrier for read quorum. This is because Primary is always going to run ahead (async replication uses W=1 on Primary).
  Using primary would voilate the monotonic read guarantees when we fall back to reading from secondary in the subsequent reads as they are always running slower as compared to Primary.
 
- Session
+ SESSION
  =======
  We read from secondaries one by one until we find a match for the client's session token (LSN-C).
  We go to primary as a last resort which should satisfy LSN-C.
@@ -137,7 +137,7 @@ import rx.Single;
  When there is a partition, the minority quorum can remain available for read as long as N >= 1
  When there is a partition, the minority quorum can remain available for writes as long as N >= 2
 
- Eventual
+ EVENTUAL
  ========
  We can read from any replicas.
 
@@ -145,21 +145,21 @@ import rx.Single;
  When there is a partition, the minority quorum can remain available for read as long as N >= 1
  When there is a partition, the minority quorum can remain available for writes as long as N >= 2
 
- Read Retry logic
+ READ Retry logic
  -----------------
  For Any NonQuorum Reads(A.K.A ReadAny); AddressCache is refreshed for following condition.
   1) No Secondary Address is found in Address Cache.
   2) Chosen Secondary Returned GoneException/EndpointNotFoundException.
 
- For Quorum Read address cache is refreshed on following condition.
+ For Quorum READ address cache is refreshed on following condition.
   1) We found only R secondary where R < RMAX.
   2) We got GoneException/EndpointNotFoundException on all the secondary we contacted.
 
  */
 /**
- * ConsistencyReader has a dependency on both StoreReader and QuorumReader. For Bounded Staleness and Strong Consistency, it uses the Quorum Reader
+ * ConsistencyReader has a dependency on both StoreReader and QuorumReader. For Bounded Staleness and STRONG Consistency, it uses the Quorum Reader
  * to converge on a read from read quorum number of replicas.
- * For Session and Eventual Consistency, it directly uses the store reader.
+ * For SESSION and EVENTUAL Consistency, it directly uses the store reader.
  */
 public class ConsistencyReader {
     private final static int MAX_NUMBER_OF_SECONDARY_READ_RETRIES = 3;
@@ -219,7 +219,7 @@ public class ConsistencyReader {
         ReadMode desiredReadMode;
         try {
             desiredReadMode = this.deduceReadMode(entity, targetConsistencyLevel, useSessionToken);
-        } catch (DocumentClientException e) {
+        } catch (CosmosClientException e) {
             return Single.error(e);
         }
         int maxReplicaCount = this.getMaxReplicaSetSize(entity);
@@ -249,7 +249,7 @@ public class ConsistencyReader {
                 return this.quorumReader.readStrongAsync(entity, readQuorumValue, desiredReadMode);
 
             case Any:
-                if (targetConsistencyLevel.v == ConsistencyLevel.Session) {
+                if (targetConsistencyLevel.v == ConsistencyLevel.SESSION) {
                     return this.readSessionAsync(entity, desiredReadMode);
                 } else {
                     return this.readAnyAsync(entity, desiredReadMode);
@@ -270,7 +270,7 @@ public class ConsistencyReader {
         return responseObs.flatMap(response -> {
             try {
                 return Single.just(response.toResponse());
-            } catch (DocumentClientException e) {
+            } catch (CosmosClientException e) {
                 // TODO: RxJava1 due to design flaw doesn't allow throwing checked exception
                 // RxJava2 has fixed this design flaw,
                 // once we switched to RxJava2 we can get rid of unnecessary catch block
@@ -298,7 +298,7 @@ public class ConsistencyReader {
 
                     try {
                         return Single.just(responses.get(0).toResponse());
-                    } catch (DocumentClientException e) {
+                    } catch (CosmosClientException e) {
                         // TODO: RxJava1 due to design flaw doesn't allow throwing checked exception
                         // RxJava2 has fixed this design flaw,
                         // once we switched to RxJava2 we can get rid of unnecessary catch block
@@ -336,17 +336,17 @@ public class ConsistencyReader {
                         if (entity.requestContext.sessionToken != null
                                 && responses.get(0).sessionToken != null
                                 && !entity.requestContext.sessionToken.isValid(responses.get(0).sessionToken)) {
-                            logger.warn("Convert to session read exception, request {} Session Lsn {}, responseLSN {}", entity.getResourceAddress(), entity.requestContext.sessionToken.convertToString(), responses.get(0).lsn);
-                            notFoundException.getResponseHeaders().put(WFConstants.BackendHeaders.SUB_STATUS, Integer.toString(HttpConstants.SubStatusCodes.READ_SESSION_NOT_AVAILABLE));
+                            logger.warn("Convert to session read exception, request {} SESSION Lsn {}, responseLSN {}", entity.getResourceAddress(), entity.requestContext.sessionToken.convertToString(), responses.get(0).lsn);
+                            notFoundException.responseHeaders().put(WFConstants.BackendHeaders.SUB_STATUS, Integer.toString(HttpConstants.SubStatusCodes.READ_SESSION_NOT_AVAILABLE));
                         }
                         return Single.error(notFoundException);
-                    } catch (DocumentClientException e) {
+                    } catch (CosmosClientException e) {
                         // TODO: RxJava1 due to design flaw doesn't allow throwing checked exception
                         // so we have to catch and return
                         // once we move to RxJava2 we can fix this.
                         return Single.error(e);
                     }
-                } catch (DocumentClientException dce) {
+                } catch (CosmosClientException dce) {
                     // TODO: RxJava1 due to design flaw doesn't allow throwing checked exception
                     // so we have to catch and return
                     // once we move to RxJava2 we can fix this.
@@ -366,9 +366,9 @@ public class ConsistencyReader {
 
     ReadMode deduceReadMode(RxDocumentServiceRequest request,
                             ValueHolder<ConsistencyLevel> targetConsistencyLevel,
-                            ValueHolder<Boolean> useSessionToken) throws DocumentClientException {
+                            ValueHolder<Boolean> useSessionToken) throws CosmosClientException {
         targetConsistencyLevel.v = RequestHelper.GetConsistencyLevelToUse(this.serviceConfigReader, request);
-        useSessionToken.v = (targetConsistencyLevel.v == ConsistencyLevel.Session);
+        useSessionToken.v = (targetConsistencyLevel.v == ConsistencyLevel.SESSION);
 
         if (request.getDefaultReplicaIndex() != null) {
             // Don't use session token - this is used by internal scenarios which technically don't intend session read when they target
@@ -378,23 +378,23 @@ public class ConsistencyReader {
         }
 
         switch (targetConsistencyLevel.v) {
-            case Eventual:
+            case EVENTUAL:
                 return ReadMode.Any;
 
-            case ConsistentPrefix:
+            case CONSISTENT_PREFIX:
                 return ReadMode.Any;
 
-            case Session:
+            case SESSION:
                 return ReadMode.Any;
 
-            case BoundedStaleness:
+            case BOUNDED_STALENESS:
                 return ReadMode.BoundedStaleness;
 
-            case Strong:
+            case STRONG:
                 return ReadMode.Strong;
 
             default:
-                throw new IllegalStateException("Invalid Consistency Level " + targetConsistencyLevel.v);
+                throw new IllegalStateException("INVALID Consistency Level " + targetConsistencyLevel.v);
         }
     }
 

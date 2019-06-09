@@ -56,7 +56,7 @@ public interface AddressValidator {
 
                 @Override
                 public void validate(Address address) {
-                    assertThat(address.getId()).as("check Resource Id").isEqualTo(resourceId);
+                    assertThat(address.id()).as("check Resource Id").isEqualTo(resourceId);
                 }
             });
             return this;
@@ -130,7 +130,7 @@ public interface AddressValidator {
 
                 @Override
                 public void validate(Address address) {
-                    assertThat(address.getResourceId()).isEqualTo(rid);
+                    assertThat(address.resourceId()).isEqualTo(rid);
                 }
             });
             return this;

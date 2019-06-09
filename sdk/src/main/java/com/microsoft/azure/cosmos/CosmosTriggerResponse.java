@@ -33,9 +33,9 @@ public class CosmosTriggerResponse extends CosmosResponse<CosmosTriggerSettings>
     CosmosTriggerResponse(ResourceResponse<Trigger> response, CosmosContainer container) {
         super(response);
         if(response.getResource() != null) {
-            super.setResourceSettings(new CosmosTriggerSettings(response));
+            super.resourceSettings(new CosmosTriggerSettings(response));
             cosmosTriggerSettings = new CosmosTriggerSettings(response);
-            cosmosTrigger = new CosmosTrigger(cosmosTriggerSettings.getId(), container);
+            cosmosTrigger = new CosmosTrigger(cosmosTriggerSettings.id(), container);
         }
     }
 
@@ -44,7 +44,7 @@ public class CosmosTriggerResponse extends CosmosResponse<CosmosTriggerSettings>
      *
      * @return {@link CosmosTriggerSettings}
      */
-    public CosmosTriggerSettings getCosmosTriggerSettings() {
+    public CosmosTriggerSettings settings() {
         return cosmosTriggerSettings;
     }
 
@@ -53,7 +53,7 @@ public class CosmosTriggerResponse extends CosmosResponse<CosmosTriggerSettings>
      *
      * @return {@link CosmosTrigger}
      */
-    public CosmosTrigger getCosmosTrigger() {
+    public CosmosTrigger trigger() {
         return cosmosTrigger;
     }
 }

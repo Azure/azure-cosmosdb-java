@@ -67,17 +67,17 @@ public class ChangeFeedTest extends TestSuiteBase {
     private AsyncDocumentClient client;
 
     public String getCollectionLink() {
-        return Utils.getCollectionNameLink(createdDatabase.getId(), createdCollection.getId());
+        return Utils.getCollectionNameLink(createdDatabase.id(), createdCollection.id());
     }
 
     static protected DocumentCollection getCollectionDefinition() {
         PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition();
         ArrayList<String> paths = new ArrayList<String>();
         paths.add("/" + PartitionKeyFieldName);
-        partitionKeyDef.setPaths(paths);
+        partitionKeyDef.paths(paths);
 
         DocumentCollection collectionDefinition = new DocumentCollection();
-        collectionDefinition.setId(UUID.randomUUID().toString());
+        collectionDefinition.id(UUID.randomUUID().toString());
         collectionDefinition.setPartitionKey(partitionKeyDef);
 
         return collectionDefinition;
@@ -94,8 +94,8 @@ public class ChangeFeedTest extends TestSuiteBase {
         Collection<Document> expectedDocuments = partitionKeyToDocuments.get(partitionKey);
 
         ChangeFeedOptions changeFeedOption = new ChangeFeedOptions();
-        changeFeedOption.setMaxItemCount(3);
-        changeFeedOption.setPartitionKey(new PartitionKey(partitionKey));
+        changeFeedOption.maxItemCount(3);
+        changeFeedOption.partitionKey(new PartitionKey(partitionKey));
         changeFeedOption.setStartFromBeginning(true);
 
         List<FeedResponse<Document>> changeFeedResultList = client.queryDocumentChangeFeed(getCollectionLink(), changeFeedOption)
@@ -104,12 +104,12 @@ public class ChangeFeedTest extends TestSuiteBase {
         int count = 0;
         for(int i = 0; i < changeFeedResultList.size(); i++) {
             FeedResponse<Document> changeFeedPage = changeFeedResultList.get(i);
-            assertThat(changeFeedPage.getResponseContinuation()).as("Response continuation should not be null").isNotNull();
+            assertThat(changeFeedPage.continuationToken()).as("Response continuation should not be null").isNotNull();
 
-            count += changeFeedPage.getResults().size();
-            assertThat(changeFeedPage.getResults().size())
+            count += changeFeedPage.results().size();
+            assertThat(changeFeedPage.results().size())
             .as("change feed should contain all the previously created documents")
-            .isLessThanOrEqualTo(changeFeedOption.getMaxItemCount());
+            .isLessThanOrEqualTo(changeFeedOption.maxItemCount());
         }
         assertThat(count).as("the number of changes").isEqualTo(expectedDocuments.size());
     }
@@ -117,8 +117,8 @@ public class ChangeFeedTest extends TestSuiteBase {
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
     public void changesFromPartitionKeyRangeId_FromBeginning() throws Exception {
         List<String> partitionKeyRangeIds = client.readPartitionKeyRanges(getCollectionLink(), null)
-                .flatMap(p -> Observable.from(p.getResults()), 1)
-                .map(pkr -> pkr.getId())
+                .flatMap(p -> Observable.from(p.results()), 1)
+                .map(pkr -> pkr.id())
                 .toList()
                 .toBlocking()
                 .single();
@@ -128,7 +128,7 @@ public class ChangeFeedTest extends TestSuiteBase {
         String pkRangeId = partitionKeyRangeIds.get(0);
         
         ChangeFeedOptions changeFeedOption = new ChangeFeedOptions();
-        changeFeedOption.setMaxItemCount(3);
+        changeFeedOption.maxItemCount(3);
         changeFeedOption.setPartitionKeyRangeId(pkRangeId);
         changeFeedOption.setStartFromBeginning(true);
         List<FeedResponse<Document>> changeFeedResultList = client.queryDocumentChangeFeed(getCollectionLink(), changeFeedOption)
@@ -137,15 +137,15 @@ public class ChangeFeedTest extends TestSuiteBase {
         int count = 0;
         for(int i = 0; i < changeFeedResultList.size(); i++) {
             FeedResponse<Document> changeFeedPage = changeFeedResultList.get(i);
-            assertThat(changeFeedPage.getResponseContinuation()).as("Response continuation should not be null").isNotNull();
+            assertThat(changeFeedPage.continuationToken()).as("Response continuation should not be null").isNotNull();
 
-            count += changeFeedPage.getResults().size();
-            assertThat(changeFeedPage.getResults().size())
+            count += changeFeedPage.results().size();
+            assertThat(changeFeedPage.results().size())
             .as("change feed should contain all the previously created documents")
-            .isLessThanOrEqualTo(changeFeedOption.getMaxItemCount());
+            .isLessThanOrEqualTo(changeFeedOption.maxItemCount());
    
-            assertThat(changeFeedPage.getResponseContinuation()).as("Response continuation should not be null").isNotNull();
-            assertThat(changeFeedPage.getResponseContinuation()).as("Response continuation should not be empty").isNotEmpty();
+            assertThat(changeFeedPage.continuationToken()).as("Response continuation should not be null").isNotNull();
+            assertThat(changeFeedPage.continuationToken()).as("Response continuation should not be empty").isNotEmpty();
         }
         assertThat(changeFeedResultList.size()).as("has at least one page").isGreaterThanOrEqualTo(1);
         assertThat(count).as("the number of changes").isGreaterThan(0);
@@ -154,10 +154,10 @@ public class ChangeFeedTest extends TestSuiteBase {
     
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
     public void changeFeed_fromNow() throws Exception {
-        // Read change feed from current.
+        // READ change feed from current.
         ChangeFeedOptions changeFeedOption = new ChangeFeedOptions();
         String partitionKey = partitionKeyToDocuments.keySet().iterator().next();
-        changeFeedOption.setPartitionKey(new PartitionKey(partitionKey));
+        changeFeedOption.partitionKey(new PartitionKey(partitionKey));
 
         List<FeedResponse<Document>> changeFeedResultsList = client.queryDocumentChangeFeed(getCollectionLink(), changeFeedOption)
                 .toList()
@@ -166,7 +166,7 @@ public class ChangeFeedTest extends TestSuiteBase {
         FeedResponseListValidator<Document> validator = new FeedResponseListValidator.Builder().totalSize(0).build();
         validator.validate(changeFeedResultsList);
         assertThat(changeFeedResultsList.get(changeFeedResultsList.size() -1 ).
-                getResponseContinuation()).as("Response continuation should not be null").isNotNull();
+                continuationToken()).as("Response continuation should not be null").isNotNull();
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
@@ -177,17 +177,17 @@ public class ChangeFeedTest extends TestSuiteBase {
             throw new SkipException("StartTime/IfModifiedSince is not currently supported when EnableMultipleWriteLocations is set");
         }
 
-        // Read change feed from current.
+        // READ change feed from current.
         ChangeFeedOptions changeFeedOption = new ChangeFeedOptions();
         String partitionKey = partitionKeyToDocuments.keySet().iterator().next();
 
-        changeFeedOption.setPartitionKey(new PartitionKey(partitionKey));
+        changeFeedOption.partitionKey(new PartitionKey(partitionKey));
         ZonedDateTime befTime = ZonedDateTime.now();
         // Waiting for at-least a second to ensure that new document is created after we took the time stamp
         waitAtleastASecond(befTime);
 
         ZonedDateTime dateTimeBeforeCreatingDoc = ZonedDateTime.now();
-        changeFeedOption.setStartDateTime(dateTimeBeforeCreatingDoc);
+        changeFeedOption.startDateTime(dateTimeBeforeCreatingDoc);
 
         // Waiting for at-least a second to ensure that new document is created after we took the time stamp
         waitAtleastASecond(dateTimeBeforeCreatingDoc);
@@ -200,8 +200,8 @@ public class ChangeFeedTest extends TestSuiteBase {
         int count = 0;
         for(int i = 0; i < changeFeedResultList.size(); i++) {
             FeedResponse<Document> changeFeedPage = changeFeedResultList.get(i);
-            count += changeFeedPage.getResults().size();
-            assertThat(changeFeedPage.getResponseContinuation()).as("Response continuation should not be null").isNotNull();
+            count += changeFeedPage.results().size();
+            assertThat(changeFeedPage.continuationToken()).as("Response continuation should not be null").isNotNull();
         }
         assertThat(count).as("Change feed should have one newly created document").isEqualTo(1);
     }
@@ -209,17 +209,17 @@ public class ChangeFeedTest extends TestSuiteBase {
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
     public void changesFromPartitionKey_AfterInsertingNewDocuments() throws Exception {
         ChangeFeedOptions changeFeedOption = new ChangeFeedOptions();
-        changeFeedOption.setMaxItemCount(3);
+        changeFeedOption.maxItemCount(3);
         String partitionKey = partitionKeyToDocuments.keySet().iterator().next();
-        changeFeedOption.setPartitionKey(new PartitionKey(partitionKey));
+        changeFeedOption.partitionKey(new PartitionKey(partitionKey));
 
         List<FeedResponse<Document>> changeFeedResultsList = client.queryDocumentChangeFeed(getCollectionLink(), changeFeedOption)
                 .toList().toBlocking().single();
 
         assertThat(changeFeedResultsList).as("only one page").hasSize(1);
-        assertThat(changeFeedResultsList.get(0).getResults()).as("no recent changes").isEmpty();
+        assertThat(changeFeedResultsList.get(0).results()).as("no recent changes").isEmpty();
 
-        String changeFeedContinuation = changeFeedResultsList.get(changeFeedResultsList.size()-1).getResponseContinuation();
+        String changeFeedContinuation = changeFeedResultsList.get(changeFeedResultsList.size()-1).continuationToken();
         assertThat(changeFeedContinuation).as("continuation token is not null").isNotNull();
         assertThat(changeFeedContinuation).as("continuation token is not empty").isNotEmpty();
 
@@ -227,15 +227,15 @@ public class ChangeFeedTest extends TestSuiteBase {
         client.createDocument(getCollectionLink(), getDocumentDefinition(partitionKey), null, true).toBlocking().single();
         client.createDocument(getCollectionLink(), getDocumentDefinition(partitionKey), null, true).toBlocking().single();
 
-        // Read change feed from continuation
-        changeFeedOption.setRequestContinuation(changeFeedContinuation);
+        // READ change feed from continuation
+        changeFeedOption.requestContinuation(changeFeedContinuation);
 
 
         FeedResponse<Document> changeFeedResults2 = client.queryDocumentChangeFeed(getCollectionLink(), changeFeedOption)
                 .toBlocking().first();
 
-        assertThat(changeFeedResults2.getResults()).as("change feed should contain newly inserted docs.").hasSize(2);
-        assertThat(changeFeedResults2.getResponseContinuation()).as("Response continuation should not be null").isNotNull();
+        assertThat(changeFeedResults2.results()).as("change feed should contain newly inserted docs.").hasSize(2);
+        assertThat(changeFeedResults2.continuationToken()).as("Response continuation should not be null").isNotNull();
     }
 
     public void createDocument(AsyncDocumentClient client, String partitionKey) {
@@ -249,7 +249,7 @@ public class ChangeFeedTest extends TestSuiteBase {
     public List<Document> bulkInsert(AsyncDocumentClient client, List<Document> docs) {
         ArrayList<Observable<ResourceResponse<Document>>> result = new ArrayList<Observable<ResourceResponse<Document>>>();
         for (int i = 0; i < docs.size(); i++) {
-            result.add(client.createDocument("dbs/" + createdDatabase.getId() + "/colls/" + createdCollection.getId(), docs.get(i), null, false));
+            result.add(client.createDocument("dbs/" + createdDatabase.id() + "/colls/" + createdCollection.id(), docs.get(i), null, false));
         }
 
         return Observable.merge(result, 100).map(r -> r.getResource()).toList().toBlocking().single();
@@ -269,7 +269,7 @@ public class ChangeFeedTest extends TestSuiteBase {
 
         RequestOptions options = new RequestOptions();
         options.setOfferThroughput(10100);
-        createdCollection = createCollection(client, createdDatabase.getId(), getCollectionDefinition(), options);
+        createdCollection = createCollection(client, createdDatabase.id(), getCollectionDefinition(), options);
 
         List<Document> docs = new ArrayList<>();
         
@@ -301,7 +301,7 @@ public class ChangeFeedTest extends TestSuiteBase {
     private static Document getDocumentDefinition(String partitionKey) {
         String uuid = UUID.randomUUID().toString();
         Document doc = new Document();
-        doc.setId(uuid);
+        doc.id(uuid);
         doc.set("mypk", partitionKey);
         doc.set("prop", uuid);
         return doc;

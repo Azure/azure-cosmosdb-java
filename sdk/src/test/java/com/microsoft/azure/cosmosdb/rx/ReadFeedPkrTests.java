@@ -54,7 +54,7 @@ public class ReadFeedPkrTests extends TestSuiteBase {
     public void readPartitionKeyRanges() throws Exception {
 
         FeedOptions options = new FeedOptions();
-        options.setMaxItemCount(2);
+        options.maxItemCount(2);
 
         Observable<FeedResponse<PartitionKeyRange>> feedObservable = client.readPartitionKeyRanges(getCollectionLink(), options);
 
@@ -81,6 +81,6 @@ public class ReadFeedPkrTests extends TestSuiteBase {
     }
 
     private String getCollectionLink() {
-        return "dbs/" + createdDatabase.getId() + "/colls/" + createdCollection.getId();
+        return "dbs/" + createdDatabase.id() + "/colls/" + createdCollection.id();
     }
 }

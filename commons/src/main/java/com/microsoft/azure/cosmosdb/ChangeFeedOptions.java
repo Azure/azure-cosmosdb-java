@@ -23,7 +23,7 @@
 
 package com.microsoft.azure.cosmosdb;
 
-import java.time.ZonedDateTime;
+import java.time.OffsetDateTime;
 
 /**
  * Specifies the options associated with change feed methods (enumeration operations) in the Azure Cosmos DB database service.
@@ -31,7 +31,7 @@ import java.time.ZonedDateTime;
 public final class ChangeFeedOptions extends FeedOptionsBase {
     private String partitionKeyRangeId;
     private boolean startFromBeginning;
-    private ZonedDateTime startDateTime;
+    private OffsetDateTime startDateTime;
 
     public ChangeFeedOptions() {}
 
@@ -52,7 +52,7 @@ public final class ChangeFeedOptions extends FeedOptionsBase {
      * @return a string indicating the partition key range ID
      * @see PartitionKeyRange
      */
-    public String getPartitionKeyRangeId() {
+    String partitionKeyRangeId() {
         return partitionKeyRangeId;
     }
 
@@ -66,8 +66,9 @@ public final class ChangeFeedOptions extends FeedOptionsBase {
      * @param partitionKeyRangeId a string indicating the partition key range ID
      * @see PartitionKeyRange
      */
-    public void setPartitionKeyRangeId(String partitionKeyRangeId) {
+    ChangeFeedOptions partitionKeyRangeId(String partitionKeyRangeId) {
         this.partitionKeyRangeId = partitionKeyRangeId;
+        return this;
     }
 
     /**
@@ -94,16 +95,17 @@ public final class ChangeFeedOptions extends FeedOptionsBase {
      * Gets the zoned date time to start looking for changes after.
      * @return a zoned date time to start looking for changes after, if set or null otherwise
      */
-    public ZonedDateTime getStartDateTime() {
+    public OffsetDateTime startDateTime() {
         return startDateTime;
     }
 
     /**
      * Sets the zoned date time (exclusive) to start looking for changes after.
-     * If this is specified, startFromBeginning is ignored. 
+     * If this is specified, startFromBeginning is ignored.
      * @param startDateTime a zoned date time to start looking for changes after.
      */
-    public void setStartDateTime(ZonedDateTime startDateTime) {
+    public ChangeFeedOptions startDateTime(OffsetDateTime startDateTime) {
         this.startDateTime = startDateTime;
+        return this;
     }
 }

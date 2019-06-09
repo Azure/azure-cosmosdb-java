@@ -3,7 +3,6 @@ package com.microsoft.azure.cosmos;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.Resource;
 import com.microsoft.azure.cosmosdb.ResourceResponse;
 import com.microsoft.azure.cosmosdb.User;
@@ -41,7 +40,7 @@ public class CosmosUserSettings extends Resource {
      * @return the permissions link.
      */
     public String getPermissionsLink() {
-        String selfLink = this.getSelfLink();
+        String selfLink = this.selfLink();
         if (selfLink.endsWith("/")) {
             return selfLink + super.getString(Constants.Properties.PERMISSIONS_LINK);
         } else {

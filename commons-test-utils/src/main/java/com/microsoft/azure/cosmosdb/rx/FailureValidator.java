@@ -23,7 +23,7 @@
 package com.microsoft.azure.cosmosdb.rx;
 
 import com.microsoft.azure.cosmosdb.BridgeInternal;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.Error;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.WFConstants;
@@ -61,8 +61,8 @@ public interface FailureValidator {
                 @Override
                 public void validate(Throwable t) {
                     assertThat(t).isNotNull();
-                    assertThat(t).isInstanceOf(DocumentClientException.class);
-                    assertThat(((DocumentClientException) t).getStatusCode()).isEqualTo(statusCode);
+                    assertThat(t).isInstanceOf(CosmosClientException.class);
+                    assertThat(((CosmosClientException) t).statusCode()).isEqualTo(statusCode);
                 }
             });
             return this;
@@ -73,8 +73,8 @@ public interface FailureValidator {
                 @Override
                 public void validate(Throwable t) {
                     assertThat(t).isNotNull();
-                    assertThat(t).isInstanceOf(DocumentClientException.class);
-                    assertThat(BridgeInternal.getLSN((DocumentClientException) t) > quorumAckedLSN).isTrue();
+                    assertThat(t).isInstanceOf(CosmosClientException.class);
+                    assertThat(BridgeInternal.getLSN((CosmosClientException) t) > quorumAckedLSN).isTrue();
                 }
             });
             return this;
@@ -85,8 +85,8 @@ public interface FailureValidator {
                 @Override
                 public void validate(Throwable t) {
                     assertThat(t).isNotNull();
-                    assertThat(t).isInstanceOf(DocumentClientException.class);
-                    assertThat(BridgeInternal.getLSN((DocumentClientException) t) >= quorumAckedLSN).isTrue();
+                    assertThat(t).isInstanceOf(CosmosClientException.class);
+                    assertThat(BridgeInternal.getLSN((CosmosClientException) t) >= quorumAckedLSN).isTrue();
                 }
             });
             return this;
@@ -97,11 +97,11 @@ public interface FailureValidator {
                 @Override
                 public void validate(Throwable t) {
                     assertThat(t).isNotNull();
-                    assertThat(t).isInstanceOf(DocumentClientException.class);
-                    DocumentClientException documentClientException = (DocumentClientException) t;
+                    assertThat(t).isInstanceOf(CosmosClientException.class);
+                    CosmosClientException cosmosClientException = (CosmosClientException) t;
                     long exceptionQuorumAckedLSN = -1;
-                    if (documentClientException.getResponseHeaders().get(WFConstants.BackendHeaders.QUORUM_ACKED_LSN) != null) {
-                        exceptionQuorumAckedLSN = Long.parseLong((String) documentClientException.getResponseHeaders().get(WFConstants.BackendHeaders.QUORUM_ACKED_LSN));
+                    if (cosmosClientException.responseHeaders().get(WFConstants.BackendHeaders.QUORUM_ACKED_LSN) != null) {
+                        exceptionQuorumAckedLSN = Long.parseLong((String) cosmosClientException.responseHeaders().get(WFConstants.BackendHeaders.QUORUM_ACKED_LSN));
 
                     }
                     assertThat(exceptionQuorumAckedLSN).isNotEqualTo(-1);
@@ -126,8 +126,8 @@ public interface FailureValidator {
                 @Override
                 public void validate(Throwable t) {
                     assertThat(t).isNotNull();
-                    assertThat(t).isInstanceOf(DocumentClientException.class);
-                    assertThat(((DocumentClientException) t).getActivityId()).isNotNull();
+                    assertThat(t).isInstanceOf(CosmosClientException.class);
+                    assertThat(((CosmosClientException) t).message()).isNotNull();
                 }
             });
             return this;
@@ -138,8 +138,8 @@ public interface FailureValidator {
                 @Override
                 public void validate(Throwable t) {
                     assertThat(t).isNotNull();
-                    assertThat(t).isInstanceOf(DocumentClientException.class);
-                    assertThat(((DocumentClientException) t).getError().toJson()).isEqualTo(error.toJson());
+                    assertThat(t).isInstanceOf(CosmosClientException.class);
+                    assertThat(((CosmosClientException) t).error().toJson()).isEqualTo(error.toJson());
                 }
             });
             return this;
@@ -150,8 +150,8 @@ public interface FailureValidator {
                 @Override
                 public void validate(Throwable t) {
                     assertThat(t).isNotNull();
-                    assertThat(t).isInstanceOf(DocumentClientException.class);
-                    assertThat(((DocumentClientException) t).getSubStatusCode()).isEqualTo(substatusCode);
+                    assertThat(t).isInstanceOf(CosmosClientException.class);
+                    assertThat(((CosmosClientException) t).subStatusCode()).isEqualTo(substatusCode);
                 }
             });
             return this;
@@ -162,8 +162,8 @@ public interface FailureValidator {
                 @Override
                 public void validate(Throwable t) {
                     assertThat(t).isNotNull();
-                    assertThat(t).isInstanceOf(DocumentClientException.class);
-                    assertThat(((DocumentClientException) t).getSubStatusCode()).isEqualTo(HttpConstants.SubStatusCodes.UNKNOWN);
+                    assertThat(t).isInstanceOf(CosmosClientException.class);
+                    assertThat(((CosmosClientException) t).subStatusCode()).isEqualTo(HttpConstants.SubStatusCodes.UNKNOWN);
                 }
             });
             return this;
@@ -174,8 +174,8 @@ public interface FailureValidator {
                 @Override
                 public void validate(Throwable t) {
                     assertThat(t).isNotNull();
-                    assertThat(t).isInstanceOf(DocumentClientException.class);
-                    assertThat(((DocumentClientException) t).getResponseHeaders().get(key)).isEqualTo(value);
+                    assertThat(t).isInstanceOf(CosmosClientException.class);
+                    assertThat(((CosmosClientException) t).responseHeaders().get(key)).isEqualTo(value);
                 }
             });
             return this;
@@ -186,8 +186,8 @@ public interface FailureValidator {
                 @Override
                 public void validate(Throwable t) {
                     assertThat(t).isNotNull();
-                    assertThat(t).isInstanceOf(DocumentClientException.class);
-                    DocumentClientException ex = (DocumentClientException) t;
+                    assertThat(t).isInstanceOf(CosmosClientException.class);
+                    CosmosClientException ex = (CosmosClientException) t;
                     assertThat(BridgeInternal.getLSN(ex)).isEqualTo(lsn);
                 }
             });
@@ -199,8 +199,8 @@ public interface FailureValidator {
                 @Override
                 public void validate(Throwable t) {
                     assertThat(t).isNotNull();
-                    assertThat(t).isInstanceOf(DocumentClientException.class);
-                    DocumentClientException ex = (DocumentClientException) t;
+                    assertThat(t).isInstanceOf(CosmosClientException.class);
+                    CosmosClientException ex = (CosmosClientException) t;
                     assertThat(BridgeInternal.getPartitionKeyRangeId(ex)).isEqualTo(pkrid);
                 }
             });
@@ -212,8 +212,8 @@ public interface FailureValidator {
                 @Override
                 public void validate(Throwable t) {
                     assertThat(t).isNotNull();
-                    assertThat(t).isInstanceOf(DocumentClientException.class);
-                    DocumentClientException ex = (DocumentClientException) t;
+                    assertThat(t).isInstanceOf(CosmosClientException.class);
+                    CosmosClientException ex = (CosmosClientException) t;
                     assertThat(BridgeInternal.getResourceAddress(ex)).isEqualTo(resourceAddress);
                 }
             });
@@ -247,9 +247,9 @@ public interface FailureValidator {
                 @Override
                 public void validate(Throwable t) {
                     assertThat(t).isNotNull();
-                    assertThat(t).isInstanceOf(DocumentClientException.class);
-                    DocumentClientException ex = (DocumentClientException) t;
-                    assertThat(ex.getStatusCode()).isEqualTo(404);
+                    assertThat(t).isInstanceOf(CosmosClientException.class);
+                    CosmosClientException ex = (CosmosClientException) t;
+                    assertThat(ex.statusCode()).isEqualTo(404);
 
                 }
             });
@@ -275,9 +275,9 @@ public interface FailureValidator {
                 @Override
                 public void validate(Throwable t) {
                     assertThat(t).isNotNull();
-                    assertThat(t).isInstanceOf(DocumentClientException.class);
-                    DocumentClientException ex = (DocumentClientException) t;
-                    assertThat(ex.getStatusCode()).isEqualTo(409);
+                    assertThat(t).isInstanceOf(CosmosClientException.class);
+                    CosmosClientException ex = (CosmosClientException) t;
+                    assertThat(ex.statusCode()).isEqualTo(409);
 
                 }
             });
@@ -314,8 +314,8 @@ public interface FailureValidator {
                 @Override
                 public void validate(Throwable t) {
                     assertThat(t).isNotNull();
-                    assertThat(t).isInstanceOf(DocumentClientException.class);
-                    DocumentClientException ex = (DocumentClientException) t;
+                    assertThat(t).isInstanceOf(CosmosClientException.class);
+                    CosmosClientException ex = (CosmosClientException) t;
                     assertThat(BridgeInternal.getRequestHeaders(ex)).containsEntry(key, value);
                 }
             });

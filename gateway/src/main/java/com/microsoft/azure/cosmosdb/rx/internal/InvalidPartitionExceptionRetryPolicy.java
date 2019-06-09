@@ -24,7 +24,7 @@ package com.microsoft.azure.cosmosdb.rx.internal;
 
 import java.time.Duration;
 
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.rx.internal.caches.RxCollectionCache;
@@ -64,7 +64,7 @@ public class InvalidPartitionExceptionRetryPolicy implements IDocumentClientRetr
 
     @Override
     public Single<ShouldRetryResult> shouldRetry(Exception e) {
-        DocumentClientException clientException = Utils.as(e, DocumentClientException.class);
+        CosmosClientException clientException = Utils.as(e, CosmosClientException.class);
         if (clientException != null && 
                 Exceptions.isStatusCode(clientException, HttpConstants.StatusCodes.GONE) &&
                 Exceptions.isSubStatusCode(clientException, HttpConstants.SubStatusCodes.NAME_CACHE_IS_STALE)) {
@@ -73,7 +73,7 @@ public class InvalidPartitionExceptionRetryPolicy implements IDocumentClientRetr
                 //this.clientCollectionCache.Refresh(clientException.ResourceAddress);
                 // TODO: this is blocking. is that fine?
                 if(this.feedOptions != null) {
-                    this.clientCollectionCache.refresh(collectionLink,this.feedOptions.getProperties());
+                    this.clientCollectionCache.refresh(collectionLink,this.feedOptions.properties());
                 } else {
                     this.clientCollectionCache.refresh(collectionLink,null);
                 }

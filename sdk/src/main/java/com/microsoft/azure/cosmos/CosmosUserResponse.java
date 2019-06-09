@@ -9,10 +9,10 @@ public class CosmosUserResponse extends CosmosResponse<CosmosUserSettings> {
     CosmosUserResponse(ResourceResponse<User> response, CosmosDatabase database) {
         super(response);
         if(response.getResource() == null){
-            super.setResourceSettings(null);
+            super.resourceSettings(null);
         }else{
-            super.setResourceSettings(new CosmosUserSettings(response));
-            this.user = new CosmosUser(getResourceSettings().getId(), database);
+            super.resourceSettings(new CosmosUserSettings(response));
+            this.user = new CosmosUser(resourceSettings().id(), database);
         }
     }
 
@@ -21,7 +21,7 @@ public class CosmosUserResponse extends CosmosResponse<CosmosUserSettings> {
      *
      * @return {@link CosmosUser}
      */
-    public CosmosUser getUser() {
+    public CosmosUser user() {
         return user;
     }
 
@@ -30,9 +30,7 @@ public class CosmosUserResponse extends CosmosResponse<CosmosUserSettings> {
      *
      * @return {@link CosmosUserSettings}
      */
-    public CosmosUserSettings getCosmosUserSettings(){
-        return getResourceSettings();
+    public CosmosUserSettings settings(){
+        return resourceSettings();
     }
-    
-
 }

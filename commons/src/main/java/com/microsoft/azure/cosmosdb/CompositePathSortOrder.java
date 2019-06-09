@@ -29,18 +29,18 @@ package com.microsoft.azure.cosmosdb;
  */
 public enum CompositePathSortOrder {
     /**
-     * Ascending sort order for composite paths.
+     * ASCENDING sort order for composite paths.
      */
-    Ascending {
+    ASCENDING {
         public String toString() {
             return "ascending";
         }
     },
 
     /**
-     * Descending sort order for composite paths.
+     * DESCENDING sort order for composite paths.
      */
-    Descending {
+    DESCENDING {
         public String toString() {
             return "descending";
         }

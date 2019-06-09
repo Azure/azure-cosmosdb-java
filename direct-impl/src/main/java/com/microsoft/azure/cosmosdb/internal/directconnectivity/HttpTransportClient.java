@@ -24,7 +24,7 @@
 package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
 import com.microsoft.azure.cosmosdb.BridgeInternal;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.internal.Integers;
 import com.microsoft.azure.cosmosdb.internal.InternalServerErrorException;
@@ -201,8 +201,8 @@ public class HttpTransportClient extends TransportClient {
                             exception,
                             null,
                             physicalAddress.toString());
-                    serviceUnavailableException.getResponseHeaders().put(HttpConstants.HttpHeaders.REQUEST_VALIDATION_FAILURE, "1");
-                    serviceUnavailableException.getResponseHeaders().put(HttpConstants.HttpHeaders.WRITE_REQUEST_TRIGGER_ADDRESS_REFRESH, "1");
+                    serviceUnavailableException.responseHeaders().put(HttpConstants.HttpHeaders.REQUEST_VALIDATION_FAILURE, "1");
+                    serviceUnavailableException.responseHeaders().put(HttpConstants.HttpHeaders.WRITE_REQUEST_TRIGGER_ADDRESS_REFRESH, "1");
                     return Single.error(serviceUnavailableException);
                 }
             }).doOnSuccess(httpClientResponse -> {
@@ -683,9 +683,9 @@ public class HttpTransportClient extends TransportClient {
                         RMResources.InvalidBackendResponse),
                     null,
                     physicalAddress);
-            exception.getResponseHeaders().put(HttpConstants.HttpHeaders.ACTIVITY_ID,
+            exception.responseHeaders().put(HttpConstants.HttpHeaders.ACTIVITY_ID,
                 activityId);
-            exception.getResponseHeaders().put(HttpConstants.HttpHeaders.REQUEST_VALIDATION_FAILURE, "1");
+            exception.responseHeaders().put(HttpConstants.HttpHeaders.REQUEST_VALIDATION_FAILURE, "1");
 
             return Single.error(exception);
         }
@@ -722,7 +722,7 @@ public class HttpTransportClient extends TransportClient {
                         responsePartitionKeyRangeId = Lists.firstOrDefault(partitionKeyRangeIdValues, null);
                     }
 
-                    DocumentClientException exception;
+                    CosmosClientException exception;
 
                     switch (statusCode.code()) {
                         case HttpConstants.StatusCodes.UNAUTHORIZED:
@@ -760,7 +760,7 @@ public class HttpTransportClient extends TransportClient {
                                                 RMResources.ExceptionMessage,
                                                 RMResources.Gone),
                                         request.getUri());
-                                exception.getResponseHeaders().put(HttpConstants.HttpHeaders.ACTIVITY_ID,
+                                exception.responseHeaders().put(HttpConstants.HttpHeaders.ACTIVITY_ID,
                                         activityId);
 
                                 break;
@@ -856,7 +856,7 @@ public class HttpTransportClient extends TransportClient {
                                         response.getHeaders(),
                                         request.getUri());
 
-                                exception.getResponseHeaders().put(HttpConstants.HttpHeaders.ACTIVITY_ID,
+                                exception.responseHeaders().put(HttpConstants.HttpHeaders.ACTIVITY_ID,
                                         activityId);
                                 break;
                             }
@@ -941,7 +941,7 @@ public class HttpTransportClient extends TransportClient {
                             if (values == null || values.isEmpty()) {
                                 logger.warn("RequestRateTooLargeException being thrown without RetryAfter.");
                             } else {
-                                exception.getResponseHeaders().put(HttpConstants.HttpHeaders.RETRY_AFTER_IN_MILLISECONDS, values.get(0));
+                                exception.responseHeaders().put(HttpConstants.HttpHeaders.RETRY_AFTER_IN_MILLISECONDS, values.get(0));
                             }
 
                             break;

@@ -36,8 +36,8 @@ public class PartitionKeyHashingTests {
 
         for (Map.Entry<Object, String> entry : keyToEffectivePartitionKeyString.entrySet()) {
             PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition();
-            partitionKeyDef.setKind(PartitionKind.Hash);
-            partitionKeyDef.setPaths(Arrays.asList(new String[]{"\\id"}));
+            partitionKeyDef.kind(PartitionKind.HASH);
+            partitionKeyDef.paths(Arrays.asList(new String[]{"\\id"}));
             String actualEffectiveKeyString = PartitionKeyInternalHelper.getEffectivePartitionKeyString(new PartitionKey(entry.getKey()).getInternalPartitionKey(),partitionKeyDef, true);
             assertThat(entry.getValue()).isEqualTo(actualEffectiveKeyString);
         }
@@ -66,9 +66,9 @@ public class PartitionKeyHashingTests {
 
         for (Map.Entry<Object, String> entry : keyToEffectivePartitionKeyString.entrySet()) {
             PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition();
-            partitionKeyDef.setKind(PartitionKind.Hash);
-            partitionKeyDef.setVersion(PartitionKeyDefinitionVersion.V2);
-            partitionKeyDef.setPaths(Arrays.asList(new String[]{"\\id"}));
+            partitionKeyDef.kind(PartitionKind.HASH);
+            partitionKeyDef.version(PartitionKeyDefinitionVersion.V2);
+            partitionKeyDef.paths(Arrays.asList(new String[]{"\\id"}));
             String actualEffectiveKeyString = PartitionKeyInternalHelper.getEffectivePartitionKeyString(new PartitionKey(entry.getKey()).getInternalPartitionKey(),partitionKeyDef, true);
             assertThat(entry.getValue()).isEqualTo(actualEffectiveKeyString);
         }
@@ -76,19 +76,19 @@ public class PartitionKeyHashingTests {
 
     @Test(groups = "unit")
     public void hashV2PartitionKeyDeserialization() {
-        String partitionKeyDefinitionStr = "{\"paths\":[\"/pk\"],\"kind\":\"Hash\",\"version\":2}";
+        String partitionKeyDefinitionStr = "{\"paths\":[\"/pk\"],\"kind\":\"HASH\",\"version\":2}";
         PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition(partitionKeyDefinitionStr);
-        assertThat(partitionKeyDef.getVersion()).isEqualTo(PartitionKeyDefinitionVersion.V2);
-        assertThat(partitionKeyDef.getKind()).isEqualTo(PartitionKind.Hash);
-        assertThat(partitionKeyDef.getPaths().toArray()[0]).isEqualTo("/pk");
+        assertThat(partitionKeyDef.version()).isEqualTo(PartitionKeyDefinitionVersion.V2);
+        assertThat(partitionKeyDef.kind()).isEqualTo(PartitionKind.HASH);
+        assertThat(partitionKeyDef.paths().toArray()[0]).isEqualTo("/pk");
     }
 
     @Test(groups = "unit")
     public void hashV1PartitionKeyDeserialization() {
-        String partitionKeyDefinitionStr = "{\"paths\":[\"/pk\"],\"kind\":\"Hash\"}";
+        String partitionKeyDefinitionStr = "{\"paths\":[\"/pk\"],\"kind\":\"HASH\"}";
         PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition(partitionKeyDefinitionStr);
-        assertThat(partitionKeyDef.getVersion()).isNull();
-        assertThat(partitionKeyDef.getKind()).isEqualTo(PartitionKind.Hash);
-        assertThat(partitionKeyDef.getPaths().toArray()[0]).isEqualTo("/pk");
+        assertThat(partitionKeyDef.version()).isNull();
+        assertThat(partitionKeyDef.kind()).isEqualTo(PartitionKind.HASH);
+        assertThat(partitionKeyDef.paths().toArray()[0]).isEqualTo("/pk");
     }
 }

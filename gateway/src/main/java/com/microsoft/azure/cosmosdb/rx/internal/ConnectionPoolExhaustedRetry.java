@@ -58,7 +58,7 @@ class ConnectionPoolExhaustedRetry implements IDocumentClientRetryPolicy {
             logger.error("PoolExhaustedException failure indicates" +
                                  " the load on the SDK is higher than what current connection pool size can support" +
                                  " either increase the connection pool size for the configured connection mode," +
-                                 " or distribute the load on more machines. All retries exhausted!");
+                                 " or distribute the load on more machines. ALL retries exhausted!");
             return Single.just(ShouldRetryResult.error(e));
         }
     }

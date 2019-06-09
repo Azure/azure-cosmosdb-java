@@ -153,7 +153,7 @@ public class PathsHelper {
             resourceType != ResourceType.ServerPartition && 
             resourceType != ResourceType.DatabaseAccount &&
                 resourceType != ResourceType.Topology) {
-            throw new IllegalStateException("Invalid resource type");
+            throw new IllegalStateException("INVALID resource type");
         }
 
         if(ownerOrResourceId == null) {

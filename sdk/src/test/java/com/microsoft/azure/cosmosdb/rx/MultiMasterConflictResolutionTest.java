@@ -30,11 +30,8 @@ import com.microsoft.azure.cosmos.CosmosContainerResponse;
 import com.microsoft.azure.cosmos.CosmosContainerSettings;
 import com.microsoft.azure.cosmos.CosmosDatabase;
 import com.microsoft.azure.cosmos.CosmosDatabaseForTest;
-import com.microsoft.azure.cosmosdb.BridgeUtils;
-import com.microsoft.azure.cosmosdb.ConflictResolutionMode;
-import com.microsoft.azure.cosmosdb.ConflictResolutionPolicy;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
-import com.microsoft.azure.cosmosdb.PartitionKeyDefinition;
+import com.microsoft.azure.cosmosdb.*;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 
 import reactor.core.publisher.Mono;
 
@@ -69,37 +66,37 @@ public class MultiMasterConflictResolutionTest extends TestSuiteBase {
 
         // default last writer wins, path _ts
         CosmosContainerSettings collectionSettings = new CosmosContainerSettings(UUID.randomUUID().toString(), partitionKeyDef);
-        CosmosContainer collection = database.createContainer(collectionSettings, new CosmosContainerRequestOptions()).block().getContainer();
-        collectionSettings = collection.read().block().getCosmosContainerSettings();
+        CosmosContainer collection = database.createContainer(collectionSettings, new CosmosContainerRequestOptions()).block().container();
+        collectionSettings = collection.read().block().settings();
 
-        assertThat(collectionSettings.getConflictResolutionPolicy().getConflictResolutionMode()).isEqualTo(ConflictResolutionMode.LastWriterWins);
+        assertThat(collectionSettings.conflictResolutionPolicy().mode()).isEqualTo(ConflictResolutionMode.LAST_WRITER_WINS);
 
         // LWW without path specified, should default to _ts
-        collectionSettings.setConflictResolutionPolicy(ConflictResolutionPolicy.createLastWriterWinsPolicy());
-        collectionSettings = collection.replace(collectionSettings, null).block().getCosmosContainerSettings();
+        collectionSettings.conflictResolutionPolicy(ConflictResolutionPolicy.createLastWriterWinsPolicy());
+        collectionSettings = collection.replace(collectionSettings, null).block().settings();
 
-        assertThat(collectionSettings.getConflictResolutionPolicy().getConflictResolutionMode()).isEqualTo(ConflictResolutionMode.LastWriterWins);
-        assertThat(collectionSettings.getConflictResolutionPolicy().getConflictResolutionPath()).isEqualTo("/_ts");
+        assertThat(collectionSettings.conflictResolutionPolicy().mode()).isEqualTo(ConflictResolutionMode.LAST_WRITER_WINS);
+        assertThat(collectionSettings.conflictResolutionPolicy().conflictResolutionPath()).isEqualTo("/_ts");
 
         // Tests the following scenarios
         // 1. LWW with valid path
         // 2. LWW with null path, should default to _ts
         // 3. LWW with empty path, should default to _ts
-        testConflictResolutionPolicyRequiringPath(ConflictResolutionMode.LastWriterWins,
+        testConflictResolutionPolicyRequiringPath(ConflictResolutionMode.LAST_WRITER_WINS,
                 new String[] { "/a", null, "" }, new String[] { "/a", "/_ts", "/_ts" });
 
         // LWW invalid path
-        collectionSettings.setConflictResolutionPolicy(ConflictResolutionPolicy.createLastWriterWinsPolicy("/a/b"));
+        collectionSettings.conflictResolutionPolicy(ConflictResolutionPolicy.createLastWriterWinsPolicy("/a/b"));
 
         try {
-            collectionSettings = collection.replace(collectionSettings, null).block().getCosmosContainerSettings();
+            collectionSettings = collection.replace(collectionSettings, null).block().settings();
             fail("Expected exception on invalid path.");
         } catch (Exception e) {
 
             // when (e.StatusCode == HttpStatusCode.BadRequest)
-            DocumentClientException dce = com.microsoft.azure.cosmosdb.rx.internal.Utils.as(e.getCause(), DocumentClientException.class);
-            if (dce != null && dce.getStatusCode() == 400) {
-                assertThat(dce.getMessage()).contains("Invalid path '\\/a\\/b' for last writer wins conflict resolution");
+            CosmosClientException dce = com.microsoft.azure.cosmosdb.rx.internal.Utils.as(e.getCause(), CosmosClientException.class);
+            if (dce != null && dce.statusCode() == 400) {
+                assertThat(dce.getMessage()).contains("INVALID path '\\/a\\/b' for last writer wins conflict resolution");
             } else {
                 throw e;
             }
@@ -107,26 +104,26 @@ public class MultiMasterConflictResolutionTest extends TestSuiteBase {
 
         // LWW invalid path
 
-        collectionSettings.setConflictResolutionPolicy(ConflictResolutionPolicy.createLastWriterWinsPolicy("someText"));
+        collectionSettings.conflictResolutionPolicy(ConflictResolutionPolicy.createLastWriterWinsPolicy("someText"));
 
         try {
-            collectionSettings = collection.replace(collectionSettings, null).block().getCosmosContainerSettings();
+            collectionSettings = collection.replace(collectionSettings, null).block().settings();
             fail("Expected exception on invalid path.");
         } catch (Exception e) {
             // when (e.StatusCode == HttpStatusCode.BadRequest)
-            DocumentClientException dce = com.microsoft.azure.cosmosdb.rx.internal.Utils.as(e.getCause(), DocumentClientException.class);
-            if (dce != null && dce.getStatusCode() == 400) {
-                assertThat(dce.getMessage()).contains("Invalid path 'someText' for last writer wins conflict resolution");
+            CosmosClientException dce = com.microsoft.azure.cosmosdb.rx.internal.Utils.as(e.getCause(), CosmosClientException.class);
+            if (dce != null && dce.statusCode() == 400) {
+                assertThat(dce.getMessage()).contains("INVALID path 'someText' for last writer wins conflict resolution");
             } else {
                 throw e;
             }
         }
 
         // Tests the following scenarios
-        // 1. Custom with valid sprocLink
-        // 2. Custom with null sprocLink, should default to empty string
-        // 3. Custom with empty sprocLink, should default to empty string
-        testConflictResolutionPolicyRequiringPath(ConflictResolutionMode.Custom,
+        // 1. CUSTOM with valid sprocLink
+        // 2. CUSTOM with null sprocLink, should default to empty string
+        // 3. CUSTOM with empty sprocLink, should default to empty string
+        testConflictResolutionPolicyRequiringPath(ConflictResolutionMode.CUSTOM,
                 new String[] { "randomSprocName", null, "" }, new String[] { "randomSprocName", "", "" });
     }
 
@@ -135,18 +132,18 @@ public class MultiMasterConflictResolutionTest extends TestSuiteBase {
         for (int i = 0; i < paths.length; i++) {            
             CosmosContainerSettings collectionSettings = new CosmosContainerSettings(UUID.randomUUID().toString(), partitionKeyDef);
             
-            if (conflictResolutionMode == ConflictResolutionMode.LastWriterWins) {
-                collectionSettings.setConflictResolutionPolicy(ConflictResolutionPolicy.createLastWriterWinsPolicy(paths[i]));
+            if (conflictResolutionMode == ConflictResolutionMode.LAST_WRITER_WINS) {
+                collectionSettings.conflictResolutionPolicy(ConflictResolutionPolicy.createLastWriterWinsPolicy(paths[i]));
             } else {
-                collectionSettings.setConflictResolutionPolicy(ConflictResolutionPolicy.createCustomPolicy(paths[i]));
+                collectionSettings.conflictResolutionPolicy(ConflictResolutionPolicy.createCustomPolicy(paths[i]));
             }
-            collectionSettings = database.createContainer(collectionSettings, new CosmosContainerRequestOptions()).block().getCosmosContainerSettings();
-            assertThat(collectionSettings.getConflictResolutionPolicy().getConflictResolutionMode()).isEqualTo(conflictResolutionMode);
+            collectionSettings = database.createContainer(collectionSettings, new CosmosContainerRequestOptions()).block().settings();
+            assertThat(collectionSettings.conflictResolutionPolicy().mode()).isEqualTo(conflictResolutionMode);
             
-            if (conflictResolutionMode == ConflictResolutionMode.LastWriterWins) {
-                assertThat(collectionSettings.getConflictResolutionPolicy().getConflictResolutionPath()).isEqualTo(expectedPaths[i]);
+            if (conflictResolutionMode == ConflictResolutionMode.LAST_WRITER_WINS) {
+                assertThat(collectionSettings.conflictResolutionPolicy().conflictResolutionPath()).isEqualTo(expectedPaths[i]);
             } else {
-                assertThat(collectionSettings.getConflictResolutionPolicy().getConflictResolutionProcedure()).isEqualTo(expectedPaths[i]);
+                assertThat(collectionSettings.conflictResolutionPolicy().conflictResolutionProcedure()).isEqualTo(expectedPaths[i]);
             }
         }
     }
@@ -157,18 +154,18 @@ public class MultiMasterConflictResolutionTest extends TestSuiteBase {
 
         // LWW without path specified, should default to _ts
         ConflictResolutionPolicy policy = BridgeUtils.createConflictResolutionPolicy();
-        BridgeUtils.setMode(policy, ConflictResolutionMode.LastWriterWins);
+        BridgeUtils.setMode(policy, ConflictResolutionMode.LAST_WRITER_WINS);
         BridgeUtils.setStoredProc(policy,"randomSprocName");
-        collection.setConflictResolutionPolicy(policy);
+        collection.conflictResolutionPolicy(policy);
 
         Mono<CosmosContainerResponse> createObservable = database.createContainer(
                 collection,
                 new CosmosContainerRequestOptions());
 
         FailureValidator validator = new FailureValidator.Builder()
-                .instanceOf(DocumentClientException.class)
+                .instanceOf(CosmosClientException.class)
                 .statusCode(400)
-                .errorMessageContains("LastWriterWins conflict resolution mode should not have conflict resolution procedure set.")
+                .errorMessageContains("LAST_WRITER_WINS conflict resolution mode should not have conflict resolution procedure set.")
                 .build();
         validateFailure(createObservable, validator);
     }
@@ -179,18 +176,18 @@ public class MultiMasterConflictResolutionTest extends TestSuiteBase {
 
         // LWW without path specified, should default to _ts
         ConflictResolutionPolicy policy = BridgeUtils.createConflictResolutionPolicy();
-        BridgeUtils.setMode(policy, ConflictResolutionMode.Custom);
+        BridgeUtils.setMode(policy, ConflictResolutionMode.CUSTOM);
         BridgeUtils.setPath(policy,"/mypath");
-        collection.setConflictResolutionPolicy(policy);
+        collection.conflictResolutionPolicy(policy);
 
         Mono<CosmosContainerResponse> createObservable = database.createContainer(
                 collection,
                 new CosmosContainerRequestOptions());
 
         FailureValidator validator = new FailureValidator.Builder()
-                .instanceOf(DocumentClientException.class)
+                .instanceOf(CosmosClientException.class)
                 .statusCode(400)
-                .errorMessageContains("Custom conflict resolution mode should not have conflict resolution path set.")
+                .errorMessageContains("CUSTOM conflict resolution mode should not have conflict resolution path set.")
                 .build();
         validateFailure(createObservable, validator);
     }
@@ -204,7 +201,7 @@ public class MultiMasterConflictResolutionTest extends TestSuiteBase {
         partitionKeyDef = new PartitionKeyDefinition();
         ArrayList<String> paths = new ArrayList<String>();
         paths.add("/mypk");
-        partitionKeyDef.setPaths(paths);
+        partitionKeyDef.paths(paths);
     }
 
     @AfterClass(groups = {"multi-master"}, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)

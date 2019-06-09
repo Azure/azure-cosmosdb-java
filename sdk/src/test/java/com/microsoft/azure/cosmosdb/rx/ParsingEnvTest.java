@@ -33,8 +33,8 @@ public class ParsingEnvTest {
 
     @Test(groups = "unit")
     public void parseDesiredConsistencies() {
-        assertThat(TestSuiteBase.parseDesiredConsistencies("[ \"Session\" , \"Strong\" ]")).containsExactly(
-                ConsistencyLevel.Session, ConsistencyLevel.Strong);
+        assertThat(TestSuiteBase.parseDesiredConsistencies("[ \"SESSION\" , \"STRONG\" ]")).containsExactly(
+                ConsistencyLevel.SESSION, ConsistencyLevel.STRONG);
     }
 
     @Test(groups = "unit")
@@ -44,8 +44,8 @@ public class ParsingEnvTest {
 
     @Test(groups = "unit")
     public void lowerConsistencies() {
-        assertThat(TestSuiteBase.allEqualOrLowerConsistencies(ConsistencyLevel.Session))
-                .containsExactly(ConsistencyLevel.Session, ConsistencyLevel.ConsistentPrefix, ConsistencyLevel.Eventual);
+        assertThat(TestSuiteBase.allEqualOrLowerConsistencies(ConsistencyLevel.SESSION))
+                .containsExactly(ConsistencyLevel.SESSION, ConsistencyLevel.CONSISTENT_PREFIX, ConsistencyLevel.EVENTUAL);
     }
 
     @Test(groups = "unit")

@@ -23,13 +23,8 @@
 package com.microsoft.azure.cosmosdb.rx.examples;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import com.microsoft.azure.cosmosdb.ConnectionMode;
-import com.microsoft.azure.cosmosdb.ConnectionPolicy;
-import com.microsoft.azure.cosmosdb.ConsistencyLevel;
-import com.microsoft.azure.cosmosdb.Database;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
-import com.microsoft.azure.cosmosdb.FeedResponse;
-import com.microsoft.azure.cosmosdb.ResourceResponse;
+import com.microsoft.azure.cosmosdb.*;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -77,20 +72,20 @@ public class DatabaseCRUDAsyncAPITest {
     @BeforeClass(groups = "samples", timeOut = TIMEOUT)
     public void setUp() {
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
-        connectionPolicy.setConnectionMode(ConnectionMode.Direct);
+        connectionPolicy.connectionMode(ConnectionMode.DIRECT);
         asyncClient = new AsyncDocumentClient.Builder()
                 .withServiceEndpoint(TestConfigurations.HOST)
                 .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
                 .withConnectionPolicy(connectionPolicy)
-                .withConsistencyLevel(ConsistencyLevel.Session)
+                .withConsistencyLevel(ConsistencyLevel.SESSION)
                 .build();
     }
 
     private Database getDatabaseDefinition() {
         Database databaseDefinition = new Database();
-        databaseDefinition.setId(Utils.generateDatabaseId());
+        databaseDefinition.id(Utils.generateDatabaseId());
 
-        databaseIds.add(databaseDefinition.getId());
+        databaseIds.add(databaseDefinition.id());
 
         return databaseDefinition;
     }
@@ -104,7 +99,7 @@ public class DatabaseCRUDAsyncAPITest {
     }
 
     /**
-     * Create a database using async api.
+     * CREATE a database using async api.
      * This test uses java8 lambda expression.
      * See testCreateDatabase_Async_withoutLambda for usage without lambda.
      */
@@ -130,7 +125,7 @@ public class DatabaseCRUDAsyncAPITest {
     }
 
     /**
-     * Create a database using async api, without java8 lambda expressions
+     * CREATE a database using async api, without java8 lambda expressions
      */
     @Test(groups = "samples", timeOut = TIMEOUT)
     public void createDatabase_Async_withoutLambda() throws Exception {
@@ -165,7 +160,7 @@ public class DatabaseCRUDAsyncAPITest {
     }
 
     /**
-     * Create a database in a blocking manner
+     * CREATE a database in a blocking manner
      */
     @Test(groups = "samples", timeOut = TIMEOUT)
     public void createDatabase_toBlocking() {
@@ -189,7 +184,7 @@ public class DatabaseCRUDAsyncAPITest {
         Database databaseDefinition = getDatabaseDefinition();
         asyncClient.createDatabase(databaseDefinition, null).toBlocking().single();
 
-        // Create the database for test.
+        // CREATE the database for test.
         Observable<ResourceResponse<Database>> databaseForTestObservable = asyncClient
                 .createDatabase(databaseDefinition, null);
 
@@ -198,7 +193,7 @@ public class DatabaseCRUDAsyncAPITest {
                     .single(); // Gets the single result
             assertThat("Should not reach here", false);
         } catch (Exception e) {
-            assertThat("Database already exists.", ((DocumentClientException) e.getCause()).getStatusCode(),
+            assertThat("Database already exists.", ((CosmosClientException) e.getCause()).statusCode(),
                        equalTo(409));
         }
     }
@@ -222,15 +217,15 @@ public class DatabaseCRUDAsyncAPITest {
     }
 
     /**
-     * Read a Database in an Async manner
+     * READ a Database in an Async manner
      */
     @Test(groups = "samples", timeOut = TIMEOUT)
     public void createAndReadDatabase() throws Exception {
-        // Create a database
+        // CREATE a database
         Database database = asyncClient.createDatabase(getDatabaseDefinition(), null).toBlocking().single().getResource();
 
-        // Read the created database using async api
-        Observable<ResourceResponse<Database>> readDatabaseObservable = asyncClient.readDatabase("dbs/" + database.getId(),
+        // READ the created database using async api
+        Observable<ResourceResponse<Database>> readDatabaseObservable = asyncClient.readDatabase("dbs/" + database.id(),
                                                                                                  null);
 
         final CountDownLatch completionLatch = new CountDownLatch(1);
@@ -250,16 +245,16 @@ public class DatabaseCRUDAsyncAPITest {
     }
 
     /**
-     * Delete a Database in an Async manner
+     * DELETE a Database in an Async manner
      */
     @Test(groups = "samples", timeOut = TIMEOUT)
     public void createAndDeleteDatabase() throws Exception {
-        // Create a database
+        // CREATE a database
         Database database = asyncClient.createDatabase(getDatabaseDefinition(), null).toBlocking().single().getResource();
 
-        // Delete the created database using async api
+        // DELETE the created database using async api
         Observable<ResourceResponse<Database>> deleteDatabaseObservable = asyncClient
-                .deleteDatabase("dbs/" + database.getId(), null);
+                .deleteDatabase("dbs/" + database.id(), null);
 
         final CountDownLatch completionLatch = new CountDownLatch(1);
 
@@ -282,13 +277,13 @@ public class DatabaseCRUDAsyncAPITest {
      */
     @Test(groups = "samples", timeOut = TIMEOUT)
     public void databaseCreateAndQuery() throws Exception {
-        // Create a database
+        // CREATE a database
         Database databaseDefinition = getDatabaseDefinition();
         asyncClient.createDatabase(databaseDefinition, null).toBlocking().single().getResource();
 
         // Query the created database using async api
         Observable<FeedResponse<Database>> queryDatabaseObservable = asyncClient
-                .queryDatabases(String.format("SELECT * FROM r where r.id = '%s'", databaseDefinition.getId()), null);
+                .queryDatabases(String.format("SELECT * FROM r where r.id = '%s'", databaseDefinition.id()), null);
 
         final CountDownLatch completionLatch = new CountDownLatch(1);
 
@@ -298,13 +293,13 @@ public class DatabaseCRUDAsyncAPITest {
 
             // First element of the list should have only 1 result
             FeedResponse<Database> databaseFeedResponse = databaseFeedResponseList.get(0);
-            assertThat(databaseFeedResponse.getResults().size(), equalTo(1));
+            assertThat(databaseFeedResponse.results().size(), equalTo(1));
 
             // This database should have the same id as the one we created
-            Database foundDatabase = databaseFeedResponse.getResults().get(0);
-            assertThat(foundDatabase.getId(), equalTo(databaseDefinition.getId()));
+            Database foundDatabase = databaseFeedResponse.results().get(0);
+            assertThat(foundDatabase.id(), equalTo(databaseDefinition.id()));
 
-            System.out.println(databaseFeedResponse.getActivityId());
+            System.out.println(databaseFeedResponse.activityId());
             completionLatch.countDown();
         }, error -> {
             System.err.println("an error occurred while querying the database: actual cause: " + error.getMessage());

@@ -23,7 +23,7 @@
 
 package com.microsoft.azure.cosmosdb.internal;
 
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.ISessionContainer;
 import com.microsoft.azure.cosmosdb.rx.internal.ReplicatedResourceClientUtils;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
@@ -47,7 +47,7 @@ public final class SessionContainer implements ISessionContainer {
     private final Logger logger = LoggerFactory.getLogger(SessionContainer.class);
 
     /**
-     * Session token cache that maps collection ResourceID to session tokens
+     * SESSION token cache that maps collection ResourceID to session tokens
      */
     private final ConcurrentHashMap<Long, ConcurrentHashMap<String, ISessionToken>> collectionResourceIdToSessionTokens = new ConcurrentHashMap<>();
     /**
@@ -211,7 +211,7 @@ public final class SessionContainer implements ISessionContainer {
         partitionKeyRangeId = tokenParts[0];
         parsedSessionToken = SessionTokenHelper.parse(tokenParts[1]);
 
-        logger.trace("Update Session token {} {} {}", resourceId.getUniqueDocumentCollectionId(), collectionName, parsedSessionToken);
+        logger.trace("UPDATE SESSION token {} {} {}", resourceId.getUniqueDocumentCollectionId(), collectionName, parsedSessionToken);
 
         boolean isKnownCollection;
 
@@ -258,7 +258,7 @@ public final class SessionContainer implements ISessionContainer {
                             }
 
                             return existingSessionTokens.merge(newSessionToken);
-                        } catch (DocumentClientException e) {
+                        } catch (CosmosClientException e) {
                             throw new IllegalStateException(e);
                         }
                     });

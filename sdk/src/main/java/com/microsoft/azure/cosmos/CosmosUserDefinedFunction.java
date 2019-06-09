@@ -39,7 +39,7 @@ public class CosmosUserDefinedFunction extends CosmosResource{
     }
 
     /**
-     * Read a user defined function.
+     * READ a user defined function.
      * <p>
      * After subscription the operation will be performed.
      * The {@link Mono} upon successful completion will contain a single resource response for the read user defined 
@@ -98,12 +98,12 @@ public class CosmosUserDefinedFunction extends CosmosResource{
     }
 
     @Override
-    protected String getURIPathSegment() {
+    protected String URIPathSegment() {
         return Paths.USER_DEFINED_FUNCTIONS_PATH_SEGMENT;
     }
 
     @Override
-    protected String getParentLink() {
+    protected String parentLink() {
         return container.getLink();
     }
 }

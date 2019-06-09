@@ -24,7 +24,7 @@
 package com.microsoft.azure.cosmosdb.internal;
 
 import com.microsoft.azure.cosmosdb.BridgeInternal;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.Error;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.HttpUtils;
 import com.microsoft.azure.cosmosdb.rx.internal.RMResources;
@@ -41,7 +41,7 @@ import java.util.Map;
  * No retries should be made in this case, as either split or merge might have happened and query/readfeed
  * must take appropriate actions.
  */
-public class InternalServerErrorException extends DocumentClientException {
+public class InternalServerErrorException extends CosmosClientException {
 
     public InternalServerErrorException() {
         this(RMResources.InternalServerError);

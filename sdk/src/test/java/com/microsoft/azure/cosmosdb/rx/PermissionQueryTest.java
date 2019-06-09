@@ -36,7 +36,7 @@ import org.testng.annotations.Test;
 
 import com.microsoft.azure.cosmosdb.Database;
 import com.microsoft.azure.cosmosdb.DatabaseForTest;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
@@ -46,8 +46,6 @@ import com.microsoft.azure.cosmosdb.User;
 import com.microsoft.azure.cosmosdb.rx.internal.TestSuiteBase;
 
 import rx.Observable;
-
-import javax.net.ssl.SSLException;
 
 //TODO: change to use external TestSuiteBase 
 public class PermissionQueryTest extends TestSuiteBase {
@@ -68,22 +66,22 @@ public class PermissionQueryTest extends TestSuiteBase {
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
     public void queryWithFilter() throws Exception {
 
-        String filterId = createdPermissions.get(0).getId();
+        String filterId = createdPermissions.get(0).id();
         String query = String.format("SELECT * from c where c.id = '%s'", filterId);
 
         FeedOptions options = new FeedOptions();
-        options.setMaxItemCount(5);
+        options.maxItemCount(5);
         Observable<FeedResponse<Permission>> queryObservable = client
                 .queryPermissions(getUserLink(), query, options);
 
-        List<Permission> expectedDocs = createdPermissions.stream().filter(sp -> filterId.equals(sp.getId()) ).collect(Collectors.toList());
+        List<Permission> expectedDocs = createdPermissions.stream().filter(sp -> filterId.equals(sp.id()) ).collect(Collectors.toList());
         assertThat(expectedDocs).isNotEmpty();
 
-        int expectedPageSize = (expectedDocs.size() + options.getMaxItemCount() - 1) / options.getMaxItemCount();
+        int expectedPageSize = (expectedDocs.size() + options.maxItemCount() - 1) / options.maxItemCount();
 
         FeedResponseListValidator<Permission> validator = new FeedResponseListValidator.Builder<Permission>()
                 .totalSize(expectedDocs.size())
-                .exactlyContainsInAnyOrder(expectedDocs.stream().map(d -> d.getResourceId()).collect(Collectors.toList()))
+                .exactlyContainsInAnyOrder(expectedDocs.stream().map(d -> d.resourceId()).collect(Collectors.toList()))
                 .numberOfPages(expectedPageSize)
                 .pageSatisfy(0, new FeedResponseValidator.Builder<Permission>()
                         .requestChargeGreaterThanOrEqualTo(1.0).build())
@@ -96,7 +94,7 @@ public class PermissionQueryTest extends TestSuiteBase {
 
         String query = "SELECT * from root r where r.id = '2'";
         FeedOptions options = new FeedOptions();
-        options.setEnableCrossPartitionQuery(true);
+        options.enableCrossPartitionQuery(true);
         Observable<FeedResponse<Permission>> queryObservable = client
                 .queryPermissions(getUserLink(), query, options);
 
@@ -114,18 +112,18 @@ public class PermissionQueryTest extends TestSuiteBase {
 
         String query = "SELECT * from root";
         FeedOptions options = new FeedOptions();
-        options.setMaxItemCount(3);
-        options.setEnableCrossPartitionQuery(true);
+        options.maxItemCount(3);
+        options.enableCrossPartitionQuery(true);
         Observable<FeedResponse<Permission>> queryObservable = client
                 .queryPermissions(getUserLink(), query, options);
 
-        int expectedPageSize = (createdPermissions.size() + options.getMaxItemCount() - 1) / options.getMaxItemCount();
+        int expectedPageSize = (createdPermissions.size() + options.maxItemCount() - 1) / options.maxItemCount();
 
         FeedResponseListValidator<Permission> validator = new FeedResponseListValidator
                 .Builder<Permission>()
                 .exactlyContainsInAnyOrder(createdPermissions
                         .stream()
-                        .map(d -> d.getResourceId())
+                        .map(d -> d.resourceId())
                         .collect(Collectors.toList()))
                 .numberOfPages(expectedPageSize)
                 .allPagesSatisfy(new FeedResponseValidator.Builder<Permission>()
@@ -138,12 +136,12 @@ public class PermissionQueryTest extends TestSuiteBase {
     public void invalidQuerySytax() throws Exception {
         String query = "I am an invalid query";
         FeedOptions options = new FeedOptions();
-        options.setEnableCrossPartitionQuery(true);
+        options.enableCrossPartitionQuery(true);
         Observable<FeedResponse<Permission>> queryObservable = client
                 .queryPermissions(getUserLink(), query, options);
 
         FailureValidator validator = new FailureValidator.Builder()
-                .instanceOf(DocumentClientException.class)
+                .instanceOf(CosmosClientException.class)
                 .statusCode(400)
                 .notNullActivityId()
                 .build();
@@ -154,9 +152,9 @@ public class PermissionQueryTest extends TestSuiteBase {
     public void beforeClass() {
         client = clientBuilder.build();
         Database d = new Database();
-        d.setId(databaseId);
+        d.id(databaseId);
         createdDatabase = createDatabase(client, d);
-        createdUser = safeCreateUser(client, createdDatabase.getId(), getUserDefinition());
+        createdUser = safeCreateUser(client, createdDatabase.id(), getUserDefinition());
 
         for(int i = 0; i < 5; i++) {
             createdPermissions.add(createPermissions(client, i));
@@ -173,17 +171,17 @@ public class PermissionQueryTest extends TestSuiteBase {
 
     private static User getUserDefinition() {
         User user = new User();
-        user.setId(UUID.randomUUID().toString());
+        user.id(UUID.randomUUID().toString());
         return user;
     }
 
     public Permission createPermissions(AsyncDocumentClient client, int index) {
         DocumentCollection collection = new DocumentCollection();
-        collection.setId(UUID.randomUUID().toString());
+        collection.id(UUID.randomUUID().toString());
         
         Permission permission = new Permission();
-        permission.setId(UUID.randomUUID().toString());
-        permission.setPermissionMode(PermissionMode.Read);
+        permission.id(UUID.randomUUID().toString());
+        permission.setPermissionMode(PermissionMode.READ);
         permission.setResourceLink("dbs/AQAAAA==/colls/AQAAAJ0fgT" + Integer.toString(index) + "=");
         
         return client.createPermission(getUserLink(), permission, null).toBlocking().single().getResource();
@@ -194,10 +192,10 @@ public class PermissionQueryTest extends TestSuiteBase {
     }
 
     private String getDatabaseId() {
-        return createdDatabase.getId();
+        return createdDatabase.id();
     }
 
     private String getUserId() {
-        return createdUser.getId();
+        return createdUser.id();
     }
 }

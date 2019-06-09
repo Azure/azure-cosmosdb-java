@@ -95,7 +95,7 @@ public class DefaultDocumentQueryExecutionContext<T extends Resource> extends Do
     }
 
     protected PartitionKeyInternal getPartitionKeyInternal() {
-        return this.feedOptions.getPartitionKey() == null ? null : feedOptions.getPartitionKey().getInternalPartitionKey();
+        return this.feedOptions.partitionKey() == null ? null : feedOptions.partitionKey().getInternalPartitionKey();
     }
 
     @Override
@@ -112,15 +112,15 @@ public class DefaultDocumentQueryExecutionContext<T extends Resource> extends Do
         // The workaround is to try and parse the continuation token as a composite continuation token.
         // If it is, then we send the query to the gateway with max degree of parallelism to force getting back the query plan
         
-        String originalContinuation = newFeedOptions.getRequestContinuation();
+        String originalContinuation = newFeedOptions.requestContinuation();
         
         if (isClientSideContinuationToken(originalContinuation)) {
             // At this point we know we want back a query plan
-            newFeedOptions.setRequestContinuation(null);
-            newFeedOptions.setMaxDegreeOfParallelism(Integer.MAX_VALUE);
+            newFeedOptions.requestContinuation(null);
+            newFeedOptions.maxDegreeOfParallelism(Integer.MAX_VALUE);
         }
 
-        int maxPageSize = newFeedOptions.getMaxItemCount() != null ? newFeedOptions.getMaxItemCount() : Constants.Properties.DEFAULT_MAX_PAGE_SIZE;
+        int maxPageSize = newFeedOptions.maxItemCount() != null ? newFeedOptions.maxItemCount() : Constants.Properties.DEFAULT_MAX_PAGE_SIZE;
 
         Func2<String, Integer, RxDocumentServiceRequest> createRequestFunc = (continuationToken, pageSize) -> this.createRequestAsync(continuationToken, pageSize);
 
@@ -165,20 +165,20 @@ public class DefaultDocumentQueryExecutionContext<T extends Resource> extends Do
             }, finalRetryPolicyInstance).toObservable()
                     .map(tFeedResponse -> {
                         this.fetchSchedulingMetrics.stop();
-                        this.fetchExecutionRangeAccumulator.endFetchRange(tFeedResponse.getActivityId(),
-                                tFeedResponse.getResults().size(),
+                        this.fetchExecutionRangeAccumulator.endFetchRange(tFeedResponse.activityId(),
+                                tFeedResponse.results().size(),
                                 this.retries);
                         ImmutablePair<String, SchedulingTimeSpan> schedulingTimeSpanMap =
                                 new ImmutablePair<>(DEFAULT_PARTITION_KEY_RANGE_ID, this.fetchSchedulingMetrics.getElapsedTime());
-                        if (!StringUtils.isEmpty(tFeedResponse.getResponseHeaders().get(HttpConstants.HttpHeaders.QUERY_METRICS))) {
+                        if (!StringUtils.isEmpty(tFeedResponse.responseHeaders().get(HttpConstants.HttpHeaders.QUERY_METRICS))) {
                             QueryMetrics qm =
-                                    BridgeInternal.createQueryMetricsFromDelimitedStringAndClientSideMetrics(tFeedResponse.getResponseHeaders()
+                                    BridgeInternal.createQueryMetricsFromDelimitedStringAndClientSideMetrics(tFeedResponse.responseHeaders()
                                                     .get(HttpConstants.HttpHeaders.QUERY_METRICS),
                                             new ClientSideMetrics(this.retries,
-                                                    tFeedResponse.getRequestCharge(),
+                                                    tFeedResponse.requestCharge(),
                                                     this.fetchExecutionRangeAccumulator.getExecutionRanges(),
                                                     Arrays.asList(schedulingTimeSpanMap)),
-                                            tFeedResponse.getActivityId());
+                                            tFeedResponse.activityId());
                             BridgeInternal.putQueryMetricsIntoMap(tFeedResponse, DEFAULT_PARTITION_KEY_RANGE_ID, qm);
                         }
                         return tFeedResponse;
@@ -193,7 +193,7 @@ public class DefaultDocumentQueryExecutionContext<T extends Resource> extends Do
         // The code leaves some temporary garbage in request (in RequestContext etc.),
         // which shold be erased during retries.
 
-        RxDocumentServiceRequest request = this.createRequestAsync(continuationToken, this.feedOptions.getMaxItemCount());
+        RxDocumentServiceRequest request = this.createRequestAsync(continuationToken, this.feedOptions.maxItemCount());
         if (retryPolicyInstance != null) {
             retryPolicyInstance.onBeforeSendRequest(request);
         }
@@ -237,8 +237,8 @@ public class DefaultDocumentQueryExecutionContext<T extends Resource> extends Do
                 this.query,
                 this.getPartitionKeyInternal());
 
-        if (!StringUtils.isEmpty(feedOptions.getPartitionKeyRangeIdInternal())) {
-            request.routeTo(new PartitionKeyRangeIdentity(feedOptions.getPartitionKeyRangeIdInternal()));
+        if (!StringUtils.isEmpty(feedOptions.partitionKeyRangeIdInternal())) {
+            request.routeTo(new PartitionKeyRangeIdentity(feedOptions.partitionKeyRangeIdInternal()));
         }
 
         return request;

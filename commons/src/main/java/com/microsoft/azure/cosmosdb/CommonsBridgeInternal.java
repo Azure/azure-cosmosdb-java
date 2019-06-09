@@ -25,10 +25,10 @@ package com.microsoft.azure.cosmosdb;
 
 public class CommonsBridgeInternal {
     public static boolean isV2(PartitionKeyDefinition pkd) {
-        return pkd.getVersion() != null && PartitionKeyDefinitionVersion.V2.val == pkd.getVersion().val;
+        return pkd.version() != null && PartitionKeyDefinitionVersion.V2.val == pkd.version().val;
     }
 
     public static void setV2(PartitionKeyDefinition pkd) {
-        pkd.setVersion(PartitionKeyDefinitionVersion.V2);
+        pkd.version(PartitionKeyDefinitionVersion.V2);
     }
 }

@@ -31,6 +31,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import com.microsoft.azure.cosmos.CosmosClientBuilder;
+import com.microsoft.azure.cosmos.CosmosItemProperties;
 import com.microsoft.azure.cosmosdb.RetryAnalyzer;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.Protocol;
 import org.testng.SkipException;
@@ -41,7 +42,6 @@ import org.testng.annotations.Test;
 
 import com.microsoft.azure.cosmos.CosmosClient;
 import com.microsoft.azure.cosmos.CosmosContainer;
-import com.microsoft.azure.cosmos.CosmosItemSettings;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.PartitionKey;
@@ -53,7 +53,7 @@ import reactor.core.publisher.Flux;
 
 public class TopQueryTests extends TestSuiteBase {
     private CosmosContainer createdCollection;
-    private ArrayList<CosmosItemSettings> docs = new ArrayList<CosmosItemSettings>();
+    private ArrayList<CosmosItemProperties> docs = new ArrayList<CosmosItemProperties>();
 
     private String partitionKey = "mypk";
     private int firstPk = 0;
@@ -71,26 +71,26 @@ public class TopQueryTests extends TestSuiteBase {
     public void queryDocumentsWithTop(boolean qmEnabled) throws Exception {
 
         FeedOptions options = new FeedOptions();
-        options.setEnableCrossPartitionQuery(true);
-        options.setMaxItemCount(9);
-        options.setMaxDegreeOfParallelism(2);
-        options.setPopulateQueryMetrics(qmEnabled);
+        options.enableCrossPartitionQuery(true);
+        options.maxItemCount(9);
+        options.maxDegreeOfParallelism(2);
+        options.populateQueryMetrics(qmEnabled);
 
         int expectedTotalSize = 20;
         int expectedNumberOfPages = 3;
         int[] expectedPageLengths = new int[] { 9, 9, 2 };
 
         for (int i = 0; i < 2; i++) {
-            Flux<FeedResponse<CosmosItemSettings>> queryObservable1 = createdCollection.queryItems("SELECT TOP 0 value AVG(c.field) from c", options);
+            Flux<FeedResponse<CosmosItemProperties>> queryObservable1 = createdCollection.queryItems("SELECT TOP 0 value AVG(c.field) from c", options);
 
-            FeedResponseListValidator<CosmosItemSettings> validator1 = new FeedResponseListValidator.Builder<CosmosItemSettings>()
+            FeedResponseListValidator<CosmosItemProperties> validator1 = new FeedResponseListValidator.Builder<CosmosItemProperties>()
                     .totalSize(0).build();
 
             try {
                 validateQuerySuccess(queryObservable1, validator1, TIMEOUT);
             } catch (Throwable error) {
                 if (this.clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {
-                    String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s",
+                    String message = String.format("DIRECT TCP test failure ignored: desiredConsistencyLevel=%s",
                             this.clientBuilder.getDesiredConsistencyLevel());
                     logger.info(message, error);
                     throw new SkipException(message, error);
@@ -98,24 +98,24 @@ public class TopQueryTests extends TestSuiteBase {
                 throw error;
             }
 
-            Flux<FeedResponse<CosmosItemSettings>> queryObservable2 = createdCollection.queryItems("SELECT TOP 1 value AVG(c.field) from c", options);
+            Flux<FeedResponse<CosmosItemProperties>> queryObservable2 = createdCollection.queryItems("SELECT TOP 1 value AVG(c.field) from c", options);
 
-            FeedResponseListValidator<CosmosItemSettings> validator2 = new FeedResponseListValidator.Builder<CosmosItemSettings>()
+            FeedResponseListValidator<CosmosItemProperties> validator2 = new FeedResponseListValidator.Builder<CosmosItemProperties>()
                     .totalSize(1).build();
 
             validateQuerySuccess(queryObservable2, validator2, TIMEOUT);
 
-            Flux<FeedResponse<CosmosItemSettings>> queryObservable3 = createdCollection.queryItems("SELECT TOP 20 * from c", options);
+            Flux<FeedResponse<CosmosItemProperties>> queryObservable3 = createdCollection.queryItems("SELECT TOP 20 * from c", options);
 
-            FeedResponseListValidator<CosmosItemSettings> validator3 = new FeedResponseListValidator.Builder<CosmosItemSettings>()
+            FeedResponseListValidator<CosmosItemProperties> validator3 = new FeedResponseListValidator.Builder<CosmosItemProperties>()
                     .totalSize(expectedTotalSize).numberOfPages(expectedNumberOfPages).pageLengths(expectedPageLengths)
                     .hasValidQueryMetrics(qmEnabled).build();
 
             validateQuerySuccess(queryObservable3, validator3, TIMEOUT);
 
             if (i == 0) {
-                options.setPartitionKey(new PartitionKey(firstPk));
-                options.setEnableCrossPartitionQuery(false);
+                options.partitionKey(new PartitionKey(firstPk));
+                options.enableCrossPartitionQuery(false);
 
                 expectedTotalSize = 10;
                 expectedNumberOfPages = 2;
@@ -157,39 +157,39 @@ public class TopQueryTests extends TestSuiteBase {
 
     private void queryWithContinuationTokensAndPageSizes(String query, int[] pageSizes, int topCount) {
         for (int pageSize : pageSizes) {
-            List<CosmosItemSettings> receivedDocuments = this.queryWithContinuationTokens(query, pageSize);
+            List<CosmosItemProperties> receivedDocuments = this.queryWithContinuationTokens(query, pageSize);
             Set<String> actualIds = new HashSet<String>();
-            for (CosmosItemSettings document : receivedDocuments) {
-                actualIds.add(document.getResourceId());
+            for (CosmosItemProperties document : receivedDocuments) {
+                actualIds.add(document.resourceId());
             }
 
             assertThat(actualIds.size()).describedAs("total number of results").isEqualTo(topCount);
         }
     }
 
-    private List<CosmosItemSettings> queryWithContinuationTokens(String query, int pageSize) {
+    private List<CosmosItemProperties> queryWithContinuationTokens(String query, int pageSize) {
         String requestContinuation = null;
         List<String> continuationTokens = new ArrayList<String>();
-        List<CosmosItemSettings> receivedDocuments = new ArrayList<CosmosItemSettings>();
+        List<CosmosItemProperties> receivedDocuments = new ArrayList<CosmosItemProperties>();
 
         do {
             FeedOptions options = new FeedOptions();
-            options.setMaxItemCount(pageSize);
-            options.setEnableCrossPartitionQuery(true);
-            options.setMaxDegreeOfParallelism(2);
-            options.setRequestContinuation(requestContinuation);
-            Flux<FeedResponse<CosmosItemSettings>> queryObservable = createdCollection.queryItems(query, options);
+            options.maxItemCount(pageSize);
+            options.enableCrossPartitionQuery(true);
+            options.maxDegreeOfParallelism(2);
+            options.requestContinuation(requestContinuation);
+            Flux<FeedResponse<CosmosItemProperties>> queryObservable = createdCollection.queryItems(query, options);
 
             //Observable<FeedResponse<Document>> firstPageObservable = queryObservable.first();
-            TestSubscriber<FeedResponse<CosmosItemSettings>> testSubscriber = new TestSubscriber<>();
+            TestSubscriber<FeedResponse<CosmosItemProperties>> testSubscriber = new TestSubscriber<>();
             queryObservable.subscribe(testSubscriber);
             testSubscriber.awaitTerminalEvent(TIMEOUT, TimeUnit.MILLISECONDS);
             testSubscriber.assertNoErrors();
             testSubscriber.assertComplete();
 
-            FeedResponse<CosmosItemSettings> firstPage = (FeedResponse<CosmosItemSettings>) testSubscriber.getEvents().get(0).get(0);
-            requestContinuation = firstPage.getResponseContinuation();
-            receivedDocuments.addAll(firstPage.getResults());
+            FeedResponse<CosmosItemProperties> firstPage = (FeedResponse<CosmosItemProperties>) testSubscriber.getEvents().get(0).get(0);
+            requestContinuation = firstPage.continuationToken();
+            receivedDocuments.addAll(firstPage.results());
             continuationTokens.add(requestContinuation);
         } while (requestContinuation != null);
 
@@ -207,16 +207,16 @@ public class TopQueryTests extends TestSuiteBase {
     public void generateTestData() {
 
         for (int i = 0; i < 10; i++) {
-            CosmosItemSettings d = new CosmosItemSettings();
-            d.setId(Integer.toString(i));
+            CosmosItemProperties d = new CosmosItemProperties();
+            d.id(Integer.toString(i));
             d.set(field, i);
             d.set(partitionKey, firstPk);
             docs.add(d);
         }
 
         for (int i = 10; i < 20; i++) {
-            CosmosItemSettings d = new CosmosItemSettings();
-            d.setId(Integer.toString(i));
+            CosmosItemProperties d = new CosmosItemProperties();
+            d.id(Integer.toString(i));
             d.set(field, i);
             d.set(partitionKey, secondPk);
             docs.add(d);

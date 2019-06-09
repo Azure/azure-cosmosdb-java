@@ -102,7 +102,7 @@ public class CosmosPermissionSettings extends Resource {
         return super.getString(Constants.Properties.TOKEN);
     }
 
-    //TODO: need getValue from JsonSerializable
+    //TODO: need value from JsonSerializable
 //    /**
 //     * Gets the resource partition key associated with this permission object.
 //     *
@@ -113,7 +113,7 @@ public class CosmosPermissionSettings extends Resource {
 //        Object value = super.get(Constants.Properties.RESOURCE_PARTITION_KEY);
 //        if (value != null) {
 //            ArrayNode arrayValue = (ArrayNode) value;
-//            key = new PartitionKey(getValue(arrayValue.get(0)));
+//            key = new PartitionKey(value(arrayValue.get(0)));
 //        }
 //
 //        return key;

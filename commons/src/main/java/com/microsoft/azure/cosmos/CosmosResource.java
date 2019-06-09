@@ -33,35 +33,36 @@ public abstract class CosmosResource {
         this.id = id;
     }
 
-    public String getId() {
+    public String id() {
         return id;
     }
 
-    protected void setId(String id) {
+    protected CosmosResource id(String id) {
         this.id = id;
+        return this;
     }
 
-    protected abstract String getURIPathSegment();
-    protected abstract String getParentLink();
+    protected abstract String URIPathSegment();
+    protected abstract String parentLink();
 
     String getLink() {
         StringBuilder builder = new StringBuilder();
-        builder.append(getParentLink());
+        builder.append(parentLink());
         builder.append("/");
-        builder.append(getURIPathSegment());
+        builder.append(URIPathSegment());
         builder.append("/");
-        builder.append(getId());
+        builder.append(id());
         return builder.toString();
     }
 
     protected static void validateResource(Resource resource) {
-        if (!StringUtils.isEmpty(resource.getId())) {
-            if (resource.getId().indexOf('/') != -1 || resource.getId().indexOf('\\') != -1 ||
-                    resource.getId().indexOf('?') != -1 || resource.getId().indexOf('#') != -1) {
+        if (!StringUtils.isEmpty(resource.id())) {
+            if (resource.id().indexOf('/') != -1 || resource.id().indexOf('\\') != -1 ||
+                    resource.id().indexOf('?') != -1 || resource.id().indexOf('#') != -1) {
                 throw new IllegalArgumentException("Id contains illegal chars.");
             }
 
-            if (resource.getId().endsWith(" ")) {
+            if (resource.id().endsWith(" ")) {
                 throw new IllegalArgumentException("Id ends with a space.");
             }
         }

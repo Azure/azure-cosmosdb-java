@@ -67,15 +67,15 @@ public class ReadFeedCollectionsTest extends TestSuiteBase {
     public void readCollections() throws Exception {
 
         FeedOptions options = new FeedOptions();
-        options.setMaxItemCount(2);
+        options.maxItemCount(2);
 
         Flux<FeedResponse<CosmosContainerSettings>> feedObservable = createdDatabase.listContainers(options);
 
-        int expectedPageSize = (createdCollections.size() + options.getMaxItemCount() - 1) / options.getMaxItemCount();
+        int expectedPageSize = (createdCollections.size() + options.maxItemCount() - 1) / options.maxItemCount();
 
         FeedResponseListValidator<CosmosContainerSettings> validator = new FeedResponseListValidator.Builder<CosmosContainerSettings>()
                 .totalSize(createdCollections.size())
-                .exactlyContainsInAnyOrder(createdCollections.stream().map(d -> d.read().block().getCosmosContainerSettings().getResourceId()).collect(Collectors.toList()))
+                .exactlyContainsInAnyOrder(createdCollections.stream().map(d -> d.read().block().settings().resourceId()).collect(Collectors.toList()))
                 .numberOfPages(expectedPageSize)
                 .pageSatisfy(0, new FeedResponseValidator.Builder<CosmosContainerSettings>()
                         .requestChargeGreaterThanOrEqualTo(1.0).build())
@@ -105,8 +105,8 @@ public class ReadFeedCollectionsTest extends TestSuiteBase {
         PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition();
         ArrayList<String> paths = new ArrayList<String>();
         paths.add("/mypk");
-        partitionKeyDef.setPaths(paths);
+        partitionKeyDef.paths(paths);
         CosmosContainerSettings collection = new CosmosContainerSettings(UUID.randomUUID().toString(), partitionKeyDef);
-        return database.createContainer(collection, new CosmosContainerRequestOptions()).block().getContainer();
+        return database.createContainer(collection, new CosmosContainerRequestOptions()).block().container();
     }
 }

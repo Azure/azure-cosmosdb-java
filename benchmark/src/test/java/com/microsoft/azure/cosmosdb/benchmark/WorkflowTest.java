@@ -56,14 +56,14 @@ public class WorkflowTest {
     public void readMyWritesCLI() throws Exception {
         String cmdFormat = "-serviceEndpoint %s -masterKey %s" +
                 " -databaseId %s -collectionId %s" +
-                " -consistencyLevel Session -concurrency 2 -numberOfOperations 123" +
-                " -operation ReadMyWrites -connectionMode Direct -numberOfPreCreatedDocuments 100";
+                " -consistencyLevel SESSION -concurrency 2 -numberOfOperations 123" +
+                " -operation ReadMyWrites -connectionMode DIRECT -numberOfPreCreatedDocuments 100";
 
         String cmd = String.format(cmdFormat,
                                    TestConfigurations.HOST,
                                    TestConfigurations.MASTER_KEY,
-                                   database.getId(),
-                                   collection.getId());
+                                   database.id(),
+                                   collection.id());
         Main.main(StringUtils.split(cmd));
     }
 
@@ -72,14 +72,14 @@ public class WorkflowTest {
         int numberOfOperations = 123;
         String cmdFormat = "-serviceEndpoint %s -masterKey %s" +
                 " -databaseId %s -collectionId %s" +
-                " -consistencyLevel Session -concurrency 2 -numberOfOperations %s" +
-                " -operation ReadMyWrites -connectionMode Direct -numberOfPreCreatedDocuments 100";
+                " -consistencyLevel SESSION -concurrency 2 -numberOfOperations %s" +
+                " -operation ReadMyWrites -connectionMode DIRECT -numberOfPreCreatedDocuments 100";
 
         String cmd = String.format(cmdFormat,
                                    TestConfigurations.HOST,
                                    TestConfigurations.MASTER_KEY,
-                                   database.getId(),
-                                   collection.getId(),
+                                   database.id(),
+                                   collection.id(),
                                    numberOfOperations)
                 + (useNameLink ? " -useNameLink" : "");
 
@@ -112,14 +112,14 @@ public class WorkflowTest {
     public void writeLatencyCLI() throws Exception {
         String cmdFormat = "-serviceEndpoint %s -masterKey %s" +
                 " -databaseId %s -collectionId %s" +
-                " -consistencyLevel Session -concurrency 2 -numberOfOperations 1000" +
-                " -operation WriteLatency -connectionMode Direct";
+                " -consistencyLevel SESSION -concurrency 2 -numberOfOperations 1000" +
+                " -operation WriteLatency -connectionMode DIRECT";
 
         String cmd = String.format(cmdFormat,
                                    TestConfigurations.HOST,
                                    TestConfigurations.MASTER_KEY,
-                                   database.getId(),
-                                   collection.getId());
+                                   database.id(),
+                                   collection.id());
         Main.main(StringUtils.split(cmd));
     }
 
@@ -128,14 +128,14 @@ public class WorkflowTest {
         int numberOfOperations = 123;
         String cmdFormat = "-serviceEndpoint %s -masterKey %s" +
                 " -databaseId %s -collectionId %s" +
-                " -consistencyLevel Session -concurrency 2 -numberOfOperations %s" +
-                " -operation WriteLatency -connectionMode Direct";
+                " -consistencyLevel SESSION -concurrency 2 -numberOfOperations %s" +
+                " -operation WriteLatency -connectionMode DIRECT";
 
         String cmd = String.format(cmdFormat,
                                    TestConfigurations.HOST,
                                    TestConfigurations.MASTER_KEY,
-                                   database.getId(),
-                                   collection.getId(),
+                                   database.id(),
+                                   collection.id(),
                                    numberOfOperations)
                 + (useNameLink ? " -useNameLink" : "");
 
@@ -169,14 +169,14 @@ public class WorkflowTest {
         int numberOfOperations = 123;
         String cmdFormat = "-serviceEndpoint %s -masterKey %s" +
                 " -databaseId %s -collectionId %s" +
-                " -consistencyLevel Session -concurrency 2 -numberOfOperations %s" +
-                " -operation WriteThroughput -connectionMode Direct";
+                " -consistencyLevel SESSION -concurrency 2 -numberOfOperations %s" +
+                " -operation WriteThroughput -connectionMode DIRECT";
 
         String cmd = String.format(cmdFormat,
                                    TestConfigurations.HOST,
                                    TestConfigurations.MASTER_KEY,
-                                   database.getId(),
-                                   collection.getId(),
+                                   database.id(),
+                                   collection.id(),
                                    numberOfOperations)
                 + (useNameLink ? " -useNameLink" : "");
 
@@ -210,14 +210,14 @@ public class WorkflowTest {
         int numberOfOperations = 123;
         String cmdFormat = "-serviceEndpoint %s -masterKey %s" +
                 " -databaseId %s -collectionId %s" +
-                " -consistencyLevel Session -concurrency 2 -numberOfOperations %s" +
-                " -operation ReadLatency -connectionMode Direct";
+                " -consistencyLevel SESSION -concurrency 2 -numberOfOperations %s" +
+                " -operation ReadLatency -connectionMode DIRECT";
 
         String cmd = String.format(cmdFormat,
                                    TestConfigurations.HOST,
                                    TestConfigurations.MASTER_KEY,
-                                   database.getId(),
-                                   collection.getId(),
+                                   database.id(),
+                                   collection.id(),
                                    numberOfOperations)
                 + (useNameLink ? " -useNameLink" : "");
 
@@ -251,14 +251,14 @@ public class WorkflowTest {
         int numberOfOperations = 123;
         String cmdFormat = "-serviceEndpoint %s -masterKey %s" +
                 " -databaseId %s -collectionId %s" +
-                " -consistencyLevel Session -concurrency 2 -numberOfOperations %s" +
-                " -operation ReadThroughput -connectionMode Direct";
+                " -consistencyLevel SESSION -concurrency 2 -numberOfOperations %s" +
+                " -operation ReadThroughput -connectionMode DIRECT";
 
         String cmd = String.format(cmdFormat,
                                    TestConfigurations.HOST,
                                    TestConfigurations.MASTER_KEY,
-                                   database.getId(),
-                                   collection.getId(),
+                                   database.id(),
+                                   collection.id(),
                                    numberOfOperations)
                 + (useNameLink ? " -useNameLink" : "");
 
@@ -293,7 +293,7 @@ public class WorkflowTest {
         options.setOfferThroughput(10000);
         AsyncDocumentClient housekeepingClient = Utils.housekeepingClient();
         database = Utils.createDatabaseForTest(housekeepingClient);
-        collection = housekeepingClient.createCollection("dbs/"+ database.getId(),
+        collection = housekeepingClient.createCollection("dbs/"+ database.id(),
                                                          getCollectionDefinitionWithRangeRangeIndex(),
                                                          options)
                 .toBlocking().single().getResource();
@@ -321,26 +321,26 @@ public class WorkflowTest {
         PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition();
         ArrayList<String> paths = new ArrayList<>();
         paths.add("/mypk");
-        partitionKeyDef.setPaths(paths);
+        partitionKeyDef.paths(paths);
         IndexingPolicy indexingPolicy = new IndexingPolicy();
         Collection<IncludedPath> includedPaths = new ArrayList<>();
         IncludedPath includedPath = new IncludedPath();
-        includedPath.setPath("/*");
+        includedPath.path("/*");
         Collection<Index> indexes = new ArrayList<>();
-        Index stringIndex = Index.Range(DataType.String);
+        Index stringIndex = Index.Range(DataType.STRING);
         stringIndex.set("precision", -1);
         indexes.add(stringIndex);
 
-        Index numberIndex = Index.Range(DataType.Number);
+        Index numberIndex = Index.Range(DataType.NUMBER);
         numberIndex.set("precision", -1);
         indexes.add(numberIndex);
-        includedPath.setIndexes(indexes);
+        includedPath.indexes(indexes);
         includedPaths.add(includedPath);
         indexingPolicy.setIncludedPaths(includedPaths);
 
         DocumentCollection collectionDefinition = new DocumentCollection();
         collectionDefinition.setIndexingPolicy(indexingPolicy);
-        collectionDefinition.setId(UUID.randomUUID().toString());
+        collectionDefinition.id(UUID.randomUUID().toString());
         collectionDefinition.setPartitionKey(partitionKeyDef);
 
         return collectionDefinition;

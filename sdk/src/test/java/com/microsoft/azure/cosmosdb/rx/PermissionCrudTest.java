@@ -24,7 +24,6 @@ package com.microsoft.azure.cosmosdb.rx;
 
 import java.util.UUID;
 
-import com.microsoft.azure.cosmosdb.Document;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
@@ -35,12 +34,9 @@ import com.microsoft.azure.cosmosdb.Permission;
 import com.microsoft.azure.cosmosdb.PermissionMode;
 import com.microsoft.azure.cosmosdb.ResourceResponse;
 import com.microsoft.azure.cosmosdb.User;
-import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import com.microsoft.azure.cosmosdb.rx.internal.TestSuiteBase;
 
 import rx.Observable;
-
-import javax.net.ssl.SSLException;
 
 //TODO: change to use external TestSuiteBase 
 public class PermissionCrudTest extends TestSuiteBase {
@@ -58,11 +54,11 @@ public class PermissionCrudTest extends TestSuiteBase {
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
     public void createPermission() throws Exception {
 
-        createdUser = safeCreateUser(client, createdDatabase.getId(), getUserDefinition());
+        createdUser = safeCreateUser(client, createdDatabase.id(), getUserDefinition());
         //create permission
         Permission permission = new Permission();
-        permission.setId(UUID.randomUUID().toString());
-        permission.setPermissionMode(PermissionMode.Read);
+        permission.id(UUID.randomUUID().toString());
+        permission.setPermissionMode(PermissionMode.READ);
         permission.setResourceLink("dbs/AQAAAA==/colls/AQAAAJ0fgTc=");
         
 
@@ -70,8 +66,8 @@ public class PermissionCrudTest extends TestSuiteBase {
 
         // validate permission creation
         ResourceResponseValidator<Permission> validator = new ResourceResponseValidator.Builder<Permission>()
-                .withId(permission.getId())
-                .withPermissionMode(PermissionMode.Read)
+                .withId(permission.id())
+                .withPermissionMode(PermissionMode.READ)
                 .withPermissionResourceLink("dbs/AQAAAA==/colls/AQAAAJ0fgTc=")
                 .notNullEtag()
                 .build();
@@ -80,22 +76,22 @@ public class PermissionCrudTest extends TestSuiteBase {
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
     public void readPermission() throws Exception {
-        createdUser = safeCreateUser(client, createdDatabase.getId(), getUserDefinition());
+        createdUser = safeCreateUser(client, createdDatabase.id(), getUserDefinition());
         
         // create permission
         Permission permission = new Permission();
-        permission.setId(UUID.randomUUID().toString());
-        permission.setPermissionMode(PermissionMode.Read);
+        permission.id(UUID.randomUUID().toString());
+        permission.setPermissionMode(PermissionMode.READ);
         permission.setResourceLink("dbs/AQAAAA==/colls/AQAAAJ0fgTc=");
         Permission readBackPermission = client.createPermission(getUserLink(), permission, null).toBlocking().single().getResource();
 
         // read Permission
-        Observable<ResourceResponse<Permission>> readObservable = client.readPermission(readBackPermission.getSelfLink(), null);
+        Observable<ResourceResponse<Permission>> readObservable = client.readPermission(readBackPermission.selfLink(), null);
 
         // validate permission read
         ResourceResponseValidator<Permission> validator = new ResourceResponseValidator.Builder<Permission>()
-                .withId(permission.getId())
-                .withPermissionMode(PermissionMode.Read)
+                .withId(permission.id())
+                .withPermissionMode(PermissionMode.READ)
                 .withPermissionResourceLink("dbs/AQAAAA==/colls/AQAAAJ0fgTc=")
                 .notNullEtag()
                 .build();
@@ -105,17 +101,17 @@ public class PermissionCrudTest extends TestSuiteBase {
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
     public void deletePermission() throws Exception {
         
-        createdUser = safeCreateUser(client, createdDatabase.getId(), getUserDefinition());
+        createdUser = safeCreateUser(client, createdDatabase.id(), getUserDefinition());
         
         // create permission
         Permission permission = new Permission();
-        permission.setId(UUID.randomUUID().toString());
-        permission.setPermissionMode(PermissionMode.Read);
+        permission.id(UUID.randomUUID().toString());
+        permission.setPermissionMode(PermissionMode.READ);
         permission.setResourceLink("dbs/AQAAAA==/colls/AQAAAJ0fgTc=");
         Permission readBackPermission = client.createPermission(getUserLink(), permission, null).toBlocking().single().getResource();
         
         // delete
-        Observable<ResourceResponse<Permission>> deleteObservable = client.deletePermission(readBackPermission.getSelfLink(), null);
+        Observable<ResourceResponse<Permission>> deleteObservable = client.deletePermission(readBackPermission.selfLink(), null);
 
         // validate delete permission
         ResourceResponseValidator<Permission> validator = new ResourceResponseValidator.Builder<Permission>()
@@ -126,7 +122,7 @@ public class PermissionCrudTest extends TestSuiteBase {
         waitIfNeededForReplicasToCatchUp(clientBuilder);
 
         // attempt to read the permission which was deleted
-        Observable<ResourceResponse<Permission>> readObservable = client.readPermission(readBackPermission.getSelfLink(), null);
+        Observable<ResourceResponse<Permission>> readObservable = client.readPermission(readBackPermission.selfLink(), null);
         FailureValidator notFoundValidator = new FailureValidator.Builder().resourceNotFound().build();
         validateFailure(readObservable, notFoundValidator);
     }
@@ -134,36 +130,36 @@ public class PermissionCrudTest extends TestSuiteBase {
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
     public void upsertPermission() throws Exception {
         
-        createdUser = safeCreateUser(client, createdDatabase.getId(), getUserDefinition());
+        createdUser = safeCreateUser(client, createdDatabase.id(), getUserDefinition());
         
         // create permission
         Permission permission = new Permission();
-        permission.setId(UUID.randomUUID().toString());
-        permission.setPermissionMode(PermissionMode.Read);
+        permission.id(UUID.randomUUID().toString());
+        permission.setPermissionMode(PermissionMode.READ);
         permission.setResourceLink("dbs/AQAAAA==/colls/AQAAAJ0fgTc=");
         Permission readBackPermission = client.upsertPermission(getUserLink(), permission, null).toBlocking().single().getResource();
 
         // read Permission
-        Observable<ResourceResponse<Permission>> readObservable = client.readPermission(readBackPermission.getSelfLink(), null);
+        Observable<ResourceResponse<Permission>> readObservable = client.readPermission(readBackPermission.selfLink(), null);
 
         // validate permission creation
         ResourceResponseValidator<Permission> validatorForRead = new ResourceResponseValidator.Builder<Permission>()
-                .withId(readBackPermission.getId())
-                .withPermissionMode(PermissionMode.Read)
+                .withId(readBackPermission.id())
+                .withPermissionMode(PermissionMode.READ)
                 .withPermissionResourceLink("dbs/AQAAAA==/colls/AQAAAJ0fgTc=")
                 .notNullEtag()
                 .build();
         validateSuccess(readObservable, validatorForRead);
         
         //update permission
-        readBackPermission.setPermissionMode(PermissionMode.All);
+        readBackPermission.setPermissionMode(PermissionMode.ALL);
 
         Observable<ResourceResponse<Permission>> updateObservable = client.upsertPermission(getUserLink(), readBackPermission, null);
 
         // validate permission update
         ResourceResponseValidator<Permission> validatorForUpdate = new ResourceResponseValidator.Builder<Permission>()
-                .withId(readBackPermission.getId())
-                .withPermissionMode(PermissionMode.All)
+                .withId(readBackPermission.id())
+                .withPermissionMode(PermissionMode.ALL)
                 .withPermissionResourceLink("dbs/AQAAAA==/colls/AQAAAJ0fgTc=")
                 .notNullEtag()
                 .build();
@@ -173,36 +169,36 @@ public class PermissionCrudTest extends TestSuiteBase {
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
     public void replacePermission() throws Exception {
         
-        createdUser = safeCreateUser(client, createdDatabase.getId(), getUserDefinition());
+        createdUser = safeCreateUser(client, createdDatabase.id(), getUserDefinition());
         
         // create permission
         Permission permission = new Permission();
-        permission.setId(UUID.randomUUID().toString());
-        permission.setPermissionMode(PermissionMode.Read);
+        permission.id(UUID.randomUUID().toString());
+        permission.setPermissionMode(PermissionMode.READ);
         permission.setResourceLink("dbs/AQAAAA==/colls/AQAAAJ0fgTc=");
         Permission readBackPermission = client.createPermission(getUserLink(), permission, null).toBlocking().single().getResource();
 
         // read Permission
-        Observable<ResourceResponse<Permission>> readObservable = client.readPermission(readBackPermission.getSelfLink(), null);
+        Observable<ResourceResponse<Permission>> readObservable = client.readPermission(readBackPermission.selfLink(), null);
 
         // validate permission creation
         ResourceResponseValidator<Permission> validatorForRead = new ResourceResponseValidator.Builder<Permission>()
-                .withId(readBackPermission.getId())
-                .withPermissionMode(PermissionMode.Read)
+                .withId(readBackPermission.id())
+                .withPermissionMode(PermissionMode.READ)
                 .withPermissionResourceLink("dbs/AQAAAA==/colls/AQAAAJ0fgTc=")
                 .notNullEtag()
                 .build();
         validateSuccess(readObservable, validatorForRead);
         
         //update permission
-        readBackPermission.setPermissionMode(PermissionMode.All);
+        readBackPermission.setPermissionMode(PermissionMode.ALL);
 
         Observable<ResourceResponse<Permission>> updateObservable = client.replacePermission(readBackPermission, null);
 
         // validate permission replace
         ResourceResponseValidator<Permission> validatorForUpdate = new ResourceResponseValidator.Builder<Permission>()
-                .withId(readBackPermission.getId())
-                .withPermissionMode(PermissionMode.All)
+                .withId(readBackPermission.id())
+                .withPermissionMode(PermissionMode.ALL)
                 .withPermissionResourceLink("dbs/AQAAAA==/colls/AQAAAJ0fgTc=")
                 .notNullEtag()
                 .build();
@@ -222,11 +218,11 @@ public class PermissionCrudTest extends TestSuiteBase {
 
     private static User getUserDefinition() {
         User user = new User();
-        user.setId(UUID.randomUUID().toString());
+        user.id(UUID.randomUUID().toString());
         return user;
     }
     
     private String getUserLink() {
-        return createdUser.getSelfLink();
+        return createdUser.selfLink();
     }
 }

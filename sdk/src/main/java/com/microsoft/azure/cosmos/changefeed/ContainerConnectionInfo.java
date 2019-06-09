@@ -44,7 +44,7 @@ public class ContainerConnectionInfo {
      */
     public ContainerConnectionInfo() {
         this.connectionPolicy = new ConnectionPolicy();
-        this.consistencyLevel = ConsistencyLevel.Session;
+        this.consistencyLevel = ConsistencyLevel.SESSION;
     }
 
     /**
@@ -71,7 +71,7 @@ public class ContainerConnectionInfo {
     }
 
     /**
-     * Gets the consistency level; default is "Session".
+     * Gets the consistency level; default is "SESSION".
      * @return the consistency level.
      */
     public ConsistencyLevel getConsistencyLevel() {

@@ -60,7 +60,7 @@ public final class Database extends Resource {
      */
     public String getCollectionsLink() {
         return String.format("%s/%s",
-                StringUtils.stripEnd(super.getSelfLink(), "/"),
+                StringUtils.stripEnd(super.selfLink(), "/"),
                 super.getString(Constants.Properties.COLLECTIONS_LINK));
     }
 
@@ -71,7 +71,7 @@ public final class Database extends Resource {
      */
     public String getUsersLink() {
         return String.format("%s/%s",
-                StringUtils.stripEnd(super.getSelfLink(), "/"),
+                StringUtils.stripEnd(super.selfLink(), "/"),
                 super.getString(Constants.Properties.USERS_LINK));
     }
 }

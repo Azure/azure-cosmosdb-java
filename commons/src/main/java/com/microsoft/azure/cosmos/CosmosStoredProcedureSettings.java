@@ -22,16 +22,19 @@
  */
 package com.microsoft.azure.cosmos;
 
+import com.microsoft.azure.cosmosdb.Resource;
 import com.microsoft.azure.cosmosdb.ResourceResponse;
 import com.microsoft.azure.cosmosdb.StoredProcedure;
+import com.microsoft.azure.cosmosdb.internal.Constants;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class CosmosStoredProcedureSettings extends StoredProcedure {
+public class CosmosStoredProcedureSettings extends Resource {
 
     /**
-     * Constructor
+     * Constructor.
+     *
      */
     public CosmosStoredProcedureSettings() {
         super();
@@ -46,8 +49,38 @@ public class CosmosStoredProcedureSettings extends StoredProcedure {
         super(jsonString);
     }
 
+    /**
+     * Constructor.
+     *
+     * @param id the id of the stored procedure
+     * @param body the body of the stored procedure
+     */
+    public CosmosStoredProcedureSettings(String id, String body) {
+        super();
+        super.id(id);
+        this.body(body);
+    }
+
     CosmosStoredProcedureSettings(ResourceResponse<StoredProcedure> response) {
         super(response.getResource().toJson());
+    }
+
+    /**
+     * Get the body of the stored procedure.
+     *
+     * @return the body of the stored procedure.
+     */
+    public String body() {
+        return super.getString(Constants.Properties.BODY);
+    }
+
+    /**
+     * Set the body of the stored procedure.
+     *
+     * @param body the body of the stored procedure.
+     */
+    public void body(String body) {
+        super.set(Constants.Properties.BODY, body);
     }
 
 

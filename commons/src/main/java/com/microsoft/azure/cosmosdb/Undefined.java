@@ -31,7 +31,7 @@ public class Undefined extends JsonSerializable {
     private final static Undefined value = new Undefined();
     
     /**
-     * Constructor. Create a new instance of the Undefined object.
+     * Constructor. CREATE a new instance of the Undefined object.
     */
     private Undefined() {
     }

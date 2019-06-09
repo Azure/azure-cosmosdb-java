@@ -29,7 +29,7 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
@@ -52,7 +52,7 @@ import rx.functions.Func1;
  * 
  * This class is used as a proxy to wrap the
  * DefaultDocumentQueryExecutionContext which is needed for sending the query to
- * Gateway first and then uses PipelinedDocumentQueryExecutionContext after it
+ * GATEWAY first and then uses PipelinedDocumentQueryExecutionContext after it
  * gets the necessary info.
  */
 public class ProxyDocumentQueryExecutionContext<T extends Resource> implements IDocumentQueryExecutionContext<T> {
@@ -115,17 +115,17 @@ public class ProxyDocumentQueryExecutionContext<T extends Resource> implements I
 
             // cross partition query construct pipeline
 
-            DocumentClientException dce = (DocumentClientException) t;
+            CosmosClientException dce = (CosmosClientException) t;
 
             PartitionedQueryExecutionInfo partitionedQueryExecutionInfo = new
-                    PartitionedQueryExecutionInfo(dce.getError().getPartitionedQueryExecutionInfo());
+                    PartitionedQueryExecutionInfo(dce.error().getPartitionedQueryExecutionInfo());
 
             logger.debug("Query Plan from gateway {}", partitionedQueryExecutionInfo);
 
             DefaultDocumentQueryExecutionContext<T> queryExecutionContext =
                     (DefaultDocumentQueryExecutionContext<T>) this.innerExecutionContext;
 
-            Single<List<PartitionKeyRange>> partitionKeyRanges = queryExecutionContext.getTargetPartitionKeyRanges(collection.getResourceId(),
+            Single<List<PartitionKeyRange>> partitionKeyRanges = queryExecutionContext.getTargetPartitionKeyRanges(collection.resourceId(),
                     partitionedQueryExecutionInfo.getQueryRanges());
 
             Observable<IDocumentQueryExecutionContext<T>> exContext = partitionKeyRanges.toObservable()
@@ -140,7 +140,7 @@ public class ProxyDocumentQueryExecutionContext<T extends Resource> implements I
                                 isContinuationExpected,
                                 partitionedQueryExecutionInfo,
                                 pkranges,
-                                this.collection.getResourceId(),
+                                this.collection.resourceId(),
                                 this.correlatedActivityId);
                         });
 
@@ -152,7 +152,7 @@ public class ProxyDocumentQueryExecutionContext<T extends Resource> implements I
 
     private boolean isCrossPartitionQuery(Exception exception) {
 
-        DocumentClientException clientException = Utils.as(exception, DocumentClientException.class);
+        CosmosClientException clientException = Utils.as(exception, CosmosClientException.class);
 
         if (clientException == null) {
             return false;

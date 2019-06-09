@@ -39,7 +39,7 @@ public abstract class Index extends JsonSerializable {
      */
     protected Index(IndexKind indexKind) {
         super();
-        this.setKind(indexKind);
+        this.kind(indexKind);
     }
 
     /**
@@ -50,7 +50,7 @@ public abstract class Index extends JsonSerializable {
      */
     protected Index(String jsonString, IndexKind indexKind) {
         super(jsonString);
-        this.setKind(indexKind);
+        this.kind(indexKind);
     }
 
     /**
@@ -60,7 +60,7 @@ public abstract class Index extends JsonSerializable {
      * <pre>
      * {@code
      *
-     * RangeIndex rangeIndex = Index.Range(DataType.Number);
+     * RangeIndex rangeIndex = Index.RANGE(DataType.NUMBER);
      *
      * }
      * </pre>
@@ -79,7 +79,7 @@ public abstract class Index extends JsonSerializable {
      * <pre>
      * {@code
      *
-     * RangeIndex rangeIndex = Index.Range(DataType.Number, -1);
+     * RangeIndex rangeIndex = Index.RANGE(DataType.NUMBER, -1);
      *
      * }
      * </pre>
@@ -99,7 +99,7 @@ public abstract class Index extends JsonSerializable {
      * <pre>
      * {@code
      *
-     * HashIndex hashIndex = Index.Hash(DataType.String);
+     * HashIndex hashIndex = Index.HASH(DataType.STRING);
      * }
      * </pre>
      *
@@ -115,7 +115,7 @@ public abstract class Index extends JsonSerializable {
      * <p>
      * Here is an example to create HashIndex instance passing in the DataType and precision:
      * <p>
-     * HashIndex hashIndex = Index.Hash(DataType.String, 3);
+     * HashIndex hashIndex = Index.HASH(DataType.STRING, 3);
      *
      * @param dataType  specifies the target data type for the index path specification.
      * @param precision specifies the precision to be used for the data type associated with this index.
@@ -130,7 +130,7 @@ public abstract class Index extends JsonSerializable {
      * <p>
      * Here is an example to create SpatialIndex instance passing in the DataType:
      * <p>
-     * SpatialIndex spatialIndex = Index.Spatial(DataType.Point);
+     * SpatialIndex spatialIndex = Index.SPATIAL(DataType.POINT);
      *
      * @param dataType specifies the target data type for the index path specification.
      * @return an instance of SpatialIndex type.
@@ -144,12 +144,12 @@ public abstract class Index extends JsonSerializable {
      *
      * @return the index kind.
      */
-    public IndexKind getKind() {
+    public IndexKind kind() {
         IndexKind result = null;
         try {
             result = IndexKind.valueOf(WordUtils.capitalize(super.getString(Constants.Properties.INDEX_KIND)));
         } catch (IllegalArgumentException e) {
-            this.getLogger().warn("Invalid index kind value %s.", super.getString(Constants.Properties.INDEX_KIND));
+            this.getLogger().warn("INVALID index kind value %s.", super.getString(Constants.Properties.INDEX_KIND));
         }
 
         return result;
@@ -160,7 +160,8 @@ public abstract class Index extends JsonSerializable {
      *
      * @param indexKind the index kind.
      */
-    private void setKind(IndexKind indexKind) {
+    private Index kind(IndexKind indexKind) {
         super.set(Constants.Properties.INDEX_KIND, indexKind.name());
+        return this;
     }
 }

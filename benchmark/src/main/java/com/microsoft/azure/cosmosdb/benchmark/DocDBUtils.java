@@ -42,10 +42,10 @@ class DocDBUtils {
                         new SqlParameterCollection(new SqlParameter("@id", databaseId))), null)
                 .toBlocking().single();
 
-        if (feedResponsePages.getResults().isEmpty()) {
+        if (feedResponsePages.results().isEmpty()) {
             throw new RuntimeException("cannot find datatbase " + databaseId);
         }
-        return feedResponsePages.getResults().get(0);
+        return feedResponsePages.results().get(0);
     }
 
     static DocumentCollection getCollection(AsyncDocumentClient client, String databaseLink,
@@ -57,9 +57,9 @@ class DocDBUtils {
                         null)
                 .toBlocking().single();
 
-        if (feedResponsePages.getResults().isEmpty()) {
+        if (feedResponsePages.results().isEmpty()) {
             throw new RuntimeException("cannot find collection " + collectionId);
         }
-        return feedResponsePages.getResults().get(0);
+        return feedResponsePages.results().get(0);
     }
 }

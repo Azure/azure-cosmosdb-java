@@ -48,20 +48,20 @@ public class CosmosItemCrudTest extends CosmosTestSuiteBase {
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
     public void testCreateItem() throws Exception {
         CosmosContainer container = client.getDatabase(PRE_EXISTING_DATABASE_ID).getContainer(PRE_EXISTING_CONTAINER_ID);
-        CosmosItemSettings itemDefinition = getItemDefinition();
+        CosmosItemProperties itemDefinition = getItemDefinition();
         // create the item
         Mono<CosmosItemResponse> createMono = container.createItem(itemDefinition, "mypk");
         
         // validate
         CosmosResponseValidator<CosmosItemResponse> validator = new CosmosResponseValidator.Builder<CosmosItemResponse>()
-                .withId(itemDefinition.getId()).build();
+                .withId(itemDefinition.id()).build();
         validateSuccess(createMono, validator);
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
     public void testCreateItem_AlreadyExists() throws Exception {
         CosmosContainer container = client.getDatabase(PRE_EXISTING_DATABASE_ID).getContainer(PRE_EXISTING_CONTAINER_ID);
-        CosmosItemSettings itemDefinition = getItemDefinition();
+        CosmosItemProperties itemDefinition = getItemDefinition();
         // create the item
         container.createItem(itemDefinition, itemDefinition.get("mypk")).block();
         
@@ -77,23 +77,23 @@ public class CosmosItemCrudTest extends CosmosTestSuiteBase {
     public void testReadItem() throws Exception {
         // read item
         CosmosContainer container = client.getDatabase(PRE_EXISTING_DATABASE_ID).getContainer(PRE_EXISTING_CONTAINER_ID);
-        CosmosItemSettings itemDefinition = getItemDefinition();
+        CosmosItemProperties itemDefinition = getItemDefinition();
         // create the item
-        CosmosItem item = container.createItem(itemDefinition, "mypk").block().getItem();
+        CosmosItem item = container.createItem(itemDefinition, "mypk").block().item();
         Mono<CosmosItemResponse> readMono = item.read();
 
         // validate
         CosmosResponseValidator<CosmosItemResponse>  validator = new CosmosResponseValidator.Builder<CosmosItemResponse>()
-                .withId(itemDefinition.getId()).build();
+                .withId(itemDefinition.id()).build();
         validateSuccess(readMono, validator);
     }
     
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
     public void testDeleteItem() throws Exception {
         CosmosContainer container = client.getDatabase(PRE_EXISTING_DATABASE_ID).getContainer(PRE_EXISTING_CONTAINER_ID);
-        CosmosItemSettings itemDefinition = getItemDefinition();
+        CosmosItemProperties itemDefinition = getItemDefinition();
         // create the item
-        CosmosItem item = container.createItem(itemDefinition, "mypk").block().getItem();
+        CosmosItem item = container.createItem(itemDefinition, "mypk").block().item();
         Mono<CosmosItemResponse> deleteMono = item.delete();
         // validate
         CosmosResponseValidator<CosmosItemResponse>  validator = new CosmosResponseValidator.Builder<CosmosItemResponse>()
@@ -105,9 +105,9 @@ public class CosmosItemCrudTest extends CosmosTestSuiteBase {
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
     public void testreplaceItem() throws Exception {
         CosmosContainer container = client.getDatabase(PRE_EXISTING_DATABASE_ID).getContainer(PRE_EXISTING_CONTAINER_ID);
-        CosmosItemSettings itemDefinition = getItemDefinition();
+        CosmosItemProperties itemDefinition = getItemDefinition();
         // create the item
-        CosmosItem item = container.createItem(itemDefinition, "mypk").block().getItem();
+        CosmosItem item = container.createItem(itemDefinition, "mypk").block().item();
 
         String newPropValue = UUID.randomUUID().toString();
         itemDefinition.set("newProp", newPropValue);
@@ -134,9 +134,9 @@ public class CosmosItemCrudTest extends CosmosTestSuiteBase {
         safeClose(client);
     }
 
-    private CosmosItemSettings getItemDefinition() {
+    private CosmosItemProperties getItemDefinition() {
         String uuid = UUID.randomUUID().toString();
-        return new CosmosItemSettings(String.format("{ "
+        return new CosmosItemProperties(String.format("{ "
                         + "\"id\": \"%s\", "
                         + "\"mypk\": \"%s\", "
                         + "\"sgmts\": [[6519456, 1471916863], [2498434, 1455671440]]"

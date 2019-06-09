@@ -32,9 +32,9 @@ public class Utils {
 
     public static String getDatabaseLink(Database database, boolean isNameBased) {
         if (isNameBased) {
-            return getDatabaseNameLink(database.getId());
+            return getDatabaseNameLink(database.id());
         } else {
-            return database.getSelfLink();
+            return database.selfLink();
         }
     }
 

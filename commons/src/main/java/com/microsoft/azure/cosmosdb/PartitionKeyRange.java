@@ -56,14 +56,14 @@ public class PartitionKeyRange extends Resource {
 
     public PartitionKeyRange(String id, String minInclusive, String maxExclusive) {
         super();
-        this.setId(id);
+        this.id(id);
         this.setMinInclusive(minInclusive);
         this.setMaxExclusive(maxExclusive);
     }
 
     public PartitionKeyRange(String id, String minInclusive, String maxExclusive, List<String> parents) {
         super();
-        this.setId(id);
+        this.id(id);
         this.setMinInclusive(minInclusive);
         this.setMaxExclusive(maxExclusive);
         this.setParents(parents);
@@ -97,7 +97,7 @@ public class PartitionKeyRange extends Resource {
 
         PartitionKeyRange otherRange = (PartitionKeyRange) obj;
 
-        return this.getId().compareTo(otherRange.getId()) == 0
+        return this.id().compareTo(otherRange.id()) == 0
                 && this.getMinInclusive().compareTo(otherRange.getMinInclusive()) == 0
                 && this.getMaxExclusive().compareTo(otherRange.getMaxExclusive()) == 0;
     }
@@ -105,7 +105,7 @@ public class PartitionKeyRange extends Resource {
     @Override
     public int hashCode() {
         int hash = 0;
-        hash = (hash * 397) ^ this.getId().hashCode();
+        hash = (hash * 397) ^ this.id().hashCode();
         hash = (hash * 397) ^ this.getMinInclusive().hashCode();
         hash = (hash * 397) ^ this.getMaxExclusive().hashCode();
         return hash;

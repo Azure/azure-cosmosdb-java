@@ -26,7 +26,7 @@ import com.microsoft.azure.cosmos.changefeed.HealthMonitor;
 import com.microsoft.azure.cosmos.changefeed.HealthMonitoringRecord;
 import com.microsoft.azure.cosmos.changefeed.Lease;
 import com.microsoft.azure.cosmos.changefeed.PartitionController;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import reactor.core.publisher.Mono;
 
 /**
@@ -48,7 +48,7 @@ public class HealthMonitoringPartitionControllerDecorator implements PartitionCo
     public Mono<Lease> addOrUpdateLease(Lease lease) {
         return this.inner.addOrUpdateLease(lease)
             .onErrorResume(throwable ->  {
-                if (throwable instanceof DocumentClientException) {
+                if (throwable instanceof CosmosClientException) {
                     // do nothing.
                 } else {
                     monitor.inspect(new HealthMonitoringRecord(

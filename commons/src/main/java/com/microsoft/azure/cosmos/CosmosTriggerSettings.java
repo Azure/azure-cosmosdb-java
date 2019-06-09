@@ -22,13 +22,14 @@
  */
 package com.microsoft.azure.cosmos;
 
-import com.microsoft.azure.cosmosdb.ResourceResponse;
-import com.microsoft.azure.cosmosdb.Trigger;
+import com.microsoft.azure.cosmosdb.*;
+import com.microsoft.azure.cosmosdb.internal.Constants;
+import org.apache.commons.text.WordUtils;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class CosmosTriggerSettings extends Trigger {
+public class CosmosTriggerSettings extends Resource {
 
     /**
      * Constructor
@@ -48,6 +49,79 @@ public class CosmosTriggerSettings extends Trigger {
 
     CosmosTriggerSettings(ResourceResponse<Trigger> response) {
         super(response.getResource().toJson());
+    }
+
+    /**
+     * Get the body of the trigger.
+     *
+     * @return the body of the trigger.
+     */
+    public String body() {
+        return super.getString(Constants.Properties.BODY);
+    }
+
+    /**
+     * Set the body of the trigger.
+     *
+     * @param body the body of the trigger.
+     */
+    public CosmosTriggerSettings body(String body) {
+        super.set(Constants.Properties.BODY, body);
+        return this;
+    }
+
+    /**
+     * Get the type of the trigger.
+     *
+     * @return the trigger type.
+     */
+    public TriggerType triggerType() {
+        TriggerType result = TriggerType.PRE;
+        try {
+            result = TriggerType.valueOf(
+                    WordUtils.capitalize(super.getString(Constants.Properties.TRIGGER_TYPE)));
+        } catch (IllegalArgumentException e) {
+            // ignore the exception and return the default
+            this.getLogger().warn("INVALID triggerType value {}.", super.getString(Constants.Properties.TRIGGER_TYPE));
+        }
+        return result;
+    }
+
+    /**
+     * Set the type of the resource.
+     *
+     * @param triggerType the trigger type.
+     */
+    public CosmosTriggerSettings triggerType(TriggerType triggerType) {
+        super.set(Constants.Properties.TRIGGER_TYPE, triggerType.name());
+        return this;
+    }
+
+    /**
+     * Get the operation type of the trigger.
+     *
+     * @return the trigger operation.
+     */
+    public TriggerOperation triggerOperation() {
+        TriggerOperation result = TriggerOperation.CREATE;
+        try {
+            result = TriggerOperation.valueOf(
+                    WordUtils.capitalize(super.getString(Constants.Properties.TRIGGER_OPERATION)));
+        } catch (IllegalArgumentException e) {
+            // ignore the exception and return the default
+            this.getLogger().warn("INVALID triggerOperation value {}.", super.getString(Constants.Properties.TRIGGER_OPERATION));
+        }
+        return result;
+    }
+
+    /**
+     * Set the operation type of the trigger.
+     *
+     * @param triggerOperation the trigger operation.
+     */
+    public CosmosTriggerSettings triggerOperation(TriggerOperation triggerOperation) {
+        super.set(Constants.Properties.TRIGGER_OPERATION, triggerOperation.name());
+        return this;
     }
 
     static List<CosmosTriggerSettings> getFromV2Results(List<Trigger> results) {

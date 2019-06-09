@@ -24,7 +24,7 @@
 package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
 import com.microsoft.azure.cosmosdb.BridgeInternal;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.Error;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.rx.internal.RMResources;
@@ -33,7 +33,7 @@ import io.reactivex.netty.protocol.http.client.HttpResponseHeaders;
 import java.net.URI;
 import java.util.Map;
 
-public class ForbiddenException extends DocumentClientException {
+public class ForbiddenException extends CosmosClientException {
     public ForbiddenException() {
         this(RMResources.Forbidden);
     }

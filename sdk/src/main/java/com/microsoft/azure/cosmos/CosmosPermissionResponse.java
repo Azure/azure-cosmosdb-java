@@ -31,10 +31,10 @@ public class CosmosPermissionResponse extends CosmosResponse<CosmosPermissionSet
     CosmosPermissionResponse(ResourceResponse<Permission> response, CosmosUser cosmosUser) {
         super(response);
         if(response.getResource() == null){
-            super.setResourceSettings(null);
+            super.resourceSettings(null);
         }else{
-            super.setResourceSettings(new CosmosPermissionSettings(response.getResource().toJson()));
-            permissionClient = new CosmosPermission(response.getResource().getId(), cosmosUser);
+            super.resourceSettings(new CosmosPermissionSettings(response.getResource().toJson()));
+            permissionClient = new CosmosPermission(response.getResource().id(), cosmosUser);
         }
     }
 
@@ -43,7 +43,7 @@ public class CosmosPermissionResponse extends CosmosResponse<CosmosPermissionSet
      * @return the permission settings
      */
     public CosmosPermissionSettings getPermissionSettings(){
-        return super.getResourceSettings();
+        return super.resourceSettings();
     }
 
     /**

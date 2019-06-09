@@ -39,7 +39,7 @@ public final class HashIndex extends Index {
      * <pre>
      * {@code
      *
-     * HashIndex hashIndex = new HashIndex(DataType.String);
+     * HashIndex hashIndex = new HashIndex(DataType.STRING);
      *
      * }
      * </pre>
@@ -47,8 +47,8 @@ public final class HashIndex extends Index {
      * @param dataType the data type.
      */
     public HashIndex(DataType dataType) {
-        super(IndexKind.Hash);
-        this.setDataType(dataType);
+        super(IndexKind.HASH);
+        this.dataType(dataType);
     }
 
     /**
@@ -58,7 +58,7 @@ public final class HashIndex extends Index {
      * <pre>
      * {@code
      *
-     * HashIndex hashIndex = new HashIndex(DataType.String, 3);
+     * HashIndex hashIndex = new HashIndex(DataType.STRING, 3);
      *
      * }
      * </pre>
@@ -67,9 +67,9 @@ public final class HashIndex extends Index {
      * @param precision the precision.
      */
     public HashIndex(DataType dataType, int precision) {
-        super(IndexKind.Hash);
-        this.setDataType(dataType);
-        this.setPrecision(precision);
+        super(IndexKind.HASH);
+        this.dataType(dataType);
+        this.precision(precision);
     }
 
     /**
@@ -78,8 +78,8 @@ public final class HashIndex extends Index {
      * @param jsonString the json string that represents the index.
      */
     public HashIndex(String jsonString) {
-        super(jsonString, IndexKind.Hash);
-        if (this.getDataType() == null) {
+        super(jsonString, IndexKind.HASH);
+        if (this.dataType() == null) {
             throw new IllegalArgumentException("The jsonString doesn't contain a valid 'dataType'.");
         }
     }
@@ -89,13 +89,13 @@ public final class HashIndex extends Index {
      *
      * @return the data type.
      */
-    public DataType getDataType() {
+    public DataType dataType() {
         DataType result = null;
         try {
             result = DataType.valueOf(WordUtils.capitalize(super.getString(Constants.Properties.DATA_TYPE)));
         } catch (IllegalArgumentException e) {
             // Ignore exception and let the caller handle null value.
-            this.getLogger().warn("Invalid index dataType value {}.", super.getString(Constants.Properties.DATA_TYPE));
+            this.getLogger().warn("INVALID index dataType value {}.", super.getString(Constants.Properties.DATA_TYPE));
         }
         return result;
     }
@@ -105,8 +105,9 @@ public final class HashIndex extends Index {
      *
      * @param dataType the data type.
      */
-    public void setDataType(DataType dataType) {
+    public HashIndex dataType(DataType dataType) {
         super.set(Constants.Properties.DATA_TYPE, dataType.name());
+        return this;
     }
 
     /**
@@ -114,7 +115,7 @@ public final class HashIndex extends Index {
      *
      * @return the precision.
      */
-    public int getPrecision() {
+    public int precision() {
         return super.getInt(Constants.Properties.PRECISION);
     }
 
@@ -123,8 +124,9 @@ public final class HashIndex extends Index {
      *
      * @param precision the precision.
      */
-    public void setPrecision(int precision) {
+    public HashIndex precision(int precision) {
         super.set(Constants.Properties.PRECISION, precision);
+        return this;
     }
 
     boolean hasPrecision() {

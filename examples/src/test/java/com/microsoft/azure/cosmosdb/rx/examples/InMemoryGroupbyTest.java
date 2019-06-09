@@ -55,28 +55,28 @@ public class InMemoryGroupbyTest {
     @BeforeClass(groups = "samples", timeOut = TIMEOUT)
     public static void setUp() throws Exception {
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
-        connectionPolicy.setConnectionMode(ConnectionMode.Direct);
+        connectionPolicy.connectionMode(ConnectionMode.DIRECT);
         asyncClient = new AsyncDocumentClient.Builder()
                 .withServiceEndpoint(TestConfigurations.HOST)
                 .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
                 .withConnectionPolicy(connectionPolicy)
-                .withConsistencyLevel(ConsistencyLevel.Session)
+                .withConsistencyLevel(ConsistencyLevel.SESSION)
                 .build();
 
-        // Create database
+        // CREATE database
         createdDatabase = Utils.createDatabaseForTest(asyncClient);
 
         DocumentCollection collectionDefinition = new DocumentCollection();
-        collectionDefinition.setId(UUID.randomUUID().toString());
+        collectionDefinition.id(UUID.randomUUID().toString());
         PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition();
         ArrayList<String> paths = new ArrayList<String>();
         paths.add("/mypk");
-        partitionKeyDef.setPaths(paths);
+        partitionKeyDef.paths(paths);
         collectionDefinition.setPartitionKey(partitionKeyDef);
 
-        // Create collection
+        // CREATE collection
         createdCollection = asyncClient
-                .createCollection("dbs/" + createdDatabase.getId(), collectionDefinition, null)
+                .createCollection("dbs/" + createdDatabase.id(), collectionDefinition, null)
                 .toBlocking().single().getResource();
 
         int numberOfPayers = 10;
@@ -118,15 +118,15 @@ public class InMemoryGroupbyTest {
         // If you want to understand the steps in more details see groupByInMemoryMoreDetail()
         int requestPageSize = 3;
         FeedOptions options = new FeedOptions();
-        options.setMaxItemCount(requestPageSize);
-        options.setEnableCrossPartitionQuery(true);
+        options.maxItemCount(requestPageSize);
+        options.enableCrossPartitionQuery(true);
 
         Observable<Document> documentsObservable = asyncClient
                 .queryDocuments(getCollectionLink(),
                         new SqlQuerySpec("SELECT * FROM root r WHERE r.site_id=@site_id",
                                 new SqlParameterCollection(new SqlParameter("@site_id", "ABC"))),
                         options)
-                .flatMap(page -> Observable.from(page.getResults()));
+                .flatMap(page -> Observable.from(page.results()));
 
         final LocalDateTime now = LocalDateTime.now();
 
@@ -151,15 +151,15 @@ public class InMemoryGroupbyTest {
 
         int requestPageSize = 3;
         FeedOptions options = new FeedOptions();
-        options.setMaxItemCount(requestPageSize);
-        options.setEnableCrossPartitionQuery(true);
+        options.maxItemCount(requestPageSize);
+        options.enableCrossPartitionQuery(true);
 
         Observable<Document> documentsObservable = asyncClient
                 .queryDocuments(getCollectionLink(),
                         new SqlQuerySpec("SELECT * FROM root r WHERE r.site_id=@site_id",
                                 new SqlParameterCollection(new SqlParameter("@site_id", "ABC"))),
                         options)
-                .flatMap(page -> Observable.from(page.getResults()));
+                .flatMap(page -> Observable.from(page.results()));
 
         final LocalDateTime now = LocalDateTime.now();
 
@@ -180,6 +180,6 @@ public class InMemoryGroupbyTest {
     }
 
     private static  String getCollectionLink() {
-        return "dbs/" + createdDatabase.getId() + "/colls/" + createdCollection.getId();
+        return "dbs/" + createdDatabase.id() + "/colls/" + createdCollection.id();
     }
 }

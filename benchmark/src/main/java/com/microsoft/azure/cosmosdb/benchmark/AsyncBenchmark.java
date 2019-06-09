@@ -83,9 +83,9 @@ abstract class AsyncBenchmark<T> {
         logger = LoggerFactory.getLogger(this.getClass());
 
         Database database = DocDBUtils.getDatabase(client, cfg.getDatabaseId());
-        collection = DocDBUtils.getCollection(client, database.getSelfLink(), cfg.getCollectionId());
-        nameCollectionLink = String.format("dbs/%s/colls/%s", database.getId(), collection.getId());
-        partitionKey = collection.getPartitionKey().getPaths().iterator().next().split("/")[1];
+        collection = DocDBUtils.getCollection(client, database.selfLink(), cfg.getCollectionId());
+        nameCollectionLink = String.format("dbs/%s/colls/%s", database.id(), collection.id());
+        partitionKey = collection.getPartitionKey().paths().iterator().next().split("/")[1];
         concurrencyControlSemaphore = new Semaphore(cfg.getConcurrency());
         configuration = cfg;
 
@@ -98,14 +98,14 @@ abstract class AsyncBenchmark<T> {
             for (int i = 0; i < cfg.getNumberOfPreCreatedDocuments(); i++) {
                 String uuid = UUID.randomUUID().toString();
                 Document newDoc = new Document();
-                newDoc.setId(uuid);
+                newDoc.id(uuid);
                 newDoc.set(partitionKey, uuid);
                 newDoc.set("dataField1", dataFieldValue);
                 newDoc.set("dataField2", dataFieldValue);
                 newDoc.set("dataField3", dataFieldValue);
                 newDoc.set("dataField4", dataFieldValue);
                 newDoc.set("dataField5", dataFieldValue);
-                Observable<Document> obs = client.createDocument(collection.getSelfLink(), newDoc, null, false)
+                Observable<Document> obs = client.createDocument(collection.selfLink(), newDoc, null, false)
                         .map(ResourceResponse::getResource);
                 createDocumentObservables.add(obs);
             }
@@ -151,15 +151,15 @@ abstract class AsyncBenchmark<T> {
         if (configuration.isUseNameLink()) {
             return this.nameCollectionLink;
         } else {
-            return collection.getSelfLink();
+            return collection.selfLink();
         }
     }
 
     protected String getDocumentLink(Document doc) {
         if (configuration.isUseNameLink()) {
-            return this.nameCollectionLink + "/docs/" + doc.getId();
+            return this.nameCollectionLink + "/docs/" + doc.id();
         } else {
-            return doc.getSelfLink();
+            return doc.selfLink();
         }
     }
 

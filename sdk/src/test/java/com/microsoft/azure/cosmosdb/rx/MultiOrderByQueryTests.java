@@ -32,7 +32,8 @@ import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 
-import com.microsoft.azure.cosmos.CosmosClientBuilder;
+import com.microsoft.azure.cosmos.*;
+import com.microsoft.azure.cosmosdb.*;
 import org.apache.commons.collections4.ComparatorUtils;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -40,20 +41,10 @@ import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.microsoft.azure.cosmos.CosmosClient;
-import com.microsoft.azure.cosmos.CosmosContainer;
-import com.microsoft.azure.cosmos.CosmosContainerSettings;
-import com.microsoft.azure.cosmos.CosmosItemRequestOptions;
-import com.microsoft.azure.cosmos.CosmosItemSettings;
-import com.microsoft.azure.cosmosdb.CompositePath;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
-import com.microsoft.azure.cosmosdb.FeedOptions;
-import com.microsoft.azure.cosmosdb.FeedResponse;
+import com.microsoft.azure.cosmos.CosmosItemProperties;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 
 import reactor.core.publisher.Flux;
-
-import com.microsoft.azure.cosmosdb.CompositePathSortOrder;
-import com.microsoft.azure.cosmosdb.Document;
 
 public class MultiOrderByQueryTests extends TestSuiteBase {
 
@@ -70,12 +61,12 @@ public class MultiOrderByQueryTests extends TestSuiteBase {
     private static final String MEDIUM_STRING_FIELD = "mediumStringField";
     private static final String LONG_STRING_FIELD = "longStringField";
     private static final String PARTITION_KEY = "pk";
-    private ArrayList<CosmosItemSettings> documents = new ArrayList<CosmosItemSettings>();
+    private ArrayList<CosmosItemProperties> documents = new ArrayList<CosmosItemProperties>();
     private CosmosContainer documentCollection;
     private CosmosClientBuilder clientBuilder;
     private CosmosClient client;
 
-    class CustomComparator implements Comparator<CosmosItemSettings> {
+    class CustomComparator implements Comparator<CosmosItemProperties> {
         String path;
         CompositePathSortOrder order;
         boolean isNumericPath = false;
@@ -98,8 +89,8 @@ public class MultiOrderByQueryTests extends TestSuiteBase {
         }
 
         @Override
-        public int compare(CosmosItemSettings doc1, CosmosItemSettings doc2) {
-            boolean isAsc = order == CompositePathSortOrder.Ascending;
+        public int compare(CosmosItemProperties doc1, CosmosItemProperties doc2) {
+            boolean isAsc = order == CompositePathSortOrder.ASCENDING;
             if (isNumericPath) {
                 if (doc1.getInt(path) < doc2.getInt(path))
                     return isAsc ? -1 : 1;
@@ -109,7 +100,7 @@ public class MultiOrderByQueryTests extends TestSuiteBase {
                     return 0;
             } else if (isStringPath) {
                 if (!isAsc) {
-                    CosmosItemSettings temp = doc1;
+                    CosmosItemProperties temp = doc1;
                     doc1 = doc2;
                     doc2 = temp;
                 }
@@ -156,30 +147,30 @@ public class MultiOrderByQueryTests extends TestSuiteBase {
 
             for (int j = 0; j < numberOfDuplicates; j++) {
                 // Add the document itself for exact duplicates
-                CosmosItemSettings initialDocument = new CosmosItemSettings(multiOrderByDocumentString);
-                initialDocument.setId(UUID.randomUUID().toString());
+                CosmosItemProperties initialDocument = new CosmosItemProperties(multiOrderByDocumentString);
+                initialDocument.id(UUID.randomUUID().toString());
                 this.documents.add(initialDocument);
 
                 // Permute all the fields so that there are duplicates with tie breaks
-                CosmosItemSettings numberClone = new CosmosItemSettings(multiOrderByDocumentString);
+                CosmosItemProperties numberClone = new CosmosItemProperties(multiOrderByDocumentString);
                 numberClone.set(NUMBER_FIELD, random.nextInt(5));
-                numberClone.setId(UUID.randomUUID().toString());
+                numberClone.id(UUID.randomUUID().toString());
                 this.documents.add(numberClone);
 
-                CosmosItemSettings stringClone = new CosmosItemSettings(multiOrderByDocumentString);
+                CosmosItemProperties stringClone = new CosmosItemProperties(multiOrderByDocumentString);
                 stringClone.set(STRING_FIELD, Integer.toString(random.nextInt(5)));
-                stringClone.setId(UUID.randomUUID().toString());
+                stringClone.id(UUID.randomUUID().toString());
                 this.documents.add(stringClone);
 
-                CosmosItemSettings boolClone = new CosmosItemSettings(multiOrderByDocumentString);
+                CosmosItemProperties boolClone = new CosmosItemProperties(multiOrderByDocumentString);
                 boolClone.set(BOOL_FIELD, random.nextInt(2) % 2 == 0);
-                boolClone.setId(UUID.randomUUID().toString());
+                boolClone.id(UUID.randomUUID().toString());
                 this.documents.add(boolClone);
 
                 // Also fuzz what partition it goes to
-                CosmosItemSettings partitionClone = new CosmosItemSettings(multiOrderByDocumentString);
+                CosmosItemProperties partitionClone = new CosmosItemProperties(multiOrderByDocumentString);
                 partitionClone.set(PARTITION_KEY, random.nextInt(5));
-                partitionClone.setId(UUID.randomUUID().toString());
+                partitionClone.id(UUID.randomUUID().toString());
                 this.documents.add(partitionClone);
             }
         }
@@ -192,7 +183,7 @@ public class MultiOrderByQueryTests extends TestSuiteBase {
     private Document generateMultiOrderByDocument() {
         Random random = new Random();
         Document document = new Document();
-        document.setId(UUID.randomUUID().toString());
+        document.id(UUID.randomUUID().toString());
         document.set(NUMBER_FIELD, random.nextInt(5));
         document.set(NUMBER_FIELD_2, random.nextInt(5));
         document.set(BOOL_FIELD, (random.nextInt() % 2) == 0);
@@ -209,13 +200,13 @@ public class MultiOrderByQueryTests extends TestSuiteBase {
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
-    public void queryDocumentsWithMultiOrder() throws DocumentClientException, InterruptedException {
+    public void queryDocumentsWithMultiOrder() throws CosmosClientException, InterruptedException {
         FeedOptions feedOptions = new FeedOptions();
-        feedOptions.setEnableCrossPartitionQuery(true);
+        feedOptions.enableCrossPartitionQuery(true);
 
         boolean[] booleanValues = new boolean[] {true, false};
-        CosmosContainerSettings containerSettings = documentCollection.read().block().getCosmosContainerSettings();
-        Iterator<ArrayList<CompositePath>> compositeIndexesIterator = containerSettings.getIndexingPolicy().getCompositeIndexes().iterator();
+        CosmosContainerSettings containerSettings = documentCollection.read().block().settings();
+        Iterator<ArrayList<CompositePath>> compositeIndexesIterator = containerSettings.indexingPolicy().compositeIndexes().iterator();
         while (compositeIndexesIterator.hasNext()) {
         ArrayList<CompositePath> compositeIndex = compositeIndexesIterator.next();
             // for every order
@@ -232,13 +223,13 @@ public class MultiOrderByQueryTests extends TestSuiteBase {
                         Iterator<CompositePath> compositeIndexiterator = compositeIndex.iterator();
                         while (compositeIndexiterator.hasNext()) {
                             CompositePath compositePath = compositeIndexiterator.next();
-                            isDesc = compositePath.getOrder() == CompositePathSortOrder.Descending ? true : false;
+                            isDesc = compositePath.order() == CompositePathSortOrder.DESCENDING ? true : false;
                             if (invert) {
                                 isDesc = !isDesc;
                             }
 
                             String isDescString = isDesc ? "DESC" : "ASC";
-                            String compositePathName = compositePath.getPath().replaceAll("/", "");
+                            String compositePathName = compositePath.path().replaceAll("/", "");
                             String orderByItemsString = "root." + compositePathName + " " + isDescString;
                             String selectItemsString = "root." + compositePathName;
                             orderByItems.add(orderByItemsString);
@@ -265,12 +256,12 @@ public class MultiOrderByQueryTests extends TestSuiteBase {
                                 "FROM root " + whereString + " " +
                                 "ORDER BY " + orderByItemStringBuilder.toString();
                         
-                        ArrayList<CosmosItemSettings> expectedOrderedList = top(sort(filter(this.documents, hasFilter), compositeIndex, invert), hasTop, topCount) ;
+                        ArrayList<CosmosItemProperties> expectedOrderedList = top(sort(filter(this.documents, hasFilter), compositeIndex, invert), hasTop, topCount) ;
                         
-                        Flux<FeedResponse<CosmosItemSettings>> queryObservable = documentCollection.queryItems(query, feedOptions);
+                        Flux<FeedResponse<CosmosItemProperties>> queryObservable = documentCollection.queryItems(query, feedOptions);
 
-                        FeedResponseListValidator<CosmosItemSettings> validator = new FeedResponseListValidator
-                                .Builder<CosmosItemSettings>()
+                        FeedResponseListValidator<CosmosItemProperties> validator = new FeedResponseListValidator
+                                .Builder<CosmosItemProperties>()
                                 .withOrderedResults(expectedOrderedList, compositeIndex)
                                 .build();
 
@@ -280,13 +271,13 @@ public class MultiOrderByQueryTests extends TestSuiteBase {
             }
         }
         
-        // Create document with numberField not set.
+        // CREATE document with numberField not set.
         // This query would then be invalid.
         Document documentWithEmptyField = generateMultiOrderByDocument();
         documentWithEmptyField.remove(NUMBER_FIELD);
         documentCollection.createItem(documentWithEmptyField, new CosmosItemRequestOptions()).block();
         String query = "SELECT [root." + NUMBER_FIELD + ",root." + STRING_FIELD + "] FROM root ORDER BY root." + NUMBER_FIELD + " ASC ,root." + STRING_FIELD + " DESC";
-        Flux<FeedResponse<CosmosItemSettings>> queryObservable = documentCollection.queryItems(query, feedOptions);
+        Flux<FeedResponse<CosmosItemProperties>> queryObservable = documentCollection.queryItems(query, feedOptions);
 
         FailureValidator validator = new FailureValidator.Builder()
                 .instanceOf(UnsupportedOperationException.class)
@@ -295,8 +286,8 @@ public class MultiOrderByQueryTests extends TestSuiteBase {
         validateQueryFailure(queryObservable, validator);
     }
 
-    private ArrayList<CosmosItemSettings> top(ArrayList<CosmosItemSettings> arrayList, boolean hasTop, int topCount) {
-        ArrayList<CosmosItemSettings> result = new ArrayList<CosmosItemSettings>();
+    private ArrayList<CosmosItemProperties> top(ArrayList<CosmosItemProperties> arrayList, boolean hasTop, int topCount) {
+        ArrayList<CosmosItemProperties> result = new ArrayList<CosmosItemProperties>();
         int counter = 0;
         if (hasTop) {
             while (counter < topCount && counter < arrayList.size()) {
@@ -309,31 +300,31 @@ public class MultiOrderByQueryTests extends TestSuiteBase {
         return result;
     }
 
-    private ArrayList<CosmosItemSettings> sort(ArrayList<CosmosItemSettings> arrayList, ArrayList<CompositePath> compositeIndex,
-            boolean invert) {
-        Collection<Comparator<CosmosItemSettings>> comparators = new ArrayList<Comparator<CosmosItemSettings>>();
+    private ArrayList<CosmosItemProperties> sort(ArrayList<CosmosItemProperties> arrayList, ArrayList<CompositePath> compositeIndex,
+                                                 boolean invert) {
+        Collection<Comparator<CosmosItemProperties>> comparators = new ArrayList<Comparator<CosmosItemProperties>>();
         Iterator<CompositePath> compositeIndexIterator = compositeIndex.iterator();
         while (compositeIndexIterator.hasNext()) {
             CompositePath compositePath = compositeIndexIterator.next();
-            CompositePathSortOrder order = compositePath.getOrder();
+            CompositePathSortOrder order = compositePath.order();
             if (invert) {
-                if (order == CompositePathSortOrder.Descending) {
-                    order = CompositePathSortOrder.Ascending;
+                if (order == CompositePathSortOrder.DESCENDING) {
+                    order = CompositePathSortOrder.ASCENDING;
                 } else {
-                    order = CompositePathSortOrder.Descending;
+                    order = CompositePathSortOrder.DESCENDING;
                 }
             }
-            String path = compositePath.getPath().replace("/", "");
+            String path = compositePath.path().replace("/", "");
             comparators.add(new CustomComparator(path, order));
         }
         Collections.sort(arrayList, ComparatorUtils.chainedComparator(comparators));
         return arrayList;
     }
 
-    private ArrayList<CosmosItemSettings> filter(ArrayList<CosmosItemSettings> cosmosItemSettings, boolean hasFilter) {
-        ArrayList<CosmosItemSettings> result = new ArrayList<CosmosItemSettings>();
+    private ArrayList<CosmosItemProperties> filter(ArrayList<CosmosItemProperties> cosmosItemSettings, boolean hasFilter) {
+        ArrayList<CosmosItemProperties> result = new ArrayList<CosmosItemProperties>();
         if (hasFilter) {
-            for (CosmosItemSettings document : cosmosItemSettings) {
+            for (CosmosItemProperties document : cosmosItemSettings) {
                 if (document.getInt(NUMBER_FIELD) % 2 == 0) {
                     result.add(document);
                 }

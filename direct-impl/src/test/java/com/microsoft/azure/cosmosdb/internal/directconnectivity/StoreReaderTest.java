@@ -25,7 +25,7 @@ package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
 import com.google.common.collect.ImmutableList;
 import com.microsoft.azure.cosmosdb.ConsistencyLevel;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.ISessionContainer;
 import com.microsoft.azure.cosmosdb.PartitionKeyRange;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
@@ -130,11 +130,11 @@ public class StoreReaderTest {
     }
 
     @Test(groups = "unit", dataProvider = "verifyCanContinueOnExceptionArgProvider")
-    public void verifyCanContinueOnException(DocumentClientException dce, Boolean shouldVerify) {
-        DocumentClientException capturedFailure = null;
+    public void verifyCanContinueOnException(CosmosClientException dce, Boolean shouldVerify) {
+        CosmosClientException capturedFailure = null;
         try {
             StoreReader.verifyCanContinueOnException(dce);
-        } catch (DocumentClientException e) {
+        } catch (CosmosClientException e) {
             capturedFailure = e;
         }
 
@@ -206,10 +206,10 @@ public class StoreReaderTest {
         long globalCommittedLsn = 651174;
         String partitionKeyRangeId = "73";
         NotFoundException foundException = new NotFoundException();
-        foundException.getResponseHeaders().put(HttpConstants.HttpHeaders.SESSION_TOKEN, partitionKeyRangeId + ":-1#" + slowReplicaLSN);
-        foundException.getResponseHeaders().put(WFConstants.BackendHeaders.LSN, Long.toString(slowReplicaLSN));
-        foundException.getResponseHeaders().put(WFConstants.BackendHeaders.LOCAL_LSN, Long.toString(slowReplicaLSN));
-        foundException.getResponseHeaders().put(WFConstants.BackendHeaders.GLOBAL_COMMITTED_LSN, Long.toString(globalCommittedLsn));
+        foundException.responseHeaders().put(HttpConstants.HttpHeaders.SESSION_TOKEN, partitionKeyRangeId + ":-1#" + slowReplicaLSN);
+        foundException.responseHeaders().put(WFConstants.BackendHeaders.LSN, Long.toString(slowReplicaLSN));
+        foundException.responseHeaders().put(WFConstants.BackendHeaders.LOCAL_LSN, Long.toString(slowReplicaLSN));
+        foundException.responseHeaders().put(WFConstants.BackendHeaders.GLOBAL_COMMITTED_LSN, Long.toString(globalCommittedLsn));
 
         long fasterReplicaLSN = 651176;
 
@@ -247,7 +247,7 @@ public class StoreReaderTest {
         TimeoutHelper timeoutHelper = Mockito.mock(TimeoutHelper.class);
         RxDocumentServiceRequest dsr = RxDocumentServiceRequest.createFromName(
                 OperationType.Read, "/dbs/db/colls/col/docs/docId", ResourceType.Document);
-        dsr.getHeaders().put(HttpConstants.HttpHeaders.CONSISTENCY_LEVEL, ConsistencyLevel.Session.name());
+        dsr.getHeaders().put(HttpConstants.HttpHeaders.CONSISTENCY_LEVEL, ConsistencyLevel.SESSION.name());
         dsr.requestContext = new DocumentServiceRequestContext();
         Utils.ValueHolder<ISessionToken> sessionToken = Utils.ValueHolder.initialize(null);
         dsr.requestContext.sessionToken = sessionToken.v;
@@ -296,10 +296,10 @@ public class StoreReaderTest {
         String partitionKeyRangeId = "73";
 
         NotFoundException foundException = new NotFoundException();
-        foundException.getResponseHeaders().put(HttpConstants.HttpHeaders.SESSION_TOKEN, partitionKeyRangeId + ":-1#" + lsn);
-        foundException.getResponseHeaders().put(WFConstants.BackendHeaders.LSN, Long.toString(lsn));
-        foundException.getResponseHeaders().put(WFConstants.BackendHeaders.LOCAL_LSN, Long.toString(lsn));
-        foundException.getResponseHeaders().put(WFConstants.BackendHeaders.GLOBAL_COMMITTED_LSN, Long.toString(globalCommittedLsn));
+        foundException.responseHeaders().put(HttpConstants.HttpHeaders.SESSION_TOKEN, partitionKeyRangeId + ":-1#" + lsn);
+        foundException.responseHeaders().put(WFConstants.BackendHeaders.LSN, Long.toString(lsn));
+        foundException.responseHeaders().put(WFConstants.BackendHeaders.LOCAL_LSN, Long.toString(lsn));
+        foundException.responseHeaders().put(WFConstants.BackendHeaders.GLOBAL_COMMITTED_LSN, Long.toString(globalCommittedLsn));
 
         TransportClientWrapper transportClientWrapper = new TransportClientWrapper.Builder.ReplicaResponseBuilder
                 .SequentialBuilder()
@@ -324,7 +324,7 @@ public class StoreReaderTest {
         TimeoutHelper timeoutHelper = Mockito.mock(TimeoutHelper.class);
         RxDocumentServiceRequest dsr = RxDocumentServiceRequest.createFromName(
                 OperationType.Read, "/dbs/db/colls/col/docs/docId", ResourceType.Document);
-        dsr.getHeaders().put(HttpConstants.HttpHeaders.CONSISTENCY_LEVEL, ConsistencyLevel.Session.name());
+        dsr.getHeaders().put(HttpConstants.HttpHeaders.CONSISTENCY_LEVEL, ConsistencyLevel.SESSION.name());
         dsr.requestContext = new DocumentServiceRequestContext();
         Utils.ValueHolder<ISessionToken> sessionToken = Utils.ValueHolder.initialize(null);
         dsr.requestContext.sessionToken = sessionToken.v;
@@ -365,10 +365,10 @@ public class StoreReaderTest {
         String partitionKeyRangeId = "73";
 
         NotFoundException foundException = new NotFoundException();
-        foundException.getResponseHeaders().put(HttpConstants.HttpHeaders.SESSION_TOKEN, partitionKeyRangeId + ":-1#" + lsn);
-        foundException.getResponseHeaders().put(WFConstants.BackendHeaders.LSN, Long.toString(lsn));
-        foundException.getResponseHeaders().put(WFConstants.BackendHeaders.LOCAL_LSN, Long.toString(lsn));
-        foundException.getResponseHeaders().put(WFConstants.BackendHeaders.GLOBAL_COMMITTED_LSN, Long.toString(globalCommittedLsn));
+        foundException.responseHeaders().put(HttpConstants.HttpHeaders.SESSION_TOKEN, partitionKeyRangeId + ":-1#" + lsn);
+        foundException.responseHeaders().put(WFConstants.BackendHeaders.LSN, Long.toString(lsn));
+        foundException.responseHeaders().put(WFConstants.BackendHeaders.LOCAL_LSN, Long.toString(lsn));
+        foundException.responseHeaders().put(WFConstants.BackendHeaders.GLOBAL_COMMITTED_LSN, Long.toString(globalCommittedLsn));
 
         TransportClientWrapper transportClientWrapper = new TransportClientWrapper.Builder.ReplicaResponseBuilder
                 .SequentialBuilder()
@@ -393,7 +393,7 @@ public class StoreReaderTest {
         TimeoutHelper timeoutHelper = Mockito.mock(TimeoutHelper.class);
         RxDocumentServiceRequest dsr = RxDocumentServiceRequest.createFromName(
                 OperationType.Read, "/dbs/db/colls/col/docs/docId", ResourceType.Document);
-        dsr.getHeaders().put(HttpConstants.HttpHeaders.CONSISTENCY_LEVEL, ConsistencyLevel.Session.name());
+        dsr.getHeaders().put(HttpConstants.HttpHeaders.CONSISTENCY_LEVEL, ConsistencyLevel.SESSION.name());
         dsr.requestContext = new DocumentServiceRequestContext();
         Utils.ValueHolder<ISessionToken> sessionToken = Utils.ValueHolder.initialize(null);
         dsr.requestContext.sessionToken = sessionToken.v;
@@ -427,10 +427,10 @@ public class StoreReaderTest {
         String partitionKeyRangeId = "257";
 
         RequestRateTooLargeException requestRateTooLargeException = new RequestRateTooLargeException();
-        requestRateTooLargeException.getResponseHeaders().put(HttpConstants.HttpHeaders.LSN, Long.toString(lsn));
-        requestRateTooLargeException.getResponseHeaders().put(WFConstants.BackendHeaders.GLOBAL_COMMITTED_LSN, Long.toString(globalCommittedLsn));
-        requestRateTooLargeException.getResponseHeaders().put(WFConstants.BackendHeaders.LOCAL_LSN, Long.toString(lsn));
-        requestRateTooLargeException.getResponseHeaders().put(HttpConstants.HttpHeaders.SESSION_TOKEN, partitionKeyRangeId + ":-1#" + lsn);
+        requestRateTooLargeException.responseHeaders().put(HttpConstants.HttpHeaders.LSN, Long.toString(lsn));
+        requestRateTooLargeException.responseHeaders().put(WFConstants.BackendHeaders.GLOBAL_COMMITTED_LSN, Long.toString(globalCommittedLsn));
+        requestRateTooLargeException.responseHeaders().put(WFConstants.BackendHeaders.LOCAL_LSN, Long.toString(lsn));
+        requestRateTooLargeException.responseHeaders().put(HttpConstants.HttpHeaders.SESSION_TOKEN, partitionKeyRangeId + ":-1#" + lsn);
 
         TransportClientWrapper transportClientWrapper = new TransportClientWrapper.Builder.ReplicaResponseBuilder
                 .SequentialBuilder()
@@ -455,7 +455,7 @@ public class StoreReaderTest {
         TimeoutHelper timeoutHelper = Mockito.mock(TimeoutHelper.class);
         RxDocumentServiceRequest dsr = RxDocumentServiceRequest.createFromName(
                 OperationType.Read, "/dbs/db/colls/col/docs/docId", ResourceType.Document);
-        dsr.getHeaders().put(HttpConstants.HttpHeaders.CONSISTENCY_LEVEL, ConsistencyLevel.Session.name());
+        dsr.getHeaders().put(HttpConstants.HttpHeaders.CONSISTENCY_LEVEL, ConsistencyLevel.SESSION.name());
         dsr.requestContext = new DocumentServiceRequestContext();
         Utils.ValueHolder<ISessionToken> sessionToken = Utils.ValueHolder.initialize(null);
         dsr.requestContext.sessionToken = sessionToken.v;
@@ -673,7 +673,7 @@ public class StoreReaderTest {
     @DataProvider(name = "readMultipleReplicasAsyncArgProvider")
     public Object[][] readMultipleReplicasAsyncArgProvider() {
         return new Object[][]{
-                // boolean includePrimary, int replicaCountToRead, ReadMode.Strong
+                // boolean includePrimary, int replicaCountToRead, ReadMode.STRONG
                 { false, 3, ReadMode.Strong },
                 { true, 3, ReadMode.Strong },
                 { false, 3, ReadMode.Any },
@@ -825,7 +825,7 @@ public class StoreReaderTest {
 
     private PartitionKeyRange partitionKeyRangeWithId(String id) {
         PartitionKeyRange partitionKeyRange = Mockito.mock(PartitionKeyRange.class);
-        Mockito.doReturn(id).when(partitionKeyRange).getId();
+        Mockito.doReturn(id).when(partitionKeyRange).id();
         return partitionKeyRange;
     }
 }

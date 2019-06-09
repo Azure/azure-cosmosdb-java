@@ -34,7 +34,6 @@ import org.testng.annotations.Test;
 
 import com.microsoft.azure.cosmosdb.Database;
 import com.microsoft.azure.cosmosdb.DatabaseForTest;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
@@ -43,8 +42,6 @@ import com.microsoft.azure.cosmosdb.PartitionKeyDefinition;
 import com.microsoft.azure.cosmosdb.rx.internal.TestSuiteBase;
 
 import rx.Observable;
-
-import javax.net.ssl.SSLException;
 
 //TODO: change to use external TestSuiteBase 
 public class ReadFeedOffersTest extends TestSuiteBase {
@@ -69,15 +66,15 @@ public class ReadFeedOffersTest extends TestSuiteBase {
     public void readOffers() throws Exception {
 
         FeedOptions options = new FeedOptions();
-        options.setMaxItemCount(2);
+        options.maxItemCount(2);
 
         Observable<FeedResponse<Offer>> feedObservable = client.readOffers(options);
 
-        int expectedPageSize = (allOffers.size() + options.getMaxItemCount() - 1) / options.getMaxItemCount();
+        int expectedPageSize = (allOffers.size() + options.maxItemCount() - 1) / options.maxItemCount();
 
         FeedResponseListValidator<Offer> validator = new FeedResponseListValidator.Builder<Offer>()
                 .totalSize(allOffers.size())
-                .exactlyContainsInAnyOrder(allOffers.stream().map(d -> d.getResourceId()).collect(Collectors.toList()))
+                .exactlyContainsInAnyOrder(allOffers.stream().map(d -> d.resourceId()).collect(Collectors.toList()))
                 .numberOfPages(expectedPageSize)
                 .pageSatisfy(0, new FeedResponseValidator.Builder<Offer>()
                         .requestChargeGreaterThanOrEqualTo(1.0).build())
@@ -95,7 +92,7 @@ public class ReadFeedOffersTest extends TestSuiteBase {
         }
 
         allOffers = client.readOffers(null)
-                          .map(frp -> frp.getResults())
+                          .map(frp -> frp.results())
                           .toList()
                           .map(list -> list.stream().flatMap(x -> x.stream()).collect(Collectors.toList()))
                           .toBlocking()
@@ -110,18 +107,18 @@ public class ReadFeedOffersTest extends TestSuiteBase {
 
     public DocumentCollection createCollections(AsyncDocumentClient client) {
         DocumentCollection collection = new DocumentCollection();
-        collection.setId(UUID.randomUUID().toString());
+        collection.id(UUID.randomUUID().toString());
         
         PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition();
         ArrayList<String> paths = new ArrayList<String>();
         paths.add("/mypk");
-        partitionKeyDef.setPaths(paths);
+        partitionKeyDef.paths(paths);
         collection.setPartitionKey(partitionKeyDef);
 
         return client.createCollection(getDatabaseLink(), collection, null).toBlocking().single().getResource();
     }
 
     private String getDatabaseLink() {
-        return "dbs/" + createdDatabase.getId();
+        return "dbs/" + createdDatabase.id();
     }
 }

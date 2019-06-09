@@ -63,30 +63,30 @@ public class StoredProcedureUpsertReplaceTest extends TestSuiteBase {
 
         // create a stored procedure
         CosmosStoredProcedureSettings storedProcedureDef = new CosmosStoredProcedureSettings();
-        storedProcedureDef.setId(UUID.randomUUID().toString());
-        storedProcedureDef.setBody("function() {var x = 10;}");
-        CosmosStoredProcedureSettings readBackSp = createdCollection.createStoredProcedure(storedProcedureDef, new CosmosStoredProcedureRequestOptions()).block().getStoredProcedureSettings();
+        storedProcedureDef.id(UUID.randomUUID().toString());
+        storedProcedureDef.body("function() {var x = 10;}");
+        CosmosStoredProcedureSettings readBackSp = createdCollection.createStoredProcedure(storedProcedureDef, new CosmosStoredProcedureRequestOptions()).block().settings();
 
         // read stored procedure to validate creation
         waitIfNeededForReplicasToCatchUp(clientBuilder);
-        Mono<CosmosStoredProcedureResponse> readObservable = createdCollection.getStoredProcedure(readBackSp.getId()).read(null);
+        Mono<CosmosStoredProcedureResponse> readObservable = createdCollection.getStoredProcedure(readBackSp.id()).read(null);
 
         // validate stored procedure creation
         CosmosResponseValidator<CosmosStoredProcedureResponse> validatorForRead = new CosmosResponseValidator.Builder<CosmosStoredProcedureResponse>()
-                .withId(readBackSp.getId())
+                .withId(readBackSp.id())
                 .withStoredProcedureBody("function() {var x = 10;}")
                 .notNullEtag()
                 .build();
         validateSuccess(readObservable, validatorForRead);
         
         //update stored procedure
-        readBackSp.setBody("function() {var x = 11;}");
+        readBackSp.body("function() {var x = 11;}");
 
-        Mono<CosmosStoredProcedureResponse> replaceObservable = createdCollection.getStoredProcedure(readBackSp.getId()).replace(readBackSp, new RequestOptions());
+        Mono<CosmosStoredProcedureResponse> replaceObservable = createdCollection.getStoredProcedure(readBackSp.id()).replace(readBackSp, new RequestOptions());
 
         //validate stored procedure replace
         CosmosResponseValidator<CosmosStoredProcedureResponse> validatorForReplace = new CosmosResponseValidator.Builder<CosmosStoredProcedureResponse>()
-                .withId(readBackSp.getId())
+                .withId(readBackSp.id())
                 .withStoredProcedureBody("function() {var x = 11;}")
                 .notNullEtag()
                 .build();
@@ -110,10 +110,10 @@ public class StoredProcedureUpsertReplaceTest extends TestSuiteBase {
         CosmosStoredProcedure storedProcedure = null;
 
         try {
-            storedProcedure = createdCollection.createStoredProcedure(storedProcedureDef, new CosmosStoredProcedureRequestOptions()).block().getStoredProcedure();
+            storedProcedure = createdCollection.createStoredProcedure(storedProcedureDef, new CosmosStoredProcedureRequestOptions()).block().storedProcedure();
         } catch (Throwable error) {
             if (this.clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {
-                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
+                String message = String.format("DIRECT TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
                 logger.info(message, error);
                 throw new SkipException(message, error);
             }
@@ -125,10 +125,10 @@ public class StoredProcedureUpsertReplaceTest extends TestSuiteBase {
         try {
             RequestOptions options = new RequestOptions();
             options.setPartitionKey(PartitionKey.None);
-            result = storedProcedure.execute(null, options).block().getResponseAsString();
+            result = storedProcedure.execute(null, options).block().responseAsString();
         } catch (Throwable error) {
             if (this.clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {
-                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
+                String message = String.format("DIRECT TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
                 logger.info(message, error);
                 throw new SkipException(message, error);
             }

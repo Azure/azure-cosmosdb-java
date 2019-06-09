@@ -40,7 +40,7 @@ public final class PathParser {
 
         while (currentIndex < path.length()) {
             if (path.charAt(currentIndex) != segmentSeparator) {
-                throw new IllegalArgumentException(String.format("Invalid path, failed at index %d.", currentIndex));
+                throw new IllegalArgumentException(String.format("INVALID path, failed at index %d.", currentIndex));
             }
 
             if (++currentIndex == path.length())
@@ -52,7 +52,7 @@ public final class PathParser {
                 while (true) {
                     newIndex = path.indexOf(quote, newIndex);
                     if (newIndex == -1) {
-                        throw new IllegalArgumentException(String.format("Invalid path, failed at index %d.", currentIndex));
+                        throw new IllegalArgumentException(String.format("INVALID path, failed at index %d.", currentIndex));
                     }
 
                     if (path.charAt(newIndex - 1) != '\\') {

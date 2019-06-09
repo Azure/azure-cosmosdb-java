@@ -34,7 +34,7 @@ public class DocumentCollectionTests {
     public void getPartitionKey()  {
         DocumentCollection collection = new DocumentCollection();
         PartitionKeyDefinition partitionKeyDefinition = new PartitionKeyDefinition();
-        partitionKeyDefinition.setPaths(ImmutableList.of("/mypk"));
+        partitionKeyDefinition.paths(ImmutableList.of("/mypk"));
         collection.setPartitionKey(partitionKeyDefinition);
         assertThat(collection.getPartitionKey()).isEqualTo(partitionKeyDefinition);
     }
@@ -43,13 +43,13 @@ public class DocumentCollectionTests {
     public void getPartitionKey_serializeAndDeserialize()  {
         DocumentCollection collection = new DocumentCollection();
         PartitionKeyDefinition partitionKeyDefinition = new PartitionKeyDefinition();
-        partitionKeyDefinition.setPaths(ImmutableList.of("/mypk"));
-        partitionKeyDefinition.setVersion(PartitionKeyDefinitionVersion.V2);
+        partitionKeyDefinition.paths(ImmutableList.of("/mypk"));
+        partitionKeyDefinition.version(PartitionKeyDefinitionVersion.V2);
         collection.setPartitionKey(partitionKeyDefinition);
 
         DocumentCollection parsedColl = new DocumentCollection(collection.toJson());
-        assertThat(parsedColl.getPartitionKey().getKind().toString()).isEqualTo(partitionKeyDefinition.getKind().toString());
-        assertThat(parsedColl.getPartitionKey().getPaths()).isEqualTo(partitionKeyDefinition.getPaths());
-        assertThat(parsedColl.getPartitionKey().getVersion()).isEqualTo(partitionKeyDefinition.getVersion());
+        assertThat(parsedColl.getPartitionKey().kind().toString()).isEqualTo(partitionKeyDefinition.kind().toString());
+        assertThat(parsedColl.getPartitionKey().paths()).isEqualTo(partitionKeyDefinition.paths());
+        assertThat(parsedColl.getPartitionKey().version()).isEqualTo(partitionKeyDefinition.version());
     }
 }

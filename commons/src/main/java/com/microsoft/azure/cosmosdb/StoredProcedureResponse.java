@@ -104,7 +104,7 @@ public final class StoredProcedureResponse {
         try {
             return Double.valueOf(value);
         } catch (NumberFormatException e) {
-            logger.warn("Invalid x-ms-request-charge value {}.", value);
+            logger.warn("INVALID x-ms-request-charge value {}.", value);
             return 0;
         }
     }

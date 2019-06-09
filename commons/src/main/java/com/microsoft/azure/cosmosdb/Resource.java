@@ -42,12 +42,12 @@ public class Resource extends JsonSerializable {
      * @param resource resource to by copied.
      */
     protected Resource(Resource resource) {
-        this.setId(resource.getId());
-        this.setResourceId(resource.getResourceId());
-        this.setSelfLink(resource.getSelfLink());
-        this.setAltLink(resource.getAltLink());
-        this.setTimestamp(resource.getTimestamp());
-        this.setETag(resource.getETag());
+        this.id(resource.id());
+        this.resourceId(resource.resourceId());
+        this.selfLink(resource.selfLink());
+        this.altLink(resource.altLink());
+        this.timestamp(resource.timestamp());
+        this.etag(resource.etag());
     }
 
     /**
@@ -91,7 +91,7 @@ public class Resource extends JsonSerializable {
      *
      * @return the name of the resource.
      */
-    public String getId() {
+    public String id() {
         return super.getString(Constants.Properties.ID);
     }
 
@@ -100,8 +100,9 @@ public class Resource extends JsonSerializable {
      *
      * @param id the name of the resource.
      */
-    public void setId(String id) {
+    public Resource id(String id) {
         super.set(Constants.Properties.ID, id);
+        return this;
     }
 
     /**
@@ -109,7 +110,7 @@ public class Resource extends JsonSerializable {
      *
      * @return the ID associated with the resource.
      */
-    public String getResourceId() {
+    public String resourceId() {
         return super.getString(Constants.Properties.R_ID);
     }
 
@@ -118,8 +119,9 @@ public class Resource extends JsonSerializable {
      *
      * @param resourceId the ID associated with the resource.
      */
-    public void setResourceId(String resourceId) {
+    Resource resourceId(String resourceId) {
         super.set(Constants.Properties.R_ID, resourceId);
+        return this;
     }
 
     /**
@@ -127,7 +129,7 @@ public class Resource extends JsonSerializable {
      *
      * @return the self link.
      */
-    public String getSelfLink() {
+    public String selfLink() {
         return super.getString(Constants.Properties.SELF_LINK);
     }
 
@@ -136,8 +138,9 @@ public class Resource extends JsonSerializable {
      *
      * @param selfLink the self link.
      */
-    void setSelfLink(String selfLink) {
+    Resource selfLink(String selfLink) {
         super.set(Constants.Properties.SELF_LINK, selfLink);
+        return this;
     }
 
     /**
@@ -145,7 +148,7 @@ public class Resource extends JsonSerializable {
      *
      * @return the timestamp.
      */
-    public OffsetDateTime getTimestamp() {
+    public OffsetDateTime timestamp() {
         Long seconds = super.getLong(Constants.Properties.LAST_MODIFIED);
         if (seconds == null) return null;
         return OffsetDateTime.ofInstant(Instant.ofEpochSecond(seconds.longValue()), ZoneOffset.UTC);
@@ -156,9 +159,10 @@ public class Resource extends JsonSerializable {
      *
      * @param timestamp the timestamp.
      */
-    void setTimestamp(OffsetDateTime timestamp) {
+    Resource timestamp(OffsetDateTime timestamp) {
         long seconds = timestamp.toEpochSecond();
         super.set(Constants.Properties.LAST_MODIFIED, seconds);
+        return this;
     }
 
     /**
@@ -166,7 +170,7 @@ public class Resource extends JsonSerializable {
      *
      * @return the e tag.
      */
-    public String getETag() {
+    public String etag() {
         return super.getString(Constants.Properties.E_TAG);
     }
 
@@ -175,22 +179,24 @@ public class Resource extends JsonSerializable {
      *
      * @param eTag the e tag.
      */
-    void setETag(String eTag) {
+    Resource etag(String eTag) {
         super.set(Constants.Properties.E_TAG, eTag);
+        return this;
     }
 
     /**
      * Sets the alt-link associated with the resource from the Azure Cosmos DB service.
      * @param altLink
      */
-    void setAltLink(String altLink) {
+    Resource altLink(String altLink) {
         this.altLink = altLink;
+        return this;
     }
 
     /**
      * Gets the alt-link associated with the resource from the Azure Cosmos DB service.
      */
-    String getAltLink() {
+    String altLink() {
         return this.altLink;
     }
 }

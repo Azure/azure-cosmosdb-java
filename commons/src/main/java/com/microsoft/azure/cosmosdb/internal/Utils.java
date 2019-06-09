@@ -29,7 +29,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -328,8 +327,8 @@ public final class Utils {
         }
 
         return collection.getPartitionKey() != null
-                && collection.getPartitionKey().getPaths() != null
-                && collection.getPartitionKey().getPaths().size() > 0;
+                && collection.getPartitionKey().paths() != null
+                && collection.getPartitionKey().paths().size() > 0;
     }
 
     public static boolean isCollectionChild(ResourceType type) {
@@ -373,25 +372,25 @@ public final class Utils {
     public static boolean isValidConsistency(ConsistencyLevel backendConsistency,
             ConsistencyLevel desiredConsistency) {
         switch (backendConsistency) {
-        case Strong:
-            return desiredConsistency == ConsistencyLevel.Strong ||
-            desiredConsistency == ConsistencyLevel.BoundedStaleness ||
-            desiredConsistency == ConsistencyLevel.Session ||
-            desiredConsistency == ConsistencyLevel.Eventual ||
-            desiredConsistency == ConsistencyLevel.ConsistentPrefix;
+        case STRONG:
+            return desiredConsistency == ConsistencyLevel.STRONG ||
+            desiredConsistency == ConsistencyLevel.BOUNDED_STALENESS ||
+            desiredConsistency == ConsistencyLevel.SESSION ||
+            desiredConsistency == ConsistencyLevel.EVENTUAL ||
+            desiredConsistency == ConsistencyLevel.CONSISTENT_PREFIX;
 
-        case BoundedStaleness:
-            return desiredConsistency == ConsistencyLevel.BoundedStaleness ||
-            desiredConsistency == ConsistencyLevel.Session ||
-            desiredConsistency == ConsistencyLevel.Eventual ||
-            desiredConsistency == ConsistencyLevel.ConsistentPrefix;
+        case BOUNDED_STALENESS:
+            return desiredConsistency == ConsistencyLevel.BOUNDED_STALENESS ||
+            desiredConsistency == ConsistencyLevel.SESSION ||
+            desiredConsistency == ConsistencyLevel.EVENTUAL ||
+            desiredConsistency == ConsistencyLevel.CONSISTENT_PREFIX;
 
-        case Session:
-        case Eventual:
-        case ConsistentPrefix:
-            return desiredConsistency == ConsistencyLevel.Session ||
-            desiredConsistency == ConsistencyLevel.Eventual ||
-            desiredConsistency == ConsistencyLevel.ConsistentPrefix;
+        case SESSION:
+        case EVENTUAL:
+        case CONSISTENT_PREFIX:
+            return desiredConsistency == ConsistencyLevel.SESSION ||
+            desiredConsistency == ConsistencyLevel.EVENTUAL ||
+            desiredConsistency == ConsistencyLevel.CONSISTENT_PREFIX;
 
         default:
             throw new IllegalArgumentException("backendConsistency");
@@ -421,7 +420,7 @@ public final class Utils {
      * Returns Current Time in RFC 1123 format, e.g, 
      * Fri, 01 Dec 2017 19:22:30 GMT.
      * 
-     * @return an instance of String
+     * @return an instance of STRING
      */
     public static String nowAsRFC1123() {
         ZonedDateTime now = ZonedDateTime.now(GMT_ZONE_ID);

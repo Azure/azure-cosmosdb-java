@@ -63,7 +63,7 @@ public class ServerStoreModel implements RxStoreModel {
         }
 
         if (ReplicatedResourceClient.isMasterResource(request.getResourceType())) {
-            request.getHeaders().put(HttpConstants.HttpHeaders.CONSISTENCY_LEVEL, ConsistencyLevel.Strong.toString());
+            request.getHeaders().put(HttpConstants.HttpHeaders.CONSISTENCY_LEVEL, ConsistencyLevel.STRONG.toString());
         }
 
         Single<RxDocumentServiceResponse> response = this.storeClient.processMessageAsync(request);

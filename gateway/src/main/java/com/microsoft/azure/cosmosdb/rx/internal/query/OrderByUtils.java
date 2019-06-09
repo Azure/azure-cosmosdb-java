@@ -100,12 +100,12 @@ class OrderByUtils {
                         queryMetricsMap.put(key, documentProducerFeedResponse.pageResult.getQueryMetrics().get(key));
                     }
                 }
-                List<T> results = documentProducerFeedResponse.pageResult.getResults();
-                OrderByContinuationToken orderByContinuationToken = targetRangeToOrderByContinuationTokenMap.get(documentProducerFeedResponse.sourcePartitionKeyRange.getId());
+                List<T> results = documentProducerFeedResponse.pageResult.results();
+                OrderByContinuationToken orderByContinuationToken = targetRangeToOrderByContinuationTokenMap.get(documentProducerFeedResponse.sourcePartitionKeyRange.id());
                 if (orderByContinuationToken != null) {
                     Pair<Boolean, ResourceId> booleanResourceIdPair = ResourceId.tryParse(orderByContinuationToken.getRid());
                     if (!booleanResourceIdPair.getLeft()) {
-                        return Observable.error(new BadRequestException(String.format("Invalid Rid in the continuation token %s for OrderBy~Context.",
+                        return Observable.error(new BadRequestException(String.format("INVALID Rid in the continuation token %s for OrderBy~Context.",
                                 orderByContinuationToken.getCompositeContinuationToken().getToken())));
                     }
                     ResourceId continuationTokenRid = booleanResourceIdPair.getRight();
@@ -141,7 +141,7 @@ class OrderByUtils {
                                     // If there is a tie in the sort order the documents should be in _rid order in the same direction as the first order by field.
                                     // So if it's ORDER BY c.age ASC, c.name DESC the _rids are ASC
                                     // If ti's ORDER BY c.age DESC, c.name DESC the _rids are DESC
-                                    cmp = (continuationTokenRid.getDocument() - ResourceId.tryParse(tOrderByRowResult.getResourceId()).getRight().getDocument());
+                                    cmp = (continuationTokenRid.getDocument() - ResourceId.tryParse(tOrderByRowResult.resourceId()).getRight().getDocument());
 
                                     if (sortOrders.iterator().next().equals(SortOrder.Descending)) {
                                         cmp = -cmp;
@@ -155,14 +155,14 @@ class OrderByUtils {
 
                 }
 
-                tracker.addCharge(documentProducerFeedResponse.pageResult.getRequestCharge());
+                tracker.addCharge(documentProducerFeedResponse.pageResult.requestCharge());
                 Observable<T> x = Observable.<T>from(results);
 
                 return x.map(r -> new OrderByRowResult<T>(
                         klass,
                         r.toJson(),
                         documentProducerFeedResponse.sourcePartitionKeyRange,
-                        documentProducerFeedResponse.pageResult.getResponseContinuation()));
+                        documentProducerFeedResponse.pageResult.continuationToken()));
             }, 1);
         }
     }

@@ -23,17 +23,8 @@
 package com.microsoft.azure.cosmosdb.rx.examples;
 
 import com.google.common.collect.ImmutableList;
-import com.microsoft.azure.cosmosdb.ConnectionMode;
-import com.microsoft.azure.cosmosdb.ConnectionPolicy;
-import com.microsoft.azure.cosmosdb.ConsistencyLevel;
-import com.microsoft.azure.cosmosdb.Database;
-import com.microsoft.azure.cosmosdb.Document;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
-import com.microsoft.azure.cosmosdb.DocumentCollection;
-import com.microsoft.azure.cosmosdb.PartitionKeyDefinition;
-import com.microsoft.azure.cosmosdb.ResourceResponse;
-import com.microsoft.azure.cosmosdb.UniqueKey;
-import com.microsoft.azure.cosmosdb.UniqueKeyPolicy;
+import com.microsoft.azure.cosmosdb.*;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -58,16 +49,16 @@ public class UniqueIndexAsyncAPITest {
     @Test(groups = "samples", timeOut = TIMEOUT)
     public void uniqueIndex() {
         DocumentCollection collectionDefinition = new DocumentCollection();
-        collectionDefinition.setId(UUID.randomUUID().toString());
+        collectionDefinition.id(UUID.randomUUID().toString());
         UniqueKeyPolicy uniqueKeyPolicy = new UniqueKeyPolicy();
         UniqueKey uniqueKey = new UniqueKey();
-        uniqueKey.setPaths(ImmutableList.of("/name", "/field"));
-        uniqueKeyPolicy.setUniqueKeys(Collections.singleton(uniqueKey));
+        uniqueKey.paths(ImmutableList.of("/name", "/field"));
+        uniqueKeyPolicy.uniqueKeys(Collections.singleton(uniqueKey));
         collectionDefinition.setUniqueKeyPolicy(uniqueKeyPolicy);
         PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition();
         ArrayList<String> paths = new ArrayList<String>();
         paths.add("/mypk");
-        partitionKeyDef.setPaths(paths);
+        partitionKeyDef.paths(paths);
         collectionDefinition.setPartitionKey(partitionKeyDef);
 
         DocumentCollection collection = client.createCollection(getDatabaseLink(), collectionDefinition, null).toBlocking().single().getResource();
@@ -88,29 +79,29 @@ public class UniqueIndexAsyncAPITest {
         docCreation.subscribe(subscriber);
 
         subscriber.awaitTerminalEvent();
-        subscriber.assertError(DocumentClientException.class);
+        subscriber.assertError(CosmosClientException.class);
         assertThat(subscriber.getOnErrorEvents(), hasSize(1));
 
         // error code for failure is conflict
-        assertThat(((DocumentClientException) subscriber.getOnErrorEvents().get(0)).getStatusCode(), equalTo(409));
+        assertThat(((CosmosClientException) subscriber.getOnErrorEvents().get(0)).statusCode(), equalTo(409));
     }
 
     @BeforeClass(groups = "samples", timeOut = TIMEOUT)
     public void setUp() {
         // Sets up the requirements for each test
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
-        connectionPolicy.setConnectionMode(ConnectionMode.Direct);
+        connectionPolicy.connectionMode(ConnectionMode.DIRECT);
         client = new AsyncDocumentClient.Builder()
                 .withServiceEndpoint(TestConfigurations.HOST)
                 .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
                 .withConnectionPolicy(connectionPolicy)
-                .withConsistencyLevel(ConsistencyLevel.Session)
+                .withConsistencyLevel(ConsistencyLevel.SESSION)
                 .build();
 
         DocumentCollection collectionDefinition = new DocumentCollection();
-        collectionDefinition.setId(UUID.randomUUID().toString());
+        collectionDefinition.id(UUID.randomUUID().toString());
 
-        // Create database
+        // CREATE database
         createdDatabase = Utils.createDatabaseForTest(client);
     }
 
@@ -121,10 +112,10 @@ public class UniqueIndexAsyncAPITest {
     }
 
     private String getCollectionLink(DocumentCollection collection) {
-        return "dbs/" + createdDatabase.getId() + "/colls/" + collection.getId();
+        return "dbs/" + createdDatabase.id() + "/colls/" + collection.id();
     }
 
     private String getDatabaseLink() {
-        return "dbs/" + createdDatabase.getId();
+        return "dbs/" + createdDatabase.id();
     }
 }

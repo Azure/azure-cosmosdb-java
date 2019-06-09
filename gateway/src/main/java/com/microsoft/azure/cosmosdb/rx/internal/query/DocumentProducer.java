@@ -28,14 +28,12 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import com.microsoft.azure.cosmosdb.BridgeInternal;
+import com.microsoft.azure.cosmosdb.*;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.rx.internal.IDocumentClientRetryPolicy;
 import com.microsoft.azure.cosmosdb.rx.internal.ObservableHelper;
 import com.microsoft.azure.cosmosdb.internal.query.metrics.ClientSideMetrics;
 import com.microsoft.azure.cosmosdb.internal.query.metrics.FetchExecutionRangeAccumulator;
-import com.microsoft.azure.cosmosdb.QueryMetrics;
-import com.microsoft.azure.cosmosdb.QueryMetricsConstants;
 import com.microsoft.azure.cosmosdb.internal.query.metrics.SchedulingStopwatch;
 import com.microsoft.azure.cosmosdb.internal.query.metrics.SchedulingTimeSpan;
 
@@ -44,11 +42,7 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.microsoft.azure.cosmosdb.DocumentClientException;
-import com.microsoft.azure.cosmosdb.FeedOptions;
-import com.microsoft.azure.cosmosdb.FeedResponse;
-import com.microsoft.azure.cosmosdb.PartitionKeyRange;
-import com.microsoft.azure.cosmosdb.Resource;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.internal.routing.Range;
 import com.microsoft.azure.cosmosdb.rx.internal.Exceptions;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
@@ -86,19 +80,19 @@ class DocumentProducer<T extends Resource> {
         }
 
         void populatePartitionedQueryMetrics() {
-            String queryMetricsDelimitedString = pageResult.getResponseHeaders().get(HttpConstants.HttpHeaders.QUERY_METRICS);
+            String queryMetricsDelimitedString = pageResult.responseHeaders().get(HttpConstants.HttpHeaders.QUERY_METRICS);
             if (!StringUtils.isEmpty(queryMetricsDelimitedString)) {
-                queryMetricsDelimitedString += String.format(";%s=%.2f", QueryMetricsConstants.RequestCharge, pageResult.getRequestCharge());
+                queryMetricsDelimitedString += String.format(";%s=%.2f", QueryMetricsConstants.RequestCharge, pageResult.requestCharge());
                 ImmutablePair<String, SchedulingTimeSpan> schedulingTimeSpanMap =
-                        new ImmutablePair<>(targetRange.getId(), fetchSchedulingMetrics.getElapsedTime());
+                        new ImmutablePair<>(targetRange.id(), fetchSchedulingMetrics.getElapsedTime());
 
                 QueryMetrics qm =BridgeInternal.createQueryMetricsFromDelimitedStringAndClientSideMetrics(queryMetricsDelimitedString,
                         new ClientSideMetrics(retries,
-                                pageResult.getRequestCharge(),
+                                pageResult.requestCharge(),
                                 fetchExecutionRangeAccumulator.getExecutionRanges(),
                                 Arrays.asList(schedulingTimeSpanMap)
-                        ), pageResult.getActivityId());
-                BridgeInternal.putQueryMetricsIntoMap(pageResult, targetRange.getId(), qm);
+                        ), pageResult.activityId());
+                BridgeInternal.putQueryMetricsIntoMap(pageResult, targetRange.id(), qm);
             }
         }
     }
@@ -142,7 +136,7 @@ class DocumentProducer<T extends Resource> {
 
         this.fetchSchedulingMetrics = new SchedulingStopwatch();
         this.fetchSchedulingMetrics.ready();
-        this.fetchExecutionRangeAccumulator = new FetchExecutionRangeAccumulator(targetRange.getId());
+        this.fetchExecutionRangeAccumulator = new FetchExecutionRangeAccumulator(targetRange.id());
 
         this.executeRequestFuncWithRetries = request -> {
             retries = -1;
@@ -163,7 +157,7 @@ class DocumentProducer<T extends Resource> {
         this.correlatedActivityId = correlatedActivityId;
 
         this.feedOptions = feedOptions != null ? feedOptions : new FeedOptions();
-        this.feedOptions.setRequestContinuation(initialContinuationToken);
+        this.feedOptions.requestContinuation(initialContinuationToken);
         this.lastResponseContinuationToken = initialContinuationToken;
         this.resourceType = resourceType;
         this.targetRange = targetRange;
@@ -185,9 +179,9 @@ class DocumentProducer<T extends Resource> {
                         top, 
                         pageSize)
                 .map(rsp -> {
-                    lastResponseContinuationToken = rsp.getResponseContinuation();
-                    this.fetchExecutionRangeAccumulator.endFetchRange(rsp.getActivityId(),
-                            rsp.getResults().size(),
+                    lastResponseContinuationToken = rsp.continuationToken();
+                    this.fetchExecutionRangeAccumulator.endFetchRange(rsp.activityId(),
+                            rsp.results().size(),
                             this.retries);
                     this.fetchSchedulingMetrics.stop();
                     return rsp;});
@@ -197,7 +191,7 @@ class DocumentProducer<T extends Resource> {
 
     private Observable<DocumentProducerFeedResponse> splitProof(Observable<DocumentProducerFeedResponse> sourceFeedResponseObservable) {
         return sourceFeedResponseObservable.onErrorResumeNext( t -> {
-            DocumentClientException dce = Utils.as(t, DocumentClientException.class);
+            CosmosClientException dce = Utils.as(t, CosmosClientException.class);
             if (dce == null || !isSplit(dce)) {
                 logger.error("Unexpected failure", t);
                 return Observable.error(t);
@@ -261,10 +255,10 @@ class DocumentProducer<T extends Resource> {
     }
 
     private Single<List<PartitionKeyRange>> getReplacementRanges(Range<String> range) {
-        return client.getPartitionKeyRangeCache().tryGetOverlappingRangesAsync(collectionRid, range, true, feedOptions.getProperties());
+        return client.getPartitionKeyRangeCache().tryGetOverlappingRangesAsync(collectionRid, range, true, feedOptions.properties());
     }
 
-    private boolean isSplit(DocumentClientException e) {
+    private boolean isSplit(CosmosClientException e) {
         return Exceptions.isPartitionSplit(e);
     }
 }

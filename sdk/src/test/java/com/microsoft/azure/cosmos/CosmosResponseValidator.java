@@ -23,17 +23,12 @@
 package com.microsoft.azure.cosmos;
 
 import com.microsoft.azure.cosmosdb.CompositePath;
-import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.IndexingMode;
 import com.microsoft.azure.cosmosdb.Resource;
-import com.microsoft.azure.cosmosdb.ResourceResponse;
 import com.microsoft.azure.cosmosdb.SpatialSpec;
 import com.microsoft.azure.cosmosdb.SpatialType;
-import com.microsoft.azure.cosmosdb.StoredProcedure;
-import com.microsoft.azure.cosmosdb.Trigger;
 import com.microsoft.azure.cosmosdb.TriggerOperation;
 import com.microsoft.azure.cosmosdb.TriggerType;
-import com.microsoft.azure.cosmosdb.UserDefinedFunction;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -68,7 +63,7 @@ public interface CosmosResponseValidator<T extends CosmosResponse> {
                 @Override
                 public void validate(T resourceResponse) {
                     assertThat(getResource(resourceResponse)).isNotNull();
-                    assertThat(getResource(resourceResponse).getId()).as("check Resource Id").isEqualTo(resourceId);
+                    assertThat(getResource(resourceResponse).id()).as("check Resource Id").isEqualTo(resourceId);
                 }
             });
             return this;
@@ -76,19 +71,19 @@ public interface CosmosResponseValidator<T extends CosmosResponse> {
 
         private  Resource getResource(T resourceResponse) {
             if (resourceResponse instanceof CosmosDatabaseResponse) {
-                return ((CosmosDatabaseResponse)resourceResponse).getCosmosDatabaseSettings();
+                return ((CosmosDatabaseResponse)resourceResponse).settings();
             } else if (resourceResponse instanceof CosmosContainerResponse) {
-                return ((CosmosContainerResponse)resourceResponse).getCosmosContainerSettings();
+                return ((CosmosContainerResponse)resourceResponse).settings();
             } else if (resourceResponse instanceof CosmosItemResponse) {
-                return ((CosmosItemResponse)resourceResponse).getCosmosItemSettings();
+                return ((CosmosItemResponse)resourceResponse).properties();
             } else if (resourceResponse instanceof CosmosStoredProcedureResponse) {
-                return ((CosmosStoredProcedureResponse)resourceResponse).getStoredProcedureSettings();
+                return ((CosmosStoredProcedureResponse)resourceResponse).settings();
             } else if (resourceResponse instanceof CosmosTriggerResponse) {
-                return ((CosmosTriggerResponse)resourceResponse).getCosmosTriggerSettings();
+                return ((CosmosTriggerResponse)resourceResponse).settings();
             } else if (resourceResponse instanceof CosmosUserDefinedFunctionResponse) {
-                return ((CosmosUserDefinedFunctionResponse)resourceResponse).getCosmosUserDefinedFunctionSettings();
+                return ((CosmosUserDefinedFunctionResponse)resourceResponse).settings();
             } else if (resourceResponse instanceof CosmosUserResponse) {
-                return ((CosmosUserResponse)resourceResponse).getCosmosUserSettings();
+                return ((CosmosUserResponse)resourceResponse).settings();
             }
             return null;
         }
@@ -109,9 +104,9 @@ public interface CosmosResponseValidator<T extends CosmosResponse> {
                 
                 @Override
                 public void validate(CosmosContainerResponse resourceResponse) {
-                    assertThat(resourceResponse.getCosmosContainerSettings()).isNotNull();
-                    assertThat(resourceResponse.getCosmosContainerSettings().getIndexingPolicy()).isNotNull();
-                    assertThat(resourceResponse.getCosmosContainerSettings().getIndexingPolicy().getIndexingMode()).isEqualTo(mode);
+                    assertThat(resourceResponse.settings()).isNotNull();
+                    assertThat(resourceResponse.settings().indexingPolicy()).isNotNull();
+                    assertThat(resourceResponse.settings().indexingPolicy().indexingMode()).isEqualTo(mode);
                 }
             });
             return this;
@@ -133,8 +128,8 @@ public interface CosmosResponseValidator<T extends CosmosResponse> {
 
                 @Override
                 public void validate(CosmosContainerResponse resourceResponse) {
-                    Iterator<ArrayList<CompositePath>> compositeIndexesReadIterator = resourceResponse.getCosmosContainerSettings()
-                            .getIndexingPolicy().getCompositeIndexes().iterator();
+                    Iterator<ArrayList<CompositePath>> compositeIndexesReadIterator = resourceResponse.settings()
+                            .indexingPolicy().compositeIndexes().iterator();
                     Iterator<ArrayList<CompositePath>> compositeIndexesWrittenIterator = compositeIndexesWritten.iterator();
                     
                     ArrayList<String> readIndexesStrings = new ArrayList<String>();
@@ -151,8 +146,8 @@ public interface CosmosResponseValidator<T extends CosmosResponse> {
                             CompositePath compositePathRead = compositeIndexReadIterator.next();
                             CompositePath compositePathWritten = compositeIndexWrittenIterator.next();
                             
-                            readIndexesString.append(compositePathRead.getPath() + ":" + compositePathRead.getOrder() + ";");
-                            writtenIndexesString.append(compositePathWritten.getPath() + ":" + compositePathRead.getOrder() + ";");
+                            readIndexesString.append(compositePathRead.path() + ":" + compositePathRead.order() + ";");
+                            writtenIndexesString.append(compositePathWritten.path() + ":" + compositePathRead.order() + ";");
                         }
                         
                         readIndexesStrings.add(readIndexesString.toString());
@@ -171,8 +166,8 @@ public interface CosmosResponseValidator<T extends CosmosResponse> {
 
                 @Override
                 public void validate(CosmosContainerResponse resourceResponse) {
-                    Iterator<SpatialSpec> spatialIndexesReadIterator = resourceResponse.getCosmosContainerSettings()
-                            .getIndexingPolicy().getSpatialIndexes().iterator();
+                    Iterator<SpatialSpec> spatialIndexesReadIterator = resourceResponse.settings()
+                            .indexingPolicy().spatialIndexes().iterator();
                     Iterator<SpatialSpec> spatialIndexesWrittenIterator = spatialIndexes.iterator();
 
                     HashMap<String, ArrayList<SpatialType>> readIndexMap = new HashMap<String, ArrayList<SpatialType>>();
@@ -182,14 +177,14 @@ public interface CosmosResponseValidator<T extends CosmosResponse> {
                         SpatialSpec spatialSpecRead = spatialIndexesReadIterator.next();
                         SpatialSpec spatialSpecWritten = spatialIndexesWrittenIterator.next();
 
-                        String readPath = spatialSpecRead.getPath() + ":";
-                        String writtenPath = spatialSpecWritten.getPath() + ":";
+                        String readPath = spatialSpecRead.path() + ":";
+                        String writtenPath = spatialSpecWritten.path() + ":";
 
                         ArrayList<SpatialType> readSpatialTypes = new ArrayList<SpatialType>();
                         ArrayList<SpatialType> writtenSpatialTypes = new ArrayList<SpatialType>();
                         
-                        Iterator<SpatialType> spatialTypesReadIterator = spatialSpecRead.getSpatialTypes().iterator();
-                        Iterator<SpatialType> spatialTypesWrittenIterator = spatialSpecWritten.getSpatialTypes().iterator();
+                        Iterator<SpatialType> spatialTypesReadIterator = spatialSpecRead.spatialTypes().iterator();
+                        Iterator<SpatialType> spatialTypesWrittenIterator = spatialSpecWritten.spatialTypes().iterator();
 
                         while (spatialTypesReadIterator.hasNext() && spatialTypesWrittenIterator.hasNext()) {
                             readSpatialTypes.add(spatialTypesReadIterator.next());
@@ -214,7 +209,7 @@ public interface CosmosResponseValidator<T extends CosmosResponse> {
 
                 @Override
                 public void validate(CosmosStoredProcedureResponse resourceResponse) {
-                    assertThat(resourceResponse.getStoredProcedureSettings().getBody()).isEqualTo(storedProcedureBody);
+                    assertThat(resourceResponse.settings().body()).isEqualTo(storedProcedureBody);
                 }
             });
             return this;
@@ -225,8 +220,8 @@ public interface CosmosResponseValidator<T extends CosmosResponse> {
 
                 @Override
                 public void validate(T resourceResponse) {
-                    assertThat(resourceResponse.getResourceSettings()).isNotNull();
-                    assertThat(resourceResponse.getResourceSettings().getETag()).isNotNull();
+                    assertThat(resourceResponse.resourceSettings()).isNotNull();
+                    assertThat(resourceResponse.resourceSettings().etag()).isNotNull();
                 }
             });
             return this;
@@ -237,7 +232,7 @@ public interface CosmosResponseValidator<T extends CosmosResponse> {
 
                 @Override
                 public void validate(CosmosTriggerResponse resourceResponse) {
-                    assertThat(resourceResponse.getCosmosTriggerSettings().getBody()).isEqualTo(functionBody);
+                    assertThat(resourceResponse.settings().body()).isEqualTo(functionBody);
                 }
             });
             return this;
@@ -248,8 +243,8 @@ public interface CosmosResponseValidator<T extends CosmosResponse> {
 
                 @Override
                 public void validate(CosmosTriggerResponse resourceResponse) {
-                    assertThat(resourceResponse.getCosmosTriggerSettings().getTriggerType()).isEqualTo(type);
-                    assertThat(resourceResponse.getCosmosTriggerSettings().getTriggerOperation()).isEqualTo(op);
+                    assertThat(resourceResponse.settings().triggerType()).isEqualTo(type);
+                    assertThat(resourceResponse.settings().triggerOperation()).isEqualTo(op);
                 }
             });
             return this;
@@ -260,7 +255,7 @@ public interface CosmosResponseValidator<T extends CosmosResponse> {
 
                 @Override
                 public void validate(CosmosUserDefinedFunctionResponse resourceResponse) {
-                    assertThat(resourceResponse.getCosmosUserDefinedFunctionSettings().getBody()).isEqualTo(functionBody);
+                    assertThat(resourceResponse.settings().body()).isEqualTo(functionBody);
                 }
             });
             return this;

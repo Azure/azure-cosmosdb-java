@@ -25,7 +25,7 @@ package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
 import com.google.common.collect.ImmutableList;
 import com.microsoft.azure.cosmosdb.ConsistencyLevel;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.ISessionContainer;
 import com.microsoft.azure.cosmosdb.PartitionKeyRange;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
@@ -63,21 +63,21 @@ public class ConsistencyReaderTest {
     public Object[][] deduceReadModeArgProvider() {
         return new Object[][]{
                 // account consistency, request consistency, expected readmode, expected consistency to use, whether use session
-                {  ConsistencyLevel.Strong, null, ReadMode.Strong, ConsistencyLevel.Strong, false},
-                {  ConsistencyLevel.Strong, ConsistencyLevel.Eventual, ReadMode.Any, ConsistencyLevel.Eventual, false},
-                {  ConsistencyLevel.Strong, ConsistencyLevel.Session, ReadMode.Any, ConsistencyLevel.Session, true},
-                {  ConsistencyLevel.Session, ConsistencyLevel.Eventual, ReadMode.Any, ConsistencyLevel.Eventual, false},
-                {  ConsistencyLevel.Session, ConsistencyLevel.Session, ReadMode.Any, ConsistencyLevel.Session, true},
-                {  ConsistencyLevel.Session, ConsistencyLevel.Eventual, ReadMode.Any, ConsistencyLevel.Eventual, false},
-                {  ConsistencyLevel.Session, null, ReadMode.Any, ConsistencyLevel.Session, true},
-                {  ConsistencyLevel.Eventual, ConsistencyLevel.Eventual, ReadMode.Any, ConsistencyLevel.Eventual, false},
-                {  ConsistencyLevel.Eventual, null, ReadMode.Any, ConsistencyLevel.Eventual, false},
+                {  ConsistencyLevel.STRONG, null, ReadMode.Strong, ConsistencyLevel.STRONG, false},
+                {  ConsistencyLevel.STRONG, ConsistencyLevel.EVENTUAL, ReadMode.Any, ConsistencyLevel.EVENTUAL, false},
+                {  ConsistencyLevel.STRONG, ConsistencyLevel.SESSION, ReadMode.Any, ConsistencyLevel.SESSION, true},
+                {  ConsistencyLevel.SESSION, ConsistencyLevel.EVENTUAL, ReadMode.Any, ConsistencyLevel.EVENTUAL, false},
+                {  ConsistencyLevel.SESSION, ConsistencyLevel.SESSION, ReadMode.Any, ConsistencyLevel.SESSION, true},
+                {  ConsistencyLevel.SESSION, ConsistencyLevel.EVENTUAL, ReadMode.Any, ConsistencyLevel.EVENTUAL, false},
+                {  ConsistencyLevel.SESSION, null, ReadMode.Any, ConsistencyLevel.SESSION, true},
+                {  ConsistencyLevel.EVENTUAL, ConsistencyLevel.EVENTUAL, ReadMode.Any, ConsistencyLevel.EVENTUAL, false},
+                {  ConsistencyLevel.EVENTUAL, null, ReadMode.Any, ConsistencyLevel.EVENTUAL, false},
         };
     }
 
     @Test(groups = "unit", dataProvider = "deduceReadModeArgProvider")
     public void deduceReadMode(ConsistencyLevel accountConsistencyLevel, ConsistencyLevel requestConsistency, ReadMode expectedReadMode,
-                               ConsistencyLevel expectedConsistencyToUse, boolean expectedToUseSession) throws DocumentClientException {
+                               ConsistencyLevel expectedConsistencyToUse, boolean expectedToUseSession) throws CosmosClientException {
         AddressSelector addressSelector = Mockito.mock(AddressSelector.class);
         ISessionContainer sessionContainer = Mockito.mock(ISessionContainer.class);
         TransportClient transportClient = Mockito.mock(TransportClient.class);
@@ -127,7 +127,7 @@ public class ConsistencyReaderTest {
         AddressSelector addressSelector = Mockito.mock(AddressSelector.class);
         ISessionContainer sessionContainer = Mockito.mock(ISessionContainer.class);
         TransportClient transportClient = Mockito.mock(TransportClient.class);
-        GatewayServiceConfiguratorReaderMock gatewayServiceConfigurationReaderWrapper = GatewayServiceConfiguratorReaderMock.from(ConsistencyLevel.Strong,
+        GatewayServiceConfiguratorReaderMock gatewayServiceConfigurationReaderWrapper = GatewayServiceConfiguratorReaderMock.from(ConsistencyLevel.STRONG,
                                                                                                                         systemMaxReplicaCount,
                                                                                                                         systemMinReplicaCount,
                                                                                                                         userMaxReplicaCount,
@@ -189,7 +189,7 @@ public class ConsistencyReaderTest {
                 .storeResponseOn(secondaries.get(2), OperationType.Read, ResourceType.Document, secondaryResponse3, true)
                 .build();
 
-        GatewayServiceConfiguratorReaderMock gatewayServiceConfigurationReaderWrapper = GatewayServiceConfiguratorReaderMock.from(ConsistencyLevel.Strong);
+        GatewayServiceConfiguratorReaderMock gatewayServiceConfigurationReaderWrapper = GatewayServiceConfiguratorReaderMock.from(ConsistencyLevel.STRONG);
         ISessionContainer sessionContainer = Mockito.mock(ISessionContainer.class);
 
         IAuthorizationTokenProvider authorizationTokenProvider = Mockito.mock(IAuthorizationTokenProvider.class);
@@ -201,7 +201,7 @@ public class ConsistencyReaderTest {
 
         RxDocumentServiceRequest request = RxDocumentServiceRequest.createFromName(
                 OperationType.Read, "/dbs/db/colls/col/docs/docId", ResourceType.Document);
-        request.getHeaders().put(HttpConstants.HttpHeaders.CONSISTENCY_LEVEL, ConsistencyLevel.Eventual.name());
+        request.getHeaders().put(HttpConstants.HttpHeaders.CONSISTENCY_LEVEL, ConsistencyLevel.EVENTUAL.name());
 
         TimeoutHelper timeout = Mockito.mock(TimeoutHelper.class);
         boolean forceRefresh = false;
@@ -298,7 +298,7 @@ public class ConsistencyReaderTest {
                 .storeResponseOn(secondaries.get(2), OperationType.Read, ResourceType.Document, secondaryResponse3, true)
                 .build();
 
-        GatewayServiceConfiguratorReaderMock gatewayServiceConfigurationReaderWrapper = GatewayServiceConfiguratorReaderMock.from(ConsistencyLevel.Strong);
+        GatewayServiceConfiguratorReaderMock gatewayServiceConfigurationReaderWrapper = GatewayServiceConfiguratorReaderMock.from(ConsistencyLevel.STRONG);
         ISessionContainer sessionContainer = Mockito.mock(ISessionContainer.class);
 
         IAuthorizationTokenProvider authorizationTokenProvider = Mockito.mock(IAuthorizationTokenProvider.class);
@@ -310,7 +310,7 @@ public class ConsistencyReaderTest {
 
         RxDocumentServiceRequest request = RxDocumentServiceRequest.createFromName(
                 OperationType.Read, "/dbs/db/colls/col/docs/docId", ResourceType.Document);
-        request.getHeaders().put(HttpConstants.HttpHeaders.CONSISTENCY_LEVEL, ConsistencyLevel.Session.name());
+        request.getHeaders().put(HttpConstants.HttpHeaders.CONSISTENCY_LEVEL, ConsistencyLevel.SESSION.name());
         request.requestContext = new DocumentServiceRequestContext();
         Utils.ValueHolder<ISessionToken> sessionToken = Utils.ValueHolder.initialize(null);
         assertThat(VectorSessionToken.tryCreate("-1#" + fasterReplicaLSN , sessionToken)).isTrue();
@@ -371,10 +371,10 @@ public class ConsistencyReaderTest {
         String partitionKeyRangeId = "1";
 
         NotFoundException foundException = new NotFoundException();
-        foundException.getResponseHeaders().put(HttpConstants.HttpHeaders.SESSION_TOKEN, partitionKeyRangeId + ":-1#" + slowReplicaLSN);
-        foundException.getResponseHeaders().put(WFConstants.BackendHeaders.LSN, Long.toString(slowReplicaLSN));
-        foundException.getResponseHeaders().put(WFConstants.BackendHeaders.LOCAL_LSN, Long.toString(slowReplicaLSN));
-        foundException.getResponseHeaders().put(WFConstants.BackendHeaders.GLOBAL_COMMITTED_LSN, Long.toString(globalCommittedLsn));
+        foundException.responseHeaders().put(HttpConstants.HttpHeaders.SESSION_TOKEN, partitionKeyRangeId + ":-1#" + slowReplicaLSN);
+        foundException.responseHeaders().put(WFConstants.BackendHeaders.LSN, Long.toString(slowReplicaLSN));
+        foundException.responseHeaders().put(WFConstants.BackendHeaders.LOCAL_LSN, Long.toString(slowReplicaLSN));
+        foundException.responseHeaders().put(WFConstants.BackendHeaders.GLOBAL_COMMITTED_LSN, Long.toString(globalCommittedLsn));
 
         StoreResponse storeResponse = StoreResponseBuilder.create()
                 .withSessionToken(partitionKeyRangeId + ":-1#" + fasterReplicaLSN)
@@ -407,7 +407,7 @@ public class ConsistencyReaderTest {
         ISessionContainer sessionContainer = Mockito.mock(ISessionContainer.class);
 
         Configs configs = new Configs();
-        GatewayServiceConfiguratorReaderMock gatewayServiceConfigurationReaderWrapper = GatewayServiceConfiguratorReaderMock.from(ConsistencyLevel.Strong,
+        GatewayServiceConfiguratorReaderMock gatewayServiceConfigurationReaderWrapper = GatewayServiceConfiguratorReaderMock.from(ConsistencyLevel.STRONG,
                                                                                                                                   4,
                                                                                                                                   3,
                                                                                                                                   4,
@@ -425,7 +425,7 @@ public class ConsistencyReaderTest {
         TimeoutHelper timeoutHelper = Mockito.mock(TimeoutHelper.class);
         RxDocumentServiceRequest dsr = RxDocumentServiceRequest.createFromName(
                 OperationType.Read, "/dbs/db/colls/col/docs/docId", ResourceType.Document);
-        dsr.getHeaders().put(HttpConstants.HttpHeaders.CONSISTENCY_LEVEL, ConsistencyLevel.Session.name());
+        dsr.getHeaders().put(HttpConstants.HttpHeaders.CONSISTENCY_LEVEL, ConsistencyLevel.SESSION.name());
         dsr.requestContext = new DocumentServiceRequestContext();
         Utils.ValueHolder<ISessionToken> sessionToken = Utils.ValueHolder.initialize(null);
         assertThat(VectorSessionToken.tryCreate("-1#" + fasterReplicaLSN , sessionToken)).isTrue();
@@ -451,10 +451,10 @@ public class ConsistencyReaderTest {
         String partitionKeyRangeId = "73";
 
         NotFoundException foundException = new NotFoundException();
-        foundException.getResponseHeaders().put(HttpConstants.HttpHeaders.SESSION_TOKEN, partitionKeyRangeId + ":-1#" + lsn);
-        foundException.getResponseHeaders().put(WFConstants.BackendHeaders.LSN, Long.toString(lsn));
-        foundException.getResponseHeaders().put(WFConstants.BackendHeaders.LOCAL_LSN, Long.toString(lsn));
-        foundException.getResponseHeaders().put(WFConstants.BackendHeaders.GLOBAL_COMMITTED_LSN, Long.toString(globalCommittedLsn));
+        foundException.responseHeaders().put(HttpConstants.HttpHeaders.SESSION_TOKEN, partitionKeyRangeId + ":-1#" + lsn);
+        foundException.responseHeaders().put(WFConstants.BackendHeaders.LSN, Long.toString(lsn));
+        foundException.responseHeaders().put(WFConstants.BackendHeaders.LOCAL_LSN, Long.toString(lsn));
+        foundException.responseHeaders().put(WFConstants.BackendHeaders.GLOBAL_COMMITTED_LSN, Long.toString(globalCommittedLsn));
 
         TransportClientWrapper transportClientWrapper = new TransportClientWrapper.Builder.ReplicaResponseBuilder
                 .SequentialBuilder()
@@ -477,7 +477,7 @@ public class ConsistencyReaderTest {
         TimeoutHelper timeoutHelper = Mockito.mock(TimeoutHelper.class);
         RxDocumentServiceRequest dsr = RxDocumentServiceRequest.createFromName(
                 OperationType.Read, "/dbs/db/colls/col/docs/docId", ResourceType.Document);
-        dsr.getHeaders().put(HttpConstants.HttpHeaders.CONSISTENCY_LEVEL, ConsistencyLevel.Session.name());
+        dsr.getHeaders().put(HttpConstants.HttpHeaders.CONSISTENCY_LEVEL, ConsistencyLevel.SESSION.name());
         dsr.requestContext = new DocumentServiceRequestContext();
         Utils.ValueHolder<ISessionToken> sessionToken = Utils.ValueHolder.initialize(null);
         assertThat(VectorSessionToken.tryCreate("-1#" + lsn , sessionToken)).isTrue();
@@ -488,7 +488,7 @@ public class ConsistencyReaderTest {
         Mockito.doReturn(sessionToken.v).when(sessionContainer).resolvePartitionLocalSessionToken(Mockito.eq(dsr), Mockito.anyString());
 
         Configs configs = new Configs();
-        GatewayServiceConfiguratorReaderMock gatewayServiceConfigurationReaderWrapper = GatewayServiceConfiguratorReaderMock.from(ConsistencyLevel.Strong,
+        GatewayServiceConfiguratorReaderMock gatewayServiceConfigurationReaderWrapper = GatewayServiceConfiguratorReaderMock.from(ConsistencyLevel.STRONG,
                                                                                                                                   4,
                                                                                                                                   3,
                                                                                                                                   4,
@@ -517,10 +517,10 @@ public class ConsistencyReaderTest {
         long globalCommittedLsn = 651174;
         String partitionKeyRangeId = "73";
         NotFoundException foundException = new NotFoundException();
-        foundException.getResponseHeaders().put(HttpConstants.HttpHeaders.SESSION_TOKEN, partitionKeyRangeId + ":-1#" + lsn);
-        foundException.getResponseHeaders().put(WFConstants.BackendHeaders.LSN, Long.toString(651175));
-        foundException.getResponseHeaders().put(WFConstants.BackendHeaders.LOCAL_LSN, Long.toString(651175));
-        foundException.getResponseHeaders().put(WFConstants.BackendHeaders.GLOBAL_COMMITTED_LSN, Long.toString(globalCommittedLsn));
+        foundException.responseHeaders().put(HttpConstants.HttpHeaders.SESSION_TOKEN, partitionKeyRangeId + ":-1#" + lsn);
+        foundException.responseHeaders().put(WFConstants.BackendHeaders.LSN, Long.toString(651175));
+        foundException.responseHeaders().put(WFConstants.BackendHeaders.LOCAL_LSN, Long.toString(651175));
+        foundException.responseHeaders().put(WFConstants.BackendHeaders.GLOBAL_COMMITTED_LSN, Long.toString(globalCommittedLsn));
 
         TransportClientWrapper transportClientWrapper = new TransportClientWrapper.Builder.ReplicaResponseBuilder
                 .SequentialBuilder()
@@ -543,7 +543,7 @@ public class ConsistencyReaderTest {
         TimeoutHelper timeoutHelper = Mockito.mock(TimeoutHelper.class);
         RxDocumentServiceRequest dsr = RxDocumentServiceRequest.createFromName(
                 OperationType.Read, "/dbs/db/colls/col/docs/docId", ResourceType.Document);
-        dsr.getHeaders().put(HttpConstants.HttpHeaders.CONSISTENCY_LEVEL, ConsistencyLevel.Session.name());
+        dsr.getHeaders().put(HttpConstants.HttpHeaders.CONSISTENCY_LEVEL, ConsistencyLevel.SESSION.name());
         dsr.requestContext = new DocumentServiceRequestContext();
         Utils.ValueHolder<ISessionToken> sessionToken = Utils.ValueHolder.initialize(null);
         assertThat(VectorSessionToken.tryCreate("-1#" + (lsn + 1) , sessionToken)).isTrue();
@@ -554,7 +554,7 @@ public class ConsistencyReaderTest {
         Mockito.doReturn(sessionToken.v).when(sessionContainer).resolvePartitionLocalSessionToken(Mockito.eq(dsr), Mockito.anyString());
 
         Configs configs = new Configs();
-        GatewayServiceConfiguratorReaderMock gatewayServiceConfigurationReaderWrapper = GatewayServiceConfiguratorReaderMock.from(ConsistencyLevel.Strong,
+        GatewayServiceConfiguratorReaderMock gatewayServiceConfigurationReaderWrapper = GatewayServiceConfiguratorReaderMock.from(ConsistencyLevel.STRONG,
                                                                                                                                   4,
                                                                                                                                   3,
                                                                                                                                   4,
@@ -581,10 +581,10 @@ public class ConsistencyReaderTest {
         String partitionKeyRangeId = "73";
 
         RequestRateTooLargeException requestTooLargeException = new RequestRateTooLargeException();
-        requestTooLargeException.getResponseHeaders().put(HttpConstants.HttpHeaders.SESSION_TOKEN, partitionKeyRangeId + ":-1#" + lsn);
-        requestTooLargeException.getResponseHeaders().put(WFConstants.BackendHeaders.LSN, Long.toString(651175));
-        requestTooLargeException.getResponseHeaders().put(WFConstants.BackendHeaders.LOCAL_LSN, Long.toString(651175));
-        requestTooLargeException.getResponseHeaders().put(WFConstants.BackendHeaders.GLOBAL_COMMITTED_LSN, Long.toString(globalCommittedLsn));
+        requestTooLargeException.responseHeaders().put(HttpConstants.HttpHeaders.SESSION_TOKEN, partitionKeyRangeId + ":-1#" + lsn);
+        requestTooLargeException.responseHeaders().put(WFConstants.BackendHeaders.LSN, Long.toString(651175));
+        requestTooLargeException.responseHeaders().put(WFConstants.BackendHeaders.LOCAL_LSN, Long.toString(651175));
+        requestTooLargeException.responseHeaders().put(WFConstants.BackendHeaders.GLOBAL_COMMITTED_LSN, Long.toString(globalCommittedLsn));
 
         TransportClientWrapper transportClientWrapper = new TransportClientWrapper.Builder.ReplicaResponseBuilder
                 .SequentialBuilder()
@@ -607,7 +607,7 @@ public class ConsistencyReaderTest {
         TimeoutHelper timeoutHelper = Mockito.mock(TimeoutHelper.class);
         RxDocumentServiceRequest dsr = RxDocumentServiceRequest.createFromName(
                 OperationType.Read, "/dbs/db/colls/col/docs/docId", ResourceType.Document);
-        dsr.getHeaders().put(HttpConstants.HttpHeaders.CONSISTENCY_LEVEL, ConsistencyLevel.Session.name());
+        dsr.getHeaders().put(HttpConstants.HttpHeaders.CONSISTENCY_LEVEL, ConsistencyLevel.SESSION.name());
         dsr.requestContext = new DocumentServiceRequestContext();
         Utils.ValueHolder<ISessionToken> sessionToken = Utils.ValueHolder.initialize(null);
         assertThat(VectorSessionToken.tryCreate("-1#" + lsn , sessionToken)).isTrue();
@@ -618,7 +618,7 @@ public class ConsistencyReaderTest {
         Mockito.doReturn(sessionToken.v).when(sessionContainer).resolvePartitionLocalSessionToken(Mockito.eq(dsr), Mockito.anyString());
 
         Configs configs = new Configs();
-        GatewayServiceConfiguratorReaderMock gatewayServiceConfigurationReaderWrapper = GatewayServiceConfiguratorReaderMock.from(ConsistencyLevel.Strong,
+        GatewayServiceConfiguratorReaderMock gatewayServiceConfigurationReaderWrapper = GatewayServiceConfiguratorReaderMock.from(ConsistencyLevel.STRONG,
                                                                                                                                   4,
                                                                                                                                   3,
                                                                                                                                   4,
@@ -776,7 +776,7 @@ public class ConsistencyReaderTest {
 
     private PartitionKeyRange partitionKeyRangeWithId(String id) {
         PartitionKeyRange partitionKeyRange = Mockito.mock(PartitionKeyRange.class);
-        Mockito.doReturn(id).when(partitionKeyRange).getId();
+        Mockito.doReturn(id).when(partitionKeyRange).id();
         return partitionKeyRange;
     }
 }

@@ -58,13 +58,13 @@ public class UserCrudTest extends TestSuiteBase {
     public void createUser() throws Exception {
         //create user
         CosmosUserSettings user = new CosmosUserSettings();
-        user.setId(UUID.randomUUID().toString());
+        user.id(UUID.randomUUID().toString());
         
         Mono<CosmosUserResponse> createObservable = createdDatabase.createUser(user, null);
 
         // validate user creation
         CosmosResponseValidator<CosmosUserResponse> validator = new CosmosResponseValidator.Builder<CosmosUserResponse>()
-                .withId(user.getId())
+                .withId(user.id())
                 .notNullEtag()
                 .build();
         validateSuccess(createObservable, validator);
@@ -75,16 +75,16 @@ public class UserCrudTest extends TestSuiteBase {
  
         //create user
         CosmosUserSettings user = new CosmosUserSettings();
-        user.setId(UUID.randomUUID().toString());
+        user.id(UUID.randomUUID().toString());
        
-        CosmosUser readBackUser = createdDatabase.createUser(user, null).block().getUser();
+        CosmosUser readBackUser = createdDatabase.createUser(user, null).block().user();
 
         // read user
         Mono<CosmosUserResponse> readObservable = readBackUser.read(null);
         
         //validate user read
         CosmosResponseValidator<CosmosUserResponse> validator = new CosmosResponseValidator.Builder<CosmosUserResponse>()
-                .withId(readBackUser.getId())
+                .withId(readBackUser.id())
                 .notNullEtag()
                 .build();
         
@@ -95,9 +95,9 @@ public class UserCrudTest extends TestSuiteBase {
     public void deleteUser() throws Exception {
         //create user
         CosmosUserSettings user = new CosmosUserSettings();
-        user.setId(UUID.randomUUID().toString());
+        user.id(UUID.randomUUID().toString());
         
-        CosmosUser readBackUser = createdDatabase.createUser(user, null).block().getUser();
+        CosmosUser readBackUser = createdDatabase.createUser(user, null).block().user();
 
         // delete user
         Mono<CosmosUserResponse> deleteObservable = readBackUser.delete(null);
@@ -119,13 +119,13 @@ public class UserCrudTest extends TestSuiteBase {
 
         //create user
         CosmosUserSettings user = new CosmosUserSettings();
-        user.setId(UUID.randomUUID().toString());
+        user.id(UUID.randomUUID().toString());
         
         Mono<CosmosUserResponse> upsertObservable = createdDatabase.upsertUser(user, null);
         
         //validate user upsert
         CosmosResponseValidator<CosmosUserResponse> validatorForUpsert = new CosmosResponseValidator.Builder<CosmosUserResponse>()
-                .withId(user.getId())
+                .withId(user.id())
                 .notNullEtag()
                 .build();
         
@@ -137,30 +137,30 @@ public class UserCrudTest extends TestSuiteBase {
 
         //create user
         CosmosUserSettings user = new CosmosUserSettings();
-        user.setId(UUID.randomUUID().toString());
+        user.id(UUID.randomUUID().toString());
         
-        CosmosUserSettings readBackUser = createdDatabase.createUser(user, null).block().getCosmosUserSettings();
+        CosmosUserSettings readBackUser = createdDatabase.createUser(user, null).block().settings();
         
         // read user to validate creation
-        Mono<CosmosUserResponse> readObservable = createdDatabase.getUser(user.getId()).read();
+        Mono<CosmosUserResponse> readObservable = createdDatabase.getUser(user.id()).read();
         
         //validate user read
         CosmosResponseValidator<CosmosUserResponse> validatorForRead = new CosmosResponseValidator.Builder<CosmosUserResponse>()
-        .withId(readBackUser.getId())
+        .withId(readBackUser.id())
                 .notNullEtag()
                 .build();
         
         validateSuccess(readObservable, validatorForRead);
         
         //update user
-        String oldId = readBackUser.getId();
-        readBackUser.setId(UUID.randomUUID().toString());
+        String oldId = readBackUser.id();
+        readBackUser.id(UUID.randomUUID().toString());
 
         Mono<CosmosUserResponse> updateObservable = createdDatabase.getUser(oldId).replace(readBackUser, null);
 
         // validate user replace
         CosmosResponseValidator<CosmosUserResponse> validatorForUpdate = new CosmosResponseValidator.Builder<CosmosUserResponse>()
-                .withId(readBackUser.getId())
+                .withId(readBackUser.id())
                 .notNullEtag()
                 .build();
         

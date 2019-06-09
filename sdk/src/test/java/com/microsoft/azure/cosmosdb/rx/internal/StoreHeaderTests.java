@@ -50,15 +50,15 @@ public class StoreHeaderTests extends TestSuiteBase {
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
     public void validateStoreHeader() {
         Document docDefinition1 = getDocumentDefinition();
-        Document responseDoc1 = createDocument(client, createdDatabase.getId(), createdCollection.getId(), docDefinition1);
-        Assert.assertNotNull(responseDoc1.getSelfLink());
+        Document responseDoc1 = createDocument(client, createdDatabase.id(), createdCollection.id(), docDefinition1);
+        Assert.assertNotNull(responseDoc1.selfLink());
         Assert.assertNotNull(responseDoc1.get("_attachments"));
 
         Document docDefinition2 = getDocumentDefinition();
         RequestOptions requestOptions = new RequestOptions();
-        requestOptions.setHeader("x-ms-exclude-system-properties", "true");
-        Document responseDoc2 = createDocument(client, createdDatabase.getId(), createdCollection.getId(), docDefinition2, requestOptions);
-        Assert.assertNull(responseDoc2.getSelfLink());
+        requestOptions.setHeader("x-ms-exclude-system-item", "true");
+        Document responseDoc2 = createDocument(client, createdDatabase.id(), createdCollection.id(), docDefinition2, requestOptions);
+        Assert.assertNull(responseDoc2.selfLink());
         Assert.assertNull(responseDoc2.get("_attachments"));
     }
 

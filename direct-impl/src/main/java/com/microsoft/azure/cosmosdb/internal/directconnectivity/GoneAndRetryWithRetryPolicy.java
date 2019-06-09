@@ -25,14 +25,13 @@ package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
 import java.time.Duration;
 
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import org.apache.commons.lang3.time.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.internal.Quadruple;
-import com.microsoft.azure.cosmosdb.rx.internal.IDocumentClientRetryPolicy;
 import com.microsoft.azure.cosmosdb.rx.internal.IRetryPolicy;
 import com.microsoft.azure.cosmosdb.rx.internal.InvalidPartitionException;
 import com.microsoft.azure.cosmosdb.rx.internal.PartitionIsMigratingException;
@@ -72,7 +71,7 @@ public class GoneAndRetryWithRetryPolicy implements IRetryPolicy {
 
     @Override
     public Single<ShouldRetryResult> shouldRetry(Exception exception) {
-        DocumentClientException exceptionToThrow = null;
+        CosmosClientException exceptionToThrow = null;
         Duration backoffTime = Duration.ofSeconds(0);
         Duration timeout = Duration.ofSeconds(0);
         boolean forceRefreshAddressCache = false;
@@ -104,7 +103,7 @@ public class GoneAndRetryWithRetryPolicy implements IRetryPolicy {
                     } else {
                         logger.warn("Received gone exception after backoff/retry. Will fail the request. {}",
                                 exception.toString());
-                        exceptionToThrow = new DocumentClientException(HttpConstants.StatusCodes.SERVICE_UNAVAILABLE,
+                        exceptionToThrow = new CosmosClientException(HttpConstants.StatusCodes.SERVICE_UNAVAILABLE,
                                 exception);
                     }
 
@@ -119,7 +118,7 @@ public class GoneAndRetryWithRetryPolicy implements IRetryPolicy {
                         logger.warn(
                                 "Received partition key range gone exception after backoff/retry. Will fail the request. {}",
                                 exception.toString());
-                        exceptionToThrow = new DocumentClientException(HttpConstants.StatusCodes.SERVICE_UNAVAILABLE,
+                        exceptionToThrow = new CosmosClientException(HttpConstants.StatusCodes.SERVICE_UNAVAILABLE,
                                 exception);
                     }
                 } else if (exception instanceof InvalidPartitionException) {
@@ -132,7 +131,7 @@ public class GoneAndRetryWithRetryPolicy implements IRetryPolicy {
                         logger.warn(
                                 "Received invalid collection partition exception after backoff/retry. Will fail the request. {}",
                                 exception.toString());
-                        exceptionToThrow = new DocumentClientException(HttpConstants.StatusCodes.SERVICE_UNAVAILABLE,
+                        exceptionToThrow = new CosmosClientException(HttpConstants.StatusCodes.SERVICE_UNAVAILABLE,
                                 exception);
                     }
                 } else {
@@ -170,7 +169,7 @@ public class GoneAndRetryWithRetryPolicy implements IRetryPolicy {
                 logger.warn("Received second InvalidPartitionException after backoff/retry. Will fail the request. {}",
                         exception.toString());
                 return Single.just(ShouldRetryResult
-                        .error(new DocumentClientException(HttpConstants.StatusCodes.SERVICE_UNAVAILABLE, exception)));
+                        .error(new CosmosClientException(HttpConstants.StatusCodes.SERVICE_UNAVAILABLE, exception)));
             }
 
             if (this.request != null) {
@@ -180,7 +179,7 @@ public class GoneAndRetryWithRetryPolicy implements IRetryPolicy {
                 logger.error("Received unexpected invalid collection exception, request should be non-null.",
                         exception);
                 return Single.just(ShouldRetryResult
-                        .error(new DocumentClientException(HttpConstants.StatusCodes.INTERNAL_SERVER_ERROR, exception)));
+                        .error(new CosmosClientException(HttpConstants.StatusCodes.INTERNAL_SERVER_ERROR, exception)));
             }
             forceRefreshAddressCache = false;
         } else if (exception instanceof PartitionKeyRangeIsSplittingException) {

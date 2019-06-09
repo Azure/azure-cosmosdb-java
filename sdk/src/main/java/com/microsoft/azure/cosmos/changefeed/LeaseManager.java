@@ -76,10 +76,10 @@ public interface LeaseManager {
     Mono<Lease> renew(Lease lease);
 
     /**
-     * Replace properties from the specified lease.
+     * REPLACE item from the specified lease.
      *   It can throw {@link LeaseLostException} if other host acquired the lease.
      *
-     * @param leaseToUpdatePropertiesFrom the new properties.
+     * @param leaseToUpdatePropertiesFrom the new item.
      * @return updated lease.
      */
     Mono<Lease> updateProperties(Lease leaseToUpdatePropertiesFrom);

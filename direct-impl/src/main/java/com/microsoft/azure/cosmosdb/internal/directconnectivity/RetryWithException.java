@@ -24,17 +24,15 @@
 package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
 import com.microsoft.azure.cosmosdb.BridgeInternal;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.Error;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
-import com.microsoft.azure.cosmosdb.rx.internal.RMResources;
-import com.microsoft.azure.cosmosdb.rx.internal.Strings;
 import io.reactivex.netty.protocol.http.client.HttpResponseHeaders;
 
 import java.net.URI;
 import java.util.Map;
 
-public class RetryWithException extends DocumentClientException {
+public class RetryWithException extends CosmosClientException {
 
     public RetryWithException(Error error, long lsn, String partitionKeyRangeId, Map<String, String> responseHeaders) {
         super(HttpConstants.StatusCodes.RETRY_WITH, error, responseHeaders);

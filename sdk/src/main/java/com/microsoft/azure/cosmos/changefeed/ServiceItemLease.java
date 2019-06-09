@@ -24,7 +24,7 @@ package com.microsoft.azure.cosmos.changefeed;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.microsoft.azure.cosmos.CosmosItemSettings;
+import com.microsoft.azure.cosmos.CosmosItemProperties;
 import com.microsoft.azure.cosmosdb.Document;
 import com.microsoft.azure.cosmos.changefeed.internal.Constants;
 
@@ -40,7 +40,7 @@ import java.util.Map;
 public class ServiceItemLease implements Lease {
     private static final ZonedDateTime UNIX_START_TIME = ZonedDateTime.parse("1970-01-01T00:00:00.0Z[UTC]");
 
-    // TODO: add JSON annotations and rename the properties.
+    // TODO: add JSON annotations and rename the item.
     private String id;
     private String _etag;
     private String LeaseToken;
@@ -211,18 +211,18 @@ public class ServiceItemLease implements Lease {
 
     public static ServiceItemLease fromDocument(Document document) {
         return new ServiceItemLease()
-            .withId(document.getId())
-            .withEtag(document.getETag())
+            .withId(document.id())
+            .withEtag(document.etag())
             .withTs(document.getString(Constants.Properties.LAST_MODIFIED))
             .withOwner(document.getString("Owner"))
             .withLeaseToken(document.getString("LeaseToken"))
             .withContinuationToken(document.getString("ContinuationToken"));
     }
 
-    public static ServiceItemLease fromDocument(CosmosItemSettings document) {
+    public static ServiceItemLease fromDocument(CosmosItemProperties document) {
         return new ServiceItemLease()
-            .withId(document.getId())
-            .withEtag(document.getETag())
+            .withId(document.id())
+            .withEtag(document.etag())
             .withTs(document.getString(Constants.Properties.LAST_MODIFIED))
             .withOwner(document.getString("Owner"))
             .withLeaseToken(document.getString("LeaseToken"))

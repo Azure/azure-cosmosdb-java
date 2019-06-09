@@ -24,8 +24,7 @@ package com.microsoft.azure.cosmos.changefeed.internal;
 
 import com.microsoft.azure.cosmos.ChangeFeedObserver;
 import com.microsoft.azure.cosmos.ChangeFeedObserverContext;
-import com.microsoft.azure.cosmos.CosmosItem;
-import com.microsoft.azure.cosmos.CosmosItemSettings;
+import com.microsoft.azure.cosmos.CosmosItemProperties;
 import com.microsoft.azure.cosmos.changefeed.CancellationToken;
 import com.microsoft.azure.cosmos.changefeed.ChangeFeedContextClient;
 import com.microsoft.azure.cosmos.changefeed.PartitionCheckpointer;
@@ -35,7 +34,7 @@ import com.microsoft.azure.cosmos.changefeed.exceptions.PartitionNotFoundExcepti
 import com.microsoft.azure.cosmos.changefeed.exceptions.PartitionSplitException;
 import com.microsoft.azure.cosmos.changefeed.exceptions.TaskCancelledException;
 import com.microsoft.azure.cosmosdb.ChangeFeedOptions;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import reactor.core.publisher.Mono;
 
@@ -64,12 +63,12 @@ public class PartitionProcessorImpl implements PartitionProcessor {
         this.checkpointer = checkpointer;
 
         this.options = new ChangeFeedOptions();
-        this.options.setMaxItemCount(settings.getMaxItemCount());
+        this.options.maxItemCount(settings.getMaxItemCount());
         this.options.setPartitionKeyRangeId(settings.getPartitionKeyRangeId());
-        // this.options.setSessionToken(settings.getSessionToken());
+        // this.options.sessionToken(settings.sessionToken());
         this.options.setStartFromBeginning(settings.isStartFromBeginning());
-        this.options.setRequestContinuation(settings.getStartContinuation());
-        this.options.setStartDateTime(settings.getStartTime());
+        this.options.requestContinuation(settings.getStartContinuation());
+        this.options.startDateTime(settings.getStartTime());
 
         //this.query = documentClient.createDocumentChangeFeedQuery(self.settings.getCollectionSelfLink(), this.options);
     }
@@ -84,18 +83,18 @@ public class PartitionProcessorImpl implements PartitionProcessor {
                 Duration delay = self.settings.getFeedPollDelay();
 
                 try {
-                    self.options.setRequestContinuation(self.lastContinuation);
-                    List<FeedResponse<CosmosItemSettings>> documentFeedResponseList = self.documentClient.createDocumentChangeFeedQuery(self.settings.getCollectionSelfLink(), self.options)
+                    self.options.requestContinuation(self.lastContinuation);
+                    List<FeedResponse<CosmosItemProperties>> documentFeedResponseList = self.documentClient.createDocumentChangeFeedQuery(self.settings.getCollectionSelfLink(), self.options)
                         .collectList()
                         .block();
 
-                    for (FeedResponse<CosmosItemSettings> documentFeedResponse : documentFeedResponseList) {
-                        self.lastContinuation = documentFeedResponse.getResponseContinuation();
-                        if (documentFeedResponse.getResults() != null && documentFeedResponse.getResults().size() > 0) {
+                    for (FeedResponse<CosmosItemProperties> documentFeedResponse : documentFeedResponseList) {
+                        self.lastContinuation = documentFeedResponse.continuationToken();
+                        if (documentFeedResponse.results() != null && documentFeedResponse.results().size() > 0) {
                             self.dispatchChanges(documentFeedResponse);
                         }
 
-                        self.options.setRequestContinuation(self.lastContinuation);
+                        self.options.requestContinuation(self.lastContinuation);
 
                         if (cancellationToken.isCancellationRequested()) {
                             // Observation was cancelled.
@@ -103,13 +102,13 @@ public class PartitionProcessorImpl implements PartitionProcessor {
                         }
                     }
 
-                    if (this.options.getMaxItemCount().compareTo(this.settings.getMaxItemCount()) == 0) {
-                        this.options.setMaxItemCount(this.settings.getMaxItemCount());   // Reset after successful execution.
+                    if (this.options.maxItemCount().compareTo(this.settings.getMaxItemCount()) == 0) {
+                        this.options.maxItemCount(this.settings.getMaxItemCount());   // Reset after successful execution.
                     }
                 } catch (RuntimeException ex) {
-                    if (ex.getCause() instanceof DocumentClientException) {
+                    if (ex.getCause() instanceof CosmosClientException) {
 
-                        DocumentClientException clientException = (DocumentClientException) ex.getCause();
+                        CosmosClientException clientException = (CosmosClientException) ex.getCause();
                         // this.logger.WarnException("exception: partition '{0}'", clientException, this.settings.PartitionKeyRangeId);
                         StatusCodeErrorType docDbError = ExceptionClassifier.classifyClientException(clientException);
 
@@ -124,14 +123,14 @@ public class PartitionProcessorImpl implements PartitionProcessor {
                                 self.resultException = ex;
                             }
                             case MAX_ITEM_COUNT_TOO_LARGE: {
-                                if (this.options.getMaxItemCount() == null) {
-                                    this.options.setMaxItemCount(DefaultMaxItemCount);
-                                } else if (this.options.getMaxItemCount() <= 1) {
+                                if (this.options.maxItemCount() == null) {
+                                    this.options.maxItemCount(DefaultMaxItemCount);
+                                } else if (this.options.maxItemCount() <= 1) {
                                     // this.logger.ErrorFormat("Cannot reduce maxItemCount further as it's already at {0}.", this.options.MaxItemCount);
                                     throw ex;
                                 }
 
-                                this.options.setMaxItemCount(this.options.getMaxItemCount() / 2);
+                                this.options.maxItemCount(this.options.maxItemCount() / 2);
                                 // this.logger.WarnFormat("Reducing maxItemCount, new value: {0}.", this.options.MaxItemCount);
                                 break;
                             }
@@ -166,9 +165,9 @@ public class PartitionProcessorImpl implements PartitionProcessor {
         return this.resultException;
     }
 
-    private void dispatchChanges(FeedResponse<CosmosItemSettings> response) {
+    private void dispatchChanges(FeedResponse<CosmosItemProperties> response) {
         ChangeFeedObserverContext context = new ChangeFeedObserverContextImpl(this.settings.getPartitionKeyRangeId(), response, this.checkpointer);
 
-        this.observer.processChanges(context, response.getResults());
+        this.observer.processChanges(context, response.results());
     }
 }

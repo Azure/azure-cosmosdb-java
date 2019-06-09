@@ -24,7 +24,7 @@
 package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
 import com.microsoft.azure.cosmosdb.BridgeInternal;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.PartitionKeyRange;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
@@ -108,13 +108,13 @@ public class AddressResolver implements IAddressResolver {
             return false;
         }
 
-        if (Strings.areEqual(initiallyResolved.getId(), PartitionKeyRange.MASTER_PARTITION_KEY_RANGE_ID) &&
-            Strings.areEqual(newlyResolved.getId(), PartitionKeyRange.MASTER_PARTITION_KEY_RANGE_ID)) {
+        if (Strings.areEqual(initiallyResolved.id(), PartitionKeyRange.MASTER_PARTITION_KEY_RANGE_ID) &&
+            Strings.areEqual(newlyResolved.id(), PartitionKeyRange.MASTER_PARTITION_KEY_RANGE_ID)) {
             return true;
         }
 
-        if (Strings.areEqual(initiallyResolved.getId(), PartitionKeyRange.MASTER_PARTITION_KEY_RANGE_ID)
-            || Strings.areEqual(newlyResolved.getId(), PartitionKeyRange.MASTER_PARTITION_KEY_RANGE_ID)) {
+        if (Strings.areEqual(initiallyResolved.id(), PartitionKeyRange.MASTER_PARTITION_KEY_RANGE_ID)
+            || Strings.areEqual(newlyResolved.id(), PartitionKeyRange.MASTER_PARTITION_KEY_RANGE_ID)) {
             String message =
                 "Request was resolved to master partition and then to server partition.";
             assert false : message;
@@ -122,13 +122,13 @@ public class AddressResolver implements IAddressResolver {
             return false;
         }
 
-        if (ResourceId.parse(initiallyResolved.getResourceId()).getDocumentCollection()
-            != ResourceId.parse(newlyResolved.getResourceId()).getDocumentCollection()) {
+        if (ResourceId.parse(initiallyResolved.resourceId()).getDocumentCollection()
+            != ResourceId.parse(newlyResolved.resourceId()).getDocumentCollection()) {
             return false;
         }
 
-        if (!Strings.areEqual(initiallyResolved.getId(), newlyResolved.getId()) &&
-            !(newlyResolved.getParents() != null && newlyResolved.getParents().contains(initiallyResolved.getId()))) {
+        if (!Strings.areEqual(initiallyResolved.id(), newlyResolved.id()) &&
+            !(newlyResolved.getParents() != null && newlyResolved.getParents().contains(initiallyResolved.id()))) {
             // the above condition should be always false in current codebase.
             // We don't need to refresh any caches if we resolved to a range which is child of previously resolved range.
             // Quorum reads should be handled transparently as child partitions share LSNs with parent partitions which are gone.
@@ -151,7 +151,7 @@ public class AddressResolver implements IAddressResolver {
      * @param request     Request in progress
      * @param targetRange Target partition key range determined by address resolver
      * @*/
-    private void throwIfTargetChanged(RxDocumentServiceRequest request, PartitionKeyRange targetRange) throws DocumentClientException {
+    private void throwIfTargetChanged(RxDocumentServiceRequest request, PartitionKeyRange targetRange) throws CosmosClientException {
         // If new range is child of previous range, we don't need to throw any exceptions
         // as LSNs are continued on child ranges.
         if (request.requestContext.resolvedPartitionKeyRange != null &&
@@ -172,7 +172,7 @@ public class AddressResolver implements IAddressResolver {
     private static void ensureRoutingMapPresent(
         RxDocumentServiceRequest request,
         CollectionRoutingMap routingMap,
-        DocumentCollection collection) throws DocumentClientException {
+        DocumentCollection collection) throws CosmosClientException {
         if (routingMap == null && request.getIsNameBased() && request.getPartitionKeyRangeIdentity() != null
             && request.getPartitionKeyRangeIdentity().getCollectionRid() != null) {
             // By design, if partitionkeyrangeid header is present and it contains collectionrid for collection
@@ -191,7 +191,7 @@ public class AddressResolver implements IAddressResolver {
         if (routingMap == null) {
             logger.debug(
                 "Routing map was not found although collection cache is upto date for collection {}",
-                collection.getResourceId());
+                collection.resourceId());
             // Routing map not found although collection was resolved correctly.
             NotFoundException e = new NotFoundException();
             BridgeInternal.setResourceAddress(e, request.getResourceAddress());
@@ -254,7 +254,7 @@ public class AddressResolver implements IAddressResolver {
 
             Single<AddressInformation[]> addressesObs = this.addressCache.tryGetAddresses(
                 request,
-                new PartitionKeyRangeIdentity(collection.getResourceId(), range.getId()),
+                new PartitionKeyRangeIdentity(collection.resourceId(), range.id()),
                 forceRefreshPartitionAddresses);
 
             return addressesObs.flatMap(addresses -> {
@@ -262,7 +262,7 @@ public class AddressResolver implements IAddressResolver {
                 if (addresses == null) {
                     logger.info(
                         "Could not resolve addresses for identity {}/{}. Potentially collection cache or routing map cache is outdated. Return null - upper logic will refresh and retry. ",
-                        new PartitionKeyRangeIdentity(collection.getResourceId(), range.getId()));
+                        new PartitionKeyRangeIdentity(collection.resourceId(), range.id()));
                     return Single.just(null);
                 }
 
@@ -277,7 +277,7 @@ public class AddressResolver implements IAddressResolver {
     private PartitionKeyRange tryResolveSinglePartitionCollection(
         RxDocumentServiceRequest request,
         CollectionRoutingMap routingMap,
-        boolean collectionCacheIsUptoDate) throws DocumentClientException {
+        boolean collectionCacheIsUptoDate) throws CosmosClientException {
         // Neither partitionkey nor partitionkeyrangeid is specified.
         // Three options here:
         //    * This is non-partitioned collection and old client SDK which doesn't send partition key. In
@@ -325,7 +325,7 @@ public class AddressResolver implements IAddressResolver {
             }
 
             PartitionKeyRange partitionKeyRange = new PartitionKeyRange();
-            partitionKeyRange.setId(PartitionKeyRange.MASTER_PARTITION_KEY_RANGE_ID);
+            partitionKeyRange.id(PartitionKeyRange.MASTER_PARTITION_KEY_RANGE_ID);
             return Single.just(new ResolutionResult(partitionKeyRange, addresses));
 
         });
@@ -353,7 +353,7 @@ public class AddressResolver implements IAddressResolver {
         Single<RefreshState> stateObs = collectionObs.flatMap(collection -> {
             state.collection = collection;
             Single<CollectionRoutingMap> routingMapObs =
-                this.collectionRoutingMapCache.tryLookupAsync(collection.getResourceId(), null, request.forceCollectionRoutingMapRefresh, request.properties);
+                this.collectionRoutingMapCache.tryLookupAsync(collection.resourceId(), null, request.forceCollectionRoutingMapRefresh, request.properties);
             final DocumentCollection underlyingCollection = collection;
             return routingMapObs.flatMap(routingMap -> {
                 state.routingMap = routingMap;
@@ -362,7 +362,7 @@ public class AddressResolver implements IAddressResolver {
                     state.collectionRoutingMapCacheIsUptoDate = true;
                     request.forcePartitionKeyRangeRefresh = false;
                     if (routingMap != null) {
-                        return this.collectionRoutingMapCache.tryLookupAsync(underlyingCollection.getResourceId(), routingMap, request.properties)
+                        return this.collectionRoutingMapCache.tryLookupAsync(underlyingCollection.resourceId(), routingMap, request.properties)
                             .map(newRoutingMap -> {
                                 state.routingMap = newRoutingMap;
                                 return state;
@@ -389,7 +389,7 @@ public class AddressResolver implements IAddressResolver {
                 return newCollectionObs.flatMap(collection -> {
                         newState.collection = collection;
                         Single<CollectionRoutingMap> newRoutingMapObs = this.collectionRoutingMapCache.tryLookupAsync(
-                            collection.getResourceId(),
+                            collection.resourceId(),
                             null,
                             request.properties);
 
@@ -460,7 +460,7 @@ public class AddressResolver implements IAddressResolver {
                             // InvalidPartitionException if we reach wrong collection.
                             // Also this header will be used by backend to inject collection rid into metrics for
                             // throttled requests.
-                            request.getHeaders().put(WFConstants.BackendHeaders.COLLECTION_RID, state.collection.getResourceId());
+                            request.getHeaders().put(WFConstants.BackendHeaders.COLLECTION_RID, state.collection.resourceId());
                         }
 
                         return Single.just(funcResolutionResult);
@@ -477,7 +477,7 @@ public class AddressResolver implements IAddressResolver {
                         if (!funcState.collectionRoutingMapCacheIsUptoDate) {
                             funcState.collectionRoutingMapCacheIsUptoDate = true;
                             Single<CollectionRoutingMap> newRoutingMapObs = this.collectionRoutingMapCache.tryLookupAsync(
-                                funcState.collection.getResourceId(),
+                                funcState.collection.resourceId(),
                                 funcState.routingMap,
                                 request.properties);
 
@@ -528,12 +528,12 @@ public class AddressResolver implements IAddressResolver {
                         Single<RefreshState> newRefreshStateObs = newCollectionObs.flatMap(collection -> {
                             state.collection = collection;
 
-                            if (collection.getResourceId() != state.routingMap.getCollectionUniqueId()) {
+                            if (collection.resourceId() != state.routingMap.getCollectionUniqueId()) {
                                 // Collection cache was stale. We resolved to new Rid. routing map cache is potentially stale
                                 // for this new collection rid. Mark it as such.
                                 state.collectionRoutingMapCacheIsUptoDate = false;
                                 Single<CollectionRoutingMap> newRoutingMap = this.collectionRoutingMapCache.tryLookupAsync( 
-                                    collection.getResourceId(),
+                                    collection.resourceId(),
                                     null,
                                     request.properties);
 
@@ -561,7 +561,7 @@ public class AddressResolver implements IAddressResolver {
         RxDocumentServiceRequest request,
         boolean collectionCacheIsUpToDate,
         boolean routingMapCacheIsUpToDate,
-        CollectionRoutingMap routingMap) throws DocumentClientException {
+        CollectionRoutingMap routingMap) throws CosmosClientException {
         // Optimization to not refresh routing map unnecessary. As we keep track of parent child relationships,
         // we can determine that a range is gone just by looking up in the routing map.
         if (collectionCacheIsUpToDate && routingMapCacheIsUpToDate ||
@@ -600,7 +600,7 @@ public class AddressResolver implements IAddressResolver {
 
         Single<AddressInformation[]> addressesObs = this.addressCache.tryGetAddresses(
             request,
-            new PartitionKeyRangeIdentity(collection.getResourceId(), request.getPartitionKeyRangeIdentity().getPartitionKeyRangeId()),
+            new PartitionKeyRangeIdentity(collection.resourceId(), request.getPartitionKeyRangeIdentity().getPartitionKeyRangeId()),
             forceRefreshPartitionAddresses);
 
         return addressesObs.flatMap(addresses -> {
@@ -610,7 +610,7 @@ public class AddressResolver implements IAddressResolver {
 
                 try {
                     return Single.just(this.handleRangeAddressResolutionFailure(request, collectionCacheIsUpToDate, routingMapCacheIsUpToDate, routingMap));
-                } catch (DocumentClientException e) {
+                } catch (CosmosClientException e) {
                     return Single.error(e);
                 }
             }
@@ -624,7 +624,7 @@ public class AddressResolver implements IAddressResolver {
         String partitionKeyString,
         boolean collectionCacheUptoDate,
         DocumentCollection collection,
-        CollectionRoutingMap routingMap) throws DocumentClientException {
+        CollectionRoutingMap routingMap) throws CosmosClientException {
         if (request == null) {
             throw new NullPointerException("request");
         }
@@ -655,11 +655,11 @@ public class AddressResolver implements IAddressResolver {
             throw new InternalServerErrorException(String.format("partition key is null '%s'", partitionKeyString));
         }
 
-        if (partitionKey.equals(PartitionKeyInternal.Empty) || partitionKey.getComponents().size() == collection.getPartitionKey().getPaths().size()) {
-            // Although we can compute effective partition key here, in general case this Gateway can have outdated
-            // partition key definition cached - like if collection with same name but with Range partitioning is created.
+        if (partitionKey.equals(PartitionKeyInternal.Empty) || partitionKey.getComponents().size() == collection.getPartitionKey().paths().size()) {
+            // Although we can compute effective partition key here, in general case this GATEWAY can have outdated
+            // partition key definition cached - like if collection with same name but with RANGE partitioning is created.
             // In this case server will not pass x-ms-documentdb-collection-rid check and will return back InvalidPartitionException.
-            // Gateway will refresh its cache and retry.
+            // GATEWAY will refresh its cache and retry.
             String effectivePartitionKey = PartitionKeyInternalHelper.getEffectivePartitionKeyString(partitionKey, collection.getPartitionKey());
 
             // There should be exactly one range which contains a partition key. Always.
@@ -668,7 +668,7 @@ public class AddressResolver implements IAddressResolver {
 
         if (collectionCacheUptoDate) {
             BadRequestException badRequestException = BridgeInternal.setResourceAddress(new BadRequestException(RMResources.PartitionKeyMismatch), request.getResourceAddress());
-            badRequestException.getResponseHeaders().put(WFConstants.BackendHeaders.SUB_STATUS, Integer.toString(HttpConstants.SubStatusCodes.PARTITION_KEY_MISMATCH));
+            badRequestException.responseHeaders().put(WFConstants.BackendHeaders.SUB_STATUS, Integer.toString(HttpConstants.SubStatusCodes.PARTITION_KEY_MISMATCH));
 
             throw badRequestException;
         }
@@ -677,17 +677,17 @@ public class AddressResolver implements IAddressResolver {
         // Three things can happen:
         //    1. User supplied wrong partition key.
         //    2. Client SDK has outdated partition key definition cache and extracted wrong value from the document.
-        //    3. Gateway's cache is outdated.
+        //    3. GATEWAY's cache is outdated.
         //
         // What we will do is append x-ms-documentdb-collection-rid header and forward it to random collection partition.
         // * If collection rid matches, server will send back 400.1001, because it also will not be able to compute
-        // effective partition key. Gateway will forward this status code to client - client will handle it.
-        // * If collection rid doesn't match, server will send back InvalidPartiitonException and Gateway will
+        // effective partition key. GATEWAY will forward this status code to client - client will handle it.
+        // * If collection rid doesn't match, server will send back InvalidPartiitonException and GATEWAY will
         //   refresh name routing cache - this will refresh partition key definition as well, and retry.
 
         logger.debug(
             "Cannot compute effective partition key. Definition has '{}' paths, values supplied has '{}' paths. Will refresh cache and retry.",
-            collection.getPartitionKey().getPaths().size(),
+            collection.getPartitionKey().paths().size(),
             partitionKey.getComponents().size());
 
         return null;

@@ -23,21 +23,20 @@
 package com.microsoft.azure.cosmosdb.rx.internal;
 
 import com.microsoft.azure.cosmosdb.BridgeInternal;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.Error;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.HttpUtils;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.WFConstants;
 import io.reactivex.netty.protocol.http.client.HttpResponseHeaders;
 
-import java.net.URI;
 import java.util.Map;
 
 /**
  * While this class is public, but it is not part of our published public APIs.
  * This is meant to be internally used only by our sdk.
  */
-public class InvalidPartitionException extends DocumentClientException {
+public class InvalidPartitionException extends CosmosClientException {
 
     private static final long serialVersionUID = 1L;
 
@@ -83,7 +82,7 @@ public class InvalidPartitionException extends DocumentClientException {
     }
 
     private void setSubStatus() {
-        this.getResponseHeaders().put(
+        this.responseHeaders().put(
                 WFConstants.BackendHeaders.SUB_STATUS,
                 Integer.toString(HttpConstants.SubStatusCodes.NAME_CACHE_IS_STALE));
     }

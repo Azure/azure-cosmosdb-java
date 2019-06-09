@@ -63,19 +63,19 @@ public class DatabaseQueryTest extends TestSuiteBase {
         String query = String.format("SELECT * from c where c.id = '%s'", databaseId1);
 
         FeedOptions options = new FeedOptions();
-        options.setMaxItemCount(2);
+        options.maxItemCount(2);
         Flux<FeedResponse<CosmosDatabaseSettings>> queryObservable = client.queryDatabases(query, options);
 
         List<CosmosDatabaseSettings> expectedDatabases = createdDatabases.stream()
-                .filter(d -> StringUtils.equals(databaseId1, d.getId()) ).map(d -> d.read().block().getCosmosDatabaseSettings()).collect(Collectors.toList());
+                .filter(d -> StringUtils.equals(databaseId1, d.id()) ).map(d -> d.read().block().settings()).collect(Collectors.toList());
 
         assertThat(expectedDatabases).isNotEmpty();
 
-        int expectedPageSize = (expectedDatabases.size() + options.getMaxItemCount() - 1) / options.getMaxItemCount();
+        int expectedPageSize = (expectedDatabases.size() + options.maxItemCount() - 1) / options.maxItemCount();
 
         FeedResponseListValidator<CosmosDatabaseSettings> validator = new FeedResponseListValidator.Builder<CosmosDatabaseSettings>()
                 .totalSize(expectedDatabases.size())
-                .exactlyContainsInAnyOrder(expectedDatabases.stream().map(d -> d.getResourceId()).collect(Collectors.toList()))
+                .exactlyContainsInAnyOrder(expectedDatabases.stream().map(d -> d.resourceId()).collect(Collectors.toList()))
                 .numberOfPages(expectedPageSize)
                 .pageSatisfy(0, new FeedResponseValidator.Builder<CosmosDatabaseSettings>()
                         .requestChargeGreaterThanOrEqualTo(1.0).build())
@@ -92,18 +92,18 @@ public class DatabaseQueryTest extends TestSuiteBase {
                                      databaseId2);
 
         FeedOptions options = new FeedOptions();
-        options.setMaxItemCount(2);
+        options.maxItemCount(2);
         Flux<FeedResponse<CosmosDatabaseSettings>> queryObservable = client.queryDatabases(query, options);
 
-        List<CosmosDatabaseSettings> expectedDatabases = createdDatabases.stream().map(d -> d.read().block().getCosmosDatabaseSettings()).collect(Collectors.toList());
+        List<CosmosDatabaseSettings> expectedDatabases = createdDatabases.stream().map(d -> d.read().block().settings()).collect(Collectors.toList());
 
         assertThat(expectedDatabases).isNotEmpty();
 
-        int expectedPageSize = (expectedDatabases.size() + options.getMaxItemCount() - 1) / options.getMaxItemCount();
+        int expectedPageSize = (expectedDatabases.size() + options.maxItemCount() - 1) / options.maxItemCount();
 
         FeedResponseListValidator<CosmosDatabaseSettings> validator = new FeedResponseListValidator.Builder<CosmosDatabaseSettings>()
                 .totalSize(expectedDatabases.size())
-                .exactlyContainsInAnyOrder(expectedDatabases.stream().map(d -> d.getResourceId()).collect(Collectors.toList()))
+                .exactlyContainsInAnyOrder(expectedDatabases.stream().map(d -> d.resourceId()).collect(Collectors.toList()))
                 .numberOfPages(expectedPageSize)
                 .pageSatisfy(0, new FeedResponseValidator.Builder<CosmosDatabaseSettings>()
                         .requestChargeGreaterThanOrEqualTo(1.0).build())
@@ -117,7 +117,7 @@ public class DatabaseQueryTest extends TestSuiteBase {
 
         String query = "SELECT * from root r where r.id = '2'";
         FeedOptions options = new FeedOptions();
-        options.setEnableCrossPartitionQuery(true);
+        options.enableCrossPartitionQuery(true);
         Flux<FeedResponse<CosmosDatabaseSettings>> queryObservable = client.queryDatabases(query, options);
 
         FeedResponseListValidator<CosmosDatabaseSettings> validator = new FeedResponseListValidator.Builder<CosmosDatabaseSettings>()

@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 import com.microsoft.azure.cosmos.CosmosClientBuilder;
+import com.microsoft.azure.cosmos.CosmosItemProperties;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.Protocol;
 
 import reactor.core.publisher.Flux;
@@ -38,7 +39,6 @@ import org.testng.annotations.Test;
 
 import com.microsoft.azure.cosmos.CosmosClient;
 import com.microsoft.azure.cosmos.CosmosContainer;
-import com.microsoft.azure.cosmos.CosmosItemSettings;
 import com.microsoft.azure.cosmosdb.Document;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
@@ -70,7 +70,7 @@ public class AggregateQueryTests extends TestSuiteBase {
     }
 
     private CosmosContainer createdCollection;
-    private ArrayList<CosmosItemSettings> docs = new ArrayList<CosmosItemSettings>();
+    private ArrayList<CosmosItemProperties> docs = new ArrayList<CosmosItemProperties>();
     private ArrayList<QueryConfig> queryConfigs = new ArrayList<QueryConfig>();
 
     private String partitionKey = "mypk";
@@ -89,7 +89,7 @@ public class AggregateQueryTests extends TestSuiteBase {
     }
 
 
-    // TODO: DANOBLE: Investigate Direct TCP performance issue
+    // TODO: DANOBLE: Investigate DIRECT TCP performance issue
     // Links: https://msdata.visualstudio.com/CosmosDB/_workitems/edit/367028https://msdata.visualstudio.com/CosmosDB/_workitems/edit/367028
     // Notes:
     // I've seen this test time out in my development environment. I test against a debug instance of the public
@@ -100,15 +100,15 @@ public class AggregateQueryTests extends TestSuiteBase {
     public void queryDocumentsWithAggregates(boolean qmEnabled) throws Exception {
 
         FeedOptions options = new FeedOptions();
-        options.setEnableCrossPartitionQuery(true);
-        options.setPopulateQueryMetrics(qmEnabled);
-        options.setMaxDegreeOfParallelism(2);
+        options.enableCrossPartitionQuery(true);
+        options.populateQueryMetrics(qmEnabled);
+        options.maxDegreeOfParallelism(2);
 
         for (QueryConfig queryConfig : queryConfigs) {    
 
-            Flux<FeedResponse<CosmosItemSettings>> queryObservable = createdCollection.queryItems(queryConfig.query, options);
+            Flux<FeedResponse<CosmosItemProperties>> queryObservable = createdCollection.queryItems(queryConfig.query, options);
 
-            FeedResponseListValidator<CosmosItemSettings> validator = new FeedResponseListValidator.Builder<CosmosItemSettings>()
+            FeedResponseListValidator<CosmosItemProperties> validator = new FeedResponseListValidator.Builder<CosmosItemProperties>()
                 .withAggregateValue(queryConfig.expected)
                 .numberOfPages(1)
                 .hasValidQueryMetrics(qmEnabled)
@@ -118,7 +118,7 @@ public class AggregateQueryTests extends TestSuiteBase {
                 validateQuerySuccess(queryObservable, validator);
             } catch (Throwable error) {
                 if (this.clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {
-                    String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
+                    String message = String.format("DIRECT TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
                     logger.info(message, error);
                     throw new SkipException(message, error);
                 }
@@ -136,26 +136,26 @@ public class AggregateQueryTests extends TestSuiteBase {
 
         Object[] values = new Object[]{null, false, true, "abc", "cdfg", "opqrs", "ttttttt", "xyz", "oo", "ppp"};
         for (int i = 0; i < values.length; i++) {
-            CosmosItemSettings d = new CosmosItemSettings();
-            d.setId(UUID.randomUUID().toString());
+            CosmosItemProperties d = new CosmosItemProperties();
+            d.id(UUID.randomUUID().toString());
             d.set(partitionKey, values[i]);
             docs.add(d);
         }
 
         for (int i = 0; i < numberOfDocsWithSamePartitionKey; i++) {
-            CosmosItemSettings d = new CosmosItemSettings();
+            CosmosItemProperties d = new CosmosItemProperties();
             d.set(partitionKey, uniquePartitionKey);
             d.set("resourceId", Integer.toString(i));
             d.set(field, i + 1);
-            d.setId(UUID.randomUUID().toString());
+            d.id(UUID.randomUUID().toString());
             docs.add(d);
         }
 
         numberOfDocumentsWithNumericId = numberOfDocuments - values.length - numberOfDocsWithSamePartitionKey;
         for (int i = 0; i < numberOfDocumentsWithNumericId; i++) {
-            CosmosItemSettings d = new CosmosItemSettings();
+            CosmosItemProperties d = new CosmosItemProperties();
             d.set(partitionKey, i + 1);
-            d.setId(UUID.randomUUID().toString());
+            d.id(UUID.randomUUID().toString());
             docs.add(d);
         }
 

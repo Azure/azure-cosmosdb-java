@@ -58,35 +58,35 @@ public class TriggerUpsertReplaceTest extends TestSuiteBase {
 
         // create a trigger
         CosmosTriggerSettings trigger = new CosmosTriggerSettings();
-        trigger.setId(UUID.randomUUID().toString());
-        trigger.setBody("function() {var x = 10;}");
-        trigger.setTriggerOperation(TriggerOperation.Create);
-        trigger.setTriggerType(TriggerType.Pre);
-        CosmosTriggerSettings readBackTrigger = createdCollection.createTrigger(trigger, new CosmosRequestOptions()).block().getCosmosTriggerSettings();
+        trigger.id(UUID.randomUUID().toString());
+        trigger.body("function() {var x = 10;}");
+        trigger.triggerOperation(TriggerOperation.CREATE);
+        trigger.triggerType(TriggerType.PRE);
+        CosmosTriggerSettings readBackTrigger = createdCollection.createTrigger(trigger, new CosmosRequestOptions()).block().settings();
         
         // read trigger to validate creation
         waitIfNeededForReplicasToCatchUp(clientBuilder);
-        Mono<CosmosTriggerResponse> readObservable = createdCollection.getTrigger(readBackTrigger.getId()).read(new RequestOptions());
+        Mono<CosmosTriggerResponse> readObservable = createdCollection.getTrigger(readBackTrigger.id()).read(new RequestOptions());
 
         // validate trigger creation
         CosmosResponseValidator<CosmosTriggerResponse> validatorForRead = new CosmosResponseValidator.Builder<CosmosTriggerResponse>()
-                .withId(readBackTrigger.getId())
+                .withId(readBackTrigger.id())
                 .withTriggerBody("function() {var x = 10;}")
-                .withTriggerInternals(TriggerType.Pre, TriggerOperation.Create)
+                .withTriggerInternals(TriggerType.PRE, TriggerOperation.CREATE)
                 .notNullEtag()
                 .build();
         validateSuccess(readObservable, validatorForRead);
         
         //update trigger
-        readBackTrigger.setBody("function() {var x = 11;}");
+        readBackTrigger.body("function() {var x = 11;}");
 
-        Mono<CosmosTriggerResponse> updateObservable = createdCollection.getTrigger(readBackTrigger.getId()).replace(readBackTrigger, new RequestOptions());
+        Mono<CosmosTriggerResponse> updateObservable = createdCollection.getTrigger(readBackTrigger.id()).replace(readBackTrigger, new RequestOptions());
 
         // validate trigger replace
         CosmosResponseValidator<CosmosTriggerResponse> validatorForUpdate = new CosmosResponseValidator.Builder<CosmosTriggerResponse>()
-                .withId(readBackTrigger.getId())
+                .withId(readBackTrigger.id())
                 .withTriggerBody("function() {var x = 11;}")
-                .withTriggerInternals(TriggerType.Pre, TriggerOperation.Create)
+                .withTriggerInternals(TriggerType.PRE, TriggerOperation.CREATE)
                 .notNullEtag()
                 .build();
         validateSuccess(updateObservable, validatorForUpdate);   

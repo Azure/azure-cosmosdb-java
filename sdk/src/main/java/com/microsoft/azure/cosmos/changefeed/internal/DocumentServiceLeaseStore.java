@@ -24,16 +24,16 @@ package com.microsoft.azure.cosmos.changefeed.internal;
 
 import com.microsoft.azure.cosmos.CosmosContainer;
 import com.microsoft.azure.cosmos.CosmosItem;
+import com.microsoft.azure.cosmos.CosmosItemProperties;
 import com.microsoft.azure.cosmos.CosmosItemRequestOptions;
-import com.microsoft.azure.cosmos.CosmosItemSettings;
 import com.microsoft.azure.cosmos.changefeed.ChangeFeedContextClient;
 import com.microsoft.azure.cosmos.changefeed.LeaseStore;
 import com.microsoft.azure.cosmos.changefeed.RequestOptionsFactory;
 import com.microsoft.azure.cosmos.changefeed.ServiceItemLease;
 import com.microsoft.azure.cosmosdb.AccessCondition;
 import com.microsoft.azure.cosmosdb.AccessConditionType;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.Document;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
@@ -68,19 +68,19 @@ public class DocumentServiceLeaseStore implements LeaseStore {
     public Mono<Boolean> isInitialized() {
         String markerDocId = this.getStoreMarkerName();
 
-        CosmosItemSettings doc = new CosmosItemSettings();
-        doc.setId(markerDocId);
+        CosmosItemProperties doc = new CosmosItemProperties();
+        doc.id(markerDocId);
 
         CosmosItemRequestOptions requestOptions = this.requestOptionsFactory.createRequestOptions(
             ServiceItemLease.fromDocument(doc));
 
         CosmosItem docItem = this.client.getContainerClient().getItem(markerDocId, "/id");
         return this.client.readItem(docItem, requestOptions)
-            .flatMap(documentResourceResponse -> Mono.just(documentResourceResponse.getItem() != null))
+            .flatMap(documentResourceResponse -> Mono.just(documentResourceResponse.item() != null))
             .onErrorResume(throwable -> {
-                if (throwable instanceof DocumentClientException) {
-                    DocumentClientException e = (DocumentClientException) throwable;
-                    if (e.getStatusCode() == HTTP_STATUS_CODE_NOT_FOUND) {
+                if (throwable instanceof CosmosClientException) {
+                    CosmosClientException e = (CosmosClientException) throwable;
+                    if (e.statusCode() == HTTP_STATUS_CODE_NOT_FOUND) {
                         return Mono.just(false);
                     }
                 }
@@ -92,15 +92,15 @@ public class DocumentServiceLeaseStore implements LeaseStore {
     @Override
     public Mono<Boolean> markInitialized() {
         String markerDocId = this.getStoreMarkerName();
-        CosmosItemSettings containerDocument = new CosmosItemSettings();
-        containerDocument.setId(markerDocId);
+        CosmosItemProperties containerDocument = new CosmosItemProperties();
+        containerDocument.id(markerDocId);
 
         return this.client.createItem(this.leaseCollectionLink, containerDocument, null, false)
             .map( item -> true)
             .onErrorResume(throwable -> {
-                if (throwable instanceof DocumentClientException) {
-                    DocumentClientException e = (DocumentClientException) throwable;
-                    if (e.getStatusCode() == HTTP_STATUS_CODE_CONFLICT) {
+                if (throwable instanceof CosmosClientException) {
+                    CosmosClientException e = (CosmosClientException) throwable;
+                    if (e.statusCode() == HTTP_STATUS_CODE_CONFLICT) {
                         return Mono.just(true);
                     }
                 }
@@ -112,23 +112,23 @@ public class DocumentServiceLeaseStore implements LeaseStore {
     public Mono<Boolean> acquireInitializationLock(Duration lockExpirationTime) {
         String lockId = this.getStoreLockName();
         Document containerDocument = new Document();
-        containerDocument.setId(lockId);
+        containerDocument.id(lockId);
         containerDocument.setTimeToLive(Long.valueOf(lockExpirationTime.getSeconds()).intValue());
         DocumentServiceLeaseStore self = this;
 
         return this.client.createItem(this.leaseCollectionLink, containerDocument, null, false)
             .map(documentResourceResponse -> {
-                if (documentResourceResponse.getItem() != null) {
-                    self.lockETag = documentResourceResponse.getCosmosItemSettings().getETag();
+                if (documentResourceResponse.item() != null) {
+                    self.lockETag = documentResourceResponse.properties().etag();
                     return true;
                 } else {
                     return false;
                 }
             })
             .onErrorResume(throwable -> {
-                if (throwable instanceof DocumentClientException) {
-                    DocumentClientException e = (DocumentClientException) throwable;
-                    if (e.getStatusCode() == HTTP_STATUS_CODE_CONFLICT) {
+                if (throwable instanceof CosmosClientException) {
+                    CosmosClientException e = (CosmosClientException) throwable;
+                    if (e.statusCode() == HTTP_STATUS_CODE_CONFLICT) {
                         return Mono.just(false);
                     }
                 }
@@ -140,8 +140,8 @@ public class DocumentServiceLeaseStore implements LeaseStore {
     @Override
     public Mono<Boolean> releaseInitializationLock() {
         String lockId = this.getStoreLockName();
-        CosmosItemSettings doc = new CosmosItemSettings();
-        doc.setId(lockId);
+        CosmosItemProperties doc = new CosmosItemProperties();
+        doc.id(lockId);
 
         CosmosItemRequestOptions requestOptions = this.requestOptionsFactory.createRequestOptions(
             ServiceItemLease.fromDocument(doc));
@@ -151,15 +151,15 @@ public class DocumentServiceLeaseStore implements LeaseStore {
         }
 
         AccessCondition accessCondition = new AccessCondition();
-        accessCondition.setType(AccessConditionType.IfMatch);
-        accessCondition.setCondition(this.lockETag);
+        accessCondition.type(AccessConditionType.IF_MATCH);
+        accessCondition.condition(this.lockETag);
         requestOptions.accessCondition(accessCondition);
         DocumentServiceLeaseStore self = this;
 
         CosmosItem docItem = this.client.getContainerClient().getItem(lockId, "/id");
         return this.client.deleteItem(docItem, requestOptions)
             .map(documentResourceResponse -> {
-                if (documentResourceResponse.getItem() != null) {
+                if (documentResourceResponse.item() != null) {
                     self.lockETag = null;
                     return true;
                 } else {
@@ -167,9 +167,9 @@ public class DocumentServiceLeaseStore implements LeaseStore {
                 }
             })
             .onErrorResume(throwable -> {
-                if (throwable instanceof DocumentClientException) {
-                    DocumentClientException e = (DocumentClientException) throwable;
-                    if (e.getStatusCode() == HTTP_STATUS_CODE_CONFLICT) {
+                if (throwable instanceof CosmosClientException) {
+                    CosmosClientException e = (CosmosClientException) throwable;
+                    if (e.statusCode() == HTTP_STATUS_CODE_CONFLICT) {
                         return Mono.just(false);
                     }
                 }

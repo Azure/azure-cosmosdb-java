@@ -32,12 +32,11 @@ import com.microsoft.azure.cosmos.CosmosDatabaseResponse;
 import com.microsoft.azure.cosmos.CosmosItem;
 import com.microsoft.azure.cosmos.CosmosItemRequestOptions;
 import com.microsoft.azure.cosmos.CosmosItemResponse;
-import com.microsoft.azure.cosmos.CosmosItemSettings;
+import com.microsoft.azure.cosmos.CosmosItemProperties;
 import com.microsoft.azure.cosmosdb.ChangeFeedOptions;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.PartitionKeyRange;
-import com.microsoft.azure.cosmosdb.RequestOptions;
 import com.microsoft.azure.cosmosdb.SqlQuerySpec;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -64,7 +63,7 @@ public interface ChangeFeedContextClient {
      * @param feedOptions The options for processing the query results feed.
      * @return an {@link Flux} containing one or several feed response pages of the obtained items or an error.
      */
-    Flux<FeedResponse<CosmosItemSettings>> createDocumentChangeFeedQuery(CosmosContainer collectionLink, ChangeFeedOptions feedOptions);
+    Flux<FeedResponse<CosmosItemProperties>> createDocumentChangeFeedQuery(CosmosContainer collectionLink, ChangeFeedOptions feedOptions);
 
     /**
      * Reads a database.
@@ -97,7 +96,7 @@ public interface ChangeFeedContextClient {
                                         boolean disableAutomaticIdGeneration);
 
     /**
-     * Delete a {@link CosmosItem}.
+     * DELETE a {@link CosmosItem}.
      *
      * @param itemLink  the item reference.
      * @param options   the request options.
@@ -132,7 +131,7 @@ public interface ChangeFeedContextClient {
      * @param options        the feed options.
      * @return an {@link Flux} containing one or several feed response pages of the obtained items or an error.
      */
-    Flux<FeedResponse<CosmosItemSettings>> queryItems(CosmosContainer containerLink, SqlQuerySpec querySpec, FeedOptions options);
+    Flux<FeedResponse<CosmosItemProperties>> queryItems(CosmosContainer containerLink, SqlQuerySpec querySpec, FeedOptions options);
 
     /**
      * @return the Cosmos client's service endpoint.

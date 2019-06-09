@@ -25,7 +25,7 @@ package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.internal.BaseAuthorizationTokenProvider;
 import com.microsoft.azure.cosmosdb.internal.InternalServerErrorException;
 import com.microsoft.azure.cosmosdb.internal.OperationType;
@@ -673,7 +673,7 @@ public class RntbdTransportClientTest {
     public void verifyNetworkFailure(
         FailureValidator.Builder builder,
         RxDocumentServiceRequest request,
-        DocumentClientException exception
+        CosmosClientException exception
     ) {
         throw new UnsupportedOperationException("TODO: DANOBLE: Implement this test");
     }

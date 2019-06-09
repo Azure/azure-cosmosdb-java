@@ -88,10 +88,10 @@ public abstract class RxCollectionCache {
                         //                      logger.debug(
                         //                          "Mapped resourceName {} to resourceId {}.",
                         //                          request.getResourceAddress(),
-                        //                          collectionInfo.getResourceId());
+                        //                          collectionInfo.resourceId());
 
-                        request.setResourceId(collection.getResourceId());
-                        request.requestContext.resolvedCollectionRid = collection.getResourceId();
+                        request.setResourceId(collection.resourceId());
+                        request.requestContext.resolvedCollectionRid = collection.resourceId();
                         return Single.just(collection);
 
                     });
@@ -125,7 +125,7 @@ public abstract class RxCollectionCache {
                     () -> {
                         Single<DocumentCollection> collectionObs = this.getByNameAsync(resourceFullName, properties);
                         return collectionObs.doOnSuccess(collection -> {
-                            this.collectionInfoByIdCache.set(collection.getResourceId(), collection);
+                            this.collectionInfoByIdCache.set(collection.resourceId(), collection);
                         });                
                     });
         }
@@ -176,7 +176,7 @@ public abstract class RxCollectionCache {
                 () -> {
                     Single<DocumentCollection> collectionObs = this.getByNameAsync(resourceFullName, properties);
                     return collectionObs.doOnSuccess(collection -> {
-                        this.collectionInfoByIdCache.set(collection.getResourceId(), collection);
+                        this.collectionInfoByIdCache.set(collection.resourceId(), collection);
                     });
                 });
     }
@@ -190,7 +190,7 @@ public abstract class RxCollectionCache {
         if (request.requestContext.resolvedCollectionRid != null) {
             // Here we will issue backend call only if cache wasn't already refreshed (if whatever is there corresponds to previously resolved collection rid).
             DocumentCollection obsoleteValue = new DocumentCollection();
-            obsoleteValue.setResourceId(request.requestContext.resolvedCollectionRid);
+            obsoleteValue.resourceId(request.requestContext.resolvedCollectionRid);
 
             completable = this.collectionInfoByNameCache.getAsync(
                     resourceFullName,
@@ -198,7 +198,7 @@ public abstract class RxCollectionCache {
                     () -> {
                         Single<DocumentCollection> collectionObs = this.getByNameAsync(resourceFullName, request.properties);
                         return collectionObs.doOnSuccess(collection -> {
-                            this.collectionInfoByIdCache.set(collection.getResourceId(), collection);
+                            this.collectionInfoByIdCache.set(collection.resourceId(), collection);
                         });
                     }).toCompletable();
         } else {
@@ -220,7 +220,7 @@ public abstract class RxCollectionCache {
                 return false;
             }
 
-            return StringUtils.equals(left.getResourceId(), right.getResourceId());
+            return StringUtils.equals(left.resourceId(), right.resourceId());
         }
     }
 }

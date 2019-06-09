@@ -96,8 +96,8 @@ public class TokenResolverTest extends TestSuiteBase {
     @DataProvider(name = "connectionMode")
     public Object[][] connectionMode() {
         return new Object[][]{
-                {ConnectionMode.Gateway},
-                {ConnectionMode.Direct},
+                {ConnectionMode.GATEWAY},
+                {ConnectionMode.DIRECT},
         };
     }
 
@@ -108,12 +108,12 @@ public class TokenResolverTest extends TestSuiteBase {
 
         client = clientBuilder.build();
 
-        userWithReadPermission = createUser(client, createdDatabase.getId(), getUserDefinition());
-        readPermission = client.createPermission(userWithReadPermission.getSelfLink(), getPermission(createdCollection, "ReadPermissionOnColl", PermissionMode.Read), null).toBlocking().single()
+        userWithReadPermission = createUser(client, createdDatabase.id(), getUserDefinition());
+        readPermission = client.createPermission(userWithReadPermission.selfLink(), getPermission(createdCollection, "ReadPermissionOnColl", PermissionMode.READ), null).toBlocking().single()
                 .getResource();
 
-        userWithAllPermission = createUser(client, createdDatabase.getId(), getUserDefinition());
-        allPermission = client.createPermission(userWithAllPermission.getSelfLink(), getPermission(createdCollection, "AllPermissionOnColl", PermissionMode.All), null).toBlocking().single()
+        userWithAllPermission = createUser(client, createdDatabase.id(), getUserDefinition());
+        allPermission = client.createPermission(userWithAllPermission.selfLink(), getPermission(createdCollection, "AllPermissionOnColl", PermissionMode.ALL), null).toBlocking().single()
                 .getResource();
     }
 
@@ -124,15 +124,15 @@ public class TokenResolverTest extends TestSuiteBase {
                 .createDocument(BridgeInternal.getAltLink(createdCollection), docDefinition, null, false).toBlocking().first();
         AsyncDocumentClient asyncClientWithTokenResolver = null;
         try {
-            asyncClientWithTokenResolver = buildClient(connectionMode, PermissionMode.Read);
+            asyncClientWithTokenResolver = buildClient(connectionMode, PermissionMode.READ);
             RequestOptions requestOptions = new RequestOptions();
             requestOptions.setPartitionKey(new PartitionKey(resourceResponse.getResource().get("mypk")));
             HashMap<String, Object> properties = new HashMap<String, Object>();
             properties.put("UserId", "readUser");
             requestOptions.setProperties(properties);
-            Observable<ResourceResponse<Document>> readObservable = asyncClientWithTokenResolver.readDocument(resourceResponse.getResource().getSelfLink(), requestOptions);
+            Observable<ResourceResponse<Document>> readObservable = asyncClientWithTokenResolver.readDocument(resourceResponse.getResource().selfLink(), requestOptions);
             ResourceResponseValidator<Document> validator = new ResourceResponseValidator.Builder<Document>()
-                    .withId(resourceResponse.getResource().getId()).build();
+                    .withId(resourceResponse.getResource().id()).build();
             validateSuccess(readObservable, validator);
         } finally {
             safeClose(asyncClientWithTokenResolver);
@@ -146,10 +146,10 @@ public class TokenResolverTest extends TestSuiteBase {
                 .createDocument(BridgeInternal.getAltLink(createdCollection), docDefinition, null, false).toBlocking().first();
         AsyncDocumentClient asyncClientWithTokenResolver = null;
         try {
-            asyncClientWithTokenResolver = buildClient(connectionMode, PermissionMode.Read);
+            asyncClientWithTokenResolver = buildClient(connectionMode, PermissionMode.READ);
             RequestOptions requestOptions = new RequestOptions();
             requestOptions.setPartitionKey(new PartitionKey(resourceResponse.getResource().get("mypk")));
-            Observable<ResourceResponse<Document>> readObservable = asyncClientWithTokenResolver.deleteDocument(resourceResponse.getResource().getSelfLink(), requestOptions);
+            Observable<ResourceResponse<Document>> readObservable = asyncClientWithTokenResolver.deleteDocument(resourceResponse.getResource().selfLink(), requestOptions);
             FailureValidator validator = new FailureValidator.Builder().statusCode(HttpConstants.StatusCodes.FORBIDDEN).build();
             validateFailure(readObservable, validator);
         } finally {
@@ -161,8 +161,8 @@ public class TokenResolverTest extends TestSuiteBase {
     public void writeDocumentWithReadPermission(ConnectionMode connectionMode) {
         AsyncDocumentClient asyncClientWithTokenResolver = null;
         try {
-            asyncClientWithTokenResolver = buildClient(connectionMode, PermissionMode.Read);
-            Observable<ResourceResponse<Document>> readObservable = asyncClientWithTokenResolver.createDocument(createdCollection.getSelfLink(), getDocumentDefinition(), null, true);
+            asyncClientWithTokenResolver = buildClient(connectionMode, PermissionMode.READ);
+            Observable<ResourceResponse<Document>> readObservable = asyncClientWithTokenResolver.createDocument(createdCollection.selfLink(), getDocumentDefinition(), null, true);
             FailureValidator validator = new FailureValidator.Builder().statusCode(HttpConstants.StatusCodes.FORBIDDEN).build();
             validateFailure(readObservable, validator);
         } finally {
@@ -174,11 +174,11 @@ public class TokenResolverTest extends TestSuiteBase {
     public void writeDocumentWithAllPermission(ConnectionMode connectionMode) {
         AsyncDocumentClient asyncClientWithTokenResolver = null;
         try {
-            asyncClientWithTokenResolver = buildClient(connectionMode, PermissionMode.All);
+            asyncClientWithTokenResolver = buildClient(connectionMode, PermissionMode.ALL);
             Document documentDefinition = getDocumentDefinition();
-            Observable<ResourceResponse<Document>> readObservable = asyncClientWithTokenResolver.createDocument(createdCollection.getSelfLink(), documentDefinition, null, true);
+            Observable<ResourceResponse<Document>> readObservable = asyncClientWithTokenResolver.createDocument(createdCollection.selfLink(), documentDefinition, null, true);
             ResourceResponseValidator<Document> validator = new ResourceResponseValidator.Builder<Document>()
-                    .withId(documentDefinition.getId()).build();
+                    .withId(documentDefinition.id()).build();
             validateSuccess(readObservable, validator);
         } finally {
             safeClose(asyncClientWithTokenResolver);
@@ -192,10 +192,10 @@ public class TokenResolverTest extends TestSuiteBase {
                 .createDocument(BridgeInternal.getAltLink(createdCollection), docDefinition, null, false).toBlocking().first();
         AsyncDocumentClient asyncClientWithTokenResolver = null;
         try {
-            asyncClientWithTokenResolver = buildClient(connectionMode, PermissionMode.All);
+            asyncClientWithTokenResolver = buildClient(connectionMode, PermissionMode.ALL);
             RequestOptions requestOptions = new RequestOptions();
             requestOptions.setPartitionKey(new PartitionKey(resourceResponse.getResource().get("mypk")));
-            Observable<ResourceResponse<Document>> readObservable = asyncClientWithTokenResolver.deleteDocument(resourceResponse.getResource().getSelfLink(), requestOptions);
+            Observable<ResourceResponse<Document>> readObservable = asyncClientWithTokenResolver.deleteDocument(resourceResponse.getResource().selfLink(), requestOptions);
             ResourceResponseValidator<Document> validator = new ResourceResponseValidator.Builder<Document>()
                     .nullResource().build();
             validateSuccess(readObservable, validator);
@@ -208,10 +208,10 @@ public class TokenResolverTest extends TestSuiteBase {
     public void readCollectionWithReadPermission(ConnectionMode connectionMode) {
         AsyncDocumentClient asyncClientWithTokenResolver = null;
         try {
-            asyncClientWithTokenResolver = buildClient(connectionMode, PermissionMode.Read);
-            Observable<ResourceResponse<DocumentCollection>> readObservable = asyncClientWithTokenResolver.readCollection(createdCollection.getSelfLink(), null);
+            asyncClientWithTokenResolver = buildClient(connectionMode, PermissionMode.READ);
+            Observable<ResourceResponse<DocumentCollection>> readObservable = asyncClientWithTokenResolver.readCollection(createdCollection.selfLink(), null);
             ResourceResponseValidator<DocumentCollection> validator = new ResourceResponseValidator.Builder<DocumentCollection>()
-                    .withId(createdCollection.getId()).build();
+                    .withId(createdCollection.id()).build();
             validateSuccess(readObservable, validator);
         } finally {
             safeClose(asyncClientWithTokenResolver);
@@ -222,8 +222,8 @@ public class TokenResolverTest extends TestSuiteBase {
     public void deleteCollectionWithReadPermission(ConnectionMode connectionMode) {
         AsyncDocumentClient asyncClientWithTokenResolver = null;
         try {
-            asyncClientWithTokenResolver = buildClient(connectionMode, PermissionMode.Read);
-            Observable<ResourceResponse<DocumentCollection>> readObservable = asyncClientWithTokenResolver.deleteCollection(createdCollection.getSelfLink(), null);
+            asyncClientWithTokenResolver = buildClient(connectionMode, PermissionMode.READ);
+            Observable<ResourceResponse<DocumentCollection>> readObservable = asyncClientWithTokenResolver.deleteCollection(createdCollection.selfLink(), null);
             FailureValidator validator = new FailureValidator.Builder().statusCode(HttpConstants.StatusCodes.FORBIDDEN).build();
             validateFailure(readObservable, validator);
         } finally {
@@ -239,7 +239,7 @@ public class TokenResolverTest extends TestSuiteBase {
         AsyncDocumentClient asyncClientWithTokenResolver = null;
         try {
             ConnectionPolicy connectionPolicy = new ConnectionPolicy();
-            connectionPolicy.setConnectionMode(connectionMode);
+            connectionPolicy.connectionMode(connectionMode);
 
             //Unauthorized error with invalid token resolver, valid  master key and valid permission feed, making it sure tokenResolver has higher priority than all.
             List<Permission> permissionFeed = new ArrayList<>();
@@ -247,14 +247,14 @@ public class TokenResolverTest extends TestSuiteBase {
             asyncClientWithTokenResolver = new AsyncDocumentClient.Builder()
                     .withServiceEndpoint(TestConfigurations.HOST)
                     .withConnectionPolicy(connectionPolicy)
-                    .withConsistencyLevel(ConsistencyLevel.Session)
+                    .withConsistencyLevel(ConsistencyLevel.SESSION)
                     .withTokenResolver(getTokenResolver(null)) //TokenResolver always generating invalid token.
                     .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
                     .withPermissionFeed(permissionFeed)
                     .build();
             RequestOptions requestOptions = new RequestOptions();
             requestOptions.setPartitionKey(new PartitionKey(resourceResponse.getResource().get("mypk")));
-            Observable<ResourceResponse<Document>> readObservable = asyncClientWithTokenResolver.readDocument(resourceResponse.getResource().getSelfLink(), requestOptions);
+            Observable<ResourceResponse<Document>> readObservable = asyncClientWithTokenResolver.readDocument(resourceResponse.getResource().selfLink(), requestOptions);
             FailureValidator failureValidator = new FailureValidator.Builder().statusCode(HttpConstants.StatusCodes.UNAUTHORIZED).build();
             validateFailure(readObservable, failureValidator);
 
@@ -262,14 +262,14 @@ public class TokenResolverTest extends TestSuiteBase {
             asyncClientWithTokenResolver = new AsyncDocumentClient.Builder()
                     .withServiceEndpoint(TestConfigurations.HOST)
                     .withConnectionPolicy(connectionPolicy)
-                    .withConsistencyLevel(ConsistencyLevel.Session)
-                    .withTokenResolver(getTokenResolver(PermissionMode.Read))
+                    .withConsistencyLevel(ConsistencyLevel.SESSION)
+                    .withTokenResolver(getTokenResolver(PermissionMode.READ))
                     .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
                     .withPermissionFeed(permissionFeed)
                     .build();
-            readObservable = asyncClientWithTokenResolver.readDocument(resourceResponse.getResource().getSelfLink(), requestOptions);
+            readObservable = asyncClientWithTokenResolver.readDocument(resourceResponse.getResource().selfLink(), requestOptions);
             ResourceResponseValidator<Document> sucessValidator = new ResourceResponseValidator.Builder<Document>()
-                    .withId(resourceResponse.getResource().getId()).build();
+                    .withId(resourceResponse.getResource().id()).build();
             validateSuccess(readObservable, sucessValidator);
 
 
@@ -277,10 +277,10 @@ public class TokenResolverTest extends TestSuiteBase {
             asyncClientWithTokenResolver = new AsyncDocumentClient.Builder()
                     .withServiceEndpoint(TestConfigurations.HOST)
                     .withConnectionPolicy(connectionPolicy)
-                    .withConsistencyLevel(ConsistencyLevel.Session)
+                    .withConsistencyLevel(ConsistencyLevel.SESSION)
                     .withPermissionFeed(permissionFeed)
                     .build();
-            readObservable = asyncClientWithTokenResolver.readDocument(resourceResponse.getResource().getSelfLink(), requestOptions);
+            readObservable = asyncClientWithTokenResolver.readDocument(resourceResponse.getResource().selfLink(), requestOptions);
             validateSuccess(readObservable, sucessValidator);
 
 
@@ -288,10 +288,10 @@ public class TokenResolverTest extends TestSuiteBase {
             asyncClientWithTokenResolver = new AsyncDocumentClient.Builder()
                     .withServiceEndpoint(TestConfigurations.HOST)
                     .withConnectionPolicy(connectionPolicy)
-                    .withConsistencyLevel(ConsistencyLevel.Session)
+                    .withConsistencyLevel(ConsistencyLevel.SESSION)
                     .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
                     .build();
-            readObservable = asyncClientWithTokenResolver.readDocument(resourceResponse.getResource().getSelfLink(), requestOptions);
+            readObservable = asyncClientWithTokenResolver.readDocument(resourceResponse.getResource().selfLink(), requestOptions);
             validateSuccess(readObservable, sucessValidator);
 
         } finally {
@@ -303,7 +303,7 @@ public class TokenResolverTest extends TestSuiteBase {
     public void createAndExecuteSprocWithWritePermission(ConnectionMode connectionMode) throws InterruptedException {
         AsyncDocumentClient asyncClientWithTokenResolver = null;
         try {
-            asyncClientWithTokenResolver = buildClient(connectionMode, PermissionMode.All);
+            asyncClientWithTokenResolver = buildClient(connectionMode, PermissionMode.ALL);
             String sprocId = "storedProcedure" + UUID.randomUUID().toString();
             StoredProcedure sproc = new StoredProcedure(
                     "{" +
@@ -313,22 +313,22 @@ public class TokenResolverTest extends TestSuiteBase {
                     "        var mytext = \"x\";" +
                     "        var myval = 1;" +
                     "        try {" +
-                    "            getContext().getResponse().setBody(\"Success!\");" +
+                    "            getContext().getResponse().body(\"Success!\");" +
                     "        }" +
                     "        catch(err) {" +
-                    "            getContext().getResponse().setBody(\"inline err: [\" + err.number + \"] \" + err);" +
+                    "            getContext().getResponse().body(\"inline err: [\" + err.number + \"] \" + err);" +
                     "        }" +
                     "    }'" +
                     "}");
             
-            Observable<ResourceResponse<StoredProcedure>> createObservable = asyncClientWithTokenResolver.createStoredProcedure(createdCollection.getSelfLink(), sproc, null);
+            Observable<ResourceResponse<StoredProcedure>> createObservable = asyncClientWithTokenResolver.createStoredProcedure(createdCollection.selfLink(), sproc, null);
             ResourceResponseValidator<StoredProcedure> createSucessValidator = new ResourceResponseValidator.Builder<StoredProcedure>()
                     .withId(sprocId).build();
             validateSuccess(createObservable, createSucessValidator);
             
             RequestOptions options = new RequestOptions();
             options.setPartitionKey(new PartitionKey(""));
-            String sprocLink = "dbs/" + createdDatabase.getId() + "/colls/" + createdCollection.getId() + "/sprocs/" + sprocId;
+            String sprocLink = "dbs/" + createdDatabase.id() + "/colls/" + createdCollection.id() + "/sprocs/" + sprocId;
             StoredProcedureResponse result = asyncClientWithTokenResolver.executeStoredProcedure(sprocLink, options, null).toBlocking().single();
             assertThat(result.getResponseAsString()).isEqualTo("\"Success!\"");
         } finally {
@@ -343,21 +343,21 @@ public class TokenResolverTest extends TestSuiteBase {
         String id2 = UUID.randomUUID().toString();
         
         try {
-            asyncClientWithTokenResolver = buildClient(connectionMode, PermissionMode.All);            
-            Document document1 = asyncClientWithTokenResolver.createDocument(createdCollection.getSelfLink(), new Document("{'id': '" + id1 + "'}"), null, false)
+            asyncClientWithTokenResolver = buildClient(connectionMode, PermissionMode.ALL);
+            Document document1 = asyncClientWithTokenResolver.createDocument(createdCollection.selfLink(), new Document("{'id': '" + id1 + "'}"), null, false)
                     .toBlocking().single().getResource();
-            Document document2 = asyncClientWithTokenResolver.createDocument(createdCollection.getSelfLink(), new Document("{'id': '" + id2 + "'}"), null, false)
+            Document document2 = asyncClientWithTokenResolver.createDocument(createdCollection.selfLink(), new Document("{'id': '" + id2 + "'}"), null, false)
                     .toBlocking().single().getResource();
             List<String> expectedIds = new ArrayList<String>();
-            String rid1 = document1.getResourceId();
-            String rid2 = document2.getResourceId();
+            String rid1 = document1.resourceId();
+            String rid2 = document2.resourceId();
             expectedIds.add(rid1);
             expectedIds.add(rid2);
             String query = "SELECT * FROM r WHERE r._rid=\"" + rid1 + "\" or r._rid=\"" + rid2 + "\"";
             
             FeedOptions options = new FeedOptions();
-            options.setEnableCrossPartitionQuery(true);
-            Observable<FeedResponse<Document>> queryObservable = asyncClientWithTokenResolver.queryDocuments(createdCollection.getSelfLink(), query, options);
+            options.enableCrossPartitionQuery(true);
+            Observable<FeedResponse<Document>> queryObservable = asyncClientWithTokenResolver.queryDocuments(createdCollection.selfLink(), query, options);
             FeedResponseListValidator<Document> validator = new FeedResponseListValidator.Builder<Document>()
                     .numberOfPages(1)
                     .exactlyContainsInAnyOrder(expectedIds).build();
@@ -378,38 +378,38 @@ public class TokenResolverTest extends TestSuiteBase {
         AsyncDocumentClient asyncClientWithTokenResolver = null;
         String id1 = UUID.randomUUID().toString();
         String id2 = UUID.randomUUID().toString();
-        String partitionKey = createdCollection.getPartitionKey().getPaths().get(0).substring(1);
+        String partitionKey = createdCollection.getPartitionKey().paths().get(0).substring(1);
         String partitionKeyValue = "pk";
         Document document1 = new Document();
-        document1.setId(id1);
+        document1.id(id1);
         document1.set(partitionKey, partitionKeyValue);
         Document document2 = new Document();
-        document2.setId(id2);
+        document2.id(id2);
         document2.set(partitionKey, partitionKeyValue);
         try {
-            asyncClientWithTokenResolver = buildClient(connectionMode, PermissionMode.All);
+            asyncClientWithTokenResolver = buildClient(connectionMode, PermissionMode.ALL);
             ZonedDateTime befTime = ZonedDateTime.now();
             Thread.sleep(1000);
 
             document1 = asyncClientWithTokenResolver
-                    .createDocument(createdCollection.getSelfLink(), document1, null, false).toBlocking().single()
+                    .createDocument(createdCollection.selfLink(), document1, null, false).toBlocking().single()
                     .getResource();
             document2 = asyncClientWithTokenResolver
-                    .createDocument(createdCollection.getSelfLink(), document2, null, false).toBlocking().single()
+                    .createDocument(createdCollection.selfLink(), document2, null, false).toBlocking().single()
                     .getResource();
             List<String> expectedIds = new ArrayList<String>();
-            String rid1 = document1.getResourceId();
-            String rid2 = document2.getResourceId();
+            String rid1 = document1.resourceId();
+            String rid2 = document2.resourceId();
             expectedIds.add(rid1);
             expectedIds.add(rid2);
 
             ChangeFeedOptions options = new ChangeFeedOptions();
-            options.setPartitionKey(new PartitionKey(partitionKeyValue));
-            options.setStartDateTime(befTime);
+            options.partitionKey(new PartitionKey(partitionKeyValue));
+            options.startDateTime(befTime);
 
             Thread.sleep(1000);
             Observable<FeedResponse<Document>> queryObservable = asyncClientWithTokenResolver
-                    .queryDocumentChangeFeed(createdCollection.getSelfLink(), options);
+                    .queryDocumentChangeFeed(createdCollection.selfLink(), options);
             FeedResponseListValidator<Document> validator = new FeedResponseListValidator.Builder<Document>()
                     .exactlyContainsInAnyOrder(expectedIds).build();
             validateQuerySuccess(queryObservable, validator, 10000);
@@ -424,17 +424,17 @@ public class TokenResolverTest extends TestSuiteBase {
         
         try {
             ConnectionPolicy connectionPolicy = new ConnectionPolicy();
-            connectionPolicy.setConnectionMode(connectionMode);
+            connectionPolicy.connectionMode(connectionMode);
             asyncClientWithTokenResolver = new AsyncDocumentClient.Builder()
                     .withServiceEndpoint(TestConfigurations.HOST)
                     .withConnectionPolicy(connectionPolicy)
-                    .withConsistencyLevel(ConsistencyLevel.Session)
+                    .withConsistencyLevel(ConsistencyLevel.SESSION)
                     .withTokenResolver(getBadTokenResolver())
                     .build();
 
             RequestOptions options = new RequestOptions();
             options.setProperties(new HashMap<String, Object>());
-            Observable<ResourceResponse<DocumentCollection>> readObservable = asyncClientWithTokenResolver.readCollection(createdCollection.getSelfLink(), options);
+            Observable<ResourceResponse<DocumentCollection>> readObservable = asyncClientWithTokenResolver.readCollection(createdCollection.selfLink(), options);
             FailureValidator validator = new FailureValidator.Builder().withRuntimeExceptionClass(UnsupportedOperationException.class).build();
             validateFailure(readObservable, validator);            
         } finally {
@@ -451,27 +451,27 @@ public class TokenResolverTest extends TestSuiteBase {
         AsyncDocumentClient asyncClientWithTokenResolver = null;
         try {
             ConnectionPolicy connectionPolicy = new ConnectionPolicy();
-            connectionPolicy.setConnectionMode(connectionMode);
+            connectionPolicy.connectionMode(connectionMode);
             asyncClientWithTokenResolver = new AsyncDocumentClient.Builder()
                     .withServiceEndpoint(TestConfigurations.HOST)
                     .withConnectionPolicy(connectionPolicy)
-                    .withConsistencyLevel(ConsistencyLevel.Session)
-                    .withTokenResolver(getTokenResolverWithBlockList(PermissionMode.Read, field, blockListedUser, errorMessage))
+                    .withConsistencyLevel(ConsistencyLevel.SESSION)
+                    .withTokenResolver(getTokenResolverWithBlockList(PermissionMode.READ, field, blockListedUser, errorMessage))
                     .build();
             
             RequestOptions options = new RequestOptions();
             HashMap<String, Object> properties = new HashMap<String, Object>();
             properties.put(field, blockListedUser);
             options.setProperties(properties);
-            Observable<ResourceResponse<DocumentCollection>> readObservable = asyncClientWithTokenResolver.readCollection(createdCollection.getSelfLink(), options);
+            Observable<ResourceResponse<DocumentCollection>> readObservable = asyncClientWithTokenResolver.readCollection(createdCollection.selfLink(), options);
             FailureValidator validator = new FailureValidator.Builder().withRuntimeExceptionMessage(errorMessage).build();
             validateFailure(readObservable, validator);
 
             properties.put(field, new UserClass("valid user", 1));
             options.setProperties(properties);
-            readObservable = asyncClientWithTokenResolver.readCollection(createdCollection.getSelfLink(), options);
+            readObservable = asyncClientWithTokenResolver.readCollection(createdCollection.selfLink(), options);
             ResourceResponseValidator<DocumentCollection> sucessValidator = new ResourceResponseValidator.Builder<DocumentCollection>()
-                    .withId(createdCollection.getId()).build();
+                    .withId(createdCollection.id()).build();
             validateSuccess(readObservable, sucessValidator);
         } finally {
             safeClose(asyncClientWithTokenResolver);
@@ -496,26 +496,26 @@ public class TokenResolverTest extends TestSuiteBase {
 
     private AsyncDocumentClient buildClient(ConnectionMode connectionMode, PermissionMode permissionMode) {
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
-        connectionPolicy.setConnectionMode(connectionMode);
+        connectionPolicy.connectionMode(connectionMode);
         return new AsyncDocumentClient.Builder()
                 .withServiceEndpoint(TestConfigurations.HOST)
                 .withConnectionPolicy(connectionPolicy)
-                .withConsistencyLevel(ConsistencyLevel.Session)
+                .withConsistencyLevel(ConsistencyLevel.SESSION)
                 .withTokenResolver(getTokenResolver(permissionMode))
                 .build();
     }
 
     private static User getUserDefinition() {
         User user = new User();
-        user.setId(UUID.randomUUID().toString());
+        user.id(UUID.randomUUID().toString());
         return user;
     }
 
     private Permission getPermission(Resource resource, String permissionId, PermissionMode permissionMode) {
         Permission permission = new Permission();
-        permission.setId(permissionId);
+        permission.id(permissionId);
         permission.setPermissionMode(permissionMode);
-        permission.setResourceLink(resource.getSelfLink());
+        permission.setResourceLink(resource.selfLink());
         return permission;
     }
 
@@ -523,7 +523,7 @@ public class TokenResolverTest extends TestSuiteBase {
         return (String requestVerb, String resourceIdOrFullName, CosmosResourceType resourceType, Map<String, Object>  properties) -> {
             if (permissionMode == null) {
                 return "invalid";
-            } else if (permissionMode.equals(PermissionMode.Read)) {
+            } else if (permissionMode.equals(PermissionMode.READ)) {
                 return readPermission.getToken();
             } else {
                 return allPermission.getToken();
@@ -555,7 +555,7 @@ public class TokenResolverTest extends TestSuiteBase {
             } else if (currentUser != null &&
                     !currentUser.userName.equals(blockListedUser.userName) &&
                     currentUser.userId != blockListedUser.userId) {
-                if (permissionMode.equals(PermissionMode.Read)) {
+                if (permissionMode.equals(PermissionMode.READ)) {
                     return readPermission.getToken();
                 } else {
                     return allPermission.getToken();

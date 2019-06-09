@@ -22,7 +22,7 @@
  */
 package com.microsoft.azure.cosmosdb.rx.internal;
 
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.ISessionContainer;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
@@ -64,7 +64,7 @@ public class RenameCollectionAwareClientRetryPolicy implements IDocumentClientRe
     public Single<ShouldRetryResult> shouldRetry(Exception e) {
         return this.retryPolicy.shouldRetry(e).flatMap(shouldRetryResult -> {
             if (!shouldRetryResult.shouldRetry && !this.hasTriggered) {
-                DocumentClientException clientException = Utils.as(e, DocumentClientException.class);
+                CosmosClientException clientException = Utils.as(e, CosmosClientException.class);
 
                 if (this.request == null) {
                     // someone didn't call OnBeforeSendRequest - nothing we can do
@@ -92,7 +92,7 @@ public class RenameCollectionAwareClientRetryPolicy implements IDocumentClientRe
                     return collectionObs.flatMap(collectionInfo -> {
                         if (collectionInfo == null) {
                             logger.warn("Can't recover from session unavailable exception because resolving collection name {} returned null", request.getResourceAddress());
-                        } else if (!StringUtils.isEmpty(oldCollectionRid) && !StringUtils.isEmpty(collectionInfo.getResourceId())) {
+                        } else if (!StringUtils.isEmpty(oldCollectionRid) && !StringUtils.isEmpty(collectionInfo.resourceId())) {
                             return Single.just(ShouldRetryResult.retryAfter(Duration.ZERO));
                         }
                         return Single.just(shouldRetryResult);

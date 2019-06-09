@@ -143,7 +143,7 @@ public class ChangeFeedProcessorBuilderImpl implements ChangeFeedProcessor.Build
         }
 
         this.changeFeedProcessorOptions = changeFeedProcessorOptions;
-        this.executorService = changeFeedProcessorOptions.getExecutorService();
+        this.executorService = changeFeedProcessorOptions.executorService();
 
         return this;
     }
@@ -325,7 +325,7 @@ public class ChangeFeedProcessorBuilderImpl implements ChangeFeedProcessor.Build
             this.feedContextClient
                 .readDatabase(this.feedContextClient.getDatabaseClient(), null)
                 .map( databaseResourceResponse -> {
-                    self.databaseResourceId = databaseResourceResponse.getDatabase().getId();
+                    self.databaseResourceId = databaseResourceResponse.database().id();
                     return self.databaseResourceId;
                 })
                 .subscribeOn(Schedulers.elastic())
@@ -337,7 +337,7 @@ public class ChangeFeedProcessorBuilderImpl implements ChangeFeedProcessor.Build
             self.feedContextClient
                 .readContainer(self.feedContextClient.getContainerClient(), null)
                 .map(documentCollectionResourceResponse -> {
-                    self.collectionResourceId = documentCollectionResourceResponse.getContainer().getId();
+                    self.collectionResourceId = documentCollectionResourceResponse.container().id();
                     return self.collectionResourceId;
                 })
                 .subscribeOn(Schedulers.elastic())
@@ -356,10 +356,10 @@ public class ChangeFeedProcessorBuilderImpl implements ChangeFeedProcessor.Build
             return this.leaseContextClient.readContainerSettings(this.leaseContextClient.getContainerClient(), null)
                 .map( collectionSettings -> {
                     boolean isPartitioned =
-                        collectionSettings.getPartitionKey() != null &&
-                            collectionSettings.getPartitionKey().getPaths() != null &&
-                            collectionSettings.getPartitionKey().getPaths().size() > 0;
-                    if (!isPartitioned || (collectionSettings.getPartitionKey().getPaths().size() != 1 || !collectionSettings.getPartitionKey().getPaths().get(0).equals("/id"))) {
+                        collectionSettings.partitionKey() != null &&
+                            collectionSettings.partitionKey().paths() != null &&
+                            collectionSettings.partitionKey().paths().size() > 0;
+                    if (!isPartitioned || (collectionSettings.partitionKey().paths().size() != 1 || !collectionSettings.partitionKey().paths().get(0).equals("/id"))) {
 //                        throw new IllegalArgumentException("The lease collection, if partitioned, must have partition key equal to id.");
                         Mono.error(new IllegalArgumentException("The lease collection must have partition key equal to id."));
                     }
@@ -384,7 +384,7 @@ public class ChangeFeedProcessorBuilderImpl implements ChangeFeedProcessor.Build
     }
 
     private String getLeasePrefix() {
-        String optionsPrefix = this.changeFeedProcessorOptions.getLeasePrefix();
+        String optionsPrefix = this.changeFeedProcessorOptions.leasePrefix();
 
         if (optionsPrefix == null) {
             optionsPrefix = "";
@@ -403,15 +403,15 @@ public class ChangeFeedProcessorBuilderImpl implements ChangeFeedProcessor.Build
     private Mono<PartitionManager> buildPartitionManager(LeaseStoreManager leaseStoreManager) {
         ChangeFeedProcessorBuilderImpl self = this;
 
-        CheckpointerObserverFactory factory = new CheckpointerObserverFactory(this.observerFactory, this.changeFeedProcessorOptions.getCheckpointFrequency());
+        CheckpointerObserverFactory factory = new CheckpointerObserverFactory(this.observerFactory, this.changeFeedProcessorOptions.checkpointFrequency());
 
         PartitionSynchronizerImpl synchronizer = new PartitionSynchronizerImpl(
             this.feedContextClient,
             this.feedContextClient.getContainerClient(),
             leaseStoreManager,
             leaseStoreManager,
-            this.changeFeedProcessorOptions.getDegreeOfParallelism(),
-            this.changeFeedProcessorOptions.getQueryPartitionsMaxBatchSize()
+            this.changeFeedProcessorOptions.degreeOfParallelism(),
+            this.changeFeedProcessorOptions.queryPartitionsMaxBatchSize()
         );
 
         Bootstrapper bootstrapper = new BootstrapperImpl(synchronizer, leaseStoreManager, this.lockTime, this.sleepTime);
@@ -430,9 +430,9 @@ public class ChangeFeedProcessorBuilderImpl implements ChangeFeedProcessor.Build
         if (this.loadBalancingStrategy == null) {
             this.loadBalancingStrategy = new EqualPartitionsBalancingStrategy(
                 this.hostName,
-                this.changeFeedProcessorOptions.getMinPartitionCount(),
-                this.changeFeedProcessorOptions.getMaxPartitionCount(),
-                this.changeFeedProcessorOptions.getLeaseExpirationInterval());
+                this.changeFeedProcessorOptions.minPartitionCount(),
+                this.changeFeedProcessorOptions.maxPartitionCount(),
+                this.changeFeedProcessorOptions.leaseExpirationInterval());
         }
 
         PartitionController partitionController = new PartitionControllerImpl(leaseStoreManager, leaseStoreManager, partitionSupervisorFactory, synchronizer, executorService);
@@ -447,7 +447,7 @@ public class ChangeFeedProcessorBuilderImpl implements ChangeFeedProcessor.Build
             partitionController2,
             leaseStoreManager,
             this.loadBalancingStrategy,
-            this.changeFeedProcessorOptions.getLeaseAcquireInterval(),
+            this.changeFeedProcessorOptions.leaseAcquireInterval(),
             this.executorService
         );
 

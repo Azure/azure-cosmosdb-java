@@ -30,6 +30,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import com.microsoft.azure.cosmos.CosmosClientBuilder;
+import com.microsoft.azure.cosmosdb.*;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
@@ -39,12 +40,7 @@ import com.microsoft.azure.cosmos.CosmosClient;
 import com.microsoft.azure.cosmos.CosmosContainer;
 import com.microsoft.azure.cosmos.CosmosRequestOptions;
 import com.microsoft.azure.cosmos.CosmosTriggerSettings;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
-import com.microsoft.azure.cosmosdb.FeedOptions;
-import com.microsoft.azure.cosmosdb.FeedResponse;
-import com.microsoft.azure.cosmosdb.Trigger;
-import com.microsoft.azure.cosmosdb.TriggerOperation;
-import com.microsoft.azure.cosmosdb.TriggerType;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 
 import reactor.core.publisher.Flux;
 
@@ -63,21 +59,21 @@ public class TriggerQueryTest extends TestSuiteBase {
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
     public void queryWithFilter() throws Exception {
 
-        String filterId = createdTriggers.get(0).getId();
+        String filterId = createdTriggers.get(0).id();
         String query = String.format("SELECT * from c where c.id = '%s'", filterId);
 
         FeedOptions options = new FeedOptions();
-        options.setMaxItemCount(5);
+        options.maxItemCount(5);
         Flux<FeedResponse<CosmosTriggerSettings>> queryObservable = createdCollection.queryTriggers(query, options);
 
-        List<Trigger> expectedDocs = createdTriggers.stream().filter(sp -> filterId.equals(sp.getId()) ).collect(Collectors.toList());
+        List<Trigger> expectedDocs = createdTriggers.stream().filter(sp -> filterId.equals(sp.id()) ).collect(Collectors.toList());
         assertThat(expectedDocs).isNotEmpty();
 
-        int expectedPageSize = (expectedDocs.size() + options.getMaxItemCount() - 1) / options.getMaxItemCount();
+        int expectedPageSize = (expectedDocs.size() + options.maxItemCount() - 1) / options.maxItemCount();
 
         FeedResponseListValidator<CosmosTriggerSettings> validator = new FeedResponseListValidator.Builder<CosmosTriggerSettings>()
                 .totalSize(expectedDocs.size())
-                .exactlyContainsInAnyOrder(expectedDocs.stream().map(d -> d.getResourceId()).collect(Collectors.toList()))
+                .exactlyContainsInAnyOrder(expectedDocs.stream().map(d -> d.resourceId()).collect(Collectors.toList()))
                 .numberOfPages(expectedPageSize)
                 .pageSatisfy(0, new FeedResponseValidator.Builder<CosmosTriggerSettings>()
                         .requestChargeGreaterThanOrEqualTo(1.0).build())
@@ -91,7 +87,7 @@ public class TriggerQueryTest extends TestSuiteBase {
 
         String query = "SELECT * from root r where r.id = '2'";
         FeedOptions options = new FeedOptions();
-        options.setEnableCrossPartitionQuery(true);
+        options.enableCrossPartitionQuery(true);
         Flux<FeedResponse<CosmosTriggerSettings>> queryObservable = createdCollection.queryTriggers(query, options);
 
         FeedResponseListValidator<CosmosTriggerSettings> validator = new FeedResponseListValidator.Builder<CosmosTriggerSettings>()
@@ -108,19 +104,19 @@ public class TriggerQueryTest extends TestSuiteBase {
 
         String query = "SELECT * from root";
         FeedOptions options = new FeedOptions();
-        options.setMaxItemCount(3);
-        options.setEnableCrossPartitionQuery(true);
+        options.maxItemCount(3);
+        options.enableCrossPartitionQuery(true);
         Flux<FeedResponse<CosmosTriggerSettings>> queryObservable = createdCollection.queryTriggers(query, options);
 
         List<CosmosTriggerSettings> expectedDocs = createdTriggers;      
 
-        int expectedPageSize = (expectedDocs.size() + options.getMaxItemCount() - 1) / options.getMaxItemCount();
+        int expectedPageSize = (expectedDocs.size() + options.maxItemCount() - 1) / options.maxItemCount();
 
         FeedResponseListValidator<CosmosTriggerSettings> validator = new FeedResponseListValidator
                 .Builder<CosmosTriggerSettings>()
                 .exactlyContainsInAnyOrder(expectedDocs
                         .stream()
-                        .map(d -> d.getResourceId())
+                        .map(d -> d.resourceId())
                         .collect(Collectors.toList()))
                 .numberOfPages(expectedPageSize)
                 .allPagesSatisfy(new FeedResponseValidator.Builder<CosmosTriggerSettings>()
@@ -133,11 +129,11 @@ public class TriggerQueryTest extends TestSuiteBase {
     public void invalidQuerySytax() throws Exception {
         String query = "I am an invalid query";
         FeedOptions options = new FeedOptions();
-        options.setEnableCrossPartitionQuery(true);
+        options.enableCrossPartitionQuery(true);
         Flux<FeedResponse<CosmosTriggerSettings>> queryObservable = createdCollection.queryTriggers(query, options);
 
         FailureValidator validator = new FailureValidator.Builder()
-                .instanceOf(DocumentClientException.class)
+                .instanceOf(CosmosClientException.class)
                 .statusCode(400)
                 .notNullActivityId()
                 .build();
@@ -146,7 +142,7 @@ public class TriggerQueryTest extends TestSuiteBase {
 
     public CosmosTriggerSettings createTrigger(CosmosContainer cosmosContainer) {
         CosmosTriggerSettings storedProcedure = getTriggerDef();
-        return cosmosContainer.createTrigger(storedProcedure, new CosmosRequestOptions()).block().getCosmosTriggerSettings();
+        return cosmosContainer.createTrigger(storedProcedure, new CosmosRequestOptions()).block().settings();
     }
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
@@ -169,10 +165,10 @@ public class TriggerQueryTest extends TestSuiteBase {
 
     private static CosmosTriggerSettings getTriggerDef() {
         CosmosTriggerSettings trigger = new CosmosTriggerSettings();
-        trigger.setId(UUID.randomUUID().toString());
-        trigger.setBody("function() {var x = 10;}");
-        trigger.setTriggerOperation(TriggerOperation.Create);
-        trigger.setTriggerType(TriggerType.Pre);
+        trigger.id(UUID.randomUUID().toString());
+        trigger.body("function() {var x = 10;}");
+        trigger.triggerOperation(TriggerOperation.CREATE);
+        trigger.triggerType(TriggerType.PRE);
         return trigger;
     }
 }

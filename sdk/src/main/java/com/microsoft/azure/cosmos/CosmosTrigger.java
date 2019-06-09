@@ -39,12 +39,12 @@ public class CosmosTrigger extends CosmosResource{
     }
 
     @Override
-    protected String getURIPathSegment() {
+    protected String URIPathSegment() {
         return Paths.TRIGGERS_PATH_SEGMENT;
     }
 
     @Override
-    protected String getParentLink() {
+    protected String parentLink() {
         return container.getLink();
     }
 

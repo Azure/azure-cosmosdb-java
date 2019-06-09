@@ -55,14 +55,14 @@ public class UserDefinedFunctionCrudTest extends TestSuiteBase {
     public void createUserDefinedFunction() throws Exception {
         // create udf
         CosmosUserDefinedFunctionSettings udf = new CosmosUserDefinedFunctionSettings();
-        udf.setId(UUID.randomUUID().toString());
-        udf.setBody("function() {var x = 10;}");
+        udf.id(UUID.randomUUID().toString());
+        udf.body("function() {var x = 10;}");
 
         Mono<CosmosUserDefinedFunctionResponse> createObservable = createdCollection.createUserDefinedFunction(udf, new CosmosRequestOptions());
 
         // validate udf creation
         CosmosResponseValidator<CosmosUserDefinedFunctionResponse> validator = new CosmosResponseValidator.Builder<CosmosUserDefinedFunctionResponse>()
-                .withId(udf.getId())
+                .withId(udf.id())
                 .withUserDefinedFunctionBody("function() {var x = 10;}")
                 .notNullEtag()
                 .build();
@@ -73,9 +73,9 @@ public class UserDefinedFunctionCrudTest extends TestSuiteBase {
     public void readUserDefinedFunction() throws Exception {
         // create a udf
         CosmosUserDefinedFunctionSettings udf = new CosmosUserDefinedFunctionSettings();
-        udf.setId(UUID.randomUUID().toString());
-        udf.setBody("function() {var x = 10;}");
-        CosmosUserDefinedFunction readBackUdf = createdCollection.createUserDefinedFunction(udf, new CosmosRequestOptions()).block().getCosmosUserDefinedFunction();
+        udf.id(UUID.randomUUID().toString());
+        udf.body("function() {var x = 10;}");
+        CosmosUserDefinedFunction readBackUdf = createdCollection.createUserDefinedFunction(udf, new CosmosRequestOptions()).block().userDefinedFunction();
 
         // read udf
         waitIfNeededForReplicasToCatchUp(clientBuilder);
@@ -83,7 +83,7 @@ public class UserDefinedFunctionCrudTest extends TestSuiteBase {
 
         //validate udf read
         CosmosResponseValidator<CosmosUserDefinedFunctionResponse> validator = new CosmosResponseValidator.Builder<CosmosUserDefinedFunctionResponse>()
-                .withId(udf.getId())
+                .withId(udf.id())
                 .withUserDefinedFunctionBody("function() {var x = 10;}")
                 .notNullEtag()
                 .build();
@@ -94,9 +94,9 @@ public class UserDefinedFunctionCrudTest extends TestSuiteBase {
     public void deleteUserDefinedFunction() throws Exception {
         // create a udf
         CosmosUserDefinedFunctionSettings udf = new CosmosUserDefinedFunctionSettings();
-        udf.setId(UUID.randomUUID().toString());
-        udf.setBody("function() {var x = 10;}");
-        CosmosUserDefinedFunction readBackUdf = createdCollection.createUserDefinedFunction(udf, new CosmosRequestOptions()).block().getCosmosUserDefinedFunction();
+        udf.id(UUID.randomUUID().toString());
+        udf.body("function() {var x = 10;}");
+        CosmosUserDefinedFunction readBackUdf = createdCollection.createUserDefinedFunction(udf, new CosmosRequestOptions()).block().userDefinedFunction();
 
         // delete udf
         Mono<CosmosResponse> deleteObservable = readBackUdf.delete(new CosmosRequestOptions());

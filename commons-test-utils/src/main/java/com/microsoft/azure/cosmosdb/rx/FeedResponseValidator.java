@@ -57,7 +57,7 @@ public interface FeedResponseValidator<T extends Resource> {
             validators.add(new FeedResponseValidator<T>() {
                 @Override
                 public void validate(FeedResponse<T> feedPage) {
-                    assertThat(feedPage.getResults().size()).isLessThanOrEqualTo(maxPageSize);
+                    assertThat(feedPage.results().size()).isLessThanOrEqualTo(maxPageSize);
                 }
             });
             return this;
@@ -68,7 +68,7 @@ public interface FeedResponseValidator<T extends Resource> {
             validators.add(new FeedResponseValidator<T>() {
                 @Override
                 public void validate(FeedResponse<T> feedPage) {
-                    assertThat(feedPage.getResults()).hasSize(expectedCount);
+                    assertThat(feedPage.results()).hasSize(expectedCount);
                 }
             });
             return this;
@@ -79,7 +79,7 @@ public interface FeedResponseValidator<T extends Resource> {
             validators.add(new FeedResponseValidator<T>() {
                 @Override
                 public void validate(FeedResponse<T> feedPage) {
-                    assertThat(feedPage.getRequestCharge()).isPositive();
+                    assertThat(feedPage.requestCharge()).isPositive();
                 }
             });
             return this;
@@ -90,7 +90,7 @@ public interface FeedResponseValidator<T extends Resource> {
             validators.add(new FeedResponseValidator<T>() {
                 @Override
                 public void validate(FeedResponse<T> feedPage) {
-                    assertThat(feedPage.getRequestCharge()).isGreaterThanOrEqualTo(minRequestCharge);
+                    assertThat(feedPage.requestCharge()).isGreaterThanOrEqualTo(minRequestCharge);
                 }
             });
             return this;
@@ -101,7 +101,7 @@ public interface FeedResponseValidator<T extends Resource> {
             validators.add(new FeedResponseValidator<T>() {
                 @Override
                 public void validate(FeedResponse<T> feedPage) {
-                    assertThat(feedPage.getRequestCharge()).isLessThanOrEqualTo(maxRequestCharge);
+                    assertThat(feedPage.requestCharge()).isLessThanOrEqualTo(maxRequestCharge);
                 }
             });
             return this;
@@ -112,7 +112,7 @@ public interface FeedResponseValidator<T extends Resource> {
             validators.add(new FeedResponseValidator<T>() {
                 @Override
                 public void validate(FeedResponse<T> feedPage) {
-                    assertThat(feedPage.getResponseHeaders()).containsKey(headerKey);
+                    assertThat(feedPage.responseHeaders()).containsKey(headerKey);
                 }
             });
             return this;
@@ -123,7 +123,7 @@ public interface FeedResponseValidator<T extends Resource> {
             validators.add(new FeedResponseValidator<T>() {
                 @Override
                 public void validate(FeedResponse<T> feedPage) {
-                    assertThat(feedPage.getResponseHeaders()).containsKey(HttpConstants.HttpHeaders.REQUEST_CHARGE);
+                    assertThat(feedPage.responseHeaders()).containsKey(HttpConstants.HttpHeaders.REQUEST_CHARGE);
                 }
             });
             return this;
@@ -134,8 +134,8 @@ public interface FeedResponseValidator<T extends Resource> {
                 @Override
                 public void validate(FeedResponse<T> feedPage) {
                     assertThat(feedPage
-                            .getResults().stream()
-                            .map(r -> r.getResourceId())
+                            .results().stream()
+                            .map(r -> r.resourceId())
                             .collect(Collectors.toList()))
                             .containsExactlyElementsOf(expectedIds);
                 }

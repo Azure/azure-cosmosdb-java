@@ -36,7 +36,7 @@ import org.testng.annotations.Test;
 import com.microsoft.azure.cosmos.CosmosClient;
 import com.microsoft.azure.cosmos.CosmosDatabaseSettings;
 import com.microsoft.azure.cosmosdb.BridgeInternal;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 
 import io.reactivex.subscribers.TestSubscriber;
@@ -63,7 +63,7 @@ public class ReadFeedExceptionHandlingTest extends TestSuiteBase {
         frps.add(BridgeInternal.createFeedResponse(dbs, null));
 
         Flux<FeedResponse<CosmosDatabaseSettings>> response = Flux.merge(Flux.fromIterable(frps))
-                                                                    .mergeWith(Flux.error(new DocumentClientException(0)))
+                                                                    .mergeWith(Flux.error(new CosmosClientException(0)))
                                                                     .mergeWith(Flux.fromIterable(frps));
 
         final CosmosClient mockClient = Mockito.spy(client);

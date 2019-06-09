@@ -25,7 +25,7 @@ package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
 
 import com.microsoft.azure.cosmosdb.ConsistencyLevel;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.internal.InternalServerErrorException;
 import com.microsoft.azure.cosmosdb.internal.JavaStreamUtils;
 import com.microsoft.azure.cosmosdb.internal.MutableVolatile;
@@ -52,7 +52,7 @@ import static com.microsoft.azure.cosmosdb.rx.internal.Utils.ValueHolder;
 
 //
 //=================================================================================================================
-// Strong read logic:
+// STRONG read logic:
 //=================================================================================================================
 //
 //              ------------------- PerformPrimaryRead-------------------------------------------------------------
@@ -68,7 +68,7 @@ import static com.microsoft.azure.cosmosdb.rx.internal.Utils.ValueHolder;
 //                                  PrimaryReadBarrier-------------------------------------------------------------
 //
 //=================================================================================================================
-// BoundedStaleness quorum read logic:
+// BOUNDED_STALENESS quorum read logic:
 //=================================================================================================================
 //
 //              ------------------- PerformPrimaryRead-------------------------------------------------------------
@@ -160,7 +160,7 @@ public class QuorumReader {
                                     case QuorumMet:
                                         try {
                                             return Observable.just(secondaryQuorumReadResult.getResponse());
-                                        } catch (DocumentClientException e) {
+                                        } catch (CosmosClientException e) {
                                             return Observable.error(e);
                                         }
 
@@ -228,7 +228,7 @@ public class QuorumReader {
                                                         logger.debug("QuorumNotSelected: ReadPrimary successful");
                                                         try {
                                                             return Observable.just(response.getResponse());
-                                                        } catch (DocumentClientException e) {
+                                                        } catch (CosmosClientException e) {
                                                             return Observable.error(e);
                                                         }
                                                     } else if (response.shouldRetryOnSecondary) {
@@ -336,8 +336,8 @@ public class QuorumReader {
 
                         //either request overrides consistency level with strong, or request does not override and account default consistency level is strong
                         boolean isGlobalStrongReadCandidate =
-                                (ReplicatedResourceClient.isGlobalStrongEnabled() && this.serviceConfigReader.getDefaultConsistencyLevel() == ConsistencyLevel.Strong) &&
-                                        (entity.requestContext.originalRequestConsistencyLevel == null || entity.requestContext.originalRequestConsistencyLevel == ConsistencyLevel.Strong);
+                                (ReplicatedResourceClient.isGlobalStrongEnabled() && this.serviceConfigReader.getDefaultConsistencyLevel() == ConsistencyLevel.STRONG) &&
+                                        (entity.requestContext.originalRequestConsistencyLevel == null || entity.requestContext.originalRequestConsistencyLevel == ConsistencyLevel.STRONG);
 
                         ValueHolder<Long> readLsn = new ValueHolder(-1);
                         ValueHolder<Long> globalCommittedLSN = new ValueHolder(-1);
@@ -381,7 +381,7 @@ public class QuorumReader {
     }
 
     /**
-     * Read and get response from Primary
+     * READ and get response from Primary
      *
      * @param entity
      * @param readQuorum
@@ -414,7 +414,7 @@ public class QuorumReader {
 
                     if (storeResult.currentReplicaSetSize <= 0 || storeResult.lsn < 0 || storeResult.quorumAckedLSN < 0) {
                         String message = String.format(
-                                "Invalid value received from response header. CurrentReplicaSetSize %d, StoreLSN %d, QuorumAckedLSN %d",
+                                "INVALID value received from response header. CurrentReplicaSetSize %d, StoreLSN %d, QuorumAckedLSN %d",
                                 storeResult.currentReplicaSetSize, storeResult.lsn, storeResult.quorumAckedLSN);
 
                         // might not be returned if primary is still building the secondary replicas (during churn)
@@ -738,7 +738,7 @@ public class QuorumReader {
             this.response = response;
         }
 
-        public StoreResponse getResponse() throws DocumentClientException {
+        public StoreResponse getResponse() throws CosmosClientException {
             if (!this.isValidResult()) {
                 logger.error("getResponse called for invalid result");
                 throw new InternalServerErrorException(RMResources.InternalServerError);
@@ -775,7 +775,7 @@ public class QuorumReader {
         public final StoreResult selectedResponse;
 
         /**
-         * All store responses from Quorum Read.
+         * ALL store responses from Quorum READ.
          */
         public final List<String> storeResponses;
 

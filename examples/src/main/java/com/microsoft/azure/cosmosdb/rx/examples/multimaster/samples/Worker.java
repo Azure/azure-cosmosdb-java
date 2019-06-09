@@ -24,8 +24,8 @@
 package com.microsoft.azure.cosmosdb.rx.examples.multimaster.samples;
 
 
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.Document;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.rx.*;
@@ -70,7 +70,7 @@ public class Worker {
                 long startTick = System.currentTimeMillis();
 
                 Document d = new Document();
-                d.setId(UUID.randomUUID().toString());
+                d.id(UUID.randomUUID().toString());
 
                 this.client.createDocument(this.documentCollectionUri, d, null, false)
                         .subscribeOn(schedulerForBlockingWork).toBlocking().single();
@@ -105,13 +105,13 @@ public class Worker {
                 do {
 
                     FeedOptions options = new FeedOptions();
-                    options.setRequestContinuation(response != null ? response.getResponseContinuation() : null);
+                    options.requestContinuation(response != null ? response.continuationToken() : null);
 
                     response = this.client.readDocuments(this.documentCollectionUri, options).first()
                             .subscribeOn(schedulerForBlockingWork).toBlocking().single();
 
-                    totalItemRead += response.getResults().size();
-                } while (response.getResponseContinuation() != null);
+                    totalItemRead += response.results().size();
+                } while (response.continuationToken() != null);
 
                 if (totalItemRead < expectedNumberOfDocuments) {
                     logger.info("Total item read {} from {} is less than {}, retrying reads",
@@ -127,7 +127,7 @@ public class Worker {
                     }
                     continue;
                 } else {
-                    logger.info("Read {} items from {}", totalItemRead, this.client.getReadEndpoint());
+                    logger.info("READ {} items from {}", totalItemRead, this.client.getReadEndpoint());
                     break;
                 }
             }
@@ -142,22 +142,22 @@ public class Worker {
         do {
 
             FeedOptions options = new FeedOptions();
-            options.setRequestContinuation(response != null ? response.getResponseContinuation() : null);
+            options.requestContinuation(response != null ? response.continuationToken() : null);
 
             response = this.client.readDocuments(this.documentCollectionUri, options).first()
                     .subscribeOn(schedulerForBlockingWork).toBlocking().single();
 
-            documents.addAll(response.getResults());
-        } while (response.getResponseContinuation() != null);
+            documents.addAll(response.results());
+        } while (response.continuationToken() != null);
 
         for (Document document : documents) {
             try {
-                this.client.deleteDocument(document.getSelfLink(), null)
+                this.client.deleteDocument(document.selfLink(), null)
                         .subscribeOn(schedulerForBlockingWork).toBlocking().single();
             } catch (RuntimeException exEx) {
-                DocumentClientException dce = getDocumentClientExceptionCause(exEx);
+                CosmosClientException dce = getDocumentClientExceptionCause(exEx);
 
-                if (dce.getStatusCode() != 404) {
+                if (dce.statusCode() != 404) {
                     logger.info("Error occurred while deleting {} from {}", dce, client.getWriteEndpoint());
                 }
             }
@@ -166,11 +166,11 @@ public class Worker {
         logger.info("Deleted all documents from region {}", this.client.getWriteEndpoint());
     }
 
-    private DocumentClientException getDocumentClientExceptionCause(Throwable e) {
+    private CosmosClientException getDocumentClientExceptionCause(Throwable e) {
         while (e != null) {
 
-            if (e instanceof DocumentClientException) {
-                return (DocumentClientException) e;
+            if (e instanceof CosmosClientException) {
+                return (CosmosClientException) e;
             }
 
             e = e.getCause();

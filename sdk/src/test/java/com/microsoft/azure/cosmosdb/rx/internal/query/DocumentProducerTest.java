@@ -27,12 +27,9 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.LinkedListMultimap;
-import com.microsoft.azure.cosmosdb.ConnectionPolicy;
-import com.microsoft.azure.cosmosdb.Document;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.*;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.Error;
-import com.microsoft.azure.cosmosdb.FeedResponse;
-import com.microsoft.azure.cosmosdb.PartitionKeyRange;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.internal.query.QueryItem;
 import com.microsoft.azure.cosmosdb.internal.query.SortOrder;
@@ -125,7 +122,7 @@ public class DocumentProducerTest {
         GlobalEndpointManager globalEndpointManager = Mockito.mock(GlobalEndpointManager.class);
         Mockito.doReturn(url).when(globalEndpointManager).resolveServiceEndpoint(Mockito.any(RxDocumentServiceRequest.class));
         doReturn(false).when(globalEndpointManager).isClosed();
-        return new RetryPolicy(globalEndpointManager, ConnectionPolicy.GetDefault());
+        return new RetryPolicy(globalEndpointManager, ConnectionPolicy.defaultPolicy());
     }
 
     @Test(groups = { "unit" }, dataProvider = "splitParamProvider",  timeOut = TIMEOUT)
@@ -375,7 +372,7 @@ public class DocumentProducerTest {
         assertThat(requestCreator.invocations.get(0).continuationToken).isEqualTo(initialContinuationToken);
         assertThat(requestCreator.invocations.stream().skip(1).map(i -> i.continuationToken)
                 .collect(Collectors.toList())).containsExactlyElementsOf(
-                responses.stream().limit(9).map(r -> r.getResponseContinuation()).collect(Collectors.toList()));
+                responses.stream().limit(9).map(r -> r.continuationToken()).collect(Collectors.toList()));
 
         // source partition
         assertThat(requestCreator.invocations.stream().map(i -> i.sourcePartition).distinct()
@@ -442,11 +439,11 @@ public class DocumentProducerTest {
                 .collect(Collectors.toList())).containsExactlyElementsOf(Collections.singletonList(targetRange));
 
         List<String> resultContinuationToken = subscriber.getOnNextEvents()
-                .stream().map(r -> r.pageResult.getResponseContinuation()).collect(Collectors.toList());
+                .stream().map(r -> r.pageResult.continuationToken()).collect(Collectors.toList());
         List<String> beforeExceptionContinuationTokens = responsesBeforeThrottle.stream()
-                .map(r -> r.getResponseContinuation()).collect(Collectors.toList());
+                .map(r -> r.continuationToken()).collect(Collectors.toList());
         List<String> afterExceptionContinuationTokens = responsesAfterThrottle.stream()
-                .map(r -> r.getResponseContinuation()).collect(Collectors.toList());
+                .map(r -> r.continuationToken()).collect(Collectors.toList());
 
         assertThat(resultContinuationToken).containsExactlyElementsOf(
                 Iterables.concat(beforeExceptionContinuationTokens, afterExceptionContinuationTokens));
@@ -512,10 +509,10 @@ public class DocumentProducerTest {
         subscriber.assertValueCount(responsesBeforeThrottle.size());
     }
 
-    private DocumentClientException mockThrottlingException(long retriesAfter) {
-        DocumentClientException throttleException = mock(DocumentClientException.class);
-        doReturn(429).when(throttleException).getStatusCode();
-        doReturn(retriesAfter).when(throttleException).getRetryAfterInMilliseconds();
+    private CosmosClientException mockThrottlingException(long retriesAfter) {
+        CosmosClientException throttleException = mock(CosmosClientException.class);
+        doReturn(429).when(throttleException).statusCode();
+        doReturn(retriesAfter).when(throttleException).retryAfterInMilliseconds();
         return throttleException;
     }
 
@@ -594,7 +591,7 @@ public class DocumentProducerTest {
     private int getLastValueInAsc(int initialValue, List<FeedResponse<Document>> responsesList) {
         Integer value = null;
         for(FeedResponse<Document> page: responsesList) {
-            for(Document d: page.getResults()) {
+            for(Document d: page.results()) {
                 Integer tmp = d.getInt(OrderByIntFieldName);
                 if (tmp != null) {
                     value = tmp;
@@ -619,7 +616,7 @@ public class DocumentProducerTest {
 
     private PartitionKeyRange mockPartitionKeyRange(String partitionKeyRangeId) {
         PartitionKeyRange pkr = Mockito.mock(PartitionKeyRange.class);
-        doReturn(partitionKeyRangeId).when(pkr).getId();
+        doReturn(partitionKeyRangeId).when(pkr).id();
         doReturn(partitionKeyRangeId + ":AA").when(pkr).getMinInclusive();
         doReturn(partitionKeyRangeId + ":FF").when(pkr).getMaxExclusive();
         return pkr;
@@ -648,24 +645,24 @@ public class DocumentProducerTest {
 
         // numberOfResultPagesFromParentBeforeSplit + 1 requests to parent partition
         assertThat(capturedInvocationList.stream().limit(numberOfResultPagesFromParentBeforeSplit + 1)
-                .filter(i -> i.sourcePartition.getId().equals(parentPartitionId)))
+                .filter(i -> i.sourcePartition.id().equals(parentPartitionId)))
                 .hasSize(numberOfResultPagesFromParentBeforeSplit + 1);
 
         assertThat(capturedInvocationList.stream().skip(numberOfResultPagesFromParentBeforeSplit + 1)
-                .filter(i -> i.sourcePartition.getId().equals(leftChildPartitionId)))
+                .filter(i -> i.sourcePartition.id().equals(leftChildPartitionId)))
                 .hasSize(numberOfResultPagesFromLeftChildAfterSplit);
 
         assertThat(capturedInvocationList.stream().skip(numberOfResultPagesFromParentBeforeSplit + 1)
-                .filter(i -> i.sourcePartition.getId().equals(rightChildPartitionId)))
+                .filter(i -> i.sourcePartition.id().equals(rightChildPartitionId)))
                 .hasSize(numberOfResultPagesFromRightChildAfterSplit);
 
 
         BiFunction<Stream<RequestCreator.CapturedInvocation>, String, Stream<RequestCreator.CapturedInvocation>>
                 filterByPartition = (stream, partitionId)
-                -> stream.filter(i -> i.sourcePartition.getId().equals(partitionId));
+                -> stream.filter(i -> i.sourcePartition.id().equals(partitionId));
 
         Function<List<FeedResponse<Document>>, Stream<String>> extractContinuationToken =
-                (list) -> list.stream().map(p -> p.getResponseContinuation());
+                (list) -> list.stream().map(p -> p.continuationToken());
 
         assertThat(filterByPartition.apply(capturedInvocationList.stream(), parentPartitionId)
                 .map(r -> r.continuationToken)).containsExactlyElementsOf(
@@ -677,7 +674,7 @@ public class DocumentProducerTest {
                 expectedResultPagesFromParentPartitionBeforeSplit.size() > 0 ?
                         expectedResultPagesFromParentPartitionBeforeSplit.get(
                                 expectedResultPagesFromParentPartitionBeforeSplit.size() - 1)
-                                .getResponseContinuation() :initialContinuationToken;
+                                .continuationToken() :initialContinuationToken;
 
         assertThat(
                 filterByPartition.andThen(s -> s.map(r -> r.continuationToken))
@@ -721,20 +718,20 @@ public class DocumentProducerTest {
         assertThat(resultFromRightChild).hasSize(numberOfResultPagesFromRightChildAfterSplit);
 
         //validate expected result continuation token
-        assertThat(toList(resultFromParent.stream().map(p -> p.getResponseContinuation())
+        assertThat(toList(resultFromParent.stream().map(p -> p.continuationToken())
                 .filter(cp -> Strings.isNullOrEmpty(cp)))).isEmpty();
 
-        assertThat(toList(resultFromLeftChild.stream().map(p -> p.getResponseContinuation())
+        assertThat(toList(resultFromLeftChild.stream().map(p -> p.continuationToken())
                 .limit(resultFromLeftChild.size() - 1)
                 .filter(cp -> Strings.isNullOrEmpty(cp)))).isEmpty();
 
-        assertThat(resultFromLeftChild.get(resultFromLeftChild.size() - 1).getResponseContinuation()).isNullOrEmpty();
+        assertThat(resultFromLeftChild.get(resultFromLeftChild.size() - 1).continuationToken()).isNullOrEmpty();
 
-        assertThat(toList(resultFromRightChild.stream().map(p -> p.getResponseContinuation())
+        assertThat(toList(resultFromRightChild.stream().map(p -> p.continuationToken())
                 .limit(resultFromRightChild.size() - 1)
                 .filter(cp -> Strings.isNullOrEmpty(cp)))).isEmpty();
 
-        assertThat(resultFromRightChild.get(resultFromRightChild.size() - 1).getResponseContinuation()).isNullOrEmpty();
+        assertThat(resultFromRightChild.get(resultFromRightChild.size() - 1).continuationToken()).isNullOrEmpty();
     }
 
     private void validateSplitResults(List<DocumentProducer<Document>.DocumentProducerFeedResponse> actualPages,
@@ -748,7 +745,7 @@ public class DocumentProducerTest {
 
         if (isOrderby) {
             Supplier<Stream<Document>> getStreamOfActualDocuments =
-                    () -> actualPages.stream().flatMap(p -> p.pageResult.getResults().stream());
+                    () -> actualPages.stream().flatMap(p -> p.pageResult.results().stream());
 
             Comparator<? super Document> comparator = new Comparator<Document>() {
                 @Override
@@ -769,13 +766,13 @@ public class DocumentProducerTest {
 
             List<Document> expectedDocuments = Stream.concat(Stream.concat(resultFromParent.stream(),
                     resultFromLeftChild.stream()), resultFromRightChild.stream())
-                    .flatMap(p -> p.getResults().stream())
+                    .flatMap(p -> p.results().stream())
                     .sorted(comparator)
                     .collect(Collectors.toList());
 
-            List<String> actualDocuments = getStreamOfActualDocuments.get().map(d -> d.getId()).collect(Collectors.toList());
+            List<String> actualDocuments = getStreamOfActualDocuments.get().map(d -> d.id()).collect(Collectors.toList());
             assertThat(actualDocuments)
-                    .containsExactlyElementsOf(expectedDocuments.stream().map(d -> d.getId()).collect(Collectors.toList()));
+                    .containsExactlyElementsOf(expectedDocuments.stream().map(d -> d.id()).collect(Collectors.toList()));
 
         } else {
             assertThat(actualPages).hasSize(resultFromParent.size()
@@ -812,7 +809,7 @@ public class DocumentProducerTest {
     }
 
     private static List<String> partitionKeyRangeIds(List<DocumentProducer<Document>.DocumentProducerFeedResponse> responses) {
-        return responses.stream().map(dpFR -> dpFR.sourcePartitionKeyRange.getId()).collect(Collectors.toList());
+        return responses.stream().map(dpFR -> dpFR.sourcePartitionKeyRange.id()).collect(Collectors.toList());
     }
 
     private static void validateResults(List<FeedResponse<Document>> captured, List<List<FeedResponse<Document>>> expectedResponsesFromPartitions) {
@@ -827,13 +824,13 @@ public class DocumentProducerTest {
     }
 
     private static void assertEqual(FeedResponse<Document> actualPage, FeedResponse<Document> expectedPage) {
-        assertThat(actualPage.getResults()).hasSameSizeAs(actualPage.getResults());
-        assertThat(actualPage.getResponseContinuation()).isEqualTo(expectedPage.getResponseContinuation());
+        assertThat(actualPage.results()).hasSameSizeAs(actualPage.results());
+        assertThat(actualPage.continuationToken()).isEqualTo(expectedPage.continuationToken());
 
-        for(int i = 0; i < actualPage.getResults().size(); i++) {
-            Document actualDoc = actualPage.getResults().get(i);
-            Document expectedDoc = expectedPage.getResults().get(i);
-            assertThat(actualDoc.getId()).isEqualTo(expectedDoc.getId());
+        for(int i = 0; i < actualPage.results().size(); i++) {
+            Document actualDoc = actualPage.results().get(i);
+            Document expectedDoc = expectedPage.results().get(i);
+            assertThat(actualDoc.id()).isEqualTo(expectedDoc.id());
             assertThat(actualDoc.getString("prop")).isEqualTo(expectedDoc.getString("prop"));
         }
     }
@@ -860,11 +857,11 @@ public class DocumentProducerTest {
             }
         }
 
-        private static DocumentClientException partitionKeyRangeGoneException() {
+        private static CosmosClientException partitionKeyRangeGoneException() {
             Map<String, String> headers = new HashMap<>();
             headers.put(HttpConstants.HttpHeaders.SUB_STATUS,
                     Integer.toString(HttpConstants.SubStatusCodes.PARTITION_KEY_RANGE_GONE));
-            return new DocumentClientException(HttpConstants.StatusCodes.GONE, new Error(), headers);
+            return new CosmosClientException(HttpConstants.StatusCodes.GONE, new Error(), headers);
         }
 
         protected void capture(String partitionId, CapturedInvocation captureInvocation) {
@@ -1029,7 +1026,7 @@ public class DocumentProducerTest {
                 public RxDocumentServiceRequest call(PartitionKeyRange pkr, String cp, Integer ps) {
                     synchronized (this) {
                         RxDocumentServiceRequest req = Mockito.mock(RxDocumentServiceRequest.class);
-                        PartitionKeyRangeIdentity pkri = new PartitionKeyRangeIdentity(pkr.getId());
+                        PartitionKeyRangeIdentity pkri = new PartitionKeyRangeIdentity(pkr.id());
                         doReturn(pkri).when(req).getPartitionKeyRangeIdentity();
                         doReturn(cp).when(req).getContinuation();
                         invocations.add(new CapturedInvocation(pkr, cp, ps, req));

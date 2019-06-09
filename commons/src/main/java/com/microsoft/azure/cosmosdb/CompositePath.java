@@ -56,7 +56,7 @@ public class CompositePath extends JsonSerializable {
      *
      * @return the path.
      */
-    public String getPath() {
+    public String path() {
         return super.getString(Constants.Properties.PATH);
     }
 
@@ -65,8 +65,9 @@ public class CompositePath extends JsonSerializable {
      *
      * @param path the path.
      */
-    public void setPath(String path) {
+    public CompositePath path(String path) {
         super.set(Constants.Properties.PATH, path);
+        return this;
     }
 
     /**
@@ -77,17 +78,17 @@ public class CompositePath extends JsonSerializable {
      * 
      * @return the sort order.
      */
-    public CompositePathSortOrder getOrder() {
+    public CompositePathSortOrder order() {
         String strValue = super.getString(Constants.Properties.ORDER);
         if (!StringUtils.isEmpty(strValue)) {
             try {
                 return CompositePathSortOrder.valueOf(WordUtils.capitalize(super.getString(Constants.Properties.ORDER)));
             } catch (IllegalArgumentException e) {
-                this.getLogger().warn("Invalid indexingMode value {}.", super.getString(Constants.Properties.ORDER));
-                return CompositePathSortOrder.Ascending;
+                this.getLogger().warn("INVALID indexingMode value {}.", super.getString(Constants.Properties.ORDER));
+                return CompositePathSortOrder.ASCENDING;
             }
         }
-        return CompositePathSortOrder.Ascending;
+        return CompositePathSortOrder.ASCENDING;
     }
 
     /**
@@ -98,7 +99,8 @@ public class CompositePath extends JsonSerializable {
      * 
      * @param order the sort order.
      */
-    public void setOrder(CompositePathSortOrder order) {
+    public CompositePath order(CompositePathSortOrder order) {
         super.set(Constants.Properties.ORDER, order.toString());
+        return this;
     }
 }

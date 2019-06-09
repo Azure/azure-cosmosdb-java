@@ -23,7 +23,7 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.rx.internal.InvalidPartitionException;
 import com.microsoft.azure.cosmosdb.rx.internal.PartitionIsMigratingException;
 import com.microsoft.azure.cosmosdb.rx.internal.PartitionKeyRangeIsSplittingException;
@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class ExceptionBuilder<T extends DocumentClientException> {
+public class ExceptionBuilder<T extends CosmosClientException> {
     private Integer status;
     private List<Map.Entry<String, String>> headerEntries;
     private String message;
@@ -65,21 +65,21 @@ public class ExceptionBuilder<T extends DocumentClientException> {
     public GoneException asGoneException() {
         assert status == null;
         GoneException dce = new GoneException();
-        dce.getResponseHeaders().putAll(headerEntries.stream().collect(Collectors.toMap(i -> i.getKey(), i -> i.getValue())));
+        dce.responseHeaders().putAll(headerEntries.stream().collect(Collectors.toMap(i -> i.getKey(), i -> i.getValue())));
         return dce;
     }
 
     public InvalidPartitionException asInvalidPartitionException() {
         assert status == null;
         InvalidPartitionException dce = new InvalidPartitionException();
-        dce.getResponseHeaders().putAll(headerEntries.stream().collect(Collectors.toMap(i -> i.getKey(), i -> i.getValue())));
+        dce.responseHeaders().putAll(headerEntries.stream().collect(Collectors.toMap(i -> i.getKey(), i -> i.getValue())));
         return dce;
     }
 
     public PartitionKeyRangeGoneException asPartitionKeyRangeGoneException() {
         assert status == null;
         PartitionKeyRangeGoneException dce = new PartitionKeyRangeGoneException();
-        dce.getResponseHeaders().putAll(headerEntries.stream().collect(Collectors.toMap(i -> i.getKey(), i -> i.getValue())));
+        dce.responseHeaders().putAll(headerEntries.stream().collect(Collectors.toMap(i -> i.getKey(), i -> i.getValue())));
         return dce;
     }
 
@@ -87,14 +87,14 @@ public class ExceptionBuilder<T extends DocumentClientException> {
     public PartitionKeyRangeIsSplittingException asPartitionKeyRangeIsSplittingException() {
         assert status == null;
         PartitionKeyRangeIsSplittingException dce = new PartitionKeyRangeIsSplittingException();
-        dce.getResponseHeaders().putAll(headerEntries.stream().collect(Collectors.toMap(i -> i.getKey(), i -> i.getValue())));
+        dce.responseHeaders().putAll(headerEntries.stream().collect(Collectors.toMap(i -> i.getKey(), i -> i.getValue())));
         return dce;
     }
 
     public PartitionIsMigratingException asPartitionIsMigratingException() {
         assert status == null;
         PartitionIsMigratingException dce = new PartitionIsMigratingException();
-        dce.getResponseHeaders().putAll(headerEntries.stream().collect(Collectors.toMap(i -> i.getKey(), i -> i.getValue())));
+        dce.responseHeaders().putAll(headerEntries.stream().collect(Collectors.toMap(i -> i.getKey(), i -> i.getValue())));
         return dce;
     }
 }

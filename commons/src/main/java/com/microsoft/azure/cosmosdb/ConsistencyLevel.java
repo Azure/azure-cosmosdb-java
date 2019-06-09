@@ -27,37 +27,37 @@ package com.microsoft.azure.cosmosdb;
  * Represents the consistency levels supported for Cosmos DB client operations in the Azure Cosmos DB database service.
  * <p>
  * The requested ConsistencyLevel must match or be weaker than that provisioned for the database account. Consistency
- * levels by order of strength are Strong, BoundedStaleness, Session and Eventual.
+ * levels by order of strength are STRONG, BOUNDED_STALENESS, SESSION and EVENTUAL.
  */
 public enum ConsistencyLevel {
 
     /**
-     * Strong Consistency guarantees that read operations always return the value that was last written.
+     * STRONG Consistency guarantees that read operations always return the value that was last written.
      */
-    Strong,
+    STRONG,
 
     /**
      * Bounded Staleness guarantees that reads are not too out-of-date. This can be configured based on number of
      * operations (MaxStalenessPrefix) or time (MaxStalenessIntervalInSeconds)
      */
-    BoundedStaleness,
+    BOUNDED_STALENESS,
 
     /**
-     * Session Consistency guarantees monotonic reads (you never read old data, then new, then old again), monotonic
+     * SESSION Consistency guarantees monotonic reads (you never read old data, then new, then old again), monotonic
      * writes (writes are ordered) and read your writes (your writes are immediately visible to your reads) within
      * any single session.
      */
-    Session,
+    SESSION,
 
     /**
-     * Eventual Consistency guarantees that reads will return a subset of writes. All writes will be eventually be
+     * EVENTUAL Consistency guarantees that reads will return a subset of writes. ALL writes will be eventually be
      * available for reads.
      */
-    Eventual,
+    EVENTUAL,
 
     /**
-     * ConsistentPrefix Consistency guarantees that reads will return some prefix of all writes with no gaps. All writes
+     * CONSISTENT_PREFIX Consistency guarantees that reads will return some prefix of all writes with no gaps. ALL writes
      * will be eventually be available for reads.
      */
-    ConsistentPrefix
+    CONSISTENT_PREFIX
 }

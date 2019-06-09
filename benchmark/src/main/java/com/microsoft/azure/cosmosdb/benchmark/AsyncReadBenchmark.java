@@ -34,8 +34,6 @@ import rx.Observable;
 import rx.Subscriber;
 import rx.schedulers.Schedulers;
 
-import javax.net.ssl.SSLException;
-
 class AsyncReadBenchmark extends AsyncBenchmark<ResourceResponse<Document>> {
 
     class LatencySubscriber<T> extends Subscriber<T> {
@@ -73,7 +71,7 @@ class AsyncReadBenchmark extends AsyncBenchmark<ResourceResponse<Document>> {
     protected void performWorkload(Subscriber<ResourceResponse<Document>> subs, long i) throws InterruptedException {
         int index = (int) (i % docsToRead.size());
         RequestOptions options = new RequestOptions();
-        options.setPartitionKey(new PartitionKey(docsToRead.get(index).getId()));
+        options.setPartitionKey(new PartitionKey(docsToRead.get(index).id()));
 
         Observable<ResourceResponse<Document>> obs = client.readDocument(getDocumentLink(docsToRead.get(index)), options);
 

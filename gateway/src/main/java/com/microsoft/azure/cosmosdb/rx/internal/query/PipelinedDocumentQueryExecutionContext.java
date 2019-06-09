@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.Function;
 
-import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.PartitionKeyRange;
@@ -79,7 +78,7 @@ public class PipelinedDocumentQueryExecutionContext<T extends Resource> implemen
         if (queryInfo.hasOrderBy()) {
             createBaseComponentFunction = (continuationToken) -> {
                 FeedOptions orderByFeedOptions = new FeedOptions(feedOptions);
-                orderByFeedOptions.setRequestContinuation(continuationToken);
+                orderByFeedOptions.requestContinuation(continuationToken);
                 return OrderByDocumentQueryExecutionContext.createAsync(client, resourceTypeEnum, resourceType,
                         expression, orderByFeedOptions, resourceLink, collectionRid, partitionedQueryExecutionInfo,
                         targetRanges, initialPageSize, isContinuationExpected, getLazyFeedResponse,
@@ -88,7 +87,7 @@ public class PipelinedDocumentQueryExecutionContext<T extends Resource> implemen
         } else {
             createBaseComponentFunction = (continuationToken) -> {
                 FeedOptions parallelFeedOptions = new FeedOptions(feedOptions);
-                parallelFeedOptions.setRequestContinuation(continuationToken);
+                parallelFeedOptions.requestContinuation(continuationToken);
                 return ParallelDocumentQueryExecutionContext.createAsync(client, resourceTypeEnum, resourceType,
                         expression, parallelFeedOptions, resourceLink, collectionRid, partitionedQueryExecutionInfo,
                         targetRanges, initialPageSize, isContinuationExpected, getLazyFeedResponse,
@@ -116,7 +115,7 @@ public class PipelinedDocumentQueryExecutionContext<T extends Resource> implemen
             createTopComponentFunction = createAggregateComponentFunction;
         }
 
-        int actualPageSize = Utils.getValueOrDefault(feedOptions.getMaxItemCount(),
+        int actualPageSize = Utils.getValueOrDefault(feedOptions.maxItemCount(),
                 ParallelQueryConfig.ClientInternalPageSize);
 
         if (actualPageSize == -1) {
@@ -124,7 +123,7 @@ public class PipelinedDocumentQueryExecutionContext<T extends Resource> implemen
         }
 
         int pageSize = Math.min(actualPageSize, Utils.getValueOrDefault(queryInfo.getTop(), (actualPageSize)));
-        return createTopComponentFunction.apply(feedOptions.getRequestContinuation())
+        return createTopComponentFunction.apply(feedOptions.requestContinuation())
                 .map(c -> new PipelinedDocumentQueryExecutionContext<>(c, pageSize, correlatedActivityId));
     }
 

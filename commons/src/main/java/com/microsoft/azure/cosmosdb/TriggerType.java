@@ -30,12 +30,12 @@ public enum TriggerType {
     /**
      * Trigger should be executed before the associated operation(s).
      */
-    Pre(0x0),
+    PRE(0x0),
 
     /**
      * Trigger should be executed after the associated operation(s).
      */
-    Post(0x1);
+    POST(0x1);
 
     private int value;
 

@@ -55,11 +55,11 @@ public class CosmosContainerSettings extends Resource {
      * @param partitionKeyPath partition key path
      */
     public CosmosContainerSettings(String id, String partitionKeyPath) {
-        super.setId(id);
+        super.id(id);
         PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition();
         ArrayList<String> paths = new ArrayList<>();
         paths.add(partitionKeyPath);
-        partitionKeyDef.setPaths(paths);
+        partitionKeyDef.paths(paths);
         setPartitionKey(partitionKeyDef);
     }
 
@@ -69,7 +69,7 @@ public class CosmosContainerSettings extends Resource {
      * @param partitionKeyDefinition the (@link PartitionKeyDefinition)
      */
     public CosmosContainerSettings(String id, PartitionKeyDefinition partitionKeyDefinition) {
-        super.setId(id);
+        super.id(id);
         setPartitionKey(partitionKeyDefinition);
     }
 
@@ -91,7 +91,7 @@ public class CosmosContainerSettings extends Resource {
      *
      * @return the indexing policy.
      */
-    public IndexingPolicy getIndexingPolicy() {
+    public IndexingPolicy indexingPolicy() {
         if (this.indexingPolicy == null) {
             if (super.has(Constants.Properties.INDEXING_POLICY)) {
                 this.indexingPolicy = super.getObject(Constants.Properties.INDEXING_POLICY, IndexingPolicy.class);
@@ -108,12 +108,13 @@ public class CosmosContainerSettings extends Resource {
      *
      * @param indexingPolicy {@link IndexingPolicy} the indexing policy
      */
-    public void setIndexingPolicy(IndexingPolicy indexingPolicy) {
+    public CosmosContainerSettings indexingPolicy(IndexingPolicy indexingPolicy) {
         if (indexingPolicy == null) {
             throw new IllegalArgumentException("IndexingPolicy cannot be null.");
         }
         this.indexingPolicy = indexingPolicy;
         super.set(Constants.Properties.INDEXING_POLICY, indexingPolicy);
+        return this;
     }
 
     /**
@@ -121,7 +122,7 @@ public class CosmosContainerSettings extends Resource {
      * 
      * @return the unique key policy
      */
-    public UniqueKeyPolicy getUniqueKeyPolicy() {
+    public UniqueKeyPolicy uniqueKeyPolicy() {
 
         // Thread safe lazy initialization for case when collection is cached (and is basically readonly).
         if (this.uniqueKeyPolicy == null) {
@@ -140,13 +141,14 @@ public class CosmosContainerSettings extends Resource {
      * 
      * @param uniqueKeyPolicy the unique key policy
      */
-    public void setUniqueKeyPolicy(UniqueKeyPolicy uniqueKeyPolicy) {
+    public CosmosContainerSettings uniqueKeyPolicy(UniqueKeyPolicy uniqueKeyPolicy) {
         if (uniqueKeyPolicy == null) {
             throw new IllegalArgumentException("uniqueKeyPolicy cannot be null.");
         }
 
         this.uniqueKeyPolicy = uniqueKeyPolicy;
         super.set(Constants.Properties.UNIQUE_KEY_POLICY, uniqueKeyPolicy);
+        return this;
     }
 
     /**
@@ -154,7 +156,7 @@ public class CosmosContainerSettings extends Resource {
      *
      * @return the partition key definition.
      */
-    public PartitionKeyDefinition getPartitionKey() {
+    public PartitionKeyDefinition partitionKey() {
         if (this.partitionKeyDefinition == null) {
 
             if (super.has(Constants.Properties.PARTITION_KEY)) {
@@ -172,12 +174,13 @@ public class CosmosContainerSettings extends Resource {
      *
      * @param partitionKeyDefinition the partition key definition.
      */
-    public void setPartitionKey(PartitionKeyDefinition partitionKeyDefinition) {
+    public CosmosContainerSettings setPartitionKey(PartitionKeyDefinition partitionKeyDefinition) {
         if (partitionKeyDefinition == null) {
             throw new IllegalArgumentException("partitionKey cannot be null.");
         }
 
         this.partitionKeyDefinition = partitionKeyDefinition;
+        return this;
     }
     
     /**
@@ -186,7 +189,7 @@ public class CosmosContainerSettings extends Resource {
      *
      * @return ConflictResolutionPolicy
      */
-    public ConflictResolutionPolicy getConflictResolutionPolicy() {
+    public ConflictResolutionPolicy conflictResolutionPolicy() {
         return super.getObject(Constants.Properties.CONFLICT_RESOLUTION_POLICY, ConflictResolutionPolicy.class);
     }
 
@@ -196,18 +199,19 @@ public class CosmosContainerSettings extends Resource {
      *
      * @param value ConflictResolutionPolicy to be used.
      */
-    public void setConflictResolutionPolicy(ConflictResolutionPolicy value) {
+    public CosmosContainerSettings conflictResolutionPolicy(ConflictResolutionPolicy value) {
         if (value == null) {
             throw new IllegalArgumentException("CONFLICT_RESOLUTION_POLICY cannot be null.");
         }
 
         super.set(Constants.Properties.CONFLICT_RESOLUTION_POLICY, value);
+        return this;
     }
 
     DocumentCollection getV2Collection(){
         DocumentCollection collection = new DocumentCollection(this.toJson());
-        collection.setPartitionKey(this.getPartitionKey());
-        collection.setIndexingPolicy(this.getIndexingPolicy());
+        collection.setPartitionKey(this.partitionKey());
+        collection.setIndexingPolicy(this.indexingPolicy());
         return collection;
     }
 }

@@ -23,8 +23,8 @@
 
 package com.microsoft.azure.cosmosdb.rx.examples.multimaster;
 
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.Database;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.ResourceResponse;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
@@ -46,13 +46,13 @@ public class Helpers {
         return client.readDatabase("/dbs/" + databaseName, null)
                 .onErrorResumeNext(
                         e -> {
-                            if (e instanceof DocumentClientException) {
-                                DocumentClientException dce = (DocumentClientException) e;
-                                if (dce.getStatusCode() ==  404) {
+                            if (e instanceof CosmosClientException) {
+                                CosmosClientException dce = (CosmosClientException) e;
+                                if (dce.statusCode() ==  404) {
                                     // if doesn't exist create it
 
                                     Database d = new Database();
-                                    d.setId(databaseName);
+                                    d.id(databaseName);
 
                                     return client.createDatabase(d, null);
                                 }
@@ -67,13 +67,13 @@ public class Helpers {
         return client.readCollection(createDocumentCollectionUri(databaseName, collectionName), null)
                 .onErrorResumeNext(
                         e -> {
-                            if (e instanceof DocumentClientException) {
-                                DocumentClientException dce = (DocumentClientException) e;
-                                if (dce.getStatusCode() ==  404) {
+                            if (e instanceof CosmosClientException) {
+                                CosmosClientException dce = (CosmosClientException) e;
+                                if (dce.statusCode() ==  404) {
                                     // if doesn't exist create it
 
                                     DocumentCollection collection = new DocumentCollection();
-                                    collection.setId(collectionName);
+                                    collection.id(collectionName);
 
                                     return client.createCollection(createDatabaseUri(databaseName), collection, null);
                                 }
@@ -85,12 +85,12 @@ public class Helpers {
     }
 
     static public Single<DocumentCollection> createCollectionIfNotExists(AsyncDocumentClient client, String databaseName, DocumentCollection collection) {
-        return client.readCollection(createDocumentCollectionUri(databaseName, collection.getId()), null)
+        return client.readCollection(createDocumentCollectionUri(databaseName, collection.id()), null)
                 .onErrorResumeNext(
                         e -> {
-                            if (e instanceof DocumentClientException) {
-                                DocumentClientException dce = (DocumentClientException) e;
-                                if (dce.getStatusCode() ==  404) {
+                            if (e instanceof CosmosClientException) {
+                                CosmosClientException dce = (CosmosClientException) e;
+                                if (dce.statusCode() ==  404) {
                                     // if doesn't exist create it
 
                                     return client.createCollection(createDatabaseUri(databaseName), collection, null);

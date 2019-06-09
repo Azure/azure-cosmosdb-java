@@ -33,12 +33,11 @@ import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.internal.routing.IServerIdentity;
 import com.microsoft.azure.cosmosdb.rx.internal.NotFoundException;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.PartitionKeyRange;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
@@ -73,7 +72,7 @@ public class RxPartitionKeyRangeCache implements IPartitionKeyRangeCache {
     }
 
     /* (non-Javadoc)
-     * @see com.microsoft.azure.cosmosdb.rx.internal.caches.IPartitionKeyRangeCache#tryLookupAsync(java.lang.String, com.microsoft.azure.cosmosdb.internal.routing.CollectionRoutingMap)
+     * @see com.microsoft.azure.cosmosdb.rx.internal.caches.IPartitionKeyRangeCache#tryLookupAsync(java.lang.STRING, com.microsoft.azure.cosmosdb.internal.routing.CollectionRoutingMap)
      */
     @Override
     public Single<CollectionRoutingMap> tryLookupAsync(String collectionRid, CollectionRoutingMap previousValue, Map<String, Object> properties) {
@@ -83,7 +82,7 @@ public class RxPartitionKeyRangeCache implements IPartitionKeyRangeCache {
                 () -> getRoutingMapForCollectionAsync(collectionRid, previousValue, properties))
                 .onErrorResumeNext(err -> {
                     logger.debug("tryLookupAsync on collectionRid {} encountered failure", collectionRid, err);
-                    DocumentClientException dce = Utils.as(err, DocumentClientException.class);
+                    CosmosClientException dce = Utils.as(err, CosmosClientException.class);
                     if (dce != null && Exceptions.isStatusCode(dce, HttpConstants.StatusCodes.NOTFOUND)) {
                         return Single.just(null);
                     }
@@ -99,7 +98,7 @@ public class RxPartitionKeyRangeCache implements IPartitionKeyRangeCache {
     }
 
     /* (non-Javadoc)
-     * @see com.microsoft.azure.cosmosdb.rx.internal.caches.IPartitionKeyRangeCache#tryGetOverlappingRangesAsync(java.lang.String, com.microsoft.azure.cosmosdb.internal.routing.Range, boolean)
+     * @see com.microsoft.azure.cosmosdb.rx.internal.caches.IPartitionKeyRangeCache#tryGetOverlappingRangesAsync(java.lang.STRING, com.microsoft.azure.cosmosdb.internal.routing.RANGE, boolean)
      */
     @Override
     public Single<List<PartitionKeyRange>> tryGetOverlappingRangesAsync(String collectionRid, Range<String> range, boolean forceRefresh,
@@ -128,7 +127,7 @@ public class RxPartitionKeyRangeCache implements IPartitionKeyRangeCache {
     }
 
     /* (non-Javadoc)
-     * @see com.microsoft.azure.cosmosdb.rx.internal.caches.IPartitionKeyRangeCache#tryGetPartitionKeyRangeByIdAsync(java.lang.String, java.lang.String, boolean)
+     * @see com.microsoft.azure.cosmosdb.rx.internal.caches.IPartitionKeyRangeCache#tryGetPartitionKeyRangeByIdAsync(java.lang.STRING, java.lang.STRING, boolean)
      */
     @Override
     public Single<PartitionKeyRange> tryGetPartitionKeyRangeByIdAsync(String collectionResourceId, String partitionKeyRangeId,
@@ -154,7 +153,7 @@ public class RxPartitionKeyRangeCache implements IPartitionKeyRangeCache {
     }
 
     /* (non-Javadoc)
-     * @see com.microsoft.azure.cosmosdb.rx.internal.caches.IPartitionKeyRangeCache#tryGetRangeByPartitionKeyRangeId(java.lang.String, java.lang.String)
+     * @see com.microsoft.azure.cosmosdb.rx.internal.caches.IPartitionKeyRangeCache#tryGetRangeByPartitionKeyRangeId(java.lang.STRING, java.lang.STRING)
      */
     @Override
     public Single<PartitionKeyRange> tryGetRangeByPartitionKeyRangeId(String collectionRid, String partitionKeyRangeId, Map<String, Object> properties) {
@@ -165,7 +164,7 @@ public class RxPartitionKeyRangeCache implements IPartitionKeyRangeCache {
 
         return routingMapObs.map(routingMap -> routingMap.getRangeByPartitionKeyRangeId(partitionKeyRangeId))
                 .onErrorResumeNext(err -> {
-                    DocumentClientException dce = Utils.as(err, DocumentClientException.class);
+                    CosmosClientException dce = Utils.as(err, CosmosClientException.class);
                     logger.debug("tryGetRangeByPartitionKeyRangeId on collectionRid {} and partitionKeyRangeId {} encountered failure",
                             collectionRid, partitionKeyRangeId, err);
 
@@ -202,7 +201,7 @@ public class RxPartitionKeyRangeCache implements IPartitionKeyRangeCache {
                 Set<String> goneRanges = new HashSet<>(ranges.stream().flatMap(range -> CollectionUtils.emptyIfNull(range.getParents()).stream()).collect(Collectors.toSet()));
 
                 routingMap = InMemoryCollectionRoutingMap.tryCreateCompleteRoutingMap(
-                    rangesTuples.stream().filter(tuple -> !goneRanges.contains(tuple.left.getId())).collect(Collectors.toList()),
+                    rangesTuples.stream().filter(tuple -> !goneRanges.contains(tuple.left.id())).collect(Collectors.toList()),
                     collectionRid);
             }
             else
@@ -212,8 +211,8 @@ public class RxPartitionKeyRangeCache implements IPartitionKeyRangeCache {
 
             if (routingMap == null)
             {
-                // Range information either doesn't exist or is not complete.
-                return Single.error(new NotFoundException(String.format("GetRoutingMapForCollectionAsync(collectionRid: {%s}), Range information either doesn't exist or is not complete.", collectionRid)));
+                // RANGE information either doesn't exist or is not complete.
+                return Single.error(new NotFoundException(String.format("GetRoutingMapForCollectionAsync(collectionRid: {%s}), RANGE information either doesn't exist or is not complete.", collectionRid)));
             }
 
             return Single.just(routingMap);
@@ -235,11 +234,11 @@ public class RxPartitionKeyRangeCache implements IPartitionKeyRangeCache {
 
             FeedOptions feedOptions = new FeedOptions();
             if (properties != null) {
-                feedOptions.setProperties(properties);
+                feedOptions.properties(properties);
             }
-            Observable<List<PartitionKeyRange>> rs = client.readPartitionKeyRanges(coll.getSelfLink(), feedOptions)
+            Observable<List<PartitionKeyRange>> rs = client.readPartitionKeyRanges(coll.selfLink(), feedOptions)
                     // maxConcurrent = 1 to makes it in the right order
-                    .flatMap(p -> Observable.from(p.getResults()), 1).toList();
+                    .flatMap(p -> Observable.from(p.results()), 1).toList();
             return rs.toSingle();
         });
     }

@@ -31,10 +31,10 @@ public enum SerializationFormattingPolicy {
     /**
      *  No additional formatting required.
      */
-    None,
+    NONE,
 
     /**
      * Indent the fields appropriately.
      */
-    Indented
+    INDENTED
 }

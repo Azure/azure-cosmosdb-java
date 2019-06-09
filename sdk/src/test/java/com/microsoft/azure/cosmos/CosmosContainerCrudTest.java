@@ -57,7 +57,7 @@ public class CosmosContainerCrudTest extends CosmosTestSuiteBase {
 
         // validate
         CosmosResponseValidator<CosmosContainerResponse> validator = new CosmosResponseValidator.Builder<CosmosContainerResponse>()
-                .withId(containerSettings.getId()).build();
+                .withId(containerSettings.id()).build();
         validateSuccess(createMono, validator);
     }
 
@@ -81,12 +81,12 @@ public class CosmosContainerCrudTest extends CosmosTestSuiteBase {
         // read container
         CosmosContainerSettings settings = getContainerSettings();
         CosmosContainer container =
-                client.getDatabase(PRE_EXISTING_DATABASE_ID).createContainer(settings).block().getContainer();
+                client.getDatabase(PRE_EXISTING_DATABASE_ID).createContainer(settings).block().container();
         Mono<CosmosContainerResponse> containerResponseMono = container.read();
 
         // validate
         CosmosResponseValidator<CosmosContainerResponse>  validator = new CosmosResponseValidator.Builder<CosmosContainerResponse>()
-                .withId(settings.getId()).build();
+                .withId(settings.id()).build();
         validateSuccess(containerResponseMono, validator);
     }
 
@@ -131,20 +131,20 @@ public class CosmosContainerCrudTest extends CosmosTestSuiteBase {
         
         Mono<CosmosContainerResponse> containerMono = database.createContainer(getContainerSettings());
         CosmosContainerResponse containerResponse = containerMono.block();
-        CosmosContainer container = containerResponse.getContainer();
-        CosmosContainerSettings settings = containerResponse.getCosmosContainerSettings();
+        CosmosContainer container = containerResponse.container();
+        CosmosContainerSettings settings = containerResponse.settings();
         // sanity check
-        assertThat(settings.getIndexingPolicy().getIndexingMode()).isEqualTo(IndexingMode.Consistent);
+        assertThat(settings.indexingPolicy().indexingMode()).isEqualTo(IndexingMode.CONSISTENT);
 
         // replace indexing mode
         IndexingPolicy indexingMode = new IndexingPolicy();
-        indexingMode.setIndexingMode(IndexingMode.Lazy);
-        settings.setIndexingPolicy(indexingMode);
+        indexingMode.indexingMode(IndexingMode.LAZY);
+        settings.indexingPolicy(indexingMode);
         Mono<CosmosContainerResponse> replaceMono = container.replace(settings, null);
 
         // validate
         CosmosResponseValidator<CosmosContainerResponse> validator = new CosmosResponseValidator.Builder<CosmosContainerResponse>()
-                .indexingMode(IndexingMode.Lazy).build();
+                .indexingMode(IndexingMode.LAZY).build();
         validateSuccess(replaceMono, validator);
     }
 
@@ -155,7 +155,7 @@ public class CosmosContainerCrudTest extends CosmosTestSuiteBase {
         Mono<CosmosContainerResponse> containerMono = database.createContainer(getContainerSettings());
         
         CosmosContainerResponse containerResponse = containerMono.block();
-        CosmosContainer container = containerResponse.getContainer();
+        CosmosContainer container = containerResponse.container();
 
         Integer throughput = container.readProvisionedThroughput().block();
     }
@@ -168,7 +168,7 @@ public class CosmosContainerCrudTest extends CosmosTestSuiteBase {
         Mono<CosmosContainerResponse> containerMono = database.createContainer(getContainerSettings());
 
         CosmosContainerResponse containerResponse = containerMono.block();
-        CosmosContainer container = containerResponse.getContainer();
+        CosmosContainer container = containerResponse.container();
 
         Integer throughput = container.replaceProvisionedThroughputAsync(newThroughput).block();
         assertThat(throughput).isEqualTo(newThroughput);

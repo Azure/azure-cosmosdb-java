@@ -153,7 +153,7 @@ public class AsyncCache<TKey, TValue> {
         if (initialLazyValue != null && (initialLazyValue.isSucceeded() || initialLazyValue.isFaulted())) {
             AsyncLazy<TValue> newLazyValue = new AsyncLazy<>(singleValueInitFunc);
 
-            // Update the new task in the cache,
+            // UPDATE the new task in the cache,
             values.merge(key, newLazyValue,
                     (lazyValue1, lazyValu2) -> lazyValue1 == initialLazyValue ? lazyValu2 : lazyValue1);
         }

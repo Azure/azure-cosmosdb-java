@@ -29,17 +29,17 @@ import java.util.List;
 /**
  * A strategy defines which leases should be taken by the current host in a certain moment.
  * <p>
- * It can set new {@link Lease} getProperties() for all returned leases if needed, including currently owned leases.
+ * It can set new {@link Lease} properties() for all returned leases if needed, including currently owned leases.
  * Example
  * <pre>
  * {@code
  *  public class CustomStrategy : PartitionLoadBalancingStrategy
  *  {
- *      private String hostName;
- *      private String hostVersion;
+ *      private STRING hostName;
+ *      private STRING hostVersion;
  *      private Duration leaseExpirationInterval;
  *
- *      private final String VersionPropertyKey = "version";
+ *      private final STRING VersionPropertyKey = "version";
  *
  *      public List<Lease> selectLeasesToTake(List<Lease> allLeases)
  *      {
@@ -88,9 +88,9 @@ import java.util.List;
 public interface PartitionLoadBalancingStrategy {
     /**
      * Select leases that should be taken for processing.
-     * This method will be called periodically with {@link ChangeFeedProcessorOptions} getLeaseAcquireInterval().
+     * This method will be called periodically with {@link ChangeFeedProcessorOptions} leaseAcquireInterval().
 
-     * @param allLeases All leases.
+     * @param allLeases ALL leases.
      * @return Leases that should be taken for processing by this host.
      */
     List<Lease> selectLeasesToTake(List<Lease> allLeases);

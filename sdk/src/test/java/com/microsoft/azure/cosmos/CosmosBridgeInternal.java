@@ -21,11 +21,11 @@ public class CosmosBridgeInternal {
     }
     
     public static CosmosDatabase getCosmosDatabaseWithNewClient(CosmosDatabase cosmosDatabase, CosmosClient client) {
-        return new CosmosDatabase(cosmosDatabase.getId(), client);
+        return new CosmosDatabase(cosmosDatabase.id(), client);
     }
     
     public static CosmosContainer getCosmosContainerWithNewClient(CosmosContainer cosmosContainer, CosmosDatabase cosmosDatabase, CosmosClient client) {
-        return new CosmosContainer(cosmosContainer.getId(), CosmosBridgeInternal.getCosmosDatabaseWithNewClient(cosmosDatabase, client));
+        return new CosmosContainer(cosmosContainer.id(), CosmosBridgeInternal.getCosmosDatabaseWithNewClient(cosmosDatabase, client));
     }
 
     public static Mono<DatabaseAccount> getDatabaseAccount(CosmosClient client) {

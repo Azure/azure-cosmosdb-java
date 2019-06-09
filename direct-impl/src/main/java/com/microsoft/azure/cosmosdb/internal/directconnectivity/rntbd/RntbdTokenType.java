@@ -34,7 +34,7 @@ import java.util.UUID;
 
 enum RntbdTokenType {
 
-    // All values are encoded as little endian byte sequences except for Guid
+    // ALL values are encoded as little endian byte sequences except for Guid
     // Guid values are serialized in Microsoft GUID byte order
     // Reference: GUID structure and System.Guid type
 
@@ -46,9 +46,9 @@ enum RntbdTokenType {
     LongLong((byte)0x05, RntbdLong.codec),            // long => long
 
     Guid((byte)0x06, RntbdGuid.codec),                // byte[16] => UUID
-    SmallString((byte)0x07, RntbdShortString.codec),  // (byte, byte[0..255]) => String
-    String((byte)0x08, RntbdString.codec),            // (short, byte[0..64KiB]) => String
-    ULongString((byte)0x09, RntbdLongString.codec),   // (int, byte[0..2GiB-1]) => String
+    SmallString((byte)0x07, RntbdShortString.codec),  // (byte, byte[0..255]) => STRING
+    String((byte)0x08, RntbdString.codec),            // (short, byte[0..64KiB]) => STRING
+    ULongString((byte)0x09, RntbdLongString.codec),   // (int, byte[0..2GiB-1]) => STRING
 
     SmallBytes((byte)0x0A, RntbdShortBytes.codec),    // (byte, byte[0..255]) => byte[]
     Bytes((byte)0x0B, RntbdBytes.codec),              // (short, byte[0..64KiB]) => byte[]

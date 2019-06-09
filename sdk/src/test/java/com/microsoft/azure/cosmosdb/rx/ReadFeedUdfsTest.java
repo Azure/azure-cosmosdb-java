@@ -60,18 +60,18 @@ public class ReadFeedUdfsTest extends TestSuiteBase {
     public void readUserDefinedFunctions() throws Exception {
 
         FeedOptions options = new FeedOptions();
-        options.setMaxItemCount(2);
+        options.maxItemCount(2);
 
         Flux<FeedResponse<CosmosUserDefinedFunctionSettings>> feedObservable = createdCollection.listUserDefinedFunctions(options);
 
-        int expectedPageSize = (createdUserDefinedFunctions.size() + options.getMaxItemCount() - 1) / options.getMaxItemCount();
+        int expectedPageSize = (createdUserDefinedFunctions.size() + options.maxItemCount() - 1) / options.maxItemCount();
 
         FeedResponseListValidator<CosmosUserDefinedFunctionSettings> validator = new FeedResponseListValidator
                 .Builder<CosmosUserDefinedFunctionSettings>()
                 .totalSize(createdUserDefinedFunctions.size())
                 .exactlyContainsInAnyOrder(createdUserDefinedFunctions
                         .stream()
-                        .map(d -> d.getResourceId())
+                        .map(d -> d.resourceId())
                         .collect(Collectors.toList()))
                 .numberOfPages(expectedPageSize)
                 .allPagesSatisfy(new FeedResponseValidator.Builder<CosmosUserDefinedFunctionSettings>()
@@ -100,9 +100,9 @@ public class ReadFeedUdfsTest extends TestSuiteBase {
 
     public CosmosUserDefinedFunctionSettings createUserDefinedFunctions(CosmosContainer cosmosContainer) {
         CosmosUserDefinedFunctionSettings udf = new CosmosUserDefinedFunctionSettings();
-         udf.setId(UUID.randomUUID().toString());
-         udf.setBody("function() {var x = 10;}");
-        return cosmosContainer.createUserDefinedFunction(udf, new CosmosRequestOptions()).block().getCosmosUserDefinedFunctionSettings();
+         udf.id(UUID.randomUUID().toString());
+         udf.body("function() {var x = 10;}");
+        return cosmosContainer.createUserDefinedFunction(udf, new CosmosRequestOptions()).block().settings();
     }
 
     private String getCollectionLink() {
@@ -110,10 +110,10 @@ public class ReadFeedUdfsTest extends TestSuiteBase {
     }
 
     private String getCollectionId() {
-        return createdCollection.getId();
+        return createdCollection.id();
     }
 
     private String getDatabaseId() {
-        return createdDatabase.getId();
+        return createdDatabase.id();
     }
 }

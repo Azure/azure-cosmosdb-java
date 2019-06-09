@@ -43,7 +43,7 @@ import com.microsoft.azure.cosmosdb.ConnectionPolicy;
 import com.microsoft.azure.cosmosdb.ConsistencyLevel;
 import com.microsoft.azure.cosmosdb.Database;
 import com.microsoft.azure.cosmosdb.Document;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.ResourceResponse;
 import com.microsoft.azure.cosmosdb.RetryOptions;
@@ -69,15 +69,15 @@ public class RetryThrottleTest extends TestSuiteBase {
     public void retryCreateDocumentsOnSpike() throws Exception {
         ConnectionPolicy policy = new ConnectionPolicy();
         RetryOptions retryOptions = new RetryOptions();
-        retryOptions.setMaxRetryAttemptsOnThrottledRequests(Integer.MAX_VALUE);
-        retryOptions.setMaxRetryWaitTimeInSeconds(LARGE_TIMEOUT);
-        policy.setRetryOptions(retryOptions);
+        retryOptions.maxRetryAttemptsOnThrottledRequests(Integer.MAX_VALUE);
+        retryOptions.maxRetryWaitTimeInSeconds(LARGE_TIMEOUT);
+        policy.retryOptions(retryOptions);
 
         AsyncDocumentClient.Builder builder = new AsyncDocumentClient.Builder()
                 .withServiceEndpoint(TestConfigurations.HOST)
                 .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
                 .withConnectionPolicy(policy)
-                .withConsistencyLevel(ConsistencyLevel.Eventual);
+                .withConsistencyLevel(ConsistencyLevel.EVENTUAL);
 
         client = SpyClientUnderTestFactory.createClientWithGatewaySpy(builder);
 
@@ -99,7 +99,7 @@ public class RetryThrottleTest extends TestSuiteBase {
             public Observable<RxDocumentServiceResponse> answer(InvocationOnMock invocation) throws Throwable {
                 RxDocumentServiceRequest req = (RxDocumentServiceRequest) invocation.getArguments()[0];
                 if (req.getResourceType() ==  ResourceType.Document && req.getOperationType() == OperationType.Create) {
-                    // increment the counter per Document Create operations
+                    // increment the counter per Document CREATE operations
                     totalCount.incrementAndGet();
                 }
                 return client.getOrigGatewayStoreModel().processMessage(req).doOnNext(rsp -> successCount.incrementAndGet());
@@ -123,7 +123,7 @@ public class RetryThrottleTest extends TestSuiteBase {
         Document docDefinition = getDocumentDefinition();
 
         Observable<ResourceResponse<Document>> createObservable = client
-                .createDocument(collection.getSelfLink(), docDefinition, null, false);
+                .createDocument(collection.selfLink(), docDefinition, null, false);
         AtomicInteger count = new AtomicInteger();
 
         doAnswer(new Answer< Observable<RxDocumentServiceResponse>>() {
@@ -135,7 +135,7 @@ public class RetryThrottleTest extends TestSuiteBase {
                 }
                 int currentAttempt = count.getAndIncrement();
                 if (currentAttempt == 0) {
-                    return Observable.error(new DocumentClientException(HttpConstants.StatusCodes.TOO_MANY_REQUESTS));
+                    return Observable.error(new CosmosClientException(HttpConstants.StatusCodes.TOO_MANY_REQUESTS));
                 } else {
                     return client.getOrigGatewayStoreModel().processMessage(req);
                 }
@@ -144,7 +144,7 @@ public class RetryThrottleTest extends TestSuiteBase {
 
         // validate
         ResourceResponseValidator<Document> validator = new ResourceResponseValidator.Builder<Document>()
-                .withId(docDefinition.getId()).build();
+                .withId(docDefinition.id()).build();
         validateSuccess(createObservable, validator, TIMEOUT);
     }
 

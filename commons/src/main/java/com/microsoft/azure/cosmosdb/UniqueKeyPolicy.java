@@ -53,7 +53,7 @@ public class UniqueKeyPolicy extends JsonSerializable {
      *
      * @return the unique keys.
      */
-    public Collection<UniqueKey> getUniqueKeys() {
+    public Collection<UniqueKey> uniqueKeys() {
         if (this.uniqueKeys == null) {
             this.uniqueKeys = super.getCollection(Constants.Properties.UNIQUE_KEYS, UniqueKey.class);
             if (this.uniqueKeys == null) {
@@ -63,11 +63,12 @@ public class UniqueKeyPolicy extends JsonSerializable {
         return this.uniqueKeys;
     }
 
-    public void setUniqueKeys(Collection<UniqueKey> uniqueKeys) {
+    public UniqueKeyPolicy uniqueKeys(Collection<UniqueKey> uniqueKeys) {
         if (uniqueKeys == null) {
             throw new IllegalArgumentException("uniqueKeys cannot be null.");
         }
         this.uniqueKeys = uniqueKeys;
+        return this;
     }
 
     @Override

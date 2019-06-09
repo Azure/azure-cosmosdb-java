@@ -23,11 +23,9 @@
 package com.microsoft.azure.cosmosdb.rx.internal;
 
 
-import com.microsoft.azure.cosmosdb.BridgeInternal;
-import com.microsoft.azure.cosmosdb.ConsistencyLevel;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.*;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.Error;
-import com.microsoft.azure.cosmosdb.ISessionContainer;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.internal.OperationType;
 import com.microsoft.azure.cosmosdb.internal.PathsHelper;
@@ -62,7 +60,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -70,7 +67,7 @@ import java.util.Map.Entry;
  * While this class is public, but it is not part of our published public APIs.
  * This is meant to be internally used only by our sdk.
  * 
- * Used internally to provide functionality to communicate and process response from Gateway in the Azure Cosmos DB database service.
+ * Used internally to provide functionality to communicate and process response from GATEWAY in the Azure Cosmos DB database service.
  */
 class RxGatewayStoreModel implements RxStoreModel {
 
@@ -398,10 +395,10 @@ class RxGatewayStoreModel implements RxStoreModel {
                         }
 
                         Exception exception = (Exception) throwable;
-                        if (!(exception instanceof DocumentClientException)) {
-                            // wrap in DocumentClientException
+                        if (!(exception instanceof CosmosClientException)) {
+                            // wrap in CosmosClientException
                             logger.error("Network failure", exception);
-                            DocumentClientException dce = new DocumentClientException(0, exception);
+                            CosmosClientException dce = new CosmosClientException(0, exception);
                             BridgeInternal.setRequestHeaders(dce, request.getHeaders());
                             return Observable.error(dce);
                         }
@@ -412,7 +409,7 @@ class RxGatewayStoreModel implements RxStoreModel {
     }
 
     private void validateOrThrow(RxDocumentServiceRequest request, HttpResponseStatus status, HttpResponseHeaders headers, String body,
-            InputStream inputStream) throws DocumentClientException {
+            InputStream inputStream) throws CosmosClientException {
 
         int statusCode = status.code();
 
@@ -422,7 +419,7 @@ class RxGatewayStoreModel implements RxStoreModel {
                     body = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
                 } catch (IOException e) {
                     logger.error("Failed to get content from the http response", e);
-                    DocumentClientException dce = new DocumentClientException(0, e);
+                    CosmosClientException dce = new CosmosClientException(0, e);
                     BridgeInternal.setRequestHeaders(dce, request.getHeaders());
                     throw dce;
                 } finally {
@@ -439,7 +436,7 @@ class RxGatewayStoreModel implements RxStoreModel {
                               String.format("%s, StatusCode: %s", error.getMessage(), statusCodeString),
                               error.getPartitionedQueryExecutionInfo());
 
-            DocumentClientException dce = new DocumentClientException(statusCode, error, HttpUtils.asMap(headers));
+            CosmosClientException dce = new CosmosClientException(statusCode, error, HttpUtils.asMap(headers));
             BridgeInternal.setRequestHeaders(dce, request.getHeaders());
             throw dce;
         }
@@ -482,7 +479,7 @@ class RxGatewayStoreModel implements RxStoreModel {
 
         return responseObs.onErrorResumeNext(
                 e -> {
-                    DocumentClientException dce = Utils.as(e, DocumentClientException.class);
+                    CosmosClientException dce = Utils.as(e, CosmosClientException.class);
 
                     if (dce == null) {
                         logger.error("unexpected failure {}", e.getMessage(), e);
@@ -490,13 +487,13 @@ class RxGatewayStoreModel implements RxStoreModel {
                     }
 
                     if ((!ReplicatedResourceClientUtils.isMasterResource(request.getResourceType())) &&
-                            (dce.getStatusCode() == HttpConstants.StatusCodes.PRECONDITION_FAILED ||
-                                    dce.getStatusCode() == HttpConstants.StatusCodes.CONFLICT ||
+                            (dce.statusCode() == HttpConstants.StatusCodes.PRECONDITION_FAILED ||
+                                    dce.statusCode() == HttpConstants.StatusCodes.CONFLICT ||
                                     (
-                                            dce.getStatusCode() == HttpConstants.StatusCodes.NOTFOUND &&
+                                            dce.statusCode() == HttpConstants.StatusCodes.NOTFOUND &&
                                                     !Exceptions.isSubStatusCode(dce,
                                                             HttpConstants.SubStatusCodes.READ_SESSION_NOT_AVAILABLE)))) {
-                        this.captureSessionToken(request, dce.getResponseHeaders());
+                        this.captureSessionToken(request, dce.responseHeaders());
                     }
 
                     return Observable.error(dce);
@@ -537,9 +534,9 @@ class RxGatewayStoreModel implements RxStoreModel {
         String requestConsistencyLevel = headers.get(HttpConstants.HttpHeaders.CONSISTENCY_LEVEL);
 
         boolean sessionConsistency =
-                this.defaultConsistencyLevel == ConsistencyLevel.Session ||
+                this.defaultConsistencyLevel == ConsistencyLevel.SESSION ||
                         (!Strings.isNullOrEmpty(requestConsistencyLevel)
-                                && Strings.areEqual(requestConsistencyLevel, ConsistencyLevel.Session.name()));
+                                && Strings.areEqual(requestConsistencyLevel, ConsistencyLevel.SESSION.name()));
 
         if (!sessionConsistency || ReplicatedResourceClientUtils.isMasterResource(request.getResourceType())) {
             return; // Only apply the session token in case of session consistency and when resource is not a master resource

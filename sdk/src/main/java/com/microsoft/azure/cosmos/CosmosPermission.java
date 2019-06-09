@@ -98,12 +98,12 @@ public class CosmosPermission extends CosmosResource{
     }
 
     @Override
-    protected String getURIPathSegment() {
+    protected String URIPathSegment() {
         return Paths.PERMISSIONS_PATH_SEGMENT;
     }
 
     @Override
-    protected String getParentLink() {
+    protected String parentLink() {
         return cosmosUser.getLink();
     }
 }

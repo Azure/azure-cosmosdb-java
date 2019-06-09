@@ -60,15 +60,15 @@ public class ReadFeedUsersTest extends TestSuiteBase {
     public void readUsers() throws Exception {
 
         FeedOptions options = new FeedOptions();
-        options.setMaxItemCount(2);
+        options.maxItemCount(2);
 
         Flux<FeedResponse<CosmosUserSettings>> feedObservable = createdDatabase.listUsers(options);
 
-        int expectedPageSize = (createdUsers.size() + options.getMaxItemCount() - 1) / options.getMaxItemCount();
+        int expectedPageSize = (createdUsers.size() + options.maxItemCount() - 1) / options.maxItemCount();
 
         FeedResponseListValidator<CosmosUserSettings> validator = new FeedResponseListValidator.Builder<CosmosUserSettings>()
                 .totalSize(createdUsers.size())
-                .exactlyContainsInAnyOrder(createdUsers.stream().map(d -> d.getResourceId()).collect(Collectors.toList()))
+                .exactlyContainsInAnyOrder(createdUsers.stream().map(d -> d.resourceId()).collect(Collectors.toList()))
                 .numberOfPages(expectedPageSize)
                 .pageSatisfy(0, new FeedResponseValidator.Builder<CosmosUserSettings>()
                         .requestChargeGreaterThanOrEqualTo(1.0).build())
@@ -96,7 +96,7 @@ public class ReadFeedUsersTest extends TestSuiteBase {
 
     public CosmosUserSettings createUsers(CosmosDatabase cosmosDatabase) {
         CosmosUserSettings user = new CosmosUserSettings();
-        user.setId(UUID.randomUUID().toString());
-        return cosmosDatabase.createUser(user, new RequestOptions()).block().getCosmosUserSettings();
+        user.id(UUID.randomUUID().toString());
+        return cosmosDatabase.createUser(user, new RequestOptions()).block().settings();
     }
 }

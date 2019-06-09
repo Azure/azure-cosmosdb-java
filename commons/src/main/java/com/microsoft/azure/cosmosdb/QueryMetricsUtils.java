@@ -49,7 +49,7 @@ class QueryMetricsUtils {
             String[] attributeKeyValue = StringUtils.split(attribute, "=");
 
             if (attributeKeyValue.length != 2) {
-                throw new NullPointerException("recieved a malformed delimited String");
+                throw new NullPointerException("recieved a malformed delimited STRING");
             }
 
             String attributeKey = attributeKeyValue[key];

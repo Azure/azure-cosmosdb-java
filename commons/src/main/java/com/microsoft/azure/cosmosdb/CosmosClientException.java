@@ -34,19 +34,19 @@ import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 
 /**
  * This class defines a custom exception type for all operations on
- * DocumentClient in the Azure Cosmos DB database service. Applications are expected to catch DocumentClientException
+ * DocumentClient in the Azure Cosmos DB database service. Applications are expected to catch CosmosClientException
  * and handle errors as appropriate when calling methods on DocumentClient.
  * <p>
  * Errors coming from the service during normal execution are converted to
- * DocumentClientException before returning to the application with the following exception:
+ * CosmosClientException before returning to the application with the following exception:
  * <p>
  * When a BE error is encountered during a QueryIterable&lt;T&gt; iteration, an IllegalStateException
- * is thrown instead of DocumentClientException.
+ * is thrown instead of CosmosClientException.
  * <p>
  * When a transport level error happens that request is not able to reach the service,
- * an IllegalStateException is thrown instead of DocumentClientException.
+ * an IllegalStateException is thrown instead of CosmosClientException.
  */
-public class DocumentClientException extends Exception {
+public class CosmosClientException extends Exception {
     private static final long serialVersionUID = 1L;
 
     private Error error;
@@ -60,22 +60,22 @@ public class DocumentClientException extends Exception {
     Map<String, String> requestHeaders;
 
     /**
-     * Creates a new instance of the DocumentClientException class.
+     * Creates a new instance of the CosmosClientException class.
      *
      * @param statusCode the http status code of the response.
      */
-    public DocumentClientException(int statusCode) {
+    public CosmosClientException(int statusCode) {
         this.statusCode = statusCode;
         this.responseHeaders = new HashMap<>();
     }
 
     /**
-     * Creates a new instance of the DocumentClientException class.
+     * Creates a new instance of the CosmosClientException class.
      *
      * @param statusCode   the http status code of the response.
      * @param errorMessage the error message.
      */
-    public DocumentClientException(int statusCode, String errorMessage) {
+    public CosmosClientException(int statusCode, String errorMessage) {
         Error error = new Error();
         error.set(Constants.Properties.MESSAGE, errorMessage);
         this.statusCode = statusCode;
@@ -84,30 +84,30 @@ public class DocumentClientException extends Exception {
     }
 
     /**
-     * Creates a new instance of the DocumentClientException class.
+     * Creates a new instance of the CosmosClientException class.
      *
      * @param statusCode     the http status code of the response.
      * @param innerException the original exception.
      */
-    public DocumentClientException(int statusCode, Exception innerException) {
+    public CosmosClientException(int statusCode, Exception innerException) {
         super(innerException);
         this.statusCode = statusCode;
         this.responseHeaders = new HashMap<>();
     }
 
     /**
-     * Creates a new instance of the DocumentClientException class.
+     * Creates a new instance of the CosmosClientException class.
      *
      * @param statusCode      the http status code of the response.
      * @param errorResource   the error resource object.
      * @param responseHeaders the response headers.
      */
-    public DocumentClientException(int statusCode, Error errorResource, Map<String, String> responseHeaders) {
+    public CosmosClientException(int statusCode, Error errorResource, Map<String, String> responseHeaders) {
         this(null, statusCode, errorResource, responseHeaders);
     }
 
     /**
-     * Creates a new instance of the DocumentClientException class.
+     * Creates a new instance of the CosmosClientException class.
      *
      * @param resourceAddress the address of the resource the request is associated with.
      * @param statusCode      the http status code of the response.
@@ -115,7 +115,7 @@ public class DocumentClientException extends Exception {
      * @param responseHeaders the response headers.
      */
 
-    public DocumentClientException(String resourceAddress, int statusCode, Error errorResource, Map<String, String> responseHeaders) {
+    public CosmosClientException(String resourceAddress, int statusCode, Error errorResource, Map<String, String> responseHeaders) {
 
         super(errorResource == null ? null : errorResource.getMessage());
 
@@ -125,14 +125,14 @@ public class DocumentClientException extends Exception {
         this.error = errorResource;
     }
 
-    /** Creates a new instance of the DocumentClientException class.
+    /** Creates a new instance of the CosmosClientException class.
      * @param message         the string message.
      * @param statusCode      the http status code of the response.
      * @param exception       the exception object.
      * @param responseHeaders the response headers.
      * @param resourceAddress the address of the resource the request is associated with.
      */
-    public DocumentClientException(String message, Exception exception, Map<String, String> responseHeaders, int statusCode, String resourceAddress) {
+    public CosmosClientException(String message, Exception exception, Map<String, String> responseHeaders, int statusCode, String resourceAddress) {
 
         super(message, exception);
 
@@ -144,9 +144,9 @@ public class DocumentClientException extends Exception {
     @Override
     public String getMessage() {
         if (clientSideRequestStatistics == null) {
-            return getInnerErrorMessage();
+            return innerErrorMessage();
         }
-        return getInnerErrorMessage() + ", " + clientSideRequestStatistics.toString();
+        return innerErrorMessage() + ", " + clientSideRequestStatistics.toString();
     }
 
     /**
@@ -154,7 +154,7 @@ public class DocumentClientException extends Exception {
      *
      * @return the activity ID.
      */
-    public String getActivityId() {
+    public String message() {
         if (this.responseHeaders != null) {
             return this.responseHeaders.get(HttpConstants.HttpHeaders.ACTIVITY_ID);
         }
@@ -167,7 +167,7 @@ public class DocumentClientException extends Exception {
      *
      * @return the status code.
      */
-    public int getStatusCode() {
+    public int statusCode() {
         return this.statusCode;
     }
 
@@ -176,7 +176,7 @@ public class DocumentClientException extends Exception {
      *
      * @return the status code.
      */
-    public int getSubStatusCode() {
+    public int subStatusCode() {
         int code = HttpConstants.SubStatusCodes.UNKNOWN;
         if (this.responseHeaders != null) {
             String subStatusString = this.responseHeaders.get(HttpConstants.HttpHeaders.SUB_STATUS);
@@ -197,7 +197,7 @@ public class DocumentClientException extends Exception {
      *
      * @return the error.
      */
-    public Error getError() {
+    public Error error() {
         return this.error;
     }
 
@@ -208,7 +208,7 @@ public class DocumentClientException extends Exception {
      * @return the recommended time interval after which the client can retry
      * failed requests.
      */
-    public long getRetryAfterInMilliseconds() {
+    public long retryAfterInMilliseconds() {
         long retryIntervalInMilliseconds = 0;
 
         if (this.responseHeaders != null) {
@@ -234,7 +234,7 @@ public class DocumentClientException extends Exception {
      *
      * @return the response headers
      */
-    public Map<String, String> getResponseHeaders() {
+    public Map<String, String> responseHeaders() {
         return this.responseHeaders;
     }
 
@@ -252,12 +252,13 @@ public class DocumentClientException extends Exception {
      *
      * @return Client side request statistics associated with this exception.
      */
-    public ClientSideRequestStatistics getClientSideRequestStatistics() {
+    public ClientSideRequestStatistics clientSideRequestStatistics() {
         return clientSideRequestStatistics;
     }
 
-    public void setClientSideRequestStatistics(ClientSideRequestStatistics clientSideRequestStatistics) {
+    CosmosClientException clientSideRequestStatistics(ClientSideRequestStatistics clientSideRequestStatistics) {
         this.clientSideRequestStatistics = clientSideRequestStatistics;
+        return this;
     }
 
     @Override
@@ -267,13 +268,13 @@ public class DocumentClientException extends Exception {
                 ", resourceAddress='" + resourceAddress + '\'' +
                 ", statusCode=" + statusCode +
                 ", message=" + getMessage() +
-                ", getCauseInfo=" + getCauseInfo() +
+                ", causeInfo=" + causeInfo() +
                 ", responseHeaders=" + responseHeaders +
                 ", requestHeaders=" + requestHeaders +
                 '}';
     }
 
-    String getInnerErrorMessage() {
+    String innerErrorMessage() {
         String innerErrorMessage = super.getMessage();
         if (error != null) {
             innerErrorMessage = error.getMessage();
@@ -284,7 +285,7 @@ public class DocumentClientException extends Exception {
         return innerErrorMessage;
     }
 
-    private String getCauseInfo() {
+    private String causeInfo() {
         Throwable cause = getCause();
         if (cause != null) {
             return String.format("[class: %s, message: %s]", cause.getClass(), cause.getMessage());

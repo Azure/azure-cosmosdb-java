@@ -68,23 +68,23 @@ public class OfferQueryTest extends TestSuiteBase {
 
     @Test(groups = { "emulator" }, timeOut = TIMEOUT)
     public void queryOffersWithFilter() throws Exception {
-        String collectionResourceId = createdCollections.get(0).getResourceId();
+        String collectionResourceId = createdCollections.get(0).resourceId();
         String query = String.format("SELECT * from c where c.offerResourceId = '%s'", collectionResourceId);
 
         FeedOptions options = new FeedOptions();
-        options.setMaxItemCount(2);
+        options.maxItemCount(2);
         Observable<FeedResponse<Offer>> queryObservable = client.queryOffers(query, null);
 
-        List<Offer> allOffers = client.readOffers(null).flatMap(f -> Observable.from(f.getResults())).toList().toBlocking().single();
+        List<Offer> allOffers = client.readOffers(null).flatMap(f -> Observable.from(f.results())).toList().toBlocking().single();
         List<Offer> expectedOffers = allOffers.stream().filter(o -> collectionResourceId.equals(o.getString("offerResourceId"))).collect(Collectors.toList());
 
         assertThat(expectedOffers).isNotEmpty();
 
-        int expectedPageSize = (expectedOffers.size() + options.getMaxItemCount() - 1) / options.getMaxItemCount();
+        int expectedPageSize = (expectedOffers.size() + options.maxItemCount() - 1) / options.maxItemCount();
 
         FeedResponseListValidator<Offer> validator = new FeedResponseListValidator.Builder<Offer>()
                 .totalSize(expectedOffers.size())
-                .exactlyContainsInAnyOrder(expectedOffers.stream().map(d -> d.getResourceId()).collect(Collectors.toList()))
+                .exactlyContainsInAnyOrder(expectedOffers.stream().map(d -> d.resourceId()).collect(Collectors.toList()))
                 .numberOfPages(expectedPageSize)
                 .pageSatisfy(0, new FeedResponseValidator.Builder<Offer>()
                         .requestChargeGreaterThanOrEqualTo(1.0).build())
@@ -96,25 +96,25 @@ public class OfferQueryTest extends TestSuiteBase {
     @Test(groups = { "emulator" }, timeOut = TIMEOUT * 100)
     public void queryOffersFilterMorePages() throws Exception {
         
-        List<String> collectionResourceIds = createdCollections.stream().map(c -> c.getResourceId()).collect(Collectors.toList());
+        List<String> collectionResourceIds = createdCollections.stream().map(c -> c.resourceId()).collect(Collectors.toList());
         String query = String.format("SELECT * from c where c.offerResourceId in (%s)", 
                 Strings.join(collectionResourceIds.stream().map(s -> "'" + s + "'").collect(Collectors.toList())).with(","));
 
         FeedOptions options = new FeedOptions();
-        options.setMaxItemCount(1);
+        options.maxItemCount(1);
         Observable<FeedResponse<Offer>> queryObservable = client.queryOffers(query, options);
 
-        List<Offer> expectedOffers = client.readOffers(null).flatMap(f -> Observable.from(f.getResults())).toList().toBlocking().single()
+        List<Offer> expectedOffers = client.readOffers(null).flatMap(f -> Observable.from(f.results())).toList().toBlocking().single()
                 .stream().filter(o -> collectionResourceIds.contains(o.getOfferResourceId()))
                 .collect(Collectors.toList());
 
         assertThat(expectedOffers).hasSize(createdCollections.size());
 
-        int expectedPageSize = (expectedOffers.size() + options.getMaxItemCount() - 1) / options.getMaxItemCount();
+        int expectedPageSize = (expectedOffers.size() + options.maxItemCount() - 1) / options.maxItemCount();
 
         FeedResponseListValidator<Offer> validator = new FeedResponseListValidator.Builder<Offer>()
                 .totalSize(expectedOffers.size())
-                .exactlyContainsInAnyOrder(expectedOffers.stream().map(d -> d.getResourceId()).collect(Collectors.toList()))
+                .exactlyContainsInAnyOrder(expectedOffers.stream().map(d -> d.resourceId()).collect(Collectors.toList()))
                 .numberOfPages(expectedPageSize)
                 .pageSatisfy(0, new FeedResponseValidator.Builder<Offer>()
                         .requestChargeGreaterThanOrEqualTo(1.0).build())
@@ -144,17 +144,17 @@ public class OfferQueryTest extends TestSuiteBase {
         client = clientBuilder.build();
 
         Database d1 = new Database();
-        d1.setId(databaseId);
+        d1.id(databaseId);
         createDatabase(client, d1);
 
         for(int i = 0; i < 3; i++) {
             DocumentCollection collection = new DocumentCollection();
-            collection.setId(UUID.randomUUID().toString());
+            collection.id(UUID.randomUUID().toString());
             
             PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition();
             ArrayList<String> paths = new ArrayList<String>();
             paths.add("/mypk");
-            partitionKeyDef.setPaths(paths);
+            partitionKeyDef.paths(paths);
             collection.setPartitionKey(partitionKeyDef);
             
             createdCollections.add(createCollection(client, databaseId, collection));

@@ -54,7 +54,7 @@ public class CosmosDatabaseCrudTest extends CosmosTestSuiteBase {
 
         // validate
         CosmosResponseValidator<CosmosDatabaseResponse> validator = new CosmosResponseValidator.Builder<CosmosDatabaseResponse>()
-                .withId(databaseSettings.getId()).build();
+                .withId(databaseSettings.id()).build();
         validateSuccess(createMono , validator);
     }
 

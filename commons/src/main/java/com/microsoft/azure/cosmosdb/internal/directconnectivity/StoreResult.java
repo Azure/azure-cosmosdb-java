@@ -24,7 +24,7 @@
 package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
 import com.microsoft.azure.cosmosdb.BridgeInternal;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.internal.ISessionToken;
 import com.microsoft.azure.cosmosdb.internal.InternalServerErrorException;
@@ -41,7 +41,7 @@ public class StoreResult {
     private final static Logger logger = LoggerFactory.getLogger(StoreResult.class);
 
     private final StoreResponse storeResponse;
-    private final DocumentClientException exception;
+    private final CosmosClientException exception;
 
     final public long lsn;
     final public String partitionKeyRangeId;
@@ -61,7 +61,7 @@ public class StoreResult {
 
     public StoreResult(
             StoreResponse storeResponse,
-            DocumentClientException exception,
+            CosmosClientException exception,
             String partitionKeyRangeId,
             long lsn,
             long quorumAckedLsn,
@@ -83,8 +83,8 @@ public class StoreResult {
         this.currentReplicaSetSize = currentReplicaSetSize;
         this.currentWriteQuorum = currentWriteQuorum;
         this.isValid = isValid;
-        this.isGoneException = this.exception != null && this.exception.getStatusCode() == HttpConstants.StatusCodes.GONE;
-        this.isNotFoundException = this.exception != null && this.exception.getStatusCode() == HttpConstants.StatusCodes.NOTFOUND;
+        this.isGoneException = this.exception != null && this.exception.statusCode() == HttpConstants.StatusCodes.GONE;
+        this.isNotFoundException = this.exception != null && this.exception.statusCode() == HttpConstants.StatusCodes.NOTFOUND;
         this.isInvalidPartitionException = this.exception != null
                 && Exceptions.isNameCacheStale(this.exception);
         this.storePhysicalAddress = storePhysicalAddress;
@@ -94,7 +94,7 @@ public class StoreResult {
         this.sessionToken = sessionToken;
     }
 
-    public DocumentClientException getException() throws InternalServerErrorException {
+    public CosmosClientException getException() throws InternalServerErrorException {
         if (this.exception == null) {
             String message = "Exception should be available but found none";
             assert false : message;
@@ -105,11 +105,11 @@ public class StoreResult {
         return exception;
     }
 
-    public StoreResponse toResponse() throws DocumentClientException {
+    public StoreResponse toResponse() throws CosmosClientException {
         return toResponse(null);
     }
 
-    public StoreResponse toResponse(RequestChargeTracker requestChargeTracker) throws DocumentClientException {
+    public StoreResponse toResponse(RequestChargeTracker requestChargeTracker) throws CosmosClientException {
         if (!this.isValid) {
             if (this.exception == null) {
                 logger.error("Exception not set for invalid response");
@@ -130,9 +130,9 @@ public class StoreResult {
         return this.storeResponse;
     }
 
-    private static void setRequestCharge(StoreResponse response, DocumentClientException documentClientException, double totalRequestCharge) {
-        if (documentClientException != null) {
-            documentClientException.getResponseHeaders().put(HttpConstants.HttpHeaders.REQUEST_CHARGE,
+    private static void setRequestCharge(StoreResponse response, CosmosClientException cosmosClientException, double totalRequestCharge) {
+        if (cosmosClientException != null) {
+            cosmosClientException.responseHeaders().put(HttpConstants.HttpHeaders.REQUEST_CHARGE,
                     Double.toString(totalRequestCharge));
         }
         // Set total charge as final charge for the response.
@@ -157,8 +157,8 @@ public class StoreResult {
             statusCode = this.storeResponse.getStatus();
             subStatusCode = this.storeResponse.getSubStatusCode();
         } else if (this.exception != null) {
-            statusCode = this.exception.getStatusCode();
-            subStatusCode = this.exception.getSubStatusCode();
+            statusCode = this.exception.statusCode();
+            subStatusCode = this.exception.subStatusCode();
         }
 
         return "storePhysicalAddress: " + this.storePhysicalAddress +

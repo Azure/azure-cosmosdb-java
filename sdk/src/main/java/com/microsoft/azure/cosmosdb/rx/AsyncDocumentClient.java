@@ -76,12 +76,12 @@ import rx.Observable;
  * <pre>
  * {@code
  * ConnectionPolicy connectionPolicy = new ConnectionPolicy();
- * connectionPolicy.setConnectionMode(ConnectionMode.Direct);
+ * connectionPolicy.connectionMode(ConnectionMode.DIRECT);
  * AsyncDocumentClient client = new AsyncDocumentClient.Builder()
  *         .withServiceEndpoint(serviceEndpoint)
  *         .withMasterKeyOrResourceToken(masterKey)
  *         .withConnectionPolicy(connectionPolicy)
- *         .withConsistencyLevel(ConsistencyLevel.Session)
+ *         .withConsistencyLevel(ConsistencyLevel.SESSION)
  *         .build();
  * }
  * </pre>
@@ -95,12 +95,12 @@ public interface AsyncDocumentClient {
      * <pre>
      * {@code
      * ConnectionPolicy connectionPolicy = new ConnectionPolicy();
-     * connectionPolicy.setConnectionMode(ConnectionMode.Direct);
+     * connectionPolicy.connectionMode(ConnectionMode.DIRECT);
      * AsyncDocumentClient client = new AsyncDocumentClient.Builder()
      *         .withServiceEndpoint(serviceEndpoint)
      *         .withMasterKeyOrResourceToken(masterKey)
      *         .withConnectionPolicy(connectionPolicy)
-     *         .withConsistencyLevel(ConsistencyLevel.Session)
+     *         .withConsistencyLevel(ConsistencyLevel.SESSION)
      *         .build();
      * }
      * </pre>
@@ -179,18 +179,18 @@ public interface AsyncDocumentClient {
 
         /**
          * This method will accept tokenResolver which is rx function, it takes arguments<br>
-         * T1 requestVerb(String),<br>
-         * T2 resourceIdOrFullName(String),<br>
+         * T1 requestVerb(STRING),<br>
+         * T2 resourceIdOrFullName(STRING),<br>
          * T3 resourceType(com.microsoft.azure.cosmosdb.internal.ResourceType),<br>
-         * T4 request headers(Map<String, String>)<br>
+         * T4 request headers(Map<STRING, STRING>)<br>
          *<br>
          * and return<br>
-         * R authenticationToken(String)<br>
+         * R authenticationToken(STRING)<br>
          *
          * @param tokenResolver tokenResolver function for authentication.
          * @return current Builder.
          */
-        /*public Builder withTokenResolver(Func4<String, String, ResourceType, Map<String, String>, String> tokenResolver) {
+        /*public Builder withTokenResolver(Func4<STRING, STRING, ResourceType, Map<STRING, STRING>, STRING> tokenResolver) {
             this.tokenResolver = tokenResolver;
             return this;
         }*/
@@ -696,7 +696,7 @@ public interface AsyncDocumentClient {
     Observable<ResourceResponse<StoredProcedure>> deleteStoredProcedure(String storedProcedureLink, RequestOptions options);
 
     /**
-     * Read a stored procedure by the stored procedure link.
+     * READ a stored procedure by the stored procedure link.
      * <p>
      * After subscription the operation will be performed.
      * The {@link Observable} upon successful completion will contain a single resource response with the read stored procedure.
@@ -943,7 +943,7 @@ public interface AsyncDocumentClient {
     Observable<ResourceResponse<UserDefinedFunction>> deleteUserDefinedFunction(String udfLink, RequestOptions options);
 
     /**
-     * Read a user defined function.
+     * READ a user defined function.
      * <p>
      * After subscription the operation will be performed.
      * The {@link Observable} upon successful completion will contain a single resource response for the read user defined function.

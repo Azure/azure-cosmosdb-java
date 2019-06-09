@@ -28,29 +28,29 @@ package com.microsoft.azure.cosmosdb;
  */
 public enum TriggerOperation {
     /**
-     * All operations.
+     * ALL operations.
      */
-    All(0x0),
+    ALL(0x0),
 
     /**
-     * Create operations only.
+     * CREATE operations only.
      */
-    Create(0x1),
+    CREATE(0x1),
 
     /**
-     * Update operations only.
+     * UPDATE operations only.
      */
-    Update(0x2),
+    UPDATE(0x2),
 
     /**
-     * Delete operations only.
+     * DELETE operations only.
      */
-    Delete(0x3),
+    DELETE(0x3),
 
     /**
-     * Replace operations only.
+     * REPLACE operations only.
      */
-    Replace(0x4);
+    REPLACE(0x4);
 
     private int value;
 

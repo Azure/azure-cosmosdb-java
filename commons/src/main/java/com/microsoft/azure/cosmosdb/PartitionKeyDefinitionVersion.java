@@ -42,7 +42,7 @@ public enum PartitionKeyDefinitionVersion {
 
     int val;
 
-    private PartitionKeyDefinitionVersion(int val) {
+    PartitionKeyDefinitionVersion(int val) {
         this.val = val;
     }
 

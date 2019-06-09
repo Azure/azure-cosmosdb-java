@@ -92,29 +92,29 @@ public class DocumentQueryAsyncAPITest {
     @BeforeClass(groups = "samples", timeOut = TIMEOUT)
     public void setUp() {
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
-        connectionPolicy.setConnectionMode(ConnectionMode.Direct);
+        connectionPolicy.connectionMode(ConnectionMode.DIRECT);
         asyncClient = new AsyncDocumentClient.Builder()
                 .withServiceEndpoint(TestConfigurations.HOST)
                 .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
                 .withConnectionPolicy(connectionPolicy)
-                .withConsistencyLevel(ConsistencyLevel.Session)
+                .withConsistencyLevel(ConsistencyLevel.SESSION)
                 .build();
 
         DocumentCollection collectionDefinition = new DocumentCollection();
-        collectionDefinition.setId(UUID.randomUUID().toString());
+        collectionDefinition.id(UUID.randomUUID().toString());
         PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition();
         ArrayList<String> paths = new ArrayList<String>();
         paths.add("/mypk");
-        partitionKeyDef.setPaths(paths);
+        partitionKeyDef.paths(paths);
         collectionDefinition.setPartitionKey(partitionKeyDef);
 
-        // Create database
+        // CREATE database
 
         createdDatabase = Utils.createDatabaseForTest(asyncClient);
 
-        // Create collection
+        // CREATE collection
         createdCollection = asyncClient
-                .createCollection("dbs/" + createdDatabase.getId(), collectionDefinition, null)
+                .createCollection("dbs/" + createdDatabase.id(), collectionDefinition, null)
                 .toBlocking().single().getResource();
 
         numberOfDocuments = 20;
@@ -140,8 +140,8 @@ public class DocumentQueryAsyncAPITest {
     public void queryDocuments_Async() throws Exception {
         int requestPageSize = 3;
         FeedOptions options = new FeedOptions();
-        options.setMaxItemCount(requestPageSize);
-        options.setEnableCrossPartitionQuery(true);
+        options.maxItemCount(requestPageSize);
+        options.enableCrossPartitionQuery(true);
 
         Observable<FeedResponse<Document>> documentQueryObservable = asyncClient
                 .queryDocuments(getCollectionLink(), "SELECT * FROM root", options);
@@ -159,7 +159,7 @@ public class DocumentQueryAsyncAPITest {
             }
 
             for (@SuppressWarnings("unused")
-                    Document d : page.getResults()) {
+                    Document d : page.results()) {
                 resultsCountDown.countDown();
             }
         });
@@ -187,8 +187,8 @@ public class DocumentQueryAsyncAPITest {
     public void queryDocuments_Async_withoutLambda() throws Exception {
         int requestPageSize = 3;
         FeedOptions options = new FeedOptions();
-        options.setMaxItemCount(requestPageSize);
-        options.setEnableCrossPartitionQuery(true);
+        options.maxItemCount(requestPageSize);
+        options.enableCrossPartitionQuery(true);
 
         Observable<FeedResponse<Document>> documentQueryObservable = asyncClient
                 .queryDocuments(getCollectionLink(), "SELECT * FROM root", options);
@@ -209,7 +209,7 @@ public class DocumentQueryAsyncAPITest {
                 } catch (InterruptedException e) {
                 }
 
-                for (Document d : t.getResults()) {
+                for (Document d : t.results()) {
                     resultsCountDown.countDown();
                 }
             }
@@ -237,12 +237,12 @@ public class DocumentQueryAsyncAPITest {
     public void queryDocuments_findTotalRequestCharge() throws Exception {
         int requestPageSize = 3;
         FeedOptions options = new FeedOptions();
-        options.setMaxItemCount(requestPageSize);
-        options.setEnableCrossPartitionQuery(true);
+        options.maxItemCount(requestPageSize);
+        options.enableCrossPartitionQuery(true);
 
         Observable<Double> totalChargeObservable = asyncClient
                 .queryDocuments(getCollectionLink(), "SELECT * FROM root", options)
-                .map(FeedResponse::getRequestCharge) // Map the page to its request charge
+                .map(FeedResponse::requestCharge) // Map the page to its request charge
                 .reduce((totalCharge, charge) -> totalCharge + charge); // Sum up all the request charges
 
         final CountDownLatch successfulCompletionLatch = new CountDownLatch(1);
@@ -263,8 +263,8 @@ public class DocumentQueryAsyncAPITest {
     public void queryDocuments_unsubscribeAfterFirstPage() throws Exception {
         int requestPageSize = 3;
         FeedOptions options = new FeedOptions();
-        options.setMaxItemCount(requestPageSize);
-        options.setEnableCrossPartitionQuery(true);
+        options.maxItemCount(requestPageSize);
+        options.enableCrossPartitionQuery(true);
 
         Observable<FeedResponse<Document>> requestChargeObservable = asyncClient
                 .queryDocuments(getCollectionLink(), "SELECT * FROM root", options);
@@ -308,8 +308,8 @@ public class DocumentQueryAsyncAPITest {
     public void queryDocuments_filterFetchedResults() throws Exception {
         int requestPageSize = 3;
         FeedOptions options = new FeedOptions();
-        options.setMaxItemCount(requestPageSize);
-        options.setEnableCrossPartitionQuery(true);
+        options.maxItemCount(requestPageSize);
+        options.enableCrossPartitionQuery(true);
 
         Func1<Document, Boolean> isPrimeNumber = new Func1<Document, Boolean>() {
 
@@ -329,7 +329,7 @@ public class DocumentQueryAsyncAPITest {
         List<Document> resultList = Collections.synchronizedList(new ArrayList<Document>());
 
         asyncClient.queryDocuments(getCollectionLink(), "SELECT * FROM root", options)
-                .map(FeedResponse::getResults) // Map the page to the list of documents
+                .map(FeedResponse::results) // Map the page to the list of documents
                 .concatMap(Observable::from) // Flatten the observable<list<document>> to observable<document>
                 .filter(isPrimeNumber) // Filter documents using isPrimeNumber predicate
                 .subscribe(doc -> resultList.add(doc)); // Collect the results
@@ -368,8 +368,8 @@ public class DocumentQueryAsyncAPITest {
         // Query for documents
         int requestPageSize = 3;
         FeedOptions options = new FeedOptions();
-        options.setMaxItemCount(requestPageSize);
-        options.setEnableCrossPartitionQuery(true);
+        options.maxItemCount(requestPageSize);
+        options.enableCrossPartitionQuery(true);
 
         Observable<FeedResponse<Document>> documentQueryObservable = asyncClient
                 .queryDocuments(getCollectionLink(), "SELECT * FROM root", options);
@@ -384,10 +384,10 @@ public class DocumentQueryAsyncAPITest {
             FeedResponse<Document> page = it.next();
             pageCounter++;
 
-            String pageSizeAsString = page.getResponseHeaders().get(HttpConstants.HttpHeaders.ITEM_COUNT);
+            String pageSizeAsString = page.responseHeaders().get(HttpConstants.HttpHeaders.ITEM_COUNT);
             assertThat("header item count must be present", pageSizeAsString, notNullValue());
             int pageSize = Integer.valueOf(pageSizeAsString);
-            assertThat("Result size must match header item count", page.getResults(), hasSize(pageSize));
+            assertThat("Result size must match header item count", page.results(), hasSize(pageSize));
             numberOfResults += pageSize;
         }
         assertThat("number of total results", numberOfResults, equalTo(numberOfDocuments));
@@ -400,9 +400,9 @@ public class DocumentQueryAsyncAPITest {
      */
     @Test(groups = "samples", timeOut = TIMEOUT)
     public void qrderBy_Async() throws Exception {
-        // Create a partitioned collection
+        // CREATE a partitioned collection
         String collectionId = UUID.randomUUID().toString();
-        DocumentCollection multiPartitionCollection = createMultiPartitionCollection("dbs/" + createdDatabase.getId(),
+        DocumentCollection multiPartitionCollection = createMultiPartitionCollection("dbs/" + createdDatabase.id(),
                                                                                      collectionId, "/key");
 
         // Insert documents
@@ -411,30 +411,30 @@ public class DocumentQueryAsyncAPITest {
 
             Document doc = new Document(String.format("{\"id\":\"documentId%d\",\"key\":\"%s\",\"prop\":%d}", i,
                                                       RandomStringUtils.randomAlphabetic(2), i));
-            asyncClient.createDocument("dbs/" + createdDatabase.getId() + "/colls/" + multiPartitionCollection.getId(),
+            asyncClient.createDocument("dbs/" + createdDatabase.id() + "/colls/" + multiPartitionCollection.id(),
                                        doc, null, true).toBlocking().single();
         }
 
         // Query for the documents order by the prop field
         SqlQuerySpec query = new SqlQuerySpec("SELECT r.id FROM r ORDER BY r.prop", new SqlParameterCollection());
         FeedOptions options = new FeedOptions();
-        options.setEnableCrossPartitionQuery(true);
-        options.setMaxItemCount(5);
+        options.enableCrossPartitionQuery(true);
+        options.maxItemCount(5);
 
         // Max degree of parallelism determines the number of partitions that
         // the SDK establishes simultaneous connections to.
-        options.setMaxDegreeOfParallelism(2);
+        options.maxDegreeOfParallelism(2);
 
         // Get the observable order by query documents
         Observable<FeedResponse<Document>> documentQueryObservable = asyncClient.queryDocuments(
-                "dbs/" + createdDatabase.getId() + "/colls/" + multiPartitionCollection.getId(), query, options);
+                "dbs/" + createdDatabase.id() + "/colls/" + multiPartitionCollection.id(), query, options);
 
         List<String> resultList = Collections.synchronizedList(new ArrayList<>());
 
-        documentQueryObservable.map(FeedResponse::getResults)
+        documentQueryObservable.map(FeedResponse::results)
                 // Map the logical page to the list of documents in the page
                 .concatMap(Observable::from) // Flatten the list of documents
-                .map(doc -> doc.getId()) // Map to the document Id
+                .map(doc -> doc.id()) // Map to the document Id
                 .forEach(docId -> resultList.add(docId)); // Add each document Id to the resultList
 
         Thread.sleep(4000);
@@ -458,8 +458,8 @@ public class DocumentQueryAsyncAPITest {
     public void transformObservableToGoogleGuavaListenableFuture() throws Exception {
         int requestPageSize = 3;
         FeedOptions options = new FeedOptions();
-        options.setMaxItemCount(requestPageSize);
-        options.setEnableCrossPartitionQuery(true);
+        options.maxItemCount(requestPageSize);
+        options.enableCrossPartitionQuery(true);
 
         Observable<FeedResponse<Document>> documentQueryObservable = asyncClient
                 .queryDocuments(getCollectionLink(), "SELECT * FROM root", options);
@@ -474,13 +474,13 @@ public class DocumentQueryAsyncAPITest {
 
         int totalNumberOfRetrievedDocuments = 0;
         for (FeedResponse<Document> page : pageList) {
-            totalNumberOfRetrievedDocuments += page.getResults().size();
+            totalNumberOfRetrievedDocuments += page.results().size();
         }
         assertThat(numberOfDocuments, equalTo(totalNumberOfRetrievedDocuments));
     }
 
     private String getCollectionLink() {
-        return "dbs/" + createdDatabase.getId() + "/colls/" + createdCollection.getId();
+        return "dbs/" + createdDatabase.id() + "/colls/" + createdCollection.id();
     }
 
     private DocumentCollection createMultiPartitionCollection(String databaseLink, String collectionId,
@@ -488,12 +488,12 @@ public class DocumentQueryAsyncAPITest {
         PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition();
         ArrayList<String> paths = new ArrayList<String>();
         paths.add(partitionKeyPath);
-        partitionKeyDef.setPaths(paths);
+        partitionKeyDef.paths(paths);
 
         RequestOptions options = new RequestOptions();
         options.setOfferThroughput(10100);
         DocumentCollection collectionDefinition = new DocumentCollection();
-        collectionDefinition.setId(collectionId);
+        collectionDefinition.id(collectionId);
         collectionDefinition.setPartitionKey(partitionKeyDef);
         DocumentCollection createdCollection = asyncClient.createCollection(databaseLink, collectionDefinition, options)
                 .toBlocking().single().getResource();

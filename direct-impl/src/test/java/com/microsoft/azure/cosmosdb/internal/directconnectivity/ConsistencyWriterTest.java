@@ -221,14 +221,14 @@ public class ConsistencyWriterTest {
     public Object[][] globalStrongArgProvider() {
         return new Object[][]{
                 {
-                        ConsistencyLevel.Session,
+                        ConsistencyLevel.SESSION,
                         Mockito.mock(RxDocumentServiceRequest.class),
                         Mockito.mock(StoreResponse.class),
 
                         false,
                 },
                 {
-                        ConsistencyLevel.Eventual,
+                        ConsistencyLevel.EVENTUAL,
                         Mockito.mock(RxDocumentServiceRequest.class),
                         Mockito.mock(StoreResponse.class),
 
@@ -236,7 +236,7 @@ public class ConsistencyWriterTest {
                 },
                 {
 
-                        ConsistencyLevel.Eventual,
+                        ConsistencyLevel.EVENTUAL,
                         Mockito.mock(RxDocumentServiceRequest.class),
                         StoreResponseBuilder.create()
                                 .withHeader(WFConstants.BackendHeaders.NUMBER_OF_READ_REGIONS, Integer.toString(5))
@@ -245,7 +245,7 @@ public class ConsistencyWriterTest {
                 },
                 {
 
-                        ConsistencyLevel.Strong,
+                        ConsistencyLevel.STRONG,
                         Mockito.mock(RxDocumentServiceRequest.class),
                         StoreResponseBuilder.create()
                                 .withHeader(WFConstants.BackendHeaders.NUMBER_OF_READ_REGIONS, Integer.toString(5))
@@ -254,7 +254,7 @@ public class ConsistencyWriterTest {
                 },
                 {
 
-                        ConsistencyLevel.Strong,
+                        ConsistencyLevel.STRONG,
                         Mockito.mock(RxDocumentServiceRequest.class),
                         StoreResponseBuilder.create()
                                 .withHeader(WFConstants.BackendHeaders.NUMBER_OF_READ_REGIONS, Integer.toString(0))
@@ -289,8 +289,8 @@ public class ConsistencyWriterTest {
                 useMultipleWriteLocation);
     }
 
-    // TODO: add more mocking unit tests for Global Strong (mocking unit tests)
-    // TODO: add more tests for Session behaviour (mocking unit tests)
+    // TODO: add more mocking unit tests for Global STRONG (mocking unit tests)
+    // TODO: add more tests for SESSION behaviour (mocking unit tests)
     // TODO: add more tests for error handling behaviour (mocking unit tests)
     // TODO: add tests for replica catch up (request barrier while loop) (mocking unit tests)
     // https://msdata.visualstudio.com/CosmosDB/_workitems/edit/320977

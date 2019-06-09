@@ -83,15 +83,15 @@ public class JsonSerializableTests {
 
         // JsonSerializable
         Document innerDocument = new Document();
-        innerDocument.setId("innerDocument");
+        innerDocument.id("innerDocument");
         document.set("innerDocument", innerDocument);
         Document readInnerDocument = document.getObject("innerDocument", Document.class);
-        assertThat(readInnerDocument.getId()).isEqualTo(innerDocument.getId());
+        assertThat(readInnerDocument.id()).isEqualTo(innerDocument.id());
     }
 
     @Test(groups = { "unit" })
     public void objectMapperInvalidJsonNoQuotesForFieldAndValue() {
-        // Invalid Json - field and value must be quoted
+        // INVALID Json - field and value must be quoted
         try {
             new Document("{ field: value }");
             fail("failure expected");
@@ -102,7 +102,7 @@ public class JsonSerializableTests {
 
     @Test(groups = { "unit" })
     public void objectMapperInvalidJsonNoQuotesForField() {
-        // Invalid Json - field must be quoted
+        // INVALID Json - field must be quoted
         try {
             new Document("{ field: 'value' }");
             fail("failure expected");
@@ -113,7 +113,7 @@ public class JsonSerializableTests {
 
     @Test(groups = { "unit" })
     public void objectMapperInvalidJsonNoDuplicatesAllowed() {
-        // Invalid Json - duplicates must not exist in Json string
+        // INVALID Json - duplicates must not exist in Json string
         try {
             new Document("{ 'field': 'value1', 'field': 'value2' }");
             fail("failure expected");

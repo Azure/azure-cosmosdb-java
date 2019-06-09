@@ -42,7 +42,7 @@ public interface ChangeFeedObserverContext {
      *
      * @return the response from the underlying call.
      */
-    FeedResponse<CosmosItemSettings> getFeedResponse();
+    FeedResponse<CosmosItemProperties> getFeedResponse();
 
     /**
      * Checkpoints progress of a stream. This method is valid only if manual checkpoint was configured.

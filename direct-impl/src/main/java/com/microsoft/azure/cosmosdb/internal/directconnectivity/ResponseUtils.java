@@ -23,7 +23,7 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.Error;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
@@ -93,7 +93,7 @@ class ResponseUtils {
     }
 
     private static void validateOrThrow(RxDocumentServiceRequest request, HttpResponseStatus status, HttpResponseHeaders headers, String body,
-                                        InputStream inputStream) throws DocumentClientException {
+                                        InputStream inputStream) throws CosmosClientException {
 
         int statusCode = status.code();
 
@@ -118,7 +118,7 @@ class ResponseUtils {
                     String.format("%s, StatusCode: %s", error.getMessage(), statusCodeString),
                     error.getPartitionedQueryExecutionInfo());
 
-            throw new DocumentClientException(statusCode, error, HttpUtils.asMap(headers));
+            throw new CosmosClientException(statusCode, error, HttpUtils.asMap(headers));
         }
     }
 }

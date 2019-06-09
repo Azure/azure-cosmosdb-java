@@ -31,10 +31,10 @@ public class CosmosDatabaseResponse extends CosmosResponse<CosmosDatabaseSetting
     CosmosDatabaseResponse(ResourceResponse<Database> response, CosmosClient client) {
         super(response);
         if(response.getResource() == null){
-            super.setResourceSettings(null);
+            super.resourceSettings(null);
         }else{
-            super.setResourceSettings(new CosmosDatabaseSettings(response));
-            database = new CosmosDatabase(getResourceSettings().getId(), client);
+            super.resourceSettings(new CosmosDatabaseSettings(response));
+            database = new CosmosDatabase(resourceSettings().id(), client);
         }
     }
 
@@ -43,7 +43,7 @@ public class CosmosDatabaseResponse extends CosmosResponse<CosmosDatabaseSetting
      *
      * @return {@link CosmosDatabase}
      */
-    public CosmosDatabase getDatabase() {
+    public CosmosDatabase database() {
         return database;
     }
 
@@ -52,8 +52,8 @@ public class CosmosDatabaseResponse extends CosmosResponse<CosmosDatabaseSetting
      *
      * @return the cosmos database settings
      */
-    public CosmosDatabaseSettings getCosmosDatabaseSettings() {
-        return getResourceSettings();
+    public CosmosDatabaseSettings settings() {
+        return resourceSettings();
     }
 
     /**
@@ -61,7 +61,7 @@ public class CosmosDatabaseResponse extends CosmosResponse<CosmosDatabaseSetting
      *
      * @return the database quota.
      */
-    public long getDatabaseQuota(){
+    public long databaseQuota(){
         return resourceResponseWrapper.getDatabaseQuota();
     }
 
@@ -70,7 +70,7 @@ public class CosmosDatabaseResponse extends CosmosResponse<CosmosDatabaseSetting
      *
      * @return the current database usage.
      */
-    public long getDatabaseUsage(){
+    public long databaseUsage(){
         return resourceResponseWrapper.getDatabaseUsage();
     }
 

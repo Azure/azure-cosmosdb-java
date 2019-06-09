@@ -25,7 +25,7 @@ package com.microsoft.azure.cosmosdb.rx;
 import com.microsoft.azure.cosmos.CosmosClient;
 import com.microsoft.azure.cosmos.CosmosClientBuilder;
 import com.microsoft.azure.cosmos.CosmosContainer;
-import com.microsoft.azure.cosmos.CosmosItemSettings;
+import com.microsoft.azure.cosmos.CosmosItemProperties;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 
@@ -44,7 +44,7 @@ import java.util.stream.Collectors;
 public class SinglePartitionReadFeedDocumentsTest extends TestSuiteBase {
 
     private CosmosContainer createdCollection;
-    private List<CosmosItemSettings> createdDocuments;
+    private List<CosmosItemProperties> createdDocuments;
 
     private CosmosClient client;
 
@@ -56,16 +56,16 @@ public class SinglePartitionReadFeedDocumentsTest extends TestSuiteBase {
     @Test(groups = { "simple" }, timeOut = FEED_TIMEOUT)
     public void readDocuments() {
         final FeedOptions options = new FeedOptions();
-        options.setEnableCrossPartitionQuery(true);
-        options.setMaxItemCount(2);
-        final Flux<FeedResponse<CosmosItemSettings>> feedObservable = createdCollection.listItems(options);
-        final int expectedPageSize = (createdDocuments.size() + options.getMaxItemCount() - 1) / options.getMaxItemCount();
+        options.enableCrossPartitionQuery(true);
+        options.maxItemCount(2);
+        final Flux<FeedResponse<CosmosItemProperties>> feedObservable = createdCollection.listItems(options);
+        final int expectedPageSize = (createdDocuments.size() + options.maxItemCount() - 1) / options.maxItemCount();
 
-        FeedResponseListValidator<CosmosItemSettings> validator = new FeedResponseListValidator.Builder<CosmosItemSettings>()
+        FeedResponseListValidator<CosmosItemProperties> validator = new FeedResponseListValidator.Builder<CosmosItemProperties>()
                 .totalSize(createdDocuments.size())
                 .numberOfPages(expectedPageSize)
-                .exactlyContainsInAnyOrder(createdDocuments.stream().map(d -> d.getResourceId()).collect(Collectors.toList()))
-                .allPagesSatisfy(new FeedResponseValidator.Builder<CosmosItemSettings>()
+                .exactlyContainsInAnyOrder(createdDocuments.stream().map(d -> d.resourceId()).collect(Collectors.toList()))
+                .allPagesSatisfy(new FeedResponseValidator.Builder<CosmosItemProperties>()
                         .requestChargeGreaterThanOrEqualTo(1.0).build())
                 .build();
         validateQuerySuccess(feedObservable, validator, FEED_TIMEOUT);
@@ -77,7 +77,7 @@ public class SinglePartitionReadFeedDocumentsTest extends TestSuiteBase {
         createdCollection = getSharedSinglePartitionCosmosContainer(client);
         truncateCollection(createdCollection);
 
-        List<CosmosItemSettings> docDefList = new ArrayList<>();
+        List<CosmosItemProperties> docDefList = new ArrayList<>();
 
         for(int i = 0; i < 5; i++) {
             docDefList.add(getDocumentDefinition());
@@ -92,9 +92,9 @@ public class SinglePartitionReadFeedDocumentsTest extends TestSuiteBase {
         safeClose(client);
     }
 
-    private CosmosItemSettings getDocumentDefinition() {
+    private CosmosItemProperties getDocumentDefinition() {
         String uuid = UUID.randomUUID().toString();
-        CosmosItemSettings doc = new CosmosItemSettings(String.format("{ "
+        CosmosItemProperties doc = new CosmosItemProperties(String.format("{ "
             + "\"id\": \"%s\", "
             + "\"mypk\": \"%s\", "
             + "\"sgmts\": [[6519456, 1471916863], [2498434, 1455671440]]"

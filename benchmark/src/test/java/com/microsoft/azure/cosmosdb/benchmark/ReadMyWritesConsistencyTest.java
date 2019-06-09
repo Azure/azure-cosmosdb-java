@@ -70,7 +70,7 @@ public class ReadMyWritesConsistencyTest {
     private final String desiredConsistency =
             System.getProperty("DESIRED_CONSISTENCY",
                                StringUtils.defaultString(Strings.emptyToNull(
-                                       System.getenv().get("DESIRED_CONSISTENCY")), "Session"));
+                                       System.getenv().get("DESIRED_CONSISTENCY")), "SESSION"));
 
     private final String numberOfOperationsAsString =
             System.getProperty("NUMBER_OF_OPERATIONS",
@@ -88,14 +88,14 @@ public class ReadMyWritesConsistencyTest {
                 " -consistencyLevel %s -concurrency %d" +
                 " -numberOfOperations %s" +
                 " -maxRunningTimeDuration %s" +
-                " -operation ReadMyWrites -connectionMode Direct -numberOfPreCreatedDocuments 100 " +
+                " -operation ReadMyWrites -connectionMode DIRECT -numberOfPreCreatedDocuments 100 " +
                 " -printingInterval 60";
 
         String cmd = String.format(cmdFormat,
                                    TestConfigurations.HOST,
                                    TestConfigurations.MASTER_KEY,
-                                   database.getId(),
-                                   collection.getId(),
+                                   database.id(),
+                                   collection.id(),
                                    desiredConsistency,
                                    concurrency,
                                    numberOfOperationsAsString,
@@ -142,7 +142,7 @@ public class ReadMyWritesConsistencyTest {
         options.setOfferThroughput(initialCollectionThroughput);
         AsyncDocumentClient housekeepingClient = Utils.housekeepingClient();
         database = Utils.createDatabaseForTest(housekeepingClient);
-        collection = housekeepingClient.createCollection("dbs/" + database.getId(),
+        collection = housekeepingClient.createCollection("dbs/" + database.id(),
                                                          getCollectionDefinitionWithRangeRangeIndex(),
                                                          options)
                 .toBlocking().single().getResource();
@@ -169,26 +169,26 @@ public class ReadMyWritesConsistencyTest {
         PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition();
         ArrayList<String> paths = new ArrayList<>();
         paths.add("/mypk");
-        partitionKeyDef.setPaths(paths);
+        partitionKeyDef.paths(paths);
         IndexingPolicy indexingPolicy = new IndexingPolicy();
         Collection<IncludedPath> includedPaths = new ArrayList<>();
         IncludedPath includedPath = new IncludedPath();
-        includedPath.setPath("/*");
+        includedPath.path("/*");
         Collection<Index> indexes = new ArrayList<>();
-        Index stringIndex = Index.Range(DataType.String);
+        Index stringIndex = Index.Range(DataType.STRING);
         stringIndex.set("precision", -1);
         indexes.add(stringIndex);
 
-        Index numberIndex = Index.Range(DataType.Number);
+        Index numberIndex = Index.Range(DataType.NUMBER);
         numberIndex.set("precision", -1);
         indexes.add(numberIndex);
-        includedPath.setIndexes(indexes);
+        includedPath.indexes(indexes);
         includedPaths.add(includedPath);
         indexingPolicy.setIncludedPaths(includedPaths);
 
         DocumentCollection collectionDefinition = new DocumentCollection();
         collectionDefinition.setIndexingPolicy(indexingPolicy);
-        collectionDefinition.setId(UUID.randomUUID().toString());
+        collectionDefinition.id(UUID.randomUUID().toString());
         collectionDefinition.setPartitionKey(partitionKeyDef);
 
         return collectionDefinition;
@@ -202,8 +202,8 @@ public class ReadMyWritesConsistencyTest {
             // for bulk insert and later queries.
             return housekeepingClient.queryOffers(
                     String.format("SELECT * FROM r WHERE r.offerResourceId = '%s'",
-                                  collection.getResourceId())
-                    , null).flatMap(page -> Observable.from(page.getResults()))
+                                  collection.resourceId())
+                    , null).flatMap(page -> Observable.from(page.results()))
                     .first().flatMap(offer -> {
                         logger.info("going to scale up collection, newThroughput {}", newThroughput);
                         offer.setThroughput(newThroughput);

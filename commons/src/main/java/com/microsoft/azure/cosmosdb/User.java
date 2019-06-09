@@ -52,7 +52,7 @@ public class User extends Resource {
      * @return the permissions link.
      */
     public String getPermissionsLink() {
-        String selfLink = this.getSelfLink();
+        String selfLink = this.selfLink();
         if (selfLink.endsWith("/")) {
             return selfLink + super.getString(Constants.Properties.PERMISSIONS_LINK);
         } else {

@@ -36,21 +36,21 @@ public class IncludedPathTest {
                 "  'path': '\\/*'," +
                 "  'indexes': [" +
                 "    {" +
-                "      'kind': 'Range'," +
-                "      'dataType': 'String'," +
+                "      'kind': 'RANGE'," +
+                "      'dataType': 'STRING'," +
                 "      'precision': -1" +
                 "    }," +
                 "    {" +
-                "      'kind': 'Range'," +
-                "      'dataType': 'Number'," +
+                "      'kind': 'RANGE'," +
+                "      'dataType': 'NUMBER'," +
                 "      'precision': -1" +
                 "    }" +
                 "  ]" +
                 "}";
         IncludedPath path = new IncludedPath(json);
-        Collection<Index> indexes = path.getIndexes();
+        Collection<Index> indexes = path.indexes();
         assertThat(indexes).hasSize(2);
-        assertThat(indexes).usingFieldByFieldElementComparator().contains(Index.Range(DataType.String, -1));
-        assertThat(indexes).usingFieldByFieldElementComparator().contains(Index.Range(DataType.Number, -1));
+        assertThat(indexes).usingFieldByFieldElementComparator().contains(Index.Range(DataType.STRING, -1));
+        assertThat(indexes).usingFieldByFieldElementComparator().contains(Index.Range(DataType.NUMBER, -1));
     }
 }

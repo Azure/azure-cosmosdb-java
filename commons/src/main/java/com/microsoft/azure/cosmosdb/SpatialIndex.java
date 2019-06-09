@@ -39,7 +39,7 @@ public final class SpatialIndex extends Index {
      * <pre>
      * {@code
      *
-     * SpatialIndex spatialIndex = new SpatialIndex(DataType.Point);
+     * SpatialIndex spatialIndex = new SpatialIndex(DataType.POINT);
      *
      * }
      * </pre>
@@ -47,8 +47,8 @@ public final class SpatialIndex extends Index {
      * @param dataType specifies the target data type for the index path specification.
      */
     public SpatialIndex(DataType dataType) {
-        super(IndexKind.Spatial);
-        this.setDataType(dataType);
+        super(IndexKind.SPATIAL);
+        this.dataType(dataType);
     }
 
     /**
@@ -57,8 +57,8 @@ public final class SpatialIndex extends Index {
      * @param jsonString the json string that represents the index.
      */
     public SpatialIndex(String jsonString) {
-        super(jsonString, IndexKind.Spatial);
-        if (this.getDataType() == null) {
+        super(jsonString, IndexKind.SPATIAL);
+        if (this.dataType() == null) {
             throw new IllegalArgumentException("The jsonString doesn't contain a valid 'dataType'.");
         }
     }
@@ -68,12 +68,12 @@ public final class SpatialIndex extends Index {
      *
      * @return the data type.
      */
-    public DataType getDataType() {
+    public DataType dataType() {
         DataType result = null;
         try {
             result = DataType.valueOf(WordUtils.capitalize(super.getString(Constants.Properties.DATA_TYPE)));
         } catch (IllegalArgumentException e) {
-            this.getLogger().warn("Invalid index dataType value {}.", super.getString(Constants.Properties.DATA_TYPE));
+            this.getLogger().warn("INVALID index dataType value {}.", super.getString(Constants.Properties.DATA_TYPE));
         }
         return result;
     }
@@ -83,7 +83,8 @@ public final class SpatialIndex extends Index {
      *
      * @param dataType the data type.
      */
-    public void setDataType(DataType dataType) {
+    public SpatialIndex dataType(DataType dataType) {
         super.set(Constants.Properties.DATA_TYPE, dataType.name());
+        return this;
     }
 }

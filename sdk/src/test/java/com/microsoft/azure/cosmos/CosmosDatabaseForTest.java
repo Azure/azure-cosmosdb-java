@@ -28,7 +28,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.microsoft.azure.cosmos.CosmosDatabaseSettings;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.SqlParameter;
 import com.microsoft.azure.cosmosdb.SqlParameterCollection;
@@ -72,11 +71,11 @@ public class CosmosDatabaseForTest {
     }
 
     private static CosmosDatabaseForTest from(CosmosDatabase db) {
-        if (db == null || db.getId() == null || db.getLink() == null) {
+        if (db == null || db.id() == null || db.getLink() == null) {
             return null;
         }
 
-        String id = db.getId();
+        String id = db.id();
         if (id == null) {
             return null;
         }
@@ -100,7 +99,7 @@ public class CosmosDatabaseForTest {
     public static CosmosDatabaseForTest create(DatabaseManager client) {
         CosmosDatabaseSettings dbDef = new CosmosDatabaseSettings(generateId());
 
-        CosmosDatabase db = client.createDatabase(dbDef).block().getDatabase();
+        CosmosDatabase db = client.createDatabase(dbDef).block().database();
         CosmosDatabaseForTest dbForTest = CosmosDatabaseForTest.from(db);
         assertThat(dbForTest).isNotNull();
         return dbForTest;
@@ -111,16 +110,16 @@ public class CosmosDatabaseForTest {
         List<CosmosDatabaseSettings> dbs = client.queryDatabases(
                 new SqlQuerySpec("SELECT * FROM c WHERE STARTSWITH(c.id, @PREFIX)",
                                  new SqlParameterCollection(new SqlParameter("@PREFIX", CosmosDatabaseForTest.SHARED_DB_ID_PREFIX))))
-                .flatMap(page -> Flux.fromIterable(page.getResults())).collectList().block();
+                .flatMap(page -> Flux.fromIterable(page.results())).collectList().block();
 
         for (CosmosDatabaseSettings db : dbs) {
-            assertThat(db.getId()).startsWith(CosmosDatabaseForTest.SHARED_DB_ID_PREFIX);
+            assertThat(db.id()).startsWith(CosmosDatabaseForTest.SHARED_DB_ID_PREFIX);
 
-            CosmosDatabaseForTest dbForTest = CosmosDatabaseForTest.from(client.getDatabase(db.getId()));
+            CosmosDatabaseForTest dbForTest = CosmosDatabaseForTest.from(client.getDatabase(db.id()));
 
             if (db != null && dbForTest.isStale()) {
-                logger.info("Deleting database {}", db.getId());
-                dbForTest.deleteDatabase(db.getId());
+                logger.info("Deleting database {}", db.id());
+                dbForTest.deleteDatabase(db.id());
             }
         }
     }

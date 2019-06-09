@@ -34,17 +34,17 @@ public class ConnectionPolicyTest {
     @DataProvider(name = "connectionModeArgProvider")
     public Object[][] connectionModeArgProvider() {
         return new Object[][]{
-                {  ConnectionMode.Gateway },
-                {  ConnectionMode.Direct },
+                {  ConnectionMode.GATEWAY},
+                {  ConnectionMode.DIRECT},
         };
     }
 
     @Test(groups = { "unit" }, dataProvider = "connectionModeArgProvider")
     public void connectionMode(ConnectionMode connectionMode) {
         ConnectionPolicy policy = new ConnectionPolicy();
-        policy.setConnectionMode(connectionMode);
+        policy.connectionMode(connectionMode);
 
-        assertThat(policy.getConnectionMode()).isEqualTo(connectionMode);
+        assertThat(policy.connectionMode()).isEqualTo(connectionMode);
     }
 
     @DataProvider(name = "connectionProtocolModeArgProvider")

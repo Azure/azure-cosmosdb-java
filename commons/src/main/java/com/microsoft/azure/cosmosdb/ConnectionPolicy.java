@@ -24,7 +24,6 @@
 package com.microsoft.azure.cosmosdb;
 
 import java.net.InetSocketAddress;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -60,7 +59,7 @@ public final class ConnectionPolicy {
      * Constructor.
      */
     public ConnectionPolicy() {
-        this.connectionMode = ConnectionMode.Gateway;
+        this.connectionMode = ConnectionMode.GATEWAY;
         this.enableReadRequestsFallback = null;
         this.idleConnectionTimeoutInMillis = DEFAULT_IDLE_CONNECTION_TIMEOUT_IN_MILLIS;
         this.maxPoolSize = DEFAULT_MAX_POOL_SIZE;
@@ -76,7 +75,7 @@ public final class ConnectionPolicy {
      *
      * @return the default connection policy.
      */
-    public static ConnectionPolicy GetDefault() {
+    public static ConnectionPolicy defaultPolicy() {
         if (ConnectionPolicy.default_policy == null) {
             ConnectionPolicy.default_policy = new ConnectionPolicy();
         }
@@ -89,7 +88,7 @@ public final class ConnectionPolicy {
      *
      * @return the request timeout in milliseconds.
      */
-    public int getRequestTimeoutInMillis() {
+    public int requestTimeoutInMillis() {
         return this.requestTimeoutInMillis;
     }
 
@@ -99,28 +98,9 @@ public final class ConnectionPolicy {
      *
      * @param requestTimeoutInMillis the request timeout in milliseconds.
      */
-    public void setRequestTimeoutInMillis(int requestTimeoutInMillis) {
+    public ConnectionPolicy requestTimeoutInMillis(int requestTimeoutInMillis) {
         this.requestTimeoutInMillis = requestTimeoutInMillis;
-    }
-
-    /**
-     * Gets or sets time to wait for response from network peer for attachment
-     * content (aka media) operations.
-     *
-     * @return the media request timeout in milliseconds.
-     */
-    public int getMediaRequestTimeoutInMillis() {
-        return this.mediaRequestTimeoutInMillis;
-    }
-
-    /**
-     * Gets or sets Time to wait for response from network peer for attachment
-     * content (aka media) operations.
-     *
-     * @param mediaRequestTimeoutInMillis the media request timeout in milliseconds.
-     */
-    public void setMediaRequestTimeoutInMillis(int mediaRequestTimeoutInMillis) {
-        this.mediaRequestTimeoutInMillis = mediaRequestTimeoutInMillis;
+        return this;
     }
 
     /**
@@ -128,7 +108,7 @@ public final class ConnectionPolicy {
      *
      * @return the connection mode.
      */
-    public ConnectionMode getConnectionMode() {
+    public ConnectionMode connectionMode() {
         return this.connectionMode;
     }
 
@@ -137,26 +117,9 @@ public final class ConnectionPolicy {
      *
      * @param connectionMode the connection mode.
      */
-    public void setConnectionMode(ConnectionMode connectionMode) {
+    public ConnectionPolicy connectionMode(ConnectionMode connectionMode) {
         this.connectionMode = connectionMode;
-    }
-
-    /**
-     * Gets the attachment content (aka media) download mode.
-     *
-     * @return the media read mode.
-     */
-    public MediaReadMode getMediaReadMode() {
-        return this.mediaReadMode;
-    }
-
-    /**
-     * Sets the attachment content (aka media) download mode.
-     *
-     * @param mediaReadMode the media read mode.
-     */
-    public void setMediaReadMode(MediaReadMode mediaReadMode) {
-        this.mediaReadMode = mediaReadMode;
+        return this;
     }
 
     /**
@@ -164,7 +127,7 @@ public final class ConnectionPolicy {
      *
      * @return connection pool size.
      */
-    public int getMaxPoolSize() {
+    public int maxPoolSize() {
         return this.maxPoolSize;
     }
 
@@ -174,8 +137,9 @@ public final class ConnectionPolicy {
      *
      * @param maxPoolSize The value of the connection pool size.
      */
-    public void setMaxPoolSize(int maxPoolSize) {
+    public ConnectionPolicy maxPoolSize(int maxPoolSize) {
         this.maxPoolSize = maxPoolSize;
+        return this;
     }
 
     /**
@@ -184,7 +148,7 @@ public final class ConnectionPolicy {
      *
      * @return Idle connection timeout.
      */
-    public int getIdleConnectionTimeoutInMillis() {
+    public int idleConnectionTimeoutInMillis() {
         return this.idleConnectionTimeoutInMillis;
     }
 
@@ -194,8 +158,9 @@ public final class ConnectionPolicy {
      *
      * @param idleConnectionTimeoutInMillis the timeout for an idle connection in seconds.
      */
-    public void setIdleConnectionTimeoutInMillis(int idleConnectionTimeoutInMillis) {
+    public ConnectionPolicy idleConnectionTimeoutInMillis(int idleConnectionTimeoutInMillis) {
         this.idleConnectionTimeoutInMillis = idleConnectionTimeoutInMillis;
+        return this;
     }
 
     /**
@@ -203,7 +168,7 @@ public final class ConnectionPolicy {
      *
      * @return the value of user-agent suffix.
      */
-    public String getUserAgentSuffix() {
+    public String userAgentSuffix() {
         return this.userAgentSuffix;
     }
 
@@ -213,8 +178,9 @@ public final class ConnectionPolicy {
      * @param userAgentSuffix The value to be appended to the user-agent header, this is
      *                        used for monitoring purposes.
      */
-    public void setUserAgentSuffix(String userAgentSuffix) {
+    public ConnectionPolicy userAgentSuffix(String userAgentSuffix) {
         this.userAgentSuffix = userAgentSuffix;
+        return this;
     }
 
     /**
@@ -222,7 +188,7 @@ public final class ConnectionPolicy {
      *
      * @return the RetryOptions instance.
      */
-    public RetryOptions getRetryOptions() {
+    public RetryOptions retryOptions() {
         return this.retryOptions;
     }
 
@@ -236,12 +202,13 @@ public final class ConnectionPolicy {
      *
      * @param retryOptions the RetryOptions instance.
      */
-    public void setRetryOptions(RetryOptions retryOptions) {
+    public ConnectionPolicy retryOptions(RetryOptions retryOptions) {
         if (retryOptions == null) {
             throw new IllegalArgumentException("retryOptions value must not be null.");
         }
 
         this.retryOptions = retryOptions;
+        return this;
     }
 
     /**
@@ -249,7 +216,7 @@ public final class ConnectionPolicy {
      *
      * @return whether endpoint discovery is enabled.
      */
-    public boolean getEnableEndpointDiscovery() {
+    public boolean enableEndpointDiscovery() {
         return this.enableEndpointDiscovery;
     }
 
@@ -264,8 +231,9 @@ public final class ConnectionPolicy {
      *
      * @param enableEndpointDiscovery true if EndpointDiscovery is enabled.
      */
-    public void setEnableEndpointDiscovery(boolean enableEndpointDiscovery) {
+    public ConnectionPolicy enableEndpointDiscovery(boolean enableEndpointDiscovery) {
         this.enableEndpointDiscovery = enableEndpointDiscovery;
+        return this;
     }
 
     /**
@@ -277,19 +245,19 @@ public final class ConnectionPolicy {
      * to true has no effect until EnableMultipleWriteLocations in DatabaseAccount
      * is also set to true.
      *
-     * Default value is false indicating that writes are only directed to
+     * DEFAULT value is false indicating that writes are only directed to
      * first region in PreferredLocations property.
      *
      * @return flag to enable writes on any locations (regions) for geo-replicated database accounts.
      */
-    public boolean isUsingMultipleWriteLocations() {
+    public boolean usingMultipleWriteLocations() {
         return this.usingMultipleWriteLocations;
     }
 
     /**
      * Gets whether to allow for reads to go to multiple regions configured on an account of Azure Cosmos DB service.
      *
-     * Default value is null.
+     * DEFAULT value is null.
      *
      * If this property is not set, the default is true for all Consistency Levels other than Bounded Staleness,
      * The default is false for Bounded Staleness.
@@ -298,7 +266,7 @@ public final class ConnectionPolicy {
      *
      * @return flag to allow for reads to go to multiple regions configured on an account of Azure Cosmos DB service.
      */
-    public Boolean isEnableReadRequestsFallback() {
+    public Boolean enableReadRequestsFallback() {
         return this.enableReadRequestsFallback;
     }
 
@@ -311,19 +279,20 @@ public final class ConnectionPolicy {
      * to true has no effect until EnableMultipleWriteLocations in DatabaseAccount
      * is also set to true.
      *
-     * Default value is false indicating that writes are only directed to
+     * DEFAULT value is false indicating that writes are only directed to
      * first region in PreferredLocations property.
      *
      * @param usingMultipleWriteLocations flag to enable writes on any locations (regions) for geo-replicated database accounts.
      */
-    public void setUsingMultipleWriteLocations(boolean usingMultipleWriteLocations) {
+    public ConnectionPolicy usingMultipleWriteLocations(boolean usingMultipleWriteLocations) {
         this.usingMultipleWriteLocations = usingMultipleWriteLocations;
+        return this;
     }
 
     /**
      * Sets whether to allow for reads to go to multiple regions configured on an account of Azure Cosmos DB service.
      *
-     * Default value is null.
+     * DEFAULT value is null.
      *
      * If this property is not set, the default is true for all Consistency Levels other than Bounded Staleness,
      * The default is false for Bounded Staleness.
@@ -332,8 +301,9 @@ public final class ConnectionPolicy {
      *
      * @param enableReadRequestsFallback flag to enable reads to go to multiple regions configured on an account of Azure Cosmos DB service.
      */
-    public void setEnableReadRequestsFallback(Boolean enableReadRequestsFallback) {
+    public ConnectionPolicy enableReadRequestsFallback(Boolean enableReadRequestsFallback) {
         this.enableReadRequestsFallback = enableReadRequestsFallback;
+        return this;
     }
 
     /**
@@ -341,7 +311,7 @@ public final class ConnectionPolicy {
      *
      * @return the list of preferred location.
      */
-    public List<String> getPreferredLocations() {
+    public List<String> preferredLocations() {
         return this.preferredLocations != null ? preferredLocations : Collections.emptyList();
     }
 
@@ -357,8 +327,9 @@ public final class ConnectionPolicy {
      *
      * @param preferredLocations the list of preferred locations.
      */
-    public void setPreferredLocations(List<String> preferredLocations) {
+    public ConnectionPolicy preferredLocations(List<String> preferredLocations) {
         this.preferredLocations = preferredLocations;
+        return this;
     }
 
     /**
@@ -366,7 +337,7 @@ public final class ConnectionPolicy {
      *
      * @return the value of proxyHost.
      */
-    public InetSocketAddress getProxy() {
+    public InetSocketAddress proxy() {
         return this.inetSocketProxyAddress;
     }
 
@@ -376,8 +347,9 @@ public final class ConnectionPolicy {
      * @param proxyHost The proxy server host.
      * @param proxyPort The proxy server port.
      */
-    public void setProxy(String proxyHost, int proxyPort) {
+    public ConnectionPolicy proxy(String proxyHost, int proxyPort) {
         this.inetSocketProxyAddress = new InetSocketAddress(proxyHost, proxyPort);
+        return this;
     }
 
     @Override

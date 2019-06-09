@@ -23,20 +23,8 @@
 package com.microsoft.azure.cosmosdb.rx.examples;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import com.microsoft.azure.cosmosdb.ConnectionMode;
-import com.microsoft.azure.cosmosdb.ConnectionPolicy;
-import com.microsoft.azure.cosmosdb.ConsistencyLevel;
-import com.microsoft.azure.cosmosdb.DataType;
-import com.microsoft.azure.cosmosdb.Database;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
-import com.microsoft.azure.cosmosdb.DocumentCollection;
-import com.microsoft.azure.cosmosdb.FeedResponse;
-import com.microsoft.azure.cosmosdb.IncludedPath;
-import com.microsoft.azure.cosmosdb.Index;
-import com.microsoft.azure.cosmosdb.IndexingPolicy;
-import com.microsoft.azure.cosmosdb.PartitionKeyDefinition;
-import com.microsoft.azure.cosmosdb.RequestOptions;
-import com.microsoft.azure.cosmosdb.ResourceResponse;
+import com.microsoft.azure.cosmosdb.*;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -91,12 +79,12 @@ public class CollectionCRUDAsyncAPITest {
     @BeforeClass(groups = "samples", timeOut = TIMEOUT)
     public void setUp() {
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
-        connectionPolicy.setConnectionMode(ConnectionMode.Direct);
+        connectionPolicy.connectionMode(ConnectionMode.DIRECT);
         asyncClient = new AsyncDocumentClient.Builder()
                 .withServiceEndpoint(TestConfigurations.HOST)
                 .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
                 .withConnectionPolicy(connectionPolicy)
-                .withConsistencyLevel(ConsistencyLevel.Session)
+                .withConsistencyLevel(ConsistencyLevel.SESSION)
                 .build();
 
         createdDatabase = Utils.createDatabaseForTest(asyncClient);
@@ -105,11 +93,11 @@ public class CollectionCRUDAsyncAPITest {
     @BeforeMethod(groups = "samples", timeOut = TIMEOUT)
     public void before() {
         collectionDefinition = new DocumentCollection();
-        collectionDefinition.setId(UUID.randomUUID().toString());
+        collectionDefinition.id(UUID.randomUUID().toString());
         PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition();
         ArrayList<String> paths = new ArrayList<String>();
         paths.add("/mypk");
-        partitionKeyDef.setPaths(paths);
+        partitionKeyDef.paths(paths);
         collectionDefinition.setPartitionKey(partitionKeyDef);
     }
 
@@ -120,7 +108,7 @@ public class CollectionCRUDAsyncAPITest {
     }
 
     /**
-     * Create a document collection using async api.
+     * CREATE a document collection using async api.
      * If you want a single partition collection with 10,000 RU/s throughput,
      * the only way to do so is to create a single partition collection with lower
      * throughput (400) and then increase the throughput.
@@ -149,7 +137,7 @@ public class CollectionCRUDAsyncAPITest {
     }
 
     /**
-     * Create a document collection using async api.
+     * CREATE a document collection using async api.
      * This test uses java8 lambda expression.
      * See testCreateCollection_Async_withoutLambda for usage without lambda
      * expressions.
@@ -181,7 +169,7 @@ public class CollectionCRUDAsyncAPITest {
     }
 
     /**
-     * Create a document Collection using async api, without java8 lambda expressions
+     * CREATE a document Collection using async api, without java8 lambda expressions
      */
     @Test(groups = "samples", timeOut = TIMEOUT)
     public void createCollection_Async_withoutLambda() throws Exception {
@@ -216,7 +204,7 @@ public class CollectionCRUDAsyncAPITest {
     }
 
     /**
-     * Create a collection in a blocking manner
+     * CREATE a collection in a blocking manner
      */
     @Test(groups = "samples", timeOut = TIMEOUT)
     public void createCollection_toBlocking() {
@@ -239,7 +227,7 @@ public class CollectionCRUDAsyncAPITest {
     public void createCollection_toBlocking_CollectionAlreadyExists_Fails() {
         asyncClient.createCollection(getDatabaseLink(), collectionDefinition, null).toBlocking().single();
 
-        // Create the collection for test.
+        // CREATE the collection for test.
         Observable<ResourceResponse<DocumentCollection>> collectionForTestObservable = asyncClient
                 .createCollection(getDatabaseLink(), collectionDefinition, null);
 
@@ -248,7 +236,7 @@ public class CollectionCRUDAsyncAPITest {
                     .single(); // Gets the single result
             assertThat("Should not reach here", false);
         } catch (Exception e) {
-            assertThat("Collection already exists.", ((DocumentClientException) e.getCause()).getStatusCode(),
+            assertThat("Collection already exists.", ((CosmosClientException) e.getCause()).statusCode(),
                        equalTo(409));
         }
     }
@@ -273,16 +261,16 @@ public class CollectionCRUDAsyncAPITest {
     }
 
     /**
-     * Read a Collection in an Async manner
+     * READ a Collection in an Async manner
      */
     @Test(groups = "samples", timeOut = TIMEOUT)
     public void createAndReadCollection() throws Exception {
-        // Create a Collection
+        // CREATE a Collection
         DocumentCollection documentCollection = asyncClient
                 .createCollection(getDatabaseLink(), collectionDefinition, null).toBlocking().single()
                 .getResource();
 
-        // Read the created collection using async api
+        // READ the created collection using async api
         Observable<ResourceResponse<DocumentCollection>> readCollectionObservable = asyncClient
                 .readCollection(getCollectionLink(documentCollection), null);
 
@@ -303,16 +291,16 @@ public class CollectionCRUDAsyncAPITest {
     }
 
     /**
-     * Delete a Collection in an Async manner
+     * DELETE a Collection in an Async manner
      */
     @Test(groups = "samples", timeOut = TIMEOUT)
     public void createAndDeleteCollection() throws Exception {
-        // Create a Collection
+        // CREATE a Collection
         DocumentCollection documentCollection = asyncClient
                 .createCollection(getDatabaseLink(), collectionDefinition, null).toBlocking().single()
                 .getResource();
 
-        // Delete the created collection using async api
+        // DELETE the created collection using async api
         Observable<ResourceResponse<DocumentCollection>> deleteCollectionObservable = asyncClient
                 .deleteCollection(getCollectionLink(documentCollection), null);
 
@@ -337,14 +325,14 @@ public class CollectionCRUDAsyncAPITest {
      */
     @Test(groups = "samples", timeOut = TIMEOUT)
     public void collectionCreateAndQuery() throws Exception {
-        // Create a Collection
+        // CREATE a Collection
         DocumentCollection collection = asyncClient
                 .createCollection(getDatabaseLink(), collectionDefinition, null).toBlocking().single()
                 .getResource();
 
         // Query the created collection using async api
         Observable<FeedResponse<DocumentCollection>> queryCollectionObservable = asyncClient.queryCollections(
-                getDatabaseLink(), String.format("SELECT * FROM r where r.id = '%s'", collection.getId()),
+                getDatabaseLink(), String.format("SELECT * FROM r where r.id = '%s'", collection.id()),
                 null);
 
         final CountDownLatch countDownLatch = new CountDownLatch(1);
@@ -355,13 +343,13 @@ public class CollectionCRUDAsyncAPITest {
 
             // First element of the list should have only 1 result
             FeedResponse<DocumentCollection> collectionFeedResponse = collectionFeedResponseList.get(0);
-            assertThat(collectionFeedResponse.getResults().size(), equalTo(1));
+            assertThat(collectionFeedResponse.results().size(), equalTo(1));
 
             // This collection should have the same id as the one we created
-            DocumentCollection foundCollection = collectionFeedResponse.getResults().get(0);
-            assertThat(foundCollection.getId(), equalTo(collection.getId()));
+            DocumentCollection foundCollection = collectionFeedResponse.results().get(0);
+            assertThat(foundCollection.id(), equalTo(collection.id()));
 
-            System.out.println(collectionFeedResponse.getActivityId());
+            System.out.println(collectionFeedResponse.activityId());
             countDownLatch.countDown();
         }, error -> {
             System.err.println("an error occurred while querying the collection: actual cause: " + error.getMessage());
@@ -373,39 +361,39 @@ public class CollectionCRUDAsyncAPITest {
     }
 
     private String getDatabaseLink() {
-        return "dbs/" + createdDatabase.getId();
+        return "dbs/" + createdDatabase.id();
     }
 
     private String getCollectionLink(DocumentCollection collection) {
-        return "dbs/" + createdDatabase.getId() + "/colls/" + collection.getId();
+        return "dbs/" + createdDatabase.id() + "/colls/" + collection.id();
     }
 
     private DocumentCollection getMultiPartitionCollectionDefinition() {
         DocumentCollection collectionDefinition = new DocumentCollection();
-        collectionDefinition.setId(UUID.randomUUID().toString());
+        collectionDefinition.id(UUID.randomUUID().toString());
 
         // Set the partitionKeyDefinition for a partitioned collection.
         // Here, we are setting the partitionKey of the Collection to be /city
         PartitionKeyDefinition partitionKeyDefinition = new PartitionKeyDefinition();
         List<String> paths = new ArrayList<>();
         paths.add("/city");
-        partitionKeyDefinition.setPaths(paths);
+        partitionKeyDefinition.paths(paths);
         collectionDefinition.setPartitionKey(partitionKeyDefinition);
 
         // Set indexing policy to be range range for string and number
         IndexingPolicy indexingPolicy = new IndexingPolicy();
         Collection<IncludedPath> includedPaths = new ArrayList<>();
         IncludedPath includedPath = new IncludedPath();
-        includedPath.setPath("/*");
+        includedPath.path("/*");
         Collection<Index> indexes = new ArrayList<>();
-        Index stringIndex = Index.Range(DataType.String);
+        Index stringIndex = Index.Range(DataType.STRING);
         stringIndex.set("precision", -1);
         indexes.add(stringIndex);
 
-        Index numberIndex = Index.Range(DataType.Number);
+        Index numberIndex = Index.Range(DataType.NUMBER);
         numberIndex.set("precision", -1);
         indexes.add(numberIndex);
-        includedPath.setIndexes(indexes);
+        includedPath.indexes(indexes);
         includedPaths.add(includedPath);
         indexingPolicy.setIncludedPaths(includedPaths);
         collectionDefinition.setIndexingPolicy(indexingPolicy);

@@ -39,7 +39,7 @@ public final class RangeIndex extends Index {
      * <pre>
      * {@code
      *
-     * RangeIndex rangeIndex = new RangeIndex(DataType.Number);
+     * RangeIndex rangeIndex = new RangeIndex(DataType.NUMBER);
      *
      * }
      * </pre>
@@ -47,8 +47,8 @@ public final class RangeIndex extends Index {
      * @param dataType the data type.
      */
     public RangeIndex(DataType dataType) {
-        super(IndexKind.Range);
-        this.setDataType(dataType);
+        super(IndexKind.RANGE);
+        this.dataType(dataType);
     }
 
     /**
@@ -56,7 +56,7 @@ public final class RangeIndex extends Index {
      * <pre>
      * {@code
      *
-     * RangeIndex rangeIndex = new RangeIndex(DataType.Number, -1);
+     * RangeIndex rangeIndex = new RangeIndex(DataType.NUMBER, -1);
      *
      * }
      * </pre>
@@ -64,9 +64,9 @@ public final class RangeIndex extends Index {
      * @param precision  the precision of the RangeIndex
      */
     public RangeIndex(DataType dataType, int precision) {
-        super(IndexKind.Range);
-        this.setDataType(dataType);
-        this.setPrecision(precision);
+        super(IndexKind.RANGE);
+        this.dataType(dataType);
+        this.precision(precision);
     }
 
     /**
@@ -75,8 +75,8 @@ public final class RangeIndex extends Index {
      * @param jsonString the json string that represents the index.
      */
     public RangeIndex(String jsonString) {
-        super(jsonString, IndexKind.Range);
-        if (this.getDataType() == null) {
+        super(jsonString, IndexKind.RANGE);
+        if (this.dataType() == null) {
             throw new IllegalArgumentException("The jsonString doesn't contain a valid 'dataType'.");
         }
     }
@@ -86,12 +86,12 @@ public final class RangeIndex extends Index {
      *
      * @return the data type.
      */
-    public DataType getDataType() {
+    public DataType dataType() {
         DataType result = null;
         try {
             result = DataType.valueOf(WordUtils.capitalize(super.getString(Constants.Properties.DATA_TYPE)));
         } catch (IllegalArgumentException e) {
-            this.getLogger().warn("Invalid index dataType value {}.", super.getString(Constants.Properties.DATA_TYPE));
+            this.getLogger().warn("INVALID index dataType value {}.", super.getString(Constants.Properties.DATA_TYPE));
         }
         return result;
     }
@@ -101,8 +101,9 @@ public final class RangeIndex extends Index {
      *
      * @param dataType the data type.
      */
-    public void setDataType(DataType dataType) {
+    public RangeIndex dataType(DataType dataType) {
         super.set(Constants.Properties.DATA_TYPE, dataType.name());
+        return this;
     }
 
     /**
@@ -110,7 +111,7 @@ public final class RangeIndex extends Index {
      *
      * @return the precision.
      */
-    public int getPrecision() {
+    public int precision() {
         return super.getInt(Constants.Properties.PRECISION);
     }
 
@@ -119,8 +120,9 @@ public final class RangeIndex extends Index {
      *
      * @param precision the precision.
      */
-    public void setPrecision(int precision) {
+    public RangeIndex precision(int precision) {
         super.set(Constants.Properties.PRECISION, precision);
+        return this;
     }
 
     boolean hasPrecision() {

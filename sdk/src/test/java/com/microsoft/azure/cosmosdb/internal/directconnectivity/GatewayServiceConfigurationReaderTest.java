@@ -92,7 +92,7 @@ public class GatewayServiceConfigurationReaderTest extends TestSuiteBase {
         ClientUnderTest clientUnderTest = SpyClientUnderTestFactory.createClientUnderTest(this.clientBuilder);
         httpClient = clientUnderTest.getSpyHttpClient();
         baseAuthorizationTokenProvider = new BaseAuthorizationTokenProvider(TestConfigurations.MASTER_KEY);
-        connectionPolicy = ConnectionPolicy.GetDefault();
+        connectionPolicy = ConnectionPolicy.defaultPolicy();
         mockGatewayServiceConfigurationReader = new GatewayServiceConfigurationReader(new URI(TestConfigurations.HOST),
                 false, TestConfigurations.MASTER_KEY, connectionPolicy, baseAuthorizationTokenProvider, mockHttpClient);
 
@@ -166,7 +166,7 @@ public class GatewayServiceConfigurationReaderTest extends TestSuiteBase {
         testSubscriber.assertNoErrors();
         testSubscriber.assertCompleted();
         testSubscriber.assertValueCount(1);
-        assertThat(testSubscriber.getOnNextEvents().get(0).getId()).isEqualTo(expectedDatabaseAccount.getId());
+        assertThat(testSubscriber.getOnNextEvents().get(0).id()).isEqualTo(expectedDatabaseAccount.id());
         assertThat(testSubscriber.getOnNextEvents().get(0).getAddressesLink())
                 .isEqualTo(expectedDatabaseAccount.getAddressesLink());
         assertThat(testSubscriber.getOnNextEvents().get(0).getWritableLocations().iterator().next().getEndpoint())

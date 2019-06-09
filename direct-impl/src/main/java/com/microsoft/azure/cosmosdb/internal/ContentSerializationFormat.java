@@ -31,7 +31,7 @@ public enum ContentSerializationFormat {
     JsonText,
 
     /**
-     * Custom binary for Cosmos DB that encodes a superset of JSON values.
+     * CUSTOM binary for Cosmos DB that encodes a superset of JSON values.
      */
     CosmosBinary,
 }

@@ -73,7 +73,7 @@ public class PartitionSynchronizerImpl implements PartitionSynchronizer {
         return this.enumPartitionKeyRanges()
             .map(partitionKeyRange -> {
                 // TODO: log the partition key ID found.
-                return partitionKeyRange.getId();
+                return partitionKeyRange.id();
             })
             .collectList()
             .flatMap( partitionKeyRangeIds -> {
@@ -99,7 +99,7 @@ public class PartitionSynchronizerImpl implements PartitionSynchronizer {
         // After a split, the children are either all or none available
         return this.enumPartitionKeyRanges()
             .filter(range -> range != null && range.getParents() != null && range.getParents().contains(leaseToken))
-            .map(PartitionKeyRange::getId)
+            .map(PartitionKeyRange::id)
             .collectList()
             .flatMapMany(addedLeaseTokens -> {
                 if (addedLeaseTokens.size() == 0) {
@@ -119,14 +119,14 @@ public class PartitionSynchronizerImpl implements PartitionSynchronizer {
     }
 
     private Flux<PartitionKeyRange> enumPartitionKeyRanges() {
-        // String partitionKeyRangesPath = String.format("%spkranges", this.collectionSelfLink);
+        // STRING partitionKeyRangesPath = STRING.format("%spkranges", this.collectionSelfLink);
         String partitionKeyRangesPath = CosmosContainer.getSelfLink(this.collectionSelfLink);
         FeedOptions feedOptions = new FeedOptions();
-        feedOptions.setMaxItemCount(this.maxBatchSize);
-        feedOptions.setRequestContinuation(null);
+        feedOptions.maxItemCount(this.maxBatchSize);
+        feedOptions.requestContinuation(null);
 
         return this.documentClient.readPartitionKeyRangeFeed(partitionKeyRangesPath, feedOptions)
-            .map(partitionKeyRangeFeedResponse -> partitionKeyRangeFeedResponse.getResults())
+            .map(partitionKeyRangeFeedResponse -> partitionKeyRangeFeedResponse.results())
             .flatMap(partitionKeyRangeList -> Flux.fromIterable(partitionKeyRangeList))
             .onErrorResume(throwable -> {
                 // TODO: Log the exception.

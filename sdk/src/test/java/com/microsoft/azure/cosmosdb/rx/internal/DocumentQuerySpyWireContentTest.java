@@ -25,7 +25,6 @@ package com.microsoft.azure.cosmosdb.rx.internal;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -36,10 +35,8 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
-import com.microsoft.azure.cosmosdb.DataType;
 import com.microsoft.azure.cosmosdb.Database;
 import com.microsoft.azure.cosmosdb.Document;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
@@ -65,11 +62,11 @@ public class DocumentQuerySpyWireContentTest extends TestSuiteBase {
     private SpyClientUnderTestFactory.ClientUnderTest client;
 
     public String getSinglePartitionCollectionLink() {
-        return Utils.getCollectionNameLink(createdDatabase.getId(), createdSinglePartitionCollection.getId());
+        return Utils.getCollectionNameLink(createdDatabase.id(), createdSinglePartitionCollection.id());
     }
 
     public String getMultiPartitionCollectionLink() {
-        return Utils.getCollectionNameLink(createdDatabase.getId(), createdMultiPartitionCollection.getId());
+        return Utils.getCollectionNameLink(createdDatabase.id(), createdMultiPartitionCollection.id());
     }
 
     @Factory(dataProvider = "clientBuilders")
@@ -81,28 +78,28 @@ public class DocumentQuerySpyWireContentTest extends TestSuiteBase {
     public static Object[][] responseContinuationTokenLimitParamProvider() {
 
         FeedOptions options1 = new FeedOptions();
-        options1.setMaxItemCount(1);
-        options1.setResponseContinuationTokenLimitInKb(5);
-        options1.setPartitionKey(new PartitionKey("99"));
+        options1.maxItemCount(1);
+        options1.responseContinuationTokenLimitInKb(5);
+        options1.partitionKey(new PartitionKey("99"));
         String query1 = "Select * from r";
         boolean multiPartitionCollection1 = true;
 
         FeedOptions options2 = new FeedOptions();
-        options2.setMaxItemCount(1);
-        options2.setResponseContinuationTokenLimitInKb(5);
-        options2.setPartitionKey(new PartitionKey("99"));
+        options2.maxItemCount(1);
+        options2.responseContinuationTokenLimitInKb(5);
+        options2.partitionKey(new PartitionKey("99"));
         String query2 = "Select * from r order by r.prop";
         boolean multiPartitionCollection2 = false;
 
         FeedOptions options3 = new FeedOptions();
-        options3.setMaxItemCount(1);
-        options3.setResponseContinuationTokenLimitInKb(5);
-        options3.setPartitionKey(new PartitionKey("99"));
+        options3.maxItemCount(1);
+        options3.responseContinuationTokenLimitInKb(5);
+        options3.partitionKey(new PartitionKey("99"));
         String query3 = "Select * from r";
         boolean multiPartitionCollection3 = false;
 
         FeedOptions options4 = new FeedOptions();
-        options4.setPartitionKey(new PartitionKey("99"));
+        options4.partitionKey(new PartitionKey("99"));
         String query4 = "Select * from r order by r.prop";
         boolean multiPartitionCollection4 = false;
 
@@ -128,7 +125,7 @@ public class DocumentQuerySpyWireContentTest extends TestSuiteBase {
         Observable<FeedResponse<Document>> queryObservable = client
                 .queryDocuments(collectionLink, query, options);
 
-        List<Document> results = queryObservable.flatMap(p -> Observable.from(p.getResults()))
+        List<Document> results = queryObservable.flatMap(p -> Observable.from(p.results()))
             .toList().toBlocking().single();
 
         assertThat(results.size()).describedAs("total results").isGreaterThanOrEqualTo(1);
@@ -136,7 +133,7 @@ public class DocumentQuerySpyWireContentTest extends TestSuiteBase {
         List<HttpClientRequest<ByteBuf>> requests = client.getCapturedRequests();
 
         for(HttpClientRequest<ByteBuf> req: requests) {
-            validateRequestHasContinuationTokenLimit(req, options.getResponseContinuationTokenLimitInKb());
+            validateRequestHasContinuationTokenLimit(req, options.responseContinuationTokenLimitInKb());
         }
     }
 
@@ -186,7 +183,7 @@ public class DocumentQuerySpyWireContentTest extends TestSuiteBase {
         TimeUnit.SECONDS.sleep(1);
 
         FeedOptions options = new FeedOptions();
-        options.setEnableCrossPartitionQuery(true);
+        options.enableCrossPartitionQuery(true);
         
         // do the query once to ensure the collection is cached.
         client.queryDocuments(getMultiPartitionCollectionLink(), "select * from root", options)

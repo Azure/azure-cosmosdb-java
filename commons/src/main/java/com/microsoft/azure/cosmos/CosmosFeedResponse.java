@@ -34,7 +34,7 @@ public class CosmosFeedResponse<T extends Resource> {
 
     //Temporary code. Used for testing conversion(one old resource type to new in feed)
     CosmosFeedResponse(FeedResponse<T> feedResponse, Class<T> klass) {
-        results = feedResponse.getResults().stream().map(resource -> {
+        results = feedResponse.results().stream().map(resource -> {
             T item = null;
             try {
                 item = klass.getConstructor(Resource.class).newInstance(resource);

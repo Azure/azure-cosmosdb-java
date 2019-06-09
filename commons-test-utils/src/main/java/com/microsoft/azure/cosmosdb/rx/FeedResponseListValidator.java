@@ -26,13 +26,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import com.microsoft.azure.cosmos.CosmosItemSettings;
+import com.microsoft.azure.cosmos.CosmosItemProperties;
 import com.microsoft.azure.cosmosdb.BridgeInternal;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.microsoft.azure.cosmosdb.CompositePath;
@@ -65,7 +64,7 @@ public interface FeedResponseListValidator<T extends Resource> {
             validators.add(new FeedResponseListValidator<T>() {
                 @Override
                 public void validate(List<FeedResponse<T>> feedList) {
-                    int resultCount = feedList.stream().mapToInt(f -> f.getResults().size()).sum();
+                    int resultCount = feedList.stream().mapToInt(f -> f.results().size()).sum();
                     assertThat(resultCount)
                     .describedAs("total number of results").isEqualTo(expectedCount);
                 }
@@ -79,8 +78,8 @@ public interface FeedResponseListValidator<T extends Resource> {
                 public void validate(List<FeedResponse<T>> feedList) {
                     List<String> actualIds = feedList
                             .stream()
-                            .flatMap(f -> f.getResults().stream())
-                            .map(r -> r.getResourceId())
+                            .flatMap(f -> f.results().stream())
+                            .map(r -> r.resourceId())
                             .collect(Collectors.toList());
                     assertThat(actualIds)
                     .describedAs("Resource IDs of results")
@@ -96,8 +95,8 @@ public interface FeedResponseListValidator<T extends Resource> {
                 public void validate(List<FeedResponse<T>> feedList) {
                     List<String> actualIds = feedList
                             .stream()
-                            .flatMap(f -> f.getResults().stream())
-                            .map(r -> r.getId())
+                            .flatMap(f -> f.results().stream())
+                            .map(r -> r.id())
                             .collect(Collectors.toList());
                     assertThat(actualIds)
                     .describedAs("IDs of results")
@@ -113,11 +112,11 @@ public interface FeedResponseListValidator<T extends Resource> {
                 public void validate(List<FeedResponse<T>> feedList) {
                     List<T> resources = feedList
                             .stream()
-                            .flatMap(f -> f.getResults().stream())
+                            .flatMap(f -> f.results().stream())
                             .collect(Collectors.toList());
 
                     for(T r: resources) {
-                        ResourceValidator<T> validator = resourceIDToValidator.get(r.getResourceId());
+                        ResourceValidator<T> validator = resourceIDToValidator.get(r.resourceId());
                         assertThat(validator).isNotNull();
                         validator.validate(r);
                     }
@@ -132,8 +131,8 @@ public interface FeedResponseListValidator<T extends Resource> {
                 public void validate(List<FeedResponse<T>> feedList) {
                     List<String> actualIds = feedList
                             .stream()
-                            .flatMap(f -> f.getResults().stream())
-                            .map(r -> r.getResourceId())
+                            .flatMap(f -> f.results().stream())
+                            .map(r -> r.resourceId())
                             .collect(Collectors.toList());
                     assertThat(actualIds)
                     .describedAs("Resource IDs of results")
@@ -171,7 +170,7 @@ public interface FeedResponseListValidator<T extends Resource> {
             validators.add(new FeedResponseListValidator<T>() {
                 @Override
                 public void validate(List<FeedResponse<T>> feedList) {
-                    assertThat(feedList.stream().mapToDouble(p -> p.getRequestCharge()).sum())
+                    assertThat(feedList.stream().mapToDouble(p -> p.requestCharge()).sum())
                     .describedAs("total request charge")
                     .isGreaterThanOrEqualTo(minimumCharge);
                 }
@@ -204,11 +203,11 @@ public interface FeedResponseListValidator<T extends Resource> {
         }
 
         public Builder<T> withAggregateValue(Object value) {
-            validators.add(new FeedResponseListValidator<CosmosItemSettings>() {
+            validators.add(new FeedResponseListValidator<CosmosItemProperties>() {
                 @Override
-                public void validate(List<FeedResponse<CosmosItemSettings>> feedList) {
-                    List<CosmosItemSettings> list = feedList.get(0).getResults();
-                    CosmosItemSettings result = list.size() > 0 ? list.get(0) : null;
+                public void validate(List<FeedResponse<CosmosItemProperties>> feedList) {
+                    List<CosmosItemProperties> list = feedList.get(0).results();
+                    CosmosItemProperties result = list.size() > 0 ? list.get(0) : null;
 
                     if (result != null) {
                         if (value instanceof Double) {
@@ -241,21 +240,21 @@ public interface FeedResponseListValidator<T extends Resource> {
             return this;
         }
 
-        public Builder<T> withOrderedResults(ArrayList<CosmosItemSettings> expectedOrderedList,
+        public Builder<T> withOrderedResults(ArrayList<CosmosItemProperties> expectedOrderedList,
                 ArrayList<CompositePath> compositeIndex) {
-            validators.add(new FeedResponseListValidator<CosmosItemSettings>() {
+            validators.add(new FeedResponseListValidator<CosmosItemProperties>() {
                 @Override
-                public void validate(List<FeedResponse<CosmosItemSettings>> feedList) {
+                public void validate(List<FeedResponse<CosmosItemProperties>> feedList) {
 
-                    List<CosmosItemSettings> resultOrderedList = feedList.stream()
-                            .flatMap(f -> f.getResults().stream())
+                    List<CosmosItemProperties> resultOrderedList = feedList.stream()
+                            .flatMap(f -> f.results().stream())
                             .collect(Collectors.toList());
                     assertThat(expectedOrderedList.size()).isEqualTo(resultOrderedList.size());
 
                     ArrayList<String> paths = new ArrayList<String>();
                     Iterator<CompositePath> compositeIndexIterator = compositeIndex.iterator();
                     while (compositeIndexIterator.hasNext()) {
-                        paths.add(compositeIndexIterator.next().getPath().replace("/", ""));
+                        paths.add(compositeIndexIterator.next().path().replace("/", ""));
                     }
                     for (int i = 0; i < resultOrderedList.size(); i ++) {
                         ArrayNode resultValues = (ArrayNode) resultOrderedList.get(i).get("$1");
@@ -285,7 +284,7 @@ public interface FeedResponseListValidator<T extends Resource> {
                 public void validate(List<FeedResponse<T>> feedList) {
                     assertThat(feedList).hasSize(pageLengths.length);
                     for (int i = 0; i < pageLengths.length; i++)
-                        assertThat(feedList.get(i).getResults().size()).isEqualTo(pageLengths[i]);
+                        assertThat(feedList.get(i).results().size()).isEqualTo(pageLengths[i]);
                 }
             });
             return this;

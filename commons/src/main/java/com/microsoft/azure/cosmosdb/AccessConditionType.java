@@ -30,10 +30,10 @@ public enum AccessConditionType {
     /**
      * Check if the resource's ETag value matches the ETag value performed.
      */
-    IfMatch,
+    IF_MATCH,
 
     /**
      * Check if the resource's ETag value does not match ETag value performed.
      */
-    IfNoneMatch
+    IF_NONE_MATCH
 }

@@ -58,14 +58,14 @@ public class ReadFeedDatabasesTest extends TestSuiteBase {
     public void readDatabases() throws Exception {
 
         FeedOptions options = new FeedOptions();
-        options.setMaxItemCount(2);
+        options.maxItemCount(2);
 
         Flux<FeedResponse<CosmosDatabaseSettings>> feedObservable = client.listDatabases(options);
 
-        int expectedPageSize = (allDatabases.size() + options.getMaxItemCount() - 1) / options.getMaxItemCount();
+        int expectedPageSize = (allDatabases.size() + options.maxItemCount() - 1) / options.maxItemCount();
         FeedResponseListValidator<CosmosDatabaseSettings> validator = new FeedResponseListValidator.Builder<CosmosDatabaseSettings>()
                 .totalSize(allDatabases.size())
-                .exactlyContainsInAnyOrder(allDatabases.stream().map(d -> d.getResourceId()).collect(Collectors.toList()))
+                .exactlyContainsInAnyOrder(allDatabases.stream().map(d -> d.resourceId()).collect(Collectors.toList()))
                 .numberOfPages(expectedPageSize)
                 .pageSatisfy(0, new FeedResponseValidator.Builder<CosmosDatabaseSettings>()
                         .requestChargeGreaterThanOrEqualTo(1.0).build())
@@ -78,7 +78,7 @@ public class ReadFeedDatabasesTest extends TestSuiteBase {
     public void beforeClass() throws URISyntaxException {
         client = clientBuilder.build();
         allDatabases = client.listDatabases(null)
-                             .map(frp -> frp.getResults())
+                             .map(frp -> frp.results())
                              .collectList()
                              .map(list -> list.stream().flatMap(x -> x.stream()).collect(Collectors.toList()))
                              .block();
@@ -90,13 +90,13 @@ public class ReadFeedDatabasesTest extends TestSuiteBase {
 
     public CosmosDatabaseSettings createDatabase(CosmosClient client) {
         CosmosDatabaseSettings db = new CosmosDatabaseSettings(UUID.randomUUID().toString());
-        return client.createDatabase(db, new CosmosDatabaseRequestOptions()).block().getCosmosDatabaseSettings();
+        return client.createDatabase(db, new CosmosDatabaseRequestOptions()).block().settings();
     }
 
     @AfterClass(groups = { "simple" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)
     public void afterClass() {
         for (int i = 0; i < 5; i ++) {
-            safeDeleteDatabase(client.getDatabase(createdDatabases.get(i).getId()));
+            safeDeleteDatabase(client.getDatabase(createdDatabases.get(i).id()));
         }
         safeClose(client);
     }

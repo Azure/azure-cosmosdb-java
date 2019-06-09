@@ -69,28 +69,28 @@ public class ConflictAPITest {
     @BeforeClass(groups = "samples", timeOut = TIMEOUT)
     public void setUp() {
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
-        connectionPolicy.setConnectionMode(ConnectionMode.Direct);
+        connectionPolicy.connectionMode(ConnectionMode.DIRECT);
         client = new AsyncDocumentClient.Builder()
                 .withServiceEndpoint(TestConfigurations.HOST)
                 .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
                 .withConnectionPolicy(connectionPolicy)
-                .withConsistencyLevel(ConsistencyLevel.Session)
+                .withConsistencyLevel(ConsistencyLevel.SESSION)
                 .build();
 
         DocumentCollection collectionDefinition = new DocumentCollection();
-        collectionDefinition.setId(UUID.randomUUID().toString());
+        collectionDefinition.id(UUID.randomUUID().toString());
         PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition();
         ArrayList<String> paths = new ArrayList<String>();
         paths.add("/mypk");
-        partitionKeyDef.setPaths(paths);
+        partitionKeyDef.paths(paths);
         collectionDefinition.setPartitionKey(partitionKeyDef);
 
-        // Create database
+        // CREATE database
         createdDatabase = Utils.createDatabaseForTest(client);
 
-        // Create collection
+        // CREATE collection
         createdCollection = client
-                .createCollection("/dbs/" + createdDatabase.getId(), collectionDefinition, null)
+                .createCollection("/dbs/" + createdDatabase.id(), collectionDefinition, null)
                 .toBlocking().single().getResource();
 
         int numberOfDocuments = 20;
@@ -108,7 +108,7 @@ public class ConflictAPITest {
     }
 
     /**
-     * Read conflicts
+     * READ conflicts
      * Converts the conflict read feed observable to blocking observable and
      * uses that to find all conflicts
      */
@@ -117,7 +117,7 @@ public class ConflictAPITest {
         // read all conflicts
         int requestPageSize = 3;
         FeedOptions options = new FeedOptions();
-        options.setMaxItemCount(requestPageSize);
+        options.maxItemCount(requestPageSize);
 
         Observable<FeedResponse<Conflict>> conflictReadFeedObservable = client
                 .readConflicts(getCollectionLink(), options);
@@ -131,11 +131,11 @@ public class ConflictAPITest {
         int numberOfResults = 0;
         while (it.hasNext()) {
             FeedResponse<Conflict> page = it.next();
-            System.out.println("items: " + page.getResults());
-            String pageSizeAsString = page.getResponseHeaders().get(HttpConstants.HttpHeaders.ITEM_COUNT);
+            System.out.println("items: " + page.results());
+            String pageSizeAsString = page.responseHeaders().get(HttpConstants.HttpHeaders.ITEM_COUNT);
             assertThat("header item count must be present", pageSizeAsString, notNullValue());
             int pageSize = Integer.valueOf(pageSizeAsString);
-            assertThat("Result size must match header item count", page.getResults(), hasSize(pageSize));
+            assertThat("Result size must match header item count", page.results(), hasSize(pageSize));
             numberOfResults += pageSize;
         }
         assertThat("number of total results", numberOfResults, equalTo(expectedNumberOfConflicts));
@@ -151,7 +151,7 @@ public class ConflictAPITest {
     public void transformObservableToGoogleGuavaListenableFuture() throws Exception {
         int requestPageSize = 3;
         FeedOptions options = new FeedOptions();
-        options.setMaxItemCount(requestPageSize);
+        options.maxItemCount(requestPageSize);
 
         Observable<FeedResponse<Conflict>> conflictReadFeedObservable = client
                 .readConflicts(getCollectionLink(), options);
@@ -166,13 +166,13 @@ public class ConflictAPITest {
 
         int totalNumberOfRetrievedConflicts = 0;
         for (FeedResponse<Conflict> page : pageList) {
-            totalNumberOfRetrievedConflicts += page.getResults().size();
+            totalNumberOfRetrievedConflicts += page.results().size();
         }
         assertThat(0, equalTo(totalNumberOfRetrievedConflicts));
     }
 
     private String getCollectionLink() {
-        return "dbs/" + createdDatabase.getId() + "/colls/" + createdCollection.getId();
+        return "dbs/" + createdDatabase.id() + "/colls/" + createdCollection.id();
     }
 }
 

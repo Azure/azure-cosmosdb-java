@@ -31,15 +31,15 @@ public enum IndexingDirective {
     /**
      * Use any pre-defined/pre-configured defaults.
      */
-    Default,
+    DEFAULT,
 
     /**
      * Index the resource.
      */
-    Include,
+    INCLUDE,
 
     /**
      * Do not index the resource.
      */
-    Exclude
+    EXCLUDE
 }

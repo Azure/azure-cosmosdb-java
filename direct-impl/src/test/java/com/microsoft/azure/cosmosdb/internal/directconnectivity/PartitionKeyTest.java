@@ -72,7 +72,7 @@ public class PartitionKeyTest {
     @Test(groups = "unit")
     public void tooFewPartitionKeyComponents() {
         PartitionKeyDefinition pkd = new PartitionKeyDefinition();
-        pkd.setPaths(ImmutableList.of("/pk1", "/pk2"));
+        pkd.paths(ImmutableList.of("/pk1", "/pk2"));
         PartitionKey pk = PartitionKey.FromJsonString("[\"PartitionKeyValue\"]");
 
         try {
@@ -89,7 +89,7 @@ public class PartitionKeyTest {
     @Test(groups = "unit")
     public void tooManyPartitionKeyComponents() {
         PartitionKeyDefinition pkd = new PartitionKeyDefinition();
-        pkd.setPaths(ImmutableList.of("/pk1"));
+        pkd.paths(ImmutableList.of("/pk1"));
         PartitionKey pk = PartitionKey.FromJsonString("[true, false]");
 
         try {

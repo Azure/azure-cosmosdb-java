@@ -25,7 +25,7 @@ package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
 import com.microsoft.azure.cosmosdb.ClientSideRequestStatistics;
 import com.microsoft.azure.cosmosdb.ConsistencyLevel;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.ISessionContainer;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.internal.Integers;
@@ -57,8 +57,8 @@ import java.util.stream.Collectors;
  *
  * The determination of whether a request is a local quorum-acked write or a globally strong write is through several factors:
  * 1. Request.RequestContext.OriginalRequestConsistencyLevel - ensure that original request's consistency level, if set, is strong.
- * 2. Default consistency level of the accoutn should be strong.
- * 3. Number of read regions returned by write response > 0.
+ * 2. DEFAULT consistency level of the accoutn should be strong.
+ * 3. NUMBER of read regions returned by write response > 0.
  *
  * For quorum-acked write:
  *   We send single request to primary of a single partition, which will take care of replicating to its secondaries. Once write quorum number of replicas commits the write, the write request returns to the user with success. There is no additional handling for this case.
@@ -164,7 +164,7 @@ public class ConsistencyWriter {
                 try {
                     primaryURI.set(primaryUri);
                     if (this.useMultipleWriteLocations &&
-                            RequestHelper.GetConsistencyLevelToUse(this.serviceConfigReader, request) == ConsistencyLevel.Session) {
+                            RequestHelper.GetConsistencyLevelToUse(this.serviceConfigReader, request) == ConsistencyLevel.SESSION) {
                         // Set session token to ensure session consistency for write requests
                         // when writes can be issued to multiple locations
                         SessionTokenHelper.setPartitionLocalSessionToken(request, this.sessionContainer);
@@ -183,14 +183,14 @@ public class ConsistencyWriter {
                         .doOnError(
                                 t -> {
                                     try {
-                                        DocumentClientException ex = Utils.as(t, DocumentClientException.class);
+                                        CosmosClientException ex = Utils.as(t, CosmosClientException.class);
                                         try {
                                             request.requestContext.clientSideRequestStatistics.recordResponse(request,
                                                     storeReader.createStoreResult(null, ex, false, false, primaryUri));
-                                        } catch (DocumentClientException e) {
+                                        } catch (CosmosClientException e) {
                                             logger.error("Error occurred while recording response", e);
                                         }
-                                        String value = ex.getResponseHeaders().get(HttpConstants.HttpHeaders.WRITE_REQUEST_TRIGGER_ADDRESS_REFRESH);
+                                        String value = ex.responseHeaders().get(HttpConstants.HttpHeaders.WRITE_REQUEST_TRIGGER_ADDRESS_REFRESH);
                                         if (!Strings.isNullOrWhiteSpace(value)) {
                                             Integer result = Integers.tryParse(value);
                                             if (result != null && result == 1) {
@@ -208,7 +208,7 @@ public class ConsistencyWriter {
                 try {
                     request.requestContext.clientSideRequestStatistics.recordResponse(request,
                             storeReader.createStoreResult(response, null, false, false, primaryURI.get()));
-                } catch (DocumentClientException e) {
+                } catch (CosmosClientException e) {
                     logger.error("Error occurred while recording response", e);
                 }
                 return barrierForGlobalStrong(request, response);
@@ -232,14 +232,14 @@ public class ConsistencyWriter {
     }
 
     boolean isGlobalStrongRequest(RxDocumentServiceRequest request, StoreResponse response) {
-        if (this.serviceConfigReader.getDefaultConsistencyLevel() == ConsistencyLevel.Strong) {
+        if (this.serviceConfigReader.getDefaultConsistencyLevel() == ConsistencyLevel.STRONG) {
             int numberOfReadRegions = -1;
             String headerValue = null;
             if ((headerValue = response.getHeaderValue(WFConstants.BackendHeaders.NUMBER_OF_READ_REGIONS)) != null) {
                 numberOfReadRegions = Integer.parseInt(headerValue);
             }
 
-            if (numberOfReadRegions > 0 && this.serviceConfigReader.getDefaultConsistencyLevel() == ConsistencyLevel.Strong) {
+            if (numberOfReadRegions > 0 && this.serviceConfigReader.getDefaultConsistencyLevel() == ConsistencyLevel.STRONG) {
                 return true;
             }
         }
@@ -298,7 +298,7 @@ public class ConsistencyWriter {
                 return Single.just(response);
             }
 
-        } catch (DocumentClientException e) {
+        } catch (CosmosClientException e) {
             // RxJava1 doesn't allow throwing checked exception from Observable operators
             return Single.error(e);
         }

@@ -50,7 +50,7 @@ public class DatabaseAccount extends Resource {
      * Constructor.
      */
     DatabaseAccount() {
-        this.setSelfLink("");
+        this.selfLink("");
     }
 
     /**

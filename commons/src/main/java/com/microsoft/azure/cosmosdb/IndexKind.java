@@ -31,14 +31,14 @@ package com.microsoft.azure.cosmosdb;
 public enum IndexKind {
     // The index entries are hashed to serve point look up queries.
     // Can be used to serve queries like: SELECT * FROM docs d WHERE d.prop = 5
-    Hash,
+    HASH,
 
-    // The index entries are ordered. Range indexes are optimized for inequality predicate queries with efficient range
+    // The index entries are ordered. RANGE indexes are optimized for inequality predicate queries with efficient range
     // scans.
     // Can be used to serve queries like: SELECT * FROM docs d WHERE d.prop > 5
-    Range,
+    RANGE,
 
     // The index entries are indexed to serve spatial queries like below:
-    // SELECT * FROM Root r WHERE ST_DISTANCE({"type":"Point","coordinates":[71.0589,42.3601]}, r.location) $LE 10000
-    Spatial
+    // SELECT * FROM Root r WHERE ST_DISTANCE({"type":"POINT","coordinates":[71.0589,42.3601]}, r.location) $LE 10000
+    SPATIAL
 }

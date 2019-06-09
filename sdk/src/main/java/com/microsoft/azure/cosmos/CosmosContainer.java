@@ -22,22 +22,11 @@
  */
 package com.microsoft.azure.cosmos;
 
-import com.microsoft.azure.cosmosdb.BridgeInternal;
-import com.microsoft.azure.cosmosdb.ChangeFeedOptions;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
-import com.microsoft.azure.cosmosdb.FeedOptions;
-import com.microsoft.azure.cosmosdb.FeedResponse;
-import com.microsoft.azure.cosmosdb.Offer;
-import com.microsoft.azure.cosmosdb.RequestOptions;
-import com.microsoft.azure.cosmosdb.SqlQuerySpec;
-import com.microsoft.azure.cosmosdb.StoredProcedure;
-import com.microsoft.azure.cosmosdb.Trigger;
-import com.microsoft.azure.cosmosdb.UserDefinedFunction;
-import com.microsoft.azure.cosmosdb.internal.Constants;
+import com.microsoft.azure.cosmosdb.*;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.internal.Paths;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
-import com.microsoft.azure.cosmosdb.internal.routing.PartitionKeyInternal;
 
 import hu.akarnokd.rxjava.interop.RxJavaInterop;
 import reactor.adapter.rxjava.RxJava2Adapter;
@@ -230,7 +219,7 @@ public class CosmosContainer extends CosmosResource {
         return RxJava2Adapter.singleToMono(
                 RxJavaInterop.toV2Single(database.getDocClientWrapper()
                                                  .createDocument(getLink(),
-                                                         CosmosItemSettings.fromObject(item),
+                                                         CosmosItemProperties.fromObject(item),
                                                          requestOptions,
                                                          true)
                                                  .map(response -> new CosmosItemResponse(response,
@@ -306,7 +295,7 @@ public class CosmosContainer extends CosmosResource {
      *
      * @return an {@link Flux} containing one or several feed response pages of the read cosmos items or an error.
      */
-    public Flux<FeedResponse<CosmosItemSettings>> listItems() {
+    public Flux<FeedResponse<CosmosItemProperties>> listItems() {
         return listItems(new FeedOptions());
     }
 
@@ -320,12 +309,12 @@ public class CosmosContainer extends CosmosResource {
      * @param options        the feed options.
      * @return an {@link Flux} containing one or several feed response pages of the read cosmos items or an error.
      */
-    public Flux<FeedResponse<CosmosItemSettings>> listItems(FeedOptions options) {
+    public Flux<FeedResponse<CosmosItemProperties>> listItems(FeedOptions options) {
         return RxJava2Adapter.flowableToFlux(
                 RxJavaInterop.toV2Flowable(getDatabase().getDocClientWrapper()
                                                    .readDocuments(getLink(), options)
-                                                   .map(response-> BridgeInternal.createFeedResponse(CosmosItemSettings.getFromV2Results(response.getResults()),
-                                                           response.getResponseHeaders()))));
+                                                   .map(response-> BridgeInternal.createFeedResponse(CosmosItemProperties.getFromV2Results(response.results()),
+                                                           response.responseHeaders()))));
     }
 
     /**
@@ -339,7 +328,7 @@ public class CosmosContainer extends CosmosResource {
      * @param options        the feed options.
      * @return an {@link Flux} containing one or several feed response pages of the obtained items or an error.
      */
-    public Flux<FeedResponse<CosmosItemSettings>> queryItems(String query, FeedOptions options){
+    public Flux<FeedResponse<CosmosItemProperties>> queryItems(String query, FeedOptions options){
         return queryItems(new SqlQuerySpec(query), options);
     }
 
@@ -354,14 +343,14 @@ public class CosmosContainer extends CosmosResource {
      * @param options        the feed options.
      * @return an {@link Flux} containing one or several feed response pages of the obtained items or an error.
      */
-    public Flux<FeedResponse<CosmosItemSettings>> queryItems(SqlQuerySpec querySpec, FeedOptions options){
+    public Flux<FeedResponse<CosmosItemProperties>> queryItems(SqlQuerySpec querySpec, FeedOptions options){
         return RxJava2Adapter.flowableToFlux(
                 RxJavaInterop.toV2Flowable(getDatabase()
                                                    .getDocClientWrapper()
                                                    .queryDocuments(getLink(), querySpec, options)
                                                    .map(response-> BridgeInternal.createFeedResponseWithQueryMetrics(
-                                                           CosmosItemSettings.getFromV2Results(response.getResults()),
-                                                           response.getResponseHeaders(),
+                                                           CosmosItemProperties.getFromV2Results(response.results()),
+                                                           response.responseHeaders(),
                                                            response.getQueryMetrics()))));
     }
 
@@ -375,14 +364,14 @@ public class CosmosContainer extends CosmosResource {
      * @param changeFeedOptions        the feed options.
      * @return an {@link Flux} containing one or several feed response pages of the obtained items or an error.
      */
-    public Flux<FeedResponse<CosmosItemSettings>> queryChangeFeedItems(ChangeFeedOptions changeFeedOptions){
+    public Flux<FeedResponse<CosmosItemProperties>> queryChangeFeedItems(ChangeFeedOptions changeFeedOptions){
         return RxJava2Adapter.flowableToFlux(
             RxJavaInterop.toV2Flowable(getDatabase()
                 .getDocClientWrapper()
                 .queryDocumentChangeFeed(getLink(), changeFeedOptions)
                 .map(response-> BridgeInternal.createFeedResponseWithQueryMetrics(
-                    CosmosItemSettings.getFromV2Results(response.getResults()),
-                    response.getResponseHeaders(), response.getQueryMetrics()))));
+                    CosmosItemProperties.getFromV2Results(response.results()),
+                    response.responseHeaders(), response.getQueryMetrics()))));
     }
 
     /**
@@ -431,8 +420,8 @@ public class CosmosContainer extends CosmosResource {
             options = new CosmosStoredProcedureRequestOptions();
         }
         StoredProcedure sProc = new StoredProcedure();
-        sProc.setId(settings.getId());
-        sProc.setBody(settings.getBody());
+        sProc.id(settings.id());
+        sProc.setBody(settings.body());
         return RxJava2Adapter.singleToMono(
                 RxJavaInterop.toV2Single(database.getDocClientWrapper()
                                                  .createStoredProcedure(getLink(), sProc, options.toRequestOptions())
@@ -455,8 +444,8 @@ public class CosmosContainer extends CosmosResource {
         return RxJava2Adapter.flowableToFlux(
                 RxJavaInterop.toV2Flowable(database.getDocClientWrapper()
                                                    .readStoredProcedures(getLink(), options)
-                                                   .map(response -> BridgeInternal.createFeedResponse(CosmosStoredProcedureSettings.getFromV2Results(response.getResults()),
-                                                                                                      response.getResponseHeaders()))));
+                                                   .map(response -> BridgeInternal.createFeedResponse(CosmosStoredProcedureSettings.getFromV2Results(response.results()),
+                                                                                                      response.responseHeaders()))));
     }
 
     /**
@@ -493,8 +482,8 @@ public class CosmosContainer extends CosmosResource {
         return RxJava2Adapter.flowableToFlux(
                 RxJavaInterop.toV2Flowable(database.getDocClientWrapper()
                                                    .queryStoredProcedures(getLink(), querySpec,options)
-                                                   .map(response -> BridgeInternal.createFeedResponse( CosmosStoredProcedureSettings.getFromV2Results(response.getResults()),
-                                                                                                       response.getResponseHeaders()))));
+                                                   .map(response -> BridgeInternal.createFeedResponse( CosmosStoredProcedureSettings.getFromV2Results(response.results()),
+                                                                                                       response.responseHeaders()))));
     }
 
     /**
@@ -523,8 +512,8 @@ public class CosmosContainer extends CosmosResource {
     public Mono<CosmosUserDefinedFunctionResponse> createUserDefinedFunction(CosmosUserDefinedFunctionSettings settings,
                                                                                CosmosRequestOptions options){
         UserDefinedFunction udf = new UserDefinedFunction();
-        udf.setId(settings.getId());
-        udf.setBody(settings.getBody());
+        udf.id(settings.id());
+        udf.setBody(settings.body());
         if(options == null){
             options = new CosmosRequestOptions();
         }
@@ -548,8 +537,8 @@ public class CosmosContainer extends CosmosResource {
         return RxJava2Adapter.flowableToFlux(
                 RxJavaInterop.toV2Flowable(database.getDocClientWrapper()
                                                    .readUserDefinedFunctions(getLink(), options)
-                                                   .map(response -> BridgeInternal.createFeedResponse(CosmosUserDefinedFunctionSettings.getFromV2Results(response.getResults()),
-                                                                                                      response.getResponseHeaders()))));
+                                                   .map(response -> BridgeInternal.createFeedResponse(CosmosUserDefinedFunctionSettings.getFromV2Results(response.results()),
+                                                                                                      response.responseHeaders()))));
     }
 
     /**
@@ -584,8 +573,8 @@ public class CosmosContainer extends CosmosResource {
         return RxJava2Adapter.flowableToFlux(
                 RxJavaInterop.toV2Flowable(database.getDocClientWrapper()
                                                    .queryUserDefinedFunctions(getLink(),querySpec, options)
-                                                   .map(response -> BridgeInternal.createFeedResponse(CosmosUserDefinedFunctionSettings.getFromV2Results(response.getResults()),
-                                                                                                      response.getResponseHeaders()))));
+                                                   .map(response -> BridgeInternal.createFeedResponse(CosmosUserDefinedFunctionSettings.getFromV2Results(response.results()),
+                                                                                                      response.responseHeaders()))));
     }
 
     /**
@@ -636,8 +625,8 @@ public class CosmosContainer extends CosmosResource {
         return RxJava2Adapter.flowableToFlux(
                 RxJavaInterop.toV2Flowable(database.getDocClientWrapper()
                                                    .readTriggers(getLink(), options)
-                                                   .map(response -> BridgeInternal.createFeedResponse(CosmosTriggerSettings.getFromV2Results(response.getResults()),
-                                                                                                      response.getResponseHeaders()))));
+                                                   .map(response -> BridgeInternal.createFeedResponse(CosmosTriggerSettings.getFromV2Results(response.results()),
+                                                                                                      response.responseHeaders()))));
     }
 
     /**
@@ -671,8 +660,8 @@ public class CosmosContainer extends CosmosResource {
         return RxJava2Adapter.flowableToFlux(
                 RxJavaInterop.toV2Flowable(database.getDocClientWrapper()
                                                    .queryTriggers(getLink(), querySpec, options)
-                                                   .map(response -> BridgeInternal.createFeedResponse(CosmosTriggerSettings.getFromV2Results(response.getResults()),
-                                                                                                      response.getResponseHeaders()))));
+                                                   .map(response -> BridgeInternal.createFeedResponse(CosmosTriggerSettings.getFromV2Results(response.results()),
+                                                                                                      response.responseHeaders()))));
     }
 
     /**
@@ -695,18 +684,18 @@ public class CosmosContainer extends CosmosResource {
                         RxJava2Adapter.singleToMono(
                                 RxJavaInterop.toV2Single(database.getDocClientWrapper()
                                         .queryOffers("select * from c where c.offerResourceId = '" +
-                                                cosmosContainerResponse.getResourceSettings().getResourceId()
+                                                cosmosContainerResponse.resourceSettings().resourceId()
                                                 + "'", new FeedOptions()).toSingle()))
                                 .flatMap(offerFeedResponse -> {
-                                    if(offerFeedResponse.getResults().isEmpty()){
-                                        return Mono.error(new DocumentClientException(HttpConstants.StatusCodes.BADREQUEST,
+                                    if(offerFeedResponse.results().isEmpty()){
+                                        return Mono.error(new CosmosClientException(HttpConstants.StatusCodes.BADREQUEST,
                                                 "No offers found for the resource"));
                                     }
                                     return RxJava2Adapter.singleToMono(
                                             RxJavaInterop.toV2Single(database.getDocClientWrapper()
-                                                    .readOffer(offerFeedResponse.getResults()
+                                                    .readOffer(offerFeedResponse.results()
                                                             .get(0)
-                                                            .getSelfLink()).toSingle()));
+                                                            .selfLink()).toSingle()));
                                 })
                                 .map(cosmosOfferResponse -> cosmosOfferResponse
                                         .getResource()
@@ -725,14 +714,14 @@ public class CosmosContainer extends CosmosResource {
                         RxJava2Adapter.singleToMono(
                                 RxJavaInterop.toV2Single(database.getDocClientWrapper()
                                         .queryOffers("select * from c where c.offerResourceId = '" +
-                                                cosmosContainerResponse.getResourceSettings().getResourceId()
+                                                cosmosContainerResponse.resourceSettings().resourceId()
                                                 + "'", new FeedOptions()).toSingle()))
                                 .flatMap(offerFeedResponse -> {
-                                    if(offerFeedResponse.getResults().isEmpty()){
-                                        return Mono.error(new DocumentClientException(HttpConstants.StatusCodes.BADREQUEST,
+                                    if(offerFeedResponse.results().isEmpty()){
+                                        return Mono.error(new CosmosClientException(HttpConstants.StatusCodes.BADREQUEST,
                                                 "No offers found for the resource"));
                                     }
-                                    Offer offer = offerFeedResponse.getResults().get(0);
+                                    Offer offer = offerFeedResponse.results().get(0);
                                     offer.setThroughput(requestUnitsPerSecond);
                                     return RxJava2Adapter.singleToMono(
                                             RxJavaInterop.toV2Single(database.getDocClientWrapper()
@@ -750,12 +739,12 @@ public class CosmosContainer extends CosmosResource {
     }
 
     @Override
-    protected String getURIPathSegment() {
+    protected String URIPathSegment() {
         return Paths.COLLECTIONS_PATH_SEGMENT;
     }
 
     @Override
-    protected String getParentLink() {
+    protected String parentLink() {
         return database.getLink();
     }
 

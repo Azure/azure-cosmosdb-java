@@ -23,7 +23,7 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.rx.FailureValidator;
 
 import java.net.URI;
@@ -65,7 +65,7 @@ public interface StoreResultValidator {
                 public void validate(StoreResult storeResult) {
                     try {
                         storeResponseValidator.validate(storeResult.toResponse());
-                    }catch (DocumentClientException e) {
+                    }catch (CosmosClientException e) {
                         fail(e.getMessage());
                     }
                 }
@@ -80,7 +80,7 @@ public interface StoreResultValidator {
                 public void validate(StoreResult storeResult) {
                     try {
                         failureValidator.validate(storeResult.getException());
-                    }catch (DocumentClientException e) {
+                    }catch (CosmosClientException e) {
                         fail(e.getMessage());
                     }
                 }

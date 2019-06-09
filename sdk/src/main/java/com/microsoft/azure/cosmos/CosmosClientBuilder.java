@@ -37,12 +37,12 @@ import java.util.List;
  * <pre>
  * {@code
  * ConnectionPolicy connectionPolicy = new ConnectionPolicy();
- * connectionPolicy.setConnectionMode(ConnectionMode.Direct);
+ * connectionPolicy.connectionMode(ConnectionMode.DIRECT);
  * CosmonsClient client = new CosmosClient.builder()
  *         .endpoint(serviceEndpoint)
  *         .key(key)
  *         .connectionPolicy(connectionPolicy)
- *         .consistencyLevel(ConsistencyLevel.Session)
+ *         .consistencyLevel(ConsistencyLevel.SESSION)
  *         .build();
  * }
  * </pre>

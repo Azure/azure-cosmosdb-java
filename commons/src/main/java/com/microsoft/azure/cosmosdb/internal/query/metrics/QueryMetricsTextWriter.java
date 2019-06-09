@@ -56,7 +56,7 @@ public class QueryMetricsTextWriter extends QueryMetricsWriter {
     private static final String EndTimeHeader = "End Time (UTC)";
     private static final String DurationHeader = "Duration (ms)";
     private static final String PartitionKeyRangeIdHeader = "Partition Id";
-    private static final String NumberOfDocumentsHeader = "Number of Documents";
+    private static final String NumberOfDocumentsHeader = "NUMBER of Documents";
     private static final String RetryCountHeader = "Retry Count";
     private static final String ActivityIdHeader = "Activity Id";
 
@@ -66,7 +66,7 @@ public class QueryMetricsTextWriter extends QueryMetricsWriter {
     private static final String RunTimeHeader = "Run Time (ms)";
     private static final String WaitTimeHeader = "Wait Time (ms)";
     private static final String TurnaroundTimeHeader = "Turnaround Time (ms)";
-    private static final String NumberOfPreemptionHeader = "Number of Preemptions";
+    private static final String NumberOfPreemptionHeader = "NUMBER of Preemptions";
 
     // Static  for Partition Execution Timeline Table
     // private static  int MaxDateTimeStringLength = LocalDateTime.MAX.toString().length();
@@ -446,7 +446,7 @@ public class QueryMetricsTextWriter extends QueryMetricsWriter {
             String[] attributeKeyValue = StringUtils.split(attribute, "=");
 
             if (attributeKeyValue.length != 2) {
-                throw new NullPointerException("recieved a malformed delimited String");
+                throw new NullPointerException("recieved a malformed delimited STRING");
             }
 
             String attributeKey = attributeKeyValue[key];

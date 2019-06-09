@@ -150,7 +150,7 @@ class RntbdToken {
             ((ByteBuf)this.value).release();
         }
 
-        this.value = this.header.type().codec().readSlice(in).retain(); // No data transfer until the first call to RntbdToken.getValue
+        this.value = this.header.type().codec().readSlice(in).retain(); // No data transfer until the first call to RntbdToken.value
     }
 
     final void encode(ByteBuf out) {

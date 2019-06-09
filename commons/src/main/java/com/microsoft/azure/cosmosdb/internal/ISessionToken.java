@@ -23,7 +23,7 @@
 
 package com.microsoft.azure.cosmosdb.internal;
 
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 
 /**
  * Models session token.
@@ -40,11 +40,11 @@ public interface ISessionToken {
      * This is used to decide if the client can accept server's response (based on comparison between client's
      * and server's session token)
      *
-     * @param other Session token to validate
+     * @param other SESSION token to validate
      * @return true if this instance of session  token is valid with respect to <code>other</code> session token;
      * false otherwise
      */
-    boolean isValid(ISessionToken other) throws DocumentClientException;
+    boolean isValid(ISessionToken other) throws CosmosClientException;
 
     /**
      * Returns a new instance of session token obtained by merging this session token with
@@ -55,7 +55,7 @@ public interface ISessionToken {
      * @param other Other session token to merge
      * @return Instance of merged session token
      */
-    ISessionToken merge(ISessionToken other) throws DocumentClientException;
+    ISessionToken merge(ISessionToken other) throws CosmosClientException;
 
     long getLSN();
 

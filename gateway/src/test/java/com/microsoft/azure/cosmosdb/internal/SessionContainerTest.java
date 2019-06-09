@@ -83,12 +83,12 @@ public class SessionContainerTest {
 
         DocumentServiceRequestContext dsrContext = new DocumentServiceRequestContext();
         PartitionKeyRange resolvedPKRange = new PartitionKeyRange();
-        resolvedPKRange.setId("range_" + (numPartitionKeyRangeIds + 10));
+        resolvedPKRange.id("range_" + (numPartitionKeyRangeIds + 10));
         GatewayTestUtils.setParent(resolvedPKRange, ImmutableList.of("range_2", "range_x"));
         dsrContext.resolvedPartitionKeyRange = resolvedPKRange;
         request.requestContext = dsrContext;
 
-        sessionToken = sessionContainer.resolvePartitionLocalSessionToken(request, resolvedPKRange.getId());
+        sessionToken = sessionContainer.resolvePartitionLocalSessionToken(request, resolvedPKRange.id());
         assertThat(sessionToken.getLSN()).isEqualTo(2);
     }
 

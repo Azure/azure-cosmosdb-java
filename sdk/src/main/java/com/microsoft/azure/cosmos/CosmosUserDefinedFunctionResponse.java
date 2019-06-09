@@ -33,9 +33,9 @@ public class CosmosUserDefinedFunctionResponse extends CosmosResponse<CosmosUser
     CosmosUserDefinedFunctionResponse(ResourceResponse<UserDefinedFunction> response, CosmosContainer container) {
         super(response);
         if(response.getResource() != null) {
-            super.setResourceSettings(new CosmosUserDefinedFunctionSettings(response));
+            super.resourceSettings(new CosmosUserDefinedFunctionSettings(response));
             cosmosUserDefinedFunctionSettings = new CosmosUserDefinedFunctionSettings(response);
-            cosmosUserDefinedFunction = new CosmosUserDefinedFunction(cosmosUserDefinedFunctionSettings.getId(), container);
+            cosmosUserDefinedFunction = new CosmosUserDefinedFunction(cosmosUserDefinedFunctionSettings.id(), container);
         }
     }
 
@@ -43,7 +43,7 @@ public class CosmosUserDefinedFunctionResponse extends CosmosResponse<CosmosUser
      * Gets the cosmos user defined function settings
      * @return the cosmos user defined function settings
      */
-    public CosmosUserDefinedFunctionSettings getCosmosUserDefinedFunctionSettings() {
+    public CosmosUserDefinedFunctionSettings settings() {
         return cosmosUserDefinedFunctionSettings;
     }
 
@@ -51,7 +51,7 @@ public class CosmosUserDefinedFunctionResponse extends CosmosResponse<CosmosUser
      * Gets the cosmos user defined function object
      * @return the cosmos user defined function object
      */
-    public CosmosUserDefinedFunction getCosmosUserDefinedFunction() {
+    public CosmosUserDefinedFunction userDefinedFunction() {
         return cosmosUserDefinedFunction;
     }
 }

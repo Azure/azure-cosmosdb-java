@@ -25,6 +25,7 @@ package com.microsoft.azure.cosmos;
 import com.microsoft.azure.cosmos.changefeed.CheckpointFrequency;
 
 import java.time.Duration;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Date;
@@ -46,7 +47,7 @@ public class ChangeFeedProcessorOptions {
     private String leasePrefix;
     private int maxItemCount;
     private String startContinuation;
-    private ZonedDateTime startTime;
+    private OffsetDateTime startTime;
     private boolean startFromBeginning;
     private String sessionToken;
     private int minPartitionCount;
@@ -75,7 +76,7 @@ public class ChangeFeedProcessorOptions {
      *
      * @return the renew interval for all leases for partitions.
      */
-    public Duration getLeaseRenewInterval() {
+    public Duration leaseRenewInterval() {
         return this.leaseRenewInterval;
     }
 
@@ -85,7 +86,7 @@ public class ChangeFeedProcessorOptions {
      * @param leaseRenewInterval the renew interval for all leases for partitions currently held by {@link ChangeFeedProcessor} instance.
      * @return the current ChangeFeedProcessorOptions instance.
      */
-    public ChangeFeedProcessorOptions withLeaseRenewInterval(Duration leaseRenewInterval) {
+    public ChangeFeedProcessorOptions leaseRenewInterval(Duration leaseRenewInterval) {
         this.leaseRenewInterval = leaseRenewInterval;
         return this;
     }
@@ -95,7 +96,7 @@ public class ChangeFeedProcessorOptions {
      *
      * @return the interval to kick off a task to compute if partitions are distributed evenly among known host instances.
      */
-    public Duration getLeaseAcquireInterval() {
+    public Duration leaseAcquireInterval() {
         return this.leaseAcquireInterval;
     }
 
@@ -104,7 +105,7 @@ public class ChangeFeedProcessorOptions {
      * @param leaseAcquireInterval he interval to kick off a task to compute if partitions are distributed evenly among known host instances.
      * @return the current ChangeFeedProcessorOptions instance.
      */
-    public ChangeFeedProcessorOptions withLeaseAcquireInterval(Duration leaseAcquireInterval) {
+    public ChangeFeedProcessorOptions leaseAcquireInterval(Duration leaseAcquireInterval) {
         this.leaseAcquireInterval = leaseAcquireInterval;
         return this;
     }
@@ -118,7 +119,7 @@ public class ChangeFeedProcessorOptions {
      *
      * @return the interval for which the lease is taken on a lease representing a partition.
      */
-    public Duration getLeaseExpirationInterval() {
+    public Duration leaseExpirationInterval() {
         return this.leaseExpirationInterval;
     }
 
@@ -132,7 +133,7 @@ public class ChangeFeedProcessorOptions {
      * @param leaseExpirationInterval the interval for which the lease is taken on a lease representing a partition.
      * @return the current ChangeFeedProcessorOptions instance.
      */
-    public ChangeFeedProcessorOptions withLeaseExpirationInterval(Duration leaseExpirationInterval) {
+    public ChangeFeedProcessorOptions leaseExpirationInterval(Duration leaseExpirationInterval) {
         this.leaseExpirationInterval = leaseExpirationInterval;
         return this;
     }
@@ -142,7 +143,7 @@ public class ChangeFeedProcessorOptions {
      *
      * @return the delay in between polling a partition for new changes on the feed.
      */
-    public Duration getFeedPollDelay() {
+    public Duration feedPollDelay() {
         return this.feedPollDelay;
     }
 
@@ -152,7 +153,7 @@ public class ChangeFeedProcessorOptions {
      * @param feedPollDelay the delay in between polling a partition for new changes on the feed, after all current changes are drained.
      * @return the current ChangeFeedProcessorOptions instance.
      */
-    public ChangeFeedProcessorOptions withFeedPollDelay(Duration feedPollDelay) {
+    public ChangeFeedProcessorOptions feedPollDelay(Duration feedPollDelay) {
         this.feedPollDelay = feedPollDelay;
         return this;
     }
@@ -162,7 +163,7 @@ public class ChangeFeedProcessorOptions {
      *
      * @return the frequency how often to checkpoint leases.
      */
-    public CheckpointFrequency getCheckpointFrequency() {
+    public CheckpointFrequency checkpointFrequency() {
         return this.checkpointFrequency;
     }
 
@@ -172,7 +173,7 @@ public class ChangeFeedProcessorOptions {
      * @param checkpointFrequency the frequency how often to checkpoint leases.
      * @return the current ChangeFeedProcessorOptions instance.
      */
-    public ChangeFeedProcessorOptions withCheckpointFrequency(CheckpointFrequency checkpointFrequency) {
+    public ChangeFeedProcessorOptions checkpointFrequency(CheckpointFrequency checkpointFrequency) {
         this.checkpointFrequency = checkpointFrequency;
         return this;
     }
@@ -185,7 +186,7 @@ public class ChangeFeedProcessorOptions {
      *
      * @return a prefix to be used as part of the lease ID.
      */
-    public String getLeasePrefix() {
+    public String leasePrefix() {
         return this.leasePrefix;
     }
 
@@ -195,7 +196,7 @@ public class ChangeFeedProcessorOptions {
      * @param leasePrefix a prefix to be used as part of the lease ID.
      * @return the current ChangeFeedProcessorOptions instance.
      */
-    public ChangeFeedProcessorOptions withLeasePrefix(String leasePrefix) {
+    public ChangeFeedProcessorOptions leasePrefix(String leasePrefix) {
         this.leasePrefix = leasePrefix;
         return this;
     }
@@ -205,7 +206,7 @@ public class ChangeFeedProcessorOptions {
      *
      * @return the maximum number of items to be returned in the enumeration operation in the Azure Cosmos DB service.
      */
-    public int getMaxItemCount() {
+    public int maxItemCount() {
         return this.maxItemCount;
     }
 
@@ -215,7 +216,7 @@ public class ChangeFeedProcessorOptions {
      * @param maxItemCount the maximum number of items to be returned in the enumeration operation.
      * @return the current ChangeFeedProcessorOptions instance.
      */
-    public ChangeFeedProcessorOptions withMaxItemCount(int maxItemCount) {
+    public ChangeFeedProcessorOptions maxItemCount(int maxItemCount) {
         this.maxItemCount = maxItemCount;
         return this;
     }
@@ -228,7 +229,7 @@ public class ChangeFeedProcessorOptions {
      *
      * @return the start request continuation token to start looking for changes after.
      */
-    public String getStartContinuation() {
+    public String startContinuation() {
         return this.startContinuation;
     }
 
@@ -241,7 +242,7 @@ public class ChangeFeedProcessorOptions {
      * @param startContinuation the start request continuation token to start looking for changes after.
      * @return the current ChangeFeedProcessorOptions instance.
      */
-    public ChangeFeedProcessorOptions withStartContinuation(String startContinuation) {
+    public ChangeFeedProcessorOptions startContinuation(String startContinuation) {
         this.startContinuation= startContinuation;
         return this;
     }
@@ -256,7 +257,7 @@ public class ChangeFeedProcessorOptions {
      *
      * @return the time (exclusive) to start looking for changes after.
      */
-    public ZonedDateTime getStartTime() {
+    public OffsetDateTime startTime() {
         return this.startTime;
     }
 
@@ -271,24 +272,8 @@ public class ChangeFeedProcessorOptions {
      * @param startTime the time (exclusive) to start looking for changes after.
      * @return the current ChangeFeedProcessorOptions instance.
      */
-    public ChangeFeedProcessorOptions withStartTime(ZonedDateTime startTime) {
+    public ChangeFeedProcessorOptions startTime(OffsetDateTime startTime) {
         this.startTime = startTime;
-        return this;
-    }
-
-    /**
-     * Sets the time (exclusive) to start looking for changes after.
-     * <p>
-     * This is only used when:
-     *   (1) Lease store is not initialized and is ignored if a lease for partition exists and has continuation token.
-     *   (2) StartContinuation is not specified.
-     * If this is specified, StartFromBeginning is ignored.
-     *
-     * @param startTime the time (exclusive) to start looking for changes after.
-     * @return the current ChangeFeedProcessorOptions instance.
-     */
-    public ChangeFeedProcessorOptions withStartTime(Date startTime) {
-        this.startTime = ZonedDateTime.ofInstant(startTime.toInstant(), ZoneId.of("UTC"));
         return this;
     }
 
@@ -303,7 +288,7 @@ public class ChangeFeedProcessorOptions {
      *
      * @return a value indicating whether change feed in the Azure Cosmos DB service should start from.
      */
-    public boolean isStartFromBeginning() {
+    public boolean startFromBeginning() {
         return this.startFromBeginning;
     }
 
@@ -315,10 +300,11 @@ public class ChangeFeedProcessorOptions {
      *   (2) StartContinuation is not specified.
      *   (3) StartTime is not specified.
      *
+     * @param startFromBeginning Indicates to start from beginning if true
      * @return the current ChangeFeedProcessorOptions instance.
      */
-    public ChangeFeedProcessorOptions withStartFromBeginning() {
-        this.startFromBeginning = true;
+    public ChangeFeedProcessorOptions startFromBeginning(boolean startFromBeginning) {
+        this.startFromBeginning = startFromBeginning;
         return this;
     }
 
@@ -342,7 +328,7 @@ public class ChangeFeedProcessorOptions {
      *
      * @return the session token for use with session consistency in the Azure Cosmos DB service.
      */
-    public String getSessionToken() {
+    public String sessionToken() {
         return this.sessionToken;
     }
 
@@ -352,7 +338,7 @@ public class ChangeFeedProcessorOptions {
      * @param sessionToken the session token for use with session consistency in the Azure Cosmos DB service.
      * @return the current ChangeFeedProcessorOptions instance.
      */
-    public ChangeFeedProcessorOptions withSessionToken(String sessionToken) {
+    public ChangeFeedProcessorOptions sessionToken(String sessionToken) {
         this.sessionToken = sessionToken;
         return this;
     }
@@ -365,7 +351,7 @@ public class ChangeFeedProcessorOptions {
      *
      * @return the minimum partition count for the host.
      */
-    public int getMinPartitionCount() {
+    public int minPartitionCount() {
         return this.minPartitionCount;
     }
 
@@ -378,7 +364,7 @@ public class ChangeFeedProcessorOptions {
      * @param minPartitionCount the minimum partition count for the host.
      * @return the current ChangeFeedProcessorOptions instance.
      */
-    public ChangeFeedProcessorOptions withMinPartitionCount(int minPartitionCount) {
+    public ChangeFeedProcessorOptions minPartitionCount(int minPartitionCount) {
         this.minPartitionCount = minPartitionCount;
         return this;
     }
@@ -387,11 +373,11 @@ public class ChangeFeedProcessorOptions {
      * Gets the maximum number of partitions the host can serve.
      * <p>
      * This can be used property to limit the number of partitions for the host and thus override equal distribution
-     *  (which is the default) of leases between hosts. Default is 0 (unlimited).
+     *  (which is the default) of leases between hosts. DEFAULT is 0 (unlimited).
      *
      * @return the maximum number of partitions the host can serve.
      */
-    public int getMaxPartitionCount() {
+    public int maxPartitionCount() {
         return this.maxPartitionCount;
     }
 
@@ -401,7 +387,7 @@ public class ChangeFeedProcessorOptions {
      * @param maxPartitionCount the maximum number of partitions the host can serve.
      * @return the current ChangeFeedProcessorOptions instance.
      */
-    public ChangeFeedProcessorOptions withMaxPartitionCount(int maxPartitionCount) {
+    public ChangeFeedProcessorOptions maxPartitionCount(int maxPartitionCount) {
         this.maxPartitionCount = maxPartitionCount;
         return this;
     }
@@ -412,7 +398,7 @@ public class ChangeFeedProcessorOptions {
      *
      * @return a value indicating whether on start of the host all existing leases should be deleted and the host should start from scratch.
      */
-    public boolean isDiscardExistingLeases() {
+    public boolean discardExistingLeases() {
         return this.discardExistingLeases;
     }
 
@@ -420,21 +406,11 @@ public class ChangeFeedProcessorOptions {
      * Sets a value indicating whether on start of the host all existing leases should be deleted and the host
      *   should start from scratch.
      *
+     * @param discardExistingLeases Indicates whether to discard all existing leases if true
      * @return the current ChangeFeedProcessorOptions instance.
      */
-    public ChangeFeedProcessorOptions withDiscardExistingLeases() {
-        this.discardExistingLeases = true;
-        return this;
-    }
-
-    /**
-     * Sets a value indicating whether on start of the host all existing leases should be deleted and the host
-     *   should start from scratch.
-     *
-     * @return the current ChangeFeedProcessorOptions instance.
-     */
-    public ChangeFeedProcessorOptions withoutDiscardExistingLeases() {
-        this.discardExistingLeases = false;
+    public ChangeFeedProcessorOptions discardExistingLeases(boolean discardExistingLeases) {
+        this.discardExistingLeases = discardExistingLeases;
         return this;
     }
 
@@ -443,7 +419,7 @@ public class ChangeFeedProcessorOptions {
      *
      * @return the Batch size of query partitions API.
      */
-    public int getQueryPartitionsMaxBatchSize() {
+    public int queryPartitionsMaxBatchSize() {
         return this.queryPartitionsMaxBatchSize;
     }
 
@@ -453,7 +429,7 @@ public class ChangeFeedProcessorOptions {
      * @param queryPartitionsMaxBatchSize the Batch size of query partitions API.
      * @return the current ChangeFeedProcessorOptions instance.
      */
-    public ChangeFeedProcessorOptions withQueryPartitionsMaxBatchSize(int queryPartitionsMaxBatchSize) {
+    public ChangeFeedProcessorOptions queryPartitionsMaxBatchSize(int queryPartitionsMaxBatchSize) {
         this.queryPartitionsMaxBatchSize = queryPartitionsMaxBatchSize;
         return this;
     }
@@ -463,7 +439,7 @@ public class ChangeFeedProcessorOptions {
      *
      * @return maximum number of tasks to use for auxiliary calls.
      */
-    public int getDegreeOfParallelism() {
+    public int degreeOfParallelism() {
         return this.degreeOfParallelism;
     }
 
@@ -473,7 +449,7 @@ public class ChangeFeedProcessorOptions {
      * @param defaultQueryPartitionsMaxBatchSize maximum number of tasks to use for auxiliary calls.
      * @return the current ChangeFeedProcessorOptions instance.
      */
-    public ChangeFeedProcessorOptions withDegreeOfParallelism(int defaultQueryPartitionsMaxBatchSize) {
+    public ChangeFeedProcessorOptions degreeOfParallelism(int defaultQueryPartitionsMaxBatchSize) {
         this.queryPartitionsMaxBatchSize = queryPartitionsMaxBatchSize;
         return this;
     }
@@ -483,7 +459,7 @@ public class ChangeFeedProcessorOptions {
      *
      * @return current ExecutorService instance.
      */
-    public ExecutorService getExecutorService() {
+    public ExecutorService executorService() {
         return this.executorService;
     }
 
@@ -493,7 +469,7 @@ public class ChangeFeedProcessorOptions {
      * @param executorService The instance of {@link ExecutorService} to use.
      * @return current ChangeFeedProcessorOptions instance.
      */
-    public ChangeFeedProcessorOptions withExecutorService(ExecutorService executorService) {
+    public ChangeFeedProcessorOptions executorService(ExecutorService executorService) {
         this.executorService = executorService;
         return this;
     }

@@ -76,7 +76,7 @@ public interface LeaseStoreManager extends LeaseContainer, LeaseManager, LeaseSt
     Mono<Lease> createLeaseIfNotExist(String leaseToken, String continuationToken);
 
     /**
-     * Delete the lease.
+     * DELETE the lease.
      *
      * @param lease the lease to remove.
      * @return a representation of the deferred computation of this call.
@@ -108,9 +108,9 @@ public interface LeaseStoreManager extends LeaseContainer, LeaseManager, LeaseSt
     Mono<Lease> renew(Lease lease);
 
     /**
-     * Replace properties from the specified lease.
+     * REPLACE item from the specified lease.
      *
-     * @param leaseToUpdatePropertiesFrom the Lease containing new properties.
+     * @param leaseToUpdatePropertiesFrom the Lease containing new item.
      * @return the updated lease.
      */
     Mono<Lease> updateProperties(Lease leaseToUpdatePropertiesFrom);

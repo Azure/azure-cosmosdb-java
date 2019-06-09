@@ -32,8 +32,6 @@ import rx.Observable;
 import rx.Subscriber;
 import rx.schedulers.Schedulers;
 
-import javax.net.ssl.SSLException;
-
 class AsyncQuerySinglePartitionMultiple extends AsyncBenchmark<FeedResponse<Document>> {
 
     private static final String SQL_QUERY = "Select * from c where c.pk = \"pk\"";
@@ -43,8 +41,8 @@ class AsyncQuerySinglePartitionMultiple extends AsyncBenchmark<FeedResponse<Docu
     AsyncQuerySinglePartitionMultiple(Configuration cfg) {
         super(cfg);
         options = new FeedOptions();
-        options.setPartitionKey(new PartitionKey("pk"));
-        options.setMaxItemCount(10);
+        options.partitionKey(new PartitionKey("pk"));
+        options.maxItemCount(10);
     }
 
     @Override

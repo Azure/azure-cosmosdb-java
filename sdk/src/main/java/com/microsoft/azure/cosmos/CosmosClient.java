@@ -22,17 +22,8 @@
  */
 package com.microsoft.azure.cosmos;
 
-import com.microsoft.azure.cosmosdb.BridgeInternal;
-import com.microsoft.azure.cosmosdb.ConnectionPolicy;
-import com.microsoft.azure.cosmosdb.ConsistencyLevel;
-import com.microsoft.azure.cosmosdb.Database;
-import com.microsoft.azure.cosmosdb.DatabaseAccount;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
-import com.microsoft.azure.cosmosdb.FeedOptions;
-import com.microsoft.azure.cosmosdb.FeedResponse;
-import com.microsoft.azure.cosmosdb.Permission;
-import com.microsoft.azure.cosmosdb.SqlQuerySpec;
-import com.microsoft.azure.cosmosdb.TokenResolver;
+import com.microsoft.azure.cosmosdb.*;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import com.microsoft.azure.cosmosdb.rx.internal.Configs;
@@ -157,7 +148,7 @@ public class CosmosClient {
     }
 
     /**
-     * Create a Database if it does not already exist on the service
+     * CREATE a Database if it does not already exist on the service
      * 
      * The {@link Mono} upon successful completion will contain a single cosmos database response with the 
      * created or existing database.
@@ -166,11 +157,11 @@ public class CosmosClient {
      * an error.
      */
     public Mono<CosmosDatabaseResponse> createDatabaseIfNotExists(CosmosDatabaseSettings databaseSettings) {
-        return createDatabaseIfNotExistsInternal(getDatabase(databaseSettings.getId()));
+        return createDatabaseIfNotExistsInternal(getDatabase(databaseSettings.id()));
     }
 
     /**
-     * Create a Database if it does not already exist on the service
+     * CREATE a Database if it does not already exist on the service
      * The {@link Mono} upon successful completion will contain a single cosmos database response with the 
      * created or existing database.
      * @param id the id of the database
@@ -183,10 +174,10 @@ public class CosmosClient {
     
     private Mono<CosmosDatabaseResponse> createDatabaseIfNotExistsInternal(CosmosDatabase database){
         return database.read().onErrorResume(exception -> {
-            if (exception instanceof DocumentClientException) {
-                DocumentClientException documentClientException = (DocumentClientException) exception;
-                if (documentClientException.getStatusCode() == HttpConstants.StatusCodes.NOTFOUND) {
-                    return createDatabase(new CosmosDatabaseSettings(database.getId()), new CosmosDatabaseRequestOptions());
+            if (exception instanceof CosmosClientException) {
+                CosmosClientException cosmosClientException = (CosmosClientException) exception;
+                if (cosmosClientException.statusCode() == HttpConstants.StatusCodes.NOTFOUND) {
+                    return createDatabase(new CosmosDatabaseSettings(database.id()), new CosmosDatabaseRequestOptions());
                 }
             }
             return Mono.error(exception);
@@ -211,7 +202,7 @@ public class CosmosClient {
             options = new CosmosDatabaseRequestOptions();
         }
         Database wrappedDatabase = new Database();
-        wrappedDatabase.setId(databaseSettings.getId());
+        wrappedDatabase.id(databaseSettings.id());
         return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(asyncDocumentClient.createDatabase(wrappedDatabase, options.toRequestOptions()).map(databaseResourceResponse ->
                 new CosmosDatabaseResponse(databaseResourceResponse, this)).toSingle()));
     }
@@ -258,8 +249,8 @@ public class CosmosClient {
      */
     public Flux<FeedResponse<CosmosDatabaseSettings>> listDatabases(FeedOptions options) {
         return RxJava2Adapter.flowableToFlux(RxJavaInterop.toV2Flowable(getDocClientWrapper().readDatabases(options)
-                .map(response-> BridgeInternal.createFeedResponse(CosmosDatabaseSettings.getFromV2Results(response.getResults()),
-                        response.getResponseHeaders()))));
+                .map(response-> BridgeInternal.createFeedResponse(CosmosDatabaseSettings.getFromV2Results(response.results()),
+                        response.responseHeaders()))));
     }
 
     /**
@@ -305,8 +296,8 @@ public class CosmosClient {
     public Flux<FeedResponse<CosmosDatabaseSettings>> queryDatabases(SqlQuerySpec querySpec, FeedOptions options){
         return RxJava2Adapter.flowableToFlux(RxJavaInterop.toV2Flowable(getDocClientWrapper().queryDatabases(querySpec, options)
                 .map(response-> BridgeInternal.createFeedResponse(
-                        CosmosDatabaseSettings.getFromV2Results(response.getResults()),
-                        response.getResponseHeaders()))));
+                        CosmosDatabaseSettings.getFromV2Results(response.results()),
+                        response.responseHeaders()))));
     }
 
     Mono<DatabaseAccount> getDatabaseAccount() {

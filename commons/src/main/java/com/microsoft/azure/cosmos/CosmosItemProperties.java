@@ -31,24 +31,25 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class CosmosItemSettings extends Resource {
+public class CosmosItemProperties extends Resource {
 
     private static final ObjectMapper mapper = Utils.getSimpleObjectMapper();
 
     /**
-     * Initialize an empty CosmosItemSettings object.
+     * Initialize an empty CosmosItemProperties object.
      */
-    public CosmosItemSettings() {}
+    public CosmosItemProperties() {
+    }
 
     /**
-     * Initialize a CosmosItemSettings object from json string.
+     * Initialize a CosmosItemProperties object from json string.
      *
      * @param jsonString the json string that represents the document object.
      */
-    public CosmosItemSettings(String jsonString) {
+    public CosmosItemProperties(String jsonString) {
         super(jsonString);
     }
-    
+
     /**
      * fromObject returns Document for compatibility with V2 sdk
      *
@@ -57,11 +58,11 @@ public class CosmosItemSettings extends Resource {
      */
     static Document fromObject(Object cosmosItem) {
         Document typedItem;
-        if (cosmosItem instanceof CosmosItemSettings) {
-            typedItem = new Document(((CosmosItemSettings) cosmosItem).toJson());
+        if (cosmosItem instanceof CosmosItemProperties) {
+            typedItem = new Document(((CosmosItemProperties) cosmosItem).toJson());
         } else {
             try {
-                return new Document(CosmosItemSettings.mapper.writeValueAsString(cosmosItem));
+                return new Document(CosmosItemProperties.mapper.writeValueAsString(cosmosItem));
             } catch (IOException e) {
                 throw new IllegalArgumentException("Can't serialize the object into the json string", e);
             }
@@ -69,8 +70,9 @@ public class CosmosItemSettings extends Resource {
         return typedItem;
     }
 
-    static List<CosmosItemSettings> getFromV2Results(List<Document> results) {
-        return results.stream().map(document -> new CosmosItemSettings(document.toJson())).collect(Collectors.toList());
+    static List<CosmosItemProperties> getFromV2Results(List<Document> results) {
+        return results.stream().map(document -> new CosmosItemProperties(document.toJson()))
+                .collect(Collectors.toList());
     }
 
     public <T> T getObject(Class<?> klass) throws IOException {

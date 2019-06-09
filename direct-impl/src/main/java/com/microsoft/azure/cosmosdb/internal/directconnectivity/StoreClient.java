@@ -24,7 +24,7 @@
 package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
 import com.microsoft.azure.cosmosdb.ConsistencyLevel;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.internal.ISessionToken;
 import com.microsoft.azure.cosmosdb.internal.InternalServerErrorException;
@@ -54,7 +54,7 @@ import java.util.Map;
 
 /**
  * Instantiated to issue direct connectivity requests to the backend on:
- *  - Gateway (for gateway mode clients)
+ *  - GATEWAY (for gateway mode clients)
  *  - Client (for direct mode clients)
  * StoreClient uses the ReplicatedResourceClient to make requests to the backend.
  */
@@ -102,13 +102,13 @@ public class StoreClient implements IStoreClient {
 
         storeResponse = storeResponse.doOnError(e -> {
                 try {
-                    DocumentClientException exception = Utils.as(e, DocumentClientException.class);
+                    CosmosClientException exception = Utils.as(e, CosmosClientException.class);
 
                     if (exception == null) {
                         return;
                     }
 
-                    exception.setClientSideRequestStatistics(request.requestContext.clientSideRequestStatistics);
+                    exception.clientSideRequestStatistics(request.requestContext.clientSideRequestStatistics);
 
                     handleUnsuccessfulStoreResponse(request, exception);
                 } catch (Throwable throwable) {
@@ -127,13 +127,13 @@ public class StoreClient implements IStoreClient {
         });
     }
 
-    private void handleUnsuccessfulStoreResponse(RxDocumentServiceRequest request, DocumentClientException exception) {
-        this.updateResponseHeader(request, exception.getResponseHeaders());
+    private void handleUnsuccessfulStoreResponse(RxDocumentServiceRequest request, CosmosClientException exception) {
+        this.updateResponseHeader(request, exception.responseHeaders());
         if ((!ReplicatedResourceClient.isMasterResource(request.getResourceType())) &&
                 (Exceptions.isStatusCode(exception, HttpConstants.StatusCodes.PRECONDITION_FAILED) || Exceptions.isStatusCode(exception, HttpConstants.StatusCodes.CONFLICT) ||
                         (Exceptions.isStatusCode(exception, HttpConstants.StatusCodes.NOTFOUND) &&
                                 !Exceptions.isSubStatusCode(exception, HttpConstants.SubStatusCodes.READ_SESSION_NOT_AVAILABLE)))) {
-            this.captureSessionToken(request, exception.getResponseHeaders());
+            this.captureSessionToken(request, exception.responseHeaders());
         }
     }
 
@@ -174,9 +174,9 @@ public class StoreClient implements IStoreClient {
         String requestConsistencyLevel = request.getHeaders().get(HttpConstants.HttpHeaders.CONSISTENCY_LEVEL);
 
         boolean sessionConsistency =
-                this.serviceConfigurationReader.getDefaultConsistencyLevel() == ConsistencyLevel.Session ||
+                this.serviceConfigurationReader.getDefaultConsistencyLevel() == ConsistencyLevel.SESSION ||
                         (!Strings.isNullOrEmpty(requestConsistencyLevel)
-                                && Strings.areEqualIgnoreCase(requestConsistencyLevel, ConsistencyLevel.Session.name()));
+                                && Strings.areEqualIgnoreCase(requestConsistencyLevel, ConsistencyLevel.SESSION.name()));
 
         long storeLSN = this.getLSN(headers);
         if (storeLSN == -1) {

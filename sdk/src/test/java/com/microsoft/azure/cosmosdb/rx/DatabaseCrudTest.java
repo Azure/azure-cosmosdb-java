@@ -55,21 +55,21 @@ public class DatabaseCrudTest extends TestSuiteBase {
     @Test(groups = { "emulator" }, timeOut = TIMEOUT)
     public void createDatabase() throws Exception {
         CosmosDatabaseSettings databaseDefinition = new CosmosDatabaseSettings(CosmosDatabaseForTest.generateId());
-        databases.add(databaseDefinition.getId());
+        databases.add(databaseDefinition.id());
 
         // create the database
         Mono<CosmosDatabaseResponse> createObservable = client.createDatabase(databaseDefinition, new CosmosDatabaseRequestOptions());
 
         // validate
         CosmosResponseValidator<CosmosDatabaseResponse> validator = new CosmosResponseValidator.Builder<CosmosDatabaseResponse>()
-                .withId(databaseDefinition.getId()).build();
+                .withId(databaseDefinition.id()).build();
         validateSuccess(createObservable, validator);
     }
 
     @Test(groups = { "emulator" }, timeOut = TIMEOUT)
     public void createDatabase_AlreadyExists() throws Exception {
         CosmosDatabaseSettings databaseDefinition = new CosmosDatabaseSettings(CosmosDatabaseForTest.generateId());
-        databases.add(databaseDefinition.getId());
+        databases.add(databaseDefinition.id());
 
         client.createDatabase(databaseDefinition, new CosmosDatabaseRequestOptions()).block();
 
@@ -107,8 +107,8 @@ public class DatabaseCrudTest extends TestSuiteBase {
     public void deleteDatabase() throws Exception {
         // create the database
         CosmosDatabaseSettings databaseDefinition = new CosmosDatabaseSettings(CosmosDatabaseForTest.generateId());
-        databases.add(databaseDefinition.getId());
-        CosmosDatabase database = client.createDatabase(databaseDefinition, new CosmosDatabaseRequestOptions()).block().getDatabase();
+        databases.add(databaseDefinition.id());
+        CosmosDatabase database = client.createDatabase(databaseDefinition, new CosmosDatabaseRequestOptions()).block().database();
 
         // delete the database
         Mono<CosmosDatabaseResponse> deleteObservable = database.delete();

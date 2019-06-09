@@ -58,18 +58,18 @@ public class ReadFeedStoredProceduresTest extends TestSuiteBase {
     public void readStoredProcedures() throws Exception {
 
         FeedOptions options = new FeedOptions();
-        options.setMaxItemCount(2);
+        options.maxItemCount(2);
 
         Flux<FeedResponse<CosmosStoredProcedureSettings>> feedObservable = createdCollection.listStoredProcedures(options);
 
-        int expectedPageSize = (createdStoredProcedures.size() + options.getMaxItemCount() - 1) / options.getMaxItemCount();
+        int expectedPageSize = (createdStoredProcedures.size() + options.maxItemCount() - 1) / options.maxItemCount();
 
         FeedResponseListValidator<CosmosStoredProcedureSettings> validator = new FeedResponseListValidator
                 .Builder<CosmosStoredProcedureSettings>()
                 .totalSize(createdStoredProcedures.size())
                 .exactlyContainsInAnyOrder(createdStoredProcedures
                         .stream()
-                        .map(d -> d.getResourceId())
+                        .map(d -> d.resourceId())
                         .collect(Collectors.toList()))
                 .numberOfPages(expectedPageSize)
                 .allPagesSatisfy(new FeedResponseValidator.Builder<CosmosStoredProcedureSettings>()
@@ -98,8 +98,8 @@ public class ReadFeedStoredProceduresTest extends TestSuiteBase {
 
     public CosmosStoredProcedureSettings createStoredProcedures(CosmosContainer cosmosContainer) {
         CosmosStoredProcedureSettings sproc = new CosmosStoredProcedureSettings();
-        sproc.setId(UUID.randomUUID().toString());
-        sproc.setBody("function() {var x = 10;}");
-        return cosmosContainer.createStoredProcedure(sproc, new CosmosStoredProcedureRequestOptions()).block().getStoredProcedureSettings();
+        sproc.id(UUID.randomUUID().toString());
+        sproc.body("function() {var x = 10;}");
+        return cosmosContainer.createStoredProcedure(sproc, new CosmosStoredProcedureRequestOptions()).block().settings();
     }
 }

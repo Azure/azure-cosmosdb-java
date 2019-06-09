@@ -23,7 +23,7 @@
 package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
 import com.microsoft.azure.cosmosdb.BridgeInternal;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.Error;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.rx.internal.RMResources;
@@ -35,7 +35,7 @@ import java.util.Map;
  * While this class is public, but it is not part of our published public APIs.
  * This is meant to be internally used only by our sdk.
  */
-public class PreconditionFailedException extends DocumentClientException {
+public class PreconditionFailedException extends CosmosClientException {
 
     private static final long serialVersionUID = 1L;
 

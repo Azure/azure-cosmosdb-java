@@ -24,7 +24,7 @@
 package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
 import com.microsoft.azure.cosmosdb.BridgeInternal;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.Error;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.rx.internal.RMResources;
@@ -35,7 +35,7 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
-public class GoneException extends DocumentClientException {
+public class GoneException extends CosmosClientException {
 
     public GoneException(String msg) {
         this(msg, null);

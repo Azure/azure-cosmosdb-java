@@ -35,8 +35,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import com.microsoft.azure.cosmos.CosmosClientBuilder;
-import com.microsoft.azure.cosmosdb.RetryAnalyzer;
+import com.microsoft.azure.cosmos.*;
+import com.microsoft.azure.cosmosdb.*;
 import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -47,16 +47,8 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
-import com.microsoft.azure.cosmos.CosmosBridgeInternal;
-import com.microsoft.azure.cosmos.CosmosClient;
-import com.microsoft.azure.cosmos.CosmosContainer;
-import com.microsoft.azure.cosmos.CosmosDatabase;
-import com.microsoft.azure.cosmos.CosmosItemRequestOptions;
-import com.microsoft.azure.cosmos.CosmosItemSettings;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
-import com.microsoft.azure.cosmosdb.FeedOptions;
-import com.microsoft.azure.cosmosdb.FeedResponse;
-import com.microsoft.azure.cosmosdb.PartitionKey;
+import com.microsoft.azure.cosmos.CosmosItemProperties;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.internal.query.QueryItem;
 import com.microsoft.azure.cosmosdb.internal.routing.Range;
 import com.microsoft.azure.cosmosdb.rx.internal.Utils.ValueHolder;
@@ -73,7 +65,7 @@ public class OrderbyDocumentQueryTest extends TestSuiteBase {
     private CosmosClient client;
     private CosmosContainer createdCollection;
     private CosmosDatabase createdDatabase;
-    private List<CosmosItemSettings> createdDocuments = new ArrayList<>();
+    private List<CosmosItemProperties> createdDocuments = new ArrayList<>();
 
     private int numberOfPartitions;
 
@@ -84,32 +76,32 @@ public class OrderbyDocumentQueryTest extends TestSuiteBase {
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT, dataProvider = "queryMetricsArgProvider")
     public void queryDocumentsValidateContent(boolean qmEnabled) throws Exception {
-        CosmosItemSettings expectedDocument = createdDocuments.get(0);
+        CosmosItemProperties expectedDocument = createdDocuments.get(0);
 
         String query = String.format("SELECT * from root r where r.propStr = '%s'"
             + " ORDER BY r.propInt"
             , expectedDocument.getString("propStr"));
 
         FeedOptions options = new FeedOptions();
-        options.setEnableCrossPartitionQuery(true);
-        options.setPopulateQueryMetrics(qmEnabled);
+        options.enableCrossPartitionQuery(true);
+        options.populateQueryMetrics(qmEnabled);
 
-        Flux<FeedResponse<CosmosItemSettings>> queryObservable = createdCollection.queryItems(query, options);
+        Flux<FeedResponse<CosmosItemProperties>> queryObservable = createdCollection.queryItems(query, options);
 
         List<String> expectedResourceIds = new ArrayList<>();
-        expectedResourceIds.add(expectedDocument.getResourceId());
+        expectedResourceIds.add(expectedDocument.resourceId());
 
-        Map<String, ResourceValidator<CosmosItemSettings>> resourceIDToValidator = new HashMap<>();
+        Map<String, ResourceValidator<CosmosItemProperties>> resourceIDToValidator = new HashMap<>();
 
-        resourceIDToValidator.put(expectedDocument.getResourceId(),
-            new ResourceValidator.Builder<CosmosItemSettings>().areEqual(expectedDocument).build());
+        resourceIDToValidator.put(expectedDocument.resourceId(),
+            new ResourceValidator.Builder<CosmosItemProperties>().areEqual(expectedDocument).build());
 
-        FeedResponseListValidator<CosmosItemSettings> validator = new FeedResponseListValidator.Builder<CosmosItemSettings>()
+        FeedResponseListValidator<CosmosItemProperties> validator = new FeedResponseListValidator.Builder<CosmosItemProperties>()
                 .numberOfPages(1)
                 .containsExactly(expectedResourceIds)
                 .validateAllResources(resourceIDToValidator)
                 .totalRequestChargeIsAtLeast(numberOfPartitions * minQueryRequestChargePerPartition)
-                .allPagesSatisfy(new FeedResponseValidator.Builder<CosmosItemSettings>().hasRequestChargeHeader().build())
+                .allPagesSatisfy(new FeedResponseValidator.Builder<CosmosItemProperties>().hasRequestChargeHeader().build())
                 .hasValidQueryMetrics(qmEnabled)
                 .build();
 
@@ -119,7 +111,7 @@ public class OrderbyDocumentQueryTest extends TestSuiteBase {
             // TODO: DANOBLE: report this detailed information in all failures produced by TestSuiteBase classes
             // work item: https://msdata.visualstudio.com/CosmosDB/_workitems/edit/370015
             String message = String.format("%s %s mode with %s consistency test failure",
-                this.clientBuilder.getConnectionPolicy().getConnectionMode(),
+                this.clientBuilder.getConnectionPolicy().connectionMode(),
                 this.clientBuilder.getConfigs().getProtocol(),
                 this.clientBuilder.getDesiredConsistencyLevel());
             throw new AssertionError(message, error);
@@ -130,14 +122,14 @@ public class OrderbyDocumentQueryTest extends TestSuiteBase {
     public void queryDocuments_NoResults() throws Exception {
         String query = "SELECT * from root r where r.id = '2' ORDER BY r.propInt";
         FeedOptions options = new FeedOptions();
-        options.setEnableCrossPartitionQuery(true);
-        Flux<FeedResponse<CosmosItemSettings>> queryObservable = createdCollection.queryItems(query, options);
+        options.enableCrossPartitionQuery(true);
+        Flux<FeedResponse<CosmosItemProperties>> queryObservable = createdCollection.queryItems(query, options);
 
-        FeedResponseListValidator<CosmosItemSettings> validator = new FeedResponseListValidator.Builder<CosmosItemSettings>()
+        FeedResponseListValidator<CosmosItemProperties> validator = new FeedResponseListValidator.Builder<CosmosItemProperties>()
             .containsExactly(new ArrayList<>())
             .numberOfPages(1)
             .totalRequestChargeIsAtLeast(numberOfPartitions * minQueryRequestChargePerPartition)
-            .allPagesSatisfy(new FeedResponseValidator.Builder<CosmosItemSettings>()
+            .allPagesSatisfy(new FeedResponseValidator.Builder<CosmosItemProperties>()
                 .hasRequestChargeHeader().build())
             .build();
 
@@ -153,10 +145,10 @@ public class OrderbyDocumentQueryTest extends TestSuiteBase {
     public void queryOrderBy(String sortOrder) throws Exception {
         String query = String.format("SELECT * FROM r ORDER BY r.propInt %s", sortOrder);
         FeedOptions options = new FeedOptions();
-        options.setEnableCrossPartitionQuery(true);
+        options.enableCrossPartitionQuery(true);
         int pageSize = 3;
-        options.setMaxItemCount(pageSize);
-        Flux<FeedResponse<CosmosItemSettings>> queryObservable = createdCollection.queryItems(query, options);
+        options.maxItemCount(pageSize);
+        Flux<FeedResponse<CosmosItemProperties>> queryObservable = createdCollection.queryItems(query, options);
         Comparator<Integer> validatorComparator = Comparator.nullsFirst(Comparator.<Integer>naturalOrder());
 
         List<String> expectedResourceIds = sortDocumentsAndCollectResourceIds("propInt", d -> d.getInt("propInt"), validatorComparator);
@@ -166,10 +158,10 @@ public class OrderbyDocumentQueryTest extends TestSuiteBase {
 
         int expectedPageSize = expectedNumberOfPages(expectedResourceIds.size(), pageSize);
 
-        FeedResponseListValidator<CosmosItemSettings> validator = new FeedResponseListValidator.Builder<CosmosItemSettings>()
+        FeedResponseListValidator<CosmosItemProperties> validator = new FeedResponseListValidator.Builder<CosmosItemProperties>()
                 .containsExactly(expectedResourceIds)
                 .numberOfPages(expectedPageSize)
-                .allPagesSatisfy(new FeedResponseValidator.Builder<CosmosItemSettings>()
+                .allPagesSatisfy(new FeedResponseValidator.Builder<CosmosItemProperties>()
                         .hasRequestChargeHeader().build())
                 .totalRequestChargeIsAtLeast(numberOfPartitions * minQueryRequestChargePerPartition)
                 .build();
@@ -181,19 +173,19 @@ public class OrderbyDocumentQueryTest extends TestSuiteBase {
     public void queryOrderByInt() throws Exception {
         String query = "SELECT * FROM r ORDER BY r.propInt";
         FeedOptions options = new FeedOptions();
-        options.setEnableCrossPartitionQuery(true);
+        options.enableCrossPartitionQuery(true);
         int pageSize = 3;
-        options.setMaxItemCount(pageSize);
-        Flux<FeedResponse<CosmosItemSettings>> queryObservable = createdCollection.queryItems(query, options);
+        options.maxItemCount(pageSize);
+        Flux<FeedResponse<CosmosItemProperties>> queryObservable = createdCollection.queryItems(query, options);
 
         Comparator<Integer> validatorComparator = Comparator.nullsFirst(Comparator.<Integer>naturalOrder());
         List<String> expectedResourceIds = sortDocumentsAndCollectResourceIds("propInt", d -> d.getInt("propInt"), validatorComparator);
         int expectedPageSize = expectedNumberOfPages(expectedResourceIds.size(), pageSize);
 
-        FeedResponseListValidator<CosmosItemSettings> validator = new FeedResponseListValidator.Builder<CosmosItemSettings>()
+        FeedResponseListValidator<CosmosItemProperties> validator = new FeedResponseListValidator.Builder<CosmosItemProperties>()
             .containsExactly(expectedResourceIds)
             .numberOfPages(expectedPageSize)
-            .allPagesSatisfy(new FeedResponseValidator.Builder<CosmosItemSettings>()
+            .allPagesSatisfy(new FeedResponseValidator.Builder<CosmosItemProperties>()
                 .hasRequestChargeHeader().build())
             .totalRequestChargeIsAtLeast(numberOfPartitions * minQueryRequestChargePerPartition)
             .build();
@@ -205,19 +197,19 @@ public class OrderbyDocumentQueryTest extends TestSuiteBase {
     public void queryOrderByString() throws Exception {
         String query = "SELECT * FROM r ORDER BY r.propStr";
         FeedOptions options = new FeedOptions();
-        options.setEnableCrossPartitionQuery(true);
+        options.enableCrossPartitionQuery(true);
         int pageSize = 3;
-        options.setMaxItemCount(pageSize);
-        Flux<FeedResponse<CosmosItemSettings>> queryObservable = createdCollection.queryItems(query, options);
+        options.maxItemCount(pageSize);
+        Flux<FeedResponse<CosmosItemProperties>> queryObservable = createdCollection.queryItems(query, options);
 
         Comparator<String> validatorComparator = Comparator.nullsFirst(Comparator.<String>naturalOrder());
         List<String> expectedResourceIds = sortDocumentsAndCollectResourceIds("propStr", d -> d.getString("propStr"), validatorComparator);
         int expectedPageSize = expectedNumberOfPages(expectedResourceIds.size(), pageSize);
 
-        FeedResponseListValidator<CosmosItemSettings> validator = new FeedResponseListValidator.Builder<CosmosItemSettings>()
+        FeedResponseListValidator<CosmosItemProperties> validator = new FeedResponseListValidator.Builder<CosmosItemProperties>()
             .containsExactly(expectedResourceIds)
             .numberOfPages(expectedPageSize)
-            .allPagesSatisfy(new FeedResponseValidator.Builder<CosmosItemSettings>()
+            .allPagesSatisfy(new FeedResponseValidator.Builder<CosmosItemProperties>()
                 .hasRequestChargeHeader().build())
             .totalRequestChargeIsAtLeast(numberOfPartitions * minQueryRequestChargePerPartition)
             .build();
@@ -235,10 +227,10 @@ public class OrderbyDocumentQueryTest extends TestSuiteBase {
     public void queryOrderWithTop(int topValue) throws Exception {
         String query = String.format("SELECT TOP %d * FROM r ORDER BY r.propInt", topValue);
         FeedOptions options = new FeedOptions();
-        options.setEnableCrossPartitionQuery(true);
+        options.enableCrossPartitionQuery(true);
         int pageSize = 3;
-        options.setMaxItemCount(pageSize);
-        Flux<FeedResponse<CosmosItemSettings>> queryObservable = createdCollection.queryItems(query, options);
+        options.maxItemCount(pageSize);
+        Flux<FeedResponse<CosmosItemProperties>> queryObservable = createdCollection.queryItems(query, options);
 
         Comparator<Integer> validatorComparator = Comparator.nullsFirst(Comparator.<Integer>naturalOrder());
 
@@ -248,10 +240,10 @@ public class OrderbyDocumentQueryTest extends TestSuiteBase {
 
         int expectedPageSize = expectedNumberOfPages(expectedResourceIds.size(), pageSize);
 
-        FeedResponseListValidator<CosmosItemSettings> validator = new FeedResponseListValidator.Builder<CosmosItemSettings>()
+        FeedResponseListValidator<CosmosItemProperties> validator = new FeedResponseListValidator.Builder<CosmosItemProperties>()
                 .containsExactly(expectedResourceIds)
                 .numberOfPages(expectedPageSize)
-                .allPagesSatisfy(new FeedResponseValidator.Builder<CosmosItemSettings>()
+                .allPagesSatisfy(new FeedResponseValidator.Builder<CosmosItemProperties>()
                         .hasRequestChargeHeader().build())
                 .totalRequestChargeIsAtLeast(numberOfPartitions * (topValue > 0 ? minQueryRequestChargePerPartition : 1))
                 .build();
@@ -259,21 +251,21 @@ public class OrderbyDocumentQueryTest extends TestSuiteBase {
         validateQuerySuccess(queryObservable, validator);
     }
 
-    private <T> List<String> sortDocumentsAndCollectResourceIds(String propName, Function<CosmosItemSettings, T> extractProp, Comparator<T> comparer) {
+    private <T> List<String> sortDocumentsAndCollectResourceIds(String propName, Function<CosmosItemProperties, T> extractProp, Comparator<T> comparer) {
         return createdDocuments.stream()
                 .filter(d -> d.getMap().containsKey(propName)) // removes undefined
                 .sorted((d1, d2) -> comparer.compare(extractProp.apply(d1), extractProp.apply(d2)))
-                .map(d -> d.getResourceId()).collect(Collectors.toList());
+                .map(d -> d.resourceId()).collect(Collectors.toList());
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
     public void crossPartitionQueryNotEnabled() throws Exception {
         String query = "SELECT * FROM r ORDER BY r.propInt";
         FeedOptions options = new FeedOptions();
-        Flux<FeedResponse<CosmosItemSettings>> queryObservable = createdCollection.queryItems(query, options);
+        Flux<FeedResponse<CosmosItemProperties>> queryObservable = createdCollection.queryItems(query, options);
 
         FailureValidator validator = new FailureValidator.Builder()
-                .instanceOf(DocumentClientException.class)
+                .instanceOf(CosmosClientException.class)
                 .statusCode(400)
                 .build();
         validateQueryFailure(queryObservable, validator);
@@ -283,41 +275,41 @@ public class OrderbyDocumentQueryTest extends TestSuiteBase {
     public void queryScopedToSinglePartition_StartWithContinuationToken() throws Exception {
         String query = "SELECT * FROM r ORDER BY r.propScopedPartitionInt ASC";
         FeedOptions options = new FeedOptions();
-        options.setPartitionKey(new PartitionKey("duplicateParitionKeyValue"));
-        options.setMaxItemCount(3);
-        Flux<FeedResponse<CosmosItemSettings>> queryObservable = createdCollection.queryItems(query, options);
+        options.partitionKey(new PartitionKey("duplicateParitionKeyValue"));
+        options.maxItemCount(3);
+        Flux<FeedResponse<CosmosItemProperties>> queryObservable = createdCollection.queryItems(query, options);
 
-        TestSubscriber<FeedResponse<CosmosItemSettings>> subscriber = new TestSubscriber<>();
+        TestSubscriber<FeedResponse<CosmosItemProperties>> subscriber = new TestSubscriber<>();
         queryObservable.take(1).subscribe(subscriber);
 
         subscriber.awaitTerminalEvent();
         subscriber.assertComplete();
         subscriber.assertNoErrors();
         assertThat(subscriber.valueCount()).isEqualTo(1);
-        FeedResponse<CosmosItemSettings> page = (FeedResponse<CosmosItemSettings>) subscriber.getEvents().get(0).get(0);
-        assertThat(page.getResults()).hasSize(3);
+        FeedResponse<CosmosItemProperties> page = (FeedResponse<CosmosItemProperties>) subscriber.getEvents().get(0).get(0);
+        assertThat(page.results()).hasSize(3);
 
-        assertThat(page.getResponseContinuation()).isNotEmpty();
+        assertThat(page.continuationToken()).isNotEmpty();
 
 
-        options.setRequestContinuation(page.getResponseContinuation());
+        options.requestContinuation(page.continuationToken());
         queryObservable = createdCollection.queryItems(query, options);
 
-        List<CosmosItemSettings> expectedDocs = createdDocuments.stream()
+        List<CosmosItemProperties> expectedDocs = createdDocuments.stream()
             .filter(d -> (StringUtils.equals("duplicateParitionKeyValue", d.getString("mypk"))))
             .filter(d -> (d.getInt("propScopedPartitionInt") > 2)).collect(Collectors.toList());
-        int expectedPageSize = (expectedDocs.size() + options.getMaxItemCount() - 1) / options.getMaxItemCount();
+        int expectedPageSize = (expectedDocs.size() + options.maxItemCount() - 1) / options.maxItemCount();
 
         assertThat(expectedDocs).hasSize(10 - 3);
 
-        FeedResponseListValidator<CosmosItemSettings> validator = null;
+        FeedResponseListValidator<CosmosItemProperties> validator = null;
 
-        validator = new FeedResponseListValidator.Builder<CosmosItemSettings>()
+        validator = new FeedResponseListValidator.Builder<CosmosItemProperties>()
             .containsExactly(expectedDocs.stream()
                 .sorted((e1, e2) -> Integer.compare(e1.getInt("propScopedPartitionInt"), e2.getInt("propScopedPartitionInt")))
-                .map(d -> d.getResourceId()).collect(Collectors.toList()))
+                .map(d -> d.resourceId()).collect(Collectors.toList()))
             .numberOfPages(expectedPageSize)
-            .allPagesSatisfy(new FeedResponseValidator.Builder<CosmosItemSettings>()
+            .allPagesSatisfy(new FeedResponseValidator.Builder<CosmosItemProperties>()
                 .requestChargeGreaterThanOrEqualTo(1.0).build())
             .build();
         
@@ -410,18 +402,18 @@ public class OrderbyDocumentQueryTest extends TestSuiteBase {
         this.assertInvalidContinuationToken(query, new int[] { 1, 5, 10, 100 }, expectedResourceIds);
     }
 
-    public CosmosItemSettings createDocument(CosmosContainer cosmosContainer, Map<String, Object> keyValueProps)
-            throws DocumentClientException {
-        CosmosItemSettings docDefinition = getDocumentDefinition(keyValueProps);
-        return cosmosContainer.createItem(docDefinition, new CosmosItemSettings()).block().getCosmosItemSettings();
+    public CosmosItemProperties createDocument(CosmosContainer cosmosContainer, Map<String, Object> keyValueProps)
+            throws CosmosClientException {
+        CosmosItemProperties docDefinition = getDocumentDefinition(keyValueProps);
+        return cosmosContainer.createItem(docDefinition, new CosmosItemProperties()).block().properties();
     }
 
-    public List<CosmosItemSettings> bulkInsert(CosmosContainer cosmosContainer, List<Map<String, Object>> keyValuePropsList) {
+    public List<CosmosItemProperties> bulkInsert(CosmosContainer cosmosContainer, List<Map<String, Object>> keyValuePropsList) {
 
-        ArrayList<CosmosItemSettings> result = new ArrayList<CosmosItemSettings>();
+        ArrayList<CosmosItemProperties> result = new ArrayList<CosmosItemProperties>();
 
         for(Map<String, Object> keyValueProps: keyValuePropsList) {
-            CosmosItemSettings docDefinition = getDocumentDefinition(keyValueProps);
+            CosmosItemProperties docDefinition = getDocumentDefinition(keyValueProps);
             result.add(docDefinition);
         }
 
@@ -460,16 +452,16 @@ public class OrderbyDocumentQueryTest extends TestSuiteBase {
         for(int i = 0; i < 10; i++) {
             Map<String, Object> p = new HashMap<>();
             p.put("propScopedPartitionInt", i);
-            CosmosItemSettings doc = getDocumentDefinition("duplicateParitionKeyValue", UUID.randomUUID().toString(), p);
+            CosmosItemProperties doc = getDocumentDefinition("duplicateParitionKeyValue", UUID.randomUUID().toString(), p);
             CosmosItemRequestOptions options = new CosmosItemRequestOptions();
-            options.setPartitionKey(new PartitionKey(doc.get("mypk")));
-            createdDocuments.add(createDocument(createdCollection, doc).read(options).block().getCosmosItemSettings());
+            options.partitionKey(new PartitionKey(doc.get("mypk")));
+            createdDocuments.add(createDocument(createdCollection, doc).read(options).block().properties());
 
         }
 
         numberOfPartitions = CosmosBridgeInternal.getAsyncDocumentClient(client)
-                .readPartitionKeyRanges("dbs/" + createdDatabase.getId() + "/colls/" + createdCollection.getId(), null)
-                .flatMap(p -> Observable.from(p.getResults())).toList().toBlocking().single().size();
+                .readPartitionKeyRanges("dbs/" + createdDatabase.id() + "/colls/" + createdCollection.id(), null)
+                .flatMap(p -> Observable.from(p.results())).toList().toBlocking().single().size();
 
         waitIfNeededForReplicasToCatchUp(clientBuilder);
     }
@@ -483,9 +475,9 @@ public class OrderbyDocumentQueryTest extends TestSuiteBase {
         String requestContinuation = null;
         do {
             FeedOptions options = new FeedOptions();
-            options.setMaxItemCount(1);
-            options.setEnableCrossPartitionQuery(true);
-            options.setMaxDegreeOfParallelism(2);
+            options.maxItemCount(1);
+            options.enableCrossPartitionQuery(true);
+            options.maxDegreeOfParallelism(2);
             OrderByContinuationToken orderByContinuationToken = new OrderByContinuationToken(
                     new CompositeContinuationToken(
                             "asdf",
@@ -493,60 +485,60 @@ public class OrderbyDocumentQueryTest extends TestSuiteBase {
                     new QueryItem[] {new QueryItem("{\"item\" : 42}")},
                     "rid",
                     false);
-            options.setRequestContinuation(orderByContinuationToken.toString());
-            Flux<FeedResponse<CosmosItemSettings>> queryObservable = createdCollection.queryItems(query,
+            options.requestContinuation(orderByContinuationToken.toString());
+            Flux<FeedResponse<CosmosItemProperties>> queryObservable = createdCollection.queryItems(query,
                     options);
 
             //Observable<FeedResponse<Document>> firstPageObservable = queryObservable.first();
-            TestSubscriber<FeedResponse<CosmosItemSettings>> testSubscriber = new TestSubscriber<>();
+            TestSubscriber<FeedResponse<CosmosItemProperties>> testSubscriber = new TestSubscriber<>();
             queryObservable.subscribe(testSubscriber);
             testSubscriber.awaitTerminalEvent(TIMEOUT, TimeUnit.MILLISECONDS);
-            testSubscriber.assertError(DocumentClientException.class);
+            testSubscriber.assertError(CosmosClientException.class);
         } while (requestContinuation != null);
     }
     
     private void queryWithContinuationTokensAndPageSizes(String query, int[] pageSizes, List<String> expectedIds) {
         for (int pageSize : pageSizes) {
-            List<CosmosItemSettings> receivedDocuments = this.queryWithContinuationTokens(query, pageSize);
+            List<CosmosItemProperties> receivedDocuments = this.queryWithContinuationTokens(query, pageSize);
             List<String> actualIds = new ArrayList<String>();
-            for (CosmosItemSettings document : receivedDocuments) {
-                actualIds.add(document.getResourceId());
+            for (CosmosItemProperties document : receivedDocuments) {
+                actualIds.add(document.resourceId());
             }
 
             assertThat(actualIds).containsExactlyElementsOf(expectedIds);
         }
     }
 
-    private List<CosmosItemSettings> queryWithContinuationTokens(String query, int pageSize) {
+    private List<CosmosItemProperties> queryWithContinuationTokens(String query, int pageSize) {
         String requestContinuation = null;
         List<String> continuationTokens = new ArrayList<String>();
-        List<CosmosItemSettings> receivedDocuments = new ArrayList<CosmosItemSettings>();
+        List<CosmosItemProperties> receivedDocuments = new ArrayList<CosmosItemProperties>();
         do {
             FeedOptions options = new FeedOptions();
-            options.setMaxItemCount(pageSize);
-            options.setEnableCrossPartitionQuery(true);
-            options.setMaxDegreeOfParallelism(2);
-            options.setRequestContinuation(requestContinuation);
-            Flux<FeedResponse<CosmosItemSettings>> queryObservable = createdCollection.queryItems(query,
+            options.maxItemCount(pageSize);
+            options.enableCrossPartitionQuery(true);
+            options.maxDegreeOfParallelism(2);
+            options.requestContinuation(requestContinuation);
+            Flux<FeedResponse<CosmosItemProperties>> queryObservable = createdCollection.queryItems(query,
                     options);
 
             //Observable<FeedResponse<Document>> firstPageObservable = queryObservable.first();
-            TestSubscriber<FeedResponse<CosmosItemSettings>> testSubscriber = new TestSubscriber<>();
+            TestSubscriber<FeedResponse<CosmosItemProperties>> testSubscriber = new TestSubscriber<>();
             queryObservable.subscribe(testSubscriber);
             testSubscriber.awaitTerminalEvent(TIMEOUT, TimeUnit.MILLISECONDS);
             testSubscriber.assertNoErrors();
             testSubscriber.assertComplete();
 
-            FeedResponse<CosmosItemSettings> firstPage = (FeedResponse<CosmosItemSettings>) testSubscriber.getEvents().get(0).get(0);
-            requestContinuation = firstPage.getResponseContinuation();
-            receivedDocuments.addAll(firstPage.getResults());
+            FeedResponse<CosmosItemProperties> firstPage = (FeedResponse<CosmosItemProperties>) testSubscriber.getEvents().get(0).get(0);
+            requestContinuation = firstPage.continuationToken();
+            receivedDocuments.addAll(firstPage.results());
             continuationTokens.add(requestContinuation);
         } while (requestContinuation != null);
 
         return receivedDocuments;
     }
 
-    private static CosmosItemSettings getDocumentDefinition(String partitionKey, String id, Map<String, Object> keyValuePair) {
+    private static CosmosItemProperties getDocumentDefinition(String partitionKey, String id, Map<String, Object> keyValuePair) {
         StringBuilder sb = new StringBuilder();
         sb.append("{\n");
 
@@ -566,10 +558,10 @@ public class OrderbyDocumentQueryTest extends TestSuiteBase {
         sb.append(String.format("  \"mypk\": \"%s\"\n", partitionKey));
         sb.append("}");
 
-        return new CosmosItemSettings(sb.toString());
+        return new CosmosItemProperties(sb.toString());
     }
 
-    private static CosmosItemSettings getDocumentDefinition(Map<String, Object> keyValuePair) {
+    private static CosmosItemProperties getDocumentDefinition(Map<String, Object> keyValuePair) {
         String uuid = UUID.randomUUID().toString();
         return getDocumentDefinition(uuid, uuid, keyValuePair);
     }

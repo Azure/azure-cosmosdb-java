@@ -51,23 +51,23 @@ public class FetcherTest {
     public static Object[][] queryParamProvider() {
 
         FeedOptions options1 = new FeedOptions();
-        options1.setMaxItemCount(100);
-        options1.setRequestContinuation("cp-init"); // initial continuation token
+        options1.maxItemCount(100);
+        options1.requestContinuation("cp-init"); // initial continuation token
         int top1 = -1; // no top
 
         // no continuation token
         FeedOptions options2 = new FeedOptions();
-        options2.setMaxItemCount(100);
+        options2.maxItemCount(100);
         int top2 = -1; // no top
 
         // top more than max item count
         FeedOptions options3 = new FeedOptions();
-        options3.setMaxItemCount(100);
+        options3.maxItemCount(100);
         int top3 = 200;
 
         // top less than max item count
         FeedOptions options4 = new FeedOptions();
-        options4.setMaxItemCount(100);
+        options4.maxItemCount(100);
         int top4 = 20;
 
         return new Object[][] {
@@ -110,13 +110,13 @@ public class FetcherTest {
 
         Func1<RxDocumentServiceRequest, Observable<FeedResponse<Document>>> executeFunc = request ->  {
                 FeedResponse<Document> rsp = feedResponseList.get(executeIndex.getAndIncrement());
-                totalResultsReceived.addAndGet(rsp.getResults().size());
+                totalResultsReceived.addAndGet(rsp.results().size());
                 return Observable.just(rsp);
         };
 
         Fetcher<Document> fetcher =
                 new Fetcher<>(createRequestFunc, executeFunc, options, false, top,
-                        options.getMaxItemCount());
+                        options.maxItemCount());
 
         validateFetcher(fetcher, options, top, feedResponseList);
     }
@@ -131,7 +131,7 @@ public class FetcherTest {
         int index = 0;
         while(index < feedResponseList.size()) {
             assertThat(fetcher.shouldFetchMore()).describedAs("should fetch more pages").isTrue();
-            totalNumberOfDocs += validate(fetcher.nextPage()).getResults().size();
+            totalNumberOfDocs += validate(fetcher.nextPage()).results().size();
 
             if ((top != -1) && (totalNumberOfDocs >= top)) {
                 break;
@@ -145,7 +145,7 @@ public class FetcherTest {
     public void changeFeed() {
 
         ChangeFeedOptions options = new ChangeFeedOptions();
-        options.setMaxItemCount(100);
+        options.maxItemCount(100);
 
         boolean isChangeFeed = true;
         int top = -1;
@@ -165,7 +165,7 @@ public class FetcherTest {
         AtomicInteger requestIndex = new AtomicInteger(0);
 
         Func2<String, Integer, RxDocumentServiceRequest> createRequestFunc = (token, maxItemCount) -> {
-            assertThat(maxItemCount).describedAs("max item count").isEqualTo(options.getMaxItemCount());
+            assertThat(maxItemCount).describedAs("max item count").isEqualTo(options.maxItemCount());
             assertThat(token).describedAs("continuation token").isEqualTo(
                     getExpectedContinuationTokenInRequest(options, feedResponseList, requestIndex.getAndIncrement()));
 
@@ -180,7 +180,7 @@ public class FetcherTest {
 
         Fetcher<Document> fetcher =
                 new Fetcher<>(createRequestFunc, executeFunc, options, isChangeFeed, top,
-                        options.getMaxItemCount());
+                        options.maxItemCount());
 
         validateFetcher(fetcher, options, feedResponseList);
     }
@@ -212,10 +212,10 @@ public class FetcherTest {
                                                          List<FeedResponse<Document>> feedResponseList,
                                                          int requestIndex) {
         if (requestIndex == 0) {
-            return options.getRequestContinuation();
+            return options.requestContinuation();
         }
 
-        return feedResponseList.get(requestIndex - 1).getResponseContinuation();
+        return feedResponseList.get(requestIndex - 1).continuationToken();
     }
 
     private int getExpectedMaxItemCountInRequest(FeedOptionsBase options,
@@ -223,12 +223,12 @@ public class FetcherTest {
                                                  List<FeedResponse<Document>> feedResponseList,
                                                  int requestIndex) {
         if (top == -1) {
-            return options.getMaxItemCount();
+            return options.maxItemCount();
         }
 
         int numberOfReceivedItemsSoFar  =
-                feedResponseList.subList(0, requestIndex).stream().mapToInt(rsp -> rsp.getResults().size()).sum();
+                feedResponseList.subList(0, requestIndex).stream().mapToInt(rsp -> rsp.results().size()).sum();
 
-        return Math.min(top - numberOfReceivedItemsSoFar, options.getMaxItemCount());
+        return Math.min(top - numberOfReceivedItemsSoFar, options.maxItemCount());
     }
 }

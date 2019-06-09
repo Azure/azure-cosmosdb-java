@@ -48,7 +48,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -73,12 +72,12 @@ public class GlobalEndpointManager implements AutoCloseable {
         this.backgroundRefreshLocationTimeIntervalInMS = configs.getUnavailableLocationsExpirationTimeInSeconds() * 1000;
         try {
             this.locationCache = new LocationCache(
-                    new ArrayList<>(connectionPolicy.getPreferredLocations() != null ?
-                            connectionPolicy.getPreferredLocations():
+                    new ArrayList<>(connectionPolicy.preferredLocations() != null ?
+                            connectionPolicy.preferredLocations():
                             Collections.emptyList()
                     ),
                     owner.getServiceEndpoint().toURL(),
-                    connectionPolicy.getEnableEndpointDiscovery(),
+                    connectionPolicy.enableEndpointDiscovery(),
                     BridgeInternal.getUseMultipleWriteLocations(connectionPolicy),
                     configs);
 
@@ -185,7 +184,7 @@ public class GlobalEndpointManager implements AutoCloseable {
 
                     Single<DatabaseAccount> databaseAccountObs = getDatabaseAccountFromAnyLocationsAsync(
                             this.defaultEndpoint,
-                            new ArrayList<>(this.connectionPolicy.getPreferredLocations()),
+                            new ArrayList<>(this.connectionPolicy.preferredLocations()),
                             url -> this.getDatabaseAccountAsync(url));
 
                     return databaseAccountObs.map(dbAccount -> {
@@ -237,7 +236,7 @@ public class GlobalEndpointManager implements AutoCloseable {
                             }
 
                             logger.debug("startRefreshLocationTimerAsync() - Invoking refresh, I was registered on [{}]", now);
-                            Single<DatabaseAccount> databaseAccountObs = GlobalEndpointManager.getDatabaseAccountFromAnyLocationsAsync(this.defaultEndpoint, new ArrayList<>(this.connectionPolicy.getPreferredLocations()),
+                            Single<DatabaseAccount> databaseAccountObs = GlobalEndpointManager.getDatabaseAccountFromAnyLocationsAsync(this.defaultEndpoint, new ArrayList<>(this.connectionPolicy.preferredLocations()),
                                     url -> this.getDatabaseAccountAsync(url)).toObservable().toSingle();
 
                             return databaseAccountObs.flatMapCompletable(dbAccount -> {

@@ -56,7 +56,7 @@ public class HttpConstants {
         public static final String USER_AGENT = "User-Agent";
         public static final String IF_MODIFIED_SINCE = "If-Modified-Since";
         public static final String IF_MATCH = "If-Match";
-        public static final String IF_NONE_MATCH = "If-None-Match";
+        public static final String IF_NONE_MATCH = "If-NONE-Match";
         public static final String CONTENT_LENGTH = "Content-Length";
         public static final String ACCEPT_ENCODING = "Accept-Encoding";
         public static final String KEEP_ALIVE = "Keep-Alive";
@@ -66,11 +66,11 @@ public class HttpConstants {
         public static final String CONTENT_LANGUAGE = "Content-Language";
         public static final String CONTENT_LOCATION = "Content-Location";
         public static final String CONTENT_MD5 = "Content-Md5";
-        public static final String CONTENT_RANGE = "Content-Range";
+        public static final String CONTENT_RANGE = "Content-RANGE";
         public static final String ACCEPT = "Accept";
         public static final String ACCEPT_CHARSET = "Accept-Charset";
         public static final String ACCEPT_LANGUAGE = "Accept-Language";
-        public static final String IF_RANGE = "If-Range";
+        public static final String IF_RANGE = "If-RANGE";
         public static final String IF_UNMODIFIED_SINCE = "If-Unmodified-Since";
         public static final String MAX_FORWARDS = "Max-Forwards";
         public static final String PROXY_AUTHORIZATION = "Proxy-Authorization";
@@ -208,7 +208,7 @@ public class HttpConstants {
 
         public static final String LSN = "lsn";
 
-        // Custom DocDB JavaScript logging headers
+        // CUSTOM DocDB JavaScript logging headers
         public static final String SCRIPT_ENABLE_LOGGING = "x-ms-documentdb-script-enable-logging";
         public static final String SCRIPT_LOG_RESULTS = "x-ms-documentdb-script-log-results";
 

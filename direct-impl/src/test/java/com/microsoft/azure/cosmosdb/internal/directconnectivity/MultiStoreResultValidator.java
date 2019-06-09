@@ -24,7 +24,7 @@
 package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
 import com.google.common.base.Predicates;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.rx.FailureValidator;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.assertj.core.description.Description;
@@ -86,7 +86,7 @@ public interface MultiStoreResultValidator {
                     for(StoreResult srr: storeResults) {
                         try {
                             storeResponseValidator.validate(srr.toResponse());
-                        } catch (DocumentClientException e) {
+                        } catch (CosmosClientException e) {
                             fail(e.getMessage());
                         }
                     }
@@ -148,7 +148,7 @@ public interface MultiStoreResultValidator {
                     for(StoreResult srr: storeResults) {
                         try {
                             failureValidator.validate(srr.getException());
-                        } catch (DocumentClientException e) {
+                        } catch (CosmosClientException e) {
                             fail(e.getMessage());
                         }
                     }

@@ -101,37 +101,37 @@ public class CosmosTestSuiteBase {
 
     static protected CosmosClientBuilder createGatewayRxCosmosClient() {
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
-        connectionPolicy.setConnectionMode(ConnectionMode.Gateway);
+        connectionPolicy.connectionMode(ConnectionMode.GATEWAY);
         RetryOptions options = new RetryOptions();
-        options.setMaxRetryWaitTimeInSeconds(SUITE_SETUP_TIMEOUT);
-        connectionPolicy.setRetryOptions(options);
+        options.maxRetryWaitTimeInSeconds(SUITE_SETUP_TIMEOUT);
+        connectionPolicy.retryOptions(options);
 
         return CosmosClient.builder().connectionPolicy(connectionPolicy)
                 .endpoint(TestConfigurations.HOST)
                 .key(TestConfigurations.MASTER_KEY)
-                .consistencyLevel(ConsistencyLevel.Session);
+                .consistencyLevel(ConsistencyLevel.SESSION);
     }
 
     static protected CosmosDatabase safeCreateDatabase(CosmosClient client, CosmosDatabaseSettings databaseSettings) {
-        safeDeleteDatabase(client, databaseSettings.getId());
+        safeDeleteDatabase(client, databaseSettings.id());
         return createDatabase(client, databaseSettings);
     }
 
     static protected CosmosDatabase createDatabase(CosmosClient client, String databaseId) {
         Mono<CosmosDatabaseResponse> databaseSingle = client.createDatabase(databaseId);
-        return databaseSingle.block().getDatabase();
+        return databaseSingle.block().database();
     }
 
     static protected CosmosContainer createContainerInDB(CosmosClient client, String containerID, String databaseId) {
         CosmosDatabase cosmosDatabaseProxy = client.getDatabase(databaseId);
         Mono<CosmosContainerResponse> containerSingle = cosmosDatabaseProxy.createContainer(containerID, "/mypk");
-        return containerSingle.block().getContainer();
+        return containerSingle.block().container();
     }
 
     static private CosmosDatabase createDatabase(CosmosClient client, CosmosDatabaseSettings databaseSettings) {
         Mono<CosmosDatabaseResponse> databaseSingle = client.createDatabase(databaseSettings,
                                                                          new CosmosDatabaseRequestOptions());
-        return databaseSingle.block().getDatabase();
+        return databaseSingle.block().database();
     }
 
     static protected void safeDeleteDatabase(CosmosClient client, String databaseId) {
@@ -158,7 +158,7 @@ public class CosmosTestSuiteBase {
         PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition();
         ArrayList<String> paths = new ArrayList<>();
         paths.add("/mypk");
-        partitionKeyDef.setPaths(paths);
+        partitionKeyDef.paths(paths);
 
         CosmosContainerSettings settings = new CosmosContainerSettings(UUID.randomUUID().toString(), partitionKeyDef);
         return settings;

@@ -45,7 +45,7 @@ public class SchedulingTimeSpan {
     private final long waitTime;
 
     /**
-     * Number of times the process was preempted.
+     * NUMBER of times the process was preempted.
      */
     private final long numPreemptions;
 

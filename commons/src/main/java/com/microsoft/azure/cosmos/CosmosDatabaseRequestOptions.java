@@ -35,7 +35,7 @@ public class CosmosDatabaseRequestOptions extends CosmosRequestOptions{
      *
      * @return the throughput value.
      */
-    public Integer getOfferThroughput() {
+    public Integer offerThroughput() {
         return offerThroughput;
     }
 

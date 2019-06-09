@@ -22,7 +22,7 @@
  */
 package com.microsoft.azure.cosmos.changefeed.internal;
 
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 
 import static com.microsoft.azure.cosmos.changefeed.internal.ChangeFeedHelper.HTTP_STATUS_CODE_GONE;
 import static com.microsoft.azure.cosmos.changefeed.internal.ChangeFeedHelper.HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR;
@@ -45,16 +45,16 @@ public class ExceptionClassifier {
     public static final int SubStatusCode_ReadSessionNotAvailable = 1002;
 
 
-    public static StatusCodeErrorType classifyClientException(DocumentClientException clientException) {
-        Integer subStatusCode = clientException.getSubStatusCode();
+    public static StatusCodeErrorType classifyClientException(CosmosClientException clientException) {
+        Integer subStatusCode = clientException.subStatusCode();
 
-        if (clientException.getStatusCode() == HTTP_STATUS_CODE_NOT_FOUND && subStatusCode != SubStatusCode_ReadSessionNotAvailable)
+        if (clientException.statusCode() == HTTP_STATUS_CODE_NOT_FOUND && subStatusCode != SubStatusCode_ReadSessionNotAvailable)
             return StatusCodeErrorType.PARTITION_NOT_FOUND;
 
-        if (clientException.getStatusCode() == HTTP_STATUS_CODE_GONE && (subStatusCode == SubStatusCode_PartitionKeyRangeGone || subStatusCode == SubStatusCode_Splitting))
+        if (clientException.statusCode() == HTTP_STATUS_CODE_GONE && (subStatusCode == SubStatusCode_PartitionKeyRangeGone || subStatusCode == SubStatusCode_Splitting))
             return StatusCodeErrorType.PARTITION_SPLIT;
 
-        if (clientException.getStatusCode() == HTTP_STATUS_CODE_TOO_MANY_REQUESTS || clientException.getStatusCode() >= HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR)
+        if (clientException.statusCode() == HTTP_STATUS_CODE_TOO_MANY_REQUESTS || clientException.statusCode() >= HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR)
             return StatusCodeErrorType.TRANSIENT_ERROR;
 
         // Temporary workaround to compare exception message, until server provides better way of handling this case.

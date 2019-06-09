@@ -76,13 +76,13 @@ public interface IDocumentQueryClient {
     /// </summary>
     enum QueryCompatibilityMode {
         /// <summary>
-        /// Default (latest) query format.
+        /// DEFAULT (latest) query format.
         /// </summary>
         Default,
 
         /// <summary>
         /// Query (application/query+json).
-        /// Default.
+        /// DEFAULT.
         /// </summary>
         Query,
 

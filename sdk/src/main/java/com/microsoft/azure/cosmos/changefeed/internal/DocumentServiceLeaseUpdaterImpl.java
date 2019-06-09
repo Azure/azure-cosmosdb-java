@@ -23,9 +23,9 @@
 package com.microsoft.azure.cosmos.changefeed.internal;
 
 import com.microsoft.azure.cosmos.CosmosItem;
+import com.microsoft.azure.cosmos.CosmosItemProperties;
 import com.microsoft.azure.cosmos.CosmosItemRequestOptions;
 import com.microsoft.azure.cosmos.CosmosItemResponse;
-import com.microsoft.azure.cosmos.CosmosItemSettings;
 import com.microsoft.azure.cosmos.changefeed.ChangeFeedContextClient;
 import com.microsoft.azure.cosmos.changefeed.Lease;
 import com.microsoft.azure.cosmos.changefeed.ServiceItemLease;
@@ -33,7 +33,7 @@ import com.microsoft.azure.cosmos.changefeed.ServiceItemLeaseUpdater;
 import com.microsoft.azure.cosmos.changefeed.exceptions.LeaseLostException;
 import com.microsoft.azure.cosmosdb.AccessCondition;
 import com.microsoft.azure.cosmosdb.AccessConditionType;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
@@ -74,22 +74,22 @@ public class DocumentServiceLeaseUpdaterImpl implements ServiceItemLeaseUpdater 
             }
 
             lease.setTimestamp(ZonedDateTime.now(ZoneId.of("UTC")));
-            CosmosItemSettings leaseDocument = this.tryReplaceLease(lease, itemLink);
+            CosmosItemProperties leaseDocument = this.tryReplaceLease(lease, itemLink);
 
             if (leaseDocument != null) {
                 return Mono.just(ServiceItemLease.fromDocument(leaseDocument));
             }
 
             // Partition lease update conflict. Reading the current version of lease.
-            CosmosItemSettings document = null;
+            CosmosItemProperties document = null;
             try {
                 CosmosItemResponse response = this.client.readItem(itemLink, requestOptions)
                     .block();
-                document = response.getCosmosItemSettings();
+                document = response.properties();
             } catch (RuntimeException re) {
-                if (re.getCause() instanceof DocumentClientException) {
-                    DocumentClientException ex = (DocumentClientException) re.getCause();
-                    if (ex.getStatusCode() == HTTP_STATUS_CODE_NOT_FOUND) {
+                if (re.getCause() instanceof CosmosClientException) {
+                    CosmosClientException ex = (CosmosClientException) re.getCause();
+                    if (ex.statusCode() == HTTP_STATUS_CODE_NOT_FOUND) {
                         // Partition lease no longer exists
                         throw new LeaseLostException(lease);
                     }
@@ -112,15 +112,15 @@ public class DocumentServiceLeaseUpdaterImpl implements ServiceItemLeaseUpdater 
         throw new LeaseLostException(lease);
     }
 
-    private CosmosItemSettings tryReplaceLease(Lease lease, CosmosItem itemLink) throws LeaseLostException {
+    private CosmosItemProperties tryReplaceLease(Lease lease, CosmosItem itemLink) throws LeaseLostException {
         try {
             CosmosItemResponse response = this.client.replaceItem(itemLink, lease, this.getCreateIfMatchOptions(lease))
                 .block();
-            return response.getCosmosItemSettings();
+            return response.properties();
         } catch (RuntimeException re) {
-            if (re.getCause() instanceof DocumentClientException) {
-                DocumentClientException ex = (DocumentClientException) re.getCause();
-                switch (ex.getStatusCode()) {
+            if (re.getCause() instanceof CosmosClientException) {
+                CosmosClientException ex = (CosmosClientException) re.getCause();
+                switch (ex.statusCode()) {
                     case HTTP_STATUS_CODE_PRECONDITION_FAILED: {
                         return null;
                     }
@@ -141,8 +141,8 @@ public class DocumentServiceLeaseUpdaterImpl implements ServiceItemLeaseUpdater 
 
     private CosmosItemRequestOptions getCreateIfMatchOptions(Lease lease) {
         AccessCondition ifMatchCondition = new AccessCondition();
-        ifMatchCondition.setType(AccessConditionType.IfMatch);
-        ifMatchCondition.setCondition(lease.getConcurrencyToken());
+        ifMatchCondition.type(AccessConditionType.IF_MATCH);
+        ifMatchCondition.condition(lease.getConcurrencyToken());
 
         CosmosItemRequestOptions createIfMatchOptions = new CosmosItemRequestOptions();
         createIfMatchOptions.accessCondition(ifMatchCondition);

@@ -38,6 +38,6 @@ public class PermissionTest {
                 "}";
         Permission p = new Permission(json);
         assertThat(p.getResourcePartitionKey()).isEqualToComparingFieldByField(new PartitionKey("/id"));
-        assertThat(p.getPermissionMode()).isEqualTo(PermissionMode.Read);
+        assertThat(p.getPermissionMode()).isEqualTo(PermissionMode.READ);
     }
 }

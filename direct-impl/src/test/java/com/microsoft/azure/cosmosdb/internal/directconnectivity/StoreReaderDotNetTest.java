@@ -464,7 +464,7 @@ public class StoreReaderDotNetTest {
         // entity.requestContext.timeoutHelper = new TimeoutHelper(new TimeSpan(2, 2, 2));
         entity.requestContext.timeoutHelper = Mockito.mock(TimeoutHelper.class);
 
-        // when the store reader throws Invalid Partition exception, the higher layer should
+        // when the store reader throws INVALID Partition exception, the higher layer should
         // clear this target identity.
         // entity.requestContext.TargetIdentity = new ServiceIdentity("dummyTargetIdentity1", new Uri("http://dummyTargetIdentity1"), false);
         entity.requestContext.resolvedPartitionKeyRange = new PartitionKeyRange();
@@ -590,12 +590,12 @@ public class StoreReaderDotNetTest {
         entity.setResourceId("1-MxAPlgMgA=");
 
         // set consistency level on the request to Bounded Staleness
-        entity.getHeaders().put(HttpConstants.HttpHeaders.CONSISTENCY_LEVEL, ConsistencyLevel.BoundedStaleness.toString());
+        entity.getHeaders().put(HttpConstants.HttpHeaders.CONSISTENCY_LEVEL, ConsistencyLevel.BOUNDED_STALENESS.toString());
 
         // also setup timeout helper, used in store reader
         entity.requestContext.timeoutHelper = new TimeoutHelper(Duration.ofSeconds(2 * 60 * 60 + 2 * 60 + 2));
 
-        // when the store reader throws Invalid Partition exception, the higher layer should
+        // when the store reader throws INVALID Partition exception, the higher layer should
         entity.requestContext.resolvedPartitionKeyRange = new PartitionKeyRange();
 
         AddressInformation[] addressInformations = getMockAddressInformationDuringUpgrade();
@@ -677,12 +677,12 @@ public class StoreReaderDotNetTest {
         entity.setResourceId("1-MxAPlgMgA=");
 
         // set consistency level on the request to Bounded Staleness
-        entity.getHeaders().put(HttpConstants.HttpHeaders.CONSISTENCY_LEVEL, ConsistencyLevel.Strong.toString());
+        entity.getHeaders().put(HttpConstants.HttpHeaders.CONSISTENCY_LEVEL, ConsistencyLevel.STRONG.toString());
 
         // also setup timeout helper, used in store reader
         entity.requestContext.timeoutHelper = new TimeoutHelper(Duration.ofSeconds(2 * 60 * 60 + 2 * 60 + 2));
 
-        // when the store reader throws Invalid Partition exception, the higher layer should
+        // when the store reader throws INVALID Partition exception, the higher layer should
         // clear this target identity.
         entity.requestContext.resolvedPartitionKeyRange = new PartitionKeyRange();
 
@@ -763,12 +763,12 @@ public class StoreReaderDotNetTest {
         entity.setResourceId("1-MxAPlgMgA=");
 
         // set consistency level on the request to Bounded Staleness
-        entity.getHeaders().put(HttpConstants.HttpHeaders.CONSISTENCY_LEVEL, ConsistencyLevel.BoundedStaleness.toString());
+        entity.getHeaders().put(HttpConstants.HttpHeaders.CONSISTENCY_LEVEL, ConsistencyLevel.BOUNDED_STALENESS.toString());
 
         // also setup timeout helper, used in store reader
         entity.requestContext.timeoutHelper = new TimeoutHelper(Duration.ofSeconds(2 * 60 * 60 + 2 * 60 + 2));
 
-        // when the store reader throws Invalid Partition exception, the higher layer should
+        // when the store reader throws INVALID Partition exception, the higher layer should
         // clear this target identity.
         entity.requestContext.resolvedPartitionKeyRange = new PartitionKeyRange();
 
@@ -807,7 +807,7 @@ public class StoreReaderDotNetTest {
 
             QuorumReader reader = new QuorumReader(new Configs(),mockTransportClient, addressSelector, storeReader, mockServiceConfigReader, mockAuthorizationTokenProvider);
 
-            entity.requestContext.originalRequestConsistencyLevel = ConsistencyLevel.Strong;
+            entity.requestContext.originalRequestConsistencyLevel = ConsistencyLevel.STRONG;
 
             StoreResponse result = reader.readStrongAsync(entity, 2, ReadMode.Strong).toBlocking().value();
             assertThat(result.getLSN()).isEqualTo(100);
@@ -839,10 +839,10 @@ public class StoreReaderDotNetTest {
 
             GatewayServiceConfigurationReader mockServiceConfigReader = Mockito.mock(GatewayServiceConfigurationReader.class);
             Mockito.when(mockServiceConfigReader.getUserReplicationPolicy()).thenReturn(replicationPolicy);
-            Mockito.when(mockServiceConfigReader.getDefaultConsistencyLevel()).thenReturn(ConsistencyLevel.Strong);
+            Mockito.when(mockServiceConfigReader.getDefaultConsistencyLevel()).thenReturn(ConsistencyLevel.STRONG);
 
             QuorumReader reader = new QuorumReader(new Configs(), mockTransportClient, addressSelector, storeReader, mockServiceConfigReader, mockAuthorizationTokenProvider);
-            entity.requestContext.originalRequestConsistencyLevel = ConsistencyLevel.Strong;
+            entity.requestContext.originalRequestConsistencyLevel = ConsistencyLevel.STRONG;
             entity.requestContext.quorumSelectedLSN = -1;
             entity.requestContext.globalCommittedSelectedLSN = -1;
             try {
@@ -881,10 +881,10 @@ public class StoreReaderDotNetTest {
 
             GatewayServiceConfigurationReader mockServiceConfigReader = Mockito.mock(GatewayServiceConfigurationReader.class);
             Mockito.when(mockServiceConfigReader.getUserReplicationPolicy()).thenReturn(replicationPolicy);
-            Mockito.when(mockServiceConfigReader.getDefaultConsistencyLevel()).thenReturn(ConsistencyLevel.Strong);
+            Mockito.when(mockServiceConfigReader.getDefaultConsistencyLevel()).thenReturn(ConsistencyLevel.STRONG);
 
             QuorumReader reader = new QuorumReader(new Configs(), mockTransportClient, addressSelector, storeReader, mockServiceConfigReader, mockAuthorizationTokenProvider);
-            entity.requestContext.originalRequestConsistencyLevel = ConsistencyLevel.Strong;
+            entity.requestContext.originalRequestConsistencyLevel = ConsistencyLevel.STRONG;
             entity.requestContext.performLocalRefreshOnGoneException = true;
 
             StoreResponse result = reader.readStrongAsync(entity, 2, ReadMode.Strong).toBlocking().value();

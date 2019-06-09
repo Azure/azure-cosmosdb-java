@@ -27,7 +27,7 @@ package com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.microsoft.azure.cosmosdb.BridgeInternal;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.Error;
 import com.microsoft.azure.cosmosdb.internal.InternalServerErrorException;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.ConflictException;
@@ -373,7 +373,7 @@ final public class RntbdRequestManager implements ChannelInboundHandler, Channel
     /**
      * Processes inbound events triggered by channel handlers in the {@link RntbdClientChannelInitializer} pipeline
      * <p>
-     * All but inbound request management events are ignored.
+     * ALL but inbound request management events are ignored.
      *
      * @param context {@link ChannelHandlerContext} to which this {@link RntbdRequestManager} belongs
      * @param event   An object representing a user event
@@ -602,16 +602,16 @@ final public class RntbdRequestManager implements ChannelInboundHandler, Channel
 
         } else {
 
-            // Map response to a DocumentClientException
+            // Map response to a CosmosClientException
 
-            final DocumentClientException cause;
+            final CosmosClientException cause;
 
             // ..Fetch required header values
 
             final long lsn = response.getHeader(RntbdResponseHeader.LSN);
             final String partitionKeyRangeId = response.getHeader(RntbdResponseHeader.PartitionKeyRangeId);
 
-            // ..Create Error instance
+            // ..CREATE Error instance
 
             final ObjectMapper mapper = new ObjectMapper();
             final Error error;
@@ -639,7 +639,7 @@ final public class RntbdRequestManager implements ChannelInboundHandler, Channel
                 this.getRntbdContext().orElseThrow(IllegalStateException::new), activityId
             );
 
-            // ..Create DocumentClientException based on status and sub-status codes
+            // ..CREATE CosmosClientException based on status and sub-status codes
 
             switch (status.code()) {
 
@@ -723,12 +723,12 @@ final public class RntbdRequestManager implements ChannelInboundHandler, Channel
                     break;
 
                 default:
-                    cause = new DocumentClientException(status.code(), error, responseHeaders);
+                    cause = new CosmosClientException(status.code(), error, responseHeaders);
                     break;
             }
 
             logger.trace("{}[activityId: {}, statusCode: {}, subStatusCode: {}] {}",
-                context.channel(), cause.getActivityId(), cause.getStatusCode(), cause.getSubStatusCode(),
+                context.channel(), cause.message(), cause.statusCode(), cause.subStatusCode(),
                 cause.getMessage()
             );
 

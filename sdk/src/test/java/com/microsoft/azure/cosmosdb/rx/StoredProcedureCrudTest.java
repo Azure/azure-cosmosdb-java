@@ -57,14 +57,14 @@ public class StoredProcedureCrudTest extends TestSuiteBase {
 
         // create a stored procedure
         CosmosStoredProcedureSettings storedProcedureDef = new CosmosStoredProcedureSettings();
-        storedProcedureDef.setId(UUID.randomUUID().toString());
-        storedProcedureDef.setBody("function() {var x = 10;}");
+        storedProcedureDef.id(UUID.randomUUID().toString());
+        storedProcedureDef.body("function() {var x = 10;}");
 
         Mono<CosmosStoredProcedureResponse> createObservable = createdCollection.createStoredProcedure(storedProcedureDef, new CosmosStoredProcedureRequestOptions());
 
         // validate stored procedure creation
         CosmosResponseValidator<CosmosStoredProcedureResponse> validator = new CosmosResponseValidator.Builder<CosmosStoredProcedureResponse>()
-                .withId(storedProcedureDef.getId())
+                .withId(storedProcedureDef.id())
                 .withStoredProcedureBody("function() {var x = 10;}")
                 .notNullEtag()
                 .build();
@@ -75,17 +75,17 @@ public class StoredProcedureCrudTest extends TestSuiteBase {
     public void readStoredProcedure() throws Exception {
         // create a stored procedure
         CosmosStoredProcedureSettings storedProcedureDef = new CosmosStoredProcedureSettings();
-        storedProcedureDef.setId(UUID.randomUUID().toString());
-        storedProcedureDef.setBody("function() {var x = 10;}");
+        storedProcedureDef.id(UUID.randomUUID().toString());
+        storedProcedureDef.body("function() {var x = 10;}");
         CosmosStoredProcedure storedProcedure = createdCollection.createStoredProcedure(storedProcedureDef, new CosmosStoredProcedureRequestOptions())
-                .block().getStoredProcedure();
+                .block().storedProcedure();
 
         // read stored procedure
         waitIfNeededForReplicasToCatchUp(clientBuilder);
         Mono<CosmosStoredProcedureResponse> readObservable = storedProcedure.read(null);
 
         CosmosResponseValidator<CosmosStoredProcedureResponse> validator = new CosmosResponseValidator.Builder<CosmosStoredProcedureResponse>()
-                .withId(storedProcedureDef.getId())
+                .withId(storedProcedureDef.id())
                 .withStoredProcedureBody("function() {var x = 10;}")
                 .notNullEtag()
                 .build();
@@ -96,10 +96,10 @@ public class StoredProcedureCrudTest extends TestSuiteBase {
     public void deleteStoredProcedure() throws Exception {
         // create a stored procedure
         CosmosStoredProcedureSettings storedProcedureDef = new CosmosStoredProcedureSettings();
-        storedProcedureDef.setId(UUID.randomUUID().toString());
-        storedProcedureDef.setBody("function() {var x = 10;}");
+        storedProcedureDef.id(UUID.randomUUID().toString());
+        storedProcedureDef.body("function() {var x = 10;}");
         CosmosStoredProcedure storedProcedure = createdCollection.createStoredProcedure(storedProcedureDef, new CosmosStoredProcedureRequestOptions())
-                .block().getStoredProcedure();
+                .block().storedProcedure();
 
         // delete
         Mono<CosmosResponse> deleteObservable = storedProcedure.delete(new CosmosStoredProcedureRequestOptions());

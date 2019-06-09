@@ -72,7 +72,7 @@ public class ResourceId {
 
         if (!pair.getKey()) {
             throw new IllegalArgumentException(String.format(
-                    "Invalid resource id %s", id));
+                    "INVALID resource id %s", id));
         }
         return pair.getValue();
     }

@@ -87,7 +87,7 @@ implements IDocumentQueryExecutionContext<T> {
 
     public String getPartitionKeyId() {
         // TODO Auto-generated method stub
-        return this.feedOptions.getPartitionKeyRangeIdInternal();
+        return this.feedOptions.partitionKeyRangeIdInternal();
     }
 
     public RxDocumentServiceRequest createDocumentServiceRequest(Map<String, String> requestHeaders,
@@ -135,8 +135,8 @@ implements IDocumentQueryExecutionContext<T> {
 
     public FeedOptions getFeedOptions(String continuationToken, Integer maxPageSize) {
         FeedOptions options = new FeedOptions(this.feedOptions);
-        options.setRequestContinuation(continuationToken);
-        options.setMaxItemCount(maxPageSize);
+        options.requestContinuation(continuationToken);
+        options.maxItemCount(maxPageSize);
         return options;
     }
 
@@ -149,10 +149,10 @@ implements IDocumentQueryExecutionContext<T> {
 
         ConsistencyLevel defaultConsistencyLevel = this.client.getDefaultConsistencyLevelAsync();
         ConsistencyLevel desiredConsistencyLevel = this.client.getDesiredConsistencyLevelAsync();
-        if (!Strings.isNullOrEmpty(feedOptions.getSessionToken())
+        if (!Strings.isNullOrEmpty(feedOptions.sessionToken())
                 && !ReplicatedResourceClientUtils.isReadingFromMaster(this.resourceTypeEnum, OperationType.ReadFeed)) {
-            if (defaultConsistencyLevel == ConsistencyLevel.Session
-                    || (desiredConsistencyLevel == ConsistencyLevel.Session)) {
+            if (defaultConsistencyLevel == ConsistencyLevel.SESSION
+                    || (desiredConsistencyLevel == ConsistencyLevel.SESSION)) {
                 // Query across partitions is not supported today. Master resources (for e.g.,
                 // database)
                 // can span across partitions, whereas server resources (viz: collection,
@@ -167,44 +167,44 @@ implements IDocumentQueryExecutionContext<T> {
                 // irrespective of the chosen replica.
                 // For server resources, which don't span partitions, specify the session token
                 // for correct replica to be chosen for servicing the query result.
-                requestHeaders.put(HttpConstants.HttpHeaders.SESSION_TOKEN, feedOptions.getSessionToken());
+                requestHeaders.put(HttpConstants.HttpHeaders.SESSION_TOKEN, feedOptions.sessionToken());
             }
         }
 
-        requestHeaders.put(HttpConstants.HttpHeaders.CONTINUATION, feedOptions.getRequestContinuation());
+        requestHeaders.put(HttpConstants.HttpHeaders.CONTINUATION, feedOptions.requestContinuation());
         requestHeaders.put(HttpConstants.HttpHeaders.IS_QUERY, Strings.toString(true));
 
         // Flow the pageSize only when we are not doing client eval
-        if (feedOptions.getMaxItemCount() != null && feedOptions.getMaxItemCount() > 0) {
-            requestHeaders.put(HttpConstants.HttpHeaders.PAGE_SIZE, Strings.toString(feedOptions.getMaxItemCount()));
+        if (feedOptions.maxItemCount() != null && feedOptions.maxItemCount() > 0) {
+            requestHeaders.put(HttpConstants.HttpHeaders.PAGE_SIZE, Strings.toString(feedOptions.maxItemCount()));
         }
 
-        if (feedOptions.getEnableCrossPartitionQuery() != null) {
+        if (feedOptions.enableCrossPartitionQuery() != null) {
 
             requestHeaders.put(HttpConstants.HttpHeaders.ENABLE_CROSS_PARTITION_QUERY,
-                    Strings.toString(feedOptions.getEnableCrossPartitionQuery()));
+                    Strings.toString(feedOptions.enableCrossPartitionQuery()));
         }
 
-        if (feedOptions.getMaxDegreeOfParallelism() != 0) {
+        if (feedOptions.maxDegreeOfParallelism() != 0) {
             requestHeaders.put(HttpConstants.HttpHeaders.PARALLELIZE_CROSS_PARTITION_QUERY, Strings.toString(true));
         }
 
-        if (this.feedOptions.getEnableCrossPartitionQuery() != null) {
+        if (this.feedOptions.enableCrossPartitionQuery() != null) {
             requestHeaders.put(HttpConstants.HttpHeaders.ENABLE_SCAN_IN_QUERY,
-                    Strings.toString(this.feedOptions.getEnableCrossPartitionQuery()));
+                    Strings.toString(this.feedOptions.enableCrossPartitionQuery()));
         }
 
-        if (this.feedOptions.getResponseContinuationTokenLimitInKb() > 0) {
+        if (this.feedOptions.responseContinuationTokenLimitInKb() > 0) {
             requestHeaders.put(HttpConstants.HttpHeaders.RESPONSE_CONTINUATION_TOKEN_LIMIT_IN_KB,
-                    Strings.toString(feedOptions.getResponseContinuationTokenLimitInKb()));
+                    Strings.toString(feedOptions.responseContinuationTokenLimitInKb()));
         }
 
         if (desiredConsistencyLevel != null) {
             requestHeaders.put(HttpConstants.HttpHeaders.CONSISTENCY_LEVEL, desiredConsistencyLevel.name());
         }
 
-        if(feedOptions.getPopulateQueryMetrics()){
-            requestHeaders.put(HttpConstants.HttpHeaders.POPULATE_QUERY_METRICS, String.valueOf(feedOptions.getPopulateQueryMetrics()));
+        if(feedOptions.populateQueryMetrics()){
+            requestHeaders.put(HttpConstants.HttpHeaders.POPULATE_QUERY_METRICS, String.valueOf(feedOptions.populateQueryMetrics()));
         }
 
         return requestHeaders;
@@ -233,7 +233,7 @@ implements IDocumentQueryExecutionContext<T> {
         }
 
         if (this.resourceTypeEnum.isPartitioned()) {
-            request.routeTo(new PartitionKeyRangeIdentity(collectionRid, range.getId()));
+            request.routeTo(new PartitionKeyRangeIdentity(collectionRid, range.id()));
         }
     }
 
@@ -244,7 +244,7 @@ implements IDocumentQueryExecutionContext<T> {
         String queryText;
         switch (this.client.getQueryCompatibilityMode()) {
         case SqlQuery:
-            SqlParameterCollection params = querySpec.getParameters();
+            SqlParameterCollection params = querySpec.parameters();
             Utils.checkStateOrThrow(params != null && params.size() > 0, "query.parameters",
                     "Unsupported argument in query compatibility mode '%s'",
                     this.client.getQueryCompatibilityMode().toString());
@@ -255,7 +255,7 @@ implements IDocumentQueryExecutionContext<T> {
                     requestHeaders);
 
             executeQueryRequest.getHeaders().put(HttpConstants.HttpHeaders.CONTENT_TYPE, MediaTypes.JSON);
-            queryText = querySpec.getQueryText();
+            queryText = querySpec.queryText();
             break;
 
         case Default:

@@ -22,7 +22,7 @@
  */
 package com.microsoft.azure.cosmosdb.rx.internal;
 
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 
 /**
@@ -31,20 +31,20 @@ import com.microsoft.azure.cosmosdb.internal.HttpConstants;
  */
 public class Exceptions {
 
-    public static boolean isStatusCode(DocumentClientException e, int status) {
-        return status == e.getStatusCode();
+    public static boolean isStatusCode(CosmosClientException e, int status) {
+        return status == e.statusCode();
     }
 
-    public static boolean isSubStatusCode(DocumentClientException e, int subStatus) {
-        return subStatus == e.getSubStatusCode();
+    public static boolean isSubStatusCode(CosmosClientException e, int subStatus) {
+        return subStatus == e.subStatusCode();
     }
 
-    public static boolean isPartitionSplit(DocumentClientException e) {
+    public static boolean isPartitionSplit(CosmosClientException e) {
         return isStatusCode(e, HttpConstants.StatusCodes.GONE)
                 && isSubStatusCode(e, HttpConstants.SubStatusCodes.PARTITION_KEY_RANGE_GONE);
     }
 
-    public static boolean isNameCacheStale(DocumentClientException e) {
+    public static boolean isNameCacheStale(CosmosClientException e) {
         return isStatusCode(e, HttpConstants.StatusCodes.GONE)
                 && isSubStatusCode(e, HttpConstants.SubStatusCodes.NAME_CACHE_IS_STALE);
     }

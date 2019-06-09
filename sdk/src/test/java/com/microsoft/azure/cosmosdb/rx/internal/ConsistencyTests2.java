@@ -23,16 +23,8 @@
 
 package com.microsoft.azure.cosmosdb.rx.internal;
 
-import com.microsoft.azure.cosmosdb.ConnectionMode;
-import com.microsoft.azure.cosmosdb.ConnectionPolicy;
-import com.microsoft.azure.cosmosdb.ConsistencyLevel;
-import com.microsoft.azure.cosmosdb.Document;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
-import com.microsoft.azure.cosmosdb.DocumentCollection;
-import com.microsoft.azure.cosmosdb.FeedOptions;
-import com.microsoft.azure.cosmosdb.FeedResponse;
-import com.microsoft.azure.cosmosdb.PartitionKey;
-import com.microsoft.azure.cosmosdb.ResourceResponse;
+import com.microsoft.azure.cosmosdb.*;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.internal.ISessionToken;
 import com.microsoft.azure.cosmosdb.internal.SessionTokenHelper;
@@ -58,18 +50,18 @@ public class ConsistencyTests2 extends ConsistencyTestsBase {
     @Test(groups = {"direct"}, timeOut = CONSISTENCY_TEST_TIMEOUT)
     public void validateReadSessionOnAsyncReplication() throws InterruptedException {
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
-        connectionPolicy.setConnectionMode(ConnectionMode.Gateway);
+        connectionPolicy.connectionMode(ConnectionMode.GATEWAY);
         this.writeClient = (RxDocumentClientImpl) new AsyncDocumentClient.Builder().withServiceEndpoint(TestConfigurations.HOST)
                 .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
                 .withConnectionPolicy(connectionPolicy)
-                .withConsistencyLevel(ConsistencyLevel.Session).build();
+                .withConsistencyLevel(ConsistencyLevel.SESSION).build();
 
         this.readClient = (RxDocumentClientImpl) new AsyncDocumentClient.Builder().withServiceEndpoint(TestConfigurations.HOST)
                 .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
                 .withConnectionPolicy(connectionPolicy)
-                .withConsistencyLevel(ConsistencyLevel.Session).build();
+                .withConsistencyLevel(ConsistencyLevel.SESSION).build();
 
-        Document document = this.initClient.createDocument(createdCollection.getSelfLink(), getDocumentDefinition(), null, false).toBlocking().first().getResource();
+        Document document = this.initClient.createDocument(createdCollection.selfLink(), getDocumentDefinition(), null, false).toBlocking().first().getResource();
         Thread.sleep(5000);//WaitForServerReplication
         boolean readLagging = this.validateReadSession(document);
         //assertThat(readLagging).isTrue(); //Will fail if batch repl is turned off
@@ -78,18 +70,18 @@ public class ConsistencyTests2 extends ConsistencyTestsBase {
     @Test(groups = {"direct"}, timeOut = CONSISTENCY_TEST_TIMEOUT)
     public void validateWriteSessionOnAsyncReplication() throws InterruptedException {
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
-        connectionPolicy.setConnectionMode(ConnectionMode.Gateway);
+        connectionPolicy.connectionMode(ConnectionMode.GATEWAY);
         this.writeClient = (RxDocumentClientImpl) new AsyncDocumentClient.Builder().withServiceEndpoint(TestConfigurations.HOST)
                 .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
                 .withConnectionPolicy(connectionPolicy)
-                .withConsistencyLevel(ConsistencyLevel.Session).build();
+                .withConsistencyLevel(ConsistencyLevel.SESSION).build();
 
         this.readClient = (RxDocumentClientImpl) new AsyncDocumentClient.Builder().withServiceEndpoint(TestConfigurations.HOST)
                 .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
                 .withConnectionPolicy(connectionPolicy)
-                .withConsistencyLevel(ConsistencyLevel.Session).build();
+                .withConsistencyLevel(ConsistencyLevel.SESSION).build();
 
-        Document document = this.initClient.createDocument(createdCollection.getSelfLink(), getDocumentDefinition(), null, false).toBlocking().first().getResource();
+        Document document = this.initClient.createDocument(createdCollection.selfLink(), getDocumentDefinition(), null, false).toBlocking().first().getResource();
         Thread.sleep(5000);//WaitForServerReplication
         boolean readLagging = this.validateWriteSession(document);
         //assertThat(readLagging).isTrue(); //Will fail if batch repl is turned off
@@ -182,37 +174,37 @@ public class ConsistencyTests2 extends ConsistencyTestsBase {
     //https://msdata.visualstudio.com/CosmosDB/_workitems/edit/358715
     @Test(groups = {"direct"}, enabled = false, timeOut = CONSISTENCY_TEST_TIMEOUT)
     public void validateNoChargeOnFailedSessionRead() throws Exception {
-        // Direct clients for read and write operations
+        // DIRECT clients for read and write operations
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
-        connectionPolicy.setConnectionMode(ConnectionMode.Direct);
+        connectionPolicy.connectionMode(ConnectionMode.DIRECT);
         RxDocumentClientImpl writeClient = (RxDocumentClientImpl) new AsyncDocumentClient.Builder().withServiceEndpoint(TestConfigurations.HOST)
                 .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
                 .withConnectionPolicy(connectionPolicy)
-                .withConsistencyLevel(ConsistencyLevel.Session)
+                .withConsistencyLevel(ConsistencyLevel.SESSION)
                 .build();
         // Client locked to replica for pause/resume
         RxDocumentClientImpl readSecondaryClient = (RxDocumentClientImpl) new AsyncDocumentClient.Builder().withServiceEndpoint(TestConfigurations.HOST)
                 .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
                 .withConnectionPolicy(connectionPolicy)
-                .withConsistencyLevel(ConsistencyLevel.Session)
+                .withConsistencyLevel(ConsistencyLevel.SESSION)
                 .build();
         try {
-            // Create collection
-            DocumentCollection parentResource = writeClient.createCollection(createdDatabase.getSelfLink(), getCollectionDefinition(), null).toBlocking().first().getResource();
+            // CREATE collection
+            DocumentCollection parentResource = writeClient.createCollection(createdDatabase.selfLink(), getCollectionDefinition(), null).toBlocking().first().getResource();
 
             // Document to lock pause/resume clients
             Document documentDefinition = getDocumentDefinition();
-            documentDefinition.setId("test" + documentDefinition.getId());
-            ResourceResponse<Document> childResource = writeClient.createDocument(parentResource.getSelfLink(), documentDefinition, null, true).toBlocking().first();
-            logger.info("Created {} child resource", childResource.getResource().getResourceId());
+            documentDefinition.id("test" + documentDefinition.id());
+            ResourceResponse<Document> childResource = writeClient.createDocument(parentResource.selfLink(), documentDefinition, null, true).toBlocking().first();
+            logger.info("Created {} child resource", childResource.getResource().resourceId());
 
             String token = childResource.getSessionToken().split(":")[0] + ":" + this.createSessionToken(SessionTokenHelper.parse(childResource.getSessionToken()), 100000000).convertToString();
 
             FeedOptions feedOptions = new FeedOptions();
-            feedOptions.setPartitionKey(new PartitionKey(PartitionKeyInternal.Empty.toJson()));
-            feedOptions.setSessionToken(token);
+            feedOptions.partitionKey(new PartitionKey(PartitionKeyInternal.Empty.toJson()));
+            feedOptions.sessionToken(token);
             FailureValidator validator = new FailureValidator.Builder().statusCode(HttpConstants.StatusCodes.NOTFOUND).subStatusCode(HttpConstants.SubStatusCodes.READ_SESSION_NOT_AVAILABLE).build();
-            Observable<FeedResponse<Document>> feedObservable = readSecondaryClient.readDocuments(parentResource.getSelfLink(), feedOptions);
+            Observable<FeedResponse<Document>> feedObservable = readSecondaryClient.readDocuments(parentResource.selfLink(), feedOptions);
             validateQueryFailure(feedObservable, validator);
         } finally {
             safeClose(writeClient);
@@ -227,7 +219,7 @@ public class ConsistencyTests2 extends ConsistencyTestsBase {
         // https://msdata.visualstudio.com/CosmosDB/_workitems/edit/355053
     }
 
-    // TODO: DANOBLE: Investigate Direct TCP performance issue
+    // TODO: DANOBLE: Investigate DIRECT TCP performance issue
     // Note that we need multiple CONSISTENCY_TEST_TIMEOUT
     // SEE: https://msdata.visualstudio.com/CosmosDB/_workitems/edit/367028https://msdata.visualstudio.com/CosmosDB/_workitems/edit/367028
 
@@ -243,15 +235,15 @@ public class ConsistencyTests2 extends ConsistencyTestsBase {
         }
 
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
-        connectionPolicy.setConnectionMode(ConnectionMode.Direct);
+        connectionPolicy.connectionMode(ConnectionMode.DIRECT);
         RxDocumentClientImpl client = (RxDocumentClientImpl) new AsyncDocumentClient.Builder().withServiceEndpoint(TestConfigurations.HOST)
                 .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
                 .withConnectionPolicy(connectionPolicy)
-                .withConsistencyLevel(ConsistencyLevel.Session)
+                .withConsistencyLevel(ConsistencyLevel.SESSION)
                 .build();
 
         try {
-            Document lastDocument = client.createDocument(createdCollection.getSelfLink(), getDocumentDefinition(), null, true)
+            Document lastDocument = client.createDocument(createdCollection.selfLink(), getDocumentDefinition(), null, true)
                 .toBlocking()
                 .first()
                 .getResource();
@@ -259,7 +251,7 @@ public class ConsistencyTests2 extends ConsistencyTestsBase {
             Completable task1 = ParallelAsync.forEachAsync(Range.between(0, 1000), 5, new Action1<Integer>() {
                 @Override
                 public void call(Integer index) {
-                    client.createDocument(createdCollection.getSelfLink(), documents.get(index % documents.size()), null, true).toBlocking().first();
+                    client.createDocument(createdCollection.selfLink(), documents.get(index % documents.size()), null, true).toBlocking().first();
                 }
             });
 
@@ -268,26 +260,26 @@ public class ConsistencyTests2 extends ConsistencyTestsBase {
                 public void call(Integer index) {
                     try {
                         FeedOptions feedOptions = new FeedOptions();
-                        feedOptions.setEnableCrossPartitionQuery(true);
-                        FeedResponse<Document> queryResponse = client.queryDocuments(createdCollection.getSelfLink(), "SELECT * FROM c WHERE c.Id = 'foo'", feedOptions).toBlocking().first();
-                        String lsnHeaderValue = queryResponse.getResponseHeaders().get(WFConstants.BackendHeaders.LSN);
+                        feedOptions.enableCrossPartitionQuery(true);
+                        FeedResponse<Document> queryResponse = client.queryDocuments(createdCollection.selfLink(), "SELECT * FROM c WHERE c.Id = 'foo'", feedOptions).toBlocking().first();
+                        String lsnHeaderValue = queryResponse.responseHeaders().get(WFConstants.BackendHeaders.LSN);
                         long lsn = Long.valueOf(lsnHeaderValue);
-                        String sessionTokenHeaderValue = queryResponse.getResponseHeaders().get(HttpConstants.HttpHeaders.SESSION_TOKEN);
+                        String sessionTokenHeaderValue = queryResponse.responseHeaders().get(HttpConstants.HttpHeaders.SESSION_TOKEN);
                         ISessionToken sessionToken = SessionTokenHelper.parse(sessionTokenHeaderValue);
-                        logger.info("Session Token = {}, LSN = {}", sessionToken.convertToString(), lsn);
+                        logger.info("SESSION Token = {}, LSN = {}", sessionToken.convertToString(), lsn);
                         assertThat(lsn).isEqualTo(sessionToken.getLSN());
                     } catch (Exception ex) {
-                        DocumentClientException clientException = (DocumentClientException) ex.getCause();
-                        if (clientException.getStatusCode() != 0) {
-                            if (clientException.getStatusCode() == HttpConstants.StatusCodes.REQUEST_TIMEOUT) {
+                        CosmosClientException clientException = (CosmosClientException) ex.getCause();
+                        if (clientException.statusCode() != 0) {
+                            if (clientException.statusCode() == HttpConstants.StatusCodes.REQUEST_TIMEOUT) {
                                 // ignore
-                            } else if (clientException.getStatusCode() == HttpConstants.StatusCodes.NOTFOUND) {
-                                String lsnHeaderValue = clientException.getResponseHeaders().get(WFConstants.BackendHeaders.LSN);
+                            } else if (clientException.statusCode() == HttpConstants.StatusCodes.NOTFOUND) {
+                                String lsnHeaderValue = clientException.responseHeaders().get(WFConstants.BackendHeaders.LSN);
                                 long lsn = Long.valueOf(lsnHeaderValue);
-                                String sessionTokenHeaderValue = clientException.getResponseHeaders().get(HttpConstants.HttpHeaders.SESSION_TOKEN);
+                                String sessionTokenHeaderValue = clientException.responseHeaders().get(HttpConstants.HttpHeaders.SESSION_TOKEN);
                                 ISessionToken sessionToken = SessionTokenHelper.parse(sessionTokenHeaderValue);
 
-                                logger.info("Session Token = {}, LSN = {}", sessionToken.convertToString(), lsn);
+                                logger.info("SESSION Token = {}, LSN = {}", sessionToken.convertToString(), lsn);
                                 assertThat(lsn).isEqualTo(sessionToken.getLSN());
                             } else {
                                 throw ex;

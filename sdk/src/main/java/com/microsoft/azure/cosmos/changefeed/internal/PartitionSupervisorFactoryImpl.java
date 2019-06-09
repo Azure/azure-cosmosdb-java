@@ -70,7 +70,7 @@ public class PartitionSupervisorFactoryImpl  implements PartitionSupervisorFacto
 
         ChangeFeedObserver changeFeedObserver = this.observerFactory.createObserver();
         PartitionProcessor processor = this.partitionProcessorFactory.create(lease, changeFeedObserver);
-        LeaseRenewer renewer = new LeaseRenewerImpl(lease, this.leaseManager, this.changeFeedProcessorOptions.getLeaseRenewInterval());
+        LeaseRenewer renewer = new LeaseRenewerImpl(lease, this.leaseManager, this.changeFeedProcessorOptions.leaseRenewInterval());
 
         return new PartitionSupervisorImpl(lease, changeFeedObserver, processor, renewer, this.executorService);
     }

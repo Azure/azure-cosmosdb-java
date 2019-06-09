@@ -24,12 +24,9 @@
 package com.microsoft.azure.cosmosdb.rx.internal;
 
 import com.google.common.collect.ImmutableMap;
-import com.microsoft.azure.cosmosdb.Database;
-import com.microsoft.azure.cosmosdb.Document;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
-import com.microsoft.azure.cosmosdb.DocumentCollection;
+import com.microsoft.azure.cosmosdb.*;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.Error;
-import com.microsoft.azure.cosmosdb.ResourceResponse;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.internal.OperationType;
 import com.microsoft.azure.cosmosdb.internal.ResourceType;
@@ -46,7 +43,6 @@ import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 import rx.Observable;
 
-import javax.net.ssl.SSLException;
 import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.UUID;
@@ -71,12 +67,12 @@ public class RetryCreateDocumentTest extends TestSuiteBase {
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
     public void retryDocumentCreate() throws Exception {
         // create a document to ensure collection is cached
-        client.createDocument(collection.getSelfLink(),  getDocumentDefinition(), null, false).toBlocking().single();
+        client.createDocument(collection.selfLink(),  getDocumentDefinition(), null, false).toBlocking().single();
 
         Document docDefinition = getDocumentDefinition();
 
         Observable<ResourceResponse<Document>> createObservable = client
-                .createDocument(collection.getSelfLink(), docDefinition, null, false);
+                .createDocument(collection.selfLink(), docDefinition, null, false);
         AtomicInteger count = new AtomicInteger();
 
         doAnswer(new Answer< Observable<RxDocumentServiceResponse>>() {
@@ -93,7 +89,7 @@ public class RetryCreateDocumentTest extends TestSuiteBase {
                             HttpConstants.HttpHeaders.SUB_STATUS,
                             Integer.toString(HttpConstants.SubStatusCodes.PARTITION_KEY_MISMATCH));          
 
-                    return Observable.error(new DocumentClientException(HttpConstants.StatusCodes.BADREQUEST, new Error() , header));
+                    return Observable.error(new CosmosClientException(HttpConstants.StatusCodes.BADREQUEST, new Error() , header));
                 } else {
                     return client.getOrigGatewayStoreModel().processMessage(req);
                 }
@@ -102,7 +98,7 @@ public class RetryCreateDocumentTest extends TestSuiteBase {
 
         // validate
         ResourceResponseValidator<Document> validator = new ResourceResponseValidator.Builder<Document>()
-                .withId(docDefinition.getId()).build();
+                .withId(docDefinition.id()).build();
         validateSuccess(createObservable, validator);
     }
 
@@ -127,20 +123,20 @@ public class RetryCreateDocumentTest extends TestSuiteBase {
                             HttpConstants.HttpHeaders.SUB_STATUS,
                             Integer.toString(2));          
 
-                    return Observable.error(new DocumentClientException(1, new Error() , header));
+                    return Observable.error(new CosmosClientException(1, new Error() , header));
                 }
             }
         }).when(client.getSpyGatewayStoreModel()).processMessage(anyObject());
 
         // create a document to ensure collection is cached
-        client.createDocument(collection.getSelfLink(),  getDocumentDefinition(), null, false)
+        client.createDocument(collection.selfLink(),  getDocumentDefinition(), null, false)
                 .toBlocking()
                 .single();
 
         Document docDefinition = getDocumentDefinition();
 
         Observable<ResourceResponse<Document>> createObservable = client
-                .createDocument(collection.getSelfLink(), docDefinition, null, false);
+                .createDocument(collection.selfLink(), docDefinition, null, false);
 
         // validate
         FailureValidator validator = new FailureValidator.Builder().statusCode(1).subStatusCode(2).build();
@@ -150,7 +146,7 @@ public class RetryCreateDocumentTest extends TestSuiteBase {
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
     public void createDocument_failImmediatelyOnNonRetriable() throws Exception {
         // create a document to ensure collection is cached
-        client.createDocument(collection.getSelfLink(),  getDocumentDefinition(), null, false).toBlocking().single();
+        client.createDocument(collection.selfLink(),  getDocumentDefinition(), null, false).toBlocking().single();
         AtomicInteger count = new AtomicInteger();
 
         doAnswer(new Answer< Observable<RxDocumentServiceResponse>>() {
@@ -166,7 +162,7 @@ public class RetryCreateDocumentTest extends TestSuiteBase {
                             HttpConstants.HttpHeaders.SUB_STATUS,
                             Integer.toString(2));          
 
-                    return Observable.error(new DocumentClientException(1, new Error() , header));
+                    return Observable.error(new CosmosClientException(1, new Error() , header));
                 } else {
                     return client.getOrigGatewayStoreModel().processMessage(req);
                 }
@@ -176,7 +172,7 @@ public class RetryCreateDocumentTest extends TestSuiteBase {
         Document docDefinition = getDocumentDefinition();
 
         Observable<ResourceResponse<Document>> createObservable = client
-                .createDocument(collection.getSelfLink(), docDefinition, null, false);
+                .createDocument(collection.selfLink(), docDefinition, null, false);
         // validate
 
         FailureValidator validator = new FailureValidator.Builder().statusCode(1).subStatusCode(2).build();

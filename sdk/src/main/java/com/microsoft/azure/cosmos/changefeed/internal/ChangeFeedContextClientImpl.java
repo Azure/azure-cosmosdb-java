@@ -22,7 +22,6 @@
  */
 package com.microsoft.azure.cosmos.changefeed.internal;
 
-import com.microsoft.azure.cosmos.CosmosClient;
 import com.microsoft.azure.cosmos.CosmosContainer;
 import com.microsoft.azure.cosmos.CosmosContainerRequestOptions;
 import com.microsoft.azure.cosmos.CosmosContainerResponse;
@@ -33,9 +32,8 @@ import com.microsoft.azure.cosmos.CosmosDatabaseResponse;
 import com.microsoft.azure.cosmos.CosmosItem;
 import com.microsoft.azure.cosmos.CosmosItemRequestOptions;
 import com.microsoft.azure.cosmos.CosmosItemResponse;
-import com.microsoft.azure.cosmos.CosmosItemSettings;
+import com.microsoft.azure.cosmos.CosmosItemProperties;
 import com.microsoft.azure.cosmos.changefeed.ChangeFeedContextClient;
-import com.microsoft.azure.cosmosdb.BridgeInternal;
 import com.microsoft.azure.cosmosdb.ChangeFeedOptions;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
@@ -100,7 +98,7 @@ public class ChangeFeedContextClientImpl implements ChangeFeedContextClient {
     }
 
     @Override
-    public Flux<FeedResponse<CosmosItemSettings>> createDocumentChangeFeedQuery(CosmosContainer collectionLink, ChangeFeedOptions feedOptions) {
+    public Flux<FeedResponse<CosmosItemProperties>> createDocumentChangeFeedQuery(CosmosContainer collectionLink, ChangeFeedOptions feedOptions) {
         return collectionLink.queryChangeFeedItems(feedOptions)
             .subscribeOn(this.rxScheduler);
     }
@@ -142,7 +140,7 @@ public class ChangeFeedContextClientImpl implements ChangeFeedContextClient {
     }
 
     @Override
-    public Flux<FeedResponse<CosmosItemSettings>> queryItems(CosmosContainer containerLink, SqlQuerySpec querySpec, FeedOptions options) {
+    public Flux<FeedResponse<CosmosItemProperties>> queryItems(CosmosContainer containerLink, SqlQuerySpec querySpec, FeedOptions options) {
         return containerLink.queryItems(querySpec, options)
             .subscribeOn(this.rxScheduler);
     }

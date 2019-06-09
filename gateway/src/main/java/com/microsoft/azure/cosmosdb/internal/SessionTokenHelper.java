@@ -23,7 +23,7 @@
 
 package com.microsoft.azure.cosmosdb.internal;
 
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.ISessionContainer;
 import com.microsoft.azure.cosmosdb.rx.internal.BadRequestException;
 import com.microsoft.azure.cosmosdb.rx.internal.RMResources;
@@ -57,9 +57,9 @@ public class SessionTokenHelper {
         }
     }
 
-    public static void setPartitionLocalSessionToken(RxDocumentServiceRequest request, ISessionContainer sessionContainer) throws DocumentClientException {
+    public static void setPartitionLocalSessionToken(RxDocumentServiceRequest request, ISessionContainer sessionContainer) throws CosmosClientException {
         String originalSessionToken = request.getHeaders().get(HttpConstants.HttpHeaders.SESSION_TOKEN);
-        String partitionKeyRangeId = request.requestContext.resolvedPartitionKeyRange.getId();
+        String partitionKeyRangeId = request.requestContext.resolvedPartitionKeyRange.id();
 
 
         if (Strings.isNullOrEmpty(partitionKeyRangeId)) {
@@ -88,7 +88,7 @@ public class SessionTokenHelper {
     private static ISessionToken getLocalSessionToken(
             RxDocumentServiceRequest request,
             String globalSessionToken,
-            String partitionKeyRangeId) throws DocumentClientException {
+            String partitionKeyRangeId) throws CosmosClientException {
 
         if (partitionKeyRangeId == null || partitionKeyRangeId.isEmpty()) {
             // AddressCache/address resolution didn't produce partition key range id.
@@ -176,7 +176,7 @@ public class SessionTokenHelper {
         }
     }
 
-    public static void validateAndRemoveSessionToken(RxDocumentServiceRequest request) throws DocumentClientException {
+    public static void validateAndRemoveSessionToken(RxDocumentServiceRequest request) throws CosmosClientException {
         String sessionToken = request.getHeaders().get(HttpConstants.HttpHeaders.SESSION_TOKEN);
         if (!Strings.isNullOrEmpty(sessionToken)) {
             getLocalSessionToken(request, sessionToken, StringUtils.EMPTY);

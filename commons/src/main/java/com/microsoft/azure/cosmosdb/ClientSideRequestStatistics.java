@@ -171,7 +171,7 @@ public class ClientSideRequestStatistics {
                     .append("Duration: ")
                     .append(Duration.between(requestStartTime, requestEndTime).toMillis())
                     .append(" ms, ")
-                    .append("Number of regions attempted: ")
+                    .append("NUMBER of regions attempted: ")
                     .append(this.regionsContacted.isEmpty() ? 1 : this.regionsContacted.size())
                     .append(System.lineSeparator());
 

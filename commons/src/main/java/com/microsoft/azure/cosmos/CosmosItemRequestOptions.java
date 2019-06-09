@@ -54,9 +54,9 @@ public class CosmosItemRequestOptions extends CosmosRequestOptions {
     public CosmosItemRequestOptions(Object partitionKey){
         super();
         if (partitionKey instanceof PartitionKey) {
-            setPartitionKey((PartitionKey) partitionKey);
+            partitionKey((PartitionKey) partitionKey);
         } else {
-            setPartitionKey(new PartitionKey(partitionKey));
+            partitionKey(new PartitionKey(partitionKey));
         }
     }
     
@@ -65,7 +65,7 @@ public class CosmosItemRequestOptions extends CosmosRequestOptions {
      *
      * @return the consistency level.
      */
-    public ConsistencyLevel getConsistencyLevel() {
+    public ConsistencyLevel consistencyLevel() {
         return consistencyLevel;
     }
 
@@ -74,8 +74,9 @@ public class CosmosItemRequestOptions extends CosmosRequestOptions {
      *
      * @param consistencyLevel the consistency level.
      */
-    public void setConsistencyLevel(ConsistencyLevel consistencyLevel) {
+    public CosmosItemRequestOptions consistencyLevel(ConsistencyLevel consistencyLevel) {
         this.consistencyLevel = consistencyLevel;
+        return this;
     }
 
     /**
@@ -83,7 +84,7 @@ public class CosmosItemRequestOptions extends CosmosRequestOptions {
      *
      * @return the indexing directive.
      */
-    public IndexingDirective getIndexingDirective() {
+    public IndexingDirective indexingDirective() {
         return indexingDirective;
     }
 
@@ -92,8 +93,9 @@ public class CosmosItemRequestOptions extends CosmosRequestOptions {
      *
      * @param indexingDirective the indexing directive.
      */
-    public void setIndexingDirective(IndexingDirective indexingDirective) {
+    public CosmosItemRequestOptions indexingDirective(IndexingDirective indexingDirective) {
         this.indexingDirective = indexingDirective;
+        return this;
     }
 
     /**
@@ -101,7 +103,7 @@ public class CosmosItemRequestOptions extends CosmosRequestOptions {
      *
      * @return the triggers to be invoked before the operation.
      */
-    public List<String> getPreTriggerInclude() {
+    public List<String> preTriggerInclude() {
         return preTriggerInclude;
     }
 
@@ -110,8 +112,9 @@ public class CosmosItemRequestOptions extends CosmosRequestOptions {
      *
      * @param preTriggerInclude the triggers to be invoked before the operation.
      */
-    public void setPreTriggerInclude(List<String> preTriggerInclude) {
+    public CosmosItemRequestOptions preTriggerInclude(List<String> preTriggerInclude) {
         this.preTriggerInclude = preTriggerInclude;
+        return this;
     }
 
     /**
@@ -119,7 +122,7 @@ public class CosmosItemRequestOptions extends CosmosRequestOptions {
      *
      * @return the triggers to be invoked after the operation.
      */
-    public List<String> getPostTriggerInclude() {
+    public List<String> postTriggerInclude() {
         return postTriggerInclude;
     }
 
@@ -128,8 +131,9 @@ public class CosmosItemRequestOptions extends CosmosRequestOptions {
      *
      * @param postTriggerInclude the triggers to be invoked after the operation.
      */
-    public void setPostTriggerInclude(List<String> postTriggerInclude) {
+    public CosmosItemRequestOptions postTriggerInclude(List<String> postTriggerInclude) {
         this.postTriggerInclude = postTriggerInclude;
+        return this;
     }
 
     /**
@@ -137,7 +141,7 @@ public class CosmosItemRequestOptions extends CosmosRequestOptions {
      *
      * @return the session token.
      */
-    public String getSessionToken() {
+    public String sessionToken() {
         return sessionToken;
     }
 
@@ -146,23 +150,25 @@ public class CosmosItemRequestOptions extends CosmosRequestOptions {
      *
      * @param sessionToken the session token.
      */
-    public void setSessionToken(String sessionToken) {
+    public CosmosItemRequestOptions sessionToken(String sessionToken) {
         this.sessionToken = sessionToken;
+        return this;
     }
 
     /**
      * Sets the partition key
      * @param partitionKey the partition key
      */
-    public void setPartitionKey(PartitionKey partitionKey) {
+    public CosmosItemRequestOptions partitionKey(PartitionKey partitionKey) {
         this.partitionKey = partitionKey;
+        return this;
     }
 
     /**
      * Gets the partition key
      * @return the partition key
      */
-    public PartitionKey getPartitionKey() {
+    public PartitionKey partitionKey() {
         return partitionKey;
     }
 
@@ -170,8 +176,8 @@ public class CosmosItemRequestOptions extends CosmosRequestOptions {
     protected RequestOptions toRequestOptions() {
         //TODO: Should we set any default values instead of nulls?
         super.toRequestOptions();
-        requestOptions.setAccessCondition(getAccessCondition());
-        requestOptions.setConsistencyLevel(getConsistencyLevel());
+        requestOptions.setAccessCondition(accessCondition());
+        requestOptions.setConsistencyLevel(consistencyLevel());
         requestOptions.setIndexingDirective(indexingDirective);
         requestOptions.setPreTriggerInclude(preTriggerInclude);
         requestOptions.setPostTriggerInclude(postTriggerInclude);

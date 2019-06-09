@@ -200,7 +200,7 @@ public class SpyClientUnderTestFactory {
         DirectHttpsClientUnderTest(URI serviceEndpoint, String masterKey, ConnectionPolicy connectionPolicy, ConsistencyLevel consistencyLevel) {
             // TODO: DANOBLE: ensure the configs instance instantiated here specifies Protocol.Https
             super(serviceEndpoint, masterKey, connectionPolicy, consistencyLevel, new Configs());
-            assert connectionPolicy.getConnectionMode() == ConnectionMode.Direct;
+            assert connectionPolicy.connectionMode() == ConnectionMode.DIRECT;
             init();
             this.origHttpClient = ReflectionUtils.getDirectHttpsHttpClient(this);
             this.spyHttpClient = Mockito.spy(this.origHttpClient);

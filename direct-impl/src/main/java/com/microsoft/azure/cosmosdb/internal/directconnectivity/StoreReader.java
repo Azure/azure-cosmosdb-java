@@ -25,7 +25,7 @@ package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
 import com.microsoft.azure.cosmosdb.BridgeInternal;
 import com.microsoft.azure.cosmosdb.ClientSideRequestStatistics;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.CosmosClientException;
 import com.microsoft.azure.cosmosdb.ISessionContainer;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.internal.ISessionToken;
@@ -93,7 +93,7 @@ public class StoreReader {
      * @param replicaCountToRead        number of replicas to read from
      * @param requiresValidLsn          flag to indicate whether a valid lsn is required to consider a response as valid
      * @param useSessionToken           flag to indicate whether to use session token
-     * @param readMode                  Read mode
+     * @param readMode                  READ mode
      * @param checkMinLSN               set minimum required session lsn
      * @param forceReadAll              reads from all available replicas to gather result from readsToRead number of replicas
      * @return  ReadReplicaResult which indicates the LSN and whether Quorum was Met / Not Met etc
@@ -310,7 +310,7 @@ public class StoreReader {
                                               int replicaCountToRead,
                                               int resolvedAddressCount,
                                               boolean hasGoneException,
-                                              RxDocumentServiceRequest entity) throws DocumentClientException {
+                                              RxDocumentServiceRequest entity) throws CosmosClientException {
         if (responseResult.size() < replicaCountToRead) {
             logger.debug("Could not get quorum number of responses. " +
                             "ValidResponsesReceived: {} ResponsesExpected: {}, ResolvedAddressCount: {}, ResponsesString: {}",
@@ -341,7 +341,7 @@ public class StoreReader {
      * @param replicaCountToRead    number of replicas to read from
      * @param requiresValidLsn      flag to indicate whether a valid lsn is required to consider a response as valid
      * @param useSessionToken       flag to indicate whether to use session token
-     * @param readMode              Read mode
+     * @param readMode              READ mode
      * @param checkMinLSN           set minimum required session lsn
      * @param forceReadAll          will read from all available replicas to put together result from readsToRead number of replicas
      * @return                      ReadReplicaResult which indicates the LSN and whether Quorum was Met / Not Met etc
@@ -544,21 +544,21 @@ public class StoreReader {
                                                 true,
                                                 storeResponse != null ? storeResponseObsAndUri.getRight() : null);
                                         return Single.just(storeResult);
-                                    } catch (DocumentClientException e) {
+                                    } catch (CosmosClientException e) {
                                         return Single.error(e);
                                     }
                                 }
 
                         );
 
-                    } catch (DocumentClientException e) {
+                    } catch (CosmosClientException e) {
                         // RxJava1 doesn't allow throwing checked exception from Observable:map
                         return Single.error(e);
                     }
 
                 }
         ).onErrorResumeNext(t -> {
-            logger.debug("Exception {} is thrown while doing Read Primary", t);
+            logger.debug("Exception {} is thrown while doing READ Primary", t);
 
             Exception storeTaskException = Utils.as(t, Exception.class);
             if (storeTaskException == null) {
@@ -572,7 +572,7 @@ public class StoreReader {
                         true,
                         null);
                 return Single.just(storeResult);
-            } catch (DocumentClientException e) {
+            } catch (CosmosClientException e) {
                 // RxJava1 doesn't allow throwing checked exception from Observable operators
                 return Single.error(e);
             }
@@ -592,7 +592,7 @@ public class StoreReader {
 
     private Pair<Single<StoreResponse>, URI> readFromStoreAsync(
             URI physicalAddress,
-            RxDocumentServiceRequest request) throws DocumentClientException {
+            RxDocumentServiceRequest request) throws CosmosClientException {
 
         if (request.requestContext.timeoutHelper.isElapsed()) {
             throw new GoneException();
@@ -671,7 +671,7 @@ public class StoreReader {
                                   Exception responseException,
                                   boolean requiresValidLsn,
                                   boolean useLocalLSNBasedHeaders,
-                                  URI storePhysicalAddress) throws DocumentClientException {
+                                  URI storePhysicalAddress) throws CosmosClientException {
 
         if (responseException == null) {
             String headerValue = null;
@@ -722,7 +722,7 @@ public class StoreReader {
             }
 
             ISessionToken sessionToken = null;
-            // Session token response header is introduced from version HttpConstants.Versions.v2018_06_18 onwards.
+            // SESSION token response header is introduced from version HttpConstants.Versions.v2018_06_18 onwards.
             // Previously it was only a request header
             if ((headerValue = storeResponse.getHeaderValue(HttpConstants.HttpHeaders.SESSION_TOKEN)) != null) {
                 sessionToken = SessionTokenHelper.parse(headerValue);
@@ -744,78 +744,78 @@ public class StoreReader {
                     /* itemLSN: */ itemLSN,
                     /* sessionToken: */ sessionToken);
         } else {
-            DocumentClientException documentClientException = Utils.as(responseException, DocumentClientException.class);
-            if (documentClientException != null) {
-                StoreReader.verifyCanContinueOnException(documentClientException);
+            CosmosClientException cosmosClientException = Utils.as(responseException, CosmosClientException.class);
+            if (cosmosClientException != null) {
+                StoreReader.verifyCanContinueOnException(cosmosClientException);
                 long quorumAckedLSN = -1;
                 int currentReplicaSetSize = -1;
                 int currentWriteQuorum = -1;
                 long globalCommittedLSN = -1;
                 int numberOfReadRegions = -1;
-                String headerValue = documentClientException.getResponseHeaders().get(useLocalLSNBasedHeaders ? WFConstants.BackendHeaders.QUORUM_ACKED_LOCAL_LSN : WFConstants.BackendHeaders.QUORUM_ACKED_LSN);
+                String headerValue = cosmosClientException.responseHeaders().get(useLocalLSNBasedHeaders ? WFConstants.BackendHeaders.QUORUM_ACKED_LOCAL_LSN : WFConstants.BackendHeaders.QUORUM_ACKED_LSN);
                 if (!Strings.isNullOrEmpty(headerValue)) {
                     quorumAckedLSN = Long.parseLong(headerValue);
                 }
 
-                headerValue = documentClientException.getResponseHeaders().get(WFConstants.BackendHeaders.CURRENT_REPLICA_SET_SIZE);
+                headerValue = cosmosClientException.responseHeaders().get(WFConstants.BackendHeaders.CURRENT_REPLICA_SET_SIZE);
                 if (!Strings.isNullOrEmpty(headerValue)) {
                     currentReplicaSetSize = Integer.parseInt(headerValue);
                 }
 
-                headerValue = documentClientException.getResponseHeaders().get(WFConstants.BackendHeaders.CURRENT_WRITE_QUORUM);
+                headerValue = cosmosClientException.responseHeaders().get(WFConstants.BackendHeaders.CURRENT_WRITE_QUORUM);
                 if (!Strings.isNullOrEmpty(headerValue)) {
                     currentReplicaSetSize = Integer.parseInt(headerValue);
                 }
 
                 double requestCharge = 0;
-                headerValue = documentClientException.getResponseHeaders().get(HttpConstants.HttpHeaders.REQUEST_CHARGE);
+                headerValue = cosmosClientException.responseHeaders().get(HttpConstants.HttpHeaders.REQUEST_CHARGE);
                 if (!Strings.isNullOrEmpty(headerValue)) {
                     requestCharge = Double.parseDouble(headerValue);
                 }
 
-                headerValue = documentClientException.getResponseHeaders().get(WFConstants.BackendHeaders.NUMBER_OF_READ_REGIONS);
+                headerValue = cosmosClientException.responseHeaders().get(WFConstants.BackendHeaders.NUMBER_OF_READ_REGIONS);
                 if (!Strings.isNullOrEmpty(headerValue)) {
                     numberOfReadRegions = Integer.parseInt(headerValue);
                 }
 
-                headerValue = documentClientException.getResponseHeaders().get(WFConstants.BackendHeaders.GLOBAL_COMMITTED_LSN);
+                headerValue = cosmosClientException.responseHeaders().get(WFConstants.BackendHeaders.GLOBAL_COMMITTED_LSN);
                 if (!Strings.isNullOrEmpty(headerValue)) {
                     globalCommittedLSN = Integer.parseInt(headerValue);
                 }
 
                 long lsn = -1;
                 if (useLocalLSNBasedHeaders) {
-                    headerValue = documentClientException.getResponseHeaders().get(WFConstants.BackendHeaders.LOCAL_LSN);
+                    headerValue = cosmosClientException.responseHeaders().get(WFConstants.BackendHeaders.LOCAL_LSN);
                     if (!Strings.isNullOrEmpty(headerValue)) {
                         lsn = Long.parseLong(headerValue);
                     }
                 } else {
-                    lsn = BridgeInternal.getLSN(documentClientException);
+                    lsn = BridgeInternal.getLSN(cosmosClientException);
                 }
 
                 ISessionToken sessionToken = null;
 
-                // Session token response header is introduced from version HttpConstants.Versions.v2018_06_18 onwards.
+                // SESSION token response header is introduced from version HttpConstants.Versions.v2018_06_18 onwards.
                 // Previously it was only a request header
-                headerValue = documentClientException.getResponseHeaders().get(HttpConstants.HttpHeaders.SESSION_TOKEN);
+                headerValue = cosmosClientException.responseHeaders().get(HttpConstants.HttpHeaders.SESSION_TOKEN);
                 if (!Strings.isNullOrEmpty(headerValue)) {
                     sessionToken = SessionTokenHelper.parse(headerValue);
                 }
 
                 return new StoreResult(
                         /* storeResponse: */     (StoreResponse) null,
-                        /* exception: */ documentClientException,
-                        /* partitionKeyRangeId: */BridgeInternal.getPartitionKeyRangeId(documentClientException),
+                        /* exception: */ cosmosClientException,
+                        /* partitionKeyRangeId: */BridgeInternal.getPartitionKeyRangeId(cosmosClientException),
                         /* lsn: */ lsn,
                         /* quorumAckedLsn: */ quorumAckedLSN,
                         /* requestCharge: */ requestCharge,
                         /* currentReplicaSetSize: */ currentReplicaSetSize,
                         /* currentWriteQuorum: */ currentWriteQuorum,
                         /* isValid: */!requiresValidLsn
-                        || ((documentClientException.getStatusCode() != HttpConstants.StatusCodes.GONE || isSubStatusCode(documentClientException, HttpConstants.SubStatusCodes.NAME_CACHE_IS_STALE))
+                        || ((cosmosClientException.statusCode() != HttpConstants.StatusCodes.GONE || isSubStatusCode(cosmosClientException, HttpConstants.SubStatusCodes.NAME_CACHE_IS_STALE))
                         && lsn >= 0),
                         // TODO: verify where exception.RequestURI is supposed to be set in .Net
-                        /* storePhysicalAddress: */ storePhysicalAddress == null ? BridgeInternal.getRequestUri(documentClientException) : storePhysicalAddress,
+                        /* storePhysicalAddress: */ storePhysicalAddress == null ? BridgeInternal.getRequestUri(cosmosClientException) : storePhysicalAddress,
                         /* globalCommittedLSN: */ globalCommittedLSN,
                         /* numberOfReadRegions: */ numberOfReadRegions,
                         /* itemLSN: */ -1,
@@ -858,7 +858,7 @@ public class StoreReader {
         return ThreadLocalRandom.current().nextInt(maxValue);
     }
 
-    static void verifyCanContinueOnException(DocumentClientException ex) throws DocumentClientException {
+    static void verifyCanContinueOnException(CosmosClientException ex) throws CosmosClientException {
         if (ex instanceof PartitionKeyRangeGoneException) {
             throw ex;
         }
@@ -871,7 +871,7 @@ public class StoreReader {
             throw ex;
         }
 
-        String value = ex.getResponseHeaders().get(HttpConstants.HttpHeaders.REQUEST_VALIDATION_FAILURE);
+        String value = ex.responseHeaders().get(HttpConstants.HttpHeaders.REQUEST_VALIDATION_FAILURE);
         if (Strings.isNullOrWhiteSpace(value)) {
             return;
         }

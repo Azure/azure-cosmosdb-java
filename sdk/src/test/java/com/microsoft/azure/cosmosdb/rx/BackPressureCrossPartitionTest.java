@@ -22,15 +22,8 @@
  */
 package com.microsoft.azure.cosmosdb.rx;
 
-import com.microsoft.azure.cosmos.ClientUnderTestBuilder;
-import com.microsoft.azure.cosmos.CosmosBridgeInternal;
-import com.microsoft.azure.cosmos.CosmosClient;
-import com.microsoft.azure.cosmos.CosmosClientBuilder;
-import com.microsoft.azure.cosmos.CosmosContainer;
-import com.microsoft.azure.cosmos.CosmosContainerRequestOptions;
-import com.microsoft.azure.cosmos.CosmosContainerSettings;
-import com.microsoft.azure.cosmos.CosmosDatabase;
-import com.microsoft.azure.cosmos.CosmosItemSettings;
+import com.microsoft.azure.cosmos.*;
+import com.microsoft.azure.cosmos.CosmosItemProperties;
 import com.microsoft.azure.cosmosdb.DataType;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
@@ -73,41 +66,41 @@ public class BackPressureCrossPartitionTest extends TestSuiteBase {
     private int numberOfDocs = 4000;
     private CosmosDatabase createdDatabase;
     private CosmosContainer createdCollection;
-    private List<CosmosItemSettings> createdDocuments;
+    private List<CosmosItemProperties> createdDocuments;
 
     private CosmosClient client;
     private int numberOfPartitions;
 
     public String getCollectionLink() {
-        return Utils.getCollectionNameLink(createdDatabase.getId(), createdCollection.getId());
+        return Utils.getCollectionNameLink(createdDatabase.id(), createdCollection.id());
     }
 
     static protected CosmosContainerSettings getCollectionDefinition() {
         PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition();
         ArrayList<String> paths = new ArrayList<>();
         paths.add("/mypk");
-        partitionKeyDef.setPaths(paths);
+        partitionKeyDef.paths(paths);
 
         IndexingPolicy indexingPolicy = new IndexingPolicy();
         Collection<IncludedPath> includedPaths = new ArrayList<>();
         IncludedPath includedPath = new IncludedPath();
-        includedPath.setPath("/*");
+        includedPath.path("/*");
         Collection<Index> indexes = new ArrayList<>();
-        Index stringIndex = Index.Range(DataType.String);
+        Index stringIndex = Index.Range(DataType.STRING);
         stringIndex.set("precision", -1);
         indexes.add(stringIndex);
 
-        Index numberIndex = Index.Range(DataType.Number);
+        Index numberIndex = Index.Range(DataType.NUMBER);
         numberIndex.set("precision", -1);
         indexes.add(numberIndex);
-        includedPath.setIndexes(indexes);
+        includedPath.indexes(indexes);
         includedPaths.add(includedPath);
         indexingPolicy.setIncludedPaths(includedPaths);
 
         CosmosContainerSettings collectionDefinition = new CosmosContainerSettings(
                 UUID.randomUUID().toString(),
                 partitionKeyDef);
-        collectionDefinition.setIndexingPolicy(indexingPolicy);
+        collectionDefinition.indexingPolicy(indexingPolicy);
 
         return collectionDefinition;
     }
@@ -119,7 +112,7 @@ public class BackPressureCrossPartitionTest extends TestSuiteBase {
 
     private void warmUp() {
         FeedOptions options = new FeedOptions();
-        options.setEnableCrossPartitionQuery(true);
+        options.enableCrossPartitionQuery(true);
         // ensure collection is cached
         createdCollection.queryItems("SELECT * FROM r", options).blockFirst();
     }
@@ -137,22 +130,22 @@ public class BackPressureCrossPartitionTest extends TestSuiteBase {
         };
     }
 
-    // TODO: DANOBLE: Investigate Direct TCP performance issue
+    // TODO: DANOBLE: Investigate DIRECT TCP performance issue
     // Links: https://msdata.visualstudio.com/CosmosDB/_workitems/edit/367028https://msdata.visualstudio.com/CosmosDB/_workitems/edit/367028
 
     @Test(groups = { "long" }, dataProvider = "queryProvider", timeOut = 2 * TIMEOUT)
     public void query(String query, int maxItemCount, int maxExpectedBufferedCountForBackPressure, int expectedNumberOfResults) throws Exception {
         FeedOptions options = new FeedOptions();
-        options.setEnableCrossPartitionQuery(true);
-        options.setMaxItemCount(maxItemCount);
-        options.setMaxDegreeOfParallelism(2);
-        Flux<FeedResponse<CosmosItemSettings>> queryObservable = createdCollection.queryItems(query, options);
+        options.enableCrossPartitionQuery(true);
+        options.maxItemCount(maxItemCount);
+        options.maxDegreeOfParallelism(2);
+        Flux<FeedResponse<CosmosItemProperties>> queryObservable = createdCollection.queryItems(query, options);
 
         RxDocumentClientUnderTest rxClient = (RxDocumentClientUnderTest)CosmosBridgeInternal.getAsyncDocumentClient(client);
         rxClient.httpRequests.clear();
 
         log.info("instantiating subscriber ...");
-        TestSubscriber<FeedResponse<CosmosItemSettings>> subscriber = new TestSubscriber<>(1);
+        TestSubscriber<FeedResponse<CosmosItemProperties>> subscriber = new TestSubscriber<>(1);
         queryObservable.publishOn(Schedulers.elastic()).subscribe(subscriber);
         int sleepTimeInMillis = 40000;
         int i = 0;
@@ -183,7 +176,7 @@ public class BackPressureCrossPartitionTest extends TestSuiteBase {
             }
         } catch (Throwable error) {
             if (this.clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {
-                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
+                String message = String.format("DIRECT TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
                 logger.info(message, error);
                 throw new SkipException(message, error);
             }
@@ -193,10 +186,10 @@ public class BackPressureCrossPartitionTest extends TestSuiteBase {
         try {
             subscriber.assertNoErrors();
             subscriber.assertComplete();
-            assertThat(subscriber.values().stream().mapToInt(p -> p.getResults().size()).sum()).isEqualTo(expectedNumberOfResults);
+            assertThat(subscriber.values().stream().mapToInt(p -> p.results().size()).sum()).isEqualTo(expectedNumberOfResults);
         } catch (Throwable error) {
             if (this.clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {
-                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
+                String message = String.format("DIRECT TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
                 logger.info(message, error);
                 throw new SkipException(message, error);
             }
@@ -212,7 +205,7 @@ public class BackPressureCrossPartitionTest extends TestSuiteBase {
         createdDatabase = getSharedCosmosDatabase(client);
         createdCollection = createCollection(createdDatabase, getCollectionDefinition(), options);
 
-        ArrayList<CosmosItemSettings> docDefList = new ArrayList<>();
+        ArrayList<CosmosItemProperties> docDefList = new ArrayList<>();
         for(int i = 0; i < numberOfDocs; i++) {
             docDefList.add(getDocumentDefinition(i));
         }
@@ -222,13 +215,13 @@ public class BackPressureCrossPartitionTest extends TestSuiteBase {
                 docDefList);
 
         numberOfPartitions = CosmosBridgeInternal.getAsyncDocumentClient(client).readPartitionKeyRanges(getCollectionLink(), null)
-                .flatMap(p -> Observable.from(p.getResults())).toList().toBlocking().single().size();
+                .flatMap(p -> Observable.from(p.results())).toList().toBlocking().single().size();
 
         waitIfNeededForReplicasToCatchUp(clientBuilder);
         warmUp();
     }
 
-    // TODO: DANOBLE: Investigate Direct TCP performance issue
+    // TODO: DANOBLE: Investigate DIRECT TCP performance issue
     // Links: https://msdata.visualstudio.com/CosmosDB/_workitems/edit/367028https://msdata.visualstudio.com/CosmosDB/_workitems/edit/367028
 
     @AfterClass(groups = { "long" }, timeOut = 2 * SHUTDOWN_TIMEOUT, alwaysRun = true)
@@ -237,9 +230,9 @@ public class BackPressureCrossPartitionTest extends TestSuiteBase {
         safeClose(client);
     }
 
-    private static CosmosItemSettings getDocumentDefinition(int cnt) {
+    private static CosmosItemProperties getDocumentDefinition(int cnt) {
         String uuid = UUID.randomUUID().toString();
-        CosmosItemSettings doc = new CosmosItemSettings(String.format("{ "
+        CosmosItemProperties doc = new CosmosItemProperties(String.format("{ "
             + "\"id\": \"%s\", "
             + "\"prop\" : %d, "
             + "\"mypk\": \"%s\", "

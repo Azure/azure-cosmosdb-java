@@ -37,7 +37,7 @@ public  class CosmosRequestOptions {
      *
      * @return the access condition.
      */
-    public AccessCondition getAccessCondition() {
+    public AccessCondition accessCondition() {
         return accessCondition;
     }
 

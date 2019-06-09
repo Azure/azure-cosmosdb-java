@@ -62,23 +62,23 @@ public class UserQueryTest extends TestSuiteBase {
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
     public void queryUsersWithFilter() throws Exception {
         
-        String filterUserId = createdUsers.get(0).getId();
+        String filterUserId = createdUsers.get(0).id();
         String query = String.format("SELECT * from c where c.id = '%s'", filterUserId);
 
         FeedOptions options = new FeedOptions();
-        options.setMaxItemCount(5);
+        options.maxItemCount(5);
         Flux<FeedResponse<CosmosUserSettings>> queryObservable = createdDatabase.queryUsers(query, options);
 
         List<CosmosUserSettings> expectedUsers = createdUsers.stream()
-                .filter(c -> StringUtils.equals(filterUserId, c.getId()) ).collect(Collectors.toList());
+                .filter(c -> StringUtils.equals(filterUserId, c.id()) ).collect(Collectors.toList());
 
         assertThat(expectedUsers).isNotEmpty();
 
-        int expectedPageSize = (expectedUsers.size() + options.getMaxItemCount() - 1) / options.getMaxItemCount();
+        int expectedPageSize = (expectedUsers.size() + options.maxItemCount() - 1) / options.maxItemCount();
 
         FeedResponseListValidator<CosmosUserSettings> validator = new FeedResponseListValidator.Builder<CosmosUserSettings>()
                 .totalSize(expectedUsers.size())
-                .exactlyContainsInAnyOrder(expectedUsers.stream().map(d -> d.getResourceId()).collect(Collectors.toList()))
+                .exactlyContainsInAnyOrder(expectedUsers.stream().map(d -> d.resourceId()).collect(Collectors.toList()))
                 .numberOfPages(expectedPageSize)
                 .pageSatisfy(0, new FeedResponseValidator.Builder<CosmosUserSettings>()
                         .requestChargeGreaterThanOrEqualTo(1.0).build())
@@ -93,7 +93,7 @@ public class UserQueryTest extends TestSuiteBase {
         String query = "SELECT * from c";
 
         FeedOptions options = new FeedOptions();
-        options.setMaxItemCount(2);
+        options.maxItemCount(2);
         String databaseLink = Utils.getDatabaseNameLink(databaseId);
         Flux<FeedResponse<CosmosUserSettings>> queryObservable = createdDatabase.queryUsers(query, options);
 
@@ -101,11 +101,11 @@ public class UserQueryTest extends TestSuiteBase {
 
         assertThat(expectedUsers).isNotEmpty();
 
-        int expectedPageSize = (expectedUsers.size() + options.getMaxItemCount() - 1) / options.getMaxItemCount();
+        int expectedPageSize = (expectedUsers.size() + options.maxItemCount() - 1) / options.maxItemCount();
 
         FeedResponseListValidator<CosmosUserSettings> validator = new FeedResponseListValidator.Builder<CosmosUserSettings>()
                 .totalSize(expectedUsers.size())
-                .exactlyContainsInAnyOrder(expectedUsers.stream().map(d -> d.getResourceId()).collect(Collectors.toList()))
+                .exactlyContainsInAnyOrder(expectedUsers.stream().map(d -> d.resourceId()).collect(Collectors.toList()))
                 .numberOfPages(expectedPageSize)
                 .pageSatisfy(0, new FeedResponseValidator.Builder<CosmosUserSettings>()
                         .requestChargeGreaterThanOrEqualTo(1.0).build())
@@ -138,8 +138,8 @@ public class UserQueryTest extends TestSuiteBase {
 
         for(int i = 0; i < 5; i++) {
             CosmosUserSettings user = new CosmosUserSettings();
-            user.setId(UUID.randomUUID().toString());
-            createdUsers.add(createUser(client, databaseId, user).read().block().getCosmosUserSettings());
+            user.id(UUID.randomUUID().toString());
+            createdUsers.add(createUser(client, databaseId, user).read().block().settings());
         }
 
         waitIfNeededForReplicasToCatchUp(clientBuilder);
