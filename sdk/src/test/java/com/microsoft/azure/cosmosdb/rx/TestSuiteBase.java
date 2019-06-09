@@ -138,14 +138,22 @@ public class TestSuiteBase {
 
     @BeforeMethod(groups = {"simple", "long", "direct", "multi-master", "emulator", "non-emulator"})
     public void beforeMethod(Method method) {
+
         if (this.clientBuilder != null) {
+
+            ConnectionMode connectionMode = this.clientBuilder.connectionPolicy.getConnectionMode();
+            Protocol protocol = connectionMode == ConnectionMode.Direct ? this.clientBuilder.configs.getProtocol() : Protocol.Https;
+
             logger.info("Starting {}::{} using {} {} mode with {} consistency",
-                        method.getDeclaringClass().getSimpleName(), method.getName(),
-                        this.clientBuilder.connectionPolicy.getConnectionMode(),
-                        this.clientBuilder.configs.getProtocol(),
-                        this.clientBuilder.desiredConsistencyLevel);
+                method.getDeclaringClass().getSimpleName(),
+                method.getName(),
+                connectionMode,
+                protocol,
+                this.clientBuilder.desiredConsistencyLevel
+            );
             return;
         }
+
         logger.info("Starting {}::{}", method.getDeclaringClass().getSimpleName(), method.getName());
     }
 
