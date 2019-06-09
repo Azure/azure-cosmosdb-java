@@ -228,7 +228,7 @@ public class DCDocumentCrudTest extends TestSuiteBase {
 
         int cnt = 1000;
         List<Document> documentList = new ArrayList<>();
-        for(int i = 0; i < cnt; i++) {
+        for (int i = 0; i < cnt; i++) {
             Document docDefinition = getDocumentDefinition();
             documentList.add(docDefinition);
         }

@@ -37,21 +37,17 @@ import com.microsoft.azure.cosmosdb.IncludedPath;
 import com.microsoft.azure.cosmosdb.Index;
 import com.microsoft.azure.cosmosdb.IndexingPolicy;
 import com.microsoft.azure.cosmosdb.PartitionKeyDefinition;
-import com.microsoft.azure.cosmosdb.internal.directconnectivity.Protocol;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentClientUnderTest;
-
 import io.reactivex.subscribers.TestSubscriber;
-import reactor.core.publisher.Flux;
-import reactor.core.scheduler.Schedulers;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
+import reactor.core.publisher.Flux;
+import reactor.core.scheduler.Schedulers;
 import reactor.util.concurrent.Queues;
 
 import java.util.ArrayList;
@@ -140,6 +136,7 @@ public class BackPressureCrossPartitionTest extends TestSuiteBase {
 
     @Test(groups = { "long" }, dataProvider = "queryProvider", timeOut = 2 * TIMEOUT)
     public void query(String query, int maxItemCount, int maxExpectedBufferedCountForBackPressure, int expectedNumberOfResults) throws Exception {
+
         FeedOptions options = new FeedOptions();
         options.setEnableCrossPartitionQuery(true);
         options.setMaxItemCount(maxItemCount);
@@ -156,51 +153,33 @@ public class BackPressureCrossPartitionTest extends TestSuiteBase {
         int i = 0;
 
         // use a test subscriber and request for more result and sleep in between
-        try {
-            while(subscriber.completions() == 0 && subscriber.getEvents().get(1).isEmpty()) {
-                log.debug("loop " + i);
+        while (subscriber.completions() == 0 && subscriber.getEvents().get(1).isEmpty()) {
+            log.debug("loop " + i);
 
-                TimeUnit.MILLISECONDS.sleep(sleepTimeInMillis);
-                sleepTimeInMillis /= 2;
+            TimeUnit.MILLISECONDS.sleep(sleepTimeInMillis);
+            sleepTimeInMillis /= 2;
 
-                if (sleepTimeInMillis > 4000) {
-                    // validate that only one item is returned to subscriber in each iteration
-                    assertThat(subscriber.valueCount() - i).isEqualTo(1);
-                }
-
-                log.debug("subscriber.getValueCount(): " + subscriber.valueCount());
-                log.debug("client.httpRequests.size(): " + rxClient.httpRequests.size());
-                // validate that the difference between the number of requests to backend
-                // and the number of returned results is always less than a fixed threshold
-
-                assertThat(rxClient.httpRequests.size() - subscriber.valueCount())
-                        .isLessThanOrEqualTo(maxExpectedBufferedCountForBackPressure);
-
-                log.debug("requesting more");
-                subscriber.requestMore(1);
-                i++;
+            if (sleepTimeInMillis > 4000) {
+                // validate that only one item is returned to subscriber in each iteration
+                assertThat(subscriber.valueCount() - i).isEqualTo(1);
             }
-        } catch (Throwable error) {
-            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {
-                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
-                logger.info(message, error);
-                throw new SkipException(message, error);
-            }
-            throw error;
+
+            log.debug("subscriber.getValueCount(): " + subscriber.valueCount());
+            log.debug("client.httpRequests.size(): " + rxClient.httpRequests.size());
+            // validate that the difference between the number of requests to backend
+            // and the number of returned results is always less than a fixed threshold
+
+            assertThat(rxClient.httpRequests.size() - subscriber.valueCount())
+                .isLessThanOrEqualTo(maxExpectedBufferedCountForBackPressure);
+
+            log.debug("requesting more");
+            subscriber.requestMore(1);
+            i++;
         }
 
-        try {
-            subscriber.assertNoErrors();
-            subscriber.assertComplete();
-            assertThat(subscriber.values().stream().mapToInt(p -> p.getResults().size()).sum()).isEqualTo(expectedNumberOfResults);
-        } catch (Throwable error) {
-            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {
-                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
-                logger.info(message, error);
-                throw new SkipException(message, error);
-            }
-            throw error;
-        }
+        subscriber.assertNoErrors();
+        subscriber.assertComplete();
+        assertThat(subscriber.values().stream().mapToInt(p -> p.getResults().size()).sum()).isEqualTo(expectedNumberOfResults);
     }
 
     @BeforeClass(groups = { "long" }, timeOut = SETUP_TIMEOUT)
