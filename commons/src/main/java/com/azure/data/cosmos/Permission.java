@@ -24,6 +24,7 @@
 package com.azure.data.cosmos;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.WordUtils;
 
 import com.azure.data.cosmos.internal.Constants;
@@ -73,7 +74,7 @@ public class Permission extends Resource {
      */
     public PermissionMode getPermissionMode() {
         String value = super.getString(Constants.Properties.PERMISSION_MODE);
-        return PermissionMode.valueOf(WordUtils.capitalize(value));
+        return PermissionMode.valueOf(StringUtils.upperCase(value));
     }
 
     /**

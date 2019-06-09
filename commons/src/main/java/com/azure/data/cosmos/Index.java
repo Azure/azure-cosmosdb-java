@@ -23,6 +23,7 @@
 
 package com.azure.data.cosmos;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.WordUtils;
 
 import com.azure.data.cosmos.internal.Constants;
@@ -147,7 +148,7 @@ public abstract class Index extends JsonSerializable {
     public IndexKind kind() {
         IndexKind result = null;
         try {
-            result = IndexKind.valueOf(WordUtils.capitalize(super.getString(Constants.Properties.INDEX_KIND)));
+            result = IndexKind.valueOf(StringUtils.upperCase(super.getString(Constants.Properties.INDEX_KIND)));
         } catch (IllegalArgumentException e) {
             this.getLogger().warn("INVALID index kind value %s.", super.getString(Constants.Properties.INDEX_KIND));
         }

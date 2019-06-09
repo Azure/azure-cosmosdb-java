@@ -25,6 +25,7 @@ package com.azure.data.cosmos;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.azure.data.cosmos.internal.Constants;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.WordUtils;
 
 import java.util.ArrayList;
@@ -132,7 +133,7 @@ public final class IndexingPolicy extends JsonSerializable {
     public IndexingMode indexingMode() {
         IndexingMode result = IndexingMode.LAZY;
         try {
-            result = IndexingMode.valueOf(WordUtils.capitalize(super.getString(Constants.Properties.INDEXING_MODE)));
+            result = IndexingMode.valueOf(StringUtils.upperCase(super.getString(Constants.Properties.INDEXING_MODE)));
         } catch (IllegalArgumentException e) {
             this.getLogger().warn("INVALID indexingMode value {}.", super.getString(Constants.Properties.INDEXING_MODE));
         }

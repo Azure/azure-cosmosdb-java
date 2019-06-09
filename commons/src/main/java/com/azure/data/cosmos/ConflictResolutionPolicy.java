@@ -3,6 +3,7 @@ package com.azure.data.cosmos;
 
 import com.azure.data.cosmos.internal.Constants;
 import com.azure.data.cosmos.internal.Strings;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.WordUtils;
 
 
@@ -148,7 +149,7 @@ public class ConflictResolutionPolicy extends JsonSerializable {
 
         if (!Strings.isNullOrEmpty(strValue)) {
             try {
-                return ConflictResolutionMode.valueOf(WordUtils.capitalize(super.getString(Constants.Properties.MODE)));
+                return ConflictResolutionMode.valueOf(StringUtils.upperCase(super.getString(Constants.Properties.MODE)));
             } catch (IllegalArgumentException e) {
                 this.getLogger().warn("INVALID ConflictResolutionMode value {}.", super.getString(Constants.Properties.MODE));
                 return ConflictResolutionMode.INVALID;

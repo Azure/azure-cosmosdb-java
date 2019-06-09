@@ -94,7 +94,7 @@ public class AggregateQueryTests extends TestSuiteBase {
     // Notes:
     // I've seen this test time out in my development environment. I test against a debug instance of the public
     // emulator and so what I'm seeing could be the result of a public emulator performance issue. Of course, it
-    // might also be the result of a Tcp protocol performance problem.
+    // might also be the result of a TCP protocol performance problem.
 
     @Test(groups = { "simple" }, timeOut = 2 * TIMEOUT, dataProvider = "queryMetricsArgProvider")
     public void queryDocumentsWithAggregates(boolean qmEnabled) throws Exception {
@@ -117,7 +117,7 @@ public class AggregateQueryTests extends TestSuiteBase {
             try {
                 validateQuerySuccess(queryObservable, validator);
             } catch (Throwable error) {
-                if (this.clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {
+                if (this.clientBuilder.getConfigs().getProtocol() == Protocol.TCP) {
                     String message = String.format("DIRECT TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
                     logger.info(message, error);
                     throw new SkipException(message, error);

@@ -23,7 +23,6 @@
 package com.azure.data.cosmos.rx;
 
 import com.azure.data.cosmos.*;
-import com.azure.data.cosmos.*;
 import com.azure.data.cosmos.DataType;
 import com.azure.data.cosmos.FeedOptions;
 import com.azure.data.cosmos.FeedResponse;
@@ -175,7 +174,7 @@ public class BackPressureCrossPartitionTest extends TestSuiteBase {
                 i++;
             }
         } catch (Throwable error) {
-            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {
+            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.TCP) {
                 String message = String.format("DIRECT TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
                 logger.info(message, error);
                 throw new SkipException(message, error);
@@ -188,7 +187,7 @@ public class BackPressureCrossPartitionTest extends TestSuiteBase {
             subscriber.assertComplete();
             assertThat(subscriber.values().stream().mapToInt(p -> p.results().size()).sum()).isEqualTo(expectedNumberOfResults);
         } catch (Throwable error) {
-            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {
+            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.TCP) {
                 String message = String.format("DIRECT TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
                 logger.info(message, error);
                 throw new SkipException(message, error);

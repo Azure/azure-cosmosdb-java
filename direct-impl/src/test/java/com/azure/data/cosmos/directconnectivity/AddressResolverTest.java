@@ -477,9 +477,9 @@ public class AddressResolverTest {
         return null;
     }
 
-    private final AddressInformation[] addresses1 = {new AddressInformation(true, true, "tcp://host/partition1", Protocol.Https)};
-    private final AddressInformation[] addresses2 = {new AddressInformation(true, true, "tcp://host/partition2", Protocol.Https)};
-    private final AddressInformation[] addresses3 = {new AddressInformation(true, true, "tcp://host/partition3", Protocol.Https)};
+    private final AddressInformation[] addresses1 = {new AddressInformation(true, true, "tcp://host/partition1", Protocol.HTTPS)};
+    private final AddressInformation[] addresses2 = {new AddressInformation(true, true, "tcp://host/partition2", Protocol.HTTPS)};
+    private final AddressInformation[] addresses3 = {new AddressInformation(true, true, "tcp://host/partition3", Protocol.HTTPS)};
 
     private DocumentCollection collection1;
     private DocumentCollection collection2;

@@ -115,9 +115,9 @@ public interface AddressValidator {
 
                 @Override
                 public void validate(Address address) {
-                    if (protocol == Protocol.Https) {
+                    if (protocol == Protocol.HTTPS) {
                         assertThat(address.getProtocolScheme()).isEqualTo("https");
-                    } else if (protocol == Protocol.Tcp){
+                    } else if (protocol == Protocol.TCP){
                         assertThat(address.getProtocolScheme()).isEqualTo("rntbd");
                     }
                 }

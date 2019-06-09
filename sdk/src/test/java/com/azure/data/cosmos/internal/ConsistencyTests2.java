@@ -101,7 +101,7 @@ public class ConsistencyTests2 extends ConsistencyTestsBase {
         //TODO Need to test with TCP protocol
         // https://msdata.visualstudio.com/CosmosDB/_workitems/edit/355057
         // Verify the collection deletion will trigger the session token clean up (even for different client)
-        //this.ValidateSessionContainerAfterCollectionDeletion(true, Protocol.Tcp);
+        //this.ValidateSessionContainerAfterCollectionDeletion(true, Protocol.TCP);
         this.validateSessionContainerAfterCollectionDeletion(true);
         this.validateSessionContainerAfterCollectionDeletion(false);
     }
@@ -115,7 +115,7 @@ public class ConsistencyTests2 extends ConsistencyTestsBase {
     public void validateSessionTokenWithPreConditionFailure() throws Exception {
         //TODO Need to test with TCP protocol
         // https://msdata.visualstudio.com/CosmosDB/_workitems/edit/355057
-        //this.validateSessionTokenWithPreConditionFailure(false, Protocol.Tcp);
+        //this.validateSessionTokenWithPreConditionFailure(false, Protocol.TCP);
         this.validateSessionTokenWithPreConditionFailure(false);
         this.validateSessionTokenWithPreConditionFailure(true);
     }
@@ -124,7 +124,7 @@ public class ConsistencyTests2 extends ConsistencyTestsBase {
     public void validateSessionTokenWithDocumentNotFound() throws Exception {
         //TODO Need to test with TCP protocol
         // https://msdata.visualstudio.com/CosmosDB/_workitems/edit/355057
-        //this.validateSessionTokenWithDocumentNotFoundException(false, Protocol.Tcp);
+        //this.validateSessionTokenWithDocumentNotFoundException(false, Protocol.TCP);
         this.validateSessionTokenWithDocumentNotFoundException(false);
         this.validateSessionTokenWithDocumentNotFoundException(true);
     }
@@ -133,7 +133,7 @@ public class ConsistencyTests2 extends ConsistencyTestsBase {
     public void validateSessionTokenWithExpectedException() throws Exception {
         //TODO Need to test with TCP protocol
         // https://msdata.visualstudio.com/CosmosDB/_workitems/edit/355057
-        //this.validateSessionTokenWithExpectedException(false, Protocol.Tcp);
+        //this.validateSessionTokenWithExpectedException(false, Protocol.TCP);
         this.validateSessionTokenWithExpectedException(false);
         this.validateSessionTokenWithExpectedException(true);
     }
@@ -142,7 +142,7 @@ public class ConsistencyTests2 extends ConsistencyTestsBase {
     public void validateSessionTokenWithConflictException() {
         //TODO Need to test with TCP protocol
         // https://msdata.visualstudio.com/CosmosDB/_workitems/edit/355057
-        //this.validateSessionTokenWithConflictException(false, Protocol.Tcp);
+        //this.validateSessionTokenWithConflictException(false, Protocol.TCP);
         this.validateSessionTokenWithConflictException(false);
         this.validateSessionTokenWithConflictException(true);
     }
@@ -151,7 +151,7 @@ public class ConsistencyTests2 extends ConsistencyTestsBase {
     public void validateSessionTokenMultiPartitionCollection() throws Exception {
         //TODO Need to test with TCP protocol
         // https://msdata.visualstudio.com/CosmosDB/_workitems/edit/355057
-        //this.validateSessionTokenMultiPartitionCollection(false, Protocol.Tcp);
+        //this.validateSessionTokenMultiPartitionCollection(false, Protocol.TCP);
         this.validateSessionTokenMultiPartitionCollection(false);
         this.validateSessionTokenMultiPartitionCollection(true);
     }
@@ -160,7 +160,7 @@ public class ConsistencyTests2 extends ConsistencyTestsBase {
     public void validateSessionTokenFromCollectionReplaceIsServerToken() {
         //TODO Need to test with TCP protocol
         // https://msdata.visualstudio.com/CosmosDB/_workitems/edit/355057
-        //this.validateSessionTokenFromCollectionReplaceIsServerToken(false, Protocol.Tcp);
+        //this.validateSessionTokenFromCollectionReplaceIsServerToken(false, Protocol.TCP);
         this.validateSessionTokenFromCollectionReplaceIsServerToken(false);
         this.validateSessionTokenFromCollectionReplaceIsServerToken(true);
     }

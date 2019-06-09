@@ -23,6 +23,7 @@
 
 package com.azure.data.cosmos;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.WordUtils;
 
 import com.azure.data.cosmos.internal.Constants;
@@ -89,7 +90,7 @@ public final class RangeIndex extends Index {
     public DataType dataType() {
         DataType result = null;
         try {
-            result = DataType.valueOf(WordUtils.capitalize(super.getString(Constants.Properties.DATA_TYPE)));
+            result = DataType.valueOf(StringUtils.upperCase(super.getString(Constants.Properties.DATA_TYPE)));
         } catch (IllegalArgumentException e) {
             this.getLogger().warn("INVALID index dataType value {}.", super.getString(Constants.Properties.DATA_TYPE));
         }

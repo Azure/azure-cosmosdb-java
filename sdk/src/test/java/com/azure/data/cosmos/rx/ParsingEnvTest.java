@@ -61,6 +61,6 @@ public class ParsingEnvTest {
 
     @Test(groups = "unit")
     public void protocols() {
-        assertThat(TestSuiteBase.parseProtocols("[ \"Tcp\" , \"Https\" ]")).containsExactly(Protocol.Tcp, Protocol.Https);
+        assertThat(TestSuiteBase.parseProtocols("[ \"TCP\" , \"HTTPS\" ]")).containsExactly(Protocol.TCP, Protocol.HTTPS);
     }
 }

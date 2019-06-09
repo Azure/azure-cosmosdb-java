@@ -174,7 +174,7 @@ public class ConsistencyTests1 extends ConsistencyTestsBase {
     public void validateSessionContainerAfterCollectionCreateReplace() {
         //TODO Need to test with TCP protocol
         // https://msdata.visualstudio.com/CosmosDB/_workitems/edit/355057
-        //validateSessionContainerAfterCollectionCreateReplace(false, Protocol.Tcp);
+        //validateSessionContainerAfterCollectionCreateReplace(false, Protocol.TCP);
         validateSessionContainerAfterCollectionCreateReplace(false);
         validateSessionContainerAfterCollectionCreateReplace(true);
     }

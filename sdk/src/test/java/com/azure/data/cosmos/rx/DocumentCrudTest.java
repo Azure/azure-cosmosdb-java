@@ -23,7 +23,6 @@
 package com.azure.data.cosmos.rx;
 
 import com.azure.data.cosmos.*;
-import com.azure.data.cosmos.*;
 import com.azure.data.cosmos.Document;
 import com.azure.data.cosmos.CosmosClientException;
 import com.azure.data.cosmos.PartitionKey;
@@ -321,7 +320,7 @@ public class DocumentCrudTest extends TestSuiteBase {
         try {
             validateSuccess(upsertObservable, validator);
         } catch (Throwable error) {
-            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {
+            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.TCP) {
                 String message = String.format("DIRECT TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
                 logger.info(message, error);
                 throw new SkipException(message, error);
@@ -350,7 +349,7 @@ public class DocumentCrudTest extends TestSuiteBase {
         try {
             validateSuccess(readObservable, validator);
         } catch (Throwable error) {
-            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {
+            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.TCP) {
                 String message = String.format("DIRECT TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
                 logger.info(message, error);
                 throw new SkipException(message, error);

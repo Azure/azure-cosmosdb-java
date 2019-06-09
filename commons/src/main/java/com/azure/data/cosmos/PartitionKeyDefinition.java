@@ -94,7 +94,7 @@ public final class PartitionKeyDefinition extends JsonSerializable {
                     this.version = PartitionKeyDefinitionVersion.valueOf(String.format("V%d", Integer.parseInt(versionStr)));
                 } else {
                     this.version = !Strings.isNullOrEmpty(versionStr)
-                            ? PartitionKeyDefinitionVersion.valueOf(WordUtils.capitalize(versionStr))
+                            ? PartitionKeyDefinitionVersion.valueOf(StringUtils.upperCase(versionStr))
                             : null;
                 }
             }

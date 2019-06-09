@@ -89,7 +89,7 @@ public class TopQueryTests extends TestSuiteBase {
             try {
                 validateQuerySuccess(queryObservable1, validator1, TIMEOUT);
             } catch (Throwable error) {
-                if (this.clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {
+                if (this.clientBuilder.getConfigs().getProtocol() == Protocol.TCP) {
                     String message = String.format("DIRECT TCP test failure ignored: desiredConsistencyLevel=%s",
                             this.clientBuilder.getDesiredConsistencyLevel());
                     logger.info(message, error);

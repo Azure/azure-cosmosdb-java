@@ -639,7 +639,7 @@ public class StoreReaderTest {
         request.requestContext.resolvedPartitionKeyRange = partitionKeyRangeWithId("12");
         request.requestContext.requestChargeTracker = new RequestChargeTracker();
 
-        AddressSelectorWrapper addressSelectorWrapper = AddressSelectorWrapper.Builder.PrimaryReplicaMoveBuilder.create(Protocol.Https)
+        AddressSelectorWrapper addressSelectorWrapper = AddressSelectorWrapper.Builder.PrimaryReplicaMoveBuilder.create(Protocol.HTTPS)
                 .withPrimaryReplicaMove(primaryURIPriorToRefresh, primaryURIAfterRefresh).build();
         StoreReader storeReader = new StoreReader(transportClientWrapper.transportClient, addressSelectorWrapper.addressSelector, sessionContainer);
 

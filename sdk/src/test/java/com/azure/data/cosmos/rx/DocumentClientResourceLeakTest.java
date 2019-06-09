@@ -23,7 +23,6 @@
 package com.azure.data.cosmos.rx;
 
 import com.azure.data.cosmos.*;
-import com.azure.data.cosmos.*;
 import com.azure.data.cosmos.directconnectivity.Protocol;
 import org.testng.SkipException;
 import org.testng.annotations.BeforeClass;
@@ -54,7 +53,7 @@ public class DocumentClientResourceLeakTest extends TestSuiteBase {
     @Test(groups = {"emulator"}, timeOut = TIMEOUT)
     public void resourceLeak() throws Exception {
         //TODO FIXME DANOBLE this test doesn't pass on RNTBD
-        if (clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {
+        if (clientBuilder.getConfigs().getProtocol() == Protocol.TCP) {
             throw new SkipException("RNTBD");
         }
         System.gc();

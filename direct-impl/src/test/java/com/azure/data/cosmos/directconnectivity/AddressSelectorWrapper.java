@@ -464,7 +464,7 @@ public class AddressSelectorWrapper {
             private URI primaryAddress;
             private List<URI> secondaryAddresses;
             static Simple  create() {
-                return new Simple(Protocol.Https);
+                return new Simple(Protocol.HTTPS);
             }
 
             public Simple(Protocol protocol) {

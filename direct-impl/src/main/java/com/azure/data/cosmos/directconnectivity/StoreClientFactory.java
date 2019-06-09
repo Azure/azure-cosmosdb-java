@@ -51,9 +51,9 @@ public class StoreClientFactory implements AutoCloseable {
         this.requestTimeoutInSeconds = requestTimeoutInSeconds;
         this.maxConcurrentConnectionOpenRequests = maxConcurrentConnectionOpenRequests;
 
-        if (protocol == Protocol.Https) {
+        if (protocol == Protocol.HTTPS) {
             this.transportClient = new HttpTransportClient(configs, requestTimeoutInSeconds, userAgent);
-        } else if (protocol == Protocol.Tcp){
+        } else if (protocol == Protocol.TCP){
             this.transportClient = new RntbdTransportClient(configs, requestTimeoutInSeconds, userAgent);
         } else {
             throw new IllegalArgumentException(String.format("protocol: %s", this.protocol));

@@ -65,7 +65,7 @@ public class ReplicatedResourceClientTest {
     @Test(groups = { "unit" }, timeOut = TIMEOUT)
     public void invokeAsyncWithGoneException() {
         Configs configs = new Configs();
-        ReplicatedResourceClient resourceClient = new ReplicatedResourceClient(configs, new AddressSelector(addressResolver, Protocol.Https), null,
+        ReplicatedResourceClient resourceClient = new ReplicatedResourceClient(configs, new AddressSelector(addressResolver, Protocol.HTTPS), null,
                 transportClient, serviceConfigReader, authorizationTokenProvider, enableReadRequestsFallback, false);
         FailureValidator validator = FailureValidator.builder().instanceOf(CosmosClientException.class).build();
         RxDocumentServiceRequest request = Mockito.spy(RxDocumentServiceRequest.create(OperationType.Create, ResourceType.Document));

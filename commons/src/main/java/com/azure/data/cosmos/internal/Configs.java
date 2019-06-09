@@ -38,7 +38,7 @@ public class Configs {
     private final SslContext sslContext;
 
     private static final String PROTOCOL = "COSMOS.PROTOCOL";
-    private static final Protocol DEFAULT_PROTOCOL = Protocol.Https;
+    private static final Protocol DEFAULT_PROTOCOL = Protocol.HTTPS;
 
     private static final String UNAVAILABLE_LOCATIONS_EXPIRATION_TIME_IN_SECONDS = "COSMOS.UNAVAILABLE_LOCATIONS_EXPIRATION_TIME_IN_SECONDS";
 
@@ -89,7 +89,7 @@ public class Configs {
     public Protocol getProtocol() {
         String protocol = getJVMConfigAsString(PROTOCOL, DEFAULT_PROTOCOL.name());
         try {
-            return Protocol.valueOf(WordUtils.capitalize(protocol.toLowerCase()));
+            return Protocol.valueOf(StringUtils.upperCase(protocol.toLowerCase()));
         } catch (Exception e) {
             logger.error("Parsing protocol {} failed. Using the default {}.", protocol, DEFAULT_PROTOCOL, e);
             return DEFAULT_PROTOCOL;

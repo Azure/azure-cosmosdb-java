@@ -23,7 +23,6 @@
 package com.azure.data.cosmos.rx;
 
 import com.azure.data.cosmos.*;
-import com.azure.data.cosmos.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -101,7 +100,7 @@ public class ParallelDocumentQueryTest extends TestSuiteBase {
         try {
             validateQuerySuccess(queryObservable, validator, TIMEOUT);
         } catch (Throwable error) {
-            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {
+            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.TCP) {
                 String message = String.format(String.format("DIRECT TCP test failure: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel()));
                 logger.info(message, error);
                 throw new SkipException(message, error);
@@ -193,7 +192,7 @@ public class ParallelDocumentQueryTest extends TestSuiteBase {
         try {
             validateQuerySuccess(queryObservable, validator, 2 * subscriberValidationTimeout);
         } catch (Throwable error) {
-            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {
+            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.TCP) {
                 String message = String.format("DIRECT TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
                 logger.info(message, error);
                 throw new SkipException(message, error);
@@ -251,7 +250,7 @@ public class ParallelDocumentQueryTest extends TestSuiteBase {
                 sum += queryResultCount;
             }
         } catch (Throwable error) {
-            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {
+            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.TCP) {
                 String message = String.format("DIRECT TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
                 logger.info(message, error);
                 throw new SkipException(message, error);
@@ -318,7 +317,7 @@ public class ParallelDocumentQueryTest extends TestSuiteBase {
     // When I've watch this method execute in the debugger and seen that the code sometimes pauses for quite a while in
     // the middle of the second group of 21 documents. I test against a debug instance of the public emulator and so
     // what I'm seeing could be the result of a public emulator performance issue. Of course, it might also be the
-    // result of a Tcp protocol performance problem.
+    // result of a TCP protocol performance problem.
 
     @BeforeClass(groups = { "simple", "non-emulator" }, timeOut = 2 * SETUP_TIMEOUT)
     public void beforeClass() {

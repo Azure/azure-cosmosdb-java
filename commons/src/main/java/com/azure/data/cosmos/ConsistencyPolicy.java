@@ -24,6 +24,7 @@
 package com.azure.data.cosmos;
 
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.WordUtils;
 
 import com.azure.data.cosmos.internal.Constants;
@@ -64,7 +65,7 @@ public final class ConsistencyPolicy extends JsonSerializable {
         ConsistencyLevel result = ConsistencyPolicy.DEFAULT_DEFAULT_CONSISTENCY_LEVEL;
         try {
             result = ConsistencyLevel.valueOf(
-                    WordUtils.capitalize(super.getString(Constants.Properties.DEFAULT_CONSISTENCY_LEVEL)));
+                    StringUtils.upperCase(super.getString(Constants.Properties.DEFAULT_CONSISTENCY_LEVEL)));
         } catch (IllegalArgumentException e) {
             // ignore the exception and return the default
             this.getLogger().warn("Unknown consistency level {}, value ignored.", super.getString(Constants.Properties.DEFAULT_CONSISTENCY_LEVEL));

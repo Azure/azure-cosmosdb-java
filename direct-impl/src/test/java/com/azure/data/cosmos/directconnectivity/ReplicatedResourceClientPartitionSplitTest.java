@@ -72,7 +72,7 @@ public class ReplicatedResourceClientPartitionSplitTest {
         String partitionKeyRangeIdBeforeSplit = "1";
         String partitionKeyRangeIdAfterSplit = "2";
 
-        AddressSelectorWrapper addressSelectorWrapper = AddressSelectorWrapper.Builder.ReplicaMoveBuilder.create(Protocol.Https)
+        AddressSelectorWrapper addressSelectorWrapper = AddressSelectorWrapper.Builder.ReplicaMoveBuilder.create(Protocol.HTTPS)
                 .withPrimaryMove(primaryAddressBeforeMove, primaryAddressAfterMove)
                 .withSecondaryMove(secondary1AddressBeforeMove, secondary1AddressAfterMove)
                 .newPartitionKeyRangeIdOnRefresh(r -> partitionKeyRangeWithId(partitionKeyRangeIdAfterSplit))

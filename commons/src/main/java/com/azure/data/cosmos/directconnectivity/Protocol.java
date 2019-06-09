@@ -24,13 +24,13 @@
 package com.azure.data.cosmos.directconnectivity;
 
 public enum Protocol {
-    Https, Tcp;
+    HTTPS, TCP;
 
     String scheme() {
         switch (this) {
-            case Https:
+            case HTTPS:
                 return "https";
-            case Tcp:
+            case TCP:
                 return "rntbd";
             default:
                 throw new IllegalStateException();

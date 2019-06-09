@@ -85,7 +85,7 @@ public class StoredProcedureQueryTest extends TestSuiteBase {
         try {
             validateQuerySuccess(queryObservable, validator, 10000);
         } catch (Throwable error) {
-            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {
+            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.TCP) {
                 String message = String.format("DIRECT TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
                 logger.info(message, error);
                 throw new SkipException(message, error);
@@ -138,7 +138,7 @@ public class StoredProcedureQueryTest extends TestSuiteBase {
         try {
             validateQuerySuccess(queryObservable, validator);
         } catch (Throwable error) {
-            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {
+            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.TCP) {
                 String message = String.format("DIRECT TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
                 logger.info(message, error);
                 throw new SkipException(message, error);

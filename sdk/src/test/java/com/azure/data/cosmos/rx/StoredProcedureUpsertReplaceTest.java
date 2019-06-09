@@ -112,7 +112,7 @@ public class StoredProcedureUpsertReplaceTest extends TestSuiteBase {
         try {
             storedProcedure = createdCollection.createStoredProcedure(storedProcedureDef, new CosmosStoredProcedureRequestOptions()).block().storedProcedure();
         } catch (Throwable error) {
-            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {
+            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.TCP) {
                 String message = String.format("DIRECT TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
                 logger.info(message, error);
                 throw new SkipException(message, error);
@@ -127,7 +127,7 @@ public class StoredProcedureUpsertReplaceTest extends TestSuiteBase {
             options.setPartitionKey(PartitionKey.None);
             result = storedProcedure.execute(null, options).block().responseAsString();
         } catch (Throwable error) {
-            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {
+            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.TCP) {
                 String message = String.format("DIRECT TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
                 logger.info(message, error);
                 throw new SkipException(message, error);

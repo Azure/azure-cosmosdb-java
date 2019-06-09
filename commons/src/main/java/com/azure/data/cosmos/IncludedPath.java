@@ -28,6 +28,7 @@ import java.util.Collection;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.WordUtils;
 
 import com.azure.data.cosmos.internal.Constants;
@@ -104,7 +105,7 @@ public class IncludedPath extends JsonSerializable {
             for (int i = 0; i < jsonArray.size(); i++) {
                 JsonNode jsonObject = jsonArray.get(i);
 
-                IndexKind indexKind = IndexKind.valueOf(WordUtils.capitalize(
+                IndexKind indexKind = IndexKind.valueOf(StringUtils.upperCase(
                         jsonObject.get(Constants.Properties.INDEX_KIND).asText()));
                 switch (indexKind) {
                 case HASH:

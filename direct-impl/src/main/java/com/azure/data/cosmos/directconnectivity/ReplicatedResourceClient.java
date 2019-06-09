@@ -76,7 +76,7 @@ public class ReplicatedResourceClient {
         this.configs = configs;
         this.protocol = configs.getProtocol();
         this.addressSelector = addressSelector;
-        if (protocol != Protocol.Https && protocol != Protocol.Tcp) {
+        if (protocol != Protocol.HTTPS && protocol != Protocol.TCP) {
             throw new IllegalArgumentException("protocol");
         }
 

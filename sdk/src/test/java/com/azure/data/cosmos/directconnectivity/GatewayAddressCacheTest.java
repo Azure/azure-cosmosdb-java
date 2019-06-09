@@ -84,23 +84,23 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
     public Object[][] partitionsKeyRangeListAndCollectionLinkParams() {
         return new Object[][] {
                 // target partition key range ids, collection link
-                { ImmutableList.of("0"), getNameBasedCollectionLink(), Protocol.Tcp },
-                { ImmutableList.of("0"), getNameBasedCollectionLink(), Protocol.Https },
+                { ImmutableList.of("0"), getNameBasedCollectionLink(), Protocol.TCP},
+                { ImmutableList.of("0"), getNameBasedCollectionLink(), Protocol.HTTPS},
 
-                { ImmutableList.of("1"), getNameBasedCollectionLink(), Protocol.Https },
-                { ImmutableList.of("1"), getCollectionSelfLink(), Protocol.Https },
-                { ImmutableList.of("3"), getNameBasedCollectionLink(), Protocol.Https },
+                { ImmutableList.of("1"), getNameBasedCollectionLink(), Protocol.HTTPS},
+                { ImmutableList.of("1"), getCollectionSelfLink(), Protocol.HTTPS},
+                { ImmutableList.of("3"), getNameBasedCollectionLink(), Protocol.HTTPS},
 
-                { ImmutableList.of("0", "1"), getNameBasedCollectionLink(), Protocol.Https },
-                { ImmutableList.of("1", "3"), getNameBasedCollectionLink(), Protocol.Https },
+                { ImmutableList.of("0", "1"), getNameBasedCollectionLink(), Protocol.HTTPS},
+                { ImmutableList.of("1", "3"), getNameBasedCollectionLink(), Protocol.HTTPS},
         };
     }
 
     @DataProvider(name = "protocolProvider")
     public Object[][] protocolProvider() {
         return new Object[][]{
-                { Protocol.Https },
-                { Protocol.Tcp },
+                { Protocol.HTTPS},
+                { Protocol.TCP},
         };
     }
 
@@ -168,12 +168,12 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
     public Object[][] partitionsKeyRangeAndCollectionLinkParams() {
         return new Object[][] {
                 // target partition key range ids, collection link, protocol
-                { "0", getNameBasedCollectionLink(), Protocol.Tcp },
-                { "0", getNameBasedCollectionLink(), Protocol.Https },
+                { "0", getNameBasedCollectionLink(), Protocol.TCP},
+                { "0", getNameBasedCollectionLink(), Protocol.HTTPS},
 
-                { "1", getNameBasedCollectionLink(), Protocol.Https} ,
-                { "1", getCollectionSelfLink(), Protocol.Https },
-                { "3", getNameBasedCollectionLink(), Protocol.Https },
+                { "1", getNameBasedCollectionLink(), Protocol.HTTPS} ,
+                { "1", getCollectionSelfLink(), Protocol.HTTPS},
+                { "3", getNameBasedCollectionLink(), Protocol.HTTPS},
         };
     }
 
@@ -232,7 +232,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
         IAuthorizationTokenProvider authorizationTokenProvider = (RxDocumentClientImpl) client;
 
         GatewayAddressCache cache = new GatewayAddressCache(serviceEndpoint,
-                                                            Protocol.Https,
+                                                            Protocol.HTTPS,
                                                             authorizationTokenProvider,
                                                             null,
                                                             httpClientWrapper.getSpyHttpClient());
@@ -287,7 +287,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
         IAuthorizationTokenProvider authorizationTokenProvider = (RxDocumentClientImpl) client;
 
         GatewayAddressCache cache = new GatewayAddressCache(serviceEndpoint,
-                                                            Protocol.Https,
+                                                            Protocol.HTTPS,
                                                             authorizationTokenProvider,
                                                             null,
                                                             httpClientWrapper.getSpyHttpClient());
@@ -343,7 +343,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
         int suboptimalRefreshTime = 2;
 
         GatewayAddressCache origCache = new GatewayAddressCache(serviceEndpoint,
-                                                                Protocol.Https,
+                                                                Protocol.HTTPS,
                                                                 authorizationTokenProvider,
                                                                 null,
                                                                 httpClientWrapper.getSpyHttpClient(),
@@ -490,7 +490,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
 
 
         GatewayAddressCache cache = new GatewayAddressCache(serviceEndpoint,
-                                                            Protocol.Https,
+                                                            Protocol.HTTPS,
                                                             authorizationTokenProvider,
                                                             null,
                                                             clientWrapper.getSpyHttpClient(),
@@ -537,7 +537,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
         IAuthorizationTokenProvider authorizationTokenProvider = (RxDocumentClientImpl) client;
 
         GatewayAddressCache cache = new GatewayAddressCache(serviceEndpoint,
-                                                            Protocol.Https,
+                                                            Protocol.HTTPS,
                                                             authorizationTokenProvider,
                                                             null,
                                                             clientWrapper.getSpyHttpClient());
@@ -587,7 +587,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
         int refreshPeriodInSeconds = 10;
 
         GatewayAddressCache origCache = new GatewayAddressCache(serviceEndpoint,
-                                                                Protocol.Https,
+                                                                Protocol.HTTPS,
                                                                 authorizationTokenProvider,
                                                                 null,
                                                                 clientWrapper.getSpyHttpClient(), refreshPeriodInSeconds);
@@ -677,7 +677,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
         int refreshPeriodInSeconds = 1;
 
         GatewayAddressCache origCache = new GatewayAddressCache(serviceEndpoint,
-                                                                Protocol.Https,
+                                                                Protocol.HTTPS,
                                                                 authorizationTokenProvider,
                                                                 null,
                                                                 clientWrapper.getSpyHttpClient(), refreshPeriodInSeconds);

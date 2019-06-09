@@ -82,7 +82,7 @@ public class DCDocumentCrudTest extends TestSuiteBase {
 
     @DataProvider
     public static Object[][] directClientBuilder() {
-        return new Object[][] { { createDCBuilder(Protocol.Https) }, { createDCBuilder(Protocol.Tcp) } };
+        return new Object[][] { { createDCBuilder(Protocol.HTTPS) }, { createDCBuilder(Protocol.TCP) } };
     }
 
     static Builder createDCBuilder(Protocol protocol) {
@@ -254,7 +254,7 @@ public class DCDocumentCrudTest extends TestSuiteBase {
             // validates only the first query for fetching query plan goes to gateway.
             assertThat(client.getCapturedRequests().stream().filter(r -> r.getResourceType() == ResourceType.Document)).hasSize(1);
         } catch (Throwable error) {
-            if (clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {
+            if (clientBuilder.getConfigs().getProtocol() == Protocol.TCP) {
                 String message = String.format("DIRECT TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
                 logger.info(message, error);
                 throw new SkipException(message, error);

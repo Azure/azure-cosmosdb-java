@@ -86,9 +86,9 @@ public class AddressInformation {
 
         switch (scheme.toLowerCase()) {
             case "https":
-                return Protocol.Https;
+                return Protocol.HTTPS;
             case "rntbd":
-                return Protocol.Tcp;
+                return Protocol.TCP;
             default:
                 throw new IllegalArgumentException(String.format("scheme: %s", scheme));
         }

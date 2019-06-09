@@ -72,7 +72,7 @@ public class StoreReaderDotNetTest {
         // setup mocks for address information
         AddressInformation[] addressInformation = new AddressInformation[3];
         for (int i = 0; i < 3; i++) {
-            addressInformation[i] = new AddressInformation(true, true, "http://replica-" + i, Protocol.Https);
+            addressInformation[i] = new AddressInformation(true, true, "http://replica-" + i, Protocol.HTTPS);
         }
 
         IAddressResolver mockAddressCache = Mockito.mock(IAddressResolver.class);
@@ -103,7 +103,7 @@ public class StoreReaderDotNetTest {
             String physicalUri =
                     "rntbd://dummytenant.documents.azure.com:14003/apps/APPGUID/services/SERVICEGUID/partitions/PARTITIONGUID/replicas/"
                             + Integer.toString(i) + (i == 0 ? "p" : "s") + "/";
-            addressInformation[i] = new AddressInformation(true, true, physicalUri, Protocol.Tcp);
+            addressInformation[i] = new AddressInformation(true, true, physicalUri, Protocol.TCP);
 
         }
 
@@ -420,7 +420,7 @@ public class StoreReaderDotNetTest {
             String physicalUri =
                     "rntbd://dummytenant.documents.azure.com:14003/apps/APPGUID/services/SERVICEGUID/partitions/PARTITIONGUID/replicas/"
                             + Integer.toString(i) + (i == 0 ? "p" : "s") + "/";
-            addressInformation[i] = new AddressInformation(true, i == 0 ? true : false, physicalUri, Protocol.Tcp);
+            addressInformation[i] = new AddressInformation(true, i == 0 ? true : false, physicalUri, Protocol.TCP);
         }
 
         return addressInformation;
@@ -477,7 +477,7 @@ public class StoreReaderDotNetTest {
 
         assertThat(addressInfo[0]).isEqualTo(addressInformation[0]);
 
-        AddressSelector addressSelector = new AddressSelector(mockAddressCache, Protocol.Tcp);
+        AddressSelector addressSelector = new AddressSelector(mockAddressCache, Protocol.TCP);
         URI primaryAddress = addressSelector.resolvePrimaryUriAsync(entity, false /*forceAddressRefresh*/).toBlocking().value();
 
         // check if the address return from Address Selector matches the original address info
@@ -605,7 +605,7 @@ public class StoreReaderDotNetTest {
         AddressInformation[] addressInfo = mockAddressCache.resolveAsync(entity, false).toBlocking().value();
         assertThat(addressInfo[0]).isEqualTo(addressInformations[0]);
 
-        AddressSelector addressSelector = new AddressSelector(mockAddressCache, Protocol.Tcp);
+        AddressSelector addressSelector = new AddressSelector(mockAddressCache, Protocol.TCP);
         URI primaryAddress = addressSelector.resolvePrimaryUriAsync(entity, false).toBlocking().value();
 
         // check if the address return from Address Selector matches the original address info
@@ -693,7 +693,7 @@ public class StoreReaderDotNetTest {
         AddressInformation[] addressInfo = mockAddressCache.resolveAsync(entity, false).toBlocking().value();
         assertThat(addressInformations[0]).isEqualTo(addressInfo[0]);
 
-        AddressSelector addressSelector = new AddressSelector(mockAddressCache, Protocol.Tcp);
+        AddressSelector addressSelector = new AddressSelector(mockAddressCache, Protocol.TCP);
         URI primaryAddress = addressSelector.resolvePrimaryUriAsync(entity, false).toBlocking().value();
 
         // check if the address return from Address Selector matches the original address info
@@ -779,7 +779,7 @@ public class StoreReaderDotNetTest {
         AddressInformation[] addressInfo = mockAddressCache.resolveAsync(entity, false).toBlocking().value();
         assertThat(addressInfo[0]).isEqualTo(addressInformations[0]);
 
-        AddressSelector addressSelector = new AddressSelector(mockAddressCache, Protocol.Tcp);
+        AddressSelector addressSelector = new AddressSelector(mockAddressCache, Protocol.TCP);
         URI primaryAddress = addressSelector.resolvePrimaryUriAsync(entity, false).toBlocking().value();
 
         // check if the address return from Address Selector matches the original address info

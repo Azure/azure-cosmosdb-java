@@ -23,8 +23,6 @@
 
 package com.azure.data.cosmos;
 
-import com.azure.data.cosmos.ConnectionMode;
-import com.azure.data.cosmos.ConnectionPolicy;
 import com.azure.data.cosmos.directconnectivity.Protocol;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -52,8 +50,8 @@ public class ConnectionPolicyTest {
     @DataProvider(name = "connectionProtocolModeArgProvider")
     public Object[][] connectionProtocolModeArgProvider() {
         return new Object[][]{
-                {  Protocol.Https },
-                {  Protocol.Tcp },
+                {  Protocol.HTTPS},
+                {  Protocol.TCP},
         };
     }
 }

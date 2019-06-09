@@ -124,7 +124,7 @@ public class GlobalAddressResolverTest {
     @Test(groups = "unit")
     public void resolveAsync() throws Exception {
 
-        GlobalAddressResolver globalAddressResolver = new GlobalAddressResolver(httpClient, endpointManager, Protocol.Https, authorizationTokenProvider, collectionCache, routingMapProvider,
+        GlobalAddressResolver globalAddressResolver = new GlobalAddressResolver(httpClient, endpointManager, Protocol.HTTPS, authorizationTokenProvider, collectionCache, routingMapProvider,
                 userAgentContainer,
                 serviceConfigReader, connectionPolicy);
         RxDocumentServiceRequest request;
@@ -149,7 +149,7 @@ public class GlobalAddressResolverTest {
 
     @Test(groups = "unit")
     public void openAsync() throws Exception {
-        GlobalAddressResolver globalAddressResolver = new GlobalAddressResolver(httpClient, endpointManager, Protocol.Https, authorizationTokenProvider, collectionCache, routingMapProvider,
+        GlobalAddressResolver globalAddressResolver = new GlobalAddressResolver(httpClient, endpointManager, Protocol.HTTPS, authorizationTokenProvider, collectionCache, routingMapProvider,
                 userAgentContainer,
                 serviceConfigReader, connectionPolicy);
         Map<URL, GlobalAddressResolver.EndpointCache> addressCacheByEndpoint = Mockito.spy(globalAddressResolver.addressCacheByEndpoint);

@@ -43,7 +43,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
-import com.azure.data.cosmos.*;
 import com.azure.data.cosmos.CosmosClientException;
 import com.azure.data.cosmos.internal.PathParser;
 import com.azure.data.cosmos.directconnectivity.Protocol;
@@ -117,7 +116,7 @@ public class TestSuiteBase {
                                           allEqualOrLowerConsistencies(accountConsistency)));
         preferredLocations = immutableListOrNull(parsePreferredLocation(TestConfigurations.PREFERRED_LOCATIONS));
         protocols = ObjectUtils.defaultIfNull(immutableListOrNull(parseProtocols(TestConfigurations.PROTOCOLS)),
-                                              ImmutableList.of(Protocol.Https, Protocol.Tcp));
+                                              ImmutableList.of(Protocol.HTTPS, Protocol.TCP));
     }
 
     protected TestSuiteBase() {
@@ -823,8 +822,8 @@ public class TestSuiteBase {
     public static Object[][] clientBuildersWithSessionConsistency() {
         return new Object[][]{
                 {createGatewayRxDocumentClient(ConsistencyLevel.SESSION, false, null)},
-                {createDirectRxDocumentClient(ConsistencyLevel.SESSION, Protocol.Https, false, null)},
-                {createDirectRxDocumentClient(ConsistencyLevel.SESSION, Protocol.Tcp, false, null)}
+                {createDirectRxDocumentClient(ConsistencyLevel.SESSION, Protocol.HTTPS, false, null)},
+                {createDirectRxDocumentClient(ConsistencyLevel.SESSION, Protocol.TCP, false, null)}
         };
     }
 
@@ -876,7 +875,7 @@ public class TestSuiteBase {
 
     @DataProvider
     public static Object[][] simpleClientBuildersWithDirectHttps() {
-        return simpleClientBuildersWithDirect(Protocol.Https);
+        return simpleClientBuildersWithDirect(Protocol.HTTPS);
     }
 
     private static Object[][] simpleClientBuildersWithDirect(Protocol... protocols) {
@@ -911,7 +910,7 @@ public class TestSuiteBase {
 
     @DataProvider
     public static Object[][] clientBuildersWithDirectHttps() {
-        return clientBuildersWithDirectAllConsistencies(Protocol.Https);
+        return clientBuildersWithDirectAllConsistencies(Protocol.HTTPS);
     }
 
     @DataProvider

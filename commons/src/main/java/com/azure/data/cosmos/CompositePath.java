@@ -82,7 +82,7 @@ public class CompositePath extends JsonSerializable {
         String strValue = super.getString(Constants.Properties.ORDER);
         if (!StringUtils.isEmpty(strValue)) {
             try {
-                return CompositePathSortOrder.valueOf(WordUtils.capitalize(super.getString(Constants.Properties.ORDER)));
+                return CompositePathSortOrder.valueOf(StringUtils.upperCase(super.getString(Constants.Properties.ORDER)));
             } catch (IllegalArgumentException e) {
                 this.getLogger().warn("INVALID indexingMode value {}.", super.getString(Constants.Properties.ORDER));
                 return CompositePathSortOrder.ASCENDING;

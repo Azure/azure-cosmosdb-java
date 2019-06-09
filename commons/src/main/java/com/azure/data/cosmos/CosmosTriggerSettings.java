@@ -23,6 +23,7 @@
 package com.azure.data.cosmos;
 
 import com.azure.data.cosmos.internal.Constants;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.WordUtils;
 
 import java.util.List;
@@ -78,7 +79,7 @@ public class CosmosTriggerSettings extends Resource {
         TriggerType result = TriggerType.PRE;
         try {
             result = TriggerType.valueOf(
-                    WordUtils.capitalize(super.getString(Constants.Properties.TRIGGER_TYPE)));
+                    StringUtils.upperCase(super.getString(Constants.Properties.TRIGGER_TYPE)));
         } catch (IllegalArgumentException e) {
             // ignore the exception and return the default
             this.getLogger().warn("INVALID triggerType value {}.", super.getString(Constants.Properties.TRIGGER_TYPE));
@@ -105,7 +106,7 @@ public class CosmosTriggerSettings extends Resource {
         TriggerOperation result = TriggerOperation.CREATE;
         try {
             result = TriggerOperation.valueOf(
-                    WordUtils.capitalize(super.getString(Constants.Properties.TRIGGER_OPERATION)));
+                    StringUtils.upperCase(super.getString(Constants.Properties.TRIGGER_OPERATION)));
         } catch (IllegalArgumentException e) {
             // ignore the exception and return the default
             this.getLogger().warn("INVALID triggerOperation value {}.", super.getString(Constants.Properties.TRIGGER_OPERATION));
