@@ -229,7 +229,7 @@ public class UniqueIndexTest extends TestSuiteBase {
     @BeforeClass(groups = { "long" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
         // set up the client
-        client = new CosmosClient.Builder()
+        client = CosmosClient.builder()
                 .endpoint(TestConfigurations.HOST)
                 .key(TestConfigurations.MASTER_KEY)
                 .connectionPolicy(ConnectionPolicy.GetDefault())

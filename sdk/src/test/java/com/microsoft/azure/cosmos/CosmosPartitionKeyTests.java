@@ -78,10 +78,10 @@ public class CosmosPartitionKeyTests extends TestSuiteBase {
 
     private CosmosClient client;
     private CosmosDatabase createdDatabase;
-    private CosmosClient.Builder clientBuilder;
+    private CosmosClientBuilder clientBuilder;
 
     @Factory(dataProvider = "clientBuilders")
-    public CosmosPartitionKeyTests(CosmosClient.Builder clientBuilder) {
+    public CosmosPartitionKeyTests(CosmosClientBuilder clientBuilder) {
         this.clientBuilder = clientBuilder;
     }
 

@@ -23,7 +23,7 @@
 package com.microsoft.azure.cosmosdb.rx;
 
 import com.microsoft.azure.cosmos.CosmosClient;
-import com.microsoft.azure.cosmos.CosmosClient.Builder;
+import com.microsoft.azure.cosmos.CosmosClientBuilder;
 import com.microsoft.azure.cosmos.CosmosContainer;
 import com.microsoft.azure.cosmos.CosmosDatabase;
 import com.microsoft.azure.cosmos.CosmosItemSettings;
@@ -42,14 +42,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class DocumentClientResourceLeakTest extends TestSuiteBase {
     private static final int TIMEOUT = 2400000;
     private static final int MAX_NUMBER = 1000;
-    private Builder clientBuilder;
+    private CosmosClientBuilder clientBuilder;
     private CosmosClient client;
 
     private CosmosDatabase createdDatabase;    
     private CosmosContainer createdCollection;
 
     @Factory(dataProvider = "simpleClientBuildersWithDirect")
-    public DocumentClientResourceLeakTest(Builder clientBuilder) {
+    public DocumentClientResourceLeakTest(CosmosClientBuilder clientBuilder) {
         this.clientBuilder = clientBuilder;
     }
 

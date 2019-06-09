@@ -18,7 +18,8 @@ public class CosmosUserResponse extends CosmosResponse<CosmosUserSettings> {
 
     /**
      * Get cosmos user
-     * @return an instance of CosmosUser
+     *
+     * @return {@link CosmosUser}
      */
     public CosmosUser getUser() {
         return user;
@@ -26,11 +27,12 @@ public class CosmosUserResponse extends CosmosResponse<CosmosUserSettings> {
 
     /**
      * Gets the cosmos user settings
-     * @return a instance of CosmosUserSettings
+     *
+     * @return {@link CosmosUserSettings}
      */
     public CosmosUserSettings getCosmosUserSettings(){
         return getResourceSettings();
     }
     
-    
+
 }
