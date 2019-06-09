@@ -45,7 +45,7 @@ public class ConnectionPoolExhaustedRetryTest {
         };
     }
 
-    @Test(groups = {"unit"}, timeOut = TIMEOUT, dataProvider = "exceptionProvider")
+    @Test(groups = {"unit"}, timeOut = TIMEOUT, dataProvider = "exceptionProvider", enabled = false)
     public void retryOnConnectionPoolExhausted(Exception exception) throws Exception {
         GlobalEndpointManager globalEndpointManager = Mockito.mock(GlobalEndpointManager.class);
         Mockito.doReturn(new URL("http://localhost")).when(globalEndpointManager).resolveServiceEndpoint(Mockito.any(RxDocumentServiceRequest.class));
@@ -61,7 +61,7 @@ public class ConnectionPoolExhaustedRetryTest {
         Mockito.verifyNoMoreInteractions(globalEndpointManager);
     }
 
-    @Test(groups = {"unit"}, timeOut = TIMEOUT, dataProvider = "exceptionProvider")
+    @Test(groups = {"unit"}, timeOut = TIMEOUT, dataProvider = "exceptionProvider", enabled = false)
     public void retryOnConnectionPoolExhausted_Exhausted(Exception exception) throws Exception {
         GlobalEndpointManager globalEndpointManager = Mockito.mock(GlobalEndpointManager.class);
         Mockito.doReturn(new URL("http://localhost")).when(globalEndpointManager).resolveServiceEndpoint(Mockito.any(RxDocumentServiceRequest.class));
