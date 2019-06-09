@@ -26,6 +26,7 @@ import com.microsoft.azure.cosmosdb.BridgeInternal;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
+import com.microsoft.azure.cosmosdb.Offer;
 import com.microsoft.azure.cosmosdb.RequestOptions;
 import com.microsoft.azure.cosmosdb.SqlQuerySpec;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
@@ -282,15 +283,19 @@ public class CosmosDatabase extends CosmosResource {
     public CosmosContainer getContainer(String id) {
         return new CosmosContainer(id, this);
     }
-    
+
     /** User operations **/
+
+    public Mono<CosmosUserResponse> createUser(CosmosUserSettings settings) {
+        return this.createUser(settings, null);
+    }
 
     /**
      * Creates a user
      * After subscription the operation will be performed.
      * The {@link Mono} upon successful completion will contain a single resource response with the created user.
      * In case of failure the {@link Mono} will error.
-     * 
+     *
      * @param settings the cosmos user settings
      * @param options the request options
      * @return an {@link Mono} containing the single resource response with the created cosmos user or an error.
@@ -298,7 +303,11 @@ public class CosmosDatabase extends CosmosResource {
     public Mono<CosmosUserResponse> createUser(CosmosUserSettings settings, RequestOptions options){
         return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(getDocClientWrapper().createUser(this.getLink(),
                 settings.getV2User(), options).map(response ->
-                new CosmosUserResponse(response, this)).toSingle())); 
+                new CosmosUserResponse(response, this)).toSingle()));
+    }
+
+    public Mono<CosmosUserResponse> upsertUser(CosmosUserSettings settings) {
+        return this.upsertUser(settings, null);
     }
 
     /**
@@ -306,7 +315,7 @@ public class CosmosDatabase extends CosmosResource {
      * After subscription the operation will be performed.
      * The {@link Mono} upon successful completion will contain a single resource response with the created user.
      * In case of failure the {@link Mono} will error.
-     *  
+     *
      * @param settings the cosmos user settings
      * @param options the request options
      * @return an {@link Mono} containing the single resource response with the upserted user or an error.
@@ -315,6 +324,10 @@ public class CosmosDatabase extends CosmosResource {
         return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(getDocClientWrapper().upsertUser(this.getLink(),
                 settings.getV2User(), options).map(response ->
                 new CosmosUserResponse(response, this)).toSingle()));
+    }
+
+    public Flux<FeedResponse<CosmosUserSettings>> listUsers() {
+        return listUsers(new FeedOptions());
     }
 
     /**
@@ -335,10 +348,14 @@ public class CosmosDatabase extends CosmosResource {
                                 response.getResponseHeaders()))));
     }
 
+    public Flux<FeedResponse<CosmosUserSettings>> queryUsers(String query, FeedOptions options){
+        return queryUsers(new SqlQuerySpec(query), options);
+    }
+
     /**
      * Query for cosmos users in a database.
      *
-     * After subscription the operation will be performed. 
+     * After subscription the operation will be performed.
      * The {@link Flux} will contain one or several feed response of the obtained users.
      * In case of failure the {@link Flux} will error.
      *
@@ -353,6 +370,65 @@ public class CosmosDatabase extends CosmosResource {
                         .map(response-> BridgeInternal.createFeedResponseWithQueryMetrics(
                                 CosmosUserSettings.getFromV2Results(response.getResults(), this),
                                 response.getResponseHeaders(), response.getQueryMetrics()))));
+    }
+
+    public CosmosUser getUser(String id) {
+        return new CosmosUser(id, this);
+    }
+
+    /**
+     * Gets the throughput of the database
+     *
+     * @return a {@link Mono} containing throughput or an error.
+     */
+    public Mono<Integer> readProvisionedThroughput(){
+        return this.read()
+                .flatMap(cosmosDatabaseResponse ->
+                        RxJava2Adapter.singleToMono(
+                                RxJavaInterop.toV2Single(getDocClientWrapper().queryOffers("select * from c where c.offerResourceId = '" +
+                                        cosmosDatabaseResponse.getResourceSettings().getResourceId()
+                                        + "'", new FeedOptions()).toSingle()))
+                                .flatMap(offerFeedResponse -> {
+                                    if(offerFeedResponse.getResults().isEmpty()){
+                                        return Mono.error(new DocumentClientException(HttpConstants.StatusCodes.BADREQUEST,
+                                                "No offers found for the resource"));
+                                    }
+                                    return RxJava2Adapter.singleToMono(
+                                            RxJavaInterop.toV2Single(getDocClientWrapper()
+                                                    .readOffer(offerFeedResponse.getResults()
+                                                            .get(0)
+                                                            .getSelfLink()).toSingle()));
+                                })
+                                .map(cosmosContainerResponse1 -> cosmosContainerResponse1
+                                        .getResource()
+                                        .getThroughput()));
+    }
+
+    /**
+     * Sets throughput provisioned for a container in measurement of Requests-per-Unit in the Azure Cosmos service.
+     *
+     * @param requestUnitsPerSecond the cosmos container throughput, expressed in Request Units per second
+     * @return a {@link Mono} containing throughput or an error.
+     */
+    public Mono<Integer> replaceProvisionedThroughputAsync(int requestUnitsPerSecond){
+        return this.read()
+                .flatMap(cosmosDatabaseResponse ->
+                        RxJava2Adapter.singleToMono(
+                                RxJavaInterop.toV2Single(this.getDocClientWrapper()
+                                        .queryOffers("select * from c where c.offerResourceId = '" +
+                                                cosmosDatabaseResponse.getResourceSettings().getResourceId()
+                                                + "'", new FeedOptions()).toSingle()))
+                                .flatMap(offerFeedResponse -> {
+                                    if(offerFeedResponse.getResults().isEmpty()){
+                                        return Mono.error(new DocumentClientException(HttpConstants.StatusCodes.BADREQUEST,
+                                                "No offers found for the resource"));
+                                    }
+                                    Offer offer = offerFeedResponse.getResults().get(0);
+                                    offer.setThroughput(requestUnitsPerSecond);
+                                    return RxJava2Adapter.singleToMono(
+                                            RxJavaInterop.toV2Single(this.getDocClientWrapper()
+                                                    .replaceOffer(offer).toSingle()));
+                                }).map(offerResourceResponse -> offerResourceResponse.getResource().getThroughput()));
     }
 
     CosmosClient getClient() {
