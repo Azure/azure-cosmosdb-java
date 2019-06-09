@@ -53,8 +53,8 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
+import reactor.util.concurrent.Queues;
 import rx.Observable;
-import rx.internal.util.RxRingBuffer;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -128,12 +128,12 @@ public class BackPressureCrossPartitionTest extends TestSuiteBase {
     public Object[][] queryProvider() {
         return new Object[][] {
                 // query, maxItemCount, max expected back pressure buffered, total number of expected query results
-                { "SELECT * FROM r", 1, 2 * RxRingBuffer.SIZE, numberOfDocs},
-                { "SELECT * FROM r", 100, 2 * RxRingBuffer.SIZE, numberOfDocs},
-                { "SELECT * FROM r ORDER BY r.prop", 100, 2 * RxRingBuffer.SIZE + 3 * numberOfPartitions, numberOfDocs},
-                { "SELECT TOP 1000 * FROM r", 1, 2 * RxRingBuffer.SIZE, 1000},
-                { "SELECT TOP 1000 * FROM r", 100, 2 * RxRingBuffer.SIZE, 1000},
-                { "SELECT TOP 1000 * FROM r ORDER BY r.prop", 100, 2 * RxRingBuffer.SIZE + 3 * numberOfPartitions , 1000},
+                { "SELECT * FROM r", 1, 2 * Queues.SMALL_BUFFER_SIZE, numberOfDocs},
+                { "SELECT * FROM r", 100, 2 * Queues.SMALL_BUFFER_SIZE, numberOfDocs},
+                { "SELECT * FROM r ORDER BY r.prop", 100, 2 * Queues.SMALL_BUFFER_SIZE + 3 * numberOfPartitions, numberOfDocs},
+                { "SELECT TOP 1000 * FROM r", 1, 2 * Queues.SMALL_BUFFER_SIZE, 1000},
+                { "SELECT TOP 1000 * FROM r", 100, 2 * Queues.SMALL_BUFFER_SIZE, 1000},
+                { "SELECT TOP 1000 * FROM r ORDER BY r.prop", 100, 2 * Queues.SMALL_BUFFER_SIZE + 3 * numberOfPartitions , 1000},
         };
     }
 
@@ -159,7 +159,7 @@ public class BackPressureCrossPartitionTest extends TestSuiteBase {
 
         // use a test subscriber and request for more result and sleep in between
         try {
-            while(subscriber.completions() == 0 && subscriber.getEvents().get(1).isEmpty()) {
+            while(subscriber.completions() == 0 && subscriber.errorCount() == 0) {
                 log.debug("loop " + i);
 
                 TimeUnit.MILLISECONDS.sleep(sleepTimeInMillis);
@@ -174,7 +174,6 @@ public class BackPressureCrossPartitionTest extends TestSuiteBase {
                 log.debug("client.httpRequests.size(): " + rxClient.httpRequests.size());
                 // validate that the difference between the number of requests to backend
                 // and the number of returned results is always less than a fixed threshold
-
                 assertThat(rxClient.httpRequests.size() - subscriber.valueCount())
                         .isLessThanOrEqualTo(maxExpectedBufferedCountForBackPressure);
 
@@ -194,7 +193,7 @@ public class BackPressureCrossPartitionTest extends TestSuiteBase {
         try {
             subscriber.assertNoErrors();
             subscriber.assertComplete();
-            assertThat(subscriber.getEvents().get(0).stream().mapToInt(p -> ((FeedResponse<CosmosItemSettings>)p).getResults().size()).sum()).isEqualTo(expectedNumberOfResults);
+            assertThat(subscriber.values().stream().mapToInt(p -> p.getResults().size()).sum()).isEqualTo(expectedNumberOfResults);
         } catch (Throwable error) {
             if (this.clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {
                 String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
