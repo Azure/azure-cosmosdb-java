@@ -25,61 +25,24 @@ package com.microsoft.azure.cosmosdb.rx;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
-import java.util.concurrent.CountDownLatch;
 
-import com.microsoft.azure.cosmos.CosmosClient;
 import com.microsoft.azure.cosmos.CosmosClientBuilder;
-import com.microsoft.azure.cosmos.CosmosDatabaseSettings;
-import com.microsoft.azure.cosmosdb.BridgeInternal;
 import org.mockito.Mockito;
-import org.reactivestreams.Subscriber;
-import org.reactivestreams.Subscription;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
+import com.microsoft.azure.cosmos.CosmosClient;
+import com.microsoft.azure.cosmos.CosmosDatabaseSettings;
+import com.microsoft.azure.cosmosdb.BridgeInternal;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 
+import io.reactivex.subscribers.TestSubscriber;
 import reactor.core.publisher.Flux;
 
 public class ReadFeedExceptionHandlingTest extends TestSuiteBase {
-
-    public class ExceptionSubscriber implements Subscriber<FeedResponse<CosmosDatabaseSettings>> {
-
-        public int onNextCount;
-        CountDownLatch latch = new CountDownLatch(1);
-        public ExceptionSubscriber() {
-            onNextCount = 0;
-        }
-
-        @Override
-        public void onComplete() {
-            latch.countDown();
-        }
-
-        @Override
-        public void onError(Throwable e) {
-            DocumentClientException exception = (DocumentClientException) e;
-            assertThat(exception).isNotNull();
-            assertThat(exception.getStatusCode()).isEqualTo(0);
-            latch.countDown();
-        }
-
-        @Override
-        public void onNext(FeedResponse<CosmosDatabaseSettings> page) {
-            System.out.println("size:" + page.getResults().size());
-            assertThat(page.getResults().size()).isEqualTo(2);
-            onNextCount ++;
-        }
-
-        @Override
-        public void onSubscribe(Subscription arg0) {
-            // TODO Auto-generated method stub
-            
-        }
-    }
 
     private CosmosClient client;
 
@@ -99,18 +62,20 @@ public class ReadFeedExceptionHandlingTest extends TestSuiteBase {
         frps.add(BridgeInternal.createFeedResponse(dbs, null));
         frps.add(BridgeInternal.createFeedResponse(dbs, null));
 
-        Flux<FeedResponse<CosmosDatabaseSettings>> response = Flux.fromIterable(frps)
-                                                                    .concatWith(Flux.error(new DocumentClientException(0)))
-                                                                    .concatWith(Flux.fromIterable(frps));
+        Flux<FeedResponse<CosmosDatabaseSettings>> response = Flux.merge(Flux.fromIterable(frps))
+                                                                    .mergeWith(Flux.error(new DocumentClientException(0)))
+                                                                    .mergeWith(Flux.fromIterable(frps));
 
         final CosmosClient mockClient = Mockito.spy(client);
         Mockito.when(mockClient.listDatabases(null)).thenReturn(response);
-        ExceptionSubscriber subscriber = new ExceptionSubscriber();
+        TestSubscriber<FeedResponse<CosmosDatabaseSettings>> subscriber = new TestSubscriber<FeedResponse<CosmosDatabaseSettings>>();
         mockClient.listDatabases(null).subscribe(subscriber);
-        subscriber.latch.await();
-        assertThat(subscriber.onNextCount).isEqualTo(2);
+        assertThat(subscriber.valueCount()).isEqualTo(2);
+        assertThat(subscriber.assertNotComplete());
+        assertThat(subscriber.assertTerminated());
+        assertThat(subscriber.errorCount()).isEqualTo(1);
     }
-    
+
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
         client = clientBuilder.build();

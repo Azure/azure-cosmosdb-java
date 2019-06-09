@@ -78,6 +78,7 @@ public class ProxyHostTest extends TestSuiteBase {
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() throws Exception {
         client = clientBuilder.build();
+        createdDatabase = getSharedCosmosDatabase(client);
         createdCollection = getSharedMultiPartitionCosmosContainer(client);
         httpProxyServer = new HttpProxyServer();
         httpProxyServer.start();

@@ -25,8 +25,10 @@ package com.microsoft.azure.cosmosdb.rx.internal.query;
 import java.util.List;
 import java.util.UUID;
 
+import com.microsoft.azure.cosmosdb.BridgeInternal;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.FeedOptions;
+import com.microsoft.azure.cosmosdb.PartitionKey;
 import com.microsoft.azure.cosmosdb.PartitionKeyRange;
 import com.microsoft.azure.cosmosdb.Resource;
 import com.microsoft.azure.cosmosdb.SqlQuerySpec;
@@ -50,7 +52,7 @@ public class DocumentQueryExecutionContextFactory {
     private final static int PageSizeFactorForTop = 5;
 
     private static Mono<DocumentCollection> resolveCollection(IDocumentQueryClient client, SqlQuerySpec query,
-                                                              ResourceType resourceTypeEnum, String resourceLink) {
+            ResourceType resourceTypeEnum, String resourceLink) {
 
         RxCollectionCache collectionCache = client.getCollectionCache();
 
@@ -85,17 +87,21 @@ public class DocumentQueryExecutionContextFactory {
         // PipelinedDocumentQueryExecutionContext by providing the partition query execution info that's needed(which we get from the exception returned from Gateway).
 
         Flux<ProxyDocumentQueryExecutionContext<T>> proxyQueryExecutionContext =
-                collectionObs.flatMap(collection -> 
-                ProxyDocumentQueryExecutionContext.createAsync(
-                        client,
-                        resourceTypeEnum,
-                        resourceType,
-                        query,
-                        feedOptions,
-                        resourceLink,
-                        collection,
-                        isContinuationExpected,
-                        correlatedActivityId));
+                collectionObs.flatMap(collection -> {
+                    if (feedOptions != null && feedOptions.getPartitionKey() != null && feedOptions.getPartitionKey().equals(PartitionKey.None)) {
+                        feedOptions.setPartitionKey(BridgeInternal.getPartitionKey(BridgeInternal.getNonePartitionKey(collection.getPartitionKey())));
+                    }
+                    return ProxyDocumentQueryExecutionContext.createAsync(
+                            client,
+                            resourceTypeEnum,
+                            resourceType,
+                            query,
+                            feedOptions,
+                            resourceLink,
+                            collection,
+                            isContinuationExpected,
+                            correlatedActivityId);
+                    });
 
         return proxyQueryExecutionContext;
     }

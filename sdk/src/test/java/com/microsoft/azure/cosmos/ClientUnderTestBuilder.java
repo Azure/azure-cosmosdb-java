@@ -20,24 +20,22 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.microsoft.azure.cosmosdb.rx;
+package com.microsoft.azure.cosmos;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import com.microsoft.azure.cosmos.CosmosClient;
-import com.microsoft.azure.cosmos.CosmosClientBuilder;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentClientUnderTest;
 import com.microsoft.azure.cosmosdb.rx.internal.directconnectivity.ReflectionUtils;
 
 public class ClientUnderTestBuilder extends CosmosClientBuilder {
 
     public ClientUnderTestBuilder(CosmosClientBuilder builder) {
-        this.configs(builder.getConfigs())
-                .connectionPolicy(builder.getConnectionPolicy())
-                .consistencyLevel(builder.getDesiredConsistencyLevel())
-                .key(builder.getKeyOrResourceToken())
-                .endpoint(builder.getServiceEndpoint());
+        this.configs(builder.getConfigs());
+        this.connectionPolicy(builder.getConnectionPolicy());
+        this.consistencyLevel(builder.getDesiredConsistencyLevel());
+        this.key(builder.getKeyOrResourceToken());
+        this.endpoint(builder.getServiceEndpoint());
     }
 
     @Override

@@ -22,6 +22,7 @@
  */
 package com.microsoft.azure.cosmosdb.rx;
 
+import com.microsoft.azure.cosmos.ClientUnderTestBuilder;
 import com.microsoft.azure.cosmos.CosmosBridgeInternal;
 import com.microsoft.azure.cosmos.CosmosClient;
 import com.microsoft.azure.cosmos.CosmosClientBuilder;
@@ -35,13 +36,15 @@ import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.Offer;
 import com.microsoft.azure.cosmosdb.PartitionKeyDefinition;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentClientUnderTest;
+
 import io.reactivex.subscribers.TestSubscriber;
+import reactor.core.publisher.Flux;
+import reactor.core.scheduler.Schedulers;
+
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
-import reactor.core.publisher.Flux;
-import reactor.core.scheduler.Schedulers;
 import reactor.util.concurrent.Queues;
 
 import java.util.ArrayList;
@@ -85,6 +88,7 @@ public class BackPressureTest extends TestSuiteBase {
     public void readFeed() throws Exception {
         FeedOptions options = new FeedOptions();
         options.setMaxItemCount(1);
+        options.setEnableCrossPartitionQuery(true);
         Flux<FeedResponse<CosmosItemSettings>> queryObservable = createdCollection.listItems(options);
 
         RxDocumentClientUnderTest rxClient = (RxDocumentClientUnderTest)CosmosBridgeInternal.getAsyncDocumentClient(client);
@@ -123,6 +127,7 @@ public class BackPressureTest extends TestSuiteBase {
     public void query() throws Exception {
         FeedOptions options = new FeedOptions();
         options.setMaxItemCount(1);
+        options.setEnableCrossPartitionQuery(true);
         Flux<FeedResponse<CosmosItemSettings>> queryObservable = createdCollection.queryItems("SELECT * from r", options);
 
         RxDocumentClientUnderTest rxClient = (RxDocumentClientUnderTest)CosmosBridgeInternal.getAsyncDocumentClient(client);
@@ -196,7 +201,9 @@ public class BackPressureTest extends TestSuiteBase {
 
     private void warmUp() {
         // ensure collection is cached
-        createdCollection.queryItems("SELECT * from r", null).blockFirst();
+        FeedOptions options = new FeedOptions();
+        options.setEnableCrossPartitionQuery(true);
+        createdCollection.queryItems("SELECT * from r", options).blockFirst();
     }
 
     // TODO: DANOBLE: Investigate Direct TCP performance issue

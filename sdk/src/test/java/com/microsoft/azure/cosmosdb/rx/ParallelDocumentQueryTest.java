@@ -189,7 +189,7 @@ public class ParallelDocumentQueryTest extends TestSuiteBase {
                 .Builder<CosmosItemSettings>()
                 .exactlyContainsInAnyOrder(expectedDocs
                         .stream()
-                        .map(d -> d.getResourceId())
+                        .map(Resource::getResourceId)
                         .collect(Collectors.toList()))
                 .numberOfPagesIsGreaterThanOrEqualTo((expectedDocs.size() + 1) / 3)
                 .allPagesSatisfy(new FeedResponseValidator.Builder<CosmosItemSettings>()
@@ -330,6 +330,7 @@ public class ParallelDocumentQueryTest extends TestSuiteBase {
     @BeforeClass(groups = { "simple", "non-emulator" }, timeOut = 2 * SETUP_TIMEOUT)
     public void beforeClass() {
         client = clientBuilder.build();
+        createdDatabase = getSharedCosmosDatabase(client);
         createdCollection = getSharedMultiPartitionCosmosContainer(client);
         truncateCollection(createdCollection);
         List<CosmosItemSettings> docDefList = new ArrayList<>();

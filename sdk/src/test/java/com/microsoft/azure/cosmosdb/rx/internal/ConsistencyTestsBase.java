@@ -62,8 +62,8 @@ import reactor.core.publisher.Flux;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.time.OffsetDateTime;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -90,7 +90,7 @@ public class ConsistencyTestsBase extends TestSuiteBase {
         Resource writeResource = resourceToWorkWith;
         while (numberOfTestIteration-- > 0) //Write from a client and do point read through second client and ensure TS matches.
         {
-            Date sourceTimestamp = writeResource.getTimestamp();
+            OffsetDateTime sourceTimestamp = writeResource.getTimestamp();
             Thread.sleep(1000); //Timestamp is in granularity of seconds.
             Resource updatedResource = null;
             if (resourceToWorkWith instanceof User) {
@@ -100,7 +100,7 @@ public class ConsistencyTestsBase extends TestSuiteBase {
                 options.setPartitionKey(new PartitionKey(resourceToWorkWith.get("mypk")));
                 updatedResource = this.writeClient.upsertDocument(createdCollection.getSelfLink(), (Document) writeResource, options, false).blockFirst().getResource();
             }
-            assertThat(updatedResource.getTimestamp().after(sourceTimestamp)).isTrue();
+            assertThat(updatedResource.getTimestamp().isAfter(sourceTimestamp)).isTrue();
 
             User readResource = this.readClient.readUser(resourceToWorkWith.getSelfLink(), null).blockFirst().getResource();
             assertThat(updatedResource.getTimestamp().equals(readResource.getTimestamp()));
@@ -174,12 +174,12 @@ public class ConsistencyTestsBase extends TestSuiteBase {
         int numberOfTestIteration = 5;
         Document writeDocument = documentToWorkWith;
         while (numberOfTestIteration-- > 0) {
-            Date sourceTimestamp = writeDocument.getTimestamp();
+            OffsetDateTime sourceTimestamp = writeDocument.getTimestamp();
             Thread.sleep(1000);//Timestamp is in granularity of seconds.
             RequestOptions options = new RequestOptions();
             options.setPartitionKey(new PartitionKey(documentToWorkWith.get("mypk")));
             Document updatedDocument = this.writeClient.replaceDocument(writeDocument, options).blockFirst().getResource();
-            assertThat(updatedDocument.getTimestamp().after(sourceTimestamp)).isTrue();
+            assertThat(updatedDocument.getTimestamp().isAfter(sourceTimestamp)).isTrue();
 
             Document readDocument = this.readClient.readDocument(documentToWorkWith.getSelfLink(), options).blockFirst().getResource();
             assertThat(updatedDocument.getTimestamp().equals(readDocument.getTimestamp()));
@@ -268,12 +268,12 @@ public class ConsistencyTestsBase extends TestSuiteBase {
 
     boolean validateConsistentPrefix(Resource resourceToWorkWith) throws InterruptedException {
         int numberOfTestIteration = 5;
-        Date lastReadDateTime = resourceToWorkWith.getTimestamp();
+        OffsetDateTime lastReadDateTime = resourceToWorkWith.getTimestamp();
         boolean readLagging = false;
         Resource writeResource = resourceToWorkWith;
 
         while (numberOfTestIteration-- > 0) { //Write from a client and do point read through second client and ensure TS monotonically increases.
-            Date sourceTimestamp = writeResource.getTimestamp();
+            OffsetDateTime sourceTimestamp = writeResource.getTimestamp();
             Thread.sleep(1000); //Timestamp is in granularity of seconds.
             Resource updatedResource = null;
             if (resourceToWorkWith instanceof User) {
@@ -287,7 +287,7 @@ public class ConsistencyTestsBase extends TestSuiteBase {
                         .blockFirst()
                         .getResource();
             }
-            assertThat(updatedResource.getTimestamp().after(sourceTimestamp)).isTrue();
+            assertThat(updatedResource.getTimestamp().isAfter(sourceTimestamp)).isTrue();
             writeResource = updatedResource;
 
             Resource readResource = null;
@@ -304,7 +304,7 @@ public class ConsistencyTestsBase extends TestSuiteBase {
             }
             assertThat(readResource.getTimestamp().compareTo(lastReadDateTime) >= 0).isTrue();
             lastReadDateTime = readResource.getTimestamp();
-            if (readResource.getTimestamp().before(updatedResource.getTimestamp())) {
+            if (readResource.getTimestamp().isBefore(updatedResource.getTimestamp())) {
                 readLagging = true;
             }
         }
@@ -313,12 +313,12 @@ public class ConsistencyTestsBase extends TestSuiteBase {
 
     boolean validateReadSession(Resource resourceToWorkWith) throws InterruptedException {
         int numberOfTestIteration = 5;
-        Date lastReadDateTime = new java.sql.Date(0);
+        OffsetDateTime lastReadDateTime = OffsetDateTime.MIN;
         boolean readLagging = false;
         Resource writeResource = resourceToWorkWith;
 
         while (numberOfTestIteration-- > 0) {
-            Date sourceTimestamp = writeResource.getTimestamp();
+            OffsetDateTime sourceTimestamp = writeResource.getTimestamp();
             Thread.sleep(1000);
             Resource updatedResource = null;
             if (resourceToWorkWith instanceof Document) {
@@ -328,7 +328,7 @@ public class ConsistencyTestsBase extends TestSuiteBase {
                         .block()
                         .getResource();
             }
-            assertThat(updatedResource.getTimestamp().after(sourceTimestamp)).isTrue();
+            assertThat(updatedResource.getTimestamp().isAfter(sourceTimestamp)).isTrue();
             writeResource = updatedResource;
 
             Resource readResource = null;
@@ -340,7 +340,7 @@ public class ConsistencyTestsBase extends TestSuiteBase {
             assertThat(readResource.getTimestamp().compareTo(lastReadDateTime) >= 0).isTrue();
             lastReadDateTime = readResource.getTimestamp();
 
-            if (readResource.getTimestamp().before(updatedResource.getTimestamp())) {
+            if (readResource.getTimestamp().isBefore(updatedResource.getTimestamp())) {
                 readLagging = true;
             }
         }
@@ -349,18 +349,18 @@ public class ConsistencyTestsBase extends TestSuiteBase {
 
     boolean validateWriteSession(Resource resourceToWorkWith) throws InterruptedException {
         int numberOfTestIteration = 5;
-        Date lastReadDateTime = new java.sql.Date(0);
+        OffsetDateTime lastReadDateTime = OffsetDateTime.MIN;
         boolean readLagging = false;
         Resource writeResource = resourceToWorkWith;
 
         while (numberOfTestIteration-- > 0) {
-            Date sourceTimestamp = writeResource.getTimestamp();
+            OffsetDateTime sourceTimestamp = writeResource.getTimestamp();
             Thread.sleep(1000);
             Resource updatedResource = null;
             if (resourceToWorkWith instanceof Document) {
                 updatedResource = this.writeClient.upsertDocument(createdCollection.getSelfLink(), writeResource, null, false).single().block().getResource();
             }
-            assertThat(updatedResource.getTimestamp().after(sourceTimestamp)).isTrue();
+            assertThat(updatedResource.getTimestamp().isAfter(sourceTimestamp)).isTrue();
             writeResource = updatedResource;
 
             Resource readResource = null;
@@ -375,7 +375,7 @@ public class ConsistencyTestsBase extends TestSuiteBase {
             assertThat(readResource.getTimestamp().compareTo(lastReadDateTime) >= 0).isTrue();
             lastReadDateTime = readResource.getTimestamp();
 
-            if (readResource.getTimestamp().before(updatedResource.getTimestamp())) {
+            if (readResource.getTimestamp().isBefore(updatedResource.getTimestamp())) {
                 readLagging = true;
             }
 
@@ -385,10 +385,10 @@ public class ConsistencyTestsBase extends TestSuiteBase {
                 readResource = this.writeClient.upsertDocument(createdCollection.getSelfLink(), readResource,
                                                                requestOptions, false)
                         .blockFirst()
-                        .getResource(); 
+                        .getResource();
                 //Now perform write on session
             }
-            assertThat(readResource.getTimestamp().after(lastReadDateTime));
+            assertThat(readResource.getTimestamp().isAfter(lastReadDateTime));
 
             this.readClient.setSession(this.writeClient.getSession());
         }
@@ -559,7 +559,7 @@ public class ConsistencyTestsBase extends TestSuiteBase {
             requestOptions.setPartitionKey(new PartitionKey(documentResponse.getResource().get("mypk")));
             requestOptions1.setAccessCondition(ac);
             Flux<ResourceResponse<Document>> preConditionFailureResponseObservable = validationClient.upsertDocument(BridgeInternal.getAltLink(createdCollection),
-                                                                                                                     documentResponse.getResource(), requestOptions1, true);
+                    documentResponse.getResource(), requestOptions1, true);
             FailureValidator failureValidator = new FailureValidator.Builder().statusCode(HttpConstants.StatusCodes.PRECONDITION_FAILED).build();
             validateFailure(preConditionFailureResponseObservable, failureValidator);
             assertThat(isSessionEqual(((SessionContainer) validationClient.getSession()), (SessionContainer) writeClient.getSession())).isTrue();
@@ -631,7 +631,7 @@ public class ConsistencyTestsBase extends TestSuiteBase {
             requestOptions.setSessionToken(higherLsnToken);
             // try to read a non existent document in the same partition that we previously wrote to
             Flux<ResourceResponse<Document>> readObservable = writeClient.readDocument(BridgeInternal.getAltLink(documentResponse.getResource()),
-                                                                                       requestOptions);
+                    requestOptions);
             validateFailure(readObservable, failureValidator);
 
         } finally {
@@ -663,8 +663,8 @@ public class ConsistencyTestsBase extends TestSuiteBase {
 
             FailureValidator failureValidator = new FailureValidator.Builder().statusCode(HttpConstants.StatusCodes.CONFLICT).build();
             Flux<ResourceResponse<Document>> conflictDocumentResponse = validationClient.createDocument(BridgeInternal.getAltLink(createdCollection),
-                                                                                                        documentDefinition, null,
-                                                                                                        true);
+                    documentDefinition, null,
+                    true);
             validateFailure(conflictDocumentResponse, failureValidator);
         } finally {
             safeClose(writeClient);

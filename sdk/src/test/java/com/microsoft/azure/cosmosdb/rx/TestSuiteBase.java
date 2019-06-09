@@ -129,7 +129,7 @@ public class TestSuiteBase {
     protected static CosmosDatabase getSharedCosmosDatabase(CosmosClient client) {
         return CosmosBridgeInternal.getCosmosDatabaseWithNewClient(SHARED_DATABASE, client);
     }
-
+    
     protected static CosmosContainer getSharedMultiPartitionCosmosContainer(CosmosClient client) {
         return CosmosBridgeInternal.getCosmosContainerWithNewClient(SHARED_MULTI_PARTITION_COLLECTION, SHARED_DATABASE, client);
     }
@@ -468,8 +468,8 @@ public class TestSuiteBase {
     }
 
     public Flux<CosmosItemResponse> bulkInsert(CosmosContainer cosmosContainer,
-                                               List<CosmosItemSettings> documentDefinitionList,
-                                               int concurrencyLevel) {
+                                                             List<CosmosItemSettings> documentDefinitionList,
+                                                             int concurrencyLevel) {
         List<Mono<CosmosItemResponse>> result = new ArrayList<>(documentDefinitionList.size());
         for (CosmosItemSettings docDef : documentDefinitionList) {
             result.add(cosmosContainer.createItem(docDef));
@@ -652,10 +652,8 @@ public class TestSuiteBase {
                     .collectList()
                     .block();
 
-            if (collections != null) {
-                for(CosmosContainerSettings collection: collections) {
-                    safeDeleteCollection(database, collection.getId());
-                }
+            for(CosmosContainerSettings collection: collections) {
+                database.getContainer(collection.getId()).delete().block();
             }
         }
     }
@@ -953,7 +951,7 @@ public class TestSuiteBase {
         RetryOptions options = new RetryOptions();
         options.setMaxRetryWaitTimeInSeconds(SUITE_SETUP_TIMEOUT);
         connectionPolicy.setRetryOptions(options);
-        return new CosmosClientBuilder().endpoint(TestConfigurations.HOST)
+        return CosmosClient.builder().endpoint(TestConfigurations.HOST)
                 .key(TestConfigurations.MASTER_KEY)
                 .connectionPolicy(connectionPolicy)
                 .consistencyLevel(ConsistencyLevel.Session);
@@ -964,7 +962,7 @@ public class TestSuiteBase {
         connectionPolicy.setConnectionMode(ConnectionMode.Gateway);
         connectionPolicy.setUsingMultipleWriteLocations(multiMasterEnabled);
         connectionPolicy.setPreferredLocations(preferredLocations);
-        return new CosmosClientBuilder().endpoint(TestConfigurations.HOST)
+        return CosmosClient.builder().endpoint(TestConfigurations.HOST)
                 .key(TestConfigurations.MASTER_KEY)
                 .connectionPolicy(connectionPolicy)
                 .consistencyLevel(consistencyLevel);
@@ -992,7 +990,7 @@ public class TestSuiteBase {
         Configs configs = spy(new Configs());
         doAnswer((Answer<Protocol>)invocation -> protocol).when(configs).getProtocol();
 
-        return new CosmosClientBuilder().endpoint(TestConfigurations.HOST)
+        return CosmosClient.builder().endpoint(TestConfigurations.HOST)
                 .key(TestConfigurations.MASTER_KEY)
                 .connectionPolicy(connectionPolicy)
                 .consistencyLevel(consistencyLevel)

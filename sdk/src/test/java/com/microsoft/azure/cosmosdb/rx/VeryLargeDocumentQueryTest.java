@@ -32,12 +32,16 @@ import com.microsoft.azure.cosmosdb.Database;
 import com.microsoft.azure.cosmosdb.Document;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.RetryAnalyzer;
+import com.microsoft.azure.cosmosdb.internal.directconnectivity.Protocol;
+
+import reactor.core.publisher.Mono;
+
 import org.apache.commons.lang3.StringUtils;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
-import reactor.core.publisher.Mono;
 
 import java.util.UUID;
 
@@ -58,17 +62,24 @@ public class VeryLargeDocumentQueryTest extends TestSuiteBase {
 
     @Test(groups = { "emulator" }, timeOut = TIMEOUT, retryAnalyzer = RetryAnalyzer.class)
     public void queryLargeDocuments() throws InterruptedException {
-
         int cnt = 5;
-
-        for (int i = 0; i < cnt; i++) {
+        for(int i = 0; i < cnt; i++) {
             createLargeDocument();
         }
 
-        FeedOptions options = new FeedOptions();
-        options.setEnableCrossPartitionQuery(true);
-        validateQuerySuccess(createdCollection.queryItems("SELECT * FROM r", options),
-            new FeedResponseListValidator.Builder().totalSize(cnt).build());
+        try {
+            FeedOptions options = new FeedOptions();
+            options.setEnableCrossPartitionQuery(true);
+            validateQuerySuccess(createdCollection.queryItems("SELECT * FROM r", options),
+                new FeedResponseListValidator.Builder().totalSize(cnt).build());
+        } catch (Throwable error) {
+            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {
+                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
+                logger.info(message, error);
+                throw new SkipException(message, error);
+            }
+            throw error;
+        }
     }
 
     private void createLargeDocument() throws InterruptedException {

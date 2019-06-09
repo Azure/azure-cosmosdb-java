@@ -26,6 +26,7 @@ import com.microsoft.azure.cosmosdb.BridgeInternal;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
+import com.microsoft.azure.cosmosdb.Offer;
 import com.microsoft.azure.cosmosdb.RequestOptions;
 import com.microsoft.azure.cosmosdb.SqlQuerySpec;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
@@ -49,38 +50,38 @@ public class CosmosDatabase extends CosmosResource {
 
     /**
      * Reads a database.
-     * <p>
-     * After subscription the operation will be performed.
+     *
+     * After subscription the operation will be performed. 
      * The {@link Mono} upon successful completion will contain a single cosmos database respone with the read database.
      * In case of failure the {@link Mono} will error.
      *
      * @return an {@link Mono} containing the single cosmos database respone with the read database or an error.
      */
-    public Mono<CosmosDatabaseResponse> read() {
+    public Mono<CosmosDatabaseResponse> read(){
         return read(new CosmosDatabaseRequestOptions());
     }
 
     /**
      * Reads a database.
-     * <p>
-     * After subscription the operation will be performed.
+     *
+     * After subscription the operation will be performed. 
      * The {@link Mono} upon successful completion will contain a cosmos cosmos database respone with the read database.
      * In case of failure the {@link Mono} will error.
      *
-     * @param options the request options.
+     * @param options      the request options.
      * @return an {@link Mono} containing the single cosmos database response with the read database or an error.
      */
     public Mono<CosmosDatabaseResponse> read(CosmosDatabaseRequestOptions options) {
         return getDocClientWrapper().readDatabase(getLink(),
-                options.toRequestOptions())
+                                                                                          options.toRequestOptions())
                 .map(response -> new CosmosDatabaseResponse(response, getClient()))
                 .single();
     }
 
     /**
      * Deletes a database.
-     * <p>
-     * After subscription the operation will be performed.
+     *
+     * After subscription the operation will be performed. 
      * The {@link Mono} upon successful completion will contain a cosmos database response with the deleted database.
      * In case of failure the {@link Mono} will error.
      *
@@ -102,8 +103,8 @@ public class CosmosDatabase extends CosmosResource {
      */
     public Mono<CosmosDatabaseResponse> delete(CosmosRequestOptions options) {
         return getDocClientWrapper()
-                .deleteDatabase(getLink(), options.toRequestOptions())
-                .map(response -> new CosmosDatabaseResponse(response, getClient()))
+                                                 .deleteDatabase(getLink(), options.toRequestOptions())
+                                                 .map(response -> new CosmosDatabaseResponse(response, getClient()))
                 .single();
     }
 
@@ -111,13 +112,13 @@ public class CosmosDatabase extends CosmosResource {
 
     /**
      * Creates a document container.
-     * <p>
-     * After subscription the operation will be performed.
-     * The {@link Mono} upon successful completion will contain a cosmos container response with the created
+     *
+     * After subscription the operation will be performed. 
+     * The {@link Mono} upon successful completion will contain a cosmos container response with the created 
      * collection.
      * In case of failure the {@link Mono} will error.
      *
-     * @param containerSettings the container settings.
+     * @param containerSettings   the container settings.
      * @return an {@link Flux} containing the single cosmos container response with the created container or an error.
      */
     public Mono<CosmosContainerResponse> createContainer(CosmosContainerSettings containerSettings) {
@@ -127,18 +128,18 @@ public class CosmosDatabase extends CosmosResource {
 
     /**
      * Creates a document container.
-     * <p>
-     * After subscription the operation will be performed.
-     * The {@link Mono} upon successful completion will contain a cosmos container response with the created
+     *
+     * After subscription the operation will be performed. 
+     * The {@link Mono} upon successful completion will contain a cosmos container response with the created 
      * collection.
      * In case of failure the {@link Mono} will error.
      *
-     * @param containerSettings the containerSettings.
-     * @param options           the cosmos container request options
+     * @param containerSettings   the containerSettings.
+     * @param options the cosmos container request options                           
      * @return an {@link Flux} containing the cosmos container response with the created container or an error.
      */
     public Mono<CosmosContainerResponse> createContainer(CosmosContainerSettings containerSettings,
-                                                         CosmosContainerRequestOptions options) {
+            CosmosContainerRequestOptions options) {
         return getDocClientWrapper().createCollection(this.getLink(),
                 containerSettings.getV2Collection(), options.toRequestOptions()).map(response ->
                 new CosmosContainerResponse(response, this))
@@ -147,13 +148,13 @@ public class CosmosDatabase extends CosmosResource {
 
     /**
      * Creates a document container.
-     * <p>
-     * After subscription the operation will be performed.
-     * The {@link Mono} upon successful completion will contain a cosmos container response with the created
+     *
+     * After subscription the operation will be performed. 
+     * The {@link Mono} upon successful completion will contain a cosmos container response with the created 
      * collection.
      * In case of failure the {@link Mono} will error.
      *
-     * @param id               the cosmos container id
+     * @param id the cosmos container id
      * @param partitionKeyPath the partition key path
      * @return an {@link Flux} containing the cosmos container response with the created container or an error.
      */
@@ -180,13 +181,13 @@ public class CosmosDatabase extends CosmosResource {
 
     /**
      * Creates a document container if it does not exist on the service.
-     * <p>
-     * After subscription the operation will be performed.
+     *
+     * After subscription the operation will be performed. 
      * The {@link Mono} upon successful completion will contain a cosmos container response with the created
      * collection.
      * In case of failure the {@link Mono} will error.
      *
-     * @param id               the cosmos container id
+     * @param id the cosmos container id
      * @param partitionKeyPath the partition key path
      * @return an {@link Flux} containing the cosmos container response with the created container or an error.
      */
@@ -211,7 +212,7 @@ public class CosmosDatabase extends CosmosResource {
 
     /**
      * Reads all cosmos containers.
-     * <p>
+     *
      * After subscription the operation will be performed.
      * The {@link Flux} will contain one or several feed response of the read containers.
      * In case of failure the {@link Flux} will error.
@@ -221,13 +222,13 @@ public class CosmosDatabase extends CosmosResource {
      */
     public Flux<FeedResponse<CosmosContainerSettings>> listContainers(FeedOptions options) {
         return getDocClientWrapper().readCollections(getLink(), options)
-                .map(response -> BridgeInternal.createFeedResponse(CosmosContainerSettings.getFromV2Results(response.getResults()),
+                .map(response-> BridgeInternal.createFeedResponse(CosmosContainerSettings.getFromV2Results(response.getResults()),
                         response.getResponseHeaders()));
     }
 
     /**
      * Reads all cosmos containers.
-     * <p>
+     *
      * After subscription the operation will be performed.
      * The {@link Flux} will contain one or several feed response of the read containers.
      * In case of failure the {@link Flux} will error.
@@ -240,41 +241,40 @@ public class CosmosDatabase extends CosmosResource {
 
     /**
      * Query for cosmos containers in a cosmos database.
-     * <p>
-     * After subscription the operation will be performed.
+     *
+     * After subscription the operation will be performed. 
      * The {@link Flux} will contain one or several feed response of the obtained containers.
      * In case of failure the {@link Flux} will error.
      *
-     * @param query   the query.
-     * @param options the feed options.
+     * @param query        the query.
+     * @param options      the feed options.
      * @return an {@link Flux} containing one or several feed response pages of the obtained containers or an error.
      */
-    public Flux<FeedResponse<CosmosContainerSettings>> queryContainers(String query, FeedOptions options) {
+    public Flux<FeedResponse<CosmosContainerSettings>> queryContainers(String query, FeedOptions options){
         return queryContainers(new SqlQuerySpec(query), options);
     }
 
     /**
      * Query for cosmos containers in a cosmos database.
-     * <p>
-     * After subscription the operation will be performed.
+     *
+     * After subscription the operation will be performed. 
      * The {@link Flux} will contain one or several feed response of the obtained containers.
      * In case of failure the {@link Flux} will error.
      *
-     * @param querySpec the SQL query specification.
-     * @param options   the feed options.
+     * @param querySpec    the SQL query specification.
+     * @param options      the feed options.
      * @return an {@link Flux} containing one or several feed response pages of the obtained containers or an error.
      */
-    public Flux<FeedResponse<CosmosContainerSettings>> queryContainers(SqlQuerySpec querySpec, FeedOptions options) {
+    public Flux<FeedResponse<CosmosContainerSettings>> queryContainers(SqlQuerySpec querySpec, FeedOptions options){
         return getDocClientWrapper().queryCollections(getLink(), querySpec,
-                options)
-                .map(response -> BridgeInternal.createFeedResponse(
+                                                                                                options)
+                .map(response-> BridgeInternal.createFeedResponse(
                         CosmosContainerSettings.getFromV2Results(response.getResults()),
                         response.getResponseHeaders()));
     }
 
     /**
      * Gets a CosmosContainer object without making a service call
-     *
      * @param id id of the container
      * @return Cosmos Container
      */
@@ -282,11 +282,11 @@ public class CosmosDatabase extends CosmosResource {
         return new CosmosContainer(id, this);
     }
 
+    /** User operations **/
+
     public Mono<CosmosUserResponse> createUser(CosmosUserSettings settings) {
         return this.createUser(settings, null);
     }
-
-    /** User operations **/
 
     /**
      * Creates a user
@@ -372,11 +372,62 @@ public class CosmosDatabase extends CosmosResource {
         return new CosmosUser(id, this);
     }
 
+    /**
+     * Gets the throughput of the database
+     *
+     * @return a {@link Mono} containing throughput or an error.
+     */
+    public Mono<Integer> readProvisionedThroughput(){
+        return this.read()
+                .flatMap(cosmosDatabaseResponse ->
+                        getDocClientWrapper().queryOffers("select * from c where c.offerResourceId = '" +
+                                        cosmosDatabaseResponse.getResourceSettings().getResourceId()
+                                        + "'", new FeedOptions()).single()
+                                .flatMap(offerFeedResponse -> {
+                                    if(offerFeedResponse.getResults().isEmpty()){
+                                        return Mono.error(new DocumentClientException(HttpConstants.StatusCodes.BADREQUEST,
+                                                "No offers found for the resource"));
+                                    }
+                                    return getDocClientWrapper()
+                                                    .readOffer(offerFeedResponse.getResults()
+                                                            .get(0)
+                                                            .getSelfLink()).single();
+                                })
+                                .map(cosmosContainerResponse1 -> cosmosContainerResponse1
+                                        .getResource()
+                                        .getThroughput()));
+    }
+
+    /**
+     * Sets throughput provisioned for a container in measurement of Requests-per-Unit in the Azure Cosmos service.
+     *
+     * @param requestUnitsPerSecond the cosmos container throughput, expressed in Request Units per second
+     * @return a {@link Mono} containing throughput or an error.
+     */
+    public Mono<Integer> replaceProvisionedThroughputAsync(int requestUnitsPerSecond){
+        return this.read()
+                .flatMap(cosmosDatabaseResponse ->
+                        this.getDocClientWrapper()
+                                        .queryOffers("select * from c where c.offerResourceId = '" +
+                                                cosmosDatabaseResponse.getResourceSettings().getResourceId()
+                                                + "'", new FeedOptions()).single()
+                                .flatMap(offerFeedResponse -> {
+                                    if(offerFeedResponse.getResults().isEmpty()){
+                                        return Mono.error(new DocumentClientException(HttpConstants.StatusCodes.BADREQUEST,
+                                                "No offers found for the resource"));
+                                    }
+                                    Offer offer = offerFeedResponse.getResults().get(0);
+                                    offer.setThroughput(requestUnitsPerSecond);
+                                    return this.getDocClientWrapper()
+                                                    .replaceOffer(offer).single();
+                                }).map(offerResourceResponse -> offerResourceResponse.getResource().getThroughput()));
+    }
+
     CosmosClient getClient() {
         return client;
     }
 
-    AsyncDocumentClient getDocClientWrapper() {
+    AsyncDocumentClient getDocClientWrapper(){
         return client.getDocClientWrapper();
     }
 

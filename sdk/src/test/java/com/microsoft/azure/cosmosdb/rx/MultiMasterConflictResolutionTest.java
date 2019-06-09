@@ -25,6 +25,7 @@ package com.microsoft.azure.cosmosdb.rx;
 import com.microsoft.azure.cosmos.CosmosClient;
 import com.microsoft.azure.cosmos.CosmosClientBuilder;
 import com.microsoft.azure.cosmos.CosmosContainer;
+import com.microsoft.azure.cosmos.CosmosContainerRequestOptions;
 import com.microsoft.azure.cosmos.CosmosContainerResponse;
 import com.microsoft.azure.cosmos.CosmosContainerSettings;
 import com.microsoft.azure.cosmos.CosmosDatabase;
@@ -63,12 +64,12 @@ public class MultiMasterConflictResolutionTest extends TestSuiteBase {
         this.clientBuilder = clientBuilder;
     }
 
-    @Test(groups = "multi-master", timeOut = TIMEOUT)
+    @Test(groups = "multi-master", timeOut = 10 * TIMEOUT)
     public void conflictResolutionPolicyCRUD() {
 
         // default last writer wins, path _ts
         CosmosContainerSettings collectionSettings = new CosmosContainerSettings(UUID.randomUUID().toString(), partitionKeyDef);
-        CosmosContainer collection = database.createContainer(collectionSettings, null).block().getContainer();
+        CosmosContainer collection = database.createContainer(collectionSettings, new CosmosContainerRequestOptions()).block().getContainer();
         collectionSettings = collection.read().block().getCosmosContainerSettings();
 
         assertThat(collectionSettings.getConflictResolutionPolicy().getConflictResolutionMode()).isEqualTo(ConflictResolutionMode.LastWriterWins);
@@ -139,7 +140,7 @@ public class MultiMasterConflictResolutionTest extends TestSuiteBase {
             } else {
                 collectionSettings.setConflictResolutionPolicy(ConflictResolutionPolicy.createCustomPolicy(paths[i]));
             }
-            collectionSettings = database.createContainer(collectionSettings, null).block().getCosmosContainerSettings();
+            collectionSettings = database.createContainer(collectionSettings, new CosmosContainerRequestOptions()).block().getCosmosContainerSettings();
             assertThat(collectionSettings.getConflictResolutionPolicy().getConflictResolutionMode()).isEqualTo(conflictResolutionMode);
             
             if (conflictResolutionMode == ConflictResolutionMode.LastWriterWins) {
@@ -162,7 +163,7 @@ public class MultiMasterConflictResolutionTest extends TestSuiteBase {
 
         Mono<CosmosContainerResponse> createObservable = database.createContainer(
                 collection,
-                null);
+                new CosmosContainerRequestOptions());
 
         FailureValidator validator = new FailureValidator.Builder()
                 .instanceOf(DocumentClientException.class)
@@ -184,7 +185,7 @@ public class MultiMasterConflictResolutionTest extends TestSuiteBase {
 
         Mono<CosmosContainerResponse> createObservable = database.createContainer(
                 collection,
-                null);
+                new CosmosContainerRequestOptions());
 
         FailureValidator validator = new FailureValidator.Builder()
                 .instanceOf(DocumentClientException.class)

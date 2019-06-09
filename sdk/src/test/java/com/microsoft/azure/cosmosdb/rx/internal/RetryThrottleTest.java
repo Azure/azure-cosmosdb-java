@@ -23,6 +23,21 @@
 
 package com.microsoft.azure.cosmosdb.rx.internal;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Matchers.anyObject;
+import static org.mockito.Mockito.doAnswer;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.mockito.stubbing.Answer;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
 import com.microsoft.azure.cosmosdb.ConnectionPolicy;
 import com.microsoft.azure.cosmosdb.ConsistencyLevel;
 import com.microsoft.azure.cosmosdb.Database;
@@ -37,21 +52,8 @@ import com.microsoft.azure.cosmosdb.internal.ResourceType;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import com.microsoft.azure.cosmosdb.rx.ResourceResponseValidator;
 import com.microsoft.azure.cosmosdb.rx.TestConfigurations;
-import org.mockito.stubbing.Answer;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+
 import reactor.core.publisher.Flux;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Matchers.anyObject;
-import static org.mockito.Mockito.doAnswer;
 
 public class RetryThrottleTest extends TestSuiteBase {
     private final static int TIMEOUT = 10000;
@@ -83,7 +85,7 @@ public class RetryThrottleTest extends TestSuiteBase {
 
         List<Flux<ResourceResponse<Document>>> list = new ArrayList<>();
         for(int i = 0; i < TOTAL_DOCS; i++) {
-            Flux<ResourceResponse<Document>> obs = client.createDocument(getCollectionLink(collection), getDocumentDefinition(), null, false);
+            Flux<ResourceResponse<Document>> obs = client.createDocument(getCollectionLink(collection),  getDocumentDefinition(), null, false);
             list.add(obs);
         }
 
@@ -92,12 +94,12 @@ public class RetryThrottleTest extends TestSuiteBase {
         AtomicInteger successCount = new AtomicInteger();
 
         doAnswer((Answer<Flux<RxDocumentServiceResponse>>) invocation -> {
-            RxDocumentServiceRequest req = (RxDocumentServiceRequest) invocation.getArguments()[0];
-            if (req.getResourceType() ==  ResourceType.Document && req.getOperationType() == OperationType.Create) {
-                // increment the counter per Document Create operations
-                totalCount.incrementAndGet();
-            }
-            return client.getOrigGatewayStoreModel().processMessage(req).doOnNext(rsp -> successCount.incrementAndGet());
+                RxDocumentServiceRequest req = (RxDocumentServiceRequest) invocation.getArguments()[0];
+                if (req.getResourceType() ==  ResourceType.Document && req.getOperationType() == OperationType.Create) {
+                    // increment the counter per Document Create operations
+                    totalCount.incrementAndGet();
+                }
+                return client.getOrigGatewayStoreModel().processMessage(req).doOnNext(rsp -> successCount.incrementAndGet());
         }).when(client.getSpyGatewayStoreModel()).processMessage(anyObject());
 
         List<ResourceResponse<Document>> rsps = Flux.merge(Flux.fromIterable(list), 100).collectList().single().block();
@@ -121,16 +123,16 @@ public class RetryThrottleTest extends TestSuiteBase {
         AtomicInteger count = new AtomicInteger();
 
         doAnswer((Answer<Flux<RxDocumentServiceResponse>>) invocation -> {
-            RxDocumentServiceRequest req = (RxDocumentServiceRequest) invocation.getArguments()[0];
-            if (req.getOperationType() != OperationType.Create) {
-                return client.getOrigGatewayStoreModel().processMessage(req);
-            }
-            int currentAttempt = count.getAndIncrement();
-            if (currentAttempt == 0) {
-                return Flux.error(new DocumentClientException(HttpConstants.StatusCodes.TOO_MANY_REQUESTS));
-            } else {
-                return client.getOrigGatewayStoreModel().processMessage(req);
-            }
+                RxDocumentServiceRequest req = (RxDocumentServiceRequest) invocation.getArguments()[0];
+                if (req.getOperationType() != OperationType.Create) {
+                    return client.getOrigGatewayStoreModel().processMessage(req);
+                }
+                int currentAttempt = count.getAndIncrement();
+                if (currentAttempt == 0) {
+                    return Flux.error(new DocumentClientException(HttpConstants.StatusCodes.TOO_MANY_REQUESTS));
+                } else {
+                    return client.getOrigGatewayStoreModel().processMessage(req);
+                }
         }).when(client.getSpyGatewayStoreModel()).processMessage(anyObject());
 
         // validate

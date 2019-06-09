@@ -31,6 +31,7 @@ import com.microsoft.azure.cosmosdb.Document;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
+import com.microsoft.azure.cosmosdb.PartitionKeyDefinition;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import org.testng.annotations.AfterClass;
@@ -39,6 +40,7 @@ import org.testng.annotations.Test;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
@@ -77,6 +79,11 @@ public class ConflictAPITest {
 
         DocumentCollection collectionDefinition = new DocumentCollection();
         collectionDefinition.setId(UUID.randomUUID().toString());
+        PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition();
+        ArrayList<String> paths = new ArrayList<String>();
+        paths.add("/mypk");
+        partitionKeyDef.setPaths(paths);
+        collectionDefinition.setPartitionKey(partitionKeyDef);
 
         // Create database
         createdDatabase = Utils.createDatabaseForTest(client);

@@ -26,6 +26,7 @@ import com.microsoft.azure.cosmosdb.BridgeInternal;
 import com.microsoft.azure.cosmosdb.ConnectionPolicy;
 import com.microsoft.azure.cosmosdb.ConsistencyLevel;
 import com.microsoft.azure.cosmosdb.Database;
+import com.microsoft.azure.cosmosdb.DatabaseAccount;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
@@ -35,6 +36,7 @@ import com.microsoft.azure.cosmosdb.TokenResolver;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import com.microsoft.azure.cosmosdb.rx.internal.Configs;
+
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -48,32 +50,40 @@ import java.util.List;
 public class CosmosClient {
 
     //Document client wrapper
+    private final Configs configs;
     private final AsyncDocumentClient asyncDocumentClient;
     private final String serviceEndpoint;
     private final String keyOrResourceToken;
     private final ConnectionPolicy connectionPolicy;
     private final ConsistencyLevel desiredConsistencyLevel;
     private final List<Permission> permissions;
-    private final Configs configs;
     private final TokenResolver tokenResolver;
 
 
      CosmosClient(CosmosClientBuilder builder) {
-        this.serviceEndpoint = builder.getServiceEndpoint();
+         this.configs = builder.getConfigs();
+         this.serviceEndpoint = builder.getServiceEndpoint();
         this.keyOrResourceToken = builder.getKeyOrResourceToken();
         this.connectionPolicy = builder.getConnectionPolicy();
         this.desiredConsistencyLevel = builder.getDesiredConsistencyLevel();
         this.permissions = builder.getPermissions();
-        this.configs = builder.getConfigs();
         this.tokenResolver = builder.getTokenResolver();
         this.asyncDocumentClient = new AsyncDocumentClient.Builder()
                 .withServiceEndpoint(this.serviceEndpoint)
                 .withMasterKeyOrResourceToken(this.keyOrResourceToken)
                 .withConnectionPolicy(this.connectionPolicy)
                 .withConsistencyLevel(this.desiredConsistencyLevel)
-                .withConfigs(configs)
-                .withTokenResolver(tokenResolver)
+                .withConfigs(this.configs)
+                .withTokenResolver(this.tokenResolver)
                 .build();
+    }
+
+    AsyncDocumentClient getContextClient() {
+        return this.asyncDocumentClient;
+    }
+
+    public static AsyncDocumentClient getContextClient(CosmosClient cosmosClient) {
+        return cosmosClient.asyncDocumentClient;
     }
 
     /**
@@ -124,8 +134,12 @@ public class CosmosClient {
         return permissions;
     }
 
+    AsyncDocumentClient getDocClientWrapper(){
+        return asyncDocumentClient;
+    }
+
     /**
-     * Gets the Configs
+     * Gets the configs
      * @return the configs
      */
     public Configs getConfigs() {
@@ -140,14 +154,10 @@ public class CosmosClient {
         return tokenResolver;
     }
 
-    AsyncDocumentClient getDocClientWrapper(){
-        return asyncDocumentClient;
-    }
-
     /**
      * Create a Database if it does not already exist on the service
-     *
-     * The {@link Mono} upon successful completion will contain a single cosmos database response with the
+     * 
+     * The {@link Mono} upon successful completion will contain a single cosmos database response with the 
      * created or existing database.
      * @param databaseSettings CosmosDatabaseSettings
      * @return a {@link Mono} containing the cosmos database response with the created or existing database or
@@ -159,7 +169,7 @@ public class CosmosClient {
 
     /**
      * Create a Database if it does not already exist on the service
-     * The {@link Mono} upon successful completion will contain a single cosmos database response with the
+     * The {@link Mono} upon successful completion will contain a single cosmos database response with the 
      * created or existing database.
      * @param id the id of the database
      * @return a {@link Mono} containing the cosmos database response with the created or existing database or
@@ -168,7 +178,7 @@ public class CosmosClient {
     public Mono<CosmosDatabaseResponse> createDatabaseIfNotExists(String id) {
         return createDatabaseIfNotExistsInternal(getDatabase(id));
     }
-
+    
     private Mono<CosmosDatabaseResponse> createDatabaseIfNotExistsInternal(CosmosDatabase database){
         return database.read().onErrorResume(exception -> {
             if (exception instanceof DocumentClientException) {
@@ -183,18 +193,18 @@ public class CosmosClient {
 
     /**
      * Creates a database.
-     *
-     * After subscription the operation will be performed.
-     * The {@link Mono} upon successful completion will contain a single resource response with the
+     * 
+     * After subscription the operation will be performed. 
+     * The {@link Mono} upon successful completion will contain a single resource response with the 
      *      created database.
      * In case of failure the {@link Mono} will error.
-     *
+     * 
      * @param databaseSettings {@link CosmosDatabaseSettings}
      * @param options {@link CosmosDatabaseRequestOptions}
      * @return an {@link Mono} containing the single cosmos database response with the created database or an error.
      */
     public Mono<CosmosDatabaseResponse> createDatabase(CosmosDatabaseSettings databaseSettings,
-                                                       CosmosDatabaseRequestOptions options) {
+            CosmosDatabaseRequestOptions options) {
         if (options == null) {
             options = new CosmosDatabaseRequestOptions();
         }
@@ -206,12 +216,12 @@ public class CosmosClient {
 
     /**
      * Creates a database.
-     *
-     * After subscription the operation will be performed.
-     * The {@link Mono} upon successful completion will contain a single resource response with the
+     * 
+     * After subscription the operation will be performed. 
+     * The {@link Mono} upon successful completion will contain a single resource response with the 
      *      created database.
      * In case of failure the {@link Mono} will error.
-     *
+     * 
      * @param databaseSettings {@link CosmosDatabaseSettings}
      * @return an {@link Mono} containing the single cosmos database response with the created database or an error.
      */
@@ -221,12 +231,12 @@ public class CosmosClient {
 
     /**
      * Creates a database.
-     *
-     * After subscription the operation will be performed.
-     * The {@link Mono} upon successful completion will contain a single resource response with the
+     * 
+     * After subscription the operation will be performed. 
+     * The {@link Mono} upon successful completion will contain a single resource response with the 
      *      created database.
      * In case of failure the {@link Mono} will error.
-     *
+     * 
      * @param id id of the database
      * @return a {@link Mono} containing the single cosmos database response with the created database or an error.
      */
@@ -236,11 +246,11 @@ public class CosmosClient {
 
     /**
      * Reads all databases.
-     *
-     * After subscription the operation will be performed.
+     * 
+     * After subscription the operation will be performed. 
      * The {@link Flux} will contain one or several feed response of the read databases.
      * In case of failure the {@link Flux} will error.
-     *
+     * 
      * @param options {@link FeedOptions}
      * @return a {@link Flux} containing one or several feed response pages of read databases or an error.
      */
@@ -252,11 +262,11 @@ public class CosmosClient {
 
     /**
      * Reads all databases.
-     *
-     * After subscription the operation will be performed.
+     * 
+     * After subscription the operation will be performed. 
      * The {@link Flux} will contain one or several feed response of the read databases.
      * In case of failure the {@link Flux} will error.
-     *
+     * 
      * @return a {@link Flux} containing one or several feed response pages of read databases or an error.
      */
     public Flux<FeedResponse<CosmosDatabaseSettings>> listDatabases() {
@@ -295,6 +305,10 @@ public class CosmosClient {
                 .map(response-> BridgeInternal.createFeedResponse(
                         CosmosDatabaseSettings.getFromV2Results(response.getResults()),
                         response.getResponseHeaders()));
+    }
+
+    Mono<DatabaseAccount> getDatabaseAccount() {
+        return asyncDocumentClient.getDatabaseAccount().single();
     }
 
     /**

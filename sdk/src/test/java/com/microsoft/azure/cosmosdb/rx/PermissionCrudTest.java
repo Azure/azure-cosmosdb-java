@@ -167,9 +167,9 @@ public class PermissionCrudTest extends TestSuiteBase {
     
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
     public void replacePermission() throws Exception {
-
+        
         createdUser = safeCreateUser(client, createdDatabase.getId(), getUserDefinition());
-
+        
         // create permission
         Permission permission = new Permission();
         permission.setId(UUID.randomUUID().toString());
@@ -188,7 +188,7 @@ public class PermissionCrudTest extends TestSuiteBase {
                 .notNullEtag()
                 .build();
         validateSuccess(readObservable, validatorForRead);
-
+        
         //update permission
         readBackPermission.setPermissionMode(PermissionMode.All);
 
@@ -201,7 +201,7 @@ public class PermissionCrudTest extends TestSuiteBase {
                 .withPermissionResourceLink("dbs/AQAAAA==/colls/AQAAAJ0fgTc=")
                 .notNullEtag()
                 .build();
-        validateSuccess(updateObservable, validatorForUpdate);
+        validateSuccess(updateObservable, validatorForUpdate);   
     }
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)

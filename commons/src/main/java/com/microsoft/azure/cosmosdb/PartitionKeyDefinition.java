@@ -141,17 +141,21 @@ public final class PartitionKeyDefinition extends JsonSerializable {
      *
      * @return the boolean indicating is it is a system key.
      */
-    public Boolean isSystemKey() {
+    Boolean isSystemKey() {
         if (this.systemKey == null) {
-            this.systemKey = super.getBoolean(Constants.Properties.SYSTEM_KEY);
+            if (super.has(Constants.Properties.SYSTEM_KEY)) {
+                this.systemKey = super.getBoolean(Constants.Properties.SYSTEM_KEY);
+            } else {
+                this.systemKey = false;
+            }
         }
 
         return this.systemKey;
     }
 
-    public PartitionKeyInternal getNonePartitionKeyValue() {
-        if (this.getPaths().size() == 1 || this.isSystemKey()) {
-            return PartitionKeyInternal.UndefinedPartitionKey;
+    PartitionKeyInternal getNonePartitionKeyValue() {
+        if (this.getPaths().size() == 0 || this.isSystemKey()) {
+            return PartitionKeyInternal.Empty;
         } else {
             return PartitionKeyInternal.UndefinedPartitionKey;
         }

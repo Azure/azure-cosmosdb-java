@@ -25,13 +25,10 @@ package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.IOUtils;
-import org.mockito.Matchers;
 import org.mockito.Mockito;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -55,20 +52,10 @@ import com.microsoft.azure.cosmosdb.rx.internal.http.HttpResponse;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.ByteBufUtil;
 import io.reactivex.subscribers.TestSubscriber;
-import org.apache.commons.io.IOUtils;
-import org.mockito.Mockito;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Factory;
-import org.testng.annotations.Test;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.TimeUnit;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class GatewayServiceConfigurationReaderTest extends TestSuiteBase {
 
@@ -103,7 +90,7 @@ public class GatewayServiceConfigurationReaderTest extends TestSuiteBase {
                                                                                   TestConfigurations.MASTER_KEY,
                                                                                   connectionPolicy,
                                                                                   baseAuthorizationTokenProvider,
-                httpClient);
+                                                                                  httpClient);
         databaseAccountJson = IOUtils
                 .toString(getClass().getClassLoader().getResourceAsStream("databaseAccount.json"), "UTF-8");
         expectedDatabaseAccount = new DatabaseAccount(databaseAccountJson);

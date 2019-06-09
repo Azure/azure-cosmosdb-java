@@ -220,6 +220,8 @@ public class DocumentCRUDAsyncAPITest {
                 .createDocument(getCollectionLink(), documentDefinition, null, false).single().block()
                 .getResource();
 
+        RequestOptions options = new RequestOptions();
+        options.setPartitionKey(PartitionKey.None);
         // Read the created document
         Flux<ResourceResponse<Document>> readDocumentObservable = asyncClient
                 .readDocument(getDocumentLink(createdDocument), null);

@@ -30,7 +30,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import com.microsoft.azure.cosmos.CosmosClientBuilder;
-import com.microsoft.azure.cosmos.CosmosDatabase;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
@@ -40,6 +39,7 @@ import com.microsoft.azure.cosmos.CosmosClient;
 import com.microsoft.azure.cosmos.CosmosContainer;
 import com.microsoft.azure.cosmos.CosmosRequestOptions;
 import com.microsoft.azure.cosmos.CosmosUserDefinedFunctionSettings;
+import com.microsoft.azure.cosmosdb.Database;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
@@ -48,7 +48,7 @@ import reactor.core.publisher.Flux;
 
 public class UserDefinedFunctionQueryTest extends TestSuiteBase {
 
-    private CosmosDatabase createdDatabase;
+    private Database createdDatabase;
     private CosmosContainer createdCollection;
     private List<CosmosUserDefinedFunctionSettings> createdUDF = new ArrayList<>();
 
@@ -155,7 +155,6 @@ public class UserDefinedFunctionQueryTest extends TestSuiteBase {
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() throws Exception {
         client = clientBuilder.build();
-        createdDatabase = getSharedCosmosDatabase(client);
         createdCollection = getSharedMultiPartitionCosmosContainer(client);
         truncateCollection(createdCollection);
 

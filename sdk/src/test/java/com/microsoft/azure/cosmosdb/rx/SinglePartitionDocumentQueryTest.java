@@ -25,14 +25,11 @@ package com.microsoft.azure.cosmosdb.rx;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import com.microsoft.azure.cosmos.CosmosClientBuilder;
-import com.microsoft.azure.cosmos.CosmosDatabase;
 import com.microsoft.azure.cosmosdb.SqlParameter;
 import com.microsoft.azure.cosmosdb.SqlParameterCollection;
 import com.microsoft.azure.cosmosdb.SqlQuerySpec;
@@ -51,13 +48,14 @@ import com.microsoft.azure.cosmos.CosmosClient;
 import com.microsoft.azure.cosmos.CosmosContainer;
 import com.microsoft.azure.cosmos.CosmosItemRequestOptions;
 import com.microsoft.azure.cosmos.CosmosItemSettings;
+import com.microsoft.azure.cosmosdb.Database;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 
 public class SinglePartitionDocumentQueryTest extends TestSuiteBase {
 
-    private CosmosDatabase createdDatabase;
+    private Database createdDatabase;
     private CosmosContainer createdCollection;
     private List<CosmosItemSettings> createdDocuments = new ArrayList<>();
 
@@ -275,7 +273,7 @@ public class SinglePartitionDocumentQueryTest extends TestSuiteBase {
         Flux<FeedResponse<CosmosItemSettings>> queryObservable = createdCollection.queryItems(query, options);
         
         TestSubscriber<FeedResponse<CosmosItemSettings>> subscriber = new TestSubscriber<>();
-        queryObservable.subscribe(subscriber);
+        queryObservable.take(1).subscribe(subscriber);
         
         subscriber.awaitTerminalEvent();
         subscriber.assertComplete();
@@ -330,7 +328,6 @@ public class SinglePartitionDocumentQueryTest extends TestSuiteBase {
     public void beforeClass() throws Exception {
         client = clientBuilder.build();
         createdCollection = getSharedSinglePartitionCosmosContainer(client);
-        createdDatabase = getSharedCosmosDatabase(client);
         truncateCollection(createdCollection);
 
         for(int i = 0; i < 5; i++) {

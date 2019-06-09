@@ -316,14 +316,6 @@ public class TestSuiteBase {
         }
     }
 
-    private static DocumentCollection getCollectionDefinitionSinglePartitionWithoutPartitionKey() {
-        DocumentCollection collectionDefinition = new DocumentCollection();
-        collectionDefinition.setId(UUID.randomUUID().toString());
-
-        return collectionDefinition;
-    }
-
-
     public static DocumentCollection createCollection(String databaseId,
                                                       DocumentCollection collection,
                                                       RequestOptions options) {
@@ -342,7 +334,7 @@ public class TestSuiteBase {
 
     public static DocumentCollection createCollection(AsyncDocumentClient client, String databaseId,
                                                       DocumentCollection collection) {
-        return client.createCollection("dbs/" + databaseId, collection, new RequestOptions()).single().block().getResource();
+        return client.createCollection("dbs/" + databaseId, collection, null).single().block().getResource();
     }
 
     private static DocumentCollection getCollectionDefinitionMultiPartitionWithCompositeAndSpatialIndexes() {
@@ -603,9 +595,10 @@ public class TestSuiteBase {
     }
 
     public static void deleteUserIfExists(AsyncDocumentClient client, String databaseId, String userId) {
-        FeedResponse<User> block = client.queryUsers("dbs/" + databaseId, String.format("SELECT * FROM root r where r.id = '%s'", userId), null)
-                .blockFirst();
-        if (block != null && !block.getResults().isEmpty()) {
+        List<User> res = client
+                .queryUsers("dbs/" + databaseId, String.format("SELECT * FROM root r where r.id = '%s'", userId), null)
+                .single().block().getResults();
+        if (!res.isEmpty()) {
             deleteUser(client, Utils.getUserNameLink(databaseId, userId));
         }
     }

@@ -23,14 +23,19 @@
 package com.microsoft.azure.cosmos;
 
 import com.microsoft.azure.cosmosdb.BridgeInternal;
+import com.microsoft.azure.cosmosdb.ChangeFeedOptions;
+import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
+import com.microsoft.azure.cosmosdb.Offer;
 import com.microsoft.azure.cosmosdb.RequestOptions;
 import com.microsoft.azure.cosmosdb.SqlQuerySpec;
 import com.microsoft.azure.cosmosdb.StoredProcedure;
 import com.microsoft.azure.cosmosdb.Trigger;
 import com.microsoft.azure.cosmosdb.UserDefinedFunction;
+import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.internal.Paths;
+import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -43,15 +48,51 @@ public class CosmosContainer extends CosmosResource {
         this.database = database;
     }
 
+    AsyncDocumentClient getContextClient() {
+        if(this.database == null || this.database.getClient() == null) {
+            return null;
+        }
+
+        return this.database.getClient().getContextClient();
+    }
+
+    /**
+     * Gets the context client.
+     *
+     * @param cosmosContainer the container client.
+     * @return the context client.
+     */
+    public static AsyncDocumentClient getContextClient(CosmosContainer cosmosContainer) {
+        if(cosmosContainer == null) {
+            return null;
+        }
+
+        return cosmosContainer.getContextClient();
+    }
+
+    /**
+     * Gets the self link to the container.
+     *
+     * @param cosmosContainer the container client.
+     * @return the self link.
+     */
+    public static String getSelfLink(CosmosContainer cosmosContainer) {
+        if(cosmosContainer == null) {
+            return null;
+        }
+
+        return cosmosContainer.getLink();
+    }
+
     /**
      * Reads the document container
      *
      * After subscription the operation will be performed.
-     * The {@link Mono} upon successful completion will contain a single cossmos container response with the read 
+     * The {@link Mono} upon successful completion will contain a single cosmos container response with the read
      * container.
      * In case of failure the {@link Mono} will error.
      *
-     * @return an {@link Mono} containing the single cossmos container response with the read container or an error.
+     * @return an {@link Mono} containing the single cosmos container response with the read container or an error.
      */
     public Mono<CosmosContainerResponse> read() {
         return read(new CosmosContainerRequestOptions());
@@ -61,10 +102,11 @@ public class CosmosContainer extends CosmosResource {
      * Reads the document container by the container link.
      *
      * After subscription the operation will be performed.
-     * The {@link Mono} upon successful completion will contain a single cossmos container response with the read container.
+     * The {@link Mono} upon successful completion will contain a single cosmos container response with the read container.
      * In case of failure the {@link Mono} will error.
-     * @param options the cosmos container request options
-     * @return an {@link Mono} containing the single cossmos container response with the read container or an error.
+     *
+     * @param options        The cosmos container request options.
+     * @return an {@link Mono} containing the single cosmos container response with the read container or an error.
      */
     public Mono<CosmosContainerResponse> read(CosmosContainerRequestOptions options) {
         if (options == null) {
@@ -78,11 +120,11 @@ public class CosmosContainer extends CosmosResource {
      * Deletes the item container
      *
      * After subscription the operation will be performed.
-     * The {@link Mono} upon successful completion will contain a single cossmos container response for the deleted database.
+     * The {@link Mono} upon successful completion will contain a single cosmos container response for the deleted database.
      * In case of failure the {@link Mono} will error.
      *
      * @param options        the request options.
-     * @return an {@link Mono} containing the single cossmos container response for the deleted database or an error.
+     * @return an {@link Mono} containing the single cosmos container response for the deleted database or an error.
      */
     public Mono<CosmosContainerResponse> delete(CosmosContainerRequestOptions options) {
         if (options == null) {
@@ -101,7 +143,7 @@ public class CosmosContainer extends CosmosResource {
      * The {@link Mono} upon successful completion will contain a single cosmos container response for the deleted container.
      * In case of failure the {@link Mono} will error.
      *
-     * @return an {@link Mono} containing the single cossmos container response for the deleted container or an error.
+     * @return an {@link Mono} containing the single cosmos container response for the deleted container or an error.
      */
     public Mono<CosmosContainerResponse> delete() {
         return delete(new CosmosContainerRequestOptions());
@@ -111,12 +153,12 @@ public class CosmosContainer extends CosmosResource {
      * Replaces a document container.
      *
      * After subscription the operation will be performed.
-     * The {@link Mono} upon successful completion will contain a single cossmos container response with the replaced document container.
+     * The {@link Mono} upon successful completion will contain a single cosmos container response with the replaced document container.
      * In case of failure the {@link Mono} will error.
      *
      * @param containerSettings the item container settings
      * @param options    the cosmos container request options.
-     * @return an {@link Mono} containing the single cossmos container response with the replaced document container or an error.
+     * @return an {@link Mono} containing the single cosmos container response with the replaced document container or an error.
      */
     public Mono<CosmosContainerResponse> replace(CosmosContainerSettings containerSettings,
                                                    CosmosContainerRequestOptions options) {
@@ -237,7 +279,7 @@ public class CosmosContainer extends CosmosResource {
         return this.getDatabase()
                                                                             .getDocClientWrapper()
                                                                             .upsertDocument(this.getLink(),
-                                                                                            CosmosItemSettings.fromObject(item),
+                                                                                            item,
                                                                                             options.toRequestOptions(),
                                                                                             true)
                                                                             .map(response -> new CosmosItemResponse(response,
@@ -311,13 +353,34 @@ public class CosmosContainer extends CosmosResource {
                                                            response.getResponseHeaders(),
                                                            response.getQueryMetrics()));
     }
+
     /**
-     * Gets a CosmosItem object without making a service call.
-     * @param id id of the cosmos item.
-     * @param partitionKey the partition key
-     * @return a cosmos item.
+     * Query for documents in a items in a container
+     *
+     * After subscription the operation will be performed.
+     * The {@link Flux} will contain one or several feed response of the obtained items.
+     * In case of failure the {@link Flux} will error.
+     *
+     * @param changeFeedOptions        the feed options.
+     * @return an {@link Flux} containing one or several feed response pages of the obtained items or an error.
      */
-    public CosmosItem getItem(String id, Object partitionKey) {
+    public Flux<FeedResponse<CosmosItemSettings>> queryChangeFeedItems(ChangeFeedOptions changeFeedOptions){
+        return getDatabase()
+                .getDocClientWrapper()
+                .queryDocumentChangeFeed(getLink(), changeFeedOptions)
+                .map(response-> BridgeInternal.createFeedResponseWithQueryMetrics(
+                    CosmosItemSettings.getFromV2Results(response.getResults()),
+                    response.getResponseHeaders(), response.getQueryMetrics()));
+    }
+
+    /**
+     * Gets a CosmosItem object without making a service call
+     *
+     * @param id           id of the item
+     * @param partitionKey the partition key
+     * @return a cosmos item
+     */
+    public CosmosItem getItem(String id, Object partitionKey){
         return new CosmosItem(id, partitionKey, this);
     }
 
@@ -601,7 +664,60 @@ public class CosmosContainer extends CosmosResource {
     }
 
     /**
+     * Gets the throughput of the container
+     *
+     * @return a {@link Mono} containing throughput or an error.
+     */
+    public Mono<Integer> readProvisionedThroughput(){
+        return this.read()
+                .flatMap(cosmosContainerResponse ->
+                        database.getDocClientWrapper()
+                                        .queryOffers("select * from c where c.offerResourceId = '" +
+                                                cosmosContainerResponse.getResourceSettings().getResourceId()
+                                                + "'", new FeedOptions()).single())
+                                .flatMap(offerFeedResponse -> {
+                                    if(offerFeedResponse.getResults().isEmpty()){
+                                        return Mono.error(new DocumentClientException(HttpConstants.StatusCodes.BADREQUEST,
+                                                "No offers found for the resource"));
+                                    }
+                                    return database.getDocClientWrapper()
+                                                    .readOffer(offerFeedResponse.getResults()
+                                                            .get(0)
+                                                            .getSelfLink()).single();
+                                })
+                                .map(cosmosOfferResponse -> cosmosOfferResponse
+                                        .getResource()
+                                        .getThroughput());
+    }
+
+    /**
+     * Sets throughput provisioned for a container in measurement of Requests-per-Unit in the Azure Cosmos service.
+     *
+     * @param requestUnitsPerSecond the cosmos container throughput, expressed in Request Units per second
+     * @return a {@link Mono} containing throughput or an error.
+     */
+    public Mono<Integer> replaceProvisionedThroughputAsync(int requestUnitsPerSecond){
+        return this.read()
+                .flatMap(cosmosContainerResponse ->
+                        database.getDocClientWrapper()
+                                        .queryOffers("select * from c where c.offerResourceId = '" +
+                                                cosmosContainerResponse.getResourceSettings().getResourceId()
+                                                + "'", new FeedOptions()).single())
+                                .flatMap(offerFeedResponse -> {
+                                    if(offerFeedResponse.getResults().isEmpty()){
+                                        return Mono.error(new DocumentClientException(HttpConstants.StatusCodes.BADREQUEST,
+                                                "No offers found for the resource"));
+                                    }
+                                    Offer offer = offerFeedResponse.getResults().get(0);
+                                    offer.setThroughput(requestUnitsPerSecond);
+                                    return database.getDocClientWrapper()
+                                                    .replaceOffer(offer).single();
+                                }).map(offerResourceResponse -> offerResourceResponse.getResource().getThroughput());
+    }
+
+    /**
      * Gets the parent Database
+     *
      * @return the (@link CosmosDatabase)
      */
     public CosmosDatabase getDatabase() {

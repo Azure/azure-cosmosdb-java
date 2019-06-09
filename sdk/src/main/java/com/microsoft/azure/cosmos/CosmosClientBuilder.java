@@ -57,19 +57,23 @@ public class CosmosClientBuilder {
     private List<Permission> permissions;
     private TokenResolver tokenResolver;
 
-    public CosmosClientBuilder() {
+    CosmosClientBuilder() {
     }
 
+    /**
+     * Configs
+     * @param configs
+     * @return current builder
+     */
     public CosmosClientBuilder configs(Configs configs) {
         this.configs = configs;
         return this;
     }
 
     /**
-     * This method will accept functional interface TokenResolver which helps in generation authorization
-     * token per request. AsyncDocumentClient can be successfully initialized with this API without passing any MasterKey, ResourceToken or PermissionFeed.
-     * @param tokenResolver The tokenResolver
-     * @return current Builder.
+     * Token Resolver
+     * @param tokenResolver
+     * @return current builder
      */
     public CosmosClientBuilder tokenResolver(TokenResolver tokenResolver) {
         this.tokenResolver = tokenResolver;
@@ -150,11 +154,11 @@ public class CosmosClientBuilder {
         return new CosmosClient(this);
     }
 
-    public String getServiceEndpoint() {
+    String getServiceEndpoint() {
         return serviceEndpoint;
     }
 
-    public String getKeyOrResourceToken() {
+    String getKeyOrResourceToken() {
         return keyOrResourceToken;
     }
 
@@ -174,7 +178,7 @@ public class CosmosClientBuilder {
         return configs;
     }
 
-    TokenResolver getTokenResolver() {
+    public TokenResolver getTokenResolver() {
         return tokenResolver;
     }
 }

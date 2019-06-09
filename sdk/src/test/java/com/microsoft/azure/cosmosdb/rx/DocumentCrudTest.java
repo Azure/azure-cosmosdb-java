@@ -47,7 +47,7 @@ import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 import java.time.Duration;
-import java.util.Date;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 
@@ -190,8 +190,8 @@ public class DocumentCrudTest extends TestSuiteBase {
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT, dataProvider = "documentCrudArgProvider")
-    public void timestamp(String documentId) throws Exception {
-        Date before = new Date();
+    public void timestamp(String documentId, boolean isNameBased) throws Exception {
+        OffsetDateTime before = OffsetDateTime.now();
         CosmosItemSettings docDefinition = getDocumentDefinition(documentId);
         Thread.sleep(1000);
         CosmosItem document = createdCollection.createItem(docDefinition, new CosmosItemRequestOptions()).block().getCosmosItem();
@@ -202,10 +202,10 @@ public class DocumentCrudTest extends TestSuiteBase {
         options.setPartitionKey(new PartitionKey(docDefinition.get("mypk")));
         CosmosItemSettings readDocument = document.read(options).block().getCosmosItemSettings();
         Thread.sleep(1000);
-        Date after = new Date();
+        OffsetDateTime after = OffsetDateTime.now();
 
-        assertThat(readDocument.getTimestamp()).isAfterOrEqualsTo(before);
-        assertThat(readDocument.getTimestamp()).isBeforeOrEqualsTo(after);
+        assertThat(readDocument.getTimestamp()).isAfterOrEqualTo(before);
+        assertThat(readDocument.getTimestamp()).isBeforeOrEqualTo(after);
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT, dataProvider = "documentCrudArgProvider")

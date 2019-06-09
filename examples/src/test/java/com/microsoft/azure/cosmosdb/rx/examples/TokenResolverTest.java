@@ -31,6 +31,8 @@ import com.microsoft.azure.cosmosdb.CosmosResourceType;
 import com.microsoft.azure.cosmosdb.Database;
 import com.microsoft.azure.cosmosdb.Document;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
+import com.microsoft.azure.cosmosdb.PartitionKey;
+import com.microsoft.azure.cosmosdb.PartitionKeyDefinition;
 import com.microsoft.azure.cosmosdb.Permission;
 import com.microsoft.azure.cosmosdb.PermissionMode;
 import com.microsoft.azure.cosmosdb.RequestOptions;
@@ -86,6 +88,11 @@ public class TokenResolverTest {
 
         DocumentCollection collectionDefinition = new DocumentCollection();
         collectionDefinition.setId(UUID.randomUUID().toString());
+        PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition();
+        ArrayList<String> paths = new ArrayList<String>();
+        paths.add("/mypk");
+        partitionKeyDef.setPaths(paths);
+        collectionDefinition.setPartitionKey(partitionKeyDef);
 
         // Create database
         createdDatabase = Utils.createDatabaseForTest(asyncClient);
@@ -99,12 +106,12 @@ public class TokenResolverTest {
             // Create a document
             Document documentDefinition = new Document();
             documentDefinition.setId(UUID.randomUUID().toString());
-            Document createdDocument = asyncClient.createDocument(createdCollection.getSelfLink(), documentDefinition, null, true).single().block().getResource();
+            Document createdDocument = asyncClient.createDocument(createdCollection.getSelfLink(), documentDefinition, null, true).blockFirst().getResource();
 
             // Create a User who is meant to only read this document
             User readUserDefinition = new User();
             readUserDefinition.setId(UUID.randomUUID().toString());
-            User createdReadUser = asyncClient.createUser(createdDatabase.getSelfLink(), readUserDefinition, null).single().block().getResource();
+            User createdReadUser = asyncClient.createUser(createdDatabase.getSelfLink(), readUserDefinition, null).blockFirst().getResource();
 
             // Create a read only permission for  the above document
             Permission readOnlyPermissionDefinition = new Permission();
@@ -113,7 +120,7 @@ public class TokenResolverTest {
             readOnlyPermissionDefinition.setPermissionMode(PermissionMode.Read);
 
             // Assign the permission to the above user
-            Permission readOnlyCreatedPermission = asyncClient.createPermission(createdReadUser.getSelfLink(), readOnlyPermissionDefinition, null).single().block().getResource();
+            Permission readOnlyCreatedPermission = asyncClient.createPermission(createdReadUser.getSelfLink(), readOnlyPermissionDefinition, null).blockFirst().getResource();
             userToReadOnlyResourceTokenMap.put(createdReadUser.getId(), readOnlyCreatedPermission.getToken());
 
             documentToReadUserMap.put(createdDocument.getSelfLink(), createdReadUser.getId());
@@ -121,7 +128,7 @@ public class TokenResolverTest {
             // Create a User who can both read and write this document
             User readWriteUserDefinition = new User();
             readWriteUserDefinition.setId(UUID.randomUUID().toString());
-            User createdReadWriteUser = asyncClient.createUser(createdDatabase.getSelfLink(), readWriteUserDefinition, null).single().block().getResource();
+            User createdReadWriteUser = asyncClient.createUser(createdDatabase.getSelfLink(), readWriteUserDefinition, null).blockFirst().getResource();
 
             // Create a read/write permission for the above document
             Permission readWritePermissionDefinition = new Permission();
@@ -130,7 +137,7 @@ public class TokenResolverTest {
             readWritePermissionDefinition.setPermissionMode(PermissionMode.All);
 
             // Assign the permission to the above user
-            Permission readWriteCreatedPermission = asyncClient.createPermission(createdReadWriteUser.getSelfLink(), readWritePermissionDefinition, null).single().block().getResource();
+            Permission readWriteCreatedPermission = asyncClient.createPermission(createdReadWriteUser.getSelfLink(), readWritePermissionDefinition, null).blockFirst().getResource();
             userToReadWriteResourceTokenMap.put(createdReadWriteUser.getId(), readWriteCreatedPermission.getToken());
 
             documentToReadWriteUserMap.put(createdDocument.getSelfLink(), createdReadWriteUser.getId());
@@ -163,6 +170,7 @@ public class TokenResolverTest {
                         .build();
                 RequestOptions requestOptions = new RequestOptions();
                 requestOptions.setProperties(properties);
+                requestOptions.setPartitionKey(PartitionKey.None);
                 Flux<ResourceResponse<Document>> readDocumentObservable = asyncClientWithTokenResolver
                         .readDocument(documentLink, requestOptions);
                 readDocumentObservable.subscribe(resourceResponse -> {
@@ -204,6 +212,7 @@ public class TokenResolverTest {
 
                 RequestOptions requestOptions = new RequestOptions();
                 requestOptions.setProperties(properties);
+                requestOptions.setPartitionKey(PartitionKey.None);
                 Flux<ResourceResponse<Document>> readDocumentObservable = asyncClientWithTokenResolver
                         .deleteDocument(documentLink, requestOptions);
                 readDocumentObservable.subscribe(resourceResponse -> {

@@ -85,7 +85,7 @@ import static org.hamcrest.Matchers.notNullValue;
  * {@link #transformObservableToCompletableFuture()}
  */
 public class DocumentQueryAsyncAPITest {
-    private final static int TIMEOUT = 60000;
+    private final static int TIMEOUT = 3 * 60000;
     private AsyncDocumentClient asyncClient;
     private DocumentCollection createdCollection;
     private Database createdDatabase;
@@ -104,6 +104,11 @@ public class DocumentQueryAsyncAPITest {
 
         DocumentCollection collectionDefinition = new DocumentCollection();
         collectionDefinition.setId(UUID.randomUUID().toString());
+        PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition();
+        ArrayList<String> paths = new ArrayList<String>();
+        paths.add("/mypk");
+        partitionKeyDef.setPaths(paths);
+        collectionDefinition.setPartitionKey(partitionKeyDef);
 
         // Create database
 
@@ -138,6 +143,7 @@ public class DocumentQueryAsyncAPITest {
         int requestPageSize = 3;
         FeedOptions options = new FeedOptions();
         options.setMaxItemCount(requestPageSize);
+        options.setEnableCrossPartitionQuery(true);
 
         Flux<FeedResponse<Document>> documentQueryObservable = asyncClient
                 .queryDocuments(getCollectionLink(), "SELECT * FROM root", options);
@@ -183,6 +189,7 @@ public class DocumentQueryAsyncAPITest {
         int requestPageSize = 3;
         FeedOptions options = new FeedOptions();
         options.setMaxItemCount(requestPageSize);
+        options.setEnableCrossPartitionQuery(true);
 
         Flux<FeedResponse<Document>> documentQueryObservable = asyncClient
                 .queryDocuments(getCollectionLink(), "SELECT * FROM root", options);
@@ -231,6 +238,7 @@ public class DocumentQueryAsyncAPITest {
         int requestPageSize = 3;
         FeedOptions options = new FeedOptions();
         options.setMaxItemCount(requestPageSize);
+        options.setEnableCrossPartitionQuery(true);
 
         Flux<Double> totalChargeObservable = asyncClient
                 .queryDocuments(getCollectionLink(), "SELECT * FROM root", options)
@@ -255,6 +263,7 @@ public class DocumentQueryAsyncAPITest {
         int requestPageSize = 3;
         FeedOptions options = new FeedOptions();
         options.setMaxItemCount(requestPageSize);
+        options.setEnableCrossPartitionQuery(true);
 
         Flux<FeedResponse<Document>> requestChargeObservable = asyncClient
                 .queryDocuments(getCollectionLink(), "SELECT * FROM root", options);
@@ -304,6 +313,7 @@ public class DocumentQueryAsyncAPITest {
         int requestPageSize = 3;
         FeedOptions options = new FeedOptions();
         options.setMaxItemCount(requestPageSize);
+        options.setEnableCrossPartitionQuery(true);
 
         Predicate<Document> isPrimeNumber = new Predicate<Document>() {
 
@@ -363,6 +373,7 @@ public class DocumentQueryAsyncAPITest {
         int requestPageSize = 3;
         FeedOptions options = new FeedOptions();
         options.setMaxItemCount(requestPageSize);
+        options.setEnableCrossPartitionQuery(true);
 
         Flux<FeedResponse<Document>> documentQueryObservable = asyncClient
                 .queryDocuments(getCollectionLink(), "SELECT * FROM root", options);
@@ -449,6 +460,7 @@ public class DocumentQueryAsyncAPITest {
         int requestPageSize = 3;
         FeedOptions options = new FeedOptions();
         options.setMaxItemCount(requestPageSize);
+        options.setEnableCrossPartitionQuery(true);
 
         Flux<FeedResponse<Document>> documentQueryObservable = asyncClient
                 .queryDocuments(getCollectionLink(), "SELECT * FROM root", options);
