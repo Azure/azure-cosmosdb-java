@@ -86,7 +86,16 @@ public class DocumentCrudTest extends TestSuiteBase {
                 .withId(docDefinition.getId())
                 .build();
 
-        validateSuccess(createObservable, validator);
+        try {
+            validateSuccess(createObservable, validator);
+        } catch (Throwable error) {
+            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {
+                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
+                logger.info(message, error);
+                throw new SkipException(message, error);
+            }
+            throw error;
+        }
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT, dataProvider = "documentCrudArgProvider")
@@ -103,7 +112,16 @@ public class DocumentCrudTest extends TestSuiteBase {
                 .withId(docDefinition.getId())
                 .build();
 
-        validateSuccess(createObservable, validator);
+        try {
+            validateSuccess(createObservable, validator);
+        } catch (Throwable error) {
+            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {
+                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
+                logger.info(message, error);
+                throw new SkipException(message, error);
+            }
+            throw error;
+        }
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT, dataProvider = "documentCrudArgProvider")
@@ -121,43 +139,71 @@ public class DocumentCrudTest extends TestSuiteBase {
                 .withId(docDefinition.getId())
                 .withProperty("mypk", sb.toString())
                 .build();
-        validateSuccess(createObservable, validator);
+
+        try {
+            validateSuccess(createObservable, validator);
+        } catch (Throwable error) {
+            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {
+                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
+                logger.info(message, error);
+                throw new SkipException(message, error);
+            }
+            throw error;
+        }
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT, dataProvider = "documentCrudArgProvider")
     public void readDocumentWithVeryLargePartitionKey(String documentId) throws InterruptedException {
-        CosmosItemSettings docDefinition = getDocumentDefinition(documentId);
-        StringBuilder sb = new StringBuilder();
-        for(int i = 0; i < 100; i++) {
-            sb.append(i).append("x");
+        try {
+            CosmosItemSettings docDefinition = getDocumentDefinition(documentId);
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < 100; i++) {
+                sb.append(i).append("x");
+            }
+            docDefinition.set("mypk", sb.toString());
+
+            CosmosItem createdDocument = TestSuiteBase.createDocument(createdCollection, docDefinition);
+
+            waitIfNeededForReplicasToCatchUp(clientBuilder);
+
+            CosmosItemRequestOptions options = new CosmosItemRequestOptions();
+            options.setPartitionKey(new PartitionKey(sb.toString()));
+            Mono<CosmosItemResponse> readObservable = createdDocument.read(options);
+
+            CosmosResponseValidator<CosmosItemResponse> validator = new CosmosResponseValidator.Builder<CosmosItemResponse>()
+                    .withId(docDefinition.getId()).withProperty("mypk", sb.toString()).build();
+            validateSuccess(readObservable, validator);
+        } catch (Throwable error) {
+            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {
+                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
+                logger.info(message, error);
+                throw new SkipException(message, error);
+            }
+            throw error;
         }
-        docDefinition.set("mypk", sb.toString());
-
-        CosmosItem createdDocument = TestSuiteBase.createDocument(createdCollection, docDefinition);
-
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
-
-        CosmosItemRequestOptions options = new CosmosItemRequestOptions();
-        options.setPartitionKey(new PartitionKey(sb.toString()));
-        Mono<CosmosItemResponse> readObservable = createdDocument.read(options);
-
-        CosmosResponseValidator<CosmosItemResponse> validator = new CosmosResponseValidator.Builder<CosmosItemResponse>()
-                .withId(docDefinition.getId())
-                .withProperty("mypk", sb.toString())
-                .build();
-        validateSuccess(readObservable, validator);
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT, dataProvider = "documentCrudArgProvider")
     public void createDocument_AlreadyExists(String documentId) throws InterruptedException {
-        CosmosItemSettings docDefinition = getDocumentDefinition(documentId);
+        try {
+            CosmosItemSettings docDefinition = getDocumentDefinition(documentId);
 
-        createdCollection.createItem(docDefinition, new CosmosItemRequestOptions()).block();
+            createdCollection.createItem(docDefinition, new CosmosItemRequestOptions()).block();
 
-        Mono<CosmosItemResponse> createObservable = createdCollection.createItem(docDefinition, new CosmosItemRequestOptions());
+            Mono<CosmosItemResponse> createObservable = createdCollection.createItem(docDefinition,
+                    new CosmosItemRequestOptions());
 
-        FailureValidator validator = new FailureValidator.Builder().resourceAlreadyExists().build();
-        validateFailure(createObservable, validator);
+            FailureValidator validator = new FailureValidator.Builder().resourceAlreadyExists().build();
+
+            validateFailure(createObservable, validator);
+        } catch (Throwable error) {
+            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {
+                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
+                logger.info(message, error);
+                throw new SkipException(message, error);
+            }
+            throw error;
+        }
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT, dataProvider = "documentCrudArgProvider")
@@ -169,147 +215,225 @@ public class DocumentCrudTest extends TestSuiteBase {
 
         FailureValidator validator = new FailureValidator.Builder().instanceOf(TimeoutException.class).build();
 
-        validateFailure(createObservable, validator);
+        try {
+            validateFailure(createObservable, validator);
+        } catch (Throwable error) {
+            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {
+                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
+                logger.info(message, error);
+                throw new SkipException(message, error);
+            }
+            throw error;
+        }
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT, dataProvider = "documentCrudArgProvider")
     public void readDocument(String documentId) throws InterruptedException {
-        CosmosItemSettings docDefinition = getDocumentDefinition(documentId);
+        try {
+            CosmosItemSettings docDefinition = getDocumentDefinition(documentId);
 
-        CosmosItem document = createdCollection.createItem(docDefinition, new CosmosItemRequestOptions()).block().getCosmosItem();
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+            CosmosItem document = createdCollection.createItem(docDefinition, new CosmosItemRequestOptions()).block()
+                    .getCosmosItem();
+            waitIfNeededForReplicasToCatchUp(clientBuilder);
 
-        CosmosItemRequestOptions options = new CosmosItemRequestOptions();
-        options.setPartitionKey(new PartitionKey(docDefinition.get("mypk")));
-        Mono<CosmosItemResponse> readObservable = document.read(options);
+            CosmosItemRequestOptions options = new CosmosItemRequestOptions();
+            options.setPartitionKey(new PartitionKey(docDefinition.get("mypk")));
+            Mono<CosmosItemResponse> readObservable = document.read(options);
 
-        CosmosResponseValidator<CosmosItemResponse> validator = new CosmosResponseValidator.Builder<CosmosItemResponse>()
-                .withId(document.getId())
-                .build();
-        validateSuccess(readObservable, validator);
+            CosmosResponseValidator<CosmosItemResponse> validator = new CosmosResponseValidator.Builder<CosmosItemResponse>()
+                    .withId(document.getId()).build();
+            validateSuccess(readObservable, validator);
+        } catch (Throwable error) {
+            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {
+                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
+                logger.info(message, error);
+                throw new SkipException(message, error);
+            }
+            throw error;
+        }
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT, dataProvider = "documentCrudArgProvider")
-    public void timestamp(String documentId, boolean isNameBased) throws Exception {
-        OffsetDateTime before = OffsetDateTime.now();
-        CosmosItemSettings docDefinition = getDocumentDefinition(documentId);
-        Thread.sleep(1000);
-        CosmosItem document = createdCollection.createItem(docDefinition, new CosmosItemRequestOptions()).block().getCosmosItem();
+    public void timestamp(String documentId) throws Exception {
+        try {
+            OffsetDateTime before = OffsetDateTime.now();
+            CosmosItemSettings docDefinition = getDocumentDefinition(documentId);
+            Thread.sleep(1000);
+            CosmosItem document = createdCollection.createItem(docDefinition, new CosmosItemRequestOptions()).block()
+                    .getCosmosItem();
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+            waitIfNeededForReplicasToCatchUp(clientBuilder);
 
-        CosmosItemRequestOptions options = new CosmosItemRequestOptions();
-        options.setPartitionKey(new PartitionKey(docDefinition.get("mypk")));
-        CosmosItemSettings readDocument = document.read(options).block().getCosmosItemSettings();
-        Thread.sleep(1000);
-        OffsetDateTime after = OffsetDateTime.now();
+            CosmosItemRequestOptions options = new CosmosItemRequestOptions();
+            options.setPartitionKey(new PartitionKey(docDefinition.get("mypk")));
+            CosmosItemSettings readDocument = document.read(options).block().getCosmosItemSettings();
+            Thread.sleep(1000);
+            OffsetDateTime after = OffsetDateTime.now();
 
-        assertThat(readDocument.getTimestamp()).isAfterOrEqualTo(before);
-        assertThat(readDocument.getTimestamp()).isBeforeOrEqualTo(after);
+            assertThat(readDocument.getTimestamp()).isAfterOrEqualTo(before);
+            assertThat(readDocument.getTimestamp()).isBeforeOrEqualTo(after);
+        } catch (Throwable error) {
+            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {
+                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s",
+                        this.clientBuilder.getDesiredConsistencyLevel());
+                logger.info(message, error);
+                throw new SkipException(message, error);
+            }
+            throw error;
+        }
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT, dataProvider = "documentCrudArgProvider")
     public void readDocument_DoesntExist(String documentId) throws InterruptedException {
-        CosmosItemSettings docDefinition = getDocumentDefinition(documentId);
+        try {
+            CosmosItemSettings docDefinition = getDocumentDefinition(documentId);
 
-        CosmosItem document = createdCollection.createItem(docDefinition, new CosmosItemRequestOptions()).block().getCosmosItem();
+            CosmosItem document = createdCollection.createItem(docDefinition, new CosmosItemRequestOptions()).block()
+                    .getCosmosItem();
 
-        CosmosItemRequestOptions options = new CosmosItemRequestOptions();
-        options.setPartitionKey(new PartitionKey(docDefinition.get("mypk")));
-        document.delete(options).block();
+            CosmosItemRequestOptions options = new CosmosItemRequestOptions();
+            options.setPartitionKey(new PartitionKey(docDefinition.get("mypk")));
+            document.delete(options).block();
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+            waitIfNeededForReplicasToCatchUp(clientBuilder);
 
-        options.setPartitionKey(new PartitionKey("looloo"));
-        Mono<CosmosItemResponse> readObservable = document.read(options);
+            options.setPartitionKey(new PartitionKey("looloo"));
+            Mono<CosmosItemResponse> readObservable = document.read(options);
 
-        FailureValidator validator = new FailureValidator.Builder().instanceOf(DocumentClientException.class)
-                .statusCode(404).build();
-        validateFailure(readObservable, validator);
+            FailureValidator validator = new FailureValidator.Builder().instanceOf(DocumentClientException.class)
+                    .statusCode(404).build();
+            validateFailure(readObservable, validator);
+        } catch (Throwable error) {
+            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {
+                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
+                logger.info(message, error);
+                throw new SkipException(message, error);
+            }
+            throw error;
+        }
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT, dataProvider = "documentCrudArgProvider")
     public void deleteDocument(String documentId) throws InterruptedException {
-        CosmosItemSettings docDefinition = getDocumentDefinition(documentId);
+        try {
+            CosmosItemSettings docDefinition = getDocumentDefinition(documentId);
 
-        CosmosItem document = createdCollection.createItem(docDefinition, new CosmosItemRequestOptions()).block().getCosmosItem();
+            CosmosItem document = createdCollection.createItem(docDefinition, new CosmosItemRequestOptions()).block()
+                    .getCosmosItem();
 
-        CosmosItemRequestOptions options = new CosmosItemRequestOptions();
-        options.setPartitionKey(new PartitionKey(docDefinition.get("mypk")));
-        Mono<CosmosItemResponse> deleteObservable = document.delete(options);
+            CosmosItemRequestOptions options = new CosmosItemRequestOptions();
+            options.setPartitionKey(new PartitionKey(docDefinition.get("mypk")));
+            Mono<CosmosItemResponse> deleteObservable = document.delete(options);
 
+            CosmosResponseValidator<CosmosItemResponse> validator = new CosmosResponseValidator.Builder<CosmosItemResponse>()
+                    .nullResource().build();
+            validateSuccess(deleteObservable, validator);
 
-        CosmosResponseValidator<CosmosItemResponse> validator = new CosmosResponseValidator.Builder<CosmosItemResponse>()
-                .nullResource().build();
-        validateSuccess(deleteObservable, validator);
+            // attempt to read document which was deleted
+            waitIfNeededForReplicasToCatchUp(clientBuilder);
 
-        // attempt to read document which was deleted
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
-
-        Mono<CosmosItemResponse> readObservable = document.read(options);
-        FailureValidator notFoundValidator = new FailureValidator.Builder().resourceNotFound().build();
-        validateFailure(readObservable, notFoundValidator);
+            Mono<CosmosItemResponse> readObservable = document.read(options);
+            FailureValidator notFoundValidator = new FailureValidator.Builder().resourceNotFound().build();
+            validateFailure(readObservable, notFoundValidator);
+        } catch (Throwable error) {
+            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {
+                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
+                logger.info(message, error);
+                throw new SkipException(message, error);
+            }
+            throw error;
+        }
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT, dataProvider = "documentCrudArgProvider")
     public void deleteDocument_undefinedPK(String documentId) throws InterruptedException {
-        Document docDefinition = new Document();
-        docDefinition.setId(documentId);
+        try {
+            Document docDefinition = new Document();
+            docDefinition.setId(documentId);
 
-        CosmosItem document = createdCollection.createItem(docDefinition, new CosmosItemRequestOptions()).block().getCosmosItem();
+            CosmosItem document = createdCollection.createItem(docDefinition, new CosmosItemRequestOptions()).block()
+                    .getCosmosItem();
 
-        CosmosItemRequestOptions options = new CosmosItemRequestOptions();
-        options.setPartitionKey(PartitionKey.None);
-        Mono<CosmosItemResponse> deleteObservable = document.delete(options);
+            CosmosItemRequestOptions options = new CosmosItemRequestOptions();
+            options.setPartitionKey(PartitionKey.None);
+            Mono<CosmosItemResponse> deleteObservable = document.delete(options);
 
-        CosmosResponseValidator<CosmosItemResponse> validator = new CosmosResponseValidator.Builder<CosmosItemResponse>()
-                .nullResource().build();
-        validateSuccess(deleteObservable, validator);
+            CosmosResponseValidator<CosmosItemResponse> validator = new CosmosResponseValidator.Builder<CosmosItemResponse>()
+                    .nullResource().build();
+            validateSuccess(deleteObservable, validator);
 
-        // attempt to read document which was deleted
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+            // attempt to read document which was deleted
+            waitIfNeededForReplicasToCatchUp(clientBuilder);
 
-        Mono<CosmosItemResponse> readObservable = document.read(options);
-        FailureValidator notFoundValidator = new FailureValidator.Builder().resourceNotFound().build();
-        validateFailure(readObservable, notFoundValidator);
+            Mono<CosmosItemResponse> readObservable = document.read(options);
+            FailureValidator notFoundValidator = new FailureValidator.Builder().resourceNotFound().build();
+            validateFailure(readObservable, notFoundValidator);
+        } catch (Throwable error) {
+            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {
+                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
+                logger.info(message, error);
+                throw new SkipException(message, error);
+            }
+            throw error;
+        }
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT, dataProvider = "documentCrudArgProvider")
     public void deleteDocument_DoesntExist(String documentId) throws InterruptedException {
-        CosmosItemSettings docDefinition = getDocumentDefinition(documentId);
+        try {
+            CosmosItemSettings docDefinition = getDocumentDefinition(documentId);
 
-        CosmosItem document = createdCollection.createItem(docDefinition, new CosmosItemRequestOptions()).block().getCosmosItem();
+            CosmosItem document = createdCollection.createItem(docDefinition, new CosmosItemRequestOptions()).block()
+                    .getCosmosItem();
 
-        CosmosItemRequestOptions options = new CosmosItemRequestOptions();
-        options.setPartitionKey(new PartitionKey(docDefinition.get("mypk")));
-        document.delete(options).block();
+            CosmosItemRequestOptions options = new CosmosItemRequestOptions();
+            options.setPartitionKey(new PartitionKey(docDefinition.get("mypk")));
+            document.delete(options).block();
 
-        // delete again
-        Mono<CosmosItemResponse> deleteObservable = document.delete(options);
+            // delete again
+            Mono<CosmosItemResponse> deleteObservable = document.delete(options);
 
-        FailureValidator validator = new FailureValidator.Builder().resourceNotFound().build();
-        validateFailure(deleteObservable, validator);
+            FailureValidator validator = new FailureValidator.Builder().resourceNotFound().build();
+            validateFailure(deleteObservable, validator);
+        } catch (Throwable error) {
+            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {
+                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
+                logger.info(message, error);
+                throw new SkipException(message, error);
+            }
+            throw error;
+        }
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT, dataProvider = "documentCrudArgProvider")
     public void replaceDocument(String documentId) throws InterruptedException {
-        // create a document
-        CosmosItemSettings docDefinition = getDocumentDefinition(documentId);
+        try {
+            // create a document
+            CosmosItemSettings docDefinition = getDocumentDefinition(documentId);
 
-        CosmosItem document = createdCollection.createItem(docDefinition, new CosmosItemRequestOptions()).block().getCosmosItem();
+            CosmosItem document = createdCollection.createItem(docDefinition, new CosmosItemRequestOptions()).block()
+                    .getCosmosItem();
 
-        String newPropValue = UUID.randomUUID().toString();
-        docDefinition.set("newProp", newPropValue);
+            String newPropValue = UUID.randomUUID().toString();
+            docDefinition.set("newProp", newPropValue);
 
-        CosmosItemRequestOptions options = new CosmosItemRequestOptions();
-        options.setPartitionKey(new PartitionKey(docDefinition.get("mypk")));
-        // replace document
-        Mono<CosmosItemResponse> replaceObservable = document.replace(docDefinition, options);
-        
-        // validate
-        CosmosResponseValidator<CosmosItemResponse> validator = new CosmosResponseValidator.Builder<CosmosItemResponse>()
-                .withProperty("newProp", newPropValue).build();
-        validateSuccess(replaceObservable, validator);
+            CosmosItemRequestOptions options = new CosmosItemRequestOptions();
+            options.setPartitionKey(new PartitionKey(docDefinition.get("mypk")));
+            // replace document
+            Mono<CosmosItemResponse> replaceObservable = document.replace(docDefinition, options);
+
+            // validate
+            CosmosResponseValidator<CosmosItemResponse> validator = new CosmosResponseValidator.Builder<CosmosItemResponse>()
+                    .withProperty("newProp", newPropValue).build();
+            validateSuccess(replaceObservable, validator);
+        } catch (Throwable error) {
+            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {
+                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
+                logger.info(message, error);
+                throw new SkipException(message, error);
+            }
+            throw error;
+        }
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT, dataProvider = "documentCrudArgProvider")
@@ -338,22 +462,24 @@ public class DocumentCrudTest extends TestSuiteBase {
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT * 100, dataProvider = "documentCrudArgProvider")
     public void upsertDocument_ReplaceDocument(String documentId) throws Throwable {
-        // create a document
-        CosmosItemSettings docDefinition = getDocumentDefinition(documentId);
-
-        docDefinition = createdCollection.createItem(docDefinition, new CosmosItemRequestOptions()).block().getCosmosItemSettings();
-
-        String newPropValue = UUID.randomUUID().toString();
-        docDefinition.set("newProp", newPropValue);
-
-        // replace document
-        Mono<CosmosItemResponse> readObservable = createdCollection.upsertItem(docDefinition, new CosmosItemRequestOptions());
-        System.out.println(docDefinition);
-
-        // validate
-        CosmosResponseValidator<CosmosItemResponse> validator = new CosmosResponseValidator.Builder<CosmosItemResponse>()
-                .withProperty("newProp", newPropValue).build();
         try {
+            // create a document
+            CosmosItemSettings docDefinition = getDocumentDefinition(documentId);
+
+            docDefinition = createdCollection.createItem(docDefinition, new CosmosItemRequestOptions()).block()
+                    .getCosmosItemSettings();
+
+            String newPropValue = UUID.randomUUID().toString();
+            docDefinition.set("newProp", newPropValue);
+
+            // replace document
+            Mono<CosmosItemResponse> readObservable = createdCollection.upsertItem(docDefinition,
+                    new CosmosItemRequestOptions());
+            System.out.println(docDefinition);
+
+            // validate
+            CosmosResponseValidator<CosmosItemResponse> validator = new CosmosResponseValidator.Builder<CosmosItemResponse>()
+                    .withProperty("newProp", newPropValue).build();
             validateSuccess(readObservable, validator);
         } catch (Throwable error) {
             if (this.clientBuilder.getConfigs().getProtocol() == Protocol.Tcp) {

@@ -704,42 +704,6 @@ public class TestSuiteBase {
         }
     }
 
-    public <T extends Resource> void validateSuccess(Observable<ResourceResponse<T>> observable,
-            ResourceResponseValidator<T> validator) {
-        validateSuccess(observable, validator, subscriberValidationTimeout);
-    }
-
-    public static <T extends Resource> void validateSuccess(Observable<ResourceResponse<T>> observable,
-            ResourceResponseValidator<T> validator, long timeout) {
-
-        VerboseTestSubscriber<ResourceResponse<T>> testSubscriber = new VerboseTestSubscriber<>();
-
-        observable.subscribe(testSubscriber);
-        testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
-        testSubscriber.assertNoErrors();
-        testSubscriber.assertCompleted();
-        testSubscriber.assertValueCount(1);
-        validator.validate(testSubscriber.getOnNextEvents().get(0));
-    }
-
-    public <T extends Resource> void validateFailure(Observable<ResourceResponse<T>> observable,
-            FailureValidator validator) {
-        validateFailure(observable, validator, subscriberValidationTimeout);
-    }
-
-    public static <T extends Resource> void validateFailure(Observable<ResourceResponse<T>> observable,
-            FailureValidator validator, long timeout) {
-
-        VerboseTestSubscriber<ResourceResponse<T>> testSubscriber = new VerboseTestSubscriber<>();
-
-        observable.subscribe(testSubscriber);
-        testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
-        testSubscriber.assertNotCompleted();
-        testSubscriber.assertTerminalEvent();
-        assertThat(testSubscriber.getOnErrorEvents()).hasSize(1);
-        validator.validate(testSubscriber.getOnErrorEvents().get(0));
-    }
-
     public <T extends Resource> void validateQuerySuccess(Observable<FeedResponse<T>> observable,
             FeedResponseListValidator<T> validator) {
         validateQuerySuccess(observable, validator, subscriberValidationTimeout);
@@ -755,24 +719,6 @@ public class TestSuiteBase {
         testSubscriber.assertNoErrors();
         testSubscriber.assertCompleted();
         validator.validate(testSubscriber.getOnNextEvents());
-    }
-
-    public <T extends Resource> void validateQueryFailure(Observable<FeedResponse<T>> observable,
-            FailureValidator validator) {
-        validateQueryFailure(observable, validator, subscriberValidationTimeout);
-    }
-
-    public static <T extends Resource> void validateQueryFailure(Observable<FeedResponse<T>> observable,
-            FailureValidator validator, long timeout) {
-
-        VerboseTestSubscriber<FeedResponse<T>> testSubscriber = new VerboseTestSubscriber<>();
-
-        observable.subscribe(testSubscriber);
-        testSubscriber.awaitTerminalEvent(timeout, TimeUnit.MILLISECONDS);
-        testSubscriber.assertNotCompleted();
-        testSubscriber.assertTerminalEvent();
-        assertThat(testSubscriber.getOnErrorEvents()).hasSize(1);
-        validator.validate(testSubscriber.getOnErrorEvents().get(0));
     }
 
     public <T extends CosmosResponse> void validateSuccess(Mono<T> single, CosmosResponseValidator<T> validator)
