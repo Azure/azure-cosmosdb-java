@@ -64,7 +64,7 @@ public class MultiMasterConflictResolutionTest extends TestSuiteBase {
         this.clientBuilder = clientBuilder;
     }
 
-    @Test(groups = "multi-master", timeOut = TIMEOUT)
+    @Test(groups = "multi-master", timeOut = 10 * TIMEOUT)
     public void conflictResolutionPolicyCRUD() {
 
         // default last writer wins, path _ts
@@ -140,7 +140,7 @@ public class MultiMasterConflictResolutionTest extends TestSuiteBase {
             } else {
                 collectionSettings.setConflictResolutionPolicy(ConflictResolutionPolicy.createCustomPolicy(paths[i]));
             }
-            collectionSettings = database.createContainer(collectionSettings, null).block().getCosmosContainerSettings();
+            collectionSettings = database.createContainer(collectionSettings, new CosmosContainerRequestOptions()).block().getCosmosContainerSettings();
             assertThat(collectionSettings.getConflictResolutionPolicy().getConflictResolutionMode()).isEqualTo(conflictResolutionMode);
             
             if (conflictResolutionMode == ConflictResolutionMode.LastWriterWins) {
