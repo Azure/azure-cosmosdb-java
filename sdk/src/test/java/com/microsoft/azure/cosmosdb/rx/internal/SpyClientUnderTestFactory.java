@@ -84,7 +84,6 @@ public class SpyClientUnderTestFactory {
 
         ClientWithGatewaySpy(URI serviceEndpoint, String masterKey, ConnectionPolicy connectionPolicy, ConsistencyLevel consistencyLevel, Configs configs) {
             super(serviceEndpoint, masterKey, connectionPolicy, consistencyLevel, configs);
-            assert connectionPolicy.getConnectionMode() == ConnectionMode.Gateway;
             init();
         }
 
