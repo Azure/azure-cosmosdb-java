@@ -23,6 +23,9 @@
 
 package com.azure.data.cosmos;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.text.WordUtils;
+
 import com.google.common.base.CaseFormat;
 
 /**
@@ -65,6 +68,6 @@ public enum ConsistencyLevel {
     
     @Override
     public String toString() {
-        return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, this.name());        
+        return StringUtils.remove(WordUtils.capitalizeFully(this.name(), '_'), '_');        
     }
 }
