@@ -45,7 +45,7 @@ public class ConfigsTests {
     @Test(groups = { "unit" })
     public void getProtocol() {
         Configs config = new Configs();
-        assertThat(config.getProtocol()).isEqualTo(Protocol.valueOf(System.getProperty("COSMOS.PROTOCOL", "HTTPS")));
+        assertThat(config.getProtocol()).isEqualTo(Protocol.valueOf(System.getProperty("COSMOS.PROTOCOL", "TCP")));
     }
 
     @Test(groups = { "unit" })
