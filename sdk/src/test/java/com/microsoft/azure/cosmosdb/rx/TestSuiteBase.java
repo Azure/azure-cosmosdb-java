@@ -40,6 +40,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.microsoft.azure.cosmosdb.DataType;
 import com.microsoft.azure.cosmosdb.DatabaseForTest;
@@ -58,6 +59,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testng.ITest;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeMethod;
@@ -86,7 +88,7 @@ import org.testng.annotations.Test;
 import rx.Observable;
 import rx.observers.TestSubscriber;
 
-public class TestSuiteBase {
+public class TestSuiteBase implements ITest {
     private static final int DEFAULT_BULK_INSERT_CONCURRENCY_LEVEL = 500;
     private static final ObjectMapper objectMapper = new ObjectMapper();
     protected static Logger logger = LoggerFactory.getLogger(TestSuiteBase.class.getSimpleName());
@@ -105,6 +107,7 @@ public class TestSuiteBase {
     private static final ImmutableList<ConsistencyLevel> desiredConsistencies;
     private static final ImmutableList<Protocol> protocols;
 
+    protected final ThreadLocal<String> testName = new ThreadLocal<>();
     protected int subscriberValidationTimeout = TIMEOUT;
     protected Builder clientBuilder;
 
@@ -132,6 +135,16 @@ public class TestSuiteBase {
         logger.debug("Initializing {} ...", this.getClass().getSimpleName());
     }
 
+    /**
+     * The name of test instance(s).
+     *
+     * @return name associated with a particular instance of a test.
+     */
+    @Override
+    public String getTestName() {
+        return this.testName.get();
+    }
+
     private static <T> ImmutableList<T> immutableListOrNull(List<T> list) {
         return list != null ? ImmutableList.copyOf(list) : null;
     }
@@ -141,20 +154,21 @@ public class TestSuiteBase {
 
         if (this.clientBuilder != null) {
 
-            ConnectionMode connectionMode = this.clientBuilder.connectionPolicy.getConnectionMode();
-            Protocol protocol = connectionMode == ConnectionMode.Direct ? this.clientBuilder.configs.getProtocol() : Protocol.Https;
+            String connectionMode = this.clientBuilder.getConnectionPolicy().getConnectionMode() == ConnectionMode.Direct
+                ? "Direct " + this.clientBuilder.getConfigs().getProtocol().name().toUpperCase()
+                : "Gateway";
 
-            logger.info("Starting {}::{} using {} {} mode with {} consistency",
+            this.testName.set(Strings.lenientFormat("%s::%s[%s with %s consistency]",
                 method.getDeclaringClass().getSimpleName(),
                 method.getName(),
                 connectionMode,
-                protocol,
-                this.clientBuilder.desiredConsistencyLevel
-            );
-            return;
+                this.clientBuilder.getDesiredConsistencyLevel()));
+
+        } else {
+            this.testName.set(Strings.lenientFormat("%s::%s", method.getDeclaringClass().getSimpleName(), method.getName()));
         }
 
-        logger.info("Starting {}::{}", method.getDeclaringClass().getSimpleName(), method.getName());
+        logger.info("Starting {}", this.getTestName());
     }
 
     @AfterMethod(groups = {"simple", "long", "direct", "multi-master", "emulator", "non-emulator"})
