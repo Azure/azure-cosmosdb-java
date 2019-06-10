@@ -45,10 +45,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
-import rx.exceptions.CompositeException;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -255,11 +255,10 @@ public class StoreReader {
         Flux<StoreResult> allStoreResults = Flux.merge(storeResult);
 
         return allStoreResults.collectList().onErrorResume(e -> {
-            if (e instanceof CompositeException) {
+            if (Exceptions.isMultiple(e)) {
                 logger.info("Captured composite exception");
-                CompositeException compositeException = (CompositeException) e;
-                List<Throwable> exceptions = compositeException.getExceptions();
-                assert exceptions != null && !exceptions.isEmpty();
+                List<Throwable> exceptions = Exceptions.unwrapMultiple(e);
+                assert !exceptions.isEmpty();
                 return Mono.error(exceptions.get(0));
             }
 
