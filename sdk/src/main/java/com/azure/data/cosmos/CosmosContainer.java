@@ -274,7 +274,7 @@ public class CosmosContainer extends CosmosResource {
         return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(this.getDatabase()
                                                                             .getDocClientWrapper()
                                                                             .upsertDocument(this.getLink(),
-                                                                                            item,
+                                                                                            CosmosItemProperties.fromObject(item),
                                                                                             options.toRequestOptions(),
                                                                                             true)
                                                                             .map(response -> new CosmosItemResponse(response,
