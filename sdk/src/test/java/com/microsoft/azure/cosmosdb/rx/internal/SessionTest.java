@@ -113,6 +113,10 @@ public class SessionTest extends TestSuiteBase {
         return spyClient.getCapturedRequests().stream()
                 .map(r -> r.getHeaders().get(HttpConstants.HttpHeaders.SESSION_TOKEN)).collect(Collectors.toList());
     }
+
+    private void clearCapturedRequests() {
+        spyClient.clearCapturedRequests();
+    }
     
     @Test(groups = { "simple" }, timeOut = TIMEOUT, dataProvider = "sessionTestArgProvider")
     public void sessionConsistency_ReadYourWrites(boolean isNameBased) {
@@ -125,21 +129,23 @@ public class SessionTest extends TestSuiteBase {
             Document documentCreated = spyClient.createDocument(getCollectionLink(isNameBased), new Document(), null, false)
                     .toBlocking().single().getResource();
 
+            clearCapturedRequests();
+
             // We send session tokens on Writes in Gateway mode
             if (connectionMode == ConnectionMode.Gateway) {
-                assertThat(getSessionTokensInRequests()).hasSize(3 * i + 1);
-                assertThat(getSessionTokensInRequests().get(3 * i + 0)).isNotEmpty();
+                assertThat(getSessionTokensInRequests()).hasSize(1);
+                assertThat(getSessionTokensInRequests().get(0)).isNotEmpty();
             }
 
             spyClient.readDocument(getDocumentLink(documentCreated, isNameBased), null).toBlocking().single();
 
-            assertThat(getSessionTokensInRequests()).hasSize(3 * i + 2);
-            assertThat(getSessionTokensInRequests().get(3 * i + 1)).isNotEmpty();
+            assertThat(getSessionTokensInRequests()).hasSize(1);
+            assertThat(getSessionTokensInRequests().get(0)).isNotEmpty();
 
             spyClient.readDocument(getDocumentLink(documentCreated, isNameBased), null).toBlocking().single();
 
-            assertThat(getSessionTokensInRequests()).hasSize(3 * i + 3);
-            assertThat(getSessionTokensInRequests().get(3 * i + 2)).isNotEmpty();
+            assertThat(getSessionTokensInRequests()).hasSize(2);
+            assertThat(getSessionTokensInRequests().get(1)).isNotEmpty();
         }
     }
 
