@@ -162,7 +162,7 @@ public abstract class Index extends JsonSerializable {
      * @param indexKind the index kind.
      */
     private Index kind(IndexKind indexKind) {
-        super.set(Constants.Properties.INDEX_KIND, indexKind.name());
+        super.set(Constants.Properties.INDEX_KIND, indexKind.toString());
         return this;
     }
 }

@@ -107,7 +107,7 @@ public final class HashIndex extends Index {
      * @param dataType the data type.
      */
     public HashIndex dataType(DataType dataType) {
-        super.set(Constants.Properties.DATA_TYPE, dataType.name());
+        super.set(Constants.Properties.DATA_TYPE, dataType.toString());
         return this;
     }
 

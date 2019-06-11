@@ -87,7 +87,7 @@ public class Configs {
     }
 
     public Protocol getProtocol() {
-        String protocol = getJVMConfigAsString(PROTOCOL, DEFAULT_PROTOCOL.name());
+        String protocol = getJVMConfigAsString(PROTOCOL, DEFAULT_PROTOCOL.toString());
         try {
             return Protocol.valueOf(StringUtils.upperCase(protocol.toLowerCase()));
         } catch (Exception e) {
