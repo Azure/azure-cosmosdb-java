@@ -167,14 +167,14 @@ public final class PartitionKeyDefinition extends JsonSerializable {
     @Override
     void populatePropertyBag() {
         if (this.kind != null) {
-            super.set(Constants.Properties.PARTITION_KIND, kind.name());
+            super.set(Constants.Properties.PARTITION_KIND, kind.toString());
         }
         if (this.paths != null) {
             super.set(Constants.Properties.PARTITION_KEY_PATHS, paths);
         }
 
         if (this.version != null) {
-            super.set(Constants.Properties.PARTITION_KEY_DEFINITION_VERSION, version.name());
+            super.set(Constants.Properties.PARTITION_KEY_DEFINITION_VERSION, version.toString());
         }
         super.populatePropertyBag();
     }

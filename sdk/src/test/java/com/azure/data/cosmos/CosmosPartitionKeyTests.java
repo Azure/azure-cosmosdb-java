@@ -237,10 +237,10 @@ public class CosmosPartitionKeyTests extends TestSuiteBase {
                         "  'body':'" +
                         "   function() {" +
                         "   var client = getContext().getCollection();" +
-                        "   var doc = client.createDocument(client.selfLink(), { \\'id\\': \\'" + documentCreatedBySprocId + "\\'}, {}, function(err, docCreated, options) { " +
+                        "   var doc = client.createDocument(client.getSelfLink(), { \\'id\\': \\'" + documentCreatedBySprocId + "\\'}, {}, function(err, docCreated, options) { " +
                         "   if(err) throw new Error(\\'Error while creating document: \\' + err.message);" +
                         "   else {" +
-                        "   getContext().getResponse().body(1);" +
+                        "   getContext().getResponse().setBody(1);" +
                         "      }" +
                         "    });" +
                         "}'" +

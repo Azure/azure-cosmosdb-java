@@ -51,7 +51,7 @@ public class ServerStoreModel implements RxStoreModel {
         if (!Strings.isNullOrEmpty(requestConsistencyLevelHeaderValue)) {
             ConsistencyLevel requestConsistencyLevel;
 
-            if ((requestConsistencyLevel = EnumUtils.getEnum(ConsistencyLevel.class, requestConsistencyLevelHeaderValue)) == null) {
+            if ((requestConsistencyLevel = EnumUtils.getEnum(ConsistencyLevel.class, Strings.fromCamelCaseToUpperCase(requestConsistencyLevelHeaderValue))) == null) {
                 return Observable.error(new BadRequestException(
                     String.format(
                         RMResources.InvalidHeaderValue,
