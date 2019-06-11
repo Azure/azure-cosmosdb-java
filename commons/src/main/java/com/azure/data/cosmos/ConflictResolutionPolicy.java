@@ -166,7 +166,7 @@ public class ConflictResolutionPolicy extends JsonSerializable {
      * @param mode One of the values of the {@link ConflictResolutionMode} enum.
      */
     ConflictResolutionPolicy mode(ConflictResolutionMode mode) {
-        super.set(Constants.Properties.MODE, mode.name());
+        super.set(Constants.Properties.MODE, mode.toString());
         return this;
     }
 

@@ -32,6 +32,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.azure.data.cosmos.internal.Strings;
 import com.azure.data.cosmos.internal.Utils;
 
 import org.slf4j.Logger;
@@ -294,7 +295,7 @@ public class JsonSerializable {
                 return c.cast(getValue(jsonObj));
             } else if (Enum.class.isAssignableFrom(c)) {
                 try {
-                    return c.cast(c.getMethod("valueOf", String.class).invoke(null, String.class.cast(getValue(jsonObj))));
+                    return c.cast(c.getMethod("valueOf", String.class).invoke(null, Strings.fromCamelCaseToUpperCase(String.class.cast(getValue(jsonObj)))));
                 } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException
                         | NoSuchMethodException | SecurityException e) {
                     throw new IllegalStateException("Failed to create enum.", e);
@@ -357,7 +358,7 @@ public class JsonSerializable {
                 } else if (isEnumClass) {
                     try {
                         result.add(c.cast(c.getMethod("valueOf", String.class).invoke(null,
-                                                                                      String.class.cast(getValue(n)))));
+                                Strings.fromCamelCaseToUpperCase(String.class.cast(getValue(n))))));
                     } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException
                             | NoSuchMethodException | SecurityException e) {
                         throw new IllegalStateException("Failed to create enum.", e);

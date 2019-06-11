@@ -25,7 +25,6 @@ package com.azure.data.cosmos;
 
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.text.WordUtils;
 
 import com.azure.data.cosmos.internal.Constants;
 
@@ -79,7 +78,7 @@ public final class ConsistencyPolicy extends JsonSerializable {
      * @param level the consistency level.
      */
     public ConsistencyPolicy defaultConsistencyLevel(ConsistencyLevel level) {
-        super.set(Constants.Properties.DEFAULT_CONSISTENCY_LEVEL, level.name());
+        super.set(Constants.Properties.DEFAULT_CONSISTENCY_LEVEL, level.toString());
         return this;
     }
 

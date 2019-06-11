@@ -38,6 +38,8 @@ import com.azure.data.cosmos.internal.RemoteStorageType;
 import com.azure.data.cosmos.internal.ResourceId;
 import com.azure.data.cosmos.internal.RMResources;
 import com.azure.data.cosmos.internal.RxDocumentServiceRequest;
+import com.azure.data.cosmos.internal.Strings;
+
 import io.netty.buffer.ByteBuf;
 import org.apache.commons.lang3.EnumUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -638,7 +640,7 @@ final class RntbdRequestHeaders extends RntbdTokenStream<RntbdRequestHeader> {
 
         if (StringUtils.isNotEmpty(value)) {
 
-            ConsistencyLevel level = EnumUtils.getEnumIgnoreCase(ConsistencyLevel.class, value);
+            ConsistencyLevel level = EnumUtils.getEnumIgnoreCase(ConsistencyLevel.class, Strings.fromCamelCaseToUpperCase(value));
 
             if (level == null) {
                 String reason = String.format(Locale.ROOT, RMResources.InvalidRequestHeaderValue,

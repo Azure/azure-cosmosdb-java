@@ -22,6 +22,8 @@
  */
 package com.azure.data.cosmos.internal;
 
+import javax.xml.stream.events.Characters;
+
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -68,5 +70,26 @@ public class Strings {
         }
 
         return str.substring(0, 1).toUpperCase() + str.substring(1, str.length()).toLowerCase();
+    }
+    
+    public static String fromCamelCaseToUpperCase(String str) {
+        if (str == null) {
+            return null;
+        }
+
+        StringBuilder result = new StringBuilder(str);
+
+        int i = 1;
+        while (i < result.length()) {
+            if (Character.isUpperCase(result.charAt(i))) {
+                result.insert(i, '_');
+                i += 2;
+            } else {
+                result.replace(i, i + 1, Character.toString(Character.toUpperCase(result.charAt(i))));
+                i ++;
+            }
+        }
+
+        return result.toString();
     }
 }
