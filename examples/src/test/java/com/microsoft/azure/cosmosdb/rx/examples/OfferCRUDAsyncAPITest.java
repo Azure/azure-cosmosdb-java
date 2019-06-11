@@ -53,30 +53,35 @@ import static org.hamcrest.MatcherAssert.assertThat;
  * This integration test class demonstrates how to use Async API to query and
  * replace an Offer.
  */
-public class OfferCRUDAsyncAPITest {
+public class OfferCRUDAsyncAPITest extends TestBase {
+
     private final static int TIMEOUT = 60000;
+
+    private AsyncDocumentClient client;
     private Database createdDatabase;
-    private AsyncDocumentClient asyncClient;
 
     @BeforeClass(groups = "samples", timeOut = TIMEOUT)
     public void setUp() {
+
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
         connectionPolicy.setConnectionMode(ConnectionMode.Direct);
-        asyncClient = new AsyncDocumentClient.Builder()
+
+        this.builder = new AsyncDocumentClient.Builder()
                 .withServiceEndpoint(TestConfigurations.HOST)
                 .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
                 .withConnectionPolicy(connectionPolicy)
-                .withConsistencyLevel(ConsistencyLevel.Session)
-                .build();
+                .withConsistencyLevel(ConsistencyLevel.Session);
+
+        this.client = this.builder.build();
 
         // Create database
-        createdDatabase = Utils.createDatabaseForTest(asyncClient);
+        createdDatabase = Utils.createDatabaseForTest(client);
     }
 
     @AfterClass(groups = "samples", timeOut = TIMEOUT)
     public void shutdown() {
-        Utils.safeClean(asyncClient, createdDatabase);
-        Utils.safeClose(asyncClient);
+        Utils.safeClean(client, createdDatabase);
+        Utils.safeClose(client);
     }
 
     /**
@@ -94,14 +99,14 @@ public class OfferCRUDAsyncAPITest {
         multiPartitionRequestOptions.setOfferThroughput(initialThroughput);
 
         // Create the collection
-        DocumentCollection createdCollection = asyncClient.createCollection("dbs/" + createdDatabase.getId(),
+        DocumentCollection createdCollection = client.createCollection("dbs/" + createdDatabase.getId(),
                                                                             getMultiPartitionCollectionDefinition(), multiPartitionRequestOptions).toBlocking().single()
-                .getResource();
+                                                     .getResource();
 
         final CountDownLatch successfulCompletionLatch = new CountDownLatch(1);
 
         // Find offer associated with this collection
-        asyncClient.queryOffers(
+        client.queryOffers(
                 String.format("SELECT * FROM r where r.offerResourceId = '%s'", createdCollection.getResourceId()),
                 null).flatMap(offerFeedResponse -> {
             List<Offer> offerList = offerFeedResponse.getResults();
@@ -119,7 +124,7 @@ public class OfferCRUDAsyncAPITest {
             offer.setThroughput(newThroughput);
 
             // Replace the offer
-            return asyncClient.replaceOffer(offer);
+            return client.replaceOffer(offer);
         }).subscribe(offerResourceResponse -> {
             Offer offer = offerResourceResponse.getResource();
             int currentThroughput = offer.getThroughput();

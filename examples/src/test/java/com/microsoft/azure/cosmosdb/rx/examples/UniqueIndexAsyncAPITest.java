@@ -47,7 +47,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 
-public class UniqueIndexAsyncAPITest {
+public class UniqueIndexAsyncAPITest extends TestBase {
+
     private final static int TIMEOUT = 60000;
 
     private AsyncDocumentClient client;
@@ -90,15 +91,17 @@ public class UniqueIndexAsyncAPITest {
 
     @BeforeClass(groups = "samples", timeOut = TIMEOUT)
     public void setUp() {
-        // Sets up the requirements for each test
+
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
         connectionPolicy.setConnectionMode(ConnectionMode.Direct);
-        client = new AsyncDocumentClient.Builder()
+
+        this.builder = new AsyncDocumentClient.Builder()
                 .withServiceEndpoint(TestConfigurations.HOST)
                 .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
                 .withConnectionPolicy(connectionPolicy)
-                .withConsistencyLevel(ConsistencyLevel.Session)
-                .build();
+                .withConsistencyLevel(ConsistencyLevel.Session);
+
+        this.client = this.builder.build();
 
         DocumentCollection collectionDefinition = new DocumentCollection();
         collectionDefinition.setId(UUID.randomUUID().toString());
