@@ -50,7 +50,7 @@ public class DocumentClientResourceLeakTest extends TestSuiteBase {
         this.clientBuilder = clientBuilder;
     }
 
-    @Test(groups = {"emulator"}, timeOut = TIMEOUT)
+    @Test(groups = {"emulator"}, timeOut = 2 * TIMEOUT)
     public void resourceLeak() throws Exception {
 
         System.gc();
