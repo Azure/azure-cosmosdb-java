@@ -173,7 +173,9 @@ public class TokenResolverTest extends TestBase {
                     capturedResponse.add(resourceResponse);
                 });
             }
-            Thread.sleep(2000);
+            // TODO: DANOBLE: Reduce wait time to 2 seconds.
+            //   link: [Direct TCP: Implement health check requests #119](https://github.com/Azure/azure-cosmosdb-java/issues/119)
+            Thread.sleep(8 * 2000);
             System.out.println("capturedResponse.size() = " + capturedResponse.size());
             assertThat(capturedResponse, hasSize(10));
         } finally {
@@ -214,7 +216,9 @@ public class TokenResolverTest extends TestBase {
                     capturedResponse.add(resourceResponse);
                 });
             }
-            Thread.sleep(2000);
+            // TODO: DANOBLE: Reduce wait time to 2 seconds.
+            //  link: [Direct TCP: Implement health check requests #119](https://github.com/Azure/azure-cosmosdb-java/issues/119)
+            Thread.sleep(8 * 2000);
             assertThat(capturedResponse, hasSize(10));
         } finally {
             Utils.safeClose(asyncClientWithTokenResolver);
