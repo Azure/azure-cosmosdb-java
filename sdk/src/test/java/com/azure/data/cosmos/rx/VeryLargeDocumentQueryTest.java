@@ -25,11 +25,11 @@ package com.azure.data.cosmos.rx;
 import com.azure.data.cosmos.CosmosClient;
 import com.azure.data.cosmos.CosmosClientBuilder;
 import com.azure.data.cosmos.CosmosContainer;
+import com.azure.data.cosmos.CosmosItemProperties;
 import com.azure.data.cosmos.CosmosItemRequestOptions;
 import com.azure.data.cosmos.CosmosItemResponse;
 import com.azure.data.cosmos.CosmosResponseValidator;
 import com.azure.data.cosmos.Database;
-import com.azure.data.cosmos.Document;
 import com.azure.data.cosmos.FeedOptions;
 import com.azure.data.cosmos.RetryAnalyzer;
 import com.azure.data.cosmos.directconnectivity.Protocol;
@@ -83,7 +83,7 @@ public class VeryLargeDocumentQueryTest extends TestSuiteBase {
     }
 
     private void createLargeDocument() throws InterruptedException {
-        Document docDefinition = getDocumentDefinition();
+        CosmosItemProperties docDefinition = getDocumentDefinition();
 
         //Keep size as ~ 1.999MB to account for size of other props
         int size = (int) (ONE_MB * 1.999);
@@ -110,9 +110,9 @@ public class VeryLargeDocumentQueryTest extends TestSuiteBase {
         safeClose(client);
     }
 
-    private static Document getDocumentDefinition() {
+    private static CosmosItemProperties getDocumentDefinition() {
         String uuid = UUID.randomUUID().toString();
-        Document doc = new Document(String.format("{ "
+        CosmosItemProperties doc = new CosmosItemProperties(String.format("{ "
                 + "\"id\": \"%s\", "
                 + "\"mypk\": \"%s\", "
                 + "}"
