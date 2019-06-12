@@ -26,8 +26,6 @@ package com.azure.data.cosmos;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.WordUtils;
 
-import com.azure.data.cosmos.internal.Strings;
-
 /**
  * Represents the consistency levels supported for Cosmos DB client operations in the Azure Cosmos DB database service.
  * <p>
