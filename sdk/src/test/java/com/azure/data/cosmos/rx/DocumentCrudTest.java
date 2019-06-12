@@ -246,7 +246,7 @@ public class DocumentCrudTest extends TestSuiteBase {
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT, dataProvider = "documentCrudArgProvider")
     public void deleteDocument_undefinedPK(String documentId) throws InterruptedException {
-        Document docDefinition = new Document();
+        CosmosItemProperties docDefinition = new CosmosItemProperties();
         docDefinition.id(documentId);
 
         CosmosItem document = createdCollection.createItem(docDefinition, new CosmosItemRequestOptions()).block().item();

@@ -286,7 +286,7 @@ public class JsonSerializable {
      *                     and a static one.
      * @return the object value.
      */
-    public <T> T getObject(String propertyName, Class<T> c) {
+    public <T> T getObject(String propertyName, Class<T> c, boolean ... convertFromCamelCase) {
         if (this.propertyBag.has(propertyName) && this.propertyBag.hasNonNull(propertyName)) {
             JsonNode jsonObj = propertyBag.get(propertyName);
             if (Number.class.isAssignableFrom(c) || String.class.isAssignableFrom(c)
@@ -295,7 +295,9 @@ public class JsonSerializable {
                 return c.cast(getValue(jsonObj));
             } else if (Enum.class.isAssignableFrom(c)) {
                 try {
-                    return c.cast(c.getMethod("valueOf", String.class).invoke(null, Strings.fromCamelCaseToUpperCase(String.class.cast(getValue(jsonObj)))));
+                    String value = String.class.cast(getValue(jsonObj));
+                    value = convertFromCamelCase.length > 0 && convertFromCamelCase[0] ? Strings.fromCamelCaseToUpperCase(value) : value;
+                    return c.cast(c.getMethod("valueOf", String.class).invoke(null, value));
                 } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException
                         | NoSuchMethodException | SecurityException e) {
                     throw new IllegalStateException("Failed to create enum.", e);
@@ -330,7 +332,7 @@ public class JsonSerializable {
      *                     and a static one.
      * @return the object collection.
      */
-    public <T> List<T> getList(String propertyName, Class<T> c) {
+    public <T> List<T> getList(String propertyName, Class<T> c, boolean ... convertFromCamelCase) {
         if (this.propertyBag.has(propertyName) && this.propertyBag.hasNonNull(propertyName)) {
             ArrayNode jsonArray = (ArrayNode) this.propertyBag.get(propertyName);
             ArrayList<T> result = new ArrayList<T>();
@@ -357,8 +359,9 @@ public class JsonSerializable {
                     result.add(c.cast(getValue(n)));
                 } else if (isEnumClass) {
                     try {
-                        result.add(c.cast(c.getMethod("valueOf", String.class).invoke(null,
-                                Strings.fromCamelCaseToUpperCase(String.class.cast(getValue(n))))));
+                        String value = String.class.cast(getValue(n));
+                        value = convertFromCamelCase.length > 0 && convertFromCamelCase[0] ? Strings.fromCamelCaseToUpperCase(value) : value;
+                        result.add(c.cast(c.getMethod("valueOf", String.class).invoke(null, value)));
                     } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException
                             | NoSuchMethodException | SecurityException e) {
                         throw new IllegalStateException("Failed to create enum.", e);
@@ -394,8 +397,8 @@ public class JsonSerializable {
      *                     and a static one.
      * @return the object collection.
      */
-    public <T> Collection<T> getCollection(String propertyName, Class<T> c) {
-        return getList(propertyName, c);
+    public <T> Collection<T> getCollection(String propertyName, Class<T> c, boolean ... convertFromCamelCase) {
+        return getList(propertyName, c, convertFromCamelCase);
     }
 
     /**
