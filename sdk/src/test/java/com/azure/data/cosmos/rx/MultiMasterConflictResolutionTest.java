@@ -22,16 +22,25 @@
  */
 package com.azure.data.cosmos.rx;
 
-import com.azure.data.cosmos.*;
-import com.azure.data.cosmos.internal.Utils;
+import com.azure.data.cosmos.BridgeUtils;
+import com.azure.data.cosmos.ConflictResolutionMode;
+import com.azure.data.cosmos.ConflictResolutionPolicy;
+import com.azure.data.cosmos.CosmosClient;
+import com.azure.data.cosmos.CosmosClientBuilder;
 import com.azure.data.cosmos.CosmosClientException;
-
-import reactor.core.publisher.Mono;
-
+import com.azure.data.cosmos.CosmosContainer;
+import com.azure.data.cosmos.CosmosContainerRequestOptions;
+import com.azure.data.cosmos.CosmosContainerResponse;
+import com.azure.data.cosmos.CosmosContainerSettings;
+import com.azure.data.cosmos.CosmosDatabase;
+import com.azure.data.cosmos.CosmosDatabaseForTest;
+import com.azure.data.cosmos.PartitionKeyDefinition;
+import com.azure.data.cosmos.internal.Utils;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
+import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.UUID;

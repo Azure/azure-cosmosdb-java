@@ -24,15 +24,15 @@
 
 package com.azure.data.cosmos.directconnectivity.rntbd;
 
+import com.azure.data.cosmos.BridgeInternal;
+import com.azure.data.cosmos.directconnectivity.GoneException;
+import com.azure.data.cosmos.directconnectivity.RntbdTransportClient.Options;
+import com.azure.data.cosmos.internal.HttpConstants;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import com.google.common.collect.ImmutableMap;
-import com.azure.data.cosmos.BridgeInternal;
-import com.azure.data.cosmos.internal.HttpConstants;
-import com.azure.data.cosmos.directconnectivity.GoneException;
-import com.azure.data.cosmos.directconnectivity.RntbdTransportClient.Options;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;

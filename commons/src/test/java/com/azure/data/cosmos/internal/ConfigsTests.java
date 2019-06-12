@@ -23,10 +23,10 @@
 
 package com.azure.data.cosmos.internal;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import com.azure.data.cosmos.directconnectivity.Protocol;
 import org.testng.annotations.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class ConfigsTests {
 
@@ -45,7 +45,7 @@ public class ConfigsTests {
     @Test(groups = { "unit" })
     public void getProtocol() {
         Configs config = new Configs();
-        assertThat(config.getProtocol()).isEqualTo(Protocol.valueOf(System.getProperty("COSMOS.PROTOCOL", "HTTPS")));
+        assertThat(config.getProtocol()).isEqualTo(Protocol.valueOf(System.getProperty("cosmos.directModeProtocol", "TCP")));
     }
 
     @Test(groups = { "unit" })

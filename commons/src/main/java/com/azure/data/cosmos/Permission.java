@@ -23,11 +23,9 @@
 
 package com.azure.data.cosmos;
 
+import com.azure.data.cosmos.internal.Constants;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.text.WordUtils;
-
-import com.azure.data.cosmos.internal.Constants;
 
 /**
  * Represents a per-User Permission to access a specific resource e.g. Document or Collection in the Azure Cosmos DB database service.

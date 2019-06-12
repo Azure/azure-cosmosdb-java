@@ -22,6 +22,7 @@
  */
 package com.azure.data.cosmos.internal;
 
+import com.azure.data.cosmos.AsyncDocumentClient;
 import com.azure.data.cosmos.ConnectionMode;
 import com.azure.data.cosmos.Database;
 import com.azure.data.cosmos.Document;
@@ -29,12 +30,9 @@ import com.azure.data.cosmos.DocumentCollection;
 import com.azure.data.cosmos.PartitionKey;
 import com.azure.data.cosmos.PartitionKeyDefinition;
 import com.azure.data.cosmos.RequestOptions;
-import com.azure.data.cosmos.AsyncDocumentClient;
-
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.HttpMethod;
 import io.reactivex.netty.protocol.http.client.HttpClientRequest;
-
 import org.apache.commons.lang3.StringUtils;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
@@ -117,7 +115,6 @@ public class SessionTest extends TestSuiteBase {
 
     @BeforeMethod(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeTest(Method method) {
-        super.beforeMethod(method);
         spyClient.clearCapturedRequests();
     }
 

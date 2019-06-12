@@ -24,7 +24,6 @@ package com.azure.data.cosmos;
 
 import com.azure.data.cosmos.internal.Constants;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.text.WordUtils;
 
 import java.util.List;
 import java.util.stream.Collectors;

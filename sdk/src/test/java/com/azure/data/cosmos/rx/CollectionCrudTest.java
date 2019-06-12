@@ -22,32 +22,41 @@
  */
 package com.azure.data.cosmos.rx;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.UUID;
-
-import com.azure.data.cosmos.*;
-import com.azure.data.cosmos.*;
+import com.azure.data.cosmos.CompositePath;
+import com.azure.data.cosmos.CompositePathSortOrder;
+import com.azure.data.cosmos.CosmosClient;
+import com.azure.data.cosmos.CosmosClientBuilder;
+import com.azure.data.cosmos.CosmosContainer;
+import com.azure.data.cosmos.CosmosContainerRequestOptions;
+import com.azure.data.cosmos.CosmosContainerResponse;
+import com.azure.data.cosmos.CosmosContainerSettings;
+import com.azure.data.cosmos.CosmosDatabase;
+import com.azure.data.cosmos.CosmosDatabaseForTest;
+import com.azure.data.cosmos.CosmosItem;
+import com.azure.data.cosmos.CosmosItemProperties;
+import com.azure.data.cosmos.CosmosItemRequestOptions;
+import com.azure.data.cosmos.CosmosItemResponse;
+import com.azure.data.cosmos.CosmosResponseValidator;
+import com.azure.data.cosmos.Database;
+import com.azure.data.cosmos.IndexingMode;
+import com.azure.data.cosmos.IndexingPolicy;
+import com.azure.data.cosmos.PartitionKey;
 import com.azure.data.cosmos.PartitionKeyDefinition;
 import com.azure.data.cosmos.RetryAnalyzer;
+import com.azure.data.cosmos.SpatialSpec;
+import com.azure.data.cosmos.SpatialType;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
-
-import com.azure.data.cosmos.CompositePath;
-import com.azure.data.cosmos.CompositePathSortOrder;
-import com.azure.data.cosmos.Database;
-import com.azure.data.cosmos.IndexingMode;
-import com.azure.data.cosmos.IndexingPolicy;
-import com.azure.data.cosmos.PartitionKey;
-import com.azure.data.cosmos.SpatialSpec;
-import com.azure.data.cosmos.SpatialType;
-
 import reactor.core.publisher.Mono;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class CollectionCrudTest extends TestSuiteBase {
     private static final int TIMEOUT = 50000;

@@ -23,11 +23,16 @@
 
 package com.azure.data.cosmos.internal;
 
-import com.azure.data.cosmos.*;
+import com.azure.data.cosmos.AsyncDocumentClient;
+import com.azure.data.cosmos.CosmosClientException;
+import com.azure.data.cosmos.Database;
+import com.azure.data.cosmos.Document;
+import com.azure.data.cosmos.DocumentCollection;
 import com.azure.data.cosmos.Error;
-import com.google.common.collect.ImmutableMap;
+import com.azure.data.cosmos.ResourceResponse;
 import com.azure.data.cosmos.rx.FailureValidator;
 import com.azure.data.cosmos.rx.ResourceResponseValidator;
+import com.google.common.collect.ImmutableMap;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -176,7 +181,6 @@ public class RetryCreateDocumentTest extends TestSuiteBase {
     
     @BeforeMethod(groups = { "simple" })
     public void beforeMethod(Method method) {
-        super.beforeMethod(method);
         Mockito.reset(client.getSpyGatewayStoreModel());
     }
 

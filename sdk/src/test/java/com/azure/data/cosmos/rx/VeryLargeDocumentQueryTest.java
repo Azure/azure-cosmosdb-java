@@ -33,15 +33,13 @@ import com.azure.data.cosmos.Document;
 import com.azure.data.cosmos.FeedOptions;
 import com.azure.data.cosmos.RetryAnalyzer;
 import com.azure.data.cosmos.directconnectivity.Protocol;
-
-import reactor.core.publisher.Mono;
-
 import org.apache.commons.lang3.StringUtils;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
+import reactor.core.publisher.Mono;
 
 import java.util.UUID;
 

@@ -23,10 +23,8 @@
 
 package com.azure.data.cosmos;
 
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.text.WordUtils;
-
 import com.azure.data.cosmos.internal.Constants;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Represents a range index in the Azure Cosmos DB database service.

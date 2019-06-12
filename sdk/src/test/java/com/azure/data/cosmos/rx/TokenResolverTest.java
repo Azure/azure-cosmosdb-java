@@ -47,7 +47,6 @@ import com.azure.data.cosmos.TokenResolver;
 import com.azure.data.cosmos.User;
 import com.azure.data.cosmos.internal.HttpConstants;
 import com.azure.data.cosmos.internal.TestSuiteBase;
-
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -56,15 +55,14 @@ import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 import rx.Observable;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import java.time.OffsetDateTime;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.UUID;
 import java.util.Map;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 //TODO: change to use external TestSuiteBase
 public class TokenResolverTest extends TestSuiteBase {

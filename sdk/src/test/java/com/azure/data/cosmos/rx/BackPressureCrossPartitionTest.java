@@ -22,7 +22,15 @@
  */
 package com.azure.data.cosmos.rx;
 
-import com.azure.data.cosmos.*;
+import com.azure.data.cosmos.ClientUnderTestBuilder;
+import com.azure.data.cosmos.CosmosBridgeInternal;
+import com.azure.data.cosmos.CosmosClient;
+import com.azure.data.cosmos.CosmosClientBuilder;
+import com.azure.data.cosmos.CosmosContainer;
+import com.azure.data.cosmos.CosmosContainerRequestOptions;
+import com.azure.data.cosmos.CosmosContainerSettings;
+import com.azure.data.cosmos.CosmosDatabase;
+import com.azure.data.cosmos.CosmosItemProperties;
 import com.azure.data.cosmos.DataType;
 import com.azure.data.cosmos.FeedOptions;
 import com.azure.data.cosmos.FeedResponse;
@@ -32,11 +40,7 @@ import com.azure.data.cosmos.IndexingPolicy;
 import com.azure.data.cosmos.PartitionKeyDefinition;
 import com.azure.data.cosmos.directconnectivity.Protocol;
 import com.azure.data.cosmos.internal.RxDocumentClientUnderTest;
-
 import io.reactivex.subscribers.TestSubscriber;
-import reactor.core.publisher.Flux;
-import reactor.core.scheduler.Schedulers;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.SkipException;
@@ -45,6 +49,8 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
+import reactor.core.publisher.Flux;
+import reactor.core.scheduler.Schedulers;
 import reactor.util.concurrent.Queues;
 import rx.Observable;
 

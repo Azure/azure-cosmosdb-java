@@ -22,7 +22,11 @@
  */
 package com.azure.data.cosmos.rx;
 
-import com.azure.data.cosmos.*;
+import com.azure.data.cosmos.CosmosClient;
+import com.azure.data.cosmos.CosmosClientBuilder;
+import com.azure.data.cosmos.CosmosContainer;
+import com.azure.data.cosmos.CosmosDatabase;
+import com.azure.data.cosmos.CosmosItemProperties;
 import com.azure.data.cosmos.directconnectivity.Protocol;
 import org.testng.SkipException;
 import org.testng.annotations.BeforeClass;

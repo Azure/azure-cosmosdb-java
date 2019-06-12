@@ -23,14 +23,13 @@
 
 package com.azure.data.cosmos;
 
+import com.azure.data.cosmos.internal.Constants;
+import com.azure.data.cosmos.internal.HttpConstants;
+import org.apache.commons.lang3.StringUtils;
+
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
-
-import org.apache.commons.lang3.StringUtils;
-
-import com.azure.data.cosmos.internal.Constants;
-import com.azure.data.cosmos.internal.HttpConstants;
 
 /**
  * This class defines a custom exception type for all operations on

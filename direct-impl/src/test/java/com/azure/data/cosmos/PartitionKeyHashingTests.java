@@ -1,13 +1,12 @@
 package com.azure.data.cosmos;
 
+import com.azure.data.cosmos.internal.routing.PartitionKeyInternalHelper;
+import com.fasterxml.jackson.databind.node.NullNode;
+import org.testng.annotations.Test;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-
-import org.testng.annotations.Test;
-
-import com.fasterxml.jackson.databind.node.NullNode;
-import com.azure.data.cosmos.internal.routing.PartitionKeyInternalHelper;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 

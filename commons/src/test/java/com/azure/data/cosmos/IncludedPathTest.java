@@ -22,14 +22,11 @@
  */
 package com.azure.data.cosmos;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.testng.annotations.Test;
 
 import java.util.Collection;
 
-import com.azure.data.cosmos.DataType;
-import com.azure.data.cosmos.IncludedPath;
-import com.azure.data.cosmos.Index;
-import org.testng.annotations.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class IncludedPathTest {
 

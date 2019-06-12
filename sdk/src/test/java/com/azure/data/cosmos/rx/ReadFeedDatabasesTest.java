@@ -22,25 +22,23 @@
  */
 package com.azure.data.cosmos.rx;
 
+import com.azure.data.cosmos.CosmosClient;
+import com.azure.data.cosmos.CosmosClientBuilder;
+import com.azure.data.cosmos.CosmosDatabaseRequestOptions;
+import com.azure.data.cosmos.CosmosDatabaseSettings;
+import com.azure.data.cosmos.FeedOptions;
+import com.azure.data.cosmos.FeedResponse;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Factory;
+import org.testng.annotations.Test;
+import reactor.core.publisher.Flux;
+
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
-import com.azure.data.cosmos.CosmosClientBuilder;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Factory;
-import org.testng.annotations.Test;
-
-import com.azure.data.cosmos.CosmosClient;
-import com.azure.data.cosmos.CosmosDatabaseRequestOptions;
-import com.azure.data.cosmos.CosmosDatabaseSettings;
-import com.azure.data.cosmos.FeedOptions;
-import com.azure.data.cosmos.FeedResponse;
-
-import reactor.core.publisher.Flux;
 
 public class ReadFeedDatabasesTest extends TestSuiteBase {
 

@@ -23,32 +23,16 @@
 
 package com.azure.data.cosmos.directconnectivity;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.net.URI;
-import java.util.concurrent.TimeUnit;
-
-import org.apache.commons.io.IOUtils;
-import org.mockito.Matchers;
-import org.mockito.Mockito;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Factory;
-import org.testng.annotations.Test;
-
+import com.azure.data.cosmos.AsyncDocumentClient;
+import com.azure.data.cosmos.AsyncDocumentClient.Builder;
 import com.azure.data.cosmos.BridgeInternal;
 import com.azure.data.cosmos.ConnectionPolicy;
 import com.azure.data.cosmos.DatabaseAccount;
 import com.azure.data.cosmos.internal.BaseAuthorizationTokenProvider;
-import com.azure.data.cosmos.AsyncDocumentClient;
-import com.azure.data.cosmos.AsyncDocumentClient.Builder;
-import com.azure.data.cosmos.rx.TestConfigurations;
-import com.azure.data.cosmos.internal.TestSuiteBase;
 import com.azure.data.cosmos.internal.SpyClientUnderTestFactory;
 import com.azure.data.cosmos.internal.SpyClientUnderTestFactory.ClientUnderTest;
-
+import com.azure.data.cosmos.internal.TestSuiteBase;
+import com.azure.data.cosmos.rx.TestConfigurations;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.ByteBufUtil;
@@ -62,9 +46,23 @@ import io.reactivex.netty.client.RxClient;
 import io.reactivex.netty.protocol.http.client.CompositeHttpClient;
 import io.reactivex.netty.protocol.http.client.HttpClientResponse;
 import io.reactivex.netty.protocol.http.client.HttpResponseHeaders;
+import org.apache.commons.io.IOUtils;
+import org.mockito.Matchers;
+import org.mockito.Mockito;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Factory;
+import org.testng.annotations.Test;
 import rx.Observable;
 import rx.Single;
 import rx.observers.TestSubscriber;
+
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.net.URI;
+import java.util.concurrent.TimeUnit;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class GatewayServiceConfigurationReaderTest extends TestSuiteBase {
 
