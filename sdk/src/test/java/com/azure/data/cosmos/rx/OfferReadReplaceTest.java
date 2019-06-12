@@ -49,7 +49,7 @@ public class OfferReadReplaceTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuilders")
     public OfferReadReplaceTest(AsyncDocumentClient.Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "emulator" }, timeOut = TIMEOUT)
@@ -100,7 +100,7 @@ public class OfferReadReplaceTest extends TestSuiteBase {
 
     @BeforeClass(groups = { "emulator" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
-        client = clientBuilder.build();
+        client = clientBuilder().build();
         createdDatabase = createDatabase(client, databaseId);
         createdCollection = createCollection(client, createdDatabase.id(),
                 getCollectionDefinition());

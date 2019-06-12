@@ -79,7 +79,7 @@ public class BackPressureTest extends TestSuiteBase {
 
     @Factory(dataProvider = "simpleClientBuildersWithDirectHttps")
     public BackPressureTest(CosmosClientBuilder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "long" }, timeOut = TIMEOUT)
@@ -169,7 +169,7 @@ public class BackPressureTest extends TestSuiteBase {
 
         CosmosContainerRequestOptions options = new CosmosContainerRequestOptions();
         options.offerThroughput(1000);
-        client = new ClientUnderTestBuilder(clientBuilder).build();
+        client = new ClientUnderTestBuilder(clientBuilder()).build();
         createdDatabase = getSharedCosmosDatabase(client);
 
         createdCollection = createCollection(createdDatabase, getSinglePartitionCollectionDefinition(), options);
@@ -193,7 +193,7 @@ public class BackPressureTest extends TestSuiteBase {
 
         createdDocuments = bulkInsertBlocking(createdCollection, docDefList);
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(clientBuilder());
         warmUp();
     }
 

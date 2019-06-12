@@ -50,7 +50,7 @@ public class DocumentClientResourceLeakTest extends TestSuiteBase {
 
     @Factory(dataProvider = "simpleClientBuildersWithDirect")
     public DocumentClientResourceLeakTest(CosmosClientBuilder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     //TODO : FIX tests
@@ -66,7 +66,7 @@ public class DocumentClientResourceLeakTest extends TestSuiteBase {
 
 
         for (int i = 0; i < MAX_NUMBER; i++) {
-            client = clientBuilder.build();
+            client = clientBuilder().build();
             logger.info("client {}", i);
             try {
                 logger.info("creating doc...");
@@ -85,7 +85,7 @@ public class DocumentClientResourceLeakTest extends TestSuiteBase {
 
     @BeforeClass(groups = {"emulator"}, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
-        client = clientBuilder.build();
+        client = clientBuilder().build();
         createdDatabase = getSharedCosmosDatabase(client);
         createdCollection = getSharedMultiPartitionCosmosContainer(client);
     }

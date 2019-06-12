@@ -29,6 +29,7 @@ import com.azure.data.cosmos.ConsistencyLevel;
 import com.azure.data.cosmos.CosmosClientException;
 import com.azure.data.cosmos.DataType;
 import com.azure.data.cosmos.Database;
+import com.azure.data.cosmos.DocumentClientTest;
 import com.azure.data.cosmos.DocumentCollection;
 import com.azure.data.cosmos.FeedResponse;
 import com.azure.data.cosmos.IncludedPath;
@@ -82,7 +83,7 @@ import static org.hamcrest.Matchers.greaterThan;
  * update the corresponding Offer. Please see
  * {@see com.azure.data.cosmos.rx.examples.OfferCRUDAsyncAPITest#testUpdateOffer()}
  */
-public class CollectionCRUDAsyncAPITest extends NamedCosmosClientTest {
+public class CollectionCRUDAsyncAPITest extends DocumentClientTest {
 
     private final static int TIMEOUT = 120000;
     private Database createdDatabase;
@@ -94,13 +95,13 @@ public class CollectionCRUDAsyncAPITest extends NamedCosmosClientTest {
 
         ConnectionPolicy connectionPolicy = new ConnectionPolicy().connectionMode(ConnectionMode.DIRECT);
 
-        this.builder()
+        this.clientBuilder()
             .withServiceEndpoint(TestConfigurations.HOST)
             .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
             .withConnectionPolicy(connectionPolicy)
             .withConsistencyLevel(ConsistencyLevel.SESSION);
 
-        this.client = this.builder().build();
+        this.client = this.clientBuilder().build();
 
         createdDatabase = Utils.createDatabaseForTest(client);
     }

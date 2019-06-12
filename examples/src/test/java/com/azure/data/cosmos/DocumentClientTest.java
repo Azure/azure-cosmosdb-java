@@ -21,10 +21,8 @@
  * SOFTWARE.
  */
 
-package com.azure.data.cosmos.rx.examples;
+package com.azure.data.cosmos;
 
-import com.azure.data.cosmos.AsyncDocumentClient;
-import com.azure.data.cosmos.ConnectionMode;
 import com.google.common.base.Strings;
 import org.testng.ITest;
 import org.testng.annotations.AfterMethod;
@@ -32,15 +30,21 @@ import org.testng.annotations.BeforeMethod;
 
 import java.lang.reflect.Method;
 
-import static com.azure.data.cosmos.AsyncDocumentClient.Builder;
+public abstract class DocumentClientTest implements ITest {
 
-public class NamedCosmosClientTest implements ITest {
-
-    private final Builder builder = new AsyncDocumentClient.Builder();
+    private final AsyncDocumentClient.Builder clientBuilder;;
     private String testName;
 
-    public final Builder builder() {
-        return this.builder;
+    public DocumentClientTest() {
+         this(new AsyncDocumentClient.Builder());
+    }
+
+    public DocumentClientTest(AsyncDocumentClient.Builder clientBuilder) {
+        this.clientBuilder = clientBuilder;
+    }
+
+    public final AsyncDocumentClient.Builder clientBuilder() {
+        return this.clientBuilder;
     }
 
     @Override
@@ -51,15 +55,15 @@ public class NamedCosmosClientTest implements ITest {
     @BeforeMethod(alwaysRun = true)
     public final void setTestName(Method method) {
 
-        String connectionMode = this.builder.getConnectionPolicy().connectionMode() == ConnectionMode.DIRECT
-            ? "Direct " + this.builder.getConfigs().getProtocol()
+        String connectionMode = this.clientBuilder.getConnectionPolicy().connectionMode() == ConnectionMode.DIRECT
+            ? "Direct " + this.clientBuilder.getConfigs().getProtocol()
             : "Gateway";
 
         this.testName = Strings.lenientFormat("%s::%s[%s with %s consistency]",
             method.getDeclaringClass().getSimpleName(),
             method.getName(),
             connectionMode,
-            builder.getDesiredConsistencyLevel());
+            clientBuilder.getDesiredConsistencyLevel());
     }
 
     @AfterMethod(alwaysRun = true)

@@ -34,11 +34,11 @@
   <modules>
     <module>commons</module>
     <module>gateway</module>
-    <module>examples</module>
-    <module>benchmark</module>
     <module>commons-test-utils</module>
     <module>sdk</module>
     <module>direct-impl</module>
+    <module>benchmark</module>
+    <module>examples</module>
   </modules>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

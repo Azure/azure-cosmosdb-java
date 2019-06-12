@@ -46,7 +46,7 @@ public class UserDefinedFunctionCrudTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuildersWithDirect")
     public UserDefinedFunctionCrudTest(CosmosClientBuilder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
@@ -76,7 +76,7 @@ public class UserDefinedFunctionCrudTest extends TestSuiteBase {
         CosmosUserDefinedFunction readBackUdf = createdCollection.createUserDefinedFunction(udf, new CosmosRequestOptions()).block().userDefinedFunction();
 
         // read udf
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(clientBuilder());
         Mono<CosmosUserDefinedFunctionResponse> readObservable = readBackUdf.read(null);
 
         //validate udf read
@@ -108,7 +108,7 @@ public class UserDefinedFunctionCrudTest extends TestSuiteBase {
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
-        client = clientBuilder.build();
+        client = clientBuilder().build();
         createdCollection = getSharedMultiPartitionCosmosContainer(client);
     }
     

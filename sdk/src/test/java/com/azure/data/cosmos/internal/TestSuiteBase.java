@@ -34,6 +34,7 @@ import com.azure.data.cosmos.DataType;
 import com.azure.data.cosmos.Database;
 import com.azure.data.cosmos.DatabaseForTest;
 import com.azure.data.cosmos.Document;
+import com.azure.data.cosmos.DocumentClientTest;
 import com.azure.data.cosmos.DocumentCollection;
 import com.azure.data.cosmos.FeedOptions;
 import com.azure.data.cosmos.FeedResponse;
@@ -89,7 +90,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
 
-public class TestSuiteBase implements ITest {
+public class TestSuiteBase extends DocumentClientTest {
 
     private static final int DEFAULT_BULK_INSERT_CONCURRENCY_LEVEL = 500;
     private static final ObjectMapper objectMapper = new ObjectMapper();
@@ -134,45 +135,16 @@ public class TestSuiteBase implements ITest {
     private String testName;
 
     protected TestSuiteBase() {
+        this(new AsyncDocumentClient.Builder());
+    }
+
+    protected TestSuiteBase(AsyncDocumentClient.Builder clientBuilder) {
+        super(clientBuilder);
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         objectMapper.configure(JsonParser.Feature.ALLOW_SINGLE_QUOTES, true);
         objectMapper.configure(JsonParser.Feature.ALLOW_TRAILING_COMMA, true);
         objectMapper.configure(JsonParser.Feature.STRICT_DUPLICATE_DETECTION, true);
         logger.debug("Initializing {} ...", this.getClass().getSimpleName());
-    }
-
-    @Override
-    public final String getTestName() {
-        return this.testName;
-    }
-
-    @BeforeMethod(alwaysRun = true)
-    public final void setTestName(Method method) {
-
-        if (this.clientBuilder == null) {
-
-            this.testName = Strings.lenientFormat("%s::%s", method.getDeclaringClass().getSimpleName(), method.getName());
-
-        } else {
-
-            String connectionMode = this.clientBuilder.getConnectionPolicy().connectionMode() == ConnectionMode.DIRECT
-                ? "Direct " + this.clientBuilder.getConfigs().getProtocol()
-                : "Gateway";
-
-            this.testName = Strings.lenientFormat("%s::%s[%s with %s consistency]",
-                method.getDeclaringClass().getSimpleName(),
-                method.getName(),
-                connectionMode,
-                this.clientBuilder.getDesiredConsistencyLevel());
-        }
-
-        logger.info("Starting {}", this.getTestName());
-    }
-
-    @AfterMethod(alwaysRun = true)
-    public final void unsetTestName() {
-        logger.info("Finished {}", this.getTestName());
-        this.testName = null;
     }
 
     private static class DatabaseManagerImpl implements DatabaseForTest.DatabaseManager {

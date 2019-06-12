@@ -83,7 +83,7 @@ public class ChangeFeedTest extends TestSuiteBase {
     }
 
     public ChangeFeedTest() {
-        clientBuilder = createGatewayRxDocumentClient();
+        super(createGatewayRxDocumentClient());
         subscriberValidationTimeout = TIMEOUT;
     }
 
@@ -101,7 +101,7 @@ public class ChangeFeedTest extends TestSuiteBase {
                 .toList().toBlocking().single();
 
         int count = 0;
-        for(int i = 0; i < changeFeedResultList.size(); i++) {
+        for (int i = 0; i < changeFeedResultList.size(); i++) {
             FeedResponse<Document> changeFeedPage = changeFeedResultList.get(i);
             assertThat(changeFeedPage.continuationToken()).as("Response continuation should not be null").isNotNull();
 
@@ -288,7 +288,7 @@ public class ChangeFeedTest extends TestSuiteBase {
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() throws Exception {
         // set up the client
-        client = clientBuilder.build();
+        client = clientBuilder().build();
         createdDatabase = SHARED_DATABASE;
     }
 

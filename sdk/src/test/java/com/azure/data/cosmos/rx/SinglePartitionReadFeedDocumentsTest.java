@@ -48,7 +48,7 @@ public class SinglePartitionReadFeedDocumentsTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuildersWithDirect")
     public SinglePartitionReadFeedDocumentsTest(CosmosClientBuilder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "simple" }, timeOut = FEED_TIMEOUT)
@@ -71,7 +71,7 @@ public class SinglePartitionReadFeedDocumentsTest extends TestSuiteBase {
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
-        client = clientBuilder.build();
+        client = clientBuilder().build();
         createdCollection = getSharedSinglePartitionCosmosContainer(client);
         truncateCollection(createdCollection);
 
@@ -82,7 +82,7 @@ public class SinglePartitionReadFeedDocumentsTest extends TestSuiteBase {
         }
 
         createdDocuments = bulkInsertBlocking(createdCollection, docDefList);
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(clientBuilder());
     }
 
     @AfterClass(groups = { "simple" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)

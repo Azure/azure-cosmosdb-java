@@ -54,7 +54,7 @@ public class UserQueryTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuilders")
     public UserQueryTest(CosmosClientBuilder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
@@ -130,7 +130,7 @@ public class UserQueryTest extends TestSuiteBase {
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() throws Exception {
-        client = clientBuilder.build();
+        client = clientBuilder().build();
 
         createdDatabase = createDatabase(client, databaseId);
 
@@ -140,7 +140,7 @@ public class UserQueryTest extends TestSuiteBase {
             createdUsers.add(createUser(client, databaseId, user).read().block().settings());
         }
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(clientBuilder());
     }
 
     @AfterClass(groups = { "simple" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)

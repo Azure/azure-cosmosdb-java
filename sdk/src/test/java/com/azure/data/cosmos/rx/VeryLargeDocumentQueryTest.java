@@ -55,7 +55,7 @@ public class VeryLargeDocumentQueryTest extends TestSuiteBase {
 
     @Factory(dataProvider = "simpleClientBuildersWithDirect")
     public VeryLargeDocumentQueryTest(CosmosClientBuilder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "emulator" }, timeOut = TIMEOUT, retryAnalyzer = RetryAnalyzer.class)
@@ -65,19 +65,10 @@ public class VeryLargeDocumentQueryTest extends TestSuiteBase {
             createLargeDocument();
         }
 
-        try {
-            FeedOptions options = new FeedOptions();
-            options.enableCrossPartitionQuery(true);
-            validateQuerySuccess(createdCollection.queryItems("SELECT * FROM r", options),
-                new FeedResponseListValidator.Builder().totalSize(cnt).build());
-        } catch (Throwable error) {
-            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.TCP) {
-                String message = String.format("DIRECT TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
-                logger.info(message, error);
-                throw new SkipException(message, error);
-            }
-            throw error;
-        }
+        FeedOptions options = new FeedOptions();
+        options.enableCrossPartitionQuery(true);
+        validateQuerySuccess(createdCollection.queryItems("SELECT * FROM r", options),
+            new FeedResponseListValidator.Builder().totalSize(cnt).build());
     }
 
     private void createLargeDocument() throws InterruptedException {
@@ -98,7 +89,7 @@ public class VeryLargeDocumentQueryTest extends TestSuiteBase {
 
     @BeforeClass(groups = { "emulator" }, timeOut = 2 * SETUP_TIMEOUT)
     public void beforeClass() throws Exception {
-        client = clientBuilder.build();
+        client = clientBuilder().build();
         createdCollection = getSharedMultiPartitionCosmosContainer(client);
         truncateCollection(createdCollection);
     }

@@ -64,7 +64,7 @@ public class SpyClientUnderTestFactory {
         
         public abstract void clearCapturedRequests();
 
-        protected static Configs createConfigsSpy(final Protocol protocol) {
+        static Configs createConfigsSpy(final Protocol protocol) {
             final Configs configs = spy(new Configs());
             doAnswer((Answer<Protocol>)invocation -> protocol).when(configs).getProtocol();
             return configs;

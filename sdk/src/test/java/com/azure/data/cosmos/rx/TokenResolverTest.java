@@ -90,7 +90,7 @@ public class TokenResolverTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuilders")
     public TokenResolverTest(AsyncDocumentClient.Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @DataProvider(name = "connectionMode")
@@ -106,7 +106,7 @@ public class TokenResolverTest extends TestSuiteBase {
         createdDatabase = SHARED_DATABASE;
         createdCollection = SHARED_SINGLE_PARTITION_COLLECTION;
 
-        client = clientBuilder.build();
+        client = clientBuilder().build();
 
         userWithReadPermission = createUser(client, createdDatabase.id(), getUserDefinition());
         readPermission = client.createPermission(userWithReadPermission.selfLink(), getPermission(createdCollection, "ReadPermissionOnColl", PermissionMode.READ), null).toBlocking().single()

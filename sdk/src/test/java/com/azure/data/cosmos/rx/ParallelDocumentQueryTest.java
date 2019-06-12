@@ -33,12 +33,10 @@ import com.azure.data.cosmos.CosmosItemProperties;
 import com.azure.data.cosmos.FeedOptions;
 import com.azure.data.cosmos.FeedResponse;
 import com.azure.data.cosmos.QueryMetrics;
-import com.azure.data.cosmos.directconnectivity.Protocol;
 import com.azure.data.cosmos.internal.Utils.ValueHolder;
 import com.azure.data.cosmos.internal.query.CompositeContinuationToken;
 import com.azure.data.cosmos.internal.routing.Range;
 import io.reactivex.subscribers.TestSubscriber;
-import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -69,7 +67,7 @@ public class ParallelDocumentQueryTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuildersWithDirect")
     public ParallelDocumentQueryTest(CosmosClientBuilder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @DataProvider(name = "queryMetricsArgProvider")
@@ -101,16 +99,7 @@ public class ParallelDocumentQueryTest extends TestSuiteBase {
                 .hasValidQueryMetrics(qmEnabled)
                 .build();
 
-        try {
-            validateQuerySuccess(queryObservable, validator, TIMEOUT);
-        } catch (Throwable error) {
-            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.TCP) {
-                String message = String.format(String.format("DIRECT TCP test failure: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel()));
-                logger.info(message, error);
-                throw new SkipException(message, error);
-            }
-            throw error;
-        }
+        validateQuerySuccess(queryObservable, validator, TIMEOUT);
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
@@ -193,16 +182,7 @@ public class ParallelDocumentQueryTest extends TestSuiteBase {
                                          .pageSizeIsLessThanOrEqualTo(pageSize)
                                          .build())
                 .build();
-        try {
-            validateQuerySuccess(queryObservable, validator, 2 * subscriberValidationTimeout);
-        } catch (Throwable error) {
-            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.TCP) {
-                String message = String.format("DIRECT TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
-                logger.info(message, error);
-                throw new SkipException(message, error);
-            }
-            throw error;
-        }
+        validateQuerySuccess(queryObservable, validator, 2 * subscriberValidationTimeout);
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
@@ -240,26 +220,19 @@ public class ParallelDocumentQueryTest extends TestSuiteBase {
     @Test(groups = { "simple" }, timeOut = 2 * TIMEOUT)
     public void partitionKeyRangeId() {
         int sum = 0;
-        try {
-            for (String partitionKeyRangeId : CosmosBridgeInternal.getAsyncDocumentClient(client).readPartitionKeyRanges(getCollectionLink(), null)
-                .flatMap(p -> Observable.from(p.results()))
-                .map(pkr -> pkr.id()).toList().toBlocking().single()) {
-                String query = "SELECT * from root";
-                FeedOptions options = new FeedOptions();
-                options.partitionKeyRangeIdInternal(partitionKeyRangeId);
-                int queryResultCount = createdCollection.queryItems(query, options)
-                    .flatMap(p -> Flux.fromIterable(p.results()))
-                    .collectList().block().size();
 
-                sum += queryResultCount;
-            }
-        } catch (Throwable error) {
-            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.TCP) {
-                String message = String.format("DIRECT TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
-                logger.info(message, error);
-                throw new SkipException(message, error);
-            }
-            throw error;
+        for (String partitionKeyRangeId :
+            CosmosBridgeInternal.getAsyncDocumentClient(client).readPartitionKeyRanges(getCollectionLink(), null)
+                                                              .flatMap(p -> Observable.from(p.results()))
+                                                              .map(pkr -> pkr.id()).toList().toBlocking().single()) {
+            String query = "SELECT * from root";
+            FeedOptions options = new FeedOptions();
+            options.partitionKeyRangeIdInternal(partitionKeyRangeId);
+            int queryResultCount = createdCollection.queryItems(query, options)
+                                                    .flatMap(p -> Flux.fromIterable(p.results()))
+                                                    .collectList().block().size();
+
+            sum += queryResultCount;
         }
 
         assertThat(sum).isEqualTo(createdDocuments.size());
@@ -325,7 +298,7 @@ public class ParallelDocumentQueryTest extends TestSuiteBase {
 
     @BeforeClass(groups = { "simple", "non-emulator" }, timeOut = 2 * SETUP_TIMEOUT)
     public void beforeClass() {
-        client = clientBuilder.build();
+        client = clientBuilder().build();
         createdDatabase = getSharedCosmosDatabase(client);
         createdCollection = getSharedMultiPartitionCosmosContainer(client);
         truncateCollection(createdCollection);
@@ -340,7 +313,7 @@ public class ParallelDocumentQueryTest extends TestSuiteBase {
 
         createdDocuments = bulkInsertBlocking(createdCollection, docDefList);
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(clientBuilder());
     }
 
     @AfterClass(groups = { "simple", "non-emulator" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)

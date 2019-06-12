@@ -60,7 +60,7 @@ public class MultiMasterConflictResolutionTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuilders")
     public MultiMasterConflictResolutionTest(CosmosClientBuilder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = "multi-master", timeOut = 10 * TIMEOUT)
@@ -198,7 +198,7 @@ public class MultiMasterConflictResolutionTest extends TestSuiteBase {
     public void beforeClass() {
         // set up the client
 
-        client = clientBuilder.build();
+        client = clientBuilder().build();
         database = createDatabase(client, databaseId);
         partitionKeyDef = new PartitionKeyDefinition();
         ArrayList<String> paths = new ArrayList<String>();

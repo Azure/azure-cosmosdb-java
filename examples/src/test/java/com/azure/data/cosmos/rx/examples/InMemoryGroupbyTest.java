@@ -28,6 +28,7 @@ import com.azure.data.cosmos.ConnectionPolicy;
 import com.azure.data.cosmos.ConsistencyLevel;
 import com.azure.data.cosmos.Database;
 import com.azure.data.cosmos.Document;
+import com.azure.data.cosmos.DocumentClientTest;
 import com.azure.data.cosmos.DocumentCollection;
 import com.azure.data.cosmos.FeedOptions;
 import com.azure.data.cosmos.PartitionKeyDefinition;
@@ -45,7 +46,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public class InMemoryGroupbyTest extends NamedCosmosClientTest {
+public class InMemoryGroupbyTest extends DocumentClientTest {
 
     private final static int TIMEOUT = 60000;
 
@@ -58,13 +59,13 @@ public class InMemoryGroupbyTest extends NamedCosmosClientTest {
 
         ConnectionPolicy connectionPolicy = new ConnectionPolicy().connectionMode(ConnectionMode.DIRECT);
 
-        this.builder()
+        this.clientBuilder()
             .withServiceEndpoint(TestConfigurations.HOST)
             .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
             .withConnectionPolicy(connectionPolicy)
             .withConsistencyLevel(ConsistencyLevel.SESSION);
 
-        this.client = this.builder().build();
+        this.client = this.clientBuilder().build();
 
         // CREATE database
         createdDatabase = Utils.createDatabaseForTest(client);

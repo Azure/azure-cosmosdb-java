@@ -129,7 +129,7 @@ public class MultiOrderByQueryTests extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuilders")
     public MultiOrderByQueryTests(CosmosClientBuilder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @AfterClass(groups = { "simple" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)
@@ -139,7 +139,7 @@ public class MultiOrderByQueryTests extends TestSuiteBase {
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() throws Exception {
-        client = clientBuilder.build();
+        client = clientBuilder().build();
         documentCollection = getSharedMultiPartitionCosmosContainerWithCompositeAndSpatialIndexes(client);
         truncateCollection(documentCollection);
 

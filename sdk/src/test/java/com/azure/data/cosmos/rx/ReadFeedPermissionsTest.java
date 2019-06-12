@@ -55,7 +55,7 @@ public class ReadFeedPermissionsTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuilders")
     public ReadFeedPermissionsTest(AsyncDocumentClient.Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "simple" }, timeOut = FEED_TIMEOUT)
@@ -80,7 +80,7 @@ public class ReadFeedPermissionsTest extends TestSuiteBase {
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
-        client = clientBuilder.build();
+        client = clientBuilder().build();
         Database d = new Database();
         d.id(databaseId);
         createdDatabase = createDatabase(client, d);

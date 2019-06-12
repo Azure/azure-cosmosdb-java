@@ -49,7 +49,7 @@ public class TriggerCrudTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuildersWithDirect")
     public TriggerCrudTest(CosmosClientBuilder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT * 100)
@@ -85,7 +85,7 @@ public class TriggerCrudTest extends TestSuiteBase {
         CosmosTrigger readBackTrigger = createdCollection.createTrigger(trigger, new CosmosRequestOptions()).block().trigger();
 
         // read trigger
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(clientBuilder());
         Mono<CosmosTriggerResponse> readObservable = readBackTrigger.read(new RequestOptions());
 
         // validate read trigger
@@ -120,7 +120,7 @@ public class TriggerCrudTest extends TestSuiteBase {
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
-        client = clientBuilder.build();
+        client = clientBuilder().build();
         createdCollection = getSharedMultiPartitionCosmosContainer(client);
     }
 

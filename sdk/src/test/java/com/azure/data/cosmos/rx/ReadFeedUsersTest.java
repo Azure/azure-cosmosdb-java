@@ -51,7 +51,7 @@ public class ReadFeedUsersTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuilders")
     public ReadFeedUsersTest(CosmosClientBuilder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "simple" }, timeOut = FEED_TIMEOUT)
@@ -76,14 +76,14 @@ public class ReadFeedUsersTest extends TestSuiteBase {
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
-        client = clientBuilder.build();
+        client = clientBuilder().build();
         createdDatabase = createDatabase(client, databaseId);
 
         for(int i = 0; i < 5; i++) {
             createdUsers.add(createUsers(createdDatabase));
         }
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(clientBuilder());
     }
 
     @AfterClass(groups = { "simple" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)

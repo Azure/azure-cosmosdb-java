@@ -29,6 +29,7 @@ import com.azure.data.cosmos.ConnectionPolicy;
 import com.azure.data.cosmos.ConsistencyLevel;
 import com.azure.data.cosmos.Database;
 import com.azure.data.cosmos.Document;
+import com.azure.data.cosmos.DocumentClientTest;
 import com.azure.data.cosmos.DocumentCollection;
 import com.azure.data.cosmos.FeedOptions;
 import com.azure.data.cosmos.FeedResponse;
@@ -59,7 +60,7 @@ import static org.hamcrest.Matchers.notNullValue;
  * transform an observable to ListenableFuture. Please see
  * {@link #transformObservableToGoogleGuavaListenableFuture()}
  */
-public class ConflictAPITest extends NamedCosmosClientTest {
+public class ConflictAPITest extends DocumentClientTest {
     private final static int TIMEOUT = 60000;
 
     private AsyncDocumentClient client;
@@ -71,13 +72,13 @@ public class ConflictAPITest extends NamedCosmosClientTest {
 
         ConnectionPolicy connectionPolicy = new ConnectionPolicy().connectionMode(ConnectionMode.DIRECT);
 
-        this.builder()
+        this.clientBuilder()
             .withServiceEndpoint(TestConfigurations.HOST)
             .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
             .withConnectionPolicy(connectionPolicy)
             .withConsistencyLevel(ConsistencyLevel.SESSION);
 
-        this.client = this.builder().build();
+        this.client = this.clientBuilder().build();
 
         DocumentCollection collectionDefinition = new DocumentCollection();
         collectionDefinition.id(UUID.randomUUID().toString());

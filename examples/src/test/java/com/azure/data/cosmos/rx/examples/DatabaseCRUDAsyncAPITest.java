@@ -28,6 +28,7 @@ import com.azure.data.cosmos.ConnectionPolicy;
 import com.azure.data.cosmos.ConsistencyLevel;
 import com.azure.data.cosmos.CosmosClientException;
 import com.azure.data.cosmos.Database;
+import com.azure.data.cosmos.DocumentClientTest;
 import com.azure.data.cosmos.FeedResponse;
 import com.azure.data.cosmos.ResourceResponse;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -68,7 +69,7 @@ import static org.hamcrest.Matchers.greaterThan;
  * transform an observable to ListenableFuture. Please see
  * {@link #transformObservableToGoogleGuavaListenableFuture()}
  */
-public class DatabaseCRUDAsyncAPITest extends NamedCosmosClientTest {
+public class DatabaseCRUDAsyncAPITest extends DocumentClientTest {
     private final static int TIMEOUT = 60000;
     private final List<String> databaseIds = new ArrayList<>();
 
@@ -79,13 +80,13 @@ public class DatabaseCRUDAsyncAPITest extends NamedCosmosClientTest {
 
         ConnectionPolicy connectionPolicy = new ConnectionPolicy().connectionMode(ConnectionMode.DIRECT);
 
-        this.builder()
+        this.clientBuilder()
             .withServiceEndpoint(TestConfigurations.HOST)
             .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
             .withConnectionPolicy(connectionPolicy)
             .withConsistencyLevel(ConsistencyLevel.SESSION);
 
-        this.client = this.builder().build();
+        this.client = this.clientBuilder().build();
     }
 
     private Database getDatabaseDefinition() {

@@ -62,7 +62,7 @@ public class TopQueryTests extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuildersWithDirect")
     public TopQueryTests(CosmosClientBuilder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT, dataProvider = "queryMetricsArgProvider", retryAnalyzer = RetryAnalyzer.class)
@@ -84,17 +84,7 @@ public class TopQueryTests extends TestSuiteBase {
             FeedResponseListValidator<CosmosItemProperties> validator1 = new FeedResponseListValidator.Builder<CosmosItemProperties>()
                     .totalSize(0).build();
 
-            try {
-                validateQuerySuccess(queryObservable1, validator1, TIMEOUT);
-            } catch (Throwable error) {
-                if (this.clientBuilder.getConfigs().getProtocol() == Protocol.TCP) {
-                    String message = String.format("DIRECT TCP test failure ignored: desiredConsistencyLevel=%s",
-                            this.clientBuilder.getDesiredConsistencyLevel());
-                    logger.info(message, error);
-                    throw new SkipException(message, error);
-                }
-                throw error;
-            }
+            validateQuerySuccess(queryObservable1, validator1, TIMEOUT);
 
             Flux<FeedResponse<CosmosItemProperties>> queryObservable2 = createdCollection.queryItems("SELECT TOP 1 value AVG(c.field) from c", options);
 
@@ -228,12 +218,12 @@ public class TopQueryTests extends TestSuiteBase {
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() throws Exception {
-        client = clientBuilder.build();
+        client = clientBuilder().build();
         createdCollection = getSharedSinglePartitionCosmosContainer(client);
         truncateCollection(createdCollection);
 
         bulkInsert(client);
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(clientBuilder());
     }
 }

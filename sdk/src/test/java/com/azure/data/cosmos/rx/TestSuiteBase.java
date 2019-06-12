@@ -31,6 +31,7 @@ import com.azure.data.cosmos.CosmosBridgeInternal;
 import com.azure.data.cosmos.CosmosClient;
 import com.azure.data.cosmos.CosmosClientBuilder;
 import com.azure.data.cosmos.CosmosClientException;
+import com.azure.data.cosmos.CosmosClientTest;
 import com.azure.data.cosmos.CosmosContainer;
 import com.azure.data.cosmos.CosmosContainerRequestOptions;
 import com.azure.data.cosmos.CosmosContainerSettings;
@@ -95,7 +96,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
 
-public class TestSuiteBase {
+public class TestSuiteBase extends CosmosClientTest {
+
     private static final int DEFAULT_BULK_INSERT_CONCURRENCY_LEVEL = 500;
     private static final ObjectMapper objectMapper = new ObjectMapper();
     protected static Logger logger = LoggerFactory.getLogger(TestSuiteBase.class.getSimpleName());
@@ -115,12 +117,15 @@ public class TestSuiteBase {
     private static final ImmutableList<Protocol> protocols;
 
     protected int subscriberValidationTimeout = TIMEOUT;
-    protected CosmosClientBuilder clientBuilder;
 
     private static CosmosDatabase SHARED_DATABASE;
     private static CosmosContainer SHARED_MULTI_PARTITION_COLLECTION;
     private static CosmosContainer SHARED_MULTI_PARTITION_COLLECTION_WITH_COMPOSITE_AND_SPATIAL_INDEXES;
     private static CosmosContainer SHARED_SINGLE_PARTITION_COLLECTION;
+
+    public TestSuiteBase(CosmosClientBuilder clientBuilder) {
+        super(clientBuilder);
+    }
 
     protected static CosmosDatabase getSharedCosmosDatabase(CosmosClient client) {
         return CosmosBridgeInternal.getCosmosDatabaseWithNewClient(SHARED_DATABASE, client);
@@ -158,25 +163,6 @@ public class TestSuiteBase {
 
     private static <T> ImmutableList<T> immutableListOrNull(List<T> list) {
         return list != null ? ImmutableList.copyOf(list) : null;
-    }
-
-    @BeforeMethod(groups = {"simple", "long", "direct", "multi-master", "emulator", "non-emulator"})
-    public void beforeMethod(Method method) {
-        if (this.clientBuilder != null) {
-            logger.info("Starting {}::{} using {} {} mode with {} consistency",
-                        method.getDeclaringClass().getSimpleName(), method.getName(),
-                        this.clientBuilder.getConnectionPolicy().connectionMode(),
-                        this.clientBuilder.getConfigs().getProtocol(),
-                        this.clientBuilder.getDesiredConsistencyLevel());
-            return;
-        }
-        logger.info("Starting {}::{}", method.getDeclaringClass().getSimpleName(), method.getName());
-    }
-
-    @AfterMethod(groups = {"simple", "long", "direct", "multi-master", "emulator", "non-emulator"})
-    public void afterMethod(Method m) {
-        Test t = m.getAnnotation(Test.class);
-        logger.info("Finished {}:{}.", m.getDeclaringClass().getSimpleName(), m.getName());
     }
 
     private static class DatabaseManagerImpl implements CosmosDatabaseForTest.DatabaseManager {

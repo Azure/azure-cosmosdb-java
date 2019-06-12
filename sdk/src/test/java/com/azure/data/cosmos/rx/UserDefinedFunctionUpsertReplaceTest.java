@@ -48,7 +48,7 @@ public class UserDefinedFunctionUpsertReplaceTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuildersWithDirect")
     public UserDefinedFunctionUpsertReplaceTest(CosmosClientBuilder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
@@ -61,19 +61,10 @@ public class UserDefinedFunctionUpsertReplaceTest extends TestSuiteBase {
 
         CosmosUserDefinedFunctionSettings readBackUdf = null;
 
-        try {
             readBackUdf = createdCollection.createUserDefinedFunction(udf, new CosmosRequestOptions()).block().settings();
-        } catch (Throwable error) {
-            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.TCP) {
-                String message = String.format("DIRECT TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
-                logger.info(message, error);
-                throw new SkipException(message, error);
-            }
-            throw error;
-        }
-        
+
         // read udf to validate creation
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(clientBuilder());
         Mono<CosmosUserDefinedFunctionResponse> readObservable = createdCollection.getUserDefinedFunction(readBackUdf.id()).read(new RequestOptions());
 
         // validate udf creation
@@ -100,7 +91,7 @@ public class UserDefinedFunctionUpsertReplaceTest extends TestSuiteBase {
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
-        client = clientBuilder.build();
+        client = clientBuilder().build();
         createdCollection = getSharedMultiPartitionCosmosContainer(client);
         truncateCollection(createdCollection);
     }

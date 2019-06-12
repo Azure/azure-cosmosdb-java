@@ -58,7 +58,7 @@ public class UserDefinedFunctionQueryTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuildersWithDirect")
     public UserDefinedFunctionQueryTest(CosmosClientBuilder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
@@ -152,7 +152,7 @@ public class UserDefinedFunctionQueryTest extends TestSuiteBase {
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() throws Exception {
-        client = clientBuilder.build();
+        client = clientBuilder().build();
         createdCollection = getSharedMultiPartitionCosmosContainer(client);
         truncateCollection(createdCollection);
 
@@ -160,7 +160,7 @@ public class UserDefinedFunctionQueryTest extends TestSuiteBase {
             createdUDF.add(createUserDefinedFunction(createdCollection));
         }
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(clientBuilder());
     }
 
     @AfterClass(groups = { "simple" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)

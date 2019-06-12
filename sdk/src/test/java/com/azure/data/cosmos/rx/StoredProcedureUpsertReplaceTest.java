@@ -32,8 +32,6 @@ import com.azure.data.cosmos.CosmosStoredProcedureResponse;
 import com.azure.data.cosmos.CosmosStoredProcedureSettings;
 import com.azure.data.cosmos.PartitionKey;
 import com.azure.data.cosmos.RequestOptions;
-import com.azure.data.cosmos.directconnectivity.Protocol;
-import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
@@ -52,7 +50,7 @@ public class StoredProcedureUpsertReplaceTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuildersWithDirect")
     public StoredProcedureUpsertReplaceTest(CosmosClientBuilder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
@@ -65,7 +63,7 @@ public class StoredProcedureUpsertReplaceTest extends TestSuiteBase {
         CosmosStoredProcedureSettings readBackSp = createdCollection.createStoredProcedure(storedProcedureDef, new CosmosStoredProcedureRequestOptions()).block().settings();
 
         // read stored procedure to validate creation
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(clientBuilder());
         Mono<CosmosStoredProcedureResponse> readObservable = createdCollection.getStoredProcedure(readBackSp.id()).read(null);
 
         // validate stored procedure creation
@@ -94,50 +92,33 @@ public class StoredProcedureUpsertReplaceTest extends TestSuiteBase {
     public void executeStoredProcedure() throws Exception {
         // create a stored procedure
         CosmosStoredProcedureSettings storedProcedureDef = new CosmosStoredProcedureSettings(
-                "{" +
-                        "  'id': '" +UUID.randomUUID().toString() + "'," +
-                        "  'body':" +
-                        "    'function () {" +
-                        "      for (var i = 0; i < 10; i++) {" +
-                        "        getContext().getResponse().appendValue(\"Body\", i);" +
-                        "      }" +
-                        "    }'" +
-                        "}");
+            "{" +
+                "  'id': '" + UUID.randomUUID().toString() + "'," +
+                "  'body':" +
+                "    'function () {" +
+                "      for (var i = 0; i < 10; i++) {" +
+                "        getContext().getResponse().appendValue(\"Body\", i);" +
+                "      }" +
+                "    }'" +
+                "}");
 
         CosmosStoredProcedure storedProcedure = null;
 
-        try {
-            storedProcedure = createdCollection.createStoredProcedure(storedProcedureDef, new CosmosStoredProcedureRequestOptions()).block().storedProcedure();
-        } catch (Throwable error) {
-            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.TCP) {
-                String message = String.format("DIRECT TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
-                logger.info(message, error);
-                throw new SkipException(message, error);
-            }
-            throw error;
-        }
+        storedProcedure = createdCollection.createStoredProcedure(storedProcedureDef,
+            new CosmosStoredProcedureRequestOptions()).block().storedProcedure();
 
         String result = null;
 
-        try {
-            RequestOptions options = new RequestOptions();
-            options.setPartitionKey(PartitionKey.None);
-            result = storedProcedure.execute(null, options).block().responseAsString();
-        } catch (Throwable error) {
-            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.TCP) {
-                String message = String.format("DIRECT TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
-                logger.info(message, error);
-                throw new SkipException(message, error);
-            }
-            throw error;
-        }
+        RequestOptions options = new RequestOptions();
+        options.setPartitionKey(PartitionKey.None);
+        result = storedProcedure.execute(null, options).block().responseAsString();
 
         assertThat(result).isEqualTo("\"0123456789\"");
     }
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
-        client = clientBuilder.build();
+        client = clientBuilder().build();
         createdCollection = getSharedMultiPartitionCosmosContainer(client);
     }
 
