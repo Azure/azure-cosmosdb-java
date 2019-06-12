@@ -217,7 +217,7 @@ class DocumentProducer<T extends Resource> {
                                     lastResponseContinuationToken);
                         }
                         return Flux.fromIterable(createReplacingDocumentProducersOnSplit(partitionKeyRanges));
-                    });
+                    }).switchIfEmpty(Flux.empty());
 
             return produceOnSplit(replacementProducers);
         });

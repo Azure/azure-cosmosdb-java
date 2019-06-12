@@ -54,7 +54,7 @@ public class BackoffRetryUtility {
             try {
                 return callbackMethod.call();
             } catch (Exception e) {
-                throw Exceptions.propagate(e);
+                return Mono.error(e);
             }
         }).retryWhen(RetryUtils.toRetryWhenFunc(retryPolicy));
     }

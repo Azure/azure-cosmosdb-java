@@ -198,7 +198,7 @@ public class FetcherTest {
     }
 
     private FeedResponse<Document> validate(Flux<FeedResponse<Document>> page) {
-        TestSubscriber<FeedResponse<Document>> subscriber = new TestSubscriber();
+        TestSubscriber<FeedResponse<Document>> subscriber = new TestSubscriber<>();
         page.subscribe(subscriber);
         subscriber.awaitTerminalEvent();
         subscriber.assertComplete();

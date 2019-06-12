@@ -118,6 +118,6 @@ class Fetcher<T extends Resource> {
         return executeFunc.apply(request).map(rsp -> {
             updateState(rsp);
             return rsp;
-        });
+        }).switchIfEmpty(Flux.empty()).onErrorResume(Flux::error);
     }
 }

@@ -116,7 +116,7 @@ public class RxPartitionKeyRangeCache implements IPartitionKeyRangeCache {
 
         }).map(routingMap -> routingMap.getOverlappingRanges(range)).switchIfEmpty(Mono.defer(() -> {
             logger.debug("Routing Map Null for collection: {} for range: {}, forceRefresh:{}", collectionRid, range.toString(), forceRefresh);
-            return null;
+            return Mono.empty();
         }));
     }
 

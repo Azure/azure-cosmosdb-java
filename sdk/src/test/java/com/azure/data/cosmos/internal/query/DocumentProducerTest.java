@@ -752,7 +752,7 @@ public class DocumentProducerTest {
                                     if (resp != null) {
                                         CapturedInvocation ci = new CapturedInvocation(request, resp);
                                         capture(a.getPartitionKeyRangeId(), ci);
-                                        return resp.toSingle().flux();
+                                        return resp.toSingle();
                                     }
 
                                 } catch (Exception e) {
@@ -784,11 +784,11 @@ public class DocumentProducerTest {
                     this.failureResult = ex;
                 }
 
-                public Mono<FeedResponse<Document>> toSingle() {
+                public Flux<FeedResponse<Document>> toSingle() {
                     if (invocationResult != null) {
-                        return Mono.just(invocationResult);
+                        return Flux.just(invocationResult);
                     } else {
-                        return Mono.error(failureResult);
+                        return Flux.error(failureResult);
                     }
                 }
             }

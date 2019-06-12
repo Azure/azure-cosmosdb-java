@@ -22,14 +22,11 @@
  */
 package com.azure.data.cosmos.internal.query;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import com.azure.data.cosmos.internal.BadRequestException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -52,34 +49,21 @@ class OrderByUtils {
                                                                               List<DocumentProducer<T>> documentProducers,
                                                                               Map<String, QueryMetrics> queryMetricsMap,
                                                                               Map<String, OrderByContinuationToken> targetRangeToOrderByContinuationTokenMap) {
-        return toOrderByQueryResultObservable(klass,
-                documentProducers.get(0),
-                tracker,
-                queryMetricsMap,
-                targetRangeToOrderByContinuationTokenMap,
-                consumeComparer.getSortOrders())
-                .compose(orderByRowResultFlux -> {
-                    List<Flux<OrderByRowResult<T>>> collectedFluxes = documentProducers.subList(1, documentProducers.size())
-                            .stream()
-                            .map(producer -> toOrderByQueryResultObservable(klass,
-                                    producer,
-                                    tracker,
-                                    queryMetricsMap,
-                                    targetRangeToOrderByContinuationTokenMap,
-                                    consumeComparer.getSortOrders()))
-                            .collect(Collectors.toList());
-                    Flux<OrderByRowResult<T>>[] arrayFlux = (Flux<OrderByRowResult<T>>[]) Array.newInstance(Flux.class, 0);
-                    Flux<OrderByRowResult<T>>[] fluxes = collectedFluxes.toArray(arrayFlux);
-                    return Flux.mergeOrdered(consumeComparer, fluxes);
-                });
+        Flux<OrderByRowResult<T>>[] fluxes = documentProducers
+                .subList(0, documentProducers.size())
+                .stream()
+                .map(producer ->
+                        toOrderByQueryResultObservable(klass, producer, tracker, queryMetricsMap, targetRangeToOrderByContinuationTokenMap, consumeComparer.getSortOrders()))
+                .toArray(Flux[]::new);
+        return Flux.mergeOrdered(consumeComparer, fluxes);
     }
 
     private static <T extends Resource> Flux<OrderByRowResult<T>> toOrderByQueryResultObservable(Class<T> klass,
-                                                                                                       DocumentProducer<T> producer,
-                                                                                                       RequestChargeTracker tracker,
-                                                                                                       Map<String, QueryMetrics> queryMetricsMap,
-                                                                                                       Map<String, OrderByContinuationToken> targetRangeToOrderByContinuationTokenMap,
-                                                                                                       List<SortOrder> sortOrders) {
+                                                                                                 DocumentProducer<T> producer,
+                                                                                                 RequestChargeTracker tracker,
+                                                                                                 Map<String, QueryMetrics> queryMetricsMap,
+                                                                                                 Map<String, OrderByContinuationToken> targetRangeToOrderByContinuationTokenMap,
+                                                                                                 List<SortOrder> sortOrders) {
         return producer
                 .produceAsync()
                 .compose(new OrderByUtils.PageToItemTransformer<T>(klass, tracker, queryMetricsMap, targetRangeToOrderByContinuationTokenMap, sortOrders));
