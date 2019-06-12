@@ -107,10 +107,10 @@ public class StoredProcedureAsyncAPITest extends DocumentClientTest {
                         "        var myval = 1;" +
                         "        try {" +
                         "            console.log(\"The value of %s is %s.\", mytext, myval);" +
-                        "            getContext().getResponse().body(\"Success!\");" +
+                        "            getContext().getResponse().setBody(\"Success!\");" +
                         "        }" +
                         "        catch(err) {" +
-                        "            getContext().getResponse().body(\"inline err: [\" + err.number + \"] \" + err);" +
+                        "            getContext().getResponse().setBody(\"inline err: [\" + err.number + \"] \" + err);" +
                         "        }" +
                         "    }'" +
                         "}");
@@ -156,7 +156,7 @@ public class StoredProcedureAsyncAPITest extends DocumentClientTest {
                         "  'id': 'multiplySample'," +
                         "  'body':" +
                         "    'function (value, num) {" +
-                        "      getContext().getResponse().body(" +
+                        "      getContext().getResponse().setBody(" +
                         "          \"2*\" + value + \" is \" + num * 2 );" +
                         "    }'" +
                         "}");
@@ -196,7 +196,7 @@ public class StoredProcedureAsyncAPITest extends DocumentClientTest {
                         "  'id': 'storedProcedurePojoSample'," +
                         "  'body':" +
                         "    'function (value) {" +
-                        "      getContext().getResponse().body(" +
+                        "      getContext().getResponse().setBody(" +
                         "          \"a is \" + value.temp);" +
                         "    }'" +
                         "}");

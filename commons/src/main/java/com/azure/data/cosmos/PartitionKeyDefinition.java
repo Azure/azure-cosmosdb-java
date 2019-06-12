@@ -65,7 +65,7 @@ public final class PartitionKeyDefinition extends JsonSerializable {
      */
     public PartitionKind kind() {
         if (this.kind == null) {
-            this.kind = super.getObject(Constants.Properties.PARTITION_KIND, PartitionKind.class);
+            this.kind = super.getObject(Constants.Properties.PARTITION_KIND, PartitionKind.class, true);
         }
 
         return this.kind;

@@ -75,7 +75,7 @@ public class SpatialSpec extends JsonSerializable {
      */
     public Collection<SpatialType> spatialTypes() {
         if (this.spatialTypes == null) {
-            this.spatialTypes = super.getCollection(Constants.Properties.TYPES, SpatialType.class);
+            this.spatialTypes = super.getCollection(Constants.Properties.TYPES, SpatialType.class, true);
 
             if (this.spatialTypes == null) {
                 this.spatialTypes = new ArrayList<SpatialType>();
@@ -94,7 +94,7 @@ public class SpatialSpec extends JsonSerializable {
         this.spatialTypes = spatialTypes;
         Collection<String> spatialTypeNames = new ArrayList<String>();
         for (SpatialType spatialType : this.spatialTypes) {
-            spatialTypeNames.add(spatialType.name());
+            spatialTypeNames.add(spatialType.toString());
         }
         super.set(Constants.Properties.TYPES, spatialTypeNames);
         return this;

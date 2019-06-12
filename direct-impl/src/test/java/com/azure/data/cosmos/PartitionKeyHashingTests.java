@@ -75,7 +75,7 @@ public class PartitionKeyHashingTests {
 
     @Test(groups = "unit")
     public void hashV2PartitionKeyDeserialization() {
-        String partitionKeyDefinitionStr = "{\"paths\":[\"/pk\"],\"kind\":\"HASH\",\"version\":2}";
+        String partitionKeyDefinitionStr = "{\"paths\":[\"/pk\"],\"kind\":\"Hash\",\"version\":2}";
         PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition(partitionKeyDefinitionStr);
         assertThat(partitionKeyDef.version()).isEqualTo(PartitionKeyDefinitionVersion.V2);
         assertThat(partitionKeyDef.kind()).isEqualTo(PartitionKind.HASH);
@@ -84,7 +84,7 @@ public class PartitionKeyHashingTests {
 
     @Test(groups = "unit")
     public void hashV1PartitionKeyDeserialization() {
-        String partitionKeyDefinitionStr = "{\"paths\":[\"/pk\"],\"kind\":\"HASH\"}";
+        String partitionKeyDefinitionStr = "{\"paths\":[\"/pk\"],\"kind\":\"Hash\"}";
         PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition(partitionKeyDefinitionStr);
         assertThat(partitionKeyDef.version()).isNull();
         assertThat(partitionKeyDef.kind()).isEqualTo(PartitionKind.HASH);

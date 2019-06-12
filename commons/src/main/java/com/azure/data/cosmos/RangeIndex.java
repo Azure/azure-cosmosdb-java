@@ -101,7 +101,7 @@ public final class RangeIndex extends Index {
      * @param dataType the data type.
      */
     public RangeIndex dataType(DataType dataType) {
-        super.set(Constants.Properties.DATA_TYPE, dataType.name());
+        super.set(Constants.Properties.DATA_TYPE, dataType.toString());
         return this;
     }
 
