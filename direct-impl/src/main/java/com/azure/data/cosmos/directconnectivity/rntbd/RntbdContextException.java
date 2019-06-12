@@ -24,13 +24,38 @@
 
 package com.azure.data.cosmos.directconnectivity.rntbd;
 
-import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
+import com.azure.data.cosmos.BridgeInternal;
+import com.azure.data.cosmos.Error;
+import com.azure.data.cosmos.directconnectivity.TransportException;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
-import java.nio.ByteOrder;
+import java.util.Map;
 
-public final class RntbdRequestFramer extends LengthFieldBasedFrameDecoder {
+public final class RntbdContextException extends TransportException {
 
-    public RntbdRequestFramer() {
-        super(ByteOrder.LITTLE_ENDIAN, Integer.MAX_VALUE, 0, Integer.BYTES, -Integer.BYTES, 0, true);
+    final private Error error;
+    final private Map<String, Object> responseHeaders;
+    final private HttpResponseStatus status;
+
+    RntbdContextException(HttpResponseStatus status, ObjectNode details, Map<String, Object> responseHeaders) {
+
+        super(status + ": " + details, null);
+
+        this.error = BridgeInternal.createError(details);
+        this.responseHeaders = responseHeaders;
+        this.status = status;
+    }
+
+    public Error getError() {
+        return error;
+    }
+
+    public Map<String, Object> getResponseHeaders() {
+        return responseHeaders;
+    }
+
+    public HttpResponseStatus getStatus() {
+        return status;
     }
 }
