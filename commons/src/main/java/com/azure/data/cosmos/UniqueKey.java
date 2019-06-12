@@ -74,6 +74,7 @@ public class UniqueKey extends JsonSerializable {
      * such as "/name/first".
      *
      * @param paths the unique paths.
+     * @return the Unique Key.
      */
     public UniqueKey paths(Collection<String> paths) {
         this.paths = paths;

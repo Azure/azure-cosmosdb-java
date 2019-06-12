@@ -62,6 +62,7 @@ public class SpatialSpec extends JsonSerializable {
      * Sets path.
      *
      * @param path the path.
+     * @return the SpatialSpec.
      */
     public SpatialSpec path(String path) {
         super.set(Constants.Properties.PATH, path);
@@ -89,6 +90,7 @@ public class SpatialSpec extends JsonSerializable {
      * Sets the collection of spatial types.
      *
      * @param spatialTypes the collection of spatial types.
+     * @return the SpatialSpec.
      */
     public SpatialSpec spatialTypes(Collection<SpatialType> spatialTypes) {
         this.spatialTypes = spatialTypes;

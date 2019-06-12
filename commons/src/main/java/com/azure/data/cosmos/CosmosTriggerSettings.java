@@ -64,6 +64,7 @@ public class CosmosTriggerSettings extends Resource {
      * Set the body of the trigger.
      *
      * @param body the body of the trigger.
+     * @return the CosmosTriggerSettings.
      */
     public CosmosTriggerSettings body(String body) {
         super.set(Constants.Properties.BODY, body);
@@ -91,6 +92,7 @@ public class CosmosTriggerSettings extends Resource {
      * Set the type of the resource.
      *
      * @param triggerType the trigger type.
+     * @return the CosmosTriggerSettings.
      */
     public CosmosTriggerSettings triggerType(TriggerType triggerType) {
         super.set(Constants.Properties.TRIGGER_TYPE, triggerType.toString());
@@ -118,6 +120,7 @@ public class CosmosTriggerSettings extends Resource {
      * Set the operation type of the trigger.
      *
      * @param triggerOperation the trigger operation.
+     * @return the CosmosTriggerSettings.
      */
     public CosmosTriggerSettings triggerOperation(TriggerOperation triggerOperation) {
         super.set(Constants.Properties.TRIGGER_OPERATION, triggerOperation.toString());
