@@ -24,7 +24,6 @@
 package com.azure.data.cosmos;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.text.WordUtils;
 
 import com.azure.data.cosmos.internal.Constants;
 
@@ -103,7 +102,7 @@ public final class RangeIndex extends Index {
      * @param dataType the data type.
      */
     public RangeIndex dataType(DataType dataType) {
-        super.set(Constants.Properties.DATA_TYPE, dataType.name());
+        super.set(Constants.Properties.DATA_TYPE, dataType.toString());
         return this;
     }
 

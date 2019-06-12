@@ -84,7 +84,7 @@ public class Permission extends Resource {
      */
     public void setPermissionMode(PermissionMode permissionMode) {
         this.set(Constants.Properties.PERMISSION_MODE,
-                permissionMode.name().toLowerCase());
+                permissionMode.toString().toLowerCase());
     }
 
     /**

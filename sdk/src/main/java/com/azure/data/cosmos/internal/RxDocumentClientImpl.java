@@ -860,7 +860,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
         }
 
         if (options.getIndexingDirective() != null) {
-            headers.put(HttpConstants.HttpHeaders.INDEXING_DIRECTIVE, options.getIndexingDirective().name());
+            headers.put(HttpConstants.HttpHeaders.INDEXING_DIRECTIVE, options.getIndexingDirective().toString());
         }
 
         if (options.getPostTriggerInclude() != null && options.getPostTriggerInclude().size() > 0) {
@@ -1085,7 +1085,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
 
     private CosmosResourceType resolveCosmosResourceType(ResourceType resourceType) {
         try {
-            return CosmosResourceType.valueOf(resourceType.name());
+            return CosmosResourceType.valueOf(resourceType.toString());
         } catch (IllegalArgumentException e) {
             return CosmosResourceType.System;
         }
