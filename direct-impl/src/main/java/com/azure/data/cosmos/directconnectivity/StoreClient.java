@@ -181,7 +181,7 @@ public class StoreClient implements IStoreClient {
         boolean sessionConsistency =
                 this.serviceConfigurationReader.getDefaultConsistencyLevel() == ConsistencyLevel.SESSION ||
                         (!Strings.isNullOrEmpty(requestConsistencyLevel)
-                                && Strings.areEqualIgnoreCase(requestConsistencyLevel, ConsistencyLevel.SESSION.name()));
+                                && Strings.areEqualIgnoreCase(requestConsistencyLevel, ConsistencyLevel.SESSION.toString()));
 
         long storeLSN = this.getLSN(headers);
         if (storeLSN == -1) {

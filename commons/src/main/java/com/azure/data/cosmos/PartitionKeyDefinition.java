@@ -67,7 +67,7 @@ public final class PartitionKeyDefinition extends JsonSerializable {
      */
     public PartitionKind kind() {
         if (this.kind == null) {
-            this.kind = super.getObject(Constants.Properties.PARTITION_KIND, PartitionKind.class);
+            this.kind = super.getObject(Constants.Properties.PARTITION_KIND, PartitionKind.class, true);
         }
 
         return this.kind;
@@ -167,14 +167,14 @@ public final class PartitionKeyDefinition extends JsonSerializable {
     @Override
     void populatePropertyBag() {
         if (this.kind != null) {
-            super.set(Constants.Properties.PARTITION_KIND, kind.name());
+            super.set(Constants.Properties.PARTITION_KIND, kind.toString());
         }
         if (this.paths != null) {
             super.set(Constants.Properties.PARTITION_KEY_PATHS, paths);
         }
 
         if (this.version != null) {
-            super.set(Constants.Properties.PARTITION_KEY_DEFINITION_VERSION, version.name());
+            super.set(Constants.Properties.PARTITION_KEY_DEFINITION_VERSION, version.toString());
         }
         super.populatePropertyBag();
     }

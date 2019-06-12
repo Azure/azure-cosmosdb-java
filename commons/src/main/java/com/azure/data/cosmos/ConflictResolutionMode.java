@@ -23,6 +23,8 @@
 
 package com.azure.data.cosmos;
 
+import org.apache.commons.text.WordUtils;
+
 public enum ConflictResolutionMode {
     /**
      * Last writer wins conflict resolution mode
@@ -48,6 +50,11 @@ public enum ConflictResolutionMode {
     /**
      * INVALID or unknown mode.
      */
-    INVALID
+    INVALID;
+    
+    @Override
+    public String toString() {
+        return WordUtils.capitalizeFully(this.name());        
+    }
 }
 

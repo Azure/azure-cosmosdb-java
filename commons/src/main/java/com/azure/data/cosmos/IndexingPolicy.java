@@ -146,7 +146,7 @@ public final class IndexingPolicy extends JsonSerializable {
      * @param indexingMode the indexing mode.
      */
     public IndexingPolicy indexingMode(IndexingMode indexingMode) {
-        super.set(Constants.Properties.INDEXING_MODE, indexingMode.name());
+        super.set(Constants.Properties.INDEXING_MODE, indexingMode.toString());
         return this;
     }
 

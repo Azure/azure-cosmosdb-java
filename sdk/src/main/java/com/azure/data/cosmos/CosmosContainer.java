@@ -270,7 +270,7 @@ public class CosmosContainer extends CosmosResource {
         return this.getDatabase()
                                                                             .getDocClientWrapper()
                                                                             .upsertDocument(this.getLink(),
-                                                                                            item,
+                                                                                            CosmosItemProperties.fromObject(item),
                                                                                             options.toRequestOptions(),
                                                                                             true)
                                                                             .map(response -> new CosmosItemResponse(response,

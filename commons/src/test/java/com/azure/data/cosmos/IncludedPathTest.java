@@ -39,13 +39,13 @@ public class IncludedPathTest {
                 "  'path': '\\/*'," +
                 "  'indexes': [" +
                 "    {" +
-                "      'kind': 'RANGE'," +
-                "      'dataType': 'STRING'," +
+                "      'kind': 'Range'," +
+                "      'dataType': 'String'," +
                 "      'precision': -1" +
                 "    }," +
                 "    {" +
-                "      'kind': 'RANGE'," +
-                "      'dataType': 'NUMBER'," +
+                "      'kind': 'Range'," +
+                "      'dataType': 'Number'," +
                 "      'precision': -1" +
                 "    }" +
                 "  ]" +

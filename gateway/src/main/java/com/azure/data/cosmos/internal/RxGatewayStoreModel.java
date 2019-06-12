@@ -485,7 +485,7 @@ class RxGatewayStoreModel implements RxStoreModel {
         boolean sessionConsistency =
                 this.defaultConsistencyLevel == ConsistencyLevel.SESSION ||
                         (!Strings.isNullOrEmpty(requestConsistencyLevel)
-                                && Strings.areEqual(requestConsistencyLevel, ConsistencyLevel.SESSION.name()));
+                                && Strings.areEqual(requestConsistencyLevel, ConsistencyLevel.SESSION.toString()));
 
         if (!sessionConsistency || ReplicatedResourceClientUtils.isMasterResource(request.getResourceType())) {
             return; // Only apply the session token in case of session consistency and when resource is not a master resource

@@ -200,7 +200,7 @@ implements IDocumentQueryExecutionContext<T> {
         }
 
         if (desiredConsistencyLevel != null) {
-            requestHeaders.put(HttpConstants.HttpHeaders.CONSISTENCY_LEVEL, desiredConsistencyLevel.name());
+            requestHeaders.put(HttpConstants.HttpHeaders.CONSISTENCY_LEVEL, desiredConsistencyLevel.toString());
         }
 
         if(feedOptions.populateQueryMetrics()){

@@ -835,7 +835,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
         }
 
         if (consistencyLevel != null) {
-            headers.put(HttpConstants.HttpHeaders.CONSISTENCY_LEVEL, consistencyLevel.name());
+            headers.put(HttpConstants.HttpHeaders.CONSISTENCY_LEVEL, consistencyLevel.toString());
         }
 
         if (options == null) {
@@ -856,11 +856,11 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
         }
 
         if (options.getConsistencyLevel() != null) {
-            headers.put(HttpConstants.HttpHeaders.CONSISTENCY_LEVEL, options.getConsistencyLevel().name());
+            headers.put(HttpConstants.HttpHeaders.CONSISTENCY_LEVEL, options.getConsistencyLevel().toString());
         }
 
         if (options.getIndexingDirective() != null) {
-            headers.put(HttpConstants.HttpHeaders.INDEXING_DIRECTIVE, options.getIndexingDirective().name());
+            headers.put(HttpConstants.HttpHeaders.INDEXING_DIRECTIVE, options.getIndexingDirective().toString());
         }
 
         if (options.getPostTriggerInclude() != null && options.getPostTriggerInclude().size() > 0) {
@@ -1085,7 +1085,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
 
     private CosmosResourceType resolveCosmosResourceType(ResourceType resourceType) {
         try {
-            return CosmosResourceType.valueOf(resourceType.name());
+            return CosmosResourceType.valueOf(resourceType.toString());
         } catch (IllegalArgumentException e) {
             return CosmosResourceType.System;
         }

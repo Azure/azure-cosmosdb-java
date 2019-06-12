@@ -466,7 +466,7 @@ public class RxDocumentServiceRequest {
             if (querySpec.parameters() != null && querySpec.parameters().size() > 0) {
                 throw new IllegalArgumentException(
                         String.format("Unsupported argument in query compatibility mode '{%s}'",
-                                queryCompatibilityMode.name()));
+                                queryCompatibilityMode.toString()));
             }
 
             operation = OperationType.SqlQuery;

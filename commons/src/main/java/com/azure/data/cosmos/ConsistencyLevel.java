@@ -23,6 +23,11 @@
 
 package com.azure.data.cosmos;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.text.WordUtils;
+
+import com.azure.data.cosmos.internal.Strings;
+
 /**
  * Represents the consistency levels supported for Cosmos DB client operations in the Azure Cosmos DB database service.
  * <p>
@@ -59,5 +64,10 @@ public enum ConsistencyLevel {
      * CONSISTENT_PREFIX Consistency guarantees that reads will return some prefix of all writes with no gaps. ALL writes
      * will be eventually be available for reads.
      */
-    CONSISTENT_PREFIX
+    CONSISTENT_PREFIX;
+
+    @Override
+    public String toString() {
+        return StringUtils.remove(WordUtils.capitalizeFully(this.name(), '_'), '_');        
+    }
 }

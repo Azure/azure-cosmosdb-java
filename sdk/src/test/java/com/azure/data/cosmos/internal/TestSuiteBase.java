@@ -777,7 +777,7 @@ public class TestSuiteBase {
     private static ConsistencyLevel parseConsistency(String consistency) {
         if (consistency != null) {
             for (ConsistencyLevel consistencyLevel : ConsistencyLevel.values()) {
-                if (consistencyLevel.name().toLowerCase().equals(consistency.toLowerCase())) {
+                if (consistencyLevel.toString().toLowerCase().equals(consistency.toLowerCase())) {
                     return consistencyLevel;
                 }
             }

@@ -143,7 +143,7 @@ public class ReplicatedResourceClientPartitionSplitTest {
                 OperationType.Read, "/dbs/db/colls/col/docs/docId", ResourceType.Document);
         request.requestContext = new DocumentServiceRequestContext();
         request.requestContext.resolvedPartitionKeyRange = partitionKeyRangeWithId(partitionKeyRangeIdBeforeSplit);
-        request.getHeaders().put(HttpConstants.HttpHeaders.CONSISTENCY_LEVEL, consistencyLevel.name());
+        request.getHeaders().put(HttpConstants.HttpHeaders.CONSISTENCY_LEVEL, consistencyLevel.toString());
 
         Function<RxDocumentServiceRequest, Mono<RxDocumentServiceRequest>> prepareRequestAsyncDelegate = null;
         Mono<StoreResponse> storeResponseObs = resourceClient.invokeAsync(request, prepareRequestAsyncDelegate);
