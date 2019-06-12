@@ -56,7 +56,7 @@ public class StoreHeaderTests extends TestSuiteBase {
 
         Document docDefinition2 = getDocumentDefinition();
         RequestOptions requestOptions = new RequestOptions();
-        requestOptions.setHeader("x-ms-exclude-system-item", "true");
+        requestOptions.setHeader("x-ms-exclude-system-properties", "true");
         Document responseDoc2 = createDocument(client, createdDatabase.id(), createdCollection.id(), docDefinition2, requestOptions);
         Assert.assertNull(responseDoc2.selfLink());
         Assert.assertNull(responseDoc2.get("_attachments"));

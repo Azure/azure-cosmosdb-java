@@ -28,7 +28,6 @@ import java.lang.reflect.Method;
 import java.util.UUID;
 
 import com.azure.data.cosmos.*;
-import com.azure.data.cosmos.*;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;

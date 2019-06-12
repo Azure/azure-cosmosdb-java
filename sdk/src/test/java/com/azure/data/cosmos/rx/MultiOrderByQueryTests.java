@@ -140,7 +140,7 @@ public class MultiOrderByQueryTests extends TestSuiteBase {
 
         Random random = new Random();
         for (int i = 0; i < numberOfDocuments; ++i) {
-            Document multiOrderByDocument = generateMultiOrderByDocument();
+            CosmosItemProperties multiOrderByDocument = generateMultiOrderByDocument();
             String multiOrderByDocumentString = multiOrderByDocument.toJson();
             int numberOfDuplicates = 5;
 
@@ -179,9 +179,9 @@ public class MultiOrderByQueryTests extends TestSuiteBase {
         waitIfNeededForReplicasToCatchUp(clientBuilder);
     }
 
-    private Document generateMultiOrderByDocument() {
+    private CosmosItemProperties generateMultiOrderByDocument() {
         Random random = new Random();
-        Document document = new Document();
+        CosmosItemProperties document = new CosmosItemProperties();
         document.id(UUID.randomUUID().toString());
         document.set(NUMBER_FIELD, random.nextInt(5));
         document.set(NUMBER_FIELD_2, random.nextInt(5));
@@ -272,7 +272,7 @@ public class MultiOrderByQueryTests extends TestSuiteBase {
         
         // CREATE document with numberField not set.
         // This query would then be invalid.
-        Document documentWithEmptyField = generateMultiOrderByDocument();
+        CosmosItemProperties documentWithEmptyField = generateMultiOrderByDocument();
         documentWithEmptyField.remove(NUMBER_FIELD);
         documentCollection.createItem(documentWithEmptyField, new CosmosItemRequestOptions()).block();
         String query = "SELECT [root." + NUMBER_FIELD + ",root." + STRING_FIELD + "] FROM root ORDER BY root." + NUMBER_FIELD + " ASC ,root." + STRING_FIELD + " DESC";

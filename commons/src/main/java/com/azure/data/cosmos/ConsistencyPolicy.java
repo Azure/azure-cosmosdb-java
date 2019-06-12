@@ -76,6 +76,7 @@ public final class ConsistencyPolicy extends JsonSerializable {
      * Set the name of the resource.
      *
      * @param level the consistency level.
+     * @return the ConsistenctPolicy.
      */
     public ConsistencyPolicy defaultConsistencyLevel(ConsistencyLevel level) {
         super.set(Constants.Properties.DEFAULT_CONSISTENCY_LEVEL, level.toString());
@@ -101,6 +102,7 @@ public final class ConsistencyPolicy extends JsonSerializable {
      * (aka version).
      *
      * @param maxStalenessPrefix the max staleness prefix.
+     * @return the ConsistenctPolicy.
      */
     public ConsistencyPolicy maxStalenessPrefix(int maxStalenessPrefix) {
         super.set(Constants.Properties.MAX_STALENESS_PREFIX, maxStalenessPrefix);
@@ -124,6 +126,7 @@ public final class ConsistencyPolicy extends JsonSerializable {
      * Sets the in bounded staleness consistency, the maximum allowed staleness in terms time interval.
      *
      * @param maxStalenessIntervalInSeconds the max staleness interval in seconds.
+     * @return the ConsistenctPolicy.
      */
     public ConsistencyPolicy maxStalenessIntervalInSeconds(int maxStalenessIntervalInSeconds) {
         super.set(Constants.Properties.MAX_STALENESS_INTERVAL_IN_SECONDS, maxStalenessIntervalInSeconds);

@@ -284,6 +284,8 @@ public class JsonSerializable {
      * @param propertyName the property to get.
      * @param c            the class of the object. If c is a POJO class, it must be a member (and not an anonymous or local)
      *                     and a static one.
+     * @param convertFromCamelCase  boolean indicating if String should be converted from camel case to upper case separated by underscore,
+     *                              before converting to required class.
      * @return the object value.
      */
     public <T> T getObject(String propertyName, Class<T> c, boolean ... convertFromCamelCase) {
@@ -330,6 +332,8 @@ public class JsonSerializable {
      * @param propertyName the property to get
      * @param c            the class of the object. If c is a POJO class, it must be a member (and not an anonymous or local)
      *                     and a static one.
+     * @param convertFromCamelCase  boolean indicating if String should be converted from camel case to upper case separated by underscore,
+     *                              before converting to required class.
      * @return the object collection.
      */
     public <T> List<T> getList(String propertyName, Class<T> c, boolean ... convertFromCamelCase) {
@@ -395,6 +399,8 @@ public class JsonSerializable {
      * @param propertyName the property to get
      * @param c            the class of the object. If c is a POJO class, it must be a member (and not an anonymous or local)
      *                     and a static one.
+     * @param convertFromCamelCase  boolean indicating if String should be converted from camel case to upper case separated by underscore,
+     *                              before converting to required class.
      * @return the object collection.
      */
     public <T> Collection<T> getCollection(String propertyName, Class<T> c, boolean ... convertFromCamelCase) {

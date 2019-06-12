@@ -26,7 +26,6 @@ package com.azure.data.cosmos;
 import org.apache.commons.lang3.StringUtils;
 
 import com.azure.data.cosmos.internal.Constants;
-import org.apache.commons.text.WordUtils;
 
 /**
  * Represents a composite path of the IndexingPolicy in the Azure Cosmos DB database service.
@@ -64,6 +63,7 @@ public class CompositePath extends JsonSerializable {
      * Sets path.
      *
      * @param path the path.
+     * @return the CompositePath.
      */
     public CompositePath path(String path) {
         super.set(Constants.Properties.PATH, path);
@@ -98,6 +98,7 @@ public class CompositePath extends JsonSerializable {
      * then you need to make the order for "/age" "ascending" and the order for "/height" "descending".
      * 
      * @param order the sort order.
+     * @return the CompositePath.
      */
     public CompositePath order(CompositePathSortOrder order) {
         super.set(Constants.Properties.ORDER, order.toString());

@@ -23,7 +23,6 @@
 package com.azure.data.cosmos.rx;
 
 import com.azure.data.cosmos.*;
-import com.azure.data.cosmos.Document;
 import com.azure.data.cosmos.CosmosClientException;
 import com.azure.data.cosmos.PartitionKey;
 import com.azure.data.cosmos.directconnectivity.Protocol;

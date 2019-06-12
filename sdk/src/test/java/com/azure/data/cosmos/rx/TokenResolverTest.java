@@ -315,10 +315,10 @@ public class TokenResolverTest extends TestSuiteBase {
                     "        var mytext = \"x\";" +
                     "        var myval = 1;" +
                     "        try {" +
-                    "            getContext().getResponse().body(\"Success!\");" +
+                    "            getContext().getResponse().setBody(\"Success!\");" +
                     "        }" +
                     "        catch(err) {" +
-                    "            getContext().getResponse().body(\"inline err: [\" + err.number + \"] \" + err);" +
+                    "            getContext().getResponse().setBody(\"inline err: [\" + err.number + \"] \" + err);" +
                     "        }" +
                     "    }'" +
                     "}");
