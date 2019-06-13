@@ -28,7 +28,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.netty.Connection;
 
-import java.io.Closeable;
 import java.nio.charset.Charset;
 
 /**

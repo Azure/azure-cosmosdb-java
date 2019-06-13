@@ -22,12 +22,24 @@
  */
 package com.azure.data.cosmos.rx.examples;
 
-import com.azure.data.cosmos.*;
+import com.azure.data.cosmos.AsyncDocumentClient;
+import com.azure.data.cosmos.ConnectionMode;
+import com.azure.data.cosmos.ConnectionPolicy;
+import com.azure.data.cosmos.ConsistencyLevel;
+import com.azure.data.cosmos.CosmosClientException;
+import com.azure.data.cosmos.Database;
+import com.azure.data.cosmos.Document;
+import com.azure.data.cosmos.DocumentCollection;
+import com.azure.data.cosmos.FeedOptions;
+import com.azure.data.cosmos.FeedResponse;
+import com.azure.data.cosmos.PartitionKey;
+import com.azure.data.cosmos.PartitionKeyDefinition;
+import com.azure.data.cosmos.RequestOptions;
+import com.azure.data.cosmos.ResourceResponse;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.commons.lang3.RandomUtils;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;

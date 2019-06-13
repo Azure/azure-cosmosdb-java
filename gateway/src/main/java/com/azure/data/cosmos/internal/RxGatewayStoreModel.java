@@ -23,8 +23,11 @@
 package com.azure.data.cosmos.internal;
 
 
-import com.azure.data.cosmos.*;
+import com.azure.data.cosmos.BridgeInternal;
+import com.azure.data.cosmos.ConsistencyLevel;
+import com.azure.data.cosmos.CosmosClientException;
 import com.azure.data.cosmos.Error;
+import com.azure.data.cosmos.ISessionContainer;
 import com.azure.data.cosmos.directconnectivity.HttpUtils;
 import com.azure.data.cosmos.directconnectivity.StoreResponse;
 import com.azure.data.cosmos.internal.http.HttpClient;

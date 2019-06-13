@@ -23,10 +23,10 @@
 
 package com.azure.data.cosmos.internal;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import com.azure.data.cosmos.directconnectivity.Protocol;
 import org.testng.annotations.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class ConfigsTests {
 

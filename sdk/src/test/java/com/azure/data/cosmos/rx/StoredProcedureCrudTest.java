@@ -22,15 +22,8 @@
  */
 package com.azure.data.cosmos.rx;
 
-import java.util.UUID;
-
-import com.azure.data.cosmos.CosmosClientBuilder;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Factory;
-import org.testng.annotations.Test;
-
 import com.azure.data.cosmos.CosmosClient;
+import com.azure.data.cosmos.CosmosClientBuilder;
 import com.azure.data.cosmos.CosmosContainer;
 import com.azure.data.cosmos.CosmosResponse;
 import com.azure.data.cosmos.CosmosResponseValidator;
@@ -38,8 +31,13 @@ import com.azure.data.cosmos.CosmosStoredProcedure;
 import com.azure.data.cosmos.CosmosStoredProcedureRequestOptions;
 import com.azure.data.cosmos.CosmosStoredProcedureResponse;
 import com.azure.data.cosmos.CosmosStoredProcedureSettings;
-
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Factory;
+import org.testng.annotations.Test;
 import reactor.core.publisher.Mono;
+
+import java.util.UUID;
 
 public class StoredProcedureCrudTest extends TestSuiteBase {
 

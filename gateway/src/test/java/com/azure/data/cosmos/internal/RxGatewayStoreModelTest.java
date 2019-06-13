@@ -26,9 +26,9 @@ package com.azure.data.cosmos.internal;
 import com.azure.data.cosmos.ConsistencyLevel;
 import com.azure.data.cosmos.CosmosClientException;
 import com.azure.data.cosmos.ISessionContainer;
-import com.azure.data.cosmos.rx.FailureValidator;
-import com.azure.data.cosmos.internal.http.HttpClient;;
+import com.azure.data.cosmos.internal.http.HttpClient;
 import com.azure.data.cosmos.internal.http.HttpRequest;
+import com.azure.data.cosmos.rx.FailureValidator;
 import io.netty.handler.timeout.ReadTimeoutException;
 import io.reactivex.subscribers.TestSubscriber;
 import org.mockito.Mockito;
@@ -40,6 +40,8 @@ import java.net.URL;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+
+;
 
 public class RxGatewayStoreModelTest {
     private final static int TIMEOUT = 10000;

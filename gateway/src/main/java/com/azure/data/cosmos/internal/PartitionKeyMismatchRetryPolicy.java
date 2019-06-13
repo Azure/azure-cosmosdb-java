@@ -22,14 +22,13 @@
  */
 package com.azure.data.cosmos.internal;
 
-import java.time.Duration;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import com.azure.data.cosmos.internal.caches.RxClientCollectionCache;
 import com.azure.data.cosmos.CosmosClientException;
 import com.azure.data.cosmos.RequestOptions;
-
+import com.azure.data.cosmos.internal.caches.RxClientCollectionCache;
 import reactor.core.publisher.Mono;
+
+import java.time.Duration;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * While this class is public, but it is not part of our published public APIs.

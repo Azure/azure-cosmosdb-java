@@ -22,22 +22,8 @@
  */
 package com.azure.data.cosmos.rx;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import java.util.UUID;
-
-import com.azure.data.cosmos.CosmosClientBuilder;
-import com.azure.data.cosmos.directconnectivity.Protocol;
-
-import reactor.core.publisher.Mono;
-
-import org.testng.SkipException;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Factory;
-import org.testng.annotations.Test;
-
 import com.azure.data.cosmos.CosmosClient;
+import com.azure.data.cosmos.CosmosClientBuilder;
 import com.azure.data.cosmos.CosmosContainer;
 import com.azure.data.cosmos.CosmosResponseValidator;
 import com.azure.data.cosmos.CosmosStoredProcedure;
@@ -46,6 +32,17 @@ import com.azure.data.cosmos.CosmosStoredProcedureResponse;
 import com.azure.data.cosmos.CosmosStoredProcedureSettings;
 import com.azure.data.cosmos.PartitionKey;
 import com.azure.data.cosmos.RequestOptions;
+import com.azure.data.cosmos.directconnectivity.Protocol;
+import org.testng.SkipException;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Factory;
+import org.testng.annotations.Test;
+import reactor.core.publisher.Mono;
+
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class StoredProcedureUpsertReplaceTest extends TestSuiteBase {
 

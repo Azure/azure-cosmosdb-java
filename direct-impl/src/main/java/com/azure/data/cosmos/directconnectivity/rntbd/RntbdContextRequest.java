@@ -24,21 +24,21 @@
 
 package com.azure.data.cosmos.directconnectivity.rntbd;
 
+import com.azure.data.cosmos.internal.UserAgentContainer;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import com.azure.data.cosmos.internal.UserAgentContainer;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.CorruptedFrameException;
 
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
-import static com.azure.data.cosmos.internal.HttpConstants.Versions;
 import static com.azure.data.cosmos.directconnectivity.rntbd.RntbdConstants.CurrentProtocolVersion;
 import static com.azure.data.cosmos.directconnectivity.rntbd.RntbdConstants.RntbdContextRequestHeader;
 import static com.azure.data.cosmos.directconnectivity.rntbd.RntbdConstants.RntbdOperationType;
 import static com.azure.data.cosmos.directconnectivity.rntbd.RntbdConstants.RntbdResourceType;
+import static com.azure.data.cosmos.internal.HttpConstants.Versions;
 
 public final class RntbdContextRequest {
 

@@ -24,6 +24,7 @@
 
 package com.azure.data.cosmos.directconnectivity.rntbd;
 
+import com.azure.data.cosmos.directconnectivity.StoreResponse;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -31,7 +32,6 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
-import com.azure.data.cosmos.directconnectivity.StoreResponse;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.EmptyByteBuf;
@@ -45,9 +45,9 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.azure.data.cosmos.directconnectivity.rntbd.RntbdConstants.RntbdResponseHeader;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static com.azure.data.cosmos.directconnectivity.rntbd.RntbdConstants.RntbdResponseHeader;
 import static java.lang.Math.min;
 
 @JsonPropertyOrder({ "frame", "headers", "content" })

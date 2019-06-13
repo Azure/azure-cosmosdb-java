@@ -22,25 +22,23 @@
  */
 package com.azure.data.cosmos.rx;
 
-import java.util.UUID;
-
-import com.azure.data.cosmos.CosmosClientBuilder;
-import com.azure.data.cosmos.directconnectivity.Protocol;
-import org.testng.SkipException;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Factory;
-import org.testng.annotations.Test;
-
 import com.azure.data.cosmos.CosmosClient;
+import com.azure.data.cosmos.CosmosClientBuilder;
 import com.azure.data.cosmos.CosmosContainer;
 import com.azure.data.cosmos.CosmosRequestOptions;
 import com.azure.data.cosmos.CosmosResponseValidator;
 import com.azure.data.cosmos.CosmosUserDefinedFunctionResponse;
 import com.azure.data.cosmos.CosmosUserDefinedFunctionSettings;
 import com.azure.data.cosmos.RequestOptions;
-
+import com.azure.data.cosmos.directconnectivity.Protocol;
+import org.testng.SkipException;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Factory;
+import org.testng.annotations.Test;
 import reactor.core.publisher.Mono;
+
+import java.util.UUID;
 
 public class UserDefinedFunctionUpsertReplaceTest extends TestSuiteBase {
 

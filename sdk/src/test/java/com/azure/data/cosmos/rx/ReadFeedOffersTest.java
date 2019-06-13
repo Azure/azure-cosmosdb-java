@@ -22,18 +22,7 @@
  */
 package com.azure.data.cosmos.rx;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
 import com.azure.data.cosmos.AsyncDocumentClient;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Factory;
-import org.testng.annotations.Test;
-
 import com.azure.data.cosmos.Database;
 import com.azure.data.cosmos.DatabaseForTest;
 import com.azure.data.cosmos.DocumentCollection;
@@ -42,7 +31,17 @@ import com.azure.data.cosmos.FeedResponse;
 import com.azure.data.cosmos.Offer;
 import com.azure.data.cosmos.PartitionKeyDefinition;
 import com.azure.data.cosmos.internal.TestSuiteBase;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Factory;
+import org.testng.annotations.Test;
 import reactor.core.publisher.Flux;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 
 //TODO: change to use external TestSuiteBase 

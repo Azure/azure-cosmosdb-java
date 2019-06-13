@@ -22,13 +22,13 @@
  */
 package com.azure.data.cosmos;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.List;
-
 import com.azure.data.cosmos.internal.Configs;
 import com.azure.data.cosmos.internal.RxDocumentClientImpl;
 import reactor.core.publisher.Flux;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.List;
 
 /**
  * Provides a client-side logical representation of the Azure Cosmos DB

@@ -22,6 +22,7 @@
  */
 package com.azure.data.cosmos.directconnectivity;
 
+import com.azure.data.cosmos.AsyncDocumentClient.Builder;
 import com.azure.data.cosmos.ConnectionMode;
 import com.azure.data.cosmos.ConnectionPolicy;
 import com.azure.data.cosmos.ConsistencyLevel;
@@ -35,17 +36,16 @@ import com.azure.data.cosmos.RequestOptions;
 import com.azure.data.cosmos.ResourceResponse;
 import com.azure.data.cosmos.StoredProcedure;
 import com.azure.data.cosmos.StoredProcedureResponse;
+import com.azure.data.cosmos.internal.Configs;
 import com.azure.data.cosmos.internal.OperationType;
 import com.azure.data.cosmos.internal.ResourceType;
+import com.azure.data.cosmos.internal.RxDocumentServiceRequest;
+import com.azure.data.cosmos.internal.SpyClientUnderTestFactory;
+import com.azure.data.cosmos.internal.TestSuiteBase;
 import com.azure.data.cosmos.rx.DocumentServiceRequestValidator;
 import com.azure.data.cosmos.rx.FeedResponseListValidator;
 import com.azure.data.cosmos.rx.ResourceResponseValidator;
 import com.azure.data.cosmos.rx.TestConfigurations;
-import com.azure.data.cosmos.AsyncDocumentClient.Builder;
-import com.azure.data.cosmos.internal.Configs;
-import com.azure.data.cosmos.internal.RxDocumentServiceRequest;
-import com.azure.data.cosmos.internal.SpyClientUnderTestFactory;
-import com.azure.data.cosmos.internal.TestSuiteBase;
 import org.mockito.stubbing.Answer;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;

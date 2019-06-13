@@ -23,10 +23,10 @@
 package com.azure.data.cosmos.internal.caches;
 
 import com.azure.data.cosmos.PartitionKeyRange;
-import com.azure.data.cosmos.internal.routing.CollectionRoutingMap;
-import com.azure.data.cosmos.internal.routing.Range;
 import com.azure.data.cosmos.internal.ICollectionRoutingMapCache;
 import com.azure.data.cosmos.internal.IRoutingMapProvider;
+import com.azure.data.cosmos.internal.routing.CollectionRoutingMap;
+import com.azure.data.cosmos.internal.routing.Range;
 import reactor.core.publisher.Mono;
 
 import java.util.List;

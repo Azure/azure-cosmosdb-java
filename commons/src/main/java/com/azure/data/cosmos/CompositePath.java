@@ -23,10 +23,8 @@
 
 package com.azure.data.cosmos;
 
-import org.apache.commons.lang3.StringUtils;
-
 import com.azure.data.cosmos.internal.Constants;
-import org.apache.commons.text.WordUtils;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Represents a composite path of the IndexingPolicy in the Azure Cosmos DB database service.

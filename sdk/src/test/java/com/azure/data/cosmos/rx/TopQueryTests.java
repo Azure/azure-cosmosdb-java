@@ -22,7 +22,24 @@
  */
 package com.azure.data.cosmos.rx;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import com.azure.data.cosmos.CosmosClient;
+import com.azure.data.cosmos.CosmosClientBuilder;
+import com.azure.data.cosmos.CosmosContainer;
+import com.azure.data.cosmos.CosmosItemProperties;
+import com.azure.data.cosmos.FeedOptions;
+import com.azure.data.cosmos.FeedResponse;
+import com.azure.data.cosmos.PartitionKey;
+import com.azure.data.cosmos.RetryAnalyzer;
+import com.azure.data.cosmos.directconnectivity.Protocol;
+import com.azure.data.cosmos.internal.Utils.ValueHolder;
+import com.azure.data.cosmos.internal.query.TakeContinuationToken;
+import io.reactivex.subscribers.TestSubscriber;
+import org.testng.SkipException;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Factory;
+import org.testng.annotations.Test;
+import reactor.core.publisher.Flux;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -30,26 +47,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import com.azure.data.cosmos.CosmosClientBuilder;
-import com.azure.data.cosmos.CosmosItemProperties;
-import com.azure.data.cosmos.RetryAnalyzer;
-import com.azure.data.cosmos.directconnectivity.Protocol;
-import org.testng.SkipException;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Factory;
-import org.testng.annotations.Test;
-
-import com.azure.data.cosmos.CosmosClient;
-import com.azure.data.cosmos.CosmosContainer;
-import com.azure.data.cosmos.FeedOptions;
-import com.azure.data.cosmos.FeedResponse;
-import com.azure.data.cosmos.PartitionKey;
-import com.azure.data.cosmos.internal.Utils.ValueHolder;
-import com.azure.data.cosmos.internal.query.TakeContinuationToken;
-
-import io.reactivex.subscribers.TestSubscriber;
-import reactor.core.publisher.Flux;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class TopQueryTests extends TestSuiteBase {
     private CosmosContainer createdCollection;

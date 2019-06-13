@@ -22,34 +22,39 @@
  */
 package com.azure.data.cosmos.rx;
 
-import com.azure.data.cosmos.*;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import com.azure.data.cosmos.BridgeInternal;
+import com.azure.data.cosmos.CosmosBridgeInternal;
+import com.azure.data.cosmos.CosmosClient;
+import com.azure.data.cosmos.CosmosClientBuilder;
+import com.azure.data.cosmos.CosmosClientException;
+import com.azure.data.cosmos.CosmosContainer;
+import com.azure.data.cosmos.CosmosDatabase;
+import com.azure.data.cosmos.CosmosItemProperties;
+import com.azure.data.cosmos.FeedOptions;
+import com.azure.data.cosmos.FeedResponse;
+import com.azure.data.cosmos.QueryMetrics;
+import com.azure.data.cosmos.Resource;
+import com.azure.data.cosmos.directconnectivity.Protocol;
+import com.azure.data.cosmos.internal.Utils.ValueHolder;
+import com.azure.data.cosmos.internal.query.CompositeContinuationToken;
+import com.azure.data.cosmos.internal.routing.Range;
+import io.reactivex.subscribers.TestSubscriber;
+import org.testng.SkipException;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Factory;
+import org.testng.annotations.Test;
+import reactor.core.publisher.Flux;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Factory;
-import org.testng.annotations.Test;
-
-import com.azure.data.cosmos.CosmosClientException;
-import com.azure.data.cosmos.directconnectivity.Protocol;
-
-import org.testng.SkipException;
-import org.testng.annotations.DataProvider;
-import com.azure.data.cosmos.internal.routing.Range;
-import com.azure.data.cosmos.internal.Utils.ValueHolder;
-import com.azure.data.cosmos.internal.query.CompositeContinuationToken;
-
-import io.reactivex.subscribers.TestSubscriber;
-import reactor.core.publisher.Flux;
-
-import java.util.Map;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class ParallelDocumentQueryTest extends TestSuiteBase {
     private CosmosDatabase createdDatabase;

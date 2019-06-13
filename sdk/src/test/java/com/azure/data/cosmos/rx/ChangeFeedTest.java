@@ -22,15 +22,6 @@
  */
 package com.azure.data.cosmos.rx;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import java.lang.reflect.Method;
-import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
-
 import com.azure.data.cosmos.AsyncDocumentClient;
 import com.azure.data.cosmos.BridgeInternal;
 import com.azure.data.cosmos.ChangeFeedOptions;
@@ -44,16 +35,24 @@ import com.azure.data.cosmos.RequestOptions;
 import com.azure.data.cosmos.Resource;
 import com.azure.data.cosmos.ResourceResponse;
 import com.azure.data.cosmos.internal.TestSuiteBase;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
 import reactor.core.publisher.Flux;
+
+import java.lang.reflect.Method;
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 //TODO: change to use external TestSuiteBase 
 public class ChangeFeedTest extends TestSuiteBase {

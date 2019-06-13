@@ -22,6 +22,7 @@
  */
 package com.azure.data.cosmos.rx.examples;
 
+import com.azure.data.cosmos.AsyncDocumentClient;
 import com.azure.data.cosmos.ConnectionMode;
 import com.azure.data.cosmos.ConnectionPolicy;
 import com.azure.data.cosmos.ConsistencyLevel;
@@ -36,7 +37,6 @@ import com.azure.data.cosmos.Resource;
 import com.azure.data.cosmos.SqlParameterCollection;
 import com.azure.data.cosmos.SqlQuerySpec;
 import com.azure.data.cosmos.internal.HttpConstants;
-import com.azure.data.cosmos.AsyncDocumentClient;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.reactivestreams.Subscription;
 import org.testng.annotations.AfterClass;

@@ -22,7 +22,9 @@
  */
 package com.azure.data.cosmos.internal.caches;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.testng.annotations.Test;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,9 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.testng.annotations.Test;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class AsyncCacheTest {
 

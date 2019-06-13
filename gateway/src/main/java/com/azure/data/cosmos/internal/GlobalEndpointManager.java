@@ -23,20 +23,19 @@
 
 package com.azure.data.cosmos.internal;
 
-import com.azure.data.cosmos.internal.routing.LocationHelper;
 import com.azure.data.cosmos.BridgeInternal;
 import com.azure.data.cosmos.ConnectionPolicy;
 import com.azure.data.cosmos.DatabaseAccount;
 import com.azure.data.cosmos.DatabaseAccountManagerInternal;
 import com.azure.data.cosmos.internal.routing.LocationCache;
+import com.azure.data.cosmos.internal.routing.LocationHelper;
+import org.apache.commons.collections4.list.UnmodifiableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import org.apache.commons.collections4.list.UnmodifiableList;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
-
 
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -47,7 +46,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 

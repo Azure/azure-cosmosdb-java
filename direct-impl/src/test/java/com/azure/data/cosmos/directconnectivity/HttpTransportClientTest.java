@@ -23,23 +23,23 @@
 
 package com.azure.data.cosmos.directconnectivity;
 
-import com.azure.data.cosmos.internal.HttpConstants;
-import com.azure.data.cosmos.internal.InternalServerErrorException;
-import com.azure.data.cosmos.internal.OperationType;
-import com.azure.data.cosmos.internal.ResourceType;
-import com.azure.data.cosmos.internal.UserAgentContainer;
-import com.azure.data.cosmos.rx.FailureValidator;
 import com.azure.data.cosmos.internal.BadRequestException;
 import com.azure.data.cosmos.internal.Configs;
+import com.azure.data.cosmos.internal.HttpConstants;
+import com.azure.data.cosmos.internal.InternalServerErrorException;
 import com.azure.data.cosmos.internal.InvalidPartitionException;
 import com.azure.data.cosmos.internal.NotFoundException;
+import com.azure.data.cosmos.internal.OperationType;
 import com.azure.data.cosmos.internal.PartitionIsMigratingException;
 import com.azure.data.cosmos.internal.PartitionKeyRangeIsSplittingException;
+import com.azure.data.cosmos.internal.ResourceType;
 import com.azure.data.cosmos.internal.RxDocumentServiceRequest;
-import com.azure.data.cosmos.internal.http.HttpClient;;
+import com.azure.data.cosmos.internal.UserAgentContainer;
+import com.azure.data.cosmos.internal.http.HttpClient;
 import com.azure.data.cosmos.internal.http.HttpHeaders;
 import com.azure.data.cosmos.internal.http.HttpRequest;
 import com.azure.data.cosmos.internal.http.HttpResponse;
+import com.azure.data.cosmos.rx.FailureValidator;
 import io.netty.channel.ConnectTimeoutException;
 import io.reactivex.subscribers.TestSubscriber;
 import org.assertj.core.api.Assertions;
@@ -53,6 +53,8 @@ import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+
+;
 
 /**
  * Tests validating {@link HttpTransportClient}

@@ -23,38 +23,36 @@
 
 package com.azure.data.cosmos.directconnectivity;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import java.net.URI;
-import java.util.concurrent.TimeUnit;
-
+import com.azure.data.cosmos.AsyncDocumentClient;
+import com.azure.data.cosmos.AsyncDocumentClient.Builder;
+import com.azure.data.cosmos.BridgeInternal;
+import com.azure.data.cosmos.ConnectionPolicy;
+import com.azure.data.cosmos.DatabaseAccount;
+import com.azure.data.cosmos.internal.BaseAuthorizationTokenProvider;
 import com.azure.data.cosmos.internal.SpyClientUnderTestFactory;
+import com.azure.data.cosmos.internal.TestSuiteBase;
+import com.azure.data.cosmos.internal.http.HttpClient;
+import com.azure.data.cosmos.internal.http.HttpHeaders;
+import com.azure.data.cosmos.internal.http.HttpRequest;
+import com.azure.data.cosmos.internal.http.HttpResponse;
+import com.azure.data.cosmos.rx.TestConfigurations;
+import io.netty.buffer.ByteBufAllocator;
+import io.netty.buffer.ByteBufUtil;
+import io.reactivex.subscribers.TestSubscriber;
 import org.apache.commons.io.IOUtils;
 import org.mockito.Mockito;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
-
-import com.azure.data.cosmos.BridgeInternal;
-import com.azure.data.cosmos.ConnectionPolicy;
-import com.azure.data.cosmos.DatabaseAccount;
-import com.azure.data.cosmos.internal.BaseAuthorizationTokenProvider;
-import com.azure.data.cosmos.AsyncDocumentClient;
-import com.azure.data.cosmos.AsyncDocumentClient.Builder;
-import com.azure.data.cosmos.rx.TestConfigurations;
-import com.azure.data.cosmos.internal.TestSuiteBase;
-import com.azure.data.cosmos.internal.http.HttpClient;
-import com.azure.data.cosmos.internal.http.HttpHeaders;
-import com.azure.data.cosmos.internal.http.HttpRequest;
-import com.azure.data.cosmos.internal.http.HttpResponse;
-import io.netty.buffer.ByteBufAllocator;
-import io.netty.buffer.ByteBufUtil;
-import io.reactivex.subscribers.TestSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.TimeUnit;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class GatewayServiceConfigurationReaderTest extends TestSuiteBase {
 

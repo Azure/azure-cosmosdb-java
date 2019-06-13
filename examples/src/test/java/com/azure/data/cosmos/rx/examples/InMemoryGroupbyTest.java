@@ -22,6 +22,7 @@
  */
 package com.azure.data.cosmos.rx.examples;
 
+import com.azure.data.cosmos.AsyncDocumentClient;
 import com.azure.data.cosmos.ConnectionMode;
 import com.azure.data.cosmos.ConnectionPolicy;
 import com.azure.data.cosmos.ConsistencyLevel;
@@ -33,7 +34,6 @@ import com.azure.data.cosmos.PartitionKeyDefinition;
 import com.azure.data.cosmos.SqlParameter;
 import com.azure.data.cosmos.SqlParameterCollection;
 import com.azure.data.cosmos.SqlQuerySpec;
-import com.azure.data.cosmos.AsyncDocumentClient;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;

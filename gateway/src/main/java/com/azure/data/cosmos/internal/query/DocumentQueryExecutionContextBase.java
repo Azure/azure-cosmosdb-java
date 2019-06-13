@@ -22,14 +22,6 @@
  */
 package com.azure.data.cosmos.internal.query;
 
-import java.io.UnsupportedEncodingException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-
-import com.azure.data.cosmos.internal.RxDocumentServiceRequest;
-import com.azure.data.cosmos.internal.RxDocumentServiceResponse;
-import com.azure.data.cosmos.internal.Strings;
 import com.azure.data.cosmos.BridgeInternal;
 import com.azure.data.cosmos.ConsistencyLevel;
 import com.azure.data.cosmos.FeedOptions;
@@ -40,15 +32,22 @@ import com.azure.data.cosmos.SqlParameterCollection;
 import com.azure.data.cosmos.SqlQuerySpec;
 import com.azure.data.cosmos.internal.HttpConstants;
 import com.azure.data.cosmos.internal.OperationType;
+import com.azure.data.cosmos.internal.ReplicatedResourceClientUtils;
 import com.azure.data.cosmos.internal.ResourceType;
 import com.azure.data.cosmos.internal.RuntimeConstants.MediaTypes;
+import com.azure.data.cosmos.internal.RxDocumentServiceRequest;
+import com.azure.data.cosmos.internal.RxDocumentServiceResponse;
+import com.azure.data.cosmos.internal.Strings;
+import com.azure.data.cosmos.internal.Utils;
 import com.azure.data.cosmos.internal.routing.PartitionKeyInternal;
 import com.azure.data.cosmos.internal.routing.PartitionKeyRangeIdentity;
-import com.azure.data.cosmos.internal.ReplicatedResourceClientUtils;
-import com.azure.data.cosmos.internal.Utils;
-
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * While this class is public, but it is not part of our published public APIs.

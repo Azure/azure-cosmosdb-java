@@ -23,23 +23,21 @@
 package com.azure.data.cosmos.rx;
 
 
-import java.util.UUID;
-
-import com.azure.data.cosmos.CosmosClientBuilder;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Factory;
-import org.testng.annotations.Test;
-
 import com.azure.data.cosmos.CosmosClient;
+import com.azure.data.cosmos.CosmosClientBuilder;
 import com.azure.data.cosmos.CosmosDatabase;
 import com.azure.data.cosmos.CosmosDatabaseForTest;
 import com.azure.data.cosmos.CosmosResponseValidator;
 import com.azure.data.cosmos.CosmosUser;
 import com.azure.data.cosmos.CosmosUserResponse;
 import com.azure.data.cosmos.CosmosUserSettings;
-
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Factory;
+import org.testng.annotations.Test;
 import reactor.core.publisher.Mono;
+
+import java.util.UUID;
 
 public class UserCrudTest extends TestSuiteBase {
 

@@ -22,7 +22,29 @@
  */
 package com.azure.data.cosmos;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import com.azure.data.cosmos.internal.BaseAuthorizationTokenProvider;
+import com.azure.data.cosmos.internal.Configs;
+import com.azure.data.cosmos.internal.HttpConstants;
+import com.azure.data.cosmos.internal.OperationType;
+import com.azure.data.cosmos.internal.Paths;
+import com.azure.data.cosmos.internal.ResourceType;
+import com.azure.data.cosmos.internal.RxDocumentServiceRequest;
+import com.azure.data.cosmos.internal.Utils;
+import com.azure.data.cosmos.internal.http.HttpClient;
+import com.azure.data.cosmos.internal.http.HttpClientConfig;
+import com.azure.data.cosmos.internal.http.HttpHeaders;
+import com.azure.data.cosmos.internal.http.HttpRequest;
+import com.azure.data.cosmos.rx.FeedResponseListValidator;
+import com.azure.data.cosmos.rx.TestConfigurations;
+import com.azure.data.cosmos.rx.TestSuiteBase;
+import io.netty.handler.codec.http.HttpMethod;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Factory;
+import org.testng.annotations.Test;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.io.IOException;
 import java.net.URI;
@@ -32,31 +54,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
 
-import com.azure.data.cosmos.internal.http.HttpClient;
-import com.azure.data.cosmos.internal.http.HttpClientConfig;
-import com.azure.data.cosmos.internal.http.HttpHeaders;
-import com.azure.data.cosmos.internal.http.HttpRequest;
-import io.netty.handler.codec.http.HttpMethod;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Factory;
-import org.testng.annotations.Test;
-
-import com.azure.data.cosmos.internal.BaseAuthorizationTokenProvider;
-import com.azure.data.cosmos.internal.HttpConstants;
-import com.azure.data.cosmos.internal.OperationType;
-import com.azure.data.cosmos.internal.Paths;
-import com.azure.data.cosmos.internal.ResourceType;
-import com.azure.data.cosmos.internal.Utils;
-import com.azure.data.cosmos.rx.FeedResponseListValidator;
-import com.azure.data.cosmos.rx.TestConfigurations;
-import com.azure.data.cosmos.rx.TestSuiteBase;
-import com.azure.data.cosmos.internal.Configs;
-import com.azure.data.cosmos.internal.RxDocumentServiceRequest;
-
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class CosmosPartitionKeyTests extends TestSuiteBase {
 

@@ -22,7 +22,18 @@
  */
 package com.azure.data.cosmos.rx.examples;
 
-import com.azure.data.cosmos.*;
+import com.azure.data.cosmos.AsyncDocumentClient;
+import com.azure.data.cosmos.ConnectionMode;
+import com.azure.data.cosmos.ConnectionPolicy;
+import com.azure.data.cosmos.ConsistencyLevel;
+import com.azure.data.cosmos.CosmosClientException;
+import com.azure.data.cosmos.Database;
+import com.azure.data.cosmos.Document;
+import com.azure.data.cosmos.DocumentCollection;
+import com.azure.data.cosmos.PartitionKeyDefinition;
+import com.azure.data.cosmos.ResourceResponse;
+import com.azure.data.cosmos.UniqueKey;
+import com.azure.data.cosmos.UniqueKeyPolicy;
 import com.google.common.collect.ImmutableList;
 import io.reactivex.subscribers.TestSubscriber;
 import org.hamcrest.Matchers;

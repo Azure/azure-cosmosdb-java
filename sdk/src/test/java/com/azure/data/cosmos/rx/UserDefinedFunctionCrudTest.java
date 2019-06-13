@@ -22,15 +22,8 @@
  */
 package com.azure.data.cosmos.rx;
 
-import java.util.UUID;
-
-import com.azure.data.cosmos.CosmosClientBuilder;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Factory;
-import org.testng.annotations.Test;
-
 import com.azure.data.cosmos.CosmosClient;
+import com.azure.data.cosmos.CosmosClientBuilder;
 import com.azure.data.cosmos.CosmosContainer;
 import com.azure.data.cosmos.CosmosRequestOptions;
 import com.azure.data.cosmos.CosmosResponse;
@@ -38,8 +31,13 @@ import com.azure.data.cosmos.CosmosResponseValidator;
 import com.azure.data.cosmos.CosmosUserDefinedFunction;
 import com.azure.data.cosmos.CosmosUserDefinedFunctionResponse;
 import com.azure.data.cosmos.CosmosUserDefinedFunctionSettings;
-
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Factory;
+import org.testng.annotations.Test;
 import reactor.core.publisher.Mono;
+
+import java.util.UUID;
 
 public class UserDefinedFunctionCrudTest extends TestSuiteBase {
 

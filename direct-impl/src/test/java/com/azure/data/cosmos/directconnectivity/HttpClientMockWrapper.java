@@ -23,7 +23,7 @@
 
 package com.azure.data.cosmos.directconnectivity;
 
-import com.azure.data.cosmos.internal.http.HttpClient;;
+import com.azure.data.cosmos.internal.http.HttpClient;
 import com.azure.data.cosmos.internal.http.HttpHeaders;
 import com.azure.data.cosmos.internal.http.HttpRequest;
 import com.azure.data.cosmos.internal.http.HttpResponse;
@@ -38,6 +38,8 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+;
 
 public class HttpClientMockWrapper {
     public static HttpClientBehaviourBuilder httpClientBehaviourBuilder() {

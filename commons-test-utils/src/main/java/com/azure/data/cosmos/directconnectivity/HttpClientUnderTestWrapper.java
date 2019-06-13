@@ -23,7 +23,7 @@
 
 package com.azure.data.cosmos.directconnectivity;
 
-import com.azure.data.cosmos.internal.http.HttpClient;;
+import com.azure.data.cosmos.internal.http.HttpClient;
 import com.azure.data.cosmos.internal.http.HttpRequest;
 import org.mockito.Mockito;
 
@@ -32,6 +32,8 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.mockito.Mockito.doAnswer;
+
+;
 
 /**
  * This is a helper class for capturing requests sent over a httpClient.

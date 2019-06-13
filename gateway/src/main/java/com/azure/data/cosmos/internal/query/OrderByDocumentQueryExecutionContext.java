@@ -22,6 +22,28 @@
  */
 package com.azure.data.cosmos.internal.query;
 
+import com.azure.data.cosmos.BridgeInternal;
+import com.azure.data.cosmos.CosmosClientException;
+import com.azure.data.cosmos.FeedOptions;
+import com.azure.data.cosmos.FeedResponse;
+import com.azure.data.cosmos.PartitionKeyRange;
+import com.azure.data.cosmos.QueryMetrics;
+import com.azure.data.cosmos.Resource;
+import com.azure.data.cosmos.SqlQuerySpec;
+import com.azure.data.cosmos.internal.HttpConstants;
+import com.azure.data.cosmos.internal.IDocumentClientRetryPolicy;
+import com.azure.data.cosmos.internal.RequestChargeTracker;
+import com.azure.data.cosmos.internal.ResourceType;
+import com.azure.data.cosmos.internal.RxDocumentServiceRequest;
+import com.azure.data.cosmos.internal.Utils;
+import com.azure.data.cosmos.internal.Utils.ValueHolder;
+import com.azure.data.cosmos.internal.query.orderbyquery.OrderByRowResult;
+import com.azure.data.cosmos.internal.query.orderbyquery.OrderbyRowComparer;
+import com.azure.data.cosmos.internal.routing.Range;
+import org.apache.commons.lang3.NotImplementedException;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import reactor.core.publisher.Flux;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -32,23 +54,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
-
-import com.azure.data.cosmos.*;
-import com.azure.data.cosmos.internal.RxDocumentServiceRequest;
-import org.apache.commons.lang3.NotImplementedException;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-
-import com.azure.data.cosmos.internal.HttpConstants;
-import com.azure.data.cosmos.internal.RequestChargeTracker;
-import com.azure.data.cosmos.internal.ResourceType;
-import com.azure.data.cosmos.internal.query.orderbyquery.OrderByRowResult;
-import com.azure.data.cosmos.internal.query.orderbyquery.OrderbyRowComparer;
-import com.azure.data.cosmos.internal.routing.Range;
-import com.azure.data.cosmos.internal.IDocumentClientRetryPolicy;
-import com.azure.data.cosmos.internal.Utils;
-import com.azure.data.cosmos.internal.Utils.ValueHolder;
-
-import reactor.core.publisher.Flux;
 
 /**
  * While this class is public, but it is not part of our published public APIs.

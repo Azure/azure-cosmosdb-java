@@ -22,18 +22,17 @@
  */
 package com.azure.data.cosmos.internal;
 
-import com.azure.data.cosmos.directconnectivity.Protocol;
-import com.azure.data.cosmos.internal.directconnectivity.ReflectionUtils;
+import com.azure.data.cosmos.AsyncDocumentClient;
 import com.azure.data.cosmos.ConnectionMode;
 import com.azure.data.cosmos.ConnectionPolicy;
 import com.azure.data.cosmos.ConsistencyLevel;
 import com.azure.data.cosmos.ISessionContainer;
+import com.azure.data.cosmos.SpyClientBuilder;
+import com.azure.data.cosmos.directconnectivity.Protocol;
+import com.azure.data.cosmos.internal.directconnectivity.ReflectionUtils;
 import com.azure.data.cosmos.internal.http.HttpClient;
 import com.azure.data.cosmos.internal.http.HttpHeaders;
 import com.azure.data.cosmos.internal.http.HttpRequest;
-import com.azure.data.cosmos.AsyncDocumentClient;
-import com.azure.data.cosmos.SpyClientBuilder;
-
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.mockito.Mockito;

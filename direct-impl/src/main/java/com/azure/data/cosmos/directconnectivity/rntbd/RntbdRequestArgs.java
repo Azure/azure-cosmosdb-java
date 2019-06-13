@@ -24,12 +24,12 @@
 
 package com.azure.data.cosmos.directconnectivity.rntbd;
 
+import com.azure.data.cosmos.internal.RxDocumentServiceRequest;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import com.google.common.base.Stopwatch;
-import com.azure.data.cosmos.internal.RxDocumentServiceRequest;
 import io.netty.channel.ChannelHandlerContext;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;

@@ -22,7 +22,33 @@
  */
 package com.azure.data.cosmos.rx;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import com.azure.data.cosmos.CosmosBridgeInternal;
+import com.azure.data.cosmos.CosmosClient;
+import com.azure.data.cosmos.CosmosClientBuilder;
+import com.azure.data.cosmos.CosmosClientException;
+import com.azure.data.cosmos.CosmosContainer;
+import com.azure.data.cosmos.CosmosDatabase;
+import com.azure.data.cosmos.CosmosItemProperties;
+import com.azure.data.cosmos.CosmosItemRequestOptions;
+import com.azure.data.cosmos.FeedOptions;
+import com.azure.data.cosmos.FeedResponse;
+import com.azure.data.cosmos.PartitionKey;
+import com.azure.data.cosmos.RetryAnalyzer;
+import com.azure.data.cosmos.internal.Utils.ValueHolder;
+import com.azure.data.cosmos.internal.query.CompositeContinuationToken;
+import com.azure.data.cosmos.internal.query.OrderByContinuationToken;
+import com.azure.data.cosmos.internal.query.QueryItem;
+import com.azure.data.cosmos.internal.routing.Range;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import io.reactivex.subscribers.TestSubscriber;
+import org.apache.commons.lang3.StringUtils;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Factory;
+import org.testng.annotations.Test;
+import reactor.core.publisher.Flux;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -35,27 +61,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import com.azure.data.cosmos.*;
-import com.azure.data.cosmos.*;
-import org.apache.commons.lang3.StringUtils;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Factory;
-import org.testng.annotations.Test;
-
-import com.azure.data.cosmos.CosmosClientException;
-import com.azure.data.cosmos.internal.query.QueryItem;
-import com.azure.data.cosmos.internal.routing.Range;
-import com.azure.data.cosmos.internal.Utils.ValueHolder;
-import com.azure.data.cosmos.internal.query.CompositeContinuationToken;
-import com.azure.data.cosmos.internal.query.OrderByContinuationToken;
-
-import io.reactivex.subscribers.TestSubscriber;
-import reactor.core.publisher.Flux;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class OrderbyDocumentQueryTest extends TestSuiteBase {
     private final double minQueryRequestChargePerPartition = 2.0;

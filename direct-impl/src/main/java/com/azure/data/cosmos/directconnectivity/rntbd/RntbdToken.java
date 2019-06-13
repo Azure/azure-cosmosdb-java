@@ -33,9 +33,9 @@ import com.fasterxml.jackson.databind.ser.PropertyWriter;
 import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
 import io.netty.buffer.ByteBuf;
 
+import static com.azure.data.cosmos.directconnectivity.rntbd.RntbdConstants.RntbdHeader;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.azure.data.cosmos.directconnectivity.rntbd.RntbdConstants.RntbdHeader;
 
 @JsonPropertyOrder({ "id", "name", "type", "present", "required", "value" })
 final class RntbdToken {

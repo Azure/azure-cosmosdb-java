@@ -31,8 +31,8 @@ import io.netty.buffer.ByteBuf;
 
 import java.util.stream.Collector;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.azure.data.cosmos.directconnectivity.rntbd.RntbdConstants.RntbdHeader;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 @SuppressWarnings("UnstableApiUsage")
 abstract class RntbdTokenStream<T extends Enum<T> & RntbdHeader> {

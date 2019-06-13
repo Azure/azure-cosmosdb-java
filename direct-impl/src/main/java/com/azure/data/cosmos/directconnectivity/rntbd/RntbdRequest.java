@@ -24,8 +24,8 @@
 
 package com.azure.data.cosmos.directconnectivity.rntbd;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.azure.data.cosmos.internal.RxDocumentServiceRequest;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.netty.buffer.ByteBuf;
 
 import java.util.UUID;

@@ -25,7 +25,6 @@
 package com.azure.data.cosmos.directconnectivity.rntbd;
 
 
-import com.fasterxml.jackson.annotation.JsonFilter;
 import com.azure.data.cosmos.ConsistencyLevel;
 import com.azure.data.cosmos.IndexingDirective;
 import com.azure.data.cosmos.internal.ContentSerializationFormat;
@@ -33,11 +32,12 @@ import com.azure.data.cosmos.internal.EnumerationDirection;
 import com.azure.data.cosmos.internal.FanoutOperationState;
 import com.azure.data.cosmos.internal.MigrateCollectionDirective;
 import com.azure.data.cosmos.internal.Paths;
+import com.azure.data.cosmos.internal.RMResources;
 import com.azure.data.cosmos.internal.ReadFeedKeyType;
 import com.azure.data.cosmos.internal.RemoteStorageType;
 import com.azure.data.cosmos.internal.ResourceId;
-import com.azure.data.cosmos.internal.RMResources;
 import com.azure.data.cosmos.internal.RxDocumentServiceRequest;
+import com.fasterxml.jackson.annotation.JsonFilter;
 import io.netty.buffer.ByteBuf;
 import org.apache.commons.lang3.EnumUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -47,8 +47,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.azure.data.cosmos.internal.HttpConstants.HttpHeaders;
 import static com.azure.data.cosmos.directconnectivity.WFConstants.BackendHeaders;
 import static com.azure.data.cosmos.directconnectivity.rntbd.RntbdConstants.RntbdConsistencyLevel;
 import static com.azure.data.cosmos.directconnectivity.rntbd.RntbdConstants.RntbdContentSerializationFormat;
@@ -60,6 +58,8 @@ import static com.azure.data.cosmos.directconnectivity.rntbd.RntbdConstants.Rntb
 import static com.azure.data.cosmos.directconnectivity.rntbd.RntbdConstants.RntbdReadFeedKeyType;
 import static com.azure.data.cosmos.directconnectivity.rntbd.RntbdConstants.RntbdRemoteStorageType;
 import static com.azure.data.cosmos.directconnectivity.rntbd.RntbdConstants.RntbdRequestHeader;
+import static com.azure.data.cosmos.internal.HttpConstants.HttpHeaders;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 @JsonFilter("RntbdToken")
 final class RntbdRequestHeaders extends RntbdTokenStream<RntbdRequestHeader> {

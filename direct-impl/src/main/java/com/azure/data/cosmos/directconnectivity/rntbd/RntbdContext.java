@@ -24,10 +24,10 @@
 
 package com.azure.data.cosmos.directconnectivity.rntbd;
 
+import com.azure.data.cosmos.directconnectivity.ServerProperties;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.azure.data.cosmos.directconnectivity.ServerProperties;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
@@ -35,9 +35,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.UUID;
 
-import static com.google.common.base.Preconditions.checkState;
 import static com.azure.data.cosmos.directconnectivity.rntbd.RntbdConstants.CurrentProtocolVersion;
 import static com.azure.data.cosmos.directconnectivity.rntbd.RntbdConstants.RntbdContextHeader;
+import static com.google.common.base.Preconditions.checkState;
 
 public final class RntbdContext {
 

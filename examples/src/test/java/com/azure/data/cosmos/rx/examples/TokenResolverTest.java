@@ -23,7 +23,7 @@
 
 package com.azure.data.cosmos.rx.examples;
 
-import com.google.common.collect.ImmutableMap;
+import com.azure.data.cosmos.AsyncDocumentClient;
 import com.azure.data.cosmos.ConnectionMode;
 import com.azure.data.cosmos.ConnectionPolicy;
 import com.azure.data.cosmos.ConsistencyLevel;
@@ -39,7 +39,7 @@ import com.azure.data.cosmos.RequestOptions;
 import com.azure.data.cosmos.ResourceResponse;
 import com.azure.data.cosmos.TokenResolver;
 import com.azure.data.cosmos.User;
-import com.azure.data.cosmos.AsyncDocumentClient;
+import com.google.common.collect.ImmutableMap;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -53,8 +53,8 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
 
 public class TokenResolverTest {

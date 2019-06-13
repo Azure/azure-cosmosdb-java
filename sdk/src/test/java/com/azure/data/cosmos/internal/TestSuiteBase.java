@@ -22,24 +22,44 @@
  */
 package com.azure.data.cosmos.internal;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.spy;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-
-import com.azure.data.cosmos.*;
+import com.azure.data.cosmos.AsyncDocumentClient;
+import com.azure.data.cosmos.AsyncDocumentClient.Builder;
+import com.azure.data.cosmos.CompositePath;
+import com.azure.data.cosmos.CompositePathSortOrder;
+import com.azure.data.cosmos.ConnectionMode;
+import com.azure.data.cosmos.ConnectionPolicy;
+import com.azure.data.cosmos.ConsistencyLevel;
+import com.azure.data.cosmos.CosmosClientException;
+import com.azure.data.cosmos.DataType;
+import com.azure.data.cosmos.Database;
+import com.azure.data.cosmos.DatabaseForTest;
+import com.azure.data.cosmos.Document;
+import com.azure.data.cosmos.DocumentCollection;
+import com.azure.data.cosmos.FeedOptions;
+import com.azure.data.cosmos.FeedResponse;
+import com.azure.data.cosmos.IncludedPath;
+import com.azure.data.cosmos.Index;
+import com.azure.data.cosmos.IndexingPolicy;
+import com.azure.data.cosmos.PartitionKey;
+import com.azure.data.cosmos.PartitionKeyDefinition;
+import com.azure.data.cosmos.RequestOptions;
+import com.azure.data.cosmos.Resource;
+import com.azure.data.cosmos.ResourceResponse;
+import com.azure.data.cosmos.RetryOptions;
+import com.azure.data.cosmos.SqlQuerySpec;
+import com.azure.data.cosmos.Undefined;
+import com.azure.data.cosmos.User;
+import com.azure.data.cosmos.directconnectivity.Protocol;
+import com.azure.data.cosmos.rx.FailureValidator;
+import com.azure.data.cosmos.rx.FeedResponseListValidator;
+import com.azure.data.cosmos.rx.ResourceResponseValidator;
+import com.azure.data.cosmos.rx.TestConfigurations;
+import com.azure.data.cosmos.rx.Utils;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
-import com.azure.data.cosmos.directconnectivity.Protocol;
 import io.reactivex.subscribers.TestSubscriber;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -51,16 +71,20 @@ import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.DataProvider;
-
-import com.azure.data.cosmos.AsyncDocumentClient.Builder;
-import com.azure.data.cosmos.rx.FailureValidator;
-import com.azure.data.cosmos.rx.FeedResponseListValidator;
-import com.azure.data.cosmos.rx.ResourceResponseValidator;
-import com.azure.data.cosmos.rx.TestConfigurations;
-import com.azure.data.cosmos.rx.Utils;
-
 import org.testng.annotations.Test;
 import reactor.core.publisher.Flux;
+
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.spy;
 
 public class TestSuiteBase {
     private static final int DEFAULT_BULK_INSERT_CONCURRENCY_LEVEL = 500;

@@ -22,29 +22,27 @@
  */
 package com.azure.data.cosmos.rx;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
+import com.azure.data.cosmos.CosmosClient;
 import com.azure.data.cosmos.CosmosClientBuilder;
 import com.azure.data.cosmos.CosmosClientException;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Factory;
-import org.testng.annotations.Test;
-
-import com.azure.data.cosmos.CosmosClient;
 import com.azure.data.cosmos.CosmosContainer;
 import com.azure.data.cosmos.CosmosRequestOptions;
 import com.azure.data.cosmos.CosmosUserDefinedFunctionSettings;
 import com.azure.data.cosmos.Database;
 import com.azure.data.cosmos.FeedOptions;
 import com.azure.data.cosmos.FeedResponse;
-
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Factory;
+import org.testng.annotations.Test;
 import reactor.core.publisher.Flux;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class UserDefinedFunctionQueryTest extends TestSuiteBase {
 

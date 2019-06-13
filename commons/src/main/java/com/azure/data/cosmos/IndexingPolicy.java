@@ -23,10 +23,9 @@
 
 package com.azure.data.cosmos;
 
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.azure.data.cosmos.internal.Constants;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.text.WordUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;

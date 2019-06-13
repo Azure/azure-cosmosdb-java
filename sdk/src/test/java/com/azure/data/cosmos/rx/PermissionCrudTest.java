@@ -22,21 +22,20 @@
  */
 package com.azure.data.cosmos.rx;
 
-import java.util.UUID;
-
 import com.azure.data.cosmos.AsyncDocumentClient;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Factory;
-import org.testng.annotations.Test;
-
 import com.azure.data.cosmos.Database;
 import com.azure.data.cosmos.Permission;
 import com.azure.data.cosmos.PermissionMode;
 import com.azure.data.cosmos.ResourceResponse;
 import com.azure.data.cosmos.User;
 import com.azure.data.cosmos.internal.TestSuiteBase;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Factory;
+import org.testng.annotations.Test;
 import reactor.core.publisher.Flux;
+
+import java.util.UUID;
 
 //TODO: change to use external TestSuiteBase 
 public class PermissionCrudTest extends TestSuiteBase {

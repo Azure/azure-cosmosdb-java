@@ -23,12 +23,12 @@
 
 package com.azure.data.cosmos.rx;
 
-import java.io.StringWriter;
-import java.lang.reflect.Method;
-import java.util.UUID;
-
-import com.azure.data.cosmos.*;
-import com.azure.data.cosmos.*;
+import com.azure.data.cosmos.CosmosClient;
+import com.azure.data.cosmos.CosmosContainer;
+import com.azure.data.cosmos.CosmosItemProperties;
+import com.azure.data.cosmos.CosmosItemRequestOptions;
+import com.azure.data.cosmos.CosmosItemResponse;
+import com.azure.data.cosmos.CosmosResponseValidator;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -40,8 +40,11 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
 import reactor.core.publisher.Mono;
+
+import java.io.StringWriter;
+import java.lang.reflect.Method;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

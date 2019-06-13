@@ -23,11 +23,9 @@
 
 package com.azure.data.cosmos.directconnectivity.rntbd;
 
-import com.google.common.base.Strings;
 import com.azure.data.cosmos.BridgeInternal;
 import com.azure.data.cosmos.CosmosClientException;
 import com.azure.data.cosmos.Error;
-import com.azure.data.cosmos.internal.InternalServerErrorException;
 import com.azure.data.cosmos.directconnectivity.ConflictException;
 import com.azure.data.cosmos.directconnectivity.ForbiddenException;
 import com.azure.data.cosmos.directconnectivity.GoneException;
@@ -44,10 +42,12 @@ import com.azure.data.cosmos.directconnectivity.StoreResponse;
 import com.azure.data.cosmos.directconnectivity.UnauthorizedException;
 import com.azure.data.cosmos.directconnectivity.rntbd.RntbdConstants.RntbdResponseHeader;
 import com.azure.data.cosmos.internal.BadRequestException;
+import com.azure.data.cosmos.internal.InternalServerErrorException;
 import com.azure.data.cosmos.internal.InvalidPartitionException;
 import com.azure.data.cosmos.internal.NotFoundException;
 import com.azure.data.cosmos.internal.PartitionIsMigratingException;
 import com.azure.data.cosmos.internal.PartitionKeyRangeIsSplittingException;
+import com.google.common.base.Strings;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelException;
@@ -78,10 +78,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static com.azure.data.cosmos.directconnectivity.rntbd.RntbdReporter.reportIssue;
 import static com.azure.data.cosmos.directconnectivity.rntbd.RntbdReporter.reportIssueUnless;
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
 import static com.azure.data.cosmos.internal.HttpConstants.StatusCodes;
 import static com.azure.data.cosmos.internal.HttpConstants.SubStatusCodes;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
 
 public final class RntbdRequestManager implements ChannelHandler, ChannelInboundHandler, ChannelOutboundHandler {
 

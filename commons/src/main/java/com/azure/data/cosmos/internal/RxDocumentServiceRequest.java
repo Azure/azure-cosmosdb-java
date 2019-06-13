@@ -23,23 +23,22 @@
 
 package com.azure.data.cosmos.internal;
 
+import com.azure.data.cosmos.FeedOptionsBase;
+import com.azure.data.cosmos.RequestOptions;
+import com.azure.data.cosmos.Resource;
+import com.azure.data.cosmos.SqlQuerySpec;
+import com.azure.data.cosmos.directconnectivity.WFConstants;
+import com.azure.data.cosmos.internal.routing.PartitionKeyRangeIdentity;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import reactor.core.publisher.Flux;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
-
-import com.azure.data.cosmos.directconnectivity.WFConstants;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
-
-import com.azure.data.cosmos.FeedOptionsBase;
-import com.azure.data.cosmos.RequestOptions;
-import com.azure.data.cosmos.Resource;
-import com.azure.data.cosmos.SqlQuerySpec;
-import com.azure.data.cosmos.internal.routing.PartitionKeyRangeIdentity;
-import reactor.core.publisher.Flux;
 
 /**
  * This is core Transport/Connection agnostic request to the Azure Cosmos DB database service.

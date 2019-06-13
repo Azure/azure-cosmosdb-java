@@ -24,24 +24,24 @@
 package com.azure.data.cosmos.internal.directconnectivity;
 
 
-import com.azure.data.cosmos.internal.caches.RxPartitionKeyRangeCache;
 import com.azure.data.cosmos.ConnectionPolicy;
 import com.azure.data.cosmos.DocumentCollection;
 import com.azure.data.cosmos.PartitionKeyRange;
-import com.azure.data.cosmos.internal.UserAgentContainer;
 import com.azure.data.cosmos.directconnectivity.AddressInformation;
 import com.azure.data.cosmos.directconnectivity.AddressResolver;
 import com.azure.data.cosmos.directconnectivity.GatewayAddressCache;
 import com.azure.data.cosmos.directconnectivity.GatewayServiceConfigurationReader;
 import com.azure.data.cosmos.directconnectivity.IAddressResolver;
 import com.azure.data.cosmos.directconnectivity.Protocol;
-import com.azure.data.cosmos.internal.routing.CollectionRoutingMap;
-import com.azure.data.cosmos.internal.routing.PartitionKeyRangeIdentity;
 import com.azure.data.cosmos.internal.GlobalEndpointManager;
 import com.azure.data.cosmos.internal.IAuthorizationTokenProvider;
 import com.azure.data.cosmos.internal.RxDocumentServiceRequest;
+import com.azure.data.cosmos.internal.UserAgentContainer;
 import com.azure.data.cosmos.internal.caches.RxCollectionCache;
-import com.azure.data.cosmos.internal.http.HttpClient;;
+import com.azure.data.cosmos.internal.caches.RxPartitionKeyRangeCache;
+import com.azure.data.cosmos.internal.http.HttpClient;
+import com.azure.data.cosmos.internal.routing.CollectionRoutingMap;
+import com.azure.data.cosmos.internal.routing.PartitionKeyRangeIdentity;
 import reactor.core.publisher.Mono;
 
 import java.net.URL;
@@ -52,6 +52,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+
+;
 
 public class GlobalAddressResolver implements IAddressResolver {
     private final static int MaxBackupReadRegions = 3;

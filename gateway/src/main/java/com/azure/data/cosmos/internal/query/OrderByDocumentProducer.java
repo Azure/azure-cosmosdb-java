@@ -22,28 +22,27 @@
  */
 package com.azure.data.cosmos.internal.query;
 
+import com.azure.data.cosmos.BridgeInternal;
+import com.azure.data.cosmos.FeedOptions;
+import com.azure.data.cosmos.FeedResponse;
+import com.azure.data.cosmos.PartitionKeyRange;
+import com.azure.data.cosmos.QueryMetrics;
+import com.azure.data.cosmos.Resource;
+import com.azure.data.cosmos.internal.HttpConstants;
+import com.azure.data.cosmos.internal.IDocumentClientRetryPolicy;
+import com.azure.data.cosmos.internal.RequestChargeTracker;
+import com.azure.data.cosmos.internal.RxDocumentServiceRequest;
+import com.azure.data.cosmos.internal.Utils;
+import com.azure.data.cosmos.internal.query.orderbyquery.OrderByRowResult;
+import com.azure.data.cosmos.internal.query.orderbyquery.OrderbyRowComparer;
+import reactor.core.publisher.Flux;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.function.Function;
-
-import com.azure.data.cosmos.internal.RxDocumentServiceRequest;
-import com.azure.data.cosmos.BridgeInternal;
-import com.azure.data.cosmos.FeedOptions;
-import com.azure.data.cosmos.FeedResponse;
-import com.azure.data.cosmos.PartitionKeyRange;
-import com.azure.data.cosmos.Resource;
-import com.azure.data.cosmos.internal.HttpConstants;
-import com.azure.data.cosmos.internal.RequestChargeTracker;
-import com.azure.data.cosmos.internal.query.orderbyquery.OrderByRowResult;
-import com.azure.data.cosmos.internal.query.orderbyquery.OrderbyRowComparer;
-import com.azure.data.cosmos.internal.IDocumentClientRetryPolicy;
-import com.azure.data.cosmos.internal.Utils;
-
-import com.azure.data.cosmos.QueryMetrics;
-import reactor.core.publisher.Flux;
 
 class OrderByDocumentProducer<T extends Resource> extends DocumentProducer<T> {
     private final OrderbyRowComparer<T> consumeComparer;
