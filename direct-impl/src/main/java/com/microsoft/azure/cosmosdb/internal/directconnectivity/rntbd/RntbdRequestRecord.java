@@ -40,7 +40,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class RntbdRequestRecord extends CompletableFuture<StoreResponse> {
 
-    private static final Logger logger = LoggerFactory.getLogger(RntbdRequestRecord.class);
+    private static final String simpleClassName = RntbdRequestRecord.class.getSimpleName();
 
     private final RntbdRequestArgs args;
     private final RntbdRequestTimer timer;
@@ -70,13 +70,19 @@ public final class RntbdRequestRecord extends CompletableFuture<StoreResponse> {
         return this.args.getLifetime();
     }
 
-    public void expire() {
-        final RequestTimeoutException error = new RequestTimeoutException(
-            String.format("Request timeout interval (%,d ms) elapsed",
-                this.timer.getRequestTimeout(TimeUnit.MILLISECONDS)),
-            this.args.getPhysicalAddress());
+    public long getTransportRequestId() {
+        return this.args.getTransportRequestId();
+    }
+
+    public boolean expire() {
+
+        final long timeoutInterval = this.timer.getRequestTimeout(TimeUnit.MILLISECONDS);
+        final String message = String.format("Request timeout interval (%,d ms) elapsed", timeoutInterval);
+        final RequestTimeoutException error = new RequestTimeoutException(message, this.args.getPhysicalAddress());
+
         BridgeInternal.setRequestHeaders(error, this.args.getServiceRequest().getHeaders());
-        this.completeExceptionally(error);
+
+        return this.completeExceptionally(error);
     }
 
     public Timeout newTimeout(final TimerTask task) {
@@ -85,6 +91,6 @@ public final class RntbdRequestRecord extends CompletableFuture<StoreResponse> {
 
     @Override
     public String toString() {
-        return this.args.toString();
+        return simpleClassName + '(' + RntbdObjectMapper.toJson(this.args) + ')';
     }
 }

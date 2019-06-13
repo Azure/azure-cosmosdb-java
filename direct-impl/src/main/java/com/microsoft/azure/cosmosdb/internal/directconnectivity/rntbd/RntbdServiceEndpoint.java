@@ -58,7 +58,6 @@ import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdReporter.reportIssue;
 
 @JsonSerialize(using = RntbdServiceEndpoint.JsonSerializer.class)
 public final class RntbdServiceEndpoint implements RntbdEndpoint {
@@ -117,7 +116,7 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
         }
     }
 
-    public CompletableFuture<StoreResponse> request(final RntbdRequestArgs args) {
+    public RntbdRequestRecord request(final RntbdRequestArgs args) {
 
         this.throwIfClosed();
 
@@ -129,7 +128,7 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
         final RntbdRequestRecord requestRecord = this.write(args);
         this.metrics.incrementRequestCount();
 
-        return requestRecord.whenComplete((response, error) -> {
+        requestRecord.whenComplete((response, error) -> {
 
             args.traceOperation(logger, null, "requestComplete", response, error);
             this.metrics.incrementResponseCount();
@@ -147,6 +146,8 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
                 }
             }
         });
+
+        return requestRecord;
     }
 
     @Override

@@ -87,14 +87,6 @@ public class AggregateQueryTests extends TestSuiteBase {
         this.clientBuilder = clientBuilder;
     }
 
-
-    // TODO: DANOBLE: Investigate Direct TCP performance issue
-    // Links: https://msdata.visualstudio.com/CosmosDB/_workitems/edit/367028https://msdata.visualstudio.com/CosmosDB/_workitems/edit/367028
-    // Notes:
-    // I've seen this test time out in my development environment. I test against a debug instance of the public
-    // emulator and so what I'm seeing could be the result of a public emulator performance issue. Of course, it
-    // might also be the result of a Tcp protocol performance problem.
-
     @Test(groups = { "simple" }, timeOut = 2 * TIMEOUT, dataProvider = "queryMetricsArgProvider")
     public void queryDocumentsWithAggregates(boolean qmEnabled) throws Exception {
 

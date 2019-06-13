@@ -38,6 +38,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.UUID;
 
+import static com.google.common.base.Preconditions.checkState;
 import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdConstants.CurrentProtocolVersion;
 import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdConstants.RntbdContextHeader;
 
@@ -146,10 +147,7 @@ public final class RntbdContext {
         this.headers.encode(out);
 
         final int length = out.writerIndex() - start;
-
-        if (length != this.frame.getLength()) {
-            throw new IllegalStateException();
-        }
+        checkState(length == this.frame.getLength());
     }
 
     public static RntbdContext from(final RntbdContextRequest request, final ServerProperties properties, final HttpResponseStatus status) {
