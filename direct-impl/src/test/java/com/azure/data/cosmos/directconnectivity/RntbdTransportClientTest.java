@@ -612,7 +612,7 @@ public final class RntbdTransportClientTest {
     /**
      * Verifies that a request for a non-existent resource produces a {@link }GoneException}
      */
-    @Test(enabled = false, groups = "direct")
+    @Test(enabled = false, groups = { "direct" })
     public void verifyGoneResponseMapsToGoneException() throws Exception {
 
         final RntbdTransportClient.Options options = new RntbdTransportClient.Options.Builder(requestTimeout).build();
@@ -687,7 +687,7 @@ public final class RntbdTransportClientTest {
      * @param request   An RNTBD request instance
      * @param exception An exception mapping
      */
-    @Test(enabled = false, groups = "unit", dataProvider = "fromMockedNetworkFailureToExpectedDocumentClientException")
+    @Test(enabled = false, groups = { "unit" }, dataProvider = "fromMockedNetworkFailureToExpectedDocumentClientException")
     public void verifyNetworkFailure(
         final FailureValidator.Builder builder,
         final RxDocumentServiceRequest request,
@@ -706,7 +706,7 @@ public final class RntbdTransportClientTest {
      * @param request   An RNTBD request instance
      * @param response  The RNTBD response instance to be returned as a result of the request
      */
-    @Test(enabled = true, groups = "unit", dataProvider = "fromMockedRntbdResponseToExpectedDocumentClientException")
+    @Test(enabled = true, groups = { "unit" }, dataProvider = "fromMockedRntbdResponseToExpectedDocumentClientException")
     public void verifyRequestFailures(
         final FailureValidator.Builder builder,
         final RxDocumentServiceRequest request,
