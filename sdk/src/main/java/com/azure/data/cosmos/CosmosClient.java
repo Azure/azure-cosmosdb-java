@@ -313,7 +313,7 @@ public class CosmosClient implements AutoCloseable {
      * Close this {@link CosmosClient} instance and cleans up the resources.
      */
     @Override
-    public void close() throws Exception {
+    public void close() {
         asyncDocumentClient.close();
     }
 }
