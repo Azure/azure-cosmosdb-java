@@ -158,7 +158,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
 
         PartitionReplicasAddressesValidator validator = new PartitionReplicasAddressesValidator.Builder()
                 .withProtocol(protocol)
-                .replicasOfSamePartition() 
+                .replicasOfSamePartition()
                 .build();
 
         validateSuccess(addresses, validator, TIMEOUT);
