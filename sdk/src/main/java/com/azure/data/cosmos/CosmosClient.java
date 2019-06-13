@@ -35,7 +35,7 @@ import java.util.List;
  * This asynchronous client is used to configure and execute requests
  * against the service.
  */
-public class CosmosClient {
+public class CosmosClient implements AutoCloseable {
 
     //Document client wrapper
     private final Configs configs;
@@ -312,7 +312,8 @@ public class CosmosClient {
     /**
      * Close this {@link CosmosClient} instance and cleans up the resources.
      */
-    public void close() {
+    @Override
+    public void close() throws Exception {
         asyncDocumentClient.close();
     }
 }

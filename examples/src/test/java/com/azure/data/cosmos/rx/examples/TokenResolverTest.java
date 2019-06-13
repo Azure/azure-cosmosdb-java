@@ -173,9 +173,7 @@ public class TokenResolverTest {
                 requestOptions.setPartitionKey(PartitionKey.None);
                 Flux<ResourceResponse<Document>> readDocumentObservable = asyncClientWithTokenResolver
                         .readDocument(documentLink, requestOptions);
-                readDocumentObservable.subscribe(resourceResponse -> {
-                    capturedResponse.add(resourceResponse);
-                });
+                readDocumentObservable.subscribe(capturedResponse::add);
             }
             Thread.sleep(2000);
             System.out.println("capturedResponse.size() = " + capturedResponse.size());

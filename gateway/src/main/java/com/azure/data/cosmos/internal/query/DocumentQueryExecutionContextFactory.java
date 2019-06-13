@@ -99,7 +99,16 @@ public class DocumentQueryExecutionContextFactory {
                             collection,
                             isContinuationExpected,
                             correlatedActivityId);
-                    });
+                    }).switchIfEmpty(ProxyDocumentQueryExecutionContext.createAsync(
+                            client,
+                            resourceTypeEnum,
+                            resourceType,
+                            query,
+                            feedOptions,
+                            resourceLink,
+                            null,
+                            isContinuationExpected,
+                            correlatedActivityId));
 
         return proxyQueryExecutionContext;
     }

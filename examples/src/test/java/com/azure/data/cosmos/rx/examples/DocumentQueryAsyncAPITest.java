@@ -38,7 +38,6 @@ import com.azure.data.cosmos.SqlQuerySpec;
 import com.azure.data.cosmos.internal.HttpConstants;
 import com.azure.data.cosmos.AsyncDocumentClient;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -54,6 +53,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -273,28 +273,15 @@ public class DocumentQueryAsyncAPITest {
         AtomicInteger onErrorCounter = new AtomicInteger();
 
         // Subscribe to the pages of Documents emitted by the observable
-        requestChargeObservable.subscribe(new Subscriber<FeedResponse<Document>>() {
-
-            @Override
-            public void onError(Throwable e) {
-                onErrorCounter.incrementAndGet();
-            }
-
-            @Override
-            public void onComplete() {
-                onCompletedCounter.incrementAndGet();
-            }
-
-            @Override
-            public void onSubscribe(Subscription s) {
-
-            }
-
-            @Override
-            public void onNext(FeedResponse<Document> page) {
-                onNextCounter.incrementAndGet();
-                //  TODO: unsubscribe
-            }
+        AtomicReference<Subscription> s = new AtomicReference<>();
+        requestChargeObservable.subscribe(documentFeedResponse -> {
+            onNextCounter.incrementAndGet();
+            s.get().cancel();
+        }, error -> {
+            onErrorCounter.incrementAndGet();
+        }, onCompletedCounter::incrementAndGet, subscription -> {
+            s.set(subscription);
+            subscription.request(1);
         });
 
         Thread.sleep(4000);
