@@ -24,9 +24,8 @@
 package com.azure.data.cosmos;
 
 
-import org.apache.commons.lang3.StringUtils;
-
 import com.azure.data.cosmos.internal.Constants;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Encapsulates the settings for consistency policy in the Azure Cosmos DB database service.

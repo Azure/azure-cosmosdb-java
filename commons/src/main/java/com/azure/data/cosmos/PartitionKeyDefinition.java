@@ -24,13 +24,12 @@
 package com.azure.data.cosmos;
 
 import com.azure.data.cosmos.internal.Constants;
-import com.azure.data.cosmos.internal.routing.PartitionKeyInternal;
 import com.azure.data.cosmos.internal.Strings;
+import com.azure.data.cosmos.internal.routing.PartitionKeyInternal;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.apache.commons.lang3.StringUtils;
 
 /**
  * Represents a partition key definition in the Azure Cosmos DB database service. A partition key definition specifies which

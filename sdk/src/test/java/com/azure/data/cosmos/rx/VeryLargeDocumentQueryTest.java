@@ -33,21 +33,20 @@ import com.azure.data.cosmos.Database;
 import com.azure.data.cosmos.FeedOptions;
 import com.azure.data.cosmos.RetryAnalyzer;
 import com.azure.data.cosmos.directconnectivity.Protocol;
-
-import reactor.core.publisher.Mono;
-
 import org.apache.commons.lang3.StringUtils;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
+import reactor.core.publisher.Mono;
 
 import java.util.UUID;
 
 import static org.apache.commons.io.FileUtils.ONE_MB;
 
 public class VeryLargeDocumentQueryTest extends TestSuiteBase {
+
     private final static int TIMEOUT = 60000;
     private final static int SETUP_TIMEOUT = 60000;
     private Database createdDatabase;
@@ -57,29 +56,23 @@ public class VeryLargeDocumentQueryTest extends TestSuiteBase {
 
     @Factory(dataProvider = "simpleClientBuildersWithDirect")
     public VeryLargeDocumentQueryTest(CosmosClientBuilder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "emulator" }, timeOut = TIMEOUT, retryAnalyzer = RetryAnalyzer.class)
     public void queryLargeDocuments() throws InterruptedException {
+
         int cnt = 5;
+
         for(int i = 0; i < cnt; i++) {
             createLargeDocument();
         }
 
-        try {
-            FeedOptions options = new FeedOptions();
-            options.enableCrossPartitionQuery(true);
-            validateQuerySuccess(createdCollection.queryItems("SELECT * FROM r", options),
-                new FeedResponseListValidator.Builder().totalSize(cnt).build());
-        } catch (Throwable error) {
-            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.TCP) {
-                String message = String.format("DIRECT TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
-                logger.info(message, error);
-                throw new SkipException(message, error);
-            }
-            throw error;
-        }
+        FeedOptions options = new FeedOptions();
+        options.enableCrossPartitionQuery(true);
+
+        validateQuerySuccess(createdCollection.queryItems("SELECT * FROM r", options),
+            new FeedResponseListValidator.Builder().totalSize(cnt).build());
     }
 
     private void createLargeDocument() throws InterruptedException {
@@ -100,7 +93,7 @@ public class VeryLargeDocumentQueryTest extends TestSuiteBase {
 
     @BeforeClass(groups = { "emulator" }, timeOut = 2 * SETUP_TIMEOUT)
     public void beforeClass() throws Exception {
-        client = clientBuilder.build();
+        client = clientBuilder().build();
         createdCollection = getSharedMultiPartitionCosmosContainer(client);
         truncateCollection(createdCollection);
     }

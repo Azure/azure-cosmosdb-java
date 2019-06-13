@@ -22,8 +22,6 @@
  */
 package com.azure.data.cosmos.internal;
 
-import javax.xml.stream.events.Characters;
-
 import org.apache.commons.lang3.StringUtils;
 
 /**

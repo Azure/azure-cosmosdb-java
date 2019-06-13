@@ -23,8 +23,8 @@
 
 package com.azure.data.cosmos.directconnectivity;
 
-import com.google.common.collect.ImmutableList;
 import com.azure.data.cosmos.internal.RxDocumentServiceRequest;
+import com.google.common.collect.ImmutableList;
 import org.mockito.Matchers;
 import org.mockito.Mockito;
 import org.testng.annotations.Test;

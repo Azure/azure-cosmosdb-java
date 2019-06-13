@@ -22,11 +22,11 @@
  */
 package com.azure.data.cosmos.internal;
 
+import com.azure.data.cosmos.AsyncDocumentClient;
 import com.azure.data.cosmos.Database;
 import com.azure.data.cosmos.Document;
 import com.azure.data.cosmos.DocumentCollection;
 import com.azure.data.cosmos.RequestOptions;
-import com.azure.data.cosmos.AsyncDocumentClient;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -44,7 +44,7 @@ public class StoreHeaderTests extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuildersWithDirect")
     public StoreHeaderTests(AsyncDocumentClient.Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
@@ -64,7 +64,7 @@ public class StoreHeaderTests extends TestSuiteBase {
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
-        client = clientBuilder.build();
+        client = clientBuilder().build();
 
         createdDatabase = SHARED_DATABASE;
         createdCollection = SHARED_MULTI_PARTITION_COLLECTION;

@@ -22,10 +22,10 @@
  */
 package com.azure.data.cosmos;
 
+import com.azure.data.cosmos.internal.Constants;
+
 import java.util.ArrayList;
 import java.util.Collection;
-
-import com.azure.data.cosmos.internal.Constants;
 
 /**
  * Represents a unique key on that enforces uniqueness constraint on documents in the collection in the Azure Cosmos DB service.
