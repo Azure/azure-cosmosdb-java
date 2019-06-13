@@ -153,16 +153,6 @@
       <classifier>linux-x86_64</classifier>
     </dependency>
     <dependency>
-      <groupId>io.reactivex</groupId>
-      <artifactId>rxjava</artifactId>
-      <version>${rxjava.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>io.reactivex</groupId>
-      <artifactId>rxjava-guava</artifactId>
-      <version>1.0.3</version>
-    </dependency>
-    <dependency>
       <groupId>log4j</groupId>
       <artifactId>log4j</artifactId>
       <version>${log4j.version}</version>

@@ -75,9 +75,6 @@ import com.azure.data.cosmos.internal.query.DocumentQueryExecutionContextFactory
 import com.azure.data.cosmos.internal.query.IDocumentQueryClient;
 import com.azure.data.cosmos.internal.query.IDocumentQueryExecutionContext;
 import com.azure.data.cosmos.internal.query.Paginator;
-import io.netty.buffer.ByteBuf;
-import io.reactivex.netty.protocol.http.client.CompositeHttpClient;
-import io.reactivex.netty.protocol.http.client.CompositeHttpClientBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -22,7 +22,6 @@
  */
 package com.azure.data.cosmos.internal;
 
-import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;

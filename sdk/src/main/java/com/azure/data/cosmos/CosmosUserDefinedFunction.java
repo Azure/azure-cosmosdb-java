@@ -23,8 +23,6 @@
 package com.azure.data.cosmos;
 
 import com.azure.data.cosmos.internal.Paths;
-import hu.akarnokd.rxjava.interop.RxJavaInterop;
-import reactor.adapter.rxjava.RxJava2Adapter;
 import reactor.core.publisher.Mono;
 
 public class CosmosUserDefinedFunction extends CosmosResource {
