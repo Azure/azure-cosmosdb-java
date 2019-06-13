@@ -46,6 +46,7 @@ import java.util.UUID;
 import static org.apache.commons.io.FileUtils.ONE_MB;
 
 public class VeryLargeDocumentQueryTest extends TestSuiteBase {
+
     private final static int TIMEOUT = 60000;
     private final static int SETUP_TIMEOUT = 60000;
     private Database createdDatabase;
@@ -60,13 +61,16 @@ public class VeryLargeDocumentQueryTest extends TestSuiteBase {
 
     @Test(groups = { "emulator" }, timeOut = TIMEOUT, retryAnalyzer = RetryAnalyzer.class)
     public void queryLargeDocuments() throws InterruptedException {
+
         int cnt = 5;
+
         for(int i = 0; i < cnt; i++) {
             createLargeDocument();
         }
 
         FeedOptions options = new FeedOptions();
         options.enableCrossPartitionQuery(true);
+
         validateQuerySuccess(createdCollection.queryItems("SELECT * FROM r", options),
             new FeedResponseListValidator.Builder().totalSize(cnt).build());
     }

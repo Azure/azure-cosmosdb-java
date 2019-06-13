@@ -61,7 +61,7 @@ public class RetryCreateDocumentTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuilders")
     public RetryCreateDocumentTest(AsyncDocumentClient.Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
@@ -187,7 +187,7 @@ public class RetryCreateDocumentTest extends TestSuiteBase {
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
         // set up the client        
-        client = SpyClientUnderTestFactory.createClientWithGatewaySpy(clientBuilder);
+        client = SpyClientUnderTestFactory.createClientWithGatewaySpy(clientBuilder());
 
         database = SHARED_DATABASE;
         collection = SHARED_SINGLE_PARTITION_COLLECTION;

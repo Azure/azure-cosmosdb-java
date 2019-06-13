@@ -90,7 +90,7 @@ public class ReadFeedPermissionsTest extends TestSuiteBase {
             createdPermissions.add(createPermissions(client, i));
         }
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(clientBuilder());
     }
 
     @AfterClass(groups = { "simple" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)

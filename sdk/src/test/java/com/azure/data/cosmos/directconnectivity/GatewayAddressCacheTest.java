@@ -77,7 +77,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuilders")
     public GatewayAddressCacheTest(Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @DataProvider(name = "targetPartitionsKeyRangeListAndCollectionLinkParams")
@@ -821,7 +821,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
     
     @BeforeClass(groups = { "direct" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
-        client = clientBuilder.build();
+        client = clientBuilder().build();
         createdDatabase = SHARED_DATABASE;
 
         RequestOptions options = new RequestOptions();

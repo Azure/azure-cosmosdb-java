@@ -41,7 +41,6 @@ public abstract class CosmosClientTest implements ITest {
 
     public CosmosClientTest(CosmosClientBuilder clientBuilder) {
         this.clientBuilder = clientBuilder;
-
     }
 
     public final CosmosClientBuilder clientBuilder() {

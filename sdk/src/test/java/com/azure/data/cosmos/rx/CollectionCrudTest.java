@@ -59,6 +59,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class CollectionCrudTest extends TestSuiteBase {
+
     private static final int TIMEOUT = 50000;
     private static final int SETUP_TIMEOUT = 20000;
     private static final int SHUTDOWN_TIMEOUT = 20000;

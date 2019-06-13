@@ -118,7 +118,7 @@ public class PermissionCrudTest extends TestSuiteBase {
                 .build();
         validateSuccess(deleteObservable, validator);
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(clientBuilder());
 
         // attempt to read the permission which was deleted
         Observable<ResourceResponse<Permission>> readObservable = client.readPermission(readBackPermission.selfLink(), null);

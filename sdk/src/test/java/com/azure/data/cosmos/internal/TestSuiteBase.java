@@ -60,17 +60,13 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testng.ITest;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterSuite;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.DataProvider;
 import rx.Observable;
@@ -78,7 +74,6 @@ import rx.observers.TestSubscriber;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -111,8 +106,6 @@ public class TestSuiteBase extends DocumentClientTest {
     private static final ImmutableList<Protocol> protocols;
 
     protected int subscriberValidationTimeout = TIMEOUT;
-    protected Builder clientBuilder;
-
     protected static Database SHARED_DATABASE;
     protected static DocumentCollection SHARED_MULTI_PARTITION_COLLECTION;
     protected static DocumentCollection SHARED_SINGLE_PARTITION_COLLECTION;
