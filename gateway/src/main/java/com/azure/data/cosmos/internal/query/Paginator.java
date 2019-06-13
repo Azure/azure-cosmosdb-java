@@ -83,7 +83,7 @@ public class Paginator {
                             Flux<FeedResponse<T>> nextPage = tFetcher.nextPage();
                             sink.next(nextPage);
                         } else {
-                            logger.info("No more results");
+                            logger.debug("No more results");
                             sink.complete();
                         }
                         return tFetcher;

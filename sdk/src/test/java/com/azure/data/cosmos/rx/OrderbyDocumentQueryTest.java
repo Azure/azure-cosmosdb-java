@@ -56,7 +56,6 @@ import com.azure.data.cosmos.internal.query.OrderByContinuationToken;
 
 import io.reactivex.subscribers.TestSubscriber;
 import reactor.core.publisher.Flux;
-import rx.Observable;
 
 public class OrderbyDocumentQueryTest extends TestSuiteBase {
     private final double minQueryRequestChargePerPartition = 2.0;
