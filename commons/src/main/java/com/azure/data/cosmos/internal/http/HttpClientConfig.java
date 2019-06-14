@@ -31,7 +31,7 @@ import java.net.InetSocketAddress;
  * Helper class internally used for instantiating reactor netty http client.
  */
 public class HttpClientConfig {
-    public final static String REACTOR_NETWORK_LOG_CATEGORY = "com.microsoft.azure.cosmosdb.reactor-netty-network";
+    public final static String REACTOR_NETWORK_LOG_CATEGORY = "com.azure.data.cosmos.netty-network";
 
     private final Configs configs;
     private Integer maxPoolSize;

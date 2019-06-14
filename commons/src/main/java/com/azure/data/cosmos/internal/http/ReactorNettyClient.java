@@ -74,11 +74,10 @@ class ReactorNettyClient implements HttpClient {
         this.connectionProvider = connectionProvider;
         this.httpClientConfig = httpClientConfig;
         this.httpClient = reactor.netty.http.client.HttpClient.create(connectionProvider);
-//        configureChannelPipelineHandlers();
+        configureChannelPipelineHandlers();
     }
 
     private void configureChannelPipelineHandlers() {
-        Configs configs = this.httpClientConfig.getConfigs();
         this.httpClient = this.httpClient.tcpConfiguration(tcpClient -> {
             if (LoggerFactory.getLogger(REACTOR_NETWORK_LOG_CATEGORY).isTraceEnabled()) {
                 tcpClient = tcpClient.wiretap(REACTOR_NETWORK_LOG_CATEGORY, LogLevel.TRACE);
@@ -86,24 +85,6 @@ class ReactorNettyClient implements HttpClient {
             if (this.httpClientConfig.getProxy() != null) {
                 tcpClient = tcpClient.proxy(typeSpec -> typeSpec.type(ProxyProvider.Proxy.HTTP).address(this.httpClientConfig.getProxy()));
             }
-            //  NOTE: The sequence matters of the handlers
-            //  Read Timeout
-            //  SSL Handler
-            //  .... Last should be Write Timeout
-
-//            tcpClient = tcpClient.bootstrap(bootstrap -> {
-//                if (this.httpClientConfig.getMaxIdleConnectionTimeoutInMillis() != null) {
-//                    BootstrapHandlers.updateConfiguration(bootstrap,
-//                            NettyPipeline.OnChannelReadIdle,
-//                            (connectionObserver, channel) ->
-//                                    channel.pipeline().addFirst(new ReadTimeoutHandler(this.httpClientConfig.getMaxIdleConnectionTimeoutInMillis() / 1000)));
-//                    BootstrapHandlers.updateConfiguration(bootstrap,
-//                            NettyPipeline.OnChannelWriteIdle,
-//                            (connectionObserver, channel) ->
-//                                    channel.pipeline().addLast(new WriteTimeoutHandler(this.httpClientConfig.getMaxIdleConnectionTimeoutInMillis() / 1000)));
-//                }
-//                return bootstrap;
-//            });
             return tcpClient;
         });
     }
