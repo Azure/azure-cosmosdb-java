@@ -68,7 +68,6 @@ public class MultiOrderByQueryTests extends TestSuiteBase {
     private static final String PARTITION_KEY = "pk";
     private ArrayList<CosmosItemProperties> documents = new ArrayList<CosmosItemProperties>();
     private CosmosContainer documentCollection;
-    private CosmosClientBuilder clientBuilder;
     private CosmosClient client;
 
     class CustomComparator implements Comparator<CosmosItemProperties> {
@@ -182,7 +181,7 @@ public class MultiOrderByQueryTests extends TestSuiteBase {
 
         bulkInsertBlocking(documentCollection, documents);
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(clientBuilder());
     }
 
     private CosmosItemProperties generateMultiOrderByDocument() {
