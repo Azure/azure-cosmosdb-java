@@ -93,7 +93,7 @@ public class BackPressureTest extends TestSuiteBase {
         rxClient.httpRequests.clear();
 
         TestSubscriber<FeedResponse<CosmosItemProperties>> subscriber = new TestSubscriber<FeedResponse<CosmosItemProperties>>(1);
-        queryObservable.publishOn(Schedulers.elastic()).subscribe(subscriber);
+        queryObservable.publishOn(Schedulers.elastic(), 1).subscribe(subscriber);
         int sleepTimeInMillis = 10000; // 10 seconds
 
         int i = 0;
@@ -132,7 +132,7 @@ public class BackPressureTest extends TestSuiteBase {
         rxClient.httpRequests.clear();
 
         TestSubscriber<FeedResponse<CosmosItemProperties>> subscriber = new TestSubscriber<FeedResponse<CosmosItemProperties>>(1);
-        queryObservable.publishOn(Schedulers.elastic()).subscribe(subscriber);
+        queryObservable.publishOn(Schedulers.elastic(), 1).subscribe(subscriber);
         int sleepTimeInMillis = 10000;
 
         int i = 0;

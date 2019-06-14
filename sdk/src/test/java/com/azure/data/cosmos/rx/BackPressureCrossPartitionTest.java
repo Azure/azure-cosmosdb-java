@@ -148,7 +148,7 @@ public class BackPressureCrossPartitionTest extends TestSuiteBase {
 
         log.info("instantiating subscriber ...");
         TestSubscriber<FeedResponse<CosmosItemProperties>> subscriber = new TestSubscriber<>(1);
-        queryObservable.publishOn(Schedulers.elastic()).subscribe(subscriber);
+        queryObservable.publishOn(Schedulers.elastic(), 1).subscribe(subscriber);
         int sleepTimeInMillis = 40000;
         int i = 0;
 
