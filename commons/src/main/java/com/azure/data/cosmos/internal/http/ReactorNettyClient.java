@@ -74,7 +74,7 @@ class ReactorNettyClient implements HttpClient {
         this.connectionProvider = connectionProvider;
         this.httpClientConfig = httpClientConfig;
         this.httpClient = reactor.netty.http.client.HttpClient.create(connectionProvider);
-        configureChannelPipelineHandlers();
+//        configureChannelPipelineHandlers();
     }
 
     private void configureChannelPipelineHandlers() {
@@ -114,7 +114,7 @@ class ReactorNettyClient implements HttpClient {
         Objects.requireNonNull(request.uri());
         Objects.requireNonNull(this.httpClientConfig);
 
-        return reactor.netty.http.client.HttpClient.create(connectionProvider)
+        return this.httpClient
                 .port(request.port())
                 .request(HttpMethod.valueOf(request.httpMethod().toString()))
                 .uri(request.uri().toString())

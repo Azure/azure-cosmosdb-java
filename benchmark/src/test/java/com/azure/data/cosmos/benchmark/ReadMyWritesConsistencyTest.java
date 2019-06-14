@@ -196,7 +196,7 @@ public class ReadMyWritesConsistencyTest {
 
     private void scheduleScaleUp(int delayStartInSeconds, int newThroughput) {
         AsyncDocumentClient housekeepingClient = Utils.housekeepingClient();
-        Flux.interval(Duration.ofSeconds(delayStartInSeconds), Schedulers.elastic()).flatMap(aVoid -> {
+        Flux.interval(Duration.ofSeconds(delayStartInSeconds), Schedulers.newSingle("ScaleUpThread")).flatMap(aVoid -> {
 
             // increase throughput to max for a single partition collection to avoid throttling
             // for bulk insert and later queries.
