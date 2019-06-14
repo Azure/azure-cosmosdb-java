@@ -21,22 +21,35 @@
  * SOFTWARE.
  */
 
-package com.microsoft.azure.cosmosdb.rx.examples;
+package com.microsoft.azure.cosmosdb;
 
 import com.google.common.base.Strings;
-import com.microsoft.azure.cosmosdb.ConnectionMode;
+import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.ITest;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 
 import java.lang.reflect.Method;
 
-import static com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient.Builder;
+public abstract class DocumentClientTest implements ITest {
 
-public class TestBase implements ITest {
-
-    Builder builder;
+    protected static final Logger logger = LoggerFactory.getLogger(DocumentClientTest.class.getSimpleName());
+    private final AsyncDocumentClient.Builder clientBuilder;
     private String testName;
+
+    public DocumentClientTest() {
+         this(new AsyncDocumentClient.Builder());
+    }
+
+    public DocumentClientTest(AsyncDocumentClient.Builder clientBuilder) {
+        this.clientBuilder = clientBuilder;
+    }
+
+    public final AsyncDocumentClient.Builder clientBuilder() {
+        return this.clientBuilder;
+    }
 
     @Override
     public final String getTestName() {
@@ -44,21 +57,24 @@ public class TestBase implements ITest {
     }
 
     @BeforeMethod(alwaysRun = true)
-    final void setTestName(Method method) {
+    public final void setTestName(Method method) {
 
-        String connectionMode = builder.getConnectionPolicy().getConnectionMode() == ConnectionMode.Direct
-            ? "Direct " + builder.getConfigs().getProtocol().name().toUpperCase()
+        String connectionMode = this.clientBuilder.getConnectionPolicy().getConnectionMode() == ConnectionMode.Direct
+            ? "Direct " + this.clientBuilder.getConfigs().getProtocol().name().toUpperCase()
             : "Gateway";
 
         this.testName = Strings.lenientFormat("%s::%s[%s with %s consistency]",
             method.getDeclaringClass().getSimpleName(),
             method.getName(),
             connectionMode,
-            builder.getDesiredConsistencyLevel());
+            clientBuilder.getDesiredConsistencyLevel());
+
+        logger.info("Starting {}", this.testName);
     }
 
     @AfterMethod(alwaysRun = true)
     public final void unsetTestName() {
+        logger.info("Finished {}", this.testName);
         this.testName = null;
     }
 }

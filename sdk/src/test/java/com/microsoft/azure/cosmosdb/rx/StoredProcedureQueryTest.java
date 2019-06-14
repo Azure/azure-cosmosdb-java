@@ -62,7 +62,7 @@ public class StoredProcedureQueryTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuildersWithDirect")
     public StoredProcedureQueryTest(Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
@@ -92,8 +92,8 @@ public class StoredProcedureQueryTest extends TestSuiteBase {
         try {
             validateQuerySuccess(queryObservable, validator, 10000);
         } catch (Throwable error) {
-            if (this.clientBuilder.configs.getProtocol() == Protocol.Tcp) {
-                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.desiredConsistencyLevel);
+            if (this.clientBuilder().configs.getProtocol() == Protocol.Tcp) {
+                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder().desiredConsistencyLevel);
                 logger.info(message, error);
                 throw new SkipException(message, error);
             }
@@ -147,8 +147,8 @@ public class StoredProcedureQueryTest extends TestSuiteBase {
         try {
             validateQuerySuccess(queryObservable, validator);
         } catch (Throwable error) {
-            if (this.clientBuilder.configs.getProtocol() == Protocol.Tcp) {
-                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.desiredConsistencyLevel);
+            if (this.clientBuilder().configs.getProtocol() == Protocol.Tcp) {
+                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder().desiredConsistencyLevel);
                 logger.info(message, error);
                 throw new SkipException(message, error);
             }
@@ -179,7 +179,7 @@ public class StoredProcedureQueryTest extends TestSuiteBase {
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() throws Exception {
-        client = clientBuilder.build();
+        client = this.clientBuilder().build();
         createdDatabase = SHARED_DATABASE;
         createdCollection = SHARED_SINGLE_PARTITION_COLLECTION_WITHOUT_PARTITION_KEY;
         truncateCollection(SHARED_SINGLE_PARTITION_COLLECTION_WITHOUT_PARTITION_KEY);
@@ -188,7 +188,7 @@ public class StoredProcedureQueryTest extends TestSuiteBase {
             createdStoredProcs.add(createStoredProc(client));
         }
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(clientBuilder());
     }
 
     @AfterClass(groups = { "simple" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)

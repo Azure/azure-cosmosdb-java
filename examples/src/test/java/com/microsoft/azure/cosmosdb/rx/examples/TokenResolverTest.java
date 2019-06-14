@@ -30,6 +30,7 @@ import com.microsoft.azure.cosmosdb.ConsistencyLevel;
 import com.microsoft.azure.cosmosdb.CosmosResourceType;
 import com.microsoft.azure.cosmosdb.Database;
 import com.microsoft.azure.cosmosdb.Document;
+import com.microsoft.azure.cosmosdb.DocumentClientTest;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.Permission;
 import com.microsoft.azure.cosmosdb.PermissionMode;
@@ -55,7 +56,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
 
-public class TokenResolverTest extends TestBase {
+public class TokenResolverTest extends DocumentClientTest {
 
     private final static int TIMEOUT = 60000;
     private final static String USER_ID = "userId";
@@ -80,13 +81,12 @@ public class TokenResolverTest extends TestBase {
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
         connectionPolicy.setConnectionMode(ConnectionMode.Direct);
 
-        this.builder = new AsyncDocumentClient.Builder()
-                .withServiceEndpoint(TestConfigurations.HOST)
-                .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
-                .withConnectionPolicy(connectionPolicy)
-                .withConsistencyLevel(ConsistencyLevel.Session);
-
-        this.client = this.builder.build();
+        this.client = this.clientBuilder()
+            .withServiceEndpoint(TestConfigurations.HOST)
+            .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
+            .withConnectionPolicy(connectionPolicy)
+            .withConsistencyLevel(ConsistencyLevel.Session)
+            .build();
 
         DocumentCollection collectionDefinition = new DocumentCollection();
         collectionDefinition.setId(UUID.randomUUID().toString());

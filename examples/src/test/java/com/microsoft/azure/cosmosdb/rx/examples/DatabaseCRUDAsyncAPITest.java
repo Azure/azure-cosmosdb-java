@@ -28,6 +28,7 @@ import com.microsoft.azure.cosmosdb.ConnectionPolicy;
 import com.microsoft.azure.cosmosdb.ConsistencyLevel;
 import com.microsoft.azure.cosmosdb.Database;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.DocumentClientTest;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.ResourceResponse;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
@@ -69,7 +70,7 @@ import static org.hamcrest.Matchers.greaterThan;
  * transform an observable to ListenableFuture. Please see
  * {@link #transformObservableToGoogleGuavaListenableFuture()}
  */
-public class DatabaseCRUDAsyncAPITest extends TestBase {
+public class DatabaseCRUDAsyncAPITest extends DocumentClientTest {
 
     private final static int TIMEOUT = 60000;
 
@@ -82,13 +83,12 @@ public class DatabaseCRUDAsyncAPITest extends TestBase {
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
         connectionPolicy.setConnectionMode(ConnectionMode.Direct);
 
-        this.builder = new Builder()
-                .withServiceEndpoint(TestConfigurations.HOST)
-                .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
-                .withConnectionPolicy(connectionPolicy)
-                .withConsistencyLevel(ConsistencyLevel.Session);
-
-        this.client = builder.build();
+        this.client = this.clientBuilder()
+            .withServiceEndpoint(TestConfigurations.HOST)
+            .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
+            .withConnectionPolicy(connectionPolicy)
+            .withConsistencyLevel(ConsistencyLevel.Session)
+            .build();
     }
 
     private Database getDatabaseDefinition() {

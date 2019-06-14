@@ -77,7 +77,7 @@ public class OrderbyDocumentQueryTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuildersWithDirect")
     public OrderbyDocumentQueryTest(AsyncDocumentClient.Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT, dataProvider = "queryMetricsArgProvider")
@@ -114,12 +114,10 @@ public class OrderbyDocumentQueryTest extends TestSuiteBase {
         try {
             validateQuerySuccess(queryObservable, validator);
         } catch (Throwable error) {
-            // TODO: DANOBLE: report this detailed information in all failures produced by TestSuiteBase classes
-            // work item: https://msdata.visualstudio.com/CosmosDB/_workitems/edit/370015
             String message = String.format("%s %s mode with %s consistency test failure",
-                this.clientBuilder.connectionPolicy.getConnectionMode(),
-                this.clientBuilder.configs.getProtocol(),
-                this.clientBuilder.desiredConsistencyLevel);
+                this.clientBuilder().connectionPolicy.getConnectionMode(),
+                this.clientBuilder().configs.getProtocol(),
+                this.clientBuilder().desiredConsistencyLevel);
             throw new AssertionError(message, error);
         }
     }
@@ -449,7 +447,7 @@ public class OrderbyDocumentQueryTest extends TestSuiteBase {
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() throws Exception {
-        client = clientBuilder.build();
+        client = this.clientBuilder().build();
         createdDatabase = SHARED_DATABASE;
         createdCollection = SHARED_MULTI_PARTITION_COLLECTION;
         truncateCollection(SHARED_MULTI_PARTITION_COLLECTION);
@@ -481,7 +479,7 @@ public class OrderbyDocumentQueryTest extends TestSuiteBase {
                 .readPartitionKeyRanges(getCollectionLink(), null)
                 .flatMap(p -> Observable.from(p.getResults())).toList().toBlocking().single().size();
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(clientBuilder());
     }
 
     @AfterClass(groups = { "simple" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)
