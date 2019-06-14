@@ -113,11 +113,8 @@ public class CosmosPartitionKeyTests extends TestSuiteBase {
 
         HttpRequest httpRequest = new HttpRequest(HttpMethod.POST, uri, uri.getPort(), new HttpHeaders(headers));
         httpRequest.withBody(request.getContent());
-        httpClient.send(httpRequest).subscribe(httpResponse  -> {
-            httpResponse.bodyAsString().subscribe(str -> {
-                assertThat(str).contains("\"id\":\"" + NON_PARTITIONED_CONTAINER_ID + "\"");
-            });
-        });
+        String body = httpClient.send(httpRequest).block().bodyAsString().block();
+        assertThat(body).contains("\"id\":\"" + NON_PARTITIONED_CONTAINER_ID + "\"");
         
         // CREATE a document in the non partitioned collection using the rest API and older version
         resourceId = Paths.DATABASES_PATH_SEGMENT + "/" + createdDatabase.id() + "/" + Paths.COLLECTIONS_PATH_SEGMENT + "/" + collection.id();
@@ -138,11 +135,8 @@ public class CosmosPartitionKeyTests extends TestSuiteBase {
         httpRequest = new HttpRequest(HttpMethod.POST, uri, uri.getPort(), new HttpHeaders(headers));
         httpRequest.withBody(request.getContent());
 
-        httpClient.send(httpRequest).subscribeOn(Schedulers.elastic()).subscribe(httpResponse -> {
-            httpResponse.bodyAsString().subscribe(str -> {
-                assertThat(str).contains("\"id\":\"" + NON_PARTITIONED_CONTAINER_DOCUEMNT_ID + "\"");
-            });
-        });
+        body = httpClient.send(httpRequest).block().bodyAsString().block();
+        assertThat(body).contains("\"id\":\"" + NON_PARTITIONED_CONTAINER_DOCUEMNT_ID + "\"");
     }
 
     @Test(groups = { "simple" })
