@@ -114,7 +114,7 @@ class ReactorNettyClient implements HttpClient {
         Objects.requireNonNull(request.uri());
         Objects.requireNonNull(this.httpClientConfig);
 
-        return this.httpClient
+        return reactor.netty.http.client.HttpClient.create(connectionProvider)
                 .port(request.port())
                 .request(HttpMethod.valueOf(request.httpMethod().toString()))
                 .uri(request.uri().toString())
