@@ -188,11 +188,11 @@ public class DocumentQuerySpyWireContentTest extends TestSuiteBase {
         
         // do the query once to ensure the collection is cached.
         client.queryDocuments(getMultiPartitionCollectionLink(), "select * from root", options)
-            .toIterable();
+            .then().block();
 
         // do the query once to ensure the collection is cached.
         client.queryDocuments(getSinglePartitionCollectionLink(), "select * from root", options)
-            .toIterable();
+              .then().block();
     }
 
     @AfterClass(groups = { "simple" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)
