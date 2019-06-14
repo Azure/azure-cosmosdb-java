@@ -30,6 +30,7 @@ import io.netty.buffer.ByteBuf;
 
 import java.util.UUID;
 
+import static com.azure.data.cosmos.directconnectivity.rntbd.RntbdConstants.RntbdRequestHeader;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class RntbdRequest {
@@ -56,12 +57,12 @@ public final class RntbdRequest {
 
     @JsonIgnore
     @SuppressWarnings("unchecked")
-    public <T> T getHeader(final RntbdConstants.RntbdRequestHeader header) {
+    public <T> T getHeader(final RntbdRequestHeader header) {
         return (T)this.headers.get(header).getValue();
     }
 
     public Long getTransportRequestId() {
-        return this.getHeader(RntbdConstants.RntbdRequestHeader.TransportRequestID);
+        return this.getHeader(RntbdRequestHeader.TransportRequestID);
     }
 
     public static RntbdRequest decode(final ByteBuf in) {

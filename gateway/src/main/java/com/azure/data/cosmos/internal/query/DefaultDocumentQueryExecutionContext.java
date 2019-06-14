@@ -61,7 +61,6 @@ import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-
 /**
  * While this class is public, but it is not part of our published public APIs.
  * This is meant to be internally used only by our sdk.

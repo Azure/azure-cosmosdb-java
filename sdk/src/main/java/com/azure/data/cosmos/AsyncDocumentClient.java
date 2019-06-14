@@ -29,7 +29,6 @@ import reactor.core.publisher.Flux;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
-
 /**
  * Provides a client-side logical representation of the Azure Cosmos DB
  * database service. This async client is used to configure and execute requests

@@ -69,12 +69,12 @@ public class ProxyHostTest extends TestSuiteBase {
     private HttpProxyServer httpProxyServer;
 
     public ProxyHostTest() {
-        this.clientBuilder = createGatewayRxDocumentClient();
+        super(createGatewayRxDocumentClient());
     }
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() throws Exception {
-        client = clientBuilder.build();
+        client = clientBuilder().build();
         createdDatabase = getSharedCosmosDatabase(client);
         createdCollection = getSharedMultiPartitionCosmosContainer(client);
         httpProxyServer = new HttpProxyServer();
@@ -166,7 +166,6 @@ public class ProxyHostTest extends TestSuiteBase {
 
     @AfterMethod(groups = { "simple" })
     public void afterMethod(Method method) {
-        super.beforeMethod(method);
         LogManager.resetConfiguration();
         PropertyConfigurator.configure(this.getClass().getClassLoader().getResource("log4j.properties"));
     }

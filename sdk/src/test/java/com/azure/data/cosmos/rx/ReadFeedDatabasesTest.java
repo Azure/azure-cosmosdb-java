@@ -49,7 +49,7 @@ public class ReadFeedDatabasesTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuilders")
     public ReadFeedDatabasesTest(CosmosClientBuilder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "simple" }, timeOut = FEED_TIMEOUT)
@@ -74,7 +74,7 @@ public class ReadFeedDatabasesTest extends TestSuiteBase {
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() throws URISyntaxException {
-        client = clientBuilder.build();
+        client = clientBuilder().build();
         allDatabases = client.listDatabases(null)
                              .map(frp -> frp.results())
                              .collectList()

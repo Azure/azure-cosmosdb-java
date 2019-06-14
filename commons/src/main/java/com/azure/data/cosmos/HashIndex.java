@@ -103,6 +103,7 @@ public final class HashIndex extends Index {
      * Sets data type.
      *
      * @param dataType the data type.
+     * @return the Hash Index.
      */
     public HashIndex dataType(DataType dataType) {
         super.set(Constants.Properties.DATA_TYPE, dataType.toString());
@@ -122,6 +123,7 @@ public final class HashIndex extends Index {
      * Sets precision.
      *
      * @param precision the precision.
+     * @return the Hash Index.
      */
     public HashIndex precision(int precision) {
         super.set(Constants.Properties.PRECISION, precision);

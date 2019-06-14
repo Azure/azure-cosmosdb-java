@@ -38,8 +38,6 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <slf4j.version>1.7.6</slf4j.version>
-    <log4j.version>1.2.17</log4j.version>
   </properties>
   <build>
     <plugins>
@@ -124,7 +122,7 @@
     <dependency>
       <groupId>com.beust</groupId>
       <artifactId>jcommander</artifactId>
-      <version>1.58</version>
+      <version>${jcommander.version}</version>
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
@@ -138,12 +136,12 @@
     </dependency>
     <dependency>
       <groupId>io.dropwizard.metrics</groupId>
-      <artifactId>metrics-graphite</artifactId>
+      <artifactId>metrics-jvm</artifactId>
       <version>${metrics.version}</version>
     </dependency>
     <dependency>
       <groupId>io.dropwizard.metrics</groupId>
-      <artifactId>metrics-jvm</artifactId>
+      <artifactId>metrics-graphite</artifactId>
       <version>${metrics.version}</version>
     </dependency>
     <dependency>
@@ -158,6 +156,11 @@
       <version>${log4j.version}</version>
     </dependency>
     <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
+      <version>${commons-lang3.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
       <version>${slf4j.version}</version>
@@ -166,11 +169,6 @@
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-log4j12</artifactId>
       <version>${slf4j.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-lang3</artifactId>
-      <version>${commons-lang3.version}</version>
     </dependency>
     <dependency>
       <groupId>org.assertj</groupId>

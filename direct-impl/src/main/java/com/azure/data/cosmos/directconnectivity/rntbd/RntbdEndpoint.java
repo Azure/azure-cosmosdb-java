@@ -24,7 +24,6 @@
 
 package com.azure.data.cosmos.directconnectivity.rntbd;
 
-import com.azure.data.cosmos.directconnectivity.RntbdTransportClient;
 import com.azure.data.cosmos.internal.UserAgentContainer;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.ssl.SslContext;
@@ -32,6 +31,7 @@ import io.netty.handler.ssl.SslContext;
 import java.net.URI;
 import java.util.stream.Stream;
 
+import static com.azure.data.cosmos.directconnectivity.RntbdTransportClient.Options;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public interface RntbdEndpoint extends AutoCloseable {
@@ -59,11 +59,11 @@ public interface RntbdEndpoint extends AutoCloseable {
 
     final class Config {
 
-        private final RntbdTransportClient.Options options;
+        private final Options options;
         private final SslContext sslContext;
         private final LogLevel wireLogLevel;
 
-        public Config(final RntbdTransportClient.Options options, final SslContext sslContext, final LogLevel wireLogLevel) {
+        public Config(final Options options, final SslContext sslContext, final LogLevel wireLogLevel) {
 
             checkNotNull(options, "options");
             checkNotNull(sslContext, "sslContext");

@@ -46,7 +46,7 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-//TODO: change to use external TestSuiteBase 
+//TODO: change to use external TestSuiteBase
 public class OfferQueryTest extends TestSuiteBase {
 
     public final static int SETUP_TIMEOUT = 40000;
@@ -62,7 +62,7 @@ public class OfferQueryTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuilders")
     public OfferQueryTest(Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "emulator" }, timeOut = TIMEOUT)
@@ -142,7 +142,7 @@ public class OfferQueryTest extends TestSuiteBase {
 
     @BeforeClass(groups = { "emulator" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() throws Exception {
-        client = clientBuilder.build();
+        client = clientBuilder().build();
 
         Database d1 = new Database();
         d1.id(databaseId);

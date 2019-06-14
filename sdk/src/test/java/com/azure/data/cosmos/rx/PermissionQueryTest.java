@@ -46,8 +46,7 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-
-//TODO: change to use external TestSuiteBase 
+//TODO: change to use external TestSuiteBase
 public class PermissionQueryTest extends TestSuiteBase {
 
     public final String databaseId = DatabaseForTest.generateId();
@@ -60,7 +59,7 @@ public class PermissionQueryTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuilders")
     public PermissionQueryTest(AsyncDocumentClient.Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
@@ -150,7 +149,7 @@ public class PermissionQueryTest extends TestSuiteBase {
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
-        client = clientBuilder.build();
+        client = clientBuilder().build();
         Database d = new Database();
         d.id(databaseId);
         createdDatabase = createDatabase(client, d);
@@ -160,7 +159,7 @@ public class PermissionQueryTest extends TestSuiteBase {
             createdPermissions.add(createPermissions(client, i));
         }
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(clientBuilder());
     }
 
     @AfterClass(groups = { "simple" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)

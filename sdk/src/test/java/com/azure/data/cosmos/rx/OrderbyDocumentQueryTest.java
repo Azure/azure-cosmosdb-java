@@ -75,7 +75,7 @@ public class OrderbyDocumentQueryTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuildersWithDirect")
     public OrderbyDocumentQueryTest(CosmosClientBuilder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT, dataProvider = "queryMetricsArgProvider")
@@ -109,17 +109,7 @@ public class OrderbyDocumentQueryTest extends TestSuiteBase {
                 .hasValidQueryMetrics(qmEnabled)
                 .build();
 
-        try {
-            validateQuerySuccess(queryObservable, validator);
-        } catch (Throwable error) {
-            // TODO: DANOBLE: report this detailed information in all failures produced by TestSuiteBase classes
-            // work item: https://msdata.visualstudio.com/CosmosDB/_workitems/edit/370015
-            String message = String.format("%s %s mode with %s consistency test failure",
-                this.clientBuilder.getConnectionPolicy().connectionMode(),
-                this.clientBuilder.getConfigs().getProtocol(),
-                this.clientBuilder.getDesiredConsistencyLevel());
-            throw new AssertionError(message, error);
-        }
+        validateQuerySuccess(queryObservable, validator);
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
@@ -432,7 +422,7 @@ public class OrderbyDocumentQueryTest extends TestSuiteBase {
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() throws Exception {
-        client = clientBuilder.build();
+        client = clientBuilder().build();
         createdDatabase = getSharedCosmosDatabase(client);
         createdCollection = getSharedMultiPartitionCosmosContainer(client);
         truncateCollection(createdCollection);
@@ -467,7 +457,7 @@ public class OrderbyDocumentQueryTest extends TestSuiteBase {
                 .readPartitionKeyRanges("dbs/" + createdDatabase.id() + "/colls/" + createdCollection.id(), null)
                 .flatMap(p -> Flux.fromIterable(p.results())).collectList().single().block().size();
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(clientBuilder());
     }
 
     @AfterClass(groups = { "simple" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)

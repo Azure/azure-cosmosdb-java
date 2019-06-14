@@ -28,6 +28,7 @@ import com.azure.data.cosmos.ConnectionPolicy;
 import com.azure.data.cosmos.ConsistencyLevel;
 import com.azure.data.cosmos.CosmosClientException;
 import com.azure.data.cosmos.Database;
+import com.azure.data.cosmos.DocumentClientTest;
 import com.azure.data.cosmos.FeedResponse;
 import com.azure.data.cosmos.ResourceResponse;
 import org.testng.annotations.AfterClass;
@@ -67,22 +68,24 @@ import static org.hamcrest.Matchers.greaterThan;
  * transform a flux to CompletableFuture. Please see
  * {@link #transformObservableToCompletableFuture()}
  */
-public class DatabaseCRUDAsyncAPITest {
+public class DatabaseCRUDAsyncAPITest extends DocumentClientTest {
     private final static int TIMEOUT = 60000;
     private final List<String> databaseIds = new ArrayList<>();
 
-    private AsyncDocumentClient asyncClient;
+    private AsyncDocumentClient client;
 
     @BeforeClass(groups = "samples", timeOut = TIMEOUT)
     public void setUp() {
-        ConnectionPolicy connectionPolicy = new ConnectionPolicy();
-        connectionPolicy.connectionMode(ConnectionMode.DIRECT);
-        asyncClient = new AsyncDocumentClient.Builder()
-                .withServiceEndpoint(TestConfigurations.HOST)
-                .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
-                .withConnectionPolicy(connectionPolicy)
-                .withConsistencyLevel(ConsistencyLevel.SESSION)
-                .build();
+
+        ConnectionPolicy connectionPolicy = new ConnectionPolicy().connectionMode(ConnectionMode.DIRECT);
+
+        this.clientBuilder()
+            .withServiceEndpoint(TestConfigurations.HOST)
+            .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
+            .withConnectionPolicy(connectionPolicy)
+            .withConsistencyLevel(ConsistencyLevel.SESSION);
+
+        this.client = this.clientBuilder().build();
     }
 
     private Database getDatabaseDefinition() {
@@ -97,9 +100,9 @@ public class DatabaseCRUDAsyncAPITest {
     @AfterClass(groups = "samples", timeOut = TIMEOUT)
     public void shutdown() {
         for (String id : databaseIds) {
-            Utils.safeClean(asyncClient, id);
+            Utils.safeClean(client, id);
         }
-        Utils.safeClose(asyncClient);
+        Utils.safeClose(client);
     }
 
     /**
@@ -109,7 +112,7 @@ public class DatabaseCRUDAsyncAPITest {
      */
     @Test(groups = "samples", timeOut = TIMEOUT)
     public void createDatabase_Async() throws Exception {
-        Flux<ResourceResponse<Database>> createDatabaseObservable = asyncClient.createDatabase(getDatabaseDefinition(),
+        Flux<ResourceResponse<Database>> createDatabaseObservable = client.createDatabase(getDatabaseDefinition(),
                                                                                                      null);
 
         final CountDownLatch completionLatch = new CountDownLatch(1);
@@ -133,7 +136,7 @@ public class DatabaseCRUDAsyncAPITest {
      */
     @Test(groups = "samples", timeOut = TIMEOUT)
     public void createDatabase_Async_withoutLambda() throws Exception {
-        Flux<ResourceResponse<Database>> createDatabaseObservable = asyncClient.createDatabase(getDatabaseDefinition(),
+        Flux<ResourceResponse<Database>> createDatabaseObservable = client.createDatabase(getDatabaseDefinition(),
                                                                                                      null);
 
         final CountDownLatch completionLatch = new CountDownLatch(1);
@@ -168,7 +171,7 @@ public class DatabaseCRUDAsyncAPITest {
      */
     @Test(groups = "samples", timeOut = TIMEOUT)
     public void createDatabase_toBlocking() {
-        Flux<ResourceResponse<Database>> createDatabaseObservable = asyncClient.createDatabase(getDatabaseDefinition(),
+        Flux<ResourceResponse<Database>> createDatabaseObservable = client.createDatabase(getDatabaseDefinition(),
                                                                                                      null);
 
         // toBlocking() converts to a blocking observable.
@@ -186,10 +189,10 @@ public class DatabaseCRUDAsyncAPITest {
     @Test(groups = "samples", timeOut = TIMEOUT)
     public void createDatabase_toBlocking_DatabaseAlreadyExists_Fails() {
         Database databaseDefinition = getDatabaseDefinition();
-        asyncClient.createDatabase(databaseDefinition, null).single().block();
+        client.createDatabase(databaseDefinition, null).single().block();
 
         // CREATE the database for test.
-        Flux<ResourceResponse<Database>> databaseForTestObservable = asyncClient
+        Flux<ResourceResponse<Database>> databaseForTestObservable = client
                 .createDatabase(databaseDefinition, null);
 
         try {
@@ -207,7 +210,7 @@ public class DatabaseCRUDAsyncAPITest {
      */
     @Test(groups = "samples", timeOut = TIMEOUT)
     public void transformObservableToCompletableFuture() throws Exception {
-        Flux<ResourceResponse<Database>> createDatabaseObservable = asyncClient.createDatabase(getDatabaseDefinition(),
+        Flux<ResourceResponse<Database>> createDatabaseObservable = client.createDatabase(getDatabaseDefinition(),
                                                                                                      null);
         CompletableFuture<ResourceResponse<Database>> future = createDatabaseObservable.single().toFuture();
 
@@ -223,10 +226,10 @@ public class DatabaseCRUDAsyncAPITest {
     @Test(groups = "samples", timeOut = TIMEOUT)
     public void createAndReadDatabase() throws Exception {
         // CREATE a database
-        Database database = asyncClient.createDatabase(getDatabaseDefinition(), null).single().block().getResource();
+        Database database = client.createDatabase(getDatabaseDefinition(), null).single().block().getResource();
 
         // READ the created database using async api
-        Flux<ResourceResponse<Database>> readDatabaseObservable = asyncClient.readDatabase("dbs/" + database.id(),
+        Flux<ResourceResponse<Database>> readDatabaseObservable = client.readDatabase("dbs/" + database.id(),
                                                                                                  null);
 
         final CountDownLatch completionLatch = new CountDownLatch(1);
@@ -251,10 +254,10 @@ public class DatabaseCRUDAsyncAPITest {
     @Test(groups = "samples", timeOut = TIMEOUT)
     public void createAndDeleteDatabase() throws Exception {
         // CREATE a database
-        Database database = asyncClient.createDatabase(getDatabaseDefinition(), null).single().block().getResource();
+        Database database = client.createDatabase(getDatabaseDefinition(), null).single().block().getResource();
 
         // DELETE the created database using async api
-        Flux<ResourceResponse<Database>> deleteDatabaseObservable = asyncClient
+        Flux<ResourceResponse<Database>> deleteDatabaseObservable = client
                 .deleteDatabase("dbs/" + database.id(), null);
 
         final CountDownLatch completionLatch = new CountDownLatch(1);
@@ -280,10 +283,10 @@ public class DatabaseCRUDAsyncAPITest {
     public void databaseCreateAndQuery() throws Exception {
         // CREATE a database
         Database databaseDefinition = getDatabaseDefinition();
-        asyncClient.createDatabase(databaseDefinition, null).single().block().getResource();
+        client.createDatabase(databaseDefinition, null).single().block().getResource();
 
         // Query the created database using async api
-        Flux<FeedResponse<Database>> queryDatabaseObservable = asyncClient
+        Flux<FeedResponse<Database>> queryDatabaseObservable = client
                 .queryDatabases(String.format("SELECT * FROM r where r.id = '%s'", databaseDefinition.id()), null);
 
         final CountDownLatch completionLatch = new CountDownLatch(1);

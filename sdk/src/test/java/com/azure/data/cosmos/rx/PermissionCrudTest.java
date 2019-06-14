@@ -37,7 +37,7 @@ import reactor.core.publisher.Flux;
 
 import java.util.UUID;
 
-//TODO: change to use external TestSuiteBase 
+//TODO: change to use external TestSuiteBase
 public class PermissionCrudTest extends TestSuiteBase {
 
     private Database createdDatabase;
@@ -47,7 +47,7 @@ public class PermissionCrudTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuilders")
     public PermissionCrudTest(AsyncDocumentClient.Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
@@ -118,7 +118,7 @@ public class PermissionCrudTest extends TestSuiteBase {
                 .build();
         validateSuccess(deleteObservable, validator);
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(clientBuilder());
 
         // attempt to read the permission which was deleted
         Flux<ResourceResponse<Permission>> readObservable = client.readPermission(readBackPermission.selfLink(), null);
@@ -206,7 +206,7 @@ public class PermissionCrudTest extends TestSuiteBase {
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
-        client = clientBuilder.build();
+        client = clientBuilder().build();
         createdDatabase = SHARED_DATABASE;
     }
 

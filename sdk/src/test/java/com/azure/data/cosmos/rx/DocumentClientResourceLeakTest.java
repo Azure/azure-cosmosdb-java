@@ -27,6 +27,7 @@ import com.azure.data.cosmos.CosmosClientBuilder;
 import com.azure.data.cosmos.CosmosContainer;
 import com.azure.data.cosmos.CosmosDatabase;
 import com.azure.data.cosmos.CosmosItemProperties;
+import com.google.common.base.Strings;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
@@ -38,20 +39,18 @@ import static org.apache.commons.io.FileUtils.ONE_MB;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class DocumentClientResourceLeakTest extends TestSuiteBase {
+
     private static final int TIMEOUT = 2400000;
     private static final int MAX_NUMBER = 1000;
-    private CosmosClientBuilder clientBuilder;
-    private CosmosClient client;
 
     private CosmosDatabase createdDatabase;
     private CosmosContainer createdCollection;
 
     @Factory(dataProvider = "simpleClientBuildersWithDirect")
     public DocumentClientResourceLeakTest(CosmosClientBuilder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
-    //TODO : FIX tests
     @Test(groups = {"emulator"}, timeOut = TIMEOUT)
     public void resourceLeak() throws Exception {
 
@@ -61,7 +60,7 @@ public class DocumentClientResourceLeakTest extends TestSuiteBase {
 
         for (int i = 0; i < MAX_NUMBER; i++) {
             logger.info("CLIENT {}", i);
-            client = clientBuilder.build();
+            CosmosClient client = this.clientBuilder().build();
             try {
                 logger.info("creating document");
                 createDocument(client.getDatabase(createdDatabase.id()).getContainer(createdCollection.id()),
@@ -82,24 +81,24 @@ public class DocumentClientResourceLeakTest extends TestSuiteBase {
             usedMemoryInBytesBefore / (double)ONE_MB,
             (usedMemoryInBytesAfter - usedMemoryInBytesBefore) / (double)ONE_MB);
 
-        assertThat(usedMemoryInBytesAfter - usedMemoryInBytesBefore).isLessThan(100 * ONE_MB);
+        assertThat(usedMemoryInBytesAfter - usedMemoryInBytesBefore).isLessThan(125 * ONE_MB);
     }
 
     @BeforeClass(groups = {"emulator"}, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
-        client = clientBuilder.build();
-        createdDatabase = getSharedCosmosDatabase(client);
-        createdCollection = getSharedMultiPartitionCosmosContainer(client);
+        CosmosClient client = this.clientBuilder().build();
+        try {
+            createdDatabase = getSharedCosmosDatabase(client);
+            createdCollection = getSharedMultiPartitionCosmosContainer(client);
+        } finally {
+            client.close();
+        }
     }
 
     private CosmosItemProperties getDocumentDefinition() {
         String uuid = UUID.randomUUID().toString();
-        CosmosItemProperties doc = new CosmosItemProperties(String.format("{ "
-                                                          + "\"id\": \"%s\", "
-                                                          + "\"mypk\": \"%s\", "
-                                                          + "\"sgmts\": [[6519456, 1471916863], [2498434, 1455671440]]"
-                                                          + "}"
-                , uuid, uuid));
-        return doc;
+        return new CosmosItemProperties(Strings.lenientFormat(
+            "{\"id\":\"%s\",\"mypk\":\"%s\",\"sgmts\":[[6519456,1471916863],[2498434,1455671440]]}", uuid, uuid
+        ));
     }
 }

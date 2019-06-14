@@ -113,15 +113,13 @@ public class CosmosClientException extends Exception {
     /**
      * Creates a new instance of the CosmosClientException class.
      *
-     * @param resourceAddress the address of the resource the request is associated
-     *                        with.
+     * @param resourceAddress the address of the resource the request is associated with.
      * @param statusCode      the http status code of the response.
      * @param errorResource   the error resource object.
      * @param responseHeaders the response headers.
      */
 
-    public CosmosClientException(String resourceAddress, int statusCode, Error errorResource,
-            Map<String, String> responseHeaders) {
+    public CosmosClientException(String resourceAddress, int statusCode, Error errorResource, Map<String, String> responseHeaders) {
         this(statusCode, errorResource == null ? null : errorResource.getMessage(), responseHeaders, null);
         this.resourceAddress = resourceAddress;
         this.error = errorResource;
@@ -129,16 +127,14 @@ public class CosmosClientException extends Exception {
 
     /**
      * Creates a new instance of the CosmosClientException class.
-     *
+     * 
      * @param message         the string message.
      * @param statusCode      the http status code of the response.
      * @param exception       the exception object.
      * @param responseHeaders the response headers.
-     * @param resourceAddress the address of the resource the request is associated
-     *                        with.
+     * @param resourceAddress the address of the resource the request is associated with.
      */
-    public CosmosClientException(String message, Exception exception, Map<String, String> responseHeaders,
-            int statusCode, String resourceAddress) {
+    public CosmosClientException(String message, Exception exception, Map<String, String> responseHeaders, int statusCode, String resourceAddress) {
         this(statusCode, message, responseHeaders, exception);
         this.resourceAddress = resourceAddress;
     }

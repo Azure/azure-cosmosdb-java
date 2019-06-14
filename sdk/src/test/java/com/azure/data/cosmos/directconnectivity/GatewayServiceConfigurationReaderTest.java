@@ -68,13 +68,13 @@ public class GatewayServiceConfigurationReaderTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuilders")
     public GatewayServiceConfigurationReaderTest(Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @BeforeClass(groups = "simple")
     public void setup() throws Exception {
-        client = clientBuilder.build();
-        SpyClientUnderTestFactory.ClientUnderTest clientUnderTest = SpyClientUnderTestFactory.createClientUnderTest(this.clientBuilder);
+        client = clientBuilder().build();
+        SpyClientUnderTestFactory.ClientUnderTest clientUnderTest = SpyClientUnderTestFactory.createClientUnderTest(this.clientBuilder());
         HttpClient httpClient = clientUnderTest.getSpyHttpClient();
         baseAuthorizationTokenProvider = new BaseAuthorizationTokenProvider(TestConfigurations.MASTER_KEY);
         connectionPolicy = ConnectionPolicy.defaultPolicy();

@@ -89,7 +89,7 @@ public class TokenResolverTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuilders")
     public TokenResolverTest(AsyncDocumentClient.Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @DataProvider(name = "connectionMode")
@@ -105,7 +105,7 @@ public class TokenResolverTest extends TestSuiteBase {
         createdDatabase = SHARED_DATABASE;
         createdCollection = SHARED_MULTI_PARTITION_COLLECTION;
 
-        client = clientBuilder.build();
+        client = clientBuilder().build();
 
         userWithReadPermission = createUser(client, createdDatabase.id(), getUserDefinition());
         readPermission = client.createPermission(userWithReadPermission.selfLink(), getPermission(createdCollection, "ReadPermissionOnColl", PermissionMode.READ), null).single().block()
@@ -312,10 +312,10 @@ public class TokenResolverTest extends TestSuiteBase {
                     "        var mytext = \"x\";" +
                     "        var myval = 1;" +
                     "        try {" +
-                    "            getContext().getResponse().body(\"Success!\");" +
+                    "            getContext().getResponse().setBody(\"Success!\");" +
                     "        }" +
                     "        catch(err) {" +
-                    "            getContext().getResponse().body(\"inline err: [\" + err.number + \"] \" + err);" +
+                    "            getContext().getResponse().setBody(\"inline err: [\" + err.number + \"] \" + err);" +
                     "        }" +
                     "    }'" +
                     "}");

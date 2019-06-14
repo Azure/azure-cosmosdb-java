@@ -29,6 +29,7 @@ import com.azure.data.cosmos.ConnectionPolicy;
 import com.azure.data.cosmos.ConsistencyLevel;
 import com.azure.data.cosmos.DataType;
 import com.azure.data.cosmos.Database;
+import com.azure.data.cosmos.DocumentClientTest;
 import com.azure.data.cosmos.DocumentCollection;
 import com.azure.data.cosmos.IncludedPath;
 import com.azure.data.cosmos.Index;
@@ -58,35 +59,37 @@ import static org.hamcrest.core.Is.is;
  * This integration test class demonstrates how to use Async API to create
  * and execute Stored Procedures.
  */
-public class StoredProcedureAsyncAPITest {
+public class StoredProcedureAsyncAPITest extends DocumentClientTest {
     private final static int TIMEOUT = 60000;
 
     private Database createdDatabase;
     private DocumentCollection createdCollection;
-    private AsyncDocumentClient asyncClient;
+    private AsyncDocumentClient client;
 
     @BeforeClass(groups = "samples", timeOut = TIMEOUT)
     public void setUp() {
-        ConnectionPolicy connectionPolicy = new ConnectionPolicy();
-        connectionPolicy.connectionMode(ConnectionMode.DIRECT);
-        asyncClient = new AsyncDocumentClient.Builder()
-                .withServiceEndpoint(TestConfigurations.HOST)
-                .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
-                .withConnectionPolicy(connectionPolicy)
-                .withConsistencyLevel(ConsistencyLevel.SESSION)
-                .build();
 
-        createdDatabase = Utils.createDatabaseForTest(asyncClient);
+        ConnectionPolicy connectionPolicy = new ConnectionPolicy().connectionMode(ConnectionMode.DIRECT);
 
-        createdCollection = asyncClient
+        this.clientBuilder()
+            .withServiceEndpoint(TestConfigurations.HOST)
+            .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
+            .withConnectionPolicy(connectionPolicy)
+            .withConsistencyLevel(ConsistencyLevel.SESSION);
+
+        this.client = this.clientBuilder().build();
+
+        createdDatabase = Utils.createDatabaseForTest(client);
+
+        createdCollection = client
                 .createCollection("dbs/" + createdDatabase.id(), getMultiPartitionCollectionDefinition(), null)
                 .single().block().getResource();
     }
 
     @AfterClass(groups = "samples", timeOut = TIMEOUT)
     public void shutdown() {
-        Utils.safeClean(asyncClient, createdDatabase);
-        Utils.safeClose(asyncClient);
+        Utils.safeClean(client, createdDatabase);
+        Utils.safeClose(client);
     }
 
     /**
@@ -112,8 +115,8 @@ public class StoredProcedureAsyncAPITest {
                         "    }'" +
                         "}");
 
-        storedProcedure = asyncClient.createStoredProcedure(getCollectionLink(), storedProcedure, null)
-                .single().block().getResource();
+        storedProcedure = client.createStoredProcedure(getCollectionLink(), storedProcedure, null)
+                                .single().block().getResource();
 
         RequestOptions requestOptions = new RequestOptions();
         requestOptions.setScriptLoggingEnabled(true);
@@ -122,8 +125,8 @@ public class StoredProcedureAsyncAPITest {
         final CountDownLatch successfulCompletionLatch = new CountDownLatch(1);
 
         // Execute the stored procedure
-        asyncClient.executeStoredProcedure(getSprocLink(storedProcedure), requestOptions, new Object[]{})
-                .subscribe(storedProcedureResponse -> {
+        client.executeStoredProcedure(getSprocLink(storedProcedure), requestOptions, new Object[]{})
+              .subscribe(storedProcedureResponse -> {
                     String logResult = "The value of x is 1.";
                     try {
                         assertThat(URLDecoder.decode(storedProcedureResponse.getScriptLog(), "UTF-8"), is(logResult));
@@ -158,8 +161,8 @@ public class StoredProcedureAsyncAPITest {
                         "    }'" +
                         "}");
 
-        storedProcedure = asyncClient.createStoredProcedure(getCollectionLink(), storedProcedure, null)
-                .single().block().getResource();
+        storedProcedure = client.createStoredProcedure(getCollectionLink(), storedProcedure, null)
+                                .single().block().getResource();
 
         RequestOptions requestOptions = new RequestOptions();
         requestOptions.setPartitionKey(new PartitionKey("Seattle"));
@@ -168,8 +171,8 @@ public class StoredProcedureAsyncAPITest {
 
         // Execute the stored procedure
         Object[] storedProcedureArgs = new Object[]{"a", 123};
-        asyncClient.executeStoredProcedure(getSprocLink(storedProcedure), requestOptions, storedProcedureArgs)
-                .subscribe(storedProcedureResponse -> {
+        client.executeStoredProcedure(getSprocLink(storedProcedure), requestOptions, storedProcedureArgs)
+              .subscribe(storedProcedureResponse -> {
                     String storedProcResultAsString = storedProcedureResponse.getResponseAsString();
                     assertThat(storedProcResultAsString, equalTo("\"2*a is 246\""));
                     successfulCompletionLatch.countDown();
@@ -198,8 +201,8 @@ public class StoredProcedureAsyncAPITest {
                         "    }'" +
                         "}");
 
-        storedProcedure = asyncClient.createStoredProcedure(getCollectionLink(), storedProcedure, null)
-                .single().block().getResource();
+        storedProcedure = client.createStoredProcedure(getCollectionLink(), storedProcedure, null)
+                                .single().block().getResource();
 
         RequestOptions requestOptions = new RequestOptions();
         requestOptions.setPartitionKey(new PartitionKey("Seattle"));
@@ -214,8 +217,8 @@ public class StoredProcedureAsyncAPITest {
 
         // Execute the stored procedure
         Object[] storedProcedureArgs = new Object[]{samplePojo};
-        asyncClient.executeStoredProcedure(getSprocLink(storedProcedure), requestOptions, storedProcedureArgs)
-                .subscribe(storedProcedureResponse -> {
+        client.executeStoredProcedure(getSprocLink(storedProcedure), requestOptions, storedProcedureArgs)
+              .subscribe(storedProcedureResponse -> {
                     String storedProcResultAsString = storedProcedureResponse.getResponseAsString();
                     assertThat(storedProcResultAsString, equalTo("\"a is my temp value\""));
                     successfulCompletionLatch.countDown();

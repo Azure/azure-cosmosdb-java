@@ -47,7 +47,7 @@ public class DatabaseCrudTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuilders")
     public DatabaseCrudTest(CosmosClientBuilder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "emulator" }, timeOut = TIMEOUT)
@@ -129,7 +129,7 @@ public class DatabaseCrudTest extends TestSuiteBase {
 
     @BeforeClass(groups = { "emulator" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
-        client = clientBuilder.build();
+        client = clientBuilder().build();
         createdDatabase = createDatabase(client, preExistingDatabaseId);
     }
 

@@ -28,6 +28,7 @@ import com.azure.data.cosmos.ConnectionPolicy;
 import com.azure.data.cosmos.ConsistencyLevel;
 import com.azure.data.cosmos.Database;
 import com.azure.data.cosmos.Document;
+import com.azure.data.cosmos.DocumentClientTest;
 import com.azure.data.cosmos.DocumentCollection;
 import com.azure.data.cosmos.FeedOptions;
 import com.azure.data.cosmos.PartitionKeyDefinition;
@@ -45,26 +46,29 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public class InMemoryGroupbyTest {
+public class InMemoryGroupbyTest extends DocumentClientTest {
+
     private final static int TIMEOUT = 60000;
 
-    private static AsyncDocumentClient asyncClient;
-    private static Database createdDatabase;
-    private static DocumentCollection createdCollection;
+    private AsyncDocumentClient client;
+    private Database createdDatabase;
+    private DocumentCollection createdCollection;
 
     @BeforeClass(groups = "samples", timeOut = TIMEOUT)
-    public static void setUp() throws Exception {
-        ConnectionPolicy connectionPolicy = new ConnectionPolicy();
-        connectionPolicy.connectionMode(ConnectionMode.DIRECT);
-        asyncClient = new AsyncDocumentClient.Builder()
-                .withServiceEndpoint(TestConfigurations.HOST)
-                .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
-                .withConnectionPolicy(connectionPolicy)
-                .withConsistencyLevel(ConsistencyLevel.SESSION)
-                .build();
+    public void setUp() throws Exception {
+
+        ConnectionPolicy connectionPolicy = new ConnectionPolicy().connectionMode(ConnectionMode.DIRECT);
+
+        this.clientBuilder()
+            .withServiceEndpoint(TestConfigurations.HOST)
+            .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
+            .withConnectionPolicy(connectionPolicy)
+            .withConsistencyLevel(ConsistencyLevel.SESSION);
+
+        this.client = this.clientBuilder().build();
 
         // CREATE database
-        createdDatabase = Utils.createDatabaseForTest(asyncClient);
+        createdDatabase = Utils.createDatabaseForTest(client);
 
         DocumentCollection collectionDefinition = new DocumentCollection();
         collectionDefinition.id(UUID.randomUUID().toString());
@@ -75,7 +79,7 @@ public class InMemoryGroupbyTest {
         collectionDefinition.setPartitionKey(partitionKeyDef);
 
         // CREATE collection
-        createdCollection = asyncClient
+        createdCollection = client
                 .createCollection("dbs/" + createdDatabase.id(), collectionDefinition, null)
                 .single().block().getResource();
 
@@ -94,7 +98,7 @@ public class InMemoryGroupbyTest {
                         + "'payer_id': %d, "
                         + " 'created_time' : %d "
                         + "}", UUID.randomUUID().toString(), i, currentTime.getSecond()));
-                asyncClient.createDocument(getCollectionLink(), doc, null, true).single().block();
+                client.createDocument(getCollectionLink(), doc, null, true).single().block();
 
                 Thread.sleep(100);
             }
@@ -103,9 +107,9 @@ public class InMemoryGroupbyTest {
     }
 
     @AfterClass(groups = "samples", timeOut = TIMEOUT)
-    public static void shutdown() {
-        Utils.safeClean(asyncClient, createdDatabase);
-        asyncClient.close();
+    public void shutdown() {
+        Utils.safeClean(client, createdDatabase);
+        client.close();
     }
 
     /**
@@ -121,7 +125,7 @@ public class InMemoryGroupbyTest {
         options.maxItemCount(requestPageSize);
         options.enableCrossPartitionQuery(true);
 
-        Flux<Document> documentsObservable = asyncClient
+        Flux<Document> documentsObservable = client
                 .queryDocuments(getCollectionLink(),
                         new SqlQuerySpec("SELECT * FROM root r WHERE r.site_id=@site_id",
                                 new SqlParameterCollection(new SqlParameter("@site_id", "ABC"))),
@@ -154,7 +158,7 @@ public class InMemoryGroupbyTest {
         options.maxItemCount(requestPageSize);
         options.enableCrossPartitionQuery(true);
 
-        Flux<Document> documentsObservable = asyncClient
+        Flux<Document> documentsObservable = client
                 .queryDocuments(getCollectionLink(),
                         new SqlQuerySpec("SELECT * FROM root r WHERE r.site_id=@site_id",
                                 new SqlParameterCollection(new SqlParameter("@site_id", "ABC"))),
@@ -179,7 +183,7 @@ public class InMemoryGroupbyTest {
         }
     }
 
-    private static  String getCollectionLink() {
+    private String getCollectionLink() {
         return "dbs/" + createdDatabase.id() + "/colls/" + createdCollection.id();
     }
 }

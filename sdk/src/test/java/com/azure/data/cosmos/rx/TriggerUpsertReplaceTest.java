@@ -48,7 +48,7 @@ public class TriggerUpsertReplaceTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuildersWithDirect")
     public TriggerUpsertReplaceTest(CosmosClientBuilder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
@@ -63,7 +63,7 @@ public class TriggerUpsertReplaceTest extends TestSuiteBase {
         CosmosTriggerSettings readBackTrigger = createdCollection.createTrigger(trigger, new CosmosRequestOptions()).block().settings();
         
         // read trigger to validate creation
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(clientBuilder());
         Mono<CosmosTriggerResponse> readObservable = createdCollection.getTrigger(readBackTrigger.id()).read(new RequestOptions());
 
         // validate trigger creation
@@ -92,7 +92,7 @@ public class TriggerUpsertReplaceTest extends TestSuiteBase {
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
-        client = clientBuilder.build();
+        client = clientBuilder().build();
         createdCollection = getSharedMultiPartitionCosmosContainer(client);
         truncateCollection(createdCollection);
     }

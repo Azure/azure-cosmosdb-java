@@ -31,6 +31,7 @@ import com.azure.data.cosmos.CosmosBridgeInternal;
 import com.azure.data.cosmos.CosmosClient;
 import com.azure.data.cosmos.CosmosClientBuilder;
 import com.azure.data.cosmos.CosmosClientException;
+import com.azure.data.cosmos.CosmosClientTest;
 import com.azure.data.cosmos.CosmosContainer;
 import com.azure.data.cosmos.CosmosContainerRequestOptions;
 import com.azure.data.cosmos.CosmosContainerSettings;
@@ -65,6 +66,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.CaseFormat;
 import com.google.common.collect.ImmutableList;
 import io.reactivex.subscribers.TestSubscriber;
 import org.apache.commons.lang3.ObjectUtils;
@@ -72,17 +74,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterSuite;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -94,9 +92,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
 
-public class TestSuiteBase {
+public class TestSuiteBase extends CosmosClientTest {
+
     private static final int DEFAULT_BULK_INSERT_CONCURRENCY_LEVEL = 500;
     private static final ObjectMapper objectMapper = new ObjectMapper();
+
     protected static Logger logger = LoggerFactory.getLogger(TestSuiteBase.class.getSimpleName());
     protected static final int TIMEOUT = 40000;
     protected static final int FEED_TIMEOUT = 40000;
@@ -114,12 +114,15 @@ public class TestSuiteBase {
     private static final ImmutableList<Protocol> protocols;
 
     protected int subscriberValidationTimeout = TIMEOUT;
-    protected CosmosClientBuilder clientBuilder;
 
     private static CosmosDatabase SHARED_DATABASE;
     private static CosmosContainer SHARED_MULTI_PARTITION_COLLECTION;
     private static CosmosContainer SHARED_MULTI_PARTITION_COLLECTION_WITH_COMPOSITE_AND_SPATIAL_INDEXES;
     private static CosmosContainer SHARED_SINGLE_PARTITION_COLLECTION;
+
+    public TestSuiteBase(CosmosClientBuilder clientBuilder) {
+        super(clientBuilder);
+    }
 
     protected static CosmosDatabase getSharedCosmosDatabase(CosmosClient client) {
         return CosmosBridgeInternal.getCosmosDatabaseWithNewClient(SHARED_DATABASE, client);
@@ -145,37 +148,20 @@ public class TestSuiteBase {
         preferredLocations = immutableListOrNull(parsePreferredLocation(TestConfigurations.PREFERRED_LOCATIONS));
         protocols = ObjectUtils.defaultIfNull(immutableListOrNull(parseProtocols(TestConfigurations.PROTOCOLS)),
                                               ImmutableList.of(Protocol.HTTPS, Protocol.TCP));
-    }
 
-    protected TestSuiteBase() {
+        //  Object mapper configurations
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         objectMapper.configure(JsonParser.Feature.ALLOW_SINGLE_QUOTES, true);
         objectMapper.configure(JsonParser.Feature.ALLOW_TRAILING_COMMA, true);
         objectMapper.configure(JsonParser.Feature.STRICT_DUPLICATE_DETECTION, true);
+    }
+
+    protected TestSuiteBase() {
         logger.debug("Initializing {} ...", this.getClass().getSimpleName());
     }
 
     private static <T> ImmutableList<T> immutableListOrNull(List<T> list) {
         return list != null ? ImmutableList.copyOf(list) : null;
-    }
-
-    @BeforeMethod(groups = {"simple", "long", "direct", "multi-master", "emulator", "non-emulator"})
-    public void beforeMethod(Method method) {
-        if (this.clientBuilder != null) {
-            logger.info("Starting {}::{} using {} {} mode with {} consistency",
-                        method.getDeclaringClass().getSimpleName(), method.getName(),
-                        this.clientBuilder.getConnectionPolicy().connectionMode(),
-                        this.clientBuilder.getConfigs().getProtocol(),
-                        this.clientBuilder.getDesiredConsistencyLevel());
-            return;
-        }
-        logger.info("Starting {}::{}", method.getDeclaringClass().getSimpleName(), method.getName());
-    }
-
-    @AfterMethod(groups = {"simple", "long", "direct", "multi-master", "emulator", "non-emulator"})
-    public void afterMethod(Method m) {
-        Test t = m.getAnnotation(Test.class);
-        logger.info("Finished {}:{}.", m.getDeclaringClass().getSimpleName(), m.getName());
     }
 
     private static class DatabaseManagerImpl implements CosmosDatabaseForTest.DatabaseManager {
@@ -485,7 +471,6 @@ public class TestSuiteBase {
                 .publishOn(Schedulers.parallel())
                 .map(CosmosItemResponse::properties)
                 .collectList()
-                .single()
                 .block();
     }
 
@@ -776,13 +761,10 @@ public class TestSuiteBase {
         };
     }
 
-    private static ConsistencyLevel parseConsistency(String consistency) {
+    static ConsistencyLevel parseConsistency(String consistency) {
         if (consistency != null) {
-            for (ConsistencyLevel consistencyLevel : ConsistencyLevel.values()) {
-                if (consistencyLevel.toString().toLowerCase().equals(consistency.toLowerCase())) {
-                    return consistencyLevel;
-                }
-            }
+            consistency = CaseFormat.UPPER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, consistency).trim();
+            return ConsistencyLevel.valueOf(consistency);
         }
 
         logger.error("INVALID configured test consistency [{}].", consistency);
@@ -807,10 +789,14 @@ public class TestSuiteBase {
         if (StringUtils.isEmpty(protocols)) {
             return null;
         }
-
+        List<Protocol> protocolList = new ArrayList<>();
         try {
-            return objectMapper.readValue(protocols, new TypeReference<List<Protocol>>() {
+            List<String> protocolStrings = objectMapper.readValue(protocols, new TypeReference<List<String>>() {
             });
+            for(String protocol : protocolStrings) {
+                protocolList.add(Protocol.valueOf(CaseFormat.UPPER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, protocol)));
+            }
+            return protocolList;
         } catch (Exception e) {
             logger.error("INVALID configured test protocols [{}].", protocols);
             throw new IllegalStateException("INVALID configured test protocols " + protocols);
@@ -886,10 +872,13 @@ public class TestSuiteBase {
         if (StringUtils.isEmpty(consistencies)) {
             return null;
         }
-
+        List<ConsistencyLevel> consistencyLevels = new ArrayList<>();
         try {
-            return objectMapper.readValue(consistencies, new TypeReference<List<ConsistencyLevel>>() {
-            });
+            List<String> consistencyStrings = objectMapper.readValue(consistencies, new TypeReference<List<String>>() {});
+            for(String consistency : consistencyStrings) {
+                consistencyLevels.add(ConsistencyLevel.valueOf(CaseFormat.UPPER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, consistency)));
+            }
+            return consistencyLevels;
         } catch (Exception e) {
             logger.error("INVALID consistency test desiredConsistencies [{}].", consistencies);
             throw new IllegalStateException("INVALID configured test desiredConsistencies " + consistencies);

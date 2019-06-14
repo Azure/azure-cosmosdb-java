@@ -29,6 +29,7 @@ import com.azure.data.cosmos.ConsistencyLevel;
 import com.azure.data.cosmos.CosmosClientException;
 import com.azure.data.cosmos.Database;
 import com.azure.data.cosmos.Document;
+import com.azure.data.cosmos.DocumentClientTest;
 import com.azure.data.cosmos.DocumentCollection;
 import com.azure.data.cosmos.PartitionKeyDefinition;
 import com.azure.data.cosmos.ResourceResponse;
@@ -49,7 +50,8 @@ import java.util.UUID;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
-public class UniqueIndexAsyncAPITest {
+public class UniqueIndexAsyncAPITest extends DocumentClientTest {
+
     private final static int TIMEOUT = 60000;
 
     private AsyncDocumentClient client;
@@ -97,15 +99,16 @@ public class UniqueIndexAsyncAPITest {
 
     @BeforeClass(groups = "samples", timeOut = TIMEOUT)
     public void setUp() {
-        // Sets up the requirements for each test
-        ConnectionPolicy connectionPolicy = new ConnectionPolicy();
-        connectionPolicy.connectionMode(ConnectionMode.DIRECT);
-        client = new AsyncDocumentClient.Builder()
-                .withServiceEndpoint(TestConfigurations.HOST)
-                .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
-                .withConnectionPolicy(connectionPolicy)
-                .withConsistencyLevel(ConsistencyLevel.SESSION)
-                .build();
+
+        ConnectionPolicy connectionPolicy = new ConnectionPolicy().connectionMode(ConnectionMode.DIRECT);
+
+        this.clientBuilder()
+            .withServiceEndpoint(TestConfigurations.HOST)
+            .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
+            .withConnectionPolicy(connectionPolicy)
+            .withConsistencyLevel(ConsistencyLevel.SESSION);
+
+        this.client = this.clientBuilder().build();
 
         DocumentCollection collectionDefinition = new DocumentCollection();
         collectionDefinition.id(UUID.randomUUID().toString());

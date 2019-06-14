@@ -26,7 +26,7 @@ package com.azure.data.cosmos.directconnectivity.rntbd;
 
 import com.azure.data.cosmos.BridgeInternal;
 import com.azure.data.cosmos.directconnectivity.GoneException;
-import com.azure.data.cosmos.directconnectivity.RntbdTransportClient;
+import com.azure.data.cosmos.directconnectivity.RntbdTransportClient.Options;
 import com.azure.data.cosmos.internal.HttpConstants;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
@@ -262,7 +262,7 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
         private final NioEventLoopGroup eventLoopGroup;
         private final RntbdRequestTimer requestTimer;
 
-        public Provider(final RntbdTransportClient.Options options, final SslContext sslContext) {
+        public Provider(final Options options, final SslContext sslContext) {
 
             checkNotNull(options, "options");
             checkNotNull(sslContext, "sslContext");

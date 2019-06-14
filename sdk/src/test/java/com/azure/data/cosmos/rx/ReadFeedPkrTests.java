@@ -47,7 +47,7 @@ public class ReadFeedPkrTests extends TestSuiteBase {
     
     @Factory(dataProvider = "clientBuildersWithDirect")
     public ReadFeedPkrTests(CosmosClientBuilder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "emulator" }, timeOut = FEED_TIMEOUT)
@@ -67,8 +67,8 @@ public class ReadFeedPkrTests extends TestSuiteBase {
 
     @BeforeClass(groups = { "emulator" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
-        client = CosmosBridgeInternal.getAsyncDocumentClient(clientBuilder.build());
-        createdDatabase = getSharedCosmosDatabase(clientBuilder.build());
+        client = CosmosBridgeInternal.getAsyncDocumentClient(clientBuilder().build());
+        createdDatabase = getSharedCosmosDatabase(clientBuilder().build());
         createdCollection = createCollection(createdDatabase,
                                              getCollectionDefinition(),
                                              new CosmosContainerRequestOptions());

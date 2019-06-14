@@ -99,6 +99,7 @@ public final class RangeIndex extends Index {
      * Sets data type.
      *
      * @param dataType the data type.
+     * @return the RangeIndex.
      */
     public RangeIndex dataType(DataType dataType) {
         super.set(Constants.Properties.DATA_TYPE, dataType.toString());
@@ -118,6 +119,7 @@ public final class RangeIndex extends Index {
      * Sets precision.
      *
      * @param precision the precision.
+     * @return the RangeIndex.
      */
     public RangeIndex precision(int precision) {
         super.set(Constants.Properties.PRECISION, precision);

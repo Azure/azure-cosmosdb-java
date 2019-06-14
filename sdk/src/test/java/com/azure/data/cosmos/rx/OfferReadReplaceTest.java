@@ -37,7 +37,7 @@ import reactor.core.publisher.Flux;
 
 import java.util.List;
 
-//TODO: change to use external TestSuiteBase 
+//TODO: change to use external TestSuiteBase
 public class OfferReadReplaceTest extends TestSuiteBase {
 
     public final String databaseId = DatabaseForTest.generateId();
@@ -49,7 +49,7 @@ public class OfferReadReplaceTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuilders")
     public OfferReadReplaceTest(AsyncDocumentClient.Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "emulator" }, timeOut = TIMEOUT)
@@ -100,7 +100,7 @@ public class OfferReadReplaceTest extends TestSuiteBase {
 
     @BeforeClass(groups = { "emulator" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
-        client = clientBuilder.build();
+        client = clientBuilder().build();
         createdDatabase = createDatabase(client, databaseId);
         createdCollection = createCollection(client, createdDatabase.id(),
                 getCollectionDefinition());

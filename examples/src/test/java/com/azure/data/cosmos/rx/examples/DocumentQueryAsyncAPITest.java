@@ -28,6 +28,7 @@ import com.azure.data.cosmos.ConnectionPolicy;
 import com.azure.data.cosmos.ConsistencyLevel;
 import com.azure.data.cosmos.Database;
 import com.azure.data.cosmos.Document;
+import com.azure.data.cosmos.DocumentClientTest;
 import com.azure.data.cosmos.DocumentCollection;
 import com.azure.data.cosmos.FeedOptions;
 import com.azure.data.cosmos.FeedResponse;
@@ -84,23 +85,27 @@ import static org.hamcrest.Matchers.notNullValue;
  * transform a flux to CompletableFuture. Please see
  * {@link #transformObservableToCompletableFuture()}
  */
-public class DocumentQueryAsyncAPITest {
+public class DocumentQueryAsyncAPITest extends DocumentClientTest {
+
     private final static int TIMEOUT = 3 * 60000;
-    private AsyncDocumentClient asyncClient;
+
+    private AsyncDocumentClient client;
     private DocumentCollection createdCollection;
     private Database createdDatabase;
     private int numberOfDocuments;
 
     @BeforeClass(groups = "samples", timeOut = TIMEOUT)
     public void setUp() {
-        ConnectionPolicy connectionPolicy = new ConnectionPolicy();
-        connectionPolicy.connectionMode(ConnectionMode.DIRECT);
-        asyncClient = new AsyncDocumentClient.Builder()
-                .withServiceEndpoint(TestConfigurations.HOST)
-                .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
-                .withConnectionPolicy(connectionPolicy)
-                .withConsistencyLevel(ConsistencyLevel.SESSION)
-                .build();
+
+        ConnectionPolicy connectionPolicy = new ConnectionPolicy().connectionMode(ConnectionMode.DIRECT);
+
+        this.clientBuilder()
+            .withServiceEndpoint(TestConfigurations.HOST)
+            .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
+            .withConnectionPolicy(connectionPolicy)
+            .withConsistencyLevel(ConsistencyLevel.SESSION);
+
+        this.client = this.clientBuilder().build();
 
         DocumentCollection collectionDefinition = new DocumentCollection();
         collectionDefinition.id(UUID.randomUUID().toString());
@@ -112,10 +117,10 @@ public class DocumentQueryAsyncAPITest {
 
         // CREATE database
 
-        createdDatabase = Utils.createDatabaseForTest(asyncClient);
+        createdDatabase = Utils.createDatabaseForTest(client);
 
         // CREATE collection
-        createdCollection = asyncClient
+        createdCollection = client
                 .createCollection("dbs/" + createdDatabase.id(), collectionDefinition, null)
                 .single().block().getResource();
 
@@ -123,14 +128,14 @@ public class DocumentQueryAsyncAPITest {
         // Add documents
         for (int i = 0; i < numberOfDocuments; i++) {
             Document doc = new Document(String.format("{ 'id': 'loc%d', 'counter': %d}", i, i));
-            asyncClient.createDocument(getCollectionLink(), doc, null, true).single().block();
+            client.createDocument(getCollectionLink(), doc, null, true).single().block();
         }
     }
 
     @AfterClass(groups = "samples", timeOut = TIMEOUT)
     public void shutdown() {
-        Utils.safeClean(asyncClient, createdDatabase);
-        Utils.safeClose(asyncClient);
+        Utils.safeClean(client, createdDatabase);
+        Utils.safeClose(client);
     }
 
     /**
@@ -145,7 +150,7 @@ public class DocumentQueryAsyncAPITest {
         options.maxItemCount(requestPageSize);
         options.enableCrossPartitionQuery(true);
 
-        Flux<FeedResponse<Document>> documentQueryObservable = asyncClient
+        Flux<FeedResponse<Document>> documentQueryObservable = client
                 .queryDocuments(getCollectionLink(), "SELECT * FROM root", options);
 
         final CountDownLatch mainThreadBarrier = new CountDownLatch(1);
@@ -191,7 +196,7 @@ public class DocumentQueryAsyncAPITest {
         options.maxItemCount(requestPageSize);
         options.enableCrossPartitionQuery(true);
 
-        Flux<FeedResponse<Document>> documentQueryObservable = asyncClient
+        Flux<FeedResponse<Document>> documentQueryObservable = client
                 .queryDocuments(getCollectionLink(), "SELECT * FROM root", options);
 
         final CountDownLatch mainThreadBarrier = new CountDownLatch(1);
@@ -240,7 +245,7 @@ public class DocumentQueryAsyncAPITest {
         options.maxItemCount(requestPageSize);
         options.enableCrossPartitionQuery(true);
 
-        Flux<Double> totalChargeObservable = asyncClient
+        Flux<Double> totalChargeObservable = client
                 .queryDocuments(getCollectionLink(), "SELECT * FROM root", options)
                 .map(FeedResponse::requestCharge) // Map the page to its request charge
                 .reduce(Double::sum).flux(); // Sum up all the request charges
@@ -265,7 +270,7 @@ public class DocumentQueryAsyncAPITest {
         options.maxItemCount(requestPageSize);
         options.enableCrossPartitionQuery(true);
 
-        Flux<FeedResponse<Document>> requestChargeObservable = asyncClient
+        Flux<FeedResponse<Document>> requestChargeObservable = client
                 .queryDocuments(getCollectionLink(), "SELECT * FROM root", options);
 
         AtomicInteger onNextCounter = new AtomicInteger();
@@ -319,11 +324,11 @@ public class DocumentQueryAsyncAPITest {
 
         List<Document> resultList = Collections.synchronizedList(new ArrayList<Document>());
 
-        asyncClient.queryDocuments(getCollectionLink(), "SELECT * FROM root", options)
-                .map(FeedResponse::results) // Map the page to the list of documents
-                .concatMap(Flux::fromIterable) // Flatten the Flux<list<document>> to Flux<document>
-                .filter(isPrimeNumber) // Filter documents using isPrimeNumber predicate
-                .subscribe(doc -> resultList.add(doc)); // Collect the results
+        client.queryDocuments(getCollectionLink(), "SELECT * FROM root", options)
+              .map(FeedResponse::results) // Map the page to the list of documents
+              .concatMap(Flux::fromIterable) // Flatten the Flux<list<document>> to Flux<document>
+              .filter(isPrimeNumber) // Filter documents using isPrimeNumber predicate
+              .subscribe(doc -> resultList.add(doc)); // Collect the results
 
         Thread.sleep(4000);
 
@@ -362,7 +367,7 @@ public class DocumentQueryAsyncAPITest {
         options.maxItemCount(requestPageSize);
         options.enableCrossPartitionQuery(true);
 
-        Flux<FeedResponse<Document>> documentQueryObservable = asyncClient
+        Flux<FeedResponse<Document>> documentQueryObservable = client
                 .queryDocuments(getCollectionLink(), "SELECT * FROM root", options);
 
         // Covert the observable to a blocking observable, then convert the blocking
@@ -402,7 +407,7 @@ public class DocumentQueryAsyncAPITest {
 
             Document doc = new Document(String.format("{\"id\":\"documentId%d\",\"key\":\"%s\",\"prop\":%d}", i,
                                                       RandomStringUtils.randomAlphabetic(2), i));
-            asyncClient.createDocument("dbs/" + createdDatabase.id() + "/colls/" + multiPartitionCollection.id(),
+            client.createDocument("dbs/" + createdDatabase.id() + "/colls/" + multiPartitionCollection.id(),
                                        doc, null, true).single().block();
         }
 
@@ -417,7 +422,7 @@ public class DocumentQueryAsyncAPITest {
         options.maxDegreeOfParallelism(2);
 
         // Get the observable order by query documents
-        Flux<FeedResponse<Document>> documentQueryObservable = asyncClient.queryDocuments(
+        Flux<FeedResponse<Document>> documentQueryObservable = client.queryDocuments(
                 "dbs/" + createdDatabase.id() + "/colls/" + multiPartitionCollection.id(), query, options);
 
         List<String> resultList = Collections.synchronizedList(new ArrayList<>());
@@ -449,7 +454,7 @@ public class DocumentQueryAsyncAPITest {
         options.maxItemCount(requestPageSize);
         options.enableCrossPartitionQuery(true);
 
-        Flux<FeedResponse<Document>> documentQueryObservable = asyncClient
+        Flux<FeedResponse<Document>> documentQueryObservable = client
                 .queryDocuments(getCollectionLink(), "SELECT * FROM root", options);
 
         // Convert to observable of list of pages
@@ -483,8 +488,8 @@ public class DocumentQueryAsyncAPITest {
         DocumentCollection collectionDefinition = new DocumentCollection();
         collectionDefinition.id(collectionId);
         collectionDefinition.setPartitionKey(partitionKeyDef);
-        DocumentCollection createdCollection = asyncClient.createCollection(databaseLink, collectionDefinition, options)
-                .single().block().getResource();
+        DocumentCollection createdCollection = client.createCollection(databaseLink, collectionDefinition, options)
+                                                     .single().block().getResource();
 
         return createdCollection;
     }

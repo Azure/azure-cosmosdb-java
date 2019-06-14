@@ -81,6 +81,7 @@ public final class SpatialIndex extends Index {
      * Sets data type.
      *
      * @param dataType the data type.
+     * @return the SpatialIndex.
      */
     public SpatialIndex dataType(DataType dataType) {
         super.set(Constants.Properties.DATA_TYPE, dataType.toString());

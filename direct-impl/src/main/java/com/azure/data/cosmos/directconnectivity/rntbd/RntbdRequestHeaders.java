@@ -171,7 +171,7 @@ final class RntbdRequestHeaders extends RntbdTokenStream<RntbdRequestHeader> {
         this.fillTokenFromHeader(headers, this::getTransportRequestID, HttpHeaders.TRANSPORT_REQUEST_ID);
 
         // Will be null in case of direct, which is fine - BE will use the value slice the connection context this.
-        // When this is used in GATEWAY, the header value will be populated with the proxied HTTP request's header,
+        // When this is used in Gateway, the header value will be populated with the proxied HTTP request's header,
         // and BE will respect the per-request value.
 
         this.fillTokenFromHeader(headers, this::getClientVersion, HttpHeaders.VERSION);
@@ -1231,7 +1231,7 @@ final class RntbdRequestHeaders extends RntbdTokenStream<RntbdRequestHeader> {
                 }
                 default: {
                     assert false : "Recognized header has neither special-case nor default handling to convert "
-                        + "from header STRING to RNTBD token";
+                        + "from header String to RNTBD token";
                     break;
                 }
             }

@@ -29,8 +29,6 @@ import com.azure.data.cosmos.CosmosContainer;
 import com.azure.data.cosmos.CosmosStoredProcedureSettings;
 import com.azure.data.cosmos.FeedOptions;
 import com.azure.data.cosmos.FeedResponse;
-import com.azure.data.cosmos.directconnectivity.Protocol;
-import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
@@ -53,7 +51,7 @@ public class StoredProcedureQueryTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuildersWithDirect")
     public StoredProcedureQueryTest(CosmosClientBuilder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
@@ -79,16 +77,7 @@ public class StoredProcedureQueryTest extends TestSuiteBase {
                         .requestChargeGreaterThanOrEqualTo(1.0).build())
                 .build();
 
-        try {
-            validateQuerySuccess(queryObservable, validator, 10000);
-        } catch (Throwable error) {
-            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.TCP) {
-                String message = String.format("DIRECT TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
-                logger.info(message, error);
-                throw new SkipException(message, error);
-            }
-            throw error;
-        }
+        validateQuerySuccess(queryObservable, validator, 10000);
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
@@ -132,16 +121,7 @@ public class StoredProcedureQueryTest extends TestSuiteBase {
                 .requestChargeGreaterThanOrEqualTo(1.0).build())
             .build();
 
-        try {
-            validateQuerySuccess(queryObservable, validator);
-        } catch (Throwable error) {
-            if (this.clientBuilder.getConfigs().getProtocol() == Protocol.TCP) {
-                String message = String.format("DIRECT TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.getDesiredConsistencyLevel());
-                logger.info(message, error);
-                throw new SkipException(message, error);
-            }
-            throw error;
-        }
+        validateQuerySuccess(queryObservable, validator);
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
@@ -166,7 +146,7 @@ public class StoredProcedureQueryTest extends TestSuiteBase {
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() throws Exception {
-        client = clientBuilder.build();
+        client = clientBuilder().build();
         createdCollection = getSharedMultiPartitionCosmosContainer(client);
         truncateCollection(createdCollection);
 
@@ -174,7 +154,7 @@ public class StoredProcedureQueryTest extends TestSuiteBase {
             createdStoredProcs.add(createStoredProc(createdCollection));
         }
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(clientBuilder());
     }
 
     @AfterClass(groups = { "simple" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)

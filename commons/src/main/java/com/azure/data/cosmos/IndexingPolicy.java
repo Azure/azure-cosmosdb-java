@@ -118,6 +118,7 @@ public final class IndexingPolicy extends JsonSerializable {
      * indexing, documents can be explicitly included.
      *
      * @param automatic the automatic
+     * @return the Indexing Policy.
      */
     public IndexingPolicy automatic(boolean automatic) {
         super.set(Constants.Properties.AUTOMATIC, automatic);
@@ -143,6 +144,7 @@ public final class IndexingPolicy extends JsonSerializable {
      * Sets the indexing mode (consistent or lazy).
      *
      * @param indexingMode the indexing mode.
+     * @return the Indexing Policy.
      */
     public IndexingPolicy indexingMode(IndexingMode indexingMode) {
         super.set(Constants.Properties.INDEXING_MODE, indexingMode.toString());
@@ -219,6 +221,7 @@ public final class IndexingPolicy extends JsonSerializable {
      * Sets the composite indexes for additional indexes.
      *
      * @param compositeIndexes the composite indexes.
+     * @return the Indexing Policy.
      */
     public IndexingPolicy compositeIndexes(Collection<ArrayList<CompositePath>> compositeIndexes) {
         this.compositeIndexes = compositeIndexes;
@@ -247,6 +250,7 @@ public final class IndexingPolicy extends JsonSerializable {
      * Sets the spatial indexes for additional indexes.
      *
      * @param spatialIndexes the spatial indexes.
+     * @return the Indexing Policy.
      */
     public IndexingPolicy spatialIndexes(Collection<SpatialSpec> spatialIndexes) {
         this.spatialIndexes = spatialIndexes;

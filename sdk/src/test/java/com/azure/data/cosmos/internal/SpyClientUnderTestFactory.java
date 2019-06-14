@@ -195,6 +195,7 @@ public class SpyClientUnderTestFactory {
             super(serviceEndpoint, masterKey, connectionPolicy, consistencyLevel, createConfigsSpy(Protocol.HTTPS));
             assert connectionPolicy.connectionMode() == ConnectionMode.DIRECT;
             init();
+
             this.origHttpClient = ReflectionUtils.getDirectHttpsHttpClient(this);
             this.spyHttpClient = spy(this.origHttpClient);
             ReflectionUtils.setDirectHttpsHttpClient(this, this.spyHttpClient);

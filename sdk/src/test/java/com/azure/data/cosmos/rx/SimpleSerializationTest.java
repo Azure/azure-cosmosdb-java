@@ -68,7 +68,7 @@ public class SimpleSerializationTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuildersWithDirect")
     public SimpleSerializationTest(CosmosClientBuilder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = {"simple"}, timeOut = TIMEOUT)
@@ -90,7 +90,7 @@ public class SimpleSerializationTest extends TestSuiteBase {
 
     @BeforeClass(groups = {"simple"}, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
-        client = clientBuilder.build();
+        client = clientBuilder().build();
         createdCollection = getSharedMultiPartitionCosmosContainer(client);
     }
 

@@ -31,7 +31,6 @@ import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
 
-
 class AsyncQuerySinglePartitionMultiple extends AsyncBenchmark<FeedResponse<Document>> {
 
     private static final String SQL_QUERY = "Select * from c where c.pk = \"pk\"";

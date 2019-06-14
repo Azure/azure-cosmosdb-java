@@ -285,7 +285,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
     /**
      * Processes inbound events triggered by channel handlers in the {@link RntbdClientChannelHandler} pipeline
      * <p>
-     * ALL but inbound request management events are ignored.
+     * All but inbound request management events are ignored.
      *
      * @param context {@link ChannelHandlerContext} to which this {@link RntbdRequestManager} belongs
      * @param event   An object representing a user event
@@ -647,7 +647,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
             final long lsn = response.getHeader(RntbdResponseHeader.LSN);
             final String partitionKeyRangeId = response.getHeader(RntbdResponseHeader.PartitionKeyRangeId);
 
-            // ..CREATE Error instance
+            // ..Create Error instance
 
             final Error error = response.hasPayload() ?
                 BridgeInternal.createError(RntbdObjectMapper.readTree(response)) :
@@ -659,7 +659,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
                 this.getRntbdContext().orElseThrow(IllegalStateException::new), activityId
             );
 
-            // ..CREATE CosmosClientException based on status and sub-status codes
+            // ..Create CosmosClientException based on status and sub-status codes
 
             switch (status.code()) {
 

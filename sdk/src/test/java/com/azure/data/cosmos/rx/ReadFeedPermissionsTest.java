@@ -43,7 +43,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-//TODO: change to use external TestSuiteBase 
+//TODO: change to use external TestSuiteBase
 public class ReadFeedPermissionsTest extends TestSuiteBase {
 
     public final String databaseId = DatabaseForTest.generateId();
@@ -56,7 +56,7 @@ public class ReadFeedPermissionsTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuilders")
     public ReadFeedPermissionsTest(AsyncDocumentClient.Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "simple" }, timeOut = FEED_TIMEOUT)
@@ -81,7 +81,7 @@ public class ReadFeedPermissionsTest extends TestSuiteBase {
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
-        client = clientBuilder.build();
+        client = clientBuilder().build();
         Database d = new Database();
         d.id(databaseId);
         createdDatabase = createDatabase(client, d);
@@ -91,7 +91,7 @@ public class ReadFeedPermissionsTest extends TestSuiteBase {
             createdPermissions.add(createPermissions(client, i));
         }
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(clientBuilder());
     }
 
     @AfterClass(groups = { "simple" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)

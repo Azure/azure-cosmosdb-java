@@ -67,6 +67,7 @@ public class IncludedPath extends JsonSerializable {
      * Sets path.
      *
      * @param path the path.
+     * @return the Included Path.
      */
     public IncludedPath path(String path) {
         super.set(Constants.Properties.PATH, path);

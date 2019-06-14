@@ -75,6 +75,7 @@ public final class PartitionKeyDefinition extends JsonSerializable {
      * Sets the partition algorithm used to calculate the partition id given a partition key.
      *
      * @param kind the partition algorithm.
+     * @return this PartitionKeyDefinition.
      */
     public PartitionKeyDefinition kind(PartitionKind kind) {
         this.kind = kind;
@@ -127,6 +128,7 @@ public final class PartitionKeyDefinition extends JsonSerializable {
      * Sets the document property paths for the partition key.
      *
      * @param paths the paths to document properties that form the partition key.
+     * @return this PartitionKeyDefinition.
      */
     public PartitionKeyDefinition paths(List<String> paths) {
         if (paths == null || paths.size() == 0) {

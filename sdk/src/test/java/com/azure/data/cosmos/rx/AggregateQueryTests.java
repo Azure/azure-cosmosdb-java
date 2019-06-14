@@ -80,7 +80,7 @@ public class AggregateQueryTests extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuildersWithDirect")
     public AggregateQueryTests(CosmosClientBuilder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
 
@@ -208,13 +208,13 @@ public class AggregateQueryTests extends TestSuiteBase {
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT * 100)
     public void beforeClass() throws Exception {
-        client = clientBuilder.build();
+        client = this.clientBuilder().build();
         createdCollection = getSharedMultiPartitionCosmosContainer(client);
         truncateCollection(createdCollection);
 
         bulkInsert();
         generateTestConfigs();
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(this.clientBuilder());
     }
 }
