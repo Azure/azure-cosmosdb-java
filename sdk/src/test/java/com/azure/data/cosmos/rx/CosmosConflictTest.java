@@ -20,8 +20,14 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.azure.data.cosmos;
+package com.azure.data.cosmos.rx;
 
+import com.azure.data.cosmos.CosmosClient;
+import com.azure.data.cosmos.CosmosClientBuilder;
+import com.azure.data.cosmos.CosmosConflictProperties;
+import com.azure.data.cosmos.CosmosContainer;
+import com.azure.data.cosmos.FeedOptions;
+import com.azure.data.cosmos.FeedResponse;
 import com.azure.data.cosmos.internal.HttpConstants;
 import com.azure.data.cosmos.rx.TestSuiteBase;
 import org.testng.annotations.AfterClass;
@@ -43,7 +49,7 @@ public class CosmosConflictTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuilders")
     public CosmosConflictTest(CosmosClientBuilder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = {"simple"}, timeOut = TIMEOUT)
@@ -76,7 +82,7 @@ public class CosmosConflictTest extends TestSuiteBase {
     
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
-        client = clientBuilder.build();
+        client = clientBuilder().build();
         createdCollection = getSharedMultiPartitionCosmosContainer(client);
     }
 
@@ -88,6 +94,6 @@ public class CosmosConflictTest extends TestSuiteBase {
     @BeforeMethod(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeMethod() {
         safeClose(client);
-        client = clientBuilder.build();
+        client = clientBuilder().build();
     }
 }
