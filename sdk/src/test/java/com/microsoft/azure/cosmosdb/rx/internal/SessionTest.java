@@ -131,12 +131,6 @@ public class SessionTest extends TestSuiteBase {
 
             clearCapturedRequests();
 
-            // We send session tokens on Writes in Gateway mode
-            if (connectionMode == ConnectionMode.Gateway) {
-                assertThat(getSessionTokensInRequests()).hasSize(1);
-                assertThat(getSessionTokensInRequests().get(0)).isNotEmpty();
-            }
-
             spyClient.readDocument(getDocumentLink(documentCreated, isNameBased), null).toBlocking().single();
 
             assertThat(getSessionTokensInRequests()).hasSize(1);

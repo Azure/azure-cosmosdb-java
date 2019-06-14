@@ -115,6 +115,12 @@ public class TestSuiteBase {
     protected static DocumentCollection SHARED_MULTI_PARTITION_COLLECTION_WITH_COMPOSITE_AND_SPATIAL_INDEXES;
 
     static {
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        objectMapper.configure(JsonParser.Feature.ALLOW_SINGLE_QUOTES, true);
+        objectMapper.configure(JsonParser.Feature.ALLOW_TRAILING_COMMA, true);
+        objectMapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
+        objectMapper.configure(JsonParser.Feature.STRICT_DUPLICATE_DETECTION, true);
+
         accountConsistency = parseConsistency(TestConfigurations.CONSISTENCY);
         desiredConsistencies = immutableListOrNull(
                 ObjectUtils.defaultIfNull(parseDesiredConsistencies(TestConfigurations.DESIRED_CONSISTENCIES),
@@ -125,10 +131,6 @@ public class TestSuiteBase {
     }
 
     protected TestSuiteBase() {
-        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        objectMapper.configure(JsonParser.Feature.ALLOW_SINGLE_QUOTES, true);
-        objectMapper.configure(JsonParser.Feature.ALLOW_TRAILING_COMMA, true);
-        objectMapper.configure(JsonParser.Feature.STRICT_DUPLICATE_DETECTION, true);
         logger.debug("Initializing {} ...", this.getClass().getSimpleName());
     }
 
