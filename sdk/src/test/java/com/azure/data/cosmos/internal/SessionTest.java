@@ -139,12 +139,12 @@ public class SessionTest extends TestSuiteBase {
                 assertThat(getSessionTokensInRequests().get(3 * i + 0)).isNotEmpty();
             }
 
-            spyClient.readDocument(getDocumentLink(documentCreated, isNameBased), null).blockFirst();
+            spyClient.readDocument(getDocumentLink(documentCreated, isNameBased), options).blockFirst();
 
             assertThat(getSessionTokensInRequests()).hasSize(3 * i + 2);
             assertThat(getSessionTokensInRequests().get(3 * i + 1)).isNotEmpty();
 
-            spyClient.readDocument(getDocumentLink(documentCreated, isNameBased), null).blockFirst();
+            spyClient.readDocument(getDocumentLink(documentCreated, isNameBased), options).blockFirst();
 
             assertThat(getSessionTokensInRequests()).hasSize(3 * i + 3);
             assertThat(getSessionTokensInRequests().get(3 * i + 2)).isNotEmpty();
@@ -161,7 +161,7 @@ public class SessionTest extends TestSuiteBase {
                 .getResource();
 
         final String documentLink = getDocumentLink(document, isNameBased);
-        spyClient.readDocument(documentLink, null).blockFirst()
+        spyClient.readDocument(documentLink, options).blockFirst()
                 .getResource();
 
         List<HttpRequest> documentReadHttpRequests = spyClient.getCapturedRequests().stream()

@@ -25,8 +25,10 @@ package com.azure.data.cosmos.internal.http;
 import com.azure.data.cosmos.internal.Configs;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import io.netty.channel.ChannelOption;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.logging.LogLevel;
+import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
 import org.reactivestreams.Publisher;
@@ -89,41 +91,19 @@ class ReactorNettyClient implements HttpClient {
             //  SSL Handler
             //  .... Last should be Write Timeout
 
-            tcpClient = tcpClient.bootstrap(bootstrap -> {
-
-                SslProvider sslProvider = SslProvider.builder()
-                        .sslContext(configs.getSslContext())
-                        .handshakeTimeout(Duration.ofSeconds(60))
-                        .handlerConfigurator(sslHandler -> {
-                            SSLEngine engine = sslHandler.engine();
-                            engine.setUseClientMode(true);
-                            engine.setEnableSessionCreation(true);
-                        })
-                        .build();
-                sslProvider = SslProvider.updateDefaultConfiguration(sslProvider, SslProvider.DefaultConfigurationType.TCP);
-                SslProvider.setBootstrap(bootstrap, sslProvider);
-                if (this.httpClientConfig.getMaxIdleConnectionTimeoutInMillis() != null) {
-                    BootstrapHandlers.updateConfiguration(bootstrap,
-                            NettyPipeline.OnChannelReadIdle,
-                            (connectionObserver, channel) ->
-                                    channel.pipeline().addFirst(new ReadTimeoutHandler(this.httpClientConfig.getMaxIdleConnectionTimeoutInMillis() / 1000)));
-                    BootstrapHandlers.updateConfiguration(bootstrap,
-                            NettyPipeline.OnChannelWriteIdle,
-                            (connectionObserver, channel) ->
-                                    channel.pipeline().addLast(new WriteTimeoutHandler(this.httpClientConfig.getMaxIdleConnectionTimeoutInMillis() / 1000)));
-                }
-//                BootstrapHandlers.updateConfiguration(bootstrap,
-//                        NettyPipeline.SslHandler,
-//                        ((connectionObserver, channel) -> {
-//                            SSLEngine sslEngine = configs.getSslContext().newEngine(channel.alloc());
-//                            sslEngine.setUseClientMode(true);
-//                            sslEngine.setEnableSessionCreation(true);
-//                            SslHandler sslHandler = new SslHandler(sslEngine);
-//                            sslHandler.setHandshakeTimeoutMillis(60000);
-//                            channel.pipeline().addFirst(sslHandler);
-//                        }));
-                return bootstrap;
-            });
+//            tcpClient = tcpClient.bootstrap(bootstrap -> {
+//                if (this.httpClientConfig.getMaxIdleConnectionTimeoutInMillis() != null) {
+//                    BootstrapHandlers.updateConfiguration(bootstrap,
+//                            NettyPipeline.OnChannelReadIdle,
+//                            (connectionObserver, channel) ->
+//                                    channel.pipeline().addFirst(new ReadTimeoutHandler(this.httpClientConfig.getMaxIdleConnectionTimeoutInMillis() / 1000)));
+//                    BootstrapHandlers.updateConfiguration(bootstrap,
+//                            NettyPipeline.OnChannelWriteIdle,
+//                            (connectionObserver, channel) ->
+//                                    channel.pipeline().addLast(new WriteTimeoutHandler(this.httpClientConfig.getMaxIdleConnectionTimeoutInMillis() / 1000)));
+//                }
+//                return bootstrap;
+//            });
             return tcpClient;
         });
     }

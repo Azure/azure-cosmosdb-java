@@ -63,16 +63,15 @@ public class CosmosPartitionKeyTests extends TestSuiteBase {
 
     private CosmosClient client;
     private CosmosDatabase createdDatabase;
-    private CosmosClientBuilder clientBuilder;
 
     @Factory(dataProvider = "clientBuilders")
     public CosmosPartitionKeyTests(CosmosClientBuilder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() throws URISyntaxException, IOException {
-        client = clientBuilder.build();
+        client = clientBuilder().build();
         createdDatabase = getSharedCosmosDatabase(client);
     }
 
@@ -116,8 +115,7 @@ public class CosmosPartitionKeyTests extends TestSuiteBase {
         httpRequest.withBody(request.getContent());
         httpClient.send(httpRequest).subscribe(httpResponse  -> {
             httpResponse.bodyAsString().subscribe(str -> {
-                logger.info("String : {}", str);
-//                assertThat(str).contains("\"id\":\"" + NON_PARTITIONED_CONTAINER_ID + "\"");
+                assertThat(str).contains("\"id\":\"" + NON_PARTITIONED_CONTAINER_ID + "\"");
             });
         });
         
@@ -142,13 +140,12 @@ public class CosmosPartitionKeyTests extends TestSuiteBase {
 
         httpClient.send(httpRequest).subscribeOn(Schedulers.elastic()).subscribe(httpResponse -> {
             httpResponse.bodyAsString().subscribe(str -> {
-                logger.info("Lower String {}", str);
-//                assertThat(str).contains("\"id\":\"" + NON_PARTITIONED_CONTAINER_DOCUEMNT_ID + "\"");
+                assertThat(str).contains("\"id\":\"" + NON_PARTITIONED_CONTAINER_DOCUEMNT_ID + "\"");
             });
         });
     }
 
-    @Test(groups = { "simple" }, timeOut = 10 * TIMEOUT)
+    @Test(groups = { "simple" })
     public void testNonPartitionedCollectionOperations() throws Exception {
         createContainerWithoutPk();
         CosmosContainer createdContainer = createdDatabase.getContainer(NON_PARTITIONED_CONTAINER_ID);
