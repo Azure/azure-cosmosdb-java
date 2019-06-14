@@ -72,6 +72,7 @@ import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.DataProvider;
 import reactor.core.publisher.Flux;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -467,9 +468,11 @@ public class TestSuiteBase extends DocumentClientTest {
                                              String collectionLink,
                                              List<Document> documentDefinitionList) {
         return bulkInsert(client, collectionLink, documentDefinitionList, DEFAULT_BULK_INSERT_CONCURRENCY_LEVEL)
+                .parallel()
+                .runOn(Schedulers.parallel())
                 .map(ResourceResponse::getResource)
+                .sequential()
                 .collectList()
-                .single()
                 .block();
     }
 

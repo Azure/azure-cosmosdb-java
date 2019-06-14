@@ -138,7 +138,6 @@ public class InMemoryGroupbyTest extends DocumentClientTest {
                 .filter(doc -> Math.abs(now.getSecond() - doc.getInt("created_time")) <= 90)
                 .groupBy(doc -> doc.getInt("payer_id")).flatMap(Flux::collectList)
                 .collectList()
-                .single()
                 .block();
 
         for(List<Document> resultsForEachPayer :resultsGroupedAsLists) {

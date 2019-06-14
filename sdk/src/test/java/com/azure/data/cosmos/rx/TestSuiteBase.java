@@ -468,8 +468,10 @@ public class TestSuiteBase extends CosmosClientTest {
 //                .collectList()
 //                .block();
         return bulkInsert(cosmosContainer, documentDefinitionList, DEFAULT_BULK_INSERT_CONCURRENCY_LEVEL)
-                .publishOn(Schedulers.parallel())
+                .parallel()
+                .runOn(Schedulers.parallel())
                 .map(CosmosItemResponse::properties)
+                .sequential()
                 .collectList()
                 .block();
     }
