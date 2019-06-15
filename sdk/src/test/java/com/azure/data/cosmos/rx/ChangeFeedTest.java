@@ -114,7 +114,7 @@ public class ChangeFeedTest extends TestSuiteBase {
         assertThat(count).as("the number of changes").isEqualTo(expectedDocuments.size());
     }
 
-    @Test(groups = { "simple" }, timeOut = TIMEOUT)
+    @Test(groups = { "simple" }, timeOut = 5 * TIMEOUT)
     public void changesFromPartitionKeyRangeId_FromBeginning() throws Exception {
         List<String> partitionKeyRangeIds = client.readPartitionKeyRanges(getCollectionLink(), null)
                 .flatMap(p -> Flux.fromIterable(p.results()), 1)
