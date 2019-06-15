@@ -22,15 +22,10 @@
  */
 package com.azure.data.cosmos.internal.http;
 
-import com.azure.data.cosmos.internal.Configs;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.netty.channel.ChannelOption;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.logging.LogLevel;
-import io.netty.handler.ssl.SslHandler;
-import io.netty.handler.timeout.ReadTimeoutHandler;
-import io.netty.handler.timeout.WriteTimeoutHandler;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,18 +34,13 @@ import reactor.core.publisher.Mono;
 import reactor.netty.ByteBufFlux;
 import reactor.netty.Connection;
 import reactor.netty.NettyOutbound;
-import reactor.netty.NettyPipeline;
-import reactor.netty.channel.BootstrapHandlers;
 import reactor.netty.http.client.HttpClientRequest;
 import reactor.netty.http.client.HttpClientResponse;
 import reactor.netty.resources.ConnectionProvider;
 import reactor.netty.tcp.ProxyProvider;
-import reactor.netty.tcp.SslProvider;
 import reactor.netty.tcp.TcpResources;
 
-import javax.net.ssl.SSLEngine;
 import java.nio.charset.Charset;
-import java.time.Duration;
 import java.util.Objects;
 import java.util.function.BiFunction;
 
