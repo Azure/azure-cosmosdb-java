@@ -45,6 +45,7 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -63,6 +64,7 @@ import java.util.concurrent.Callable;
  */
 class RxGatewayStoreModel implements RxStoreModel {
 
+    private final static int INITIAL_RESPONSE_BUFFER_SIZE = 1024;
     private final Logger logger = LoggerFactory.getLogger(RxGatewayStoreModel.class);
     private final Map<String, String> defaultHeaders;
     private final HttpClient httpClient;
@@ -248,6 +250,22 @@ class RxGatewayStoreModel implements RxStoreModel {
         return "/" + path;
     }
 
+    private Mono<String> toString(Flux<ByteBuf> contentObservable) {
+        return contentObservable
+            .reduce(
+                new ByteArrayOutputStream(INITIAL_RESPONSE_BUFFER_SIZE),
+                (out, bb) -> {
+                    try {
+                        bb.readBytes(out, bb.readableBytes());
+                        return out;
+                    }
+                    catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                })
+            .map(out -> new String(out.toByteArray(), StandardCharsets.UTF_8));
+    }
+
     /**
      * Transforms the reactor netty's client response Observable to RxDocumentServiceResponse Observable.
      *
@@ -318,7 +336,7 @@ class RxGatewayStoreModel implements RxStoreModel {
                     contentObservable = Flux.just(StringUtils.EMPTY);
                 } else {
                     // transforms the ByteBufFlux to Flux<String>
-                    contentObservable = httpResponse.bodyAsString(StandardCharsets.UTF_8).flux();
+                    contentObservable = toString(httpResponse.body()).flux();
                 }
 
                 return contentObservable

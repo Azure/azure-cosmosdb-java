@@ -50,7 +50,7 @@ public class HttpClientUtils {
     }
 
     private static Mono<CosmosClientException> createDocumentClientException(HttpResponse httpResponse) {
-        Mono<String> readStream = httpResponse.bodyAsString();
+        Mono<String> readStream = ResponseUtils.toString(httpResponse.body());
 
         return readStream.map(body -> {
             Error error = new Error(body);
