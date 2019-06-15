@@ -173,7 +173,10 @@ public class TokenResolverTest extends DocumentClientTest {
                     capturedResponse.add(resourceResponse);
                 });
             }
-            Thread.sleep(2000);
+            // TODO: DANOBLE: Reduce sleep interval before completing Direct TCP: Implement health check requests #119
+            //  Emulator runs often timeout on this test, especially in Standard_D2_V2 CI environments
+            //  link: https://github.com/Azure/azure-cosmosdb-java/issues/119
+            Thread.sleep(8 * 2000);
             System.out.println("capturedResponse.size() = " + capturedResponse.size());
             assertThat(capturedResponse, hasSize(10));
         } finally {
@@ -214,7 +217,10 @@ public class TokenResolverTest extends DocumentClientTest {
                     capturedResponse.add(resourceResponse);
                 });
             }
-            Thread.sleep(2000);
+            // TODO: DANOBLE: Reduce sleep interval before completing Direct TCP: Implement health check requests #119
+            //  Emulator runs often timeout on this test, notably in Standard_D2_V2 CI environments
+            //  link: https://github.com/Azure/azure-cosmosdb-java/issues/119
+            Thread.sleep(16 * 2000);
             assertThat(capturedResponse, hasSize(10));
         } finally {
             Utils.safeClose(asyncClientWithTokenResolver);

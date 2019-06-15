@@ -285,7 +285,10 @@ public class DatabaseCRUDAsyncAPITest extends DocumentClientTest {
     /**
      * Query a Database in an Async manner
      */
-    @Test(groups = "samples", timeOut = TIMEOUT)
+    // TODO: DANOBLE: Reduce timeout interval before completing Direct TCP: Implement health check requests #119
+    //  Emulator runs often timeout on this test, especially in Standard_D2_V2 CI environments
+    //  link: https://github.com/Azure/azure-cosmosdb-java/issues/119
+    @Test(groups = "samples", timeOut = 2 * TIMEOUT)
     public void databaseCreateAndQuery() throws Exception {
         // Create a database
         Database databaseDefinition = getDatabaseDefinition();
