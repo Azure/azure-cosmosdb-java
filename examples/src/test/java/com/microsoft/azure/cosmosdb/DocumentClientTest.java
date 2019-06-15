@@ -33,6 +33,8 @@ import org.testng.annotations.BeforeMethod;
 
 import java.lang.reflect.Method;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 public abstract class DocumentClientTest implements ITest {
 
     protected static final Logger logger = LoggerFactory.getLogger(DocumentClientTest.class.getSimpleName());
@@ -44,6 +46,7 @@ public abstract class DocumentClientTest implements ITest {
     }
 
     public DocumentClientTest(AsyncDocumentClient.Builder clientBuilder) {
+        checkNotNull(clientBuilder, "clientBuilder: null");
         this.clientBuilder = clientBuilder;
     }
 
@@ -59,9 +62,16 @@ public abstract class DocumentClientTest implements ITest {
     @BeforeMethod(alwaysRun = true)
     public final void setTestName(Method method) {
 
-        String connectionMode = this.clientBuilder.getConnectionPolicy().getConnectionMode() == ConnectionMode.Direct
-            ? "Direct " + this.clientBuilder.getConfigs().getProtocol().name().toUpperCase()
-            : "Gateway";
+        final ConnectionPolicy connectionPolicy = this.clientBuilder.getConnectionPolicy();
+        final String connectionMode;
+
+        if (connectionPolicy == null) {
+            connectionMode = "None";
+        } else {
+            connectionMode = connectionPolicy.getConnectionMode() == ConnectionMode.Direct
+                ? "Direct " + this.clientBuilder.getConfigs().getProtocol().name().toUpperCase()
+                : "Gateway";
+        }
 
         this.testName = Strings.lenientFormat("%s::%s[%s with %s consistency]",
             method.getDeclaringClass().getSimpleName(),
