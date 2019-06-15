@@ -358,8 +358,8 @@ public class TokenResolverTest extends TestSuiteBase {
             options.enableCrossPartitionQuery(true);
             Flux<FeedResponse<Document>> queryObservable = asyncClientWithTokenResolver.queryDocuments(createdCollection.selfLink(), query, options);
             FeedResponseListValidator<Document> validator = new FeedResponseListValidator.Builder<Document>()
-                    .numberOfPages(1)
-                    .exactlyContainsInAnyOrder(expectedIds).build();
+                .totalSize(2)
+                .exactlyContainsInAnyOrder(expectedIds).build();
             validateQuerySuccess(queryObservable, validator, 10000);
         } finally {
             safeClose(asyncClientWithTokenResolver);
@@ -368,7 +368,7 @@ public class TokenResolverTest extends TestSuiteBase {
 
     @Test(groups = {"simple"}, dataProvider = "connectionMode", timeOut = TIMEOUT)
     public void readChangeFeedWithAllPermission(ConnectionMode connectionMode) throws InterruptedException {
-        
+
         //setStartDateTime is not currently supported in multimaster mode. So skipping the test
         if(BridgeInternal.isEnableMultipleWriteLocations(client.getDatabaseAccount().single().block())){
             throw new SkipException("StartTime/IfModifiedSince is not currently supported when EnableMultipleWriteLocations is set");

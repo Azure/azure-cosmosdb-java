@@ -99,7 +99,7 @@ public class ChangeFeedTest extends TestSuiteBase {
         changeFeedOption.startFromBeginning(true);
 
         List<FeedResponse<Document>> changeFeedResultList = client.queryDocumentChangeFeed(getCollectionLink(), changeFeedOption)
-                .collectList().single().block();
+                .collectList().block();
 
         int count = 0;
         for (int i = 0; i < changeFeedResultList.size(); i++) {
@@ -120,7 +120,6 @@ public class ChangeFeedTest extends TestSuiteBase {
                 .flatMap(p -> Flux.fromIterable(p.results()), 1)
                 .map(Resource::id)
                 .collectList()
-                .single()
                 .block();
         
         assertThat(partitionKeyRangeIds.size()).isGreaterThan(1);
@@ -132,7 +131,7 @@ public class ChangeFeedTest extends TestSuiteBase {
         changeFeedOption.partitionKeyRangeId(pkRangeId);
         changeFeedOption.startFromBeginning(true);
         List<FeedResponse<Document>> changeFeedResultList = client.queryDocumentChangeFeed(getCollectionLink(), changeFeedOption)
-                .collectList().single().block();
+                .collectList().block();
         
         int count = 0;
         for(int i = 0; i < changeFeedResultList.size(); i++) {
@@ -161,7 +160,7 @@ public class ChangeFeedTest extends TestSuiteBase {
 
         List<FeedResponse<Document>> changeFeedResultsList = client.queryDocumentChangeFeed(getCollectionLink(), changeFeedOption)
                 .collectList()
-                .single().block();
+                .block();
 
         FeedResponseListValidator<Document> validator = new FeedResponseListValidator.Builder<Document>().totalSize(0).build();
         validator.validate(changeFeedResultsList);
@@ -191,11 +190,10 @@ public class ChangeFeedTest extends TestSuiteBase {
 
         // Waiting for at-least a second to ensure that new document is created after we took the time stamp
         waitAtleastASecond(dateTimeBeforeCreatingDoc);
-        client.createDocument(getCollectionLink(), getDocumentDefinition(partitionKey), null, true).single().block().getResource();
+        client.createDocument(getCollectionLink(), getDocumentDefinition(partitionKey), null, true).single().block();
 
         List<FeedResponse<Document>> changeFeedResultList = client.queryDocumentChangeFeed(getCollectionLink(),
-                changeFeedOption).collectList()
-                .single().block();
+                changeFeedOption).collectList().block();
 
         int count = 0;
         for(int i = 0; i < changeFeedResultList.size(); i++) {
@@ -214,7 +212,7 @@ public class ChangeFeedTest extends TestSuiteBase {
         changeFeedOption.partitionKey(new PartitionKey(partitionKey));
 
         List<FeedResponse<Document>> changeFeedResultsList = client.queryDocumentChangeFeed(getCollectionLink(), changeFeedOption)
-                .collectList().single().block();
+                .collectList().block();
 
         assertThat(changeFeedResultsList).as("only one page").hasSize(1);
         assertThat(changeFeedResultsList.get(0).results()).as("no recent changes").isEmpty();
@@ -252,7 +250,7 @@ public class ChangeFeedTest extends TestSuiteBase {
             result.add(client.createDocument("dbs/" + createdDatabase.id() + "/colls/" + createdCollection.id(), docs.get(i), null, false));
         }
 
-        return Flux.merge(Flux.fromIterable(result), 100).map(ResourceResponse::getResource).collectList().single().block();
+        return Flux.merge(Flux.fromIterable(result), 100).map(ResourceResponse::getResource).collectList().block();
     }
 
     @AfterMethod(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
