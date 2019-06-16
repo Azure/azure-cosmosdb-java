@@ -267,9 +267,10 @@ public class ConsistencyReader {
                 entity,
                 false /*required valid LSN*/,
                 useSessionToken);
-        return responseObs.flatMap(response -> {
+
+        return responseObs.map(response -> {
             try {
-                return Mono.just(response.toResponse());
+                return response.toResponse();
             } catch (CosmosClientException e) {
                 throw Exceptions.propagate(e);
             }
@@ -286,19 +287,16 @@ public class ConsistencyReader {
                 /* useSessionToken */ false,
                 /* readMode */ readMode);
 
-        return responsesObs.flatMap(
-                responses -> {
-                    if (responses.size() == 0) {
-                        return Mono.error(new GoneException(RMResources.Gone));
-                    }
-
-                    try {
-                        return Mono.just(responses.get(0).toResponse());
-                    } catch (CosmosClientException e) {
-                        throw Exceptions.propagate(e);
-                    }
-                }
-        );
+        return responsesObs.map(responses -> {
+            if (responses.size() == 0) {
+                throw Exceptions.propagate(new GoneException(RMResources.Gone));
+            }
+            try {
+                return responses.get(0).toResponse();
+            } catch (CosmosClientException e) {
+                throw Exceptions.propagate(e);
+            }
+        });
     }
 
     private Mono<StoreResponse> readSessionAsync(RxDocumentServiceRequest entity,
@@ -318,27 +316,25 @@ public class ConsistencyReader {
                 /* checkMinLsn */ true,
                 /* forceReadAll */ false);
 
-        return responsesObs.flatMap(responses -> {
-
+        return responsesObs.map(responses -> {
             if (responses.size() > 0) {
                 try {
-                    return Mono.just(responses.get(0).toResponse(entity.requestContext.requestChargeTracker));
+                    return responses.get(0).toResponse(entity.requestContext.requestChargeTracker);
                 } catch (NotFoundException notFoundException) {
                     try {
                         if (entity.requestContext.sessionToken != null
-                                && responses.get(0).sessionToken != null
-                                && !entity.requestContext.sessionToken.isValid(responses.get(0).sessionToken)) {
+                            && responses.get(0).sessionToken != null
+                            && !entity.requestContext.sessionToken.isValid(responses.get(0).sessionToken)) {
                             logger.warn("Convert to session read exception, request {} SESSION Lsn {}, responseLSN {}", entity.getResourceAddress(), entity.requestContext.sessionToken.convertToString(), responses.get(0).lsn);
                             notFoundException.responseHeaders().put(WFConstants.BackendHeaders.SUB_STATUS, Integer.toString(HttpConstants.SubStatusCodes.READ_SESSION_NOT_AVAILABLE));
                         }
-                        return Mono.error(notFoundException);
-                    } catch (CosmosClientException e) {
-                        throw Exceptions.propagate(e);
+                        throw Exceptions.propagate(notFoundException);
+                    } catch (CosmosClientException ex) {
+                        throw Exceptions.propagate(ex);
                     }
-                } catch (CosmosClientException dce) {
-                    throw Exceptions.propagate(dce);
+                } catch (CosmosClientException cce) {
+                    throw Exceptions.propagate(cce);
                 }
-
             }
 
             // else
@@ -346,7 +342,7 @@ public class ConsistencyReader {
             responseHeaders.put(WFConstants.BackendHeaders.SUB_STATUS, Integer.toString(HttpConstants.SubStatusCodes.READ_SESSION_NOT_AVAILABLE));
             ISessionToken requestSessionToken = entity.requestContext.sessionToken;
             logger.warn("Fail the session read {}, request session token {}", entity.getResourceAddress(), requestSessionToken == null ? "<empty>" : requestSessionToken.convertToString());
-            return Mono.error(new NotFoundException(RMResources.ReadSessionNotAvailable, responseHeaders, null));
+            throw Exceptions.propagate(new NotFoundException(RMResources.ReadSessionNotAvailable, responseHeaders, null));
         });
     }
 

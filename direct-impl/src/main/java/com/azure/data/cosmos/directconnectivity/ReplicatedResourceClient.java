@@ -148,16 +148,14 @@ public class ReplicatedResourceClient {
 
                 if (prepareRequestAsyncDelegate != null) {
                     return prepareRequestAsyncDelegate.apply(readRequestClone).flatMap(responseReq -> {
-                        logger.trace(String.format("Executing inBackoffAlternateCallbackMethod on readRegionIndex {}",
-                                forceRefreshAndTimeout.getValue3()));
+                        logger.trace("Executing inBackoffAlternateCallbackMethod on readRegionIndex {}", forceRefreshAndTimeout.getValue3());
                         responseReq.requestContext.RouteToLocation(forceRefreshAndTimeout.getValue3(), true);
                         return invokeAsync(responseReq, new TimeoutHelper(forceRefreshAndTimeout.getValue2()),
                                 forceRefreshAndTimeout.getValue1(),
                                 forceRefreshAndTimeout.getValue0());
                     });
                 } else {
-                    logger.trace(String.format("Executing inBackoffAlternateCallbackMethod on readRegionIndex {}",
-                            forceRefreshAndTimeout.getValue3()));
+                    logger.trace("Executing inBackoffAlternateCallbackMethod on readRegionIndex {}", forceRefreshAndTimeout.getValue3());
                     readRequestClone.requestContext.RouteToLocation(forceRefreshAndTimeout.getValue3(), true);
                     return invokeAsync(readRequestClone, new TimeoutHelper(forceRefreshAndTimeout.getValue2()),
                             forceRefreshAndTimeout.getValue1(),

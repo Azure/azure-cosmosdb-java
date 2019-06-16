@@ -70,7 +70,7 @@ public class VeryLargeDocumentQueryTest extends TestSuiteBase {
         options.enableCrossPartitionQuery(true);
 
         validateQuerySuccess(createdCollection.queryItems("SELECT * FROM r", options),
-            new FeedResponseListValidator.Builder().totalSize(cnt).build());
+            new FeedResponseListValidator.Builder<CosmosItemProperties>().totalSize(cnt).build());
     }
 
     private void createLargeDocument() throws InterruptedException {
