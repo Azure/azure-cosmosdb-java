@@ -52,6 +52,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 
+import static com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient.Builder;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
@@ -82,36 +83,40 @@ import static org.hamcrest.Matchers.greaterThan;
  * update the corresponding Offer. Please see
  * {@see com.microsoft.azure.cosmosdb.rx.examples.OfferCRUDAsyncAPITest#testUpdateOffer()}
  */
-public class CollectionCRUDAsyncAPITest {
+public class CollectionCRUDAsyncAPITest extends TestBase {
+
     private final static int TIMEOUT = 120000;
     private static Database createdDatabase;
-    private static AsyncDocumentClient asyncClient;
+
+    private AsyncDocumentClient client;
     private DocumentCollection collectionDefinition;
 
     @BeforeClass(groups = "samples", timeOut = TIMEOUT)
     public void setUp() {
+
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
         connectionPolicy.setConnectionMode(ConnectionMode.Direct);
-        asyncClient = new AsyncDocumentClient.Builder()
+
+        this.builder = new Builder()
                 .withServiceEndpoint(TestConfigurations.HOST)
                 .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
                 .withConnectionPolicy(connectionPolicy)
-                .withConsistencyLevel(ConsistencyLevel.Session)
-                .build();
+                .withConsistencyLevel(ConsistencyLevel.Session);
 
-        createdDatabase = Utils.createDatabaseForTest(asyncClient);
+        this.client = this.builder.build();
+        createdDatabase = Utils.createDatabaseForTest(this.client);
     }
 
     @BeforeMethod(groups = "samples", timeOut = TIMEOUT)
-    public void before() {
+    public void begin() {
         collectionDefinition = new DocumentCollection();
         collectionDefinition.setId(UUID.randomUUID().toString());
     }
 
     @AfterClass(groups = "samples", timeOut = TIMEOUT)
     public void shutdown() {
-        Utils.safeClean(asyncClient, createdDatabase);
-        Utils.safeClose(asyncClient);
+        Utils.safeClean(client, createdDatabase);
+        Utils.safeClose(client);
     }
 
     /**
@@ -124,7 +129,7 @@ public class CollectionCRUDAsyncAPITest {
     public void createCollection_SinglePartition_Async() throws Exception {
         RequestOptions singlePartitionRequestOptions = new RequestOptions();
         singlePartitionRequestOptions.setOfferThroughput(400);
-        Observable<ResourceResponse<DocumentCollection>> createCollectionObservable = asyncClient
+        Observable<ResourceResponse<DocumentCollection>> createCollectionObservable = client
                 .createCollection(getDatabaseLink(), collectionDefinition, singlePartitionRequestOptions);
 
         final CountDownLatch countDownLatch = new CountDownLatch(1);
@@ -156,7 +161,7 @@ public class CollectionCRUDAsyncAPITest {
         RequestOptions multiPartitionRequestOptions = new RequestOptions();
         multiPartitionRequestOptions.setOfferThroughput(20000);
 
-        Observable<ResourceResponse<DocumentCollection>> createCollectionObservable = asyncClient.createCollection(
+        Observable<ResourceResponse<DocumentCollection>> createCollectionObservable = client.createCollection(
                 getDatabaseLink(), getMultiPartitionCollectionDefinition(), multiPartitionRequestOptions);
 
         final CountDownLatch countDownLatch = new CountDownLatch(1);
@@ -180,7 +185,7 @@ public class CollectionCRUDAsyncAPITest {
      */
     @Test(groups = "samples", timeOut = TIMEOUT)
     public void createCollection_Async_withoutLambda() throws Exception {
-        Observable<ResourceResponse<DocumentCollection>> createCollectionObservable = asyncClient
+        Observable<ResourceResponse<DocumentCollection>> createCollectionObservable = client
                 .createCollection(getDatabaseLink(), collectionDefinition, null);
 
         final CountDownLatch countDownLatch = new CountDownLatch(1);
@@ -215,7 +220,7 @@ public class CollectionCRUDAsyncAPITest {
      */
     @Test(groups = "samples", timeOut = TIMEOUT)
     public void createCollection_toBlocking() {
-        Observable<ResourceResponse<DocumentCollection>> createCollectionObservable = asyncClient
+        Observable<ResourceResponse<DocumentCollection>> createCollectionObservable = client
                 .createCollection(getDatabaseLink(), collectionDefinition, null);
 
         // toBlocking() converts the observable to a blocking observable.
@@ -232,10 +237,10 @@ public class CollectionCRUDAsyncAPITest {
      */
     @Test(groups = "samples", timeOut = TIMEOUT)
     public void createCollection_toBlocking_CollectionAlreadyExists_Fails() {
-        asyncClient.createCollection(getDatabaseLink(), collectionDefinition, null).toBlocking().single();
+        client.createCollection(getDatabaseLink(), collectionDefinition, null).toBlocking().single();
 
         // Create the collection for test.
-        Observable<ResourceResponse<DocumentCollection>> collectionForTestObservable = asyncClient
+        Observable<ResourceResponse<DocumentCollection>> collectionForTestObservable = client
                 .createCollection(getDatabaseLink(), collectionDefinition, null);
 
         try {
@@ -256,7 +261,7 @@ public class CollectionCRUDAsyncAPITest {
      */
     @Test(groups = "samples", timeOut = TIMEOUT)
     public void transformObservableToGoogleGuavaListenableFuture() throws Exception {
-        Observable<ResourceResponse<DocumentCollection>> createCollectionObservable = asyncClient
+        Observable<ResourceResponse<DocumentCollection>> createCollectionObservable = client
                 .createCollection(getDatabaseLink(), collectionDefinition, null);
         ListenableFuture<ResourceResponse<DocumentCollection>> future = ListenableFutureObservable
                 .to(createCollectionObservable);
@@ -273,12 +278,12 @@ public class CollectionCRUDAsyncAPITest {
     @Test(groups = "samples", timeOut = TIMEOUT)
     public void createAndReadCollection() throws Exception {
         // Create a Collection
-        DocumentCollection documentCollection = asyncClient
+        DocumentCollection documentCollection = client
                 .createCollection(getDatabaseLink(), collectionDefinition, null).toBlocking().single()
                 .getResource();
 
         // Read the created collection using async api
-        Observable<ResourceResponse<DocumentCollection>> readCollectionObservable = asyncClient
+        Observable<ResourceResponse<DocumentCollection>> readCollectionObservable = client
                 .readCollection(getCollectionLink(documentCollection), null);
 
         final CountDownLatch countDownLatch = new CountDownLatch(1);
@@ -303,12 +308,12 @@ public class CollectionCRUDAsyncAPITest {
     @Test(groups = "samples", timeOut = TIMEOUT)
     public void createAndDeleteCollection() throws Exception {
         // Create a Collection
-        DocumentCollection documentCollection = asyncClient
+        DocumentCollection documentCollection = client
                 .createCollection(getDatabaseLink(), collectionDefinition, null).toBlocking().single()
                 .getResource();
 
         // Delete the created collection using async api
-        Observable<ResourceResponse<DocumentCollection>> deleteCollectionObservable = asyncClient
+        Observable<ResourceResponse<DocumentCollection>> deleteCollectionObservable = client
                 .deleteCollection(getCollectionLink(documentCollection), null);
 
         final CountDownLatch countDownLatch = new CountDownLatch(1);
@@ -333,12 +338,12 @@ public class CollectionCRUDAsyncAPITest {
     @Test(groups = "samples", timeOut = TIMEOUT)
     public void collectionCreateAndQuery() throws Exception {
         // Create a Collection
-        DocumentCollection collection = asyncClient
+        DocumentCollection collection = client
                 .createCollection(getDatabaseLink(), collectionDefinition, null).toBlocking().single()
                 .getResource();
 
         // Query the created collection using async api
-        Observable<FeedResponse<DocumentCollection>> queryCollectionObservable = asyncClient.queryCollections(
+        Observable<FeedResponse<DocumentCollection>> queryCollectionObservable = client.queryCollections(
                 getDatabaseLink(), String.format("SELECT * FROM r where r.id = '%s'", collection.getId()),
                 null);
 
