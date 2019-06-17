@@ -176,9 +176,8 @@ public class TokenResolverTest extends DocumentClientTest {
                 requestOptions.setPartitionKey(PartitionKey.None);
                 Flux<ResourceResponse<Document>> readDocumentObservable = asyncClientWithTokenResolver
                         .readDocument(documentLink, requestOptions);
-                readDocumentObservable.subscribe(capturedResponse::add);
+                readDocumentObservable.collectList().block().forEach(capturedResponse::add);
             }
-            Thread.sleep(8000);
             System.out.println("capturedResponse.size() = " + capturedResponse.size());
             assertThat(capturedResponse, hasSize(10));
         } finally {
@@ -216,11 +215,8 @@ public class TokenResolverTest extends DocumentClientTest {
                 requestOptions.setPartitionKey(PartitionKey.None);
                 Flux<ResourceResponse<Document>> readDocumentObservable = asyncClientWithTokenResolver
                         .deleteDocument(documentLink, requestOptions);
-                readDocumentObservable.subscribe(resourceResponse -> {
-                    capturedResponse.add(resourceResponse);
-                });
+                readDocumentObservable.collectList().block().forEach(capturedResponse::add);
             }
-            Thread.sleep(8000);
             assertThat(capturedResponse, hasSize(10));
         } finally {
             Utils.safeClose(asyncClientWithTokenResolver);
