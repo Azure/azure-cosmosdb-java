@@ -42,6 +42,7 @@ import com.azure.data.cosmos.internal.query.orderbyquery.OrderbyRowComparer;
 import com.azure.data.cosmos.internal.routing.Range;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 
 import java.util.ArrayList;
@@ -131,7 +132,7 @@ public class OrderByDocumentQueryExecutionContext<T extends Resource>
 
             return Flux.just(context);
         } catch (CosmosClientException dce) {
-            return Flux.error(dce);
+            throw Exceptions.propagate(dce);
         }
     }
 

@@ -150,7 +150,7 @@ class DocumentProducer<T extends Resource> {
                 try {
                     retryPolicy = createRetryPolicyFunc.call();
                 } catch (Exception e) {
-                    return Flux.error(e);
+                    throw reactor.core.Exceptions.propagate(e);
                 }
                 retryPolicy.onBeforeSendRequest(request);
             }
@@ -192,7 +192,7 @@ class DocumentProducer<T extends Resource> {
                             this.retries);
                     this.fetchSchedulingMetrics.stop();
                     return rsp;});
-        
+
         return splitProof(obs.map(DocumentProducerFeedResponse::new));
     }
 
@@ -222,7 +222,7 @@ class DocumentProducer<T extends Resource> {
                                     lastResponseContinuationToken);
                         }
                         return Flux.fromIterable(createReplacingDocumentProducersOnSplit(partitionKeyRanges));
-                    }).switchIfEmpty(Flux.empty());
+                    });
 
             return produceOnSplit(replacementProducers);
         });

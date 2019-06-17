@@ -252,19 +252,20 @@ public class ParallelDocumentQueryExecutionContext<T extends Resource>
                 // Add the request charge
                 double charge = tracker.getAndResetCharge();
                 if (charge > 0) {
-                    return plusCharge(documentProducerFeedResponse,
-                            charge);
+                    return new ValueHolder<>(plusCharge(documentProducerFeedResponse,
+                            charge));
                 } else {
-                    return documentProducerFeedResponse;
+                    return new ValueHolder<>(documentProducerFeedResponse);
                 }
-            }).concatWith(Flux.defer(Flux::empty)).map(documentProducerFeedResponse -> {
+            }).concatWith(Flux.just(new ValueHolder<>(null))).map(heldValue -> {
+                DocumentProducer<T>.DocumentProducerFeedResponse documentProducerFeedResponse = heldValue.v;
                 // CREATE pairs from the stream to allow the observables downstream to "peek"
                 // 1, 2, 3, null -> (null, 1), (1, 2), (2, 3), (3, null)
-                ImmutablePair<DocumentProducer<T>.DocumentProducerFeedResponse, DocumentProducer<T>.DocumentProducerFeedResponse> previousCurrent = new ImmutablePair<DocumentProducer<T>.DocumentProducerFeedResponse, DocumentProducer<T>.DocumentProducerFeedResponse>(
+                    ImmutablePair<DocumentProducer<T>.DocumentProducerFeedResponse, DocumentProducer<T>.DocumentProducerFeedResponse> previousCurrent = new ImmutablePair<>(
                         this.previousPage,
                         documentProducerFeedResponse);
-                this.previousPage = documentProducerFeedResponse;
-                return previousCurrent;
+                    this.previousPage = documentProducerFeedResponse;
+                    return previousCurrent;
             }).skip(1).map(currentNext -> {
                 // remove the (null, 1)
                 // Add the continuation token based on the current and next page.

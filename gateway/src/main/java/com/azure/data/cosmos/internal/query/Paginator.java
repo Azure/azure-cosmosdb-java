@@ -89,7 +89,7 @@ public class Paginator {
                         return tFetcher;
             });
 
-            return generate.flatMap(feedResponseFlux -> feedResponseFlux, 1);
+            return generate.flatMapSequential(feedResponseFlux -> feedResponseFlux, 1);
         });
     }
 }

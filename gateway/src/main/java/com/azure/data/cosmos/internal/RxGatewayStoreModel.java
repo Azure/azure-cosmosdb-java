@@ -185,7 +185,7 @@ class RxGatewayStoreModel implements RxStoreModel {
             return toDocumentServiceResponse(httpResponseMono, request);
 
         } catch (Exception e) {
-            return Flux.error(e);
+            throw reactor.core.Exceptions.propagate(e);
         }
     }
 

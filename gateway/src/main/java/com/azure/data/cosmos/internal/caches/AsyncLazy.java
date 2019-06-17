@@ -24,6 +24,7 @@ package com.azure.data.cosmos.internal.caches;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
 
 import java.util.concurrent.Callable;
@@ -43,7 +44,7 @@ class AsyncLazy<TValue> {
             try {
                 return func.call();
             } catch (Exception e) {
-                return Mono.error(e);
+                throw Exceptions.propagate(e);
             }
         }));
     }
