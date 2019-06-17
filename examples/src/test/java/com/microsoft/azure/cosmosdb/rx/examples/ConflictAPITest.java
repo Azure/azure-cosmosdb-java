@@ -46,6 +46,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 
+import static com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient.Builder;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -59,7 +60,8 @@ import static org.hamcrest.Matchers.notNullValue;
  * transform an observable to ListenableFuture. Please see
  * {@link #transformObservableToGoogleGuavaListenableFuture()}
  */
-public class ConflictAPITest {
+public class ConflictAPITest extends TestBase {
+
     private final static int TIMEOUT = 60000;
 
     private AsyncDocumentClient client;
@@ -68,14 +70,17 @@ public class ConflictAPITest {
 
     @BeforeClass(groups = "samples", timeOut = TIMEOUT)
     public void setUp() {
+
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
         connectionPolicy.setConnectionMode(ConnectionMode.Direct);
-        client = new AsyncDocumentClient.Builder()
+
+        builder = new Builder()
                 .withServiceEndpoint(TestConfigurations.HOST)
                 .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
                 .withConnectionPolicy(connectionPolicy)
-                .withConsistencyLevel(ConsistencyLevel.Session)
-                .build();
+                .withConsistencyLevel(ConsistencyLevel.Session);
+
+        client = builder.build();
 
         DocumentCollection collectionDefinition = new DocumentCollection();
         collectionDefinition.setId(UUID.randomUUID().toString());
