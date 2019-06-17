@@ -54,10 +54,10 @@ import java.util.concurrent.Executors;
  * <pre>
  * {@code
  *  ChangeFeedProcessor.Builder()
- *     .withHostName(hostName)
- *     .withFeedContainerClient(feedContainer)
- *     .withLeaseContainerClient(leaseContainer)
- *     .withChangeFeedObserver(SampleObserverImpl.class)
+ *     .hostName(hostName)
+ *     .feedContainerClient(feedContainer)
+ *     .leaseContainerClient(leaseContainer)
+ *     .observer(SampleObserverImpl.class)
  *     .build();
  * }
  * </pre>
@@ -109,7 +109,7 @@ public class ChangeFeedProcessorBuilderImpl implements ChangeFeedProcessor.Build
      * @return current Builder.
      */
     @Override
-    public ChangeFeedProcessorBuilderImpl withHostName(String hostName) {
+    public ChangeFeedProcessorBuilderImpl hostName(String hostName) {
         this.hostName = hostName;
         return this;
     }
@@ -121,7 +121,7 @@ public class ChangeFeedProcessorBuilderImpl implements ChangeFeedProcessor.Build
      * @return current Builder.
      */
     @Override
-    public ChangeFeedProcessorBuilderImpl withFeedContainerClient(CosmosContainer feedDocumentClient) {
+    public ChangeFeedProcessorBuilderImpl feedContainerClient(CosmosContainer feedDocumentClient) {
         if (feedDocumentClient == null) {
             throw new IllegalArgumentException("feedContextClient");
         }
@@ -137,13 +137,12 @@ public class ChangeFeedProcessorBuilderImpl implements ChangeFeedProcessor.Build
      * @return current Builder.
      */
     @Override
-    public ChangeFeedProcessorBuilderImpl withProcessorOptions(ChangeFeedProcessorOptions changeFeedProcessorOptions) {
+    public ChangeFeedProcessorBuilderImpl options(ChangeFeedProcessorOptions changeFeedProcessorOptions) {
         if (changeFeedProcessorOptions == null) {
             throw new IllegalArgumentException("changeFeedProcessorOptions");
         }
 
         this.changeFeedProcessorOptions = changeFeedProcessorOptions;
-        this.executorService = changeFeedProcessorOptions.executorService();
 
         return this;
     }
@@ -155,7 +154,7 @@ public class ChangeFeedProcessorBuilderImpl implements ChangeFeedProcessor.Build
      * @return current Builder.
      */
     @Override
-    public ChangeFeedProcessorBuilderImpl withChangeFeedObserverFactory(ChangeFeedObserverFactory observerFactory) {
+    public ChangeFeedProcessorBuilderImpl observerFactory(ChangeFeedObserverFactory observerFactory) {
         if (observerFactory == null) {
             throw new IllegalArgumentException("observerFactory");
         }
@@ -170,7 +169,7 @@ public class ChangeFeedProcessorBuilderImpl implements ChangeFeedProcessor.Build
      * @return current Builder.
      */
     @Override
-    public ChangeFeedProcessorBuilderImpl withChangeFeedObserver(Class<? extends ChangeFeedObserver> type) {
+    public ChangeFeedProcessorBuilderImpl observer(Class<? extends ChangeFeedObserver> type) {
         if (type == null) {
             throw new IllegalArgumentException("type");
         }
@@ -208,7 +207,7 @@ public class ChangeFeedProcessorBuilderImpl implements ChangeFeedProcessor.Build
      * @return current Builder.
      */
     @Override
-    public ChangeFeedProcessorBuilderImpl withLeaseContainerClient(CosmosContainer leaseDocumentClient) {
+    public ChangeFeedProcessorBuilderImpl leaseContainerClient(CosmosContainer leaseDocumentClient) {
         if (leaseDocumentClient == null) {
             throw new IllegalArgumentException("leaseContextClient");
         }

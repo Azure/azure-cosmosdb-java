@@ -25,23 +25,20 @@ package com.azure.data.cosmos.rx;
 import com.azure.data.cosmos.ChangeFeedObserver;
 import com.azure.data.cosmos.ChangeFeedObserverCloseReason;
 import com.azure.data.cosmos.ChangeFeedObserverContext;
-import com.azure.data.cosmos.ChangeFeedOptions;
 import com.azure.data.cosmos.ChangeFeedProcessor;
 import com.azure.data.cosmos.ChangeFeedProcessorOptions;
 import com.azure.data.cosmos.CosmosClient;
 import com.azure.data.cosmos.CosmosClientBuilder;
-import com.azure.data.cosmos.CosmosClientException;
 import com.azure.data.cosmos.CosmosContainer;
 import com.azure.data.cosmos.CosmosContainerRequestOptions;
 import com.azure.data.cosmos.CosmosContainerSettings;
 import com.azure.data.cosmos.CosmosDatabase;
 import com.azure.data.cosmos.CosmosDatabaseForTest;
-import com.azure.data.cosmos.CosmosDatabaseSettings;
 import com.azure.data.cosmos.CosmosItemProperties;
-import com.azure.data.cosmos.Document;
-import com.azure.data.cosmos.FeedResponse;
 import com.azure.data.cosmos.SerializationFormattingPolicy;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
@@ -49,7 +46,6 @@ import org.testng.annotations.Test;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -59,6 +55,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ChangeFeedProcessorTest extends TestSuiteBase {
+    private final static Logger log = LoggerFactory.getLogger(ChangeFeedProcessorTest.class);
+
     private CosmosDatabase createdDatabase;
     private CosmosContainer createdFeedCollection;
     private CosmosContainer createdLeaseCollection;
@@ -82,11 +80,11 @@ public class ChangeFeedProcessorTest extends TestSuiteBase {
     public void readFeedDocuments() {
 
         Mono<ChangeFeedProcessor> changeFeedProcessorObservable = ChangeFeedProcessor.Builder()
-            .withHostName(hostName)
-            .withChangeFeedObserver(TestChangeFeedObserverImpl.class)
-            .withFeedContainerClient(createdFeedCollection)
-            .withLeaseContainerClient(createdLeaseCollection)
-            .withProcessorOptions(new ChangeFeedProcessorOptions().startFromBeginning(true))
+            .hostName(hostName)
+            .observer(TestChangeFeedObserverImpl.class)
+            .feedContainerClient(createdFeedCollection)
+            .leaseContainerClient(createdLeaseCollection)
+            .options(new ChangeFeedProcessorOptions().startFromBeginning(true))
             .build();
 
         changeFeedProcessorObservable.flatMap(processor -> {
@@ -102,11 +100,6 @@ public class ChangeFeedProcessorTest extends TestSuiteBase {
         }
 
         changeFeedProcessor.stop().block();
-//        .subscribe(consumer -> {
-//            assertThat(false).as("TEST assert").isTrue();
-//        }, errorConsumer -> {
-//            assertThat(false).as("TEST assert").isTrue();
-//        });
 
         // Wait for the change feed threads to exit
         try {
@@ -163,7 +156,11 @@ public class ChangeFeedProcessorTest extends TestSuiteBase {
     public void afterClass() {
         safeDeleteAllCollections(createdDatabase);
         safeDeleteDatabase(createdDatabase);
-//        safeClose(client);
+
+        // Allow some time for the collections and the database to be deleted before exiting.
+        try {
+            Thread.sleep(500);
+        } catch (Exception e){ }
     }
 
     private CosmosItemProperties getDocumentDefinition() {
@@ -185,7 +182,7 @@ public class ChangeFeedProcessorTest extends TestSuiteBase {
     }
 
     private static synchronized void processItem(CosmosItemProperties item) {
-        System.out.println("-->RECEIVED" + item.toJson(SerializationFormattingPolicy.INDENTED));
+        ChangeFeedProcessorTest.log.info("RECEIVED {}", item.toJson(SerializationFormattingPolicy.INDENTED));
         receivedDocuments.put(item.id(), item);
     }
 
@@ -195,22 +192,21 @@ public class ChangeFeedProcessorTest extends TestSuiteBase {
 
         @Override
         public void open(ChangeFeedObserverContext context) {
-            System.out.format("-->ChangeFeedObserver::open() from thread %d\n", Thread.currentThread().getId());
+            ChangeFeedProcessorTest.log.info("OPEN processing from thread {}", Thread.currentThread().getId());
         }
 
         @Override
         public void close(ChangeFeedObserverContext context, ChangeFeedObserverCloseReason reason) {
-            System.out.format("-->ChangeFeedObserver::close() from thread %d\n", Thread.currentThread().getId());
-
+            ChangeFeedProcessorTest.log.info("CLOSE processing from thread {}", Thread.currentThread().getId());
         }
 
         @Override
         public void processChanges(ChangeFeedObserverContext context, List<CosmosItemProperties> docs) {
-            System.out.format("-->ChangeFeedObserver::processChanges() START from thread %d\n", Thread.currentThread().getId());
+            ChangeFeedProcessorTest.log.info("START processing from thread {}", Thread.currentThread().getId());
             for (CosmosItemProperties item : docs) {
                 processItem(item);
             }
-            System.out.format("-->ChangeFeedObserver::processChanges() END from thread %d\n", Thread.currentThread().getId());
+            ChangeFeedProcessorTest.log.info("END processing from thread {}", Thread.currentThread().getId());
         }
     }
 }

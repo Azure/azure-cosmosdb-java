@@ -108,10 +108,10 @@ public class SampleChangeFeedProcessor {
 
     public static Mono<ChangeFeedProcessor> getChangeFeedProcessor(String hostName, CosmosContainer feedContainer, CosmosContainer leaseContainer) {
         return ChangeFeedProcessor.Builder()
-            .withHostName(hostName)
-            .withFeedContainerClient(feedContainer)
-            .withLeaseContainerClient(leaseContainer)
-            .withChangeFeedObserver(SampleObserverImpl.class)
+            .hostName(hostName)
+            .feedContainerClient(feedContainer)
+            .leaseContainerClient(leaseContainer)
+            .observer(SampleObserverImpl.class)
             .build();
     }
 

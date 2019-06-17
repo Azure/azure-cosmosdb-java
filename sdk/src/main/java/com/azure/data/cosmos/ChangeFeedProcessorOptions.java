@@ -26,7 +26,6 @@ import com.azure.data.cosmos.changefeed.CheckpointFrequency;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
-import java.util.concurrent.ExecutorService;
 
 public class ChangeFeedProcessorOptions {
     private static final int DefaultQueryPartitionsMaxBatchSize = 100;
@@ -52,7 +51,6 @@ public class ChangeFeedProcessorOptions {
     private boolean discardExistingLeases;
     private int queryPartitionsMaxBatchSize;
     private int degreeOfParallelism;
-    private ExecutorService executorService;
 
     public ChangeFeedProcessorOptions() {
         this.maxItemCount = 100;
@@ -65,7 +63,6 @@ public class ChangeFeedProcessorOptions {
         this.checkpointFrequency = new CheckpointFrequency();
         this.maxPartitionCount = 0; // unlimited
         this.degreeOfParallelism = 25; // default
-        this.executorService = null;
     }
 
     /**
@@ -450,25 +447,4 @@ public class ChangeFeedProcessorOptions {
         this.queryPartitionsMaxBatchSize = queryPartitionsMaxBatchSize;
         return this;
     }
-
-    /**
-     * Gets the current {@link ExecutorService} which will be used to control the thread pool.
-     *
-     * @return current ExecutorService instance.
-     */
-    public ExecutorService executorService() {
-        return this.executorService;
-    }
-
-    /**
-     * Sets the {@link ExecutorService} to be used to control the thread pool.
-     *
-     * @param executorService The instance of {@link ExecutorService} to use.
-     * @return current ChangeFeedProcessorOptions instance.
-     */
-    public ChangeFeedProcessorOptions executorService(ExecutorService executorService) {
-        this.executorService = executorService;
-        return this;
-    }
-
 }

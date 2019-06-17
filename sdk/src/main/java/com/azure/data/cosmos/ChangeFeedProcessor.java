@@ -42,10 +42,10 @@ import reactor.core.publisher.Mono;
  * <p>
  * {@code
  * ChangeFeedProcessor changeFeedProcessor = ChangeFeedProcessor.Builder()
- *     .withHostName(hostName)
- *     .withFeedContainerClient(feedContainer)
- *     .withLeaseContainerClient(leaseContainer)
- *     .withChangeFeedObserver(SampleObserverImpl.class)
+ *     .hostName(hostName)
+ *     .feedContainerClient(feedContainer)
+ *     .leaseContainerClient(leaseContainer)
+ *     .observer(SampleObserverImpl.class)
  *     .build();
  * }
  */
@@ -72,10 +72,10 @@ public interface ChangeFeedProcessor {
      * {@code
      *
      *  ChangeFeedProcessor.Builder()
-     *       .withHostName("SampleHost")
-     *       .withFeedContainerClient(feedContainer)
-     *       .withLeaseContainerClient(leaseContainer)
-     *       .withChangeFeedObserver(SampleObserverImpl.class)
+     *       .hostName("SampleHost")
+     *       .feedContainerClient(feedContainer)
+     *       .leaseContainerClient(leaseContainer)
+     *       .observer(SampleObserverImpl.class)
      *       .build();
      * }
      *
@@ -92,7 +92,7 @@ public interface ChangeFeedProcessor {
          * @param hostName the name to be used for the host. When using multiple hosts, each host must have a unique name.
          * @return current Builder.
          */
-        BuilderDefinition withHostName(String hostName);
+        BuilderDefinition hostName(String hostName);
 
         /**
          * Sets and existing {@link CosmosContainer} to be used to read from the monitored collection.
@@ -100,7 +100,7 @@ public interface ChangeFeedProcessor {
          * @param feedContainerClient the instance of {@link CosmosContainer} to be used.
          * @return current Builder.
          */
-        BuilderDefinition withFeedContainerClient(CosmosContainer feedContainerClient);
+        BuilderDefinition feedContainerClient(CosmosContainer feedContainerClient);
 
         /**
          * Sets the {@link ChangeFeedProcessorOptions} to be used.
@@ -108,7 +108,7 @@ public interface ChangeFeedProcessor {
          * @param changeFeedProcessorOptions the change feed processor options to use.
          * @return current Builder.
          */
-        BuilderDefinition withProcessorOptions(ChangeFeedProcessorOptions changeFeedProcessorOptions);
+        BuilderDefinition options(ChangeFeedProcessorOptions changeFeedProcessorOptions);
 
         /**
          * Sets the {@link ChangeFeedObserverFactory} to be used to generate {@link ChangeFeedObserver}
@@ -116,7 +116,7 @@ public interface ChangeFeedProcessor {
          * @param observerFactory The instance of {@link ChangeFeedObserverFactory} to use.
          * @return current Builder.
          */
-        BuilderDefinition withChangeFeedObserverFactory(ChangeFeedObserverFactory observerFactory);
+        BuilderDefinition observerFactory(ChangeFeedObserverFactory observerFactory);
 
         /**
          * Sets an existing {@link ChangeFeedObserver} type to be used by a {@link ChangeFeedObserverFactory} to process changes.
@@ -124,7 +124,7 @@ public interface ChangeFeedProcessor {
          * @param type the type of {@link ChangeFeedObserver} to be used.
          * @return current Builder.
          */
-        BuilderDefinition withChangeFeedObserver(Class<? extends ChangeFeedObserver> type);
+        BuilderDefinition observer(Class<? extends ChangeFeedObserver> type);
 
         /**
          * Sets an existing {@link CosmosContainer} to be used to read from the leases collection.
@@ -132,7 +132,7 @@ public interface ChangeFeedProcessor {
          * @param leaseCosmosClient the instance of {@link CosmosContainer} to use.
          * @return current Builder.
          */
-        BuilderDefinition withLeaseContainerClient(CosmosContainer leaseCosmosClient);
+        BuilderDefinition leaseContainerClient(CosmosContainer leaseCosmosClient);
 
         /**
          * Builds a new instance of the {@link ChangeFeedProcessor} with the specified configuration asynchronously.
