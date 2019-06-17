@@ -30,6 +30,7 @@ import com.microsoft.azure.cosmosdb.ConsistencyLevel;
 import com.microsoft.azure.cosmosdb.CosmosResourceType;
 import com.microsoft.azure.cosmosdb.Database;
 import com.microsoft.azure.cosmosdb.Document;
+import com.microsoft.azure.cosmosdb.DocumentClientTest;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.Permission;
 import com.microsoft.azure.cosmosdb.PermissionMode;
@@ -55,7 +56,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
 
-public class TokenResolverTest {
+public class TokenResolverTest extends DocumentClientTest {
     private final static int TIMEOUT = 60000;
     private final static String USER_ID = "userId";
     private AsyncDocumentClient asyncClient;
@@ -77,7 +78,7 @@ public class TokenResolverTest {
         // Sets up the requirements for each test
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
         connectionPolicy.setConnectionMode(ConnectionMode.Direct);
-        asyncClient = new AsyncDocumentClient.Builder()
+        asyncClient = this.clientBuilder()
                 .withServiceEndpoint(TestConfigurations.HOST)
                 .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
                 .withConnectionPolicy(connectionPolicy)
@@ -146,7 +147,7 @@ public class TokenResolverTest {
         try {
             ConnectionPolicy connectionPolicy = new ConnectionPolicy();
             connectionPolicy.setConnectionMode(ConnectionMode.Direct);
-            asyncClientWithTokenResolver = new AsyncDocumentClient.Builder()
+            asyncClientWithTokenResolver = this.clientBuilder()
                     .withServiceEndpoint(TestConfigurations.HOST)
                     .withConnectionPolicy(connectionPolicy)
                     .withConsistencyLevel(ConsistencyLevel.Session)
@@ -186,7 +187,7 @@ public class TokenResolverTest {
         try {
             ConnectionPolicy connectionPolicy = new ConnectionPolicy();
             connectionPolicy.setConnectionMode(ConnectionMode.Direct);
-            asyncClientWithTokenResolver = new AsyncDocumentClient.Builder()
+            asyncClientWithTokenResolver = this.clientBuilder()
                     .withServiceEndpoint(TestConfigurations.HOST)
                     .withConnectionPolicy(connectionPolicy)
                     .withConsistencyLevel(ConsistencyLevel.Session)
@@ -230,7 +231,7 @@ public class TokenResolverTest {
         try {
             ConnectionPolicy connectionPolicy = new ConnectionPolicy();
             connectionPolicy.setConnectionMode(ConnectionMode.Direct);
-            asyncClientWithTokenResolver = new AsyncDocumentClient.Builder()
+            asyncClientWithTokenResolver = this.clientBuilder()
                     .withServiceEndpoint(TestConfigurations.HOST)
                     .withConnectionPolicy(connectionPolicy)
                     .withConsistencyLevel(ConsistencyLevel.Session)

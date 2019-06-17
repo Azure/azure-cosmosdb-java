@@ -49,7 +49,7 @@ public class DocumentClientResourceLeakTest extends TestSuiteBase {
 
     @Factory(dataProvider = "simpleClientBuildersWithDirect")
     public DocumentClientResourceLeakTest(Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = {"emulator"}, timeOut = TIMEOUT)
@@ -61,7 +61,7 @@ public class DocumentClientResourceLeakTest extends TestSuiteBase {
 
         for (int i = 0; i < MAX_NUMBER; i++) {
             logger.info("CLIENT {}", i);
-            client = clientBuilder.build();
+            client = this.clientBuilder().build();
             try {
                 logger.info("creating document");
                 createDocument(client, createdDatabase.getId(), createdCollection.getId(), getDocumentDefinition());

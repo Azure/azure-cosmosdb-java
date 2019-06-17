@@ -100,12 +100,12 @@ public class ResourceTokenTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuilders")
     public ResourceTokenTest(AsyncDocumentClient.Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() throws Exception {
-        client = clientBuilder.build();
+        client = this.clientBuilder().build();
         Database d = new Database();
         d.setId(databaseId);
         createdDatabase = createDatabase(client, d);

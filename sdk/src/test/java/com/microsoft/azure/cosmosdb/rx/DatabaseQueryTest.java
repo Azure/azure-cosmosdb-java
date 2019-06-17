@@ -53,7 +53,7 @@ public class DatabaseQueryTest extends TestSuiteBase {
     
     @Factory(dataProvider = "clientBuilders")
     public DatabaseQueryTest(Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
     
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
@@ -129,7 +129,7 @@ public class DatabaseQueryTest extends TestSuiteBase {
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() throws Exception {
-        client = clientBuilder.build();
+        client = clientBuilder().build();
 
         Database d1 = new Database();
         d1.setId(databaseId1);

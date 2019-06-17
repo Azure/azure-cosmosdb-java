@@ -48,7 +48,7 @@ public class NetworkFailureTest extends TestSuiteBase {
 
     @Factory(dataProvider = "simpleClientBuildersWithDirect")
     public NetworkFailureTest(AsyncDocumentClient.Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
         this.collectionDefinition = getCollectionDefinition();
     }
 
@@ -57,7 +57,7 @@ public class NetworkFailureTest extends TestSuiteBase {
         SpyClientUnderTestFactory.ClientWithGatewaySpy client = null;
 
         try {
-            client = SpyClientUnderTestFactory.createClientWithGatewaySpy(clientBuilder);
+            client = SpyClientUnderTestFactory.createClientWithGatewaySpy(this.clientBuilder());
 
             Database database = SHARED_DATABASE;
 

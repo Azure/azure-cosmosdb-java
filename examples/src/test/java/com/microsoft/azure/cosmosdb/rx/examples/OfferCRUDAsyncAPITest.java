@@ -28,6 +28,7 @@ import com.microsoft.azure.cosmosdb.ConnectionPolicy;
 import com.microsoft.azure.cosmosdb.ConsistencyLevel;
 import com.microsoft.azure.cosmosdb.DataType;
 import com.microsoft.azure.cosmosdb.Database;
+import com.microsoft.azure.cosmosdb.DocumentClientTest;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.IncludedPath;
 import com.microsoft.azure.cosmosdb.Index;
@@ -53,7 +54,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
  * This integration test class demonstrates how to use Async API to query and
  * replace an Offer.
  */
-public class OfferCRUDAsyncAPITest {
+public class OfferCRUDAsyncAPITest extends DocumentClientTest {
     private final static int TIMEOUT = 60000;
     private Database createdDatabase;
     private AsyncDocumentClient asyncClient;
@@ -62,7 +63,7 @@ public class OfferCRUDAsyncAPITest {
     public void setUp() {
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
         connectionPolicy.setConnectionMode(ConnectionMode.Direct);
-        asyncClient = new AsyncDocumentClient.Builder()
+        asyncClient = this.clientBuilder()
                 .withServiceEndpoint(TestConfigurations.HOST)
                 .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
                 .withConnectionPolicy(connectionPolicy)

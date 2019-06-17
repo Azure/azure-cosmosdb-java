@@ -54,7 +54,7 @@ public class AttachmentCrudTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuildersWithDirectHttps")  // Direct TCP mode does not support attachments
     public AttachmentCrudTest(AsyncDocumentClient.Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
@@ -86,7 +86,7 @@ public class AttachmentCrudTest extends TestSuiteBase {
         options.setPartitionKey(new PartitionKey(createdDocument.getId()));
         Attachment readBackAttachment = client.createAttachment(getDocumentLink(), attachment, options).toBlocking().single().getResource();
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(this.clientBuilder());
 
         // read attachment
         Observable<ResourceResponse<Attachment>> readObservable = client.readAttachment(readBackAttachment.getSelfLink(), options);
@@ -131,7 +131,7 @@ public class AttachmentCrudTest extends TestSuiteBase {
         Attachment readBackAttachment = client.upsertAttachment(getDocumentLink(), attachment, options).toBlocking().single().getResource();
 
         // read attachment
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(this.clientBuilder());
         Observable<ResourceResponse<Attachment>> readObservable = client.readAttachment(readBackAttachment.getSelfLink(), options);
 
         // validate attachment read
@@ -168,7 +168,7 @@ public class AttachmentCrudTest extends TestSuiteBase {
 
 
         // read attachment
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(this.clientBuilder());
         Observable<ResourceResponse<Attachment>> readObservable = client.readAttachment(readBackAttachment.getSelfLink(), options);
 
         // validate attachment read
@@ -195,7 +195,7 @@ public class AttachmentCrudTest extends TestSuiteBase {
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
-        client = clientBuilder.build();
+        client = this.clientBuilder().build();
         createdDatabase = SHARED_DATABASE;
         createdCollection = SHARED_MULTI_PARTITION_COLLECTION;
         createdDocument = createDocument(client, createdDatabase.getId(), createdCollection.getId(), getDocumentDefinition());

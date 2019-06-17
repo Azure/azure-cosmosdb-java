@@ -71,7 +71,7 @@ public class BackPressureTest extends TestSuiteBase {
 
     @Factory(dataProvider = "simpleClientBuildersWithDirect")
     public BackPressureTest(Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "long" }, timeOut = TIMEOUT)
@@ -158,7 +158,7 @@ public class BackPressureTest extends TestSuiteBase {
         createdDatabase = SHARED_DATABASE;
         createdCollection = createCollection(createdDatabase.getId(), getSinglePartitionCollectionDefinition(), options);
 
-        client = new ClientUnderTestBuilder(clientBuilder).build();
+        client = new ClientUnderTestBuilder(this.clientBuilder()).build();
 
         // increase throughput to max for a single partition collection to avoid throttling
         // for bulk insert and later queries.
@@ -183,7 +183,7 @@ public class BackPressureTest extends TestSuiteBase {
 
         createdDocuments = documentBulkInsertObs.map(ResourceResponse::getResource).toList().toBlocking().single();
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(this.clientBuilder());
         warmUp();
     }
 
