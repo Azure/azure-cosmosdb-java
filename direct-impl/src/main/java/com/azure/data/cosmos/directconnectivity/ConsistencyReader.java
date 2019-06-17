@@ -37,7 +37,6 @@ import com.azure.data.cosmos.internal.RequestChargeTracker;
 import com.azure.data.cosmos.internal.RxDocumentServiceRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
 
 import java.util.HashMap;
@@ -267,12 +266,11 @@ public class ConsistencyReader {
                 entity,
                 false /*required valid LSN*/,
                 useSessionToken);
-
-        return responseObs.map(response -> {
+        return responseObs.flatMap(response -> {
             try {
-                return response.toResponse();
+                return Mono.just(response.toResponse());
             } catch (CosmosClientException e) {
-                throw Exceptions.propagate(e);
+                return Mono.error(e);
             }
         });
     }
@@ -287,14 +285,14 @@ public class ConsistencyReader {
                 /* useSessionToken */ false,
                 /* readMode */ readMode);
 
-        return responsesObs.map(responses -> {
+        return responsesObs.flatMap(responses -> {
             if (responses.size() == 0) {
-                throw Exceptions.propagate(new GoneException(RMResources.Gone));
+                return Mono.error(new GoneException(RMResources.Gone));
             }
             try {
-                return responses.get(0).toResponse();
+                return Mono.just(responses.get(0).toResponse());
             } catch (CosmosClientException e) {
-                throw Exceptions.propagate(e);
+                return Mono.error(e);
             }
         });
     }
@@ -316,10 +314,11 @@ public class ConsistencyReader {
                 /* checkMinLsn */ true,
                 /* forceReadAll */ false);
 
-        return responsesObs.map(responses -> {
+        return responsesObs.flatMap(responses -> {
+
             if (responses.size() > 0) {
                 try {
-                    return responses.get(0).toResponse(entity.requestContext.requestChargeTracker);
+                    return Mono.just(responses.get(0).toResponse(entity.requestContext.requestChargeTracker));
                 } catch (NotFoundException notFoundException) {
                     try {
                         if (entity.requestContext.sessionToken != null
@@ -328,12 +327,12 @@ public class ConsistencyReader {
                             logger.warn("Convert to session read exception, request {} SESSION Lsn {}, responseLSN {}", entity.getResourceAddress(), entity.requestContext.sessionToken.convertToString(), responses.get(0).lsn);
                             notFoundException.responseHeaders().put(WFConstants.BackendHeaders.SUB_STATUS, Integer.toString(HttpConstants.SubStatusCodes.READ_SESSION_NOT_AVAILABLE));
                         }
-                        throw Exceptions.propagate(notFoundException);
+                        return Mono.error(notFoundException);
                     } catch (CosmosClientException ex) {
-                        throw Exceptions.propagate(ex);
+                        return Mono.error(ex);
                     }
                 } catch (CosmosClientException cce) {
-                    throw Exceptions.propagate(cce);
+                    return Mono.error(cce);
                 }
             }
 
@@ -342,7 +341,7 @@ public class ConsistencyReader {
             responseHeaders.put(WFConstants.BackendHeaders.SUB_STATUS, Integer.toString(HttpConstants.SubStatusCodes.READ_SESSION_NOT_AVAILABLE));
             ISessionToken requestSessionToken = entity.requestContext.sessionToken;
             logger.warn("Fail the session read {}, request session token {}", entity.getResourceAddress(), requestSessionToken == null ? "<empty>" : requestSessionToken.convertToString());
-            throw Exceptions.propagate(new NotFoundException(RMResources.ReadSessionNotAvailable, responseHeaders, null));
+            return Mono.error(new NotFoundException(RMResources.ReadSessionNotAvailable, responseHeaders, null));
         });
     }
 

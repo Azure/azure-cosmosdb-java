@@ -173,7 +173,7 @@ public class StoreReader {
                                 request.requestContext.clientSideRequestStatistics.getContactedReplicas().add(storeRespAndURI.getRight());
                                 return Mono.just(storeResult);
                             } catch (Exception e) {
-                                throw Exceptions.propagate(e);
+                                return Mono.error(e);
                             }
                         }
                 ).onErrorResume(t -> {
@@ -196,7 +196,7 @@ public class StoreReader {
                         }
                         return Mono.just(storeResult);
                     } catch (Exception e) {
-                        throw Exceptions.propagate(e);
+                        return Mono.error(e);
                     }
                 });
     }
@@ -434,12 +434,12 @@ public class StoreReader {
                                                     // TODO: some fields which get updated need to be thread-safe
                                                     return Mono.just(createReadReplicaResult(storeResultList, replicaCountToRead, resolveApiResults.size(), hasGoneException.v, entity));
                                                 } catch (Exception e) {
-                                                    throw Exceptions.propagate(e);
+                                                    return Mono.error(e);
                                                 }
                                             }));
                                 }));
                     } catch (Exception e) {
-                        throw Exceptions.propagate(e);
+                        return Mono.error(e);
                     }
                 }
         );
@@ -537,14 +537,14 @@ public class StoreReader {
                                                 storeResponse != null ? storeResponseObsAndUri.getRight() : null);
                                         return Mono.just(storeResult);
                                     } catch (CosmosClientException e) {
-                                        throw Exceptions.propagate(e);
+                                        return Mono.error(e);
                                     }
                                 }
 
                         );
 
                     } catch (CosmosClientException e) {
-                        throw Exceptions.propagate(e);
+                        return Mono.error(e);
                     }
 
                 }
@@ -564,7 +564,7 @@ public class StoreReader {
                         null);
                 return Mono.just(storeResult);
             } catch (CosmosClientException e) {
-                throw Exceptions.propagate(e);
+                return Mono.error(e);
             }
         });
 

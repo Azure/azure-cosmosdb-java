@@ -132,7 +132,7 @@ public class OrderByDocumentQueryExecutionContext<T extends Resource>
 
             return Flux.just(context);
         } catch (CosmosClientException dce) {
-            throw Exceptions.propagate(dce);
+            return Flux.error(dce);
         }
     }
 

@@ -150,7 +150,7 @@ class DocumentProducer<T extends Resource> {
                 try {
                     retryPolicy = createRetryPolicyFunc.call();
                 } catch (Exception e) {
-                    throw reactor.core.Exceptions.propagate(e);
+                    return Flux.error(e);
                 }
                 retryPolicy.onBeforeSendRequest(request);
             }

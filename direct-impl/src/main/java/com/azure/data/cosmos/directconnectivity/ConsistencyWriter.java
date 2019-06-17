@@ -39,7 +39,6 @@ import com.azure.data.cosmos.internal.Utils;
 import org.apache.commons.collections4.ComparatorUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
@@ -175,7 +174,7 @@ public class ConsistencyWriter {
                     }
 
                 } catch (Exception e) {
-                    throw Exceptions.propagate(e);
+                    return Mono.error(e);
                 }
 
                 return this.transportClient.invokeResourceOperationAsync(primaryUri, request)
@@ -297,7 +296,7 @@ public class ConsistencyWriter {
 
         } catch (CosmosClientException e) {
             // RxJava1 doesn't allow throwing checked exception from Observable operators
-            throw Exceptions.propagate(e);
+            return Mono.error(e);
         }
     }
 
