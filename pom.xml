@@ -353,7 +353,7 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
-  <dependencies/>
+  <dependencies />
   <licenses>
     <license>
       <name>MIT License</name>

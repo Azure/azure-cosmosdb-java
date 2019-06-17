@@ -57,6 +57,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 
+import static com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient.Builder;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -102,7 +103,7 @@ public class DocumentCRUDAsyncAPITest extends DocumentClientTest {
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
         connectionPolicy.setConnectionMode(ConnectionMode.Direct);
 
-        client = this.clientBuilder()
+        this.client = this.clientBuilder()
             .withServiceEndpoint(TestConfigurations.HOST)
             .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
             .withConnectionPolicy(connectionPolicy)
@@ -166,7 +167,7 @@ public class DocumentCRUDAsyncAPITest extends DocumentClientTest {
     public void createDocument_Async_withoutLambda() throws Exception {
         Document doc = new Document(String.format("{ 'id': 'doc%s', 'counter': '%d'}", UUID.randomUUID().toString(), 1));
         Observable<ResourceResponse<Document>> createDocumentObservable = client
-                .createDocument(getCollectionLink(), doc, null, true);
+            .createDocument(getCollectionLink(), doc, null, true);
 
         final CountDownLatch completionLatch = new CountDownLatch(1);
 
@@ -183,14 +184,14 @@ public class DocumentCRUDAsyncAPITest extends DocumentClientTest {
 
             public void call(Throwable error) {
                 System.err
-                        .println("an error occurred while creating the document: actual cause: " + error.getMessage());
+                    .println("an error occurred while creating the document: actual cause: " + error.getMessage());
                 completionLatch.countDown();
             }
         };
 
         // Subscribe to Document resource response emitted by the observable
         createDocumentObservable.single() // We know there will be one response
-                .subscribe(onNext, onError);
+                                .subscribe(onNext, onError);
 
         // Wait till document creation completes
         completionLatch.await();
@@ -203,7 +204,7 @@ public class DocumentCRUDAsyncAPITest extends DocumentClientTest {
     public void createDocument_toBlocking() {
         Document doc = new Document(String.format("{ 'id': 'doc%s', 'counter': '%d'}", UUID.randomUUID().toString(), 1));
         Observable<ResourceResponse<Document>> createDocumentObservable = client
-                .createDocument(getCollectionLink(), doc, null, true);
+            .createDocument(getCollectionLink(), doc, null, true);
 
         // toBlocking() converts to a blocking observable.
         // single() gets the only result.
@@ -221,12 +222,12 @@ public class DocumentCRUDAsyncAPITest extends DocumentClientTest {
 
         // Create a document
         Document createdDocument = client
-                .createDocument(getCollectionLink(), documentDefinition, null, false).toBlocking().single()
-                .getResource();
+            .createDocument(getCollectionLink(), documentDefinition, null, false).toBlocking().single()
+            .getResource();
 
         // Read the created document
         Observable<ResourceResponse<Document>> readDocumentObservable = client
-                .readDocument(getDocumentLink(createdDocument), null);
+            .readDocument(getDocumentLink(createdDocument), null);
 
         final CountDownLatch completionLatch = new CountDownLatch(1);
 
@@ -257,7 +258,7 @@ public class DocumentCRUDAsyncAPITest extends DocumentClientTest {
             Document doc = new Document(String.format("{ 'id': 'doc%s', 'counter': '%d'}", UUID.randomUUID().toString(), i));
 
             Observable<ResourceResponse<Document>> createDocumentObservable = client
-                    .createDocument(getCollectionLink(), doc, null, false);
+                .createDocument(getCollectionLink(), doc, null, false);
             listOfCreateDocumentObservables.add(createDocumentObservable);
         }
 
@@ -267,19 +268,19 @@ public class DocumentCRUDAsyncAPITest extends DocumentClientTest {
         // Create a new observable emitting the total charge of creating all 10
         // documents.
         Observable<Double> totalChargeObservable = mergedObservable
-                .map(ResourceResponse::getRequestCharge)
-                // Map to request charge
-                .reduce((totalCharge, charge) -> totalCharge + charge);
+            .map(ResourceResponse::getRequestCharge)
+            // Map to request charge
+            .reduce((totalCharge, charge) -> totalCharge + charge);
         // Sum up all the charges
 
         final CountDownLatch completionLatch = new CountDownLatch(1);
 
         // Subscribe to the total request charge observable
         totalChargeObservable.subscribe(totalCharge -> {
-                                            // Print the total charge
-                                            System.out.println(totalCharge);
-                                            completionLatch.countDown();
-                                        }, e -> completionLatch.countDown()
+                // Print the total charge
+                System.out.println(totalCharge);
+                completionLatch.countDown();
+            }, e -> completionLatch.countDown()
         );
 
         completionLatch.await();
@@ -299,15 +300,15 @@ public class DocumentCRUDAsyncAPITest extends DocumentClientTest {
 
         // Create the document
         Observable<ResourceResponse<Document>> createDocumentObservable = client
-                .createDocument(getCollectionLink(), doc, null, false);
+            .createDocument(getCollectionLink(), doc, null, false);
 
         try {
             createDocumentObservable.toBlocking() // Converts the observable to a blocking observable
-                    .single(); // Gets the single result
+                                    .single(); // Gets the single result
             Assert.fail("Document Already Exists. Document Creation must fail");
         } catch (Exception e) {
             assertThat("Document already exists.", ((DocumentClientException) e.getCause()).getStatusCode(),
-                       equalTo(409));
+                equalTo(409));
         }
     }
 
@@ -325,7 +326,7 @@ public class DocumentCRUDAsyncAPITest extends DocumentClientTest {
 
         // Create the document
         Observable<ResourceResponse<Document>> createDocumentObservable = client
-                .createDocument(getCollectionLink(), doc, null, false);
+            .createDocument(getCollectionLink(), doc, null, false);
 
         List<Throwable> errorList = Collections.synchronizedList(new ArrayList<>());
 
@@ -353,12 +354,12 @@ public class DocumentCRUDAsyncAPITest extends DocumentClientTest {
 
         // Try to replace the existing document
         Document replacingDocument = new Document(
-                String.format("{ 'id': 'doc%s', 'counter': '%d', 'new-prop' : '2'}", createdDocument.getId(), 1));
+            String.format("{ 'id': 'doc%s', 'counter': '%d', 'new-prop' : '2'}", createdDocument.getId(), 1));
         Observable<ResourceResponse<Document>> replaceDocumentObservable = client
-                .replaceDocument(getDocumentLink(createdDocument), replacingDocument, null);
+            .replaceDocument(getDocumentLink(createdDocument), replacingDocument, null);
 
         List<ResourceResponse<Document>> capturedResponse = Collections
-                .synchronizedList(new ArrayList<>());
+            .synchronizedList(new ArrayList<>());
 
         replaceDocumentObservable.subscribe(resourceResponse -> {
             capturedResponse.add(resourceResponse);
@@ -381,12 +382,12 @@ public class DocumentCRUDAsyncAPITest extends DocumentClientTest {
 
         // Upsert the existing document
         Document upsertingDocument = new Document(
-                String.format("{ 'id': 'doc%s', 'counter': '%d', 'new-prop' : '2'}", doc.getId(), 1));
+            String.format("{ 'id': 'doc%s', 'counter': '%d', 'new-prop' : '2'}", doc.getId(), 1));
         Observable<ResourceResponse<Document>> upsertDocumentObservable = client
-                .upsertDocument(getCollectionLink(), upsertingDocument, null, false);
+            .upsertDocument(getCollectionLink(), upsertingDocument, null, false);
 
         List<ResourceResponse<Document>> capturedResponse = Collections
-                .synchronizedList(new ArrayList<>());
+            .synchronizedList(new ArrayList<>());
 
         upsertDocumentObservable.subscribe(resourceResponse -> {
             capturedResponse.add(resourceResponse);
@@ -495,19 +496,19 @@ public class DocumentCRUDAsyncAPITest extends DocumentClientTest {
         Document doc = new Document(itemAsJsonString);
 
         Document createdDocument = client
-                .createDocument(getCollectionLink(), doc, null, false)
-                .toBlocking()
-                .single()
-                .getResource();
+            .createDocument(getCollectionLink(), doc, null, false)
+            .toBlocking()
+            .single()
+            .getResource();
 
         RequestOptions options = new RequestOptions();
         options.setPartitionKey(new PartitionKey(testObject.mypk));
 
         Document readDocument = client
-                .readDocument(createdDocument.getSelfLink(), options)
-                .toBlocking()
-                .single()
-                .getResource();
+            .readDocument(createdDocument.getSelfLink(), options)
+            .toBlocking()
+            .single()
+            .getResource();
 
         TestObject readObject = mapper.readValue(readDocument.toJson(), TestObject.class);
         assertThat(readObject.prop, equalTo(testObject.prop));

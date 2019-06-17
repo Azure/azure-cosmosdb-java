@@ -53,6 +53,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 
+import static com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient.Builder;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
@@ -97,18 +98,18 @@ public class CollectionCRUDAsyncAPITest extends DocumentClientTest {
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
         connectionPolicy.setConnectionMode(ConnectionMode.Direct);
 
-        client = this.clientBuilder()
-                .withServiceEndpoint(TestConfigurations.HOST)
-                .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
-                .withConnectionPolicy(connectionPolicy)
-                .withConsistencyLevel(ConsistencyLevel.Session)
-                .build();
+        this.client = this.clientBuilder()
+            .withServiceEndpoint(TestConfigurations.HOST)
+            .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
+            .withConnectionPolicy(connectionPolicy)
+            .withConsistencyLevel(ConsistencyLevel.Session)
+            .build();
 
-        createdDatabase = Utils.createDatabaseForTest(client);
+        createdDatabase = Utils.createDatabaseForTest(this.client);
     }
 
     @BeforeMethod(groups = "samples", timeOut = TIMEOUT)
-    public void before() {
+    public void begin() {
         collectionDefinition = new DocumentCollection();
         collectionDefinition.setId(UUID.randomUUID().toString());
     }

@@ -43,6 +43,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
+import static com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient.Builder;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
@@ -70,10 +71,11 @@ import static org.hamcrest.Matchers.greaterThan;
  * {@link #transformObservableToGoogleGuavaListenableFuture()}
  */
 public class DatabaseCRUDAsyncAPITest extends DocumentClientTest {
+
     private final static int TIMEOUT = 60000;
-    private final List<String> databaseIds = new ArrayList<>();
 
     private AsyncDocumentClient client;
+    private final List<String> databaseIds = new ArrayList<>();
 
     @BeforeClass(groups = "samples", timeOut = TIMEOUT)
     public void setUp() {
@@ -81,7 +83,7 @@ public class DatabaseCRUDAsyncAPITest extends DocumentClientTest {
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
         connectionPolicy.setConnectionMode(ConnectionMode.Direct);
 
-        client = this.clientBuilder()
+        this.client = this.clientBuilder()
             .withServiceEndpoint(TestConfigurations.HOST)
             .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
             .withConnectionPolicy(connectionPolicy)
@@ -283,7 +285,10 @@ public class DatabaseCRUDAsyncAPITest extends DocumentClientTest {
     /**
      * Query a Database in an Async manner
      */
-    @Test(groups = "samples", timeOut = TIMEOUT)
+    // TODO: DANOBLE: Reduce timeout interval before completing Direct TCP: Implement health check requests #119
+    //  Emulator runs often timeout on this test, especially in Standard_D2_V2 CI environments
+    //  link: https://github.com/Azure/azure-cosmosdb-java/issues/119
+    @Test(groups = "samples", timeOut = 2 * TIMEOUT)
     public void databaseCreateAndQuery() throws Exception {
         // Create a database
         Database databaseDefinition = getDatabaseDefinition();

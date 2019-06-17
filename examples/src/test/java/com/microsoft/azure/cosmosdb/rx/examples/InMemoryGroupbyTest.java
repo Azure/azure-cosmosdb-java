@@ -48,9 +48,9 @@ public class InMemoryGroupbyTest extends DocumentClientTest {
 
     private final static int TIMEOUT = 60000;
 
-    private static AsyncDocumentClient client;
-    private static DocumentCollection createdCollection;
-    private static Database createdDatabase;
+    private AsyncDocumentClient client;
+    private DocumentCollection createdCollection;
+    private Database createdDatabase;
 
     @BeforeClass(groups = "samples", timeOut = TIMEOUT)
     public void setUp() throws Exception {
@@ -58,7 +58,7 @@ public class InMemoryGroupbyTest extends DocumentClientTest {
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
         connectionPolicy.setConnectionMode(ConnectionMode.Direct);
 
-        client = this.clientBuilder()
+        this.client = this.clientBuilder()
             .withServiceEndpoint(TestConfigurations.HOST)
             .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
             .withConnectionPolicy(connectionPolicy)
@@ -73,8 +73,8 @@ public class InMemoryGroupbyTest extends DocumentClientTest {
 
         // Create collection
         createdCollection = client
-            .createCollection("dbs/" + createdDatabase.getId(), collectionDefinition, null)
-            .toBlocking().single().getResource();
+                .createCollection("dbs/" + createdDatabase.getId(), collectionDefinition, null)
+                .toBlocking().single().getResource();
 
         int numberOfPayers = 10;
         int numberOfDocumentsPerPayer = 10;
@@ -100,7 +100,7 @@ public class InMemoryGroupbyTest extends DocumentClientTest {
     }
 
     @AfterClass(groups = "samples", timeOut = TIMEOUT)
-    public static void shutdown() {
+    public void shutdown() {
         Utils.safeClean(client, createdDatabase);
         client.close();
     }
@@ -175,7 +175,7 @@ public class InMemoryGroupbyTest extends DocumentClientTest {
         }
     }
 
-    private static  String getCollectionLink() {
-        return "dbs/" + createdDatabase.getId() + "/colls/" + createdCollection.getId();
+    private String getCollectionLink() {
+        return "dbs/" + this.createdDatabase.getId() + "/colls/" + this.createdCollection.getId();
     }
 }
