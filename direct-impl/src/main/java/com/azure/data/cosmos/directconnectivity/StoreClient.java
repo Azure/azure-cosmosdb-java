@@ -102,7 +102,7 @@ public class StoreClient implements IStoreClient {
                 ? BackoffRetryUtility.executeRetry(storeResponseDelegate, retryPolicy)
                 : storeResponseDelegate.call();
         } catch (Exception e) {
-            throw reactor.core.Exceptions.propagate(e);
+            return Mono.error(e);
         }
 
         storeResponse = storeResponse.doOnError(e -> {
@@ -127,7 +127,7 @@ public class StoreClient implements IStoreClient {
             try {
                 return Mono.just(this.completeResponse(sr, request));
             } catch (Exception e) {
-                throw reactor.core.Exceptions.propagate(e);
+                return Mono.error(e);
             }
         });
     }

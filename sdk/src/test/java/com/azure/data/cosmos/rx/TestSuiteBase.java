@@ -245,7 +245,7 @@ public class TestSuiteBase extends CosmosClientTest {
 
                         }
                         return cosmosContainer.getItem(doc.id(), propertyValue).delete();
-                    }).collectList().block();
+                    }).then().block();
             logger.info("Truncating collection {} triggers ...", cosmosContainerId);
 
             cosmosContainer.queryTriggers("SELECT * FROM root", options)
@@ -259,7 +259,7 @@ public class TestSuiteBase extends CosmosClientTest {
 //                    }
 
                         return cosmosContainer.getTrigger(trigger.id()).delete(requestOptions);
-                    }).collectList().block();
+                    }).then().block();
 
             logger.info("Truncating collection {} storedProcedures ...", cosmosContainerId);
 
@@ -274,7 +274,7 @@ public class TestSuiteBase extends CosmosClientTest {
 //                    }
 
                         return cosmosContainer.getStoredProcedure(storedProcedure.id()).delete(requestOptions);
-                    }).collectList().block();
+                    }).then().block();
 
             logger.info("Truncating collection {} udfs ...", cosmosContainerId);
 
@@ -289,7 +289,7 @@ public class TestSuiteBase extends CosmosClientTest {
 //                    }
 
                         return cosmosContainer.getUserDefinedFunction(udf.id()).delete(requestOptions);
-                    }).collectList().block();
+                    }).then().block();
 
         } finally {
             houseKeepingClient.close();

@@ -39,8 +39,6 @@ import com.azure.data.cosmos.internal.Utils;
 import org.apache.commons.collections4.ComparatorUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import reactor.core.Exceptions;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
@@ -176,7 +174,7 @@ public class ConsistencyWriter {
                     }
 
                 } catch (Exception e) {
-                    return Mono.error(Exceptions.propagate(e));
+                    return Mono.error(e);
                 }
 
                 return this.transportClient.invokeResourceOperationAsync(primaryUri, request)
@@ -298,16 +296,16 @@ public class ConsistencyWriter {
 
         } catch (CosmosClientException e) {
             // RxJava1 doesn't allow throwing checked exception from Observable operators
-            return Mono.error(Exceptions.propagate(e));
+            return Mono.error(e);
         }
     }
 
     private Mono<Boolean> waitForWriteBarrierAsync(RxDocumentServiceRequest barrierRequest, long selectedGlobalCommittedLsn) {
         AtomicInteger writeBarrierRetryCount = new AtomicInteger(ConsistencyWriter.MAX_NUMBER_OF_WRITE_BARRIER_READ_RETRIES);
         AtomicLong maxGlobalCommittedLsnReceived = new AtomicLong(0);
-        return Flux.defer(() -> {
+        return Mono.defer(() -> {
             if (barrierRequest.requestContext.timeoutHelper.isElapsed()) {
-                return Flux.error(new RequestTimeoutException());
+                return Mono.error(new RequestTimeoutException());
             }
 
             Mono<List<StoreResult>> storeResultListObs = this.storeReader.readMultipleReplicaAsync(
@@ -342,10 +340,10 @@ public class ConsistencyWriter {
                         }
 
                         return Mono.empty();
-                    }).flux();
+                    });
         }).repeatWhen(s -> {
             if (writeBarrierRetryCount.get() == 0) {
-                    return Flux.empty();
+                return Mono.empty();
             } else {
 
                 if ((ConsistencyWriter.MAX_NUMBER_OF_WRITE_BARRIER_READ_RETRIES - writeBarrierRetryCount.get()) > ConsistencyWriter.MAX_SHORT_BARRIER_RETRIES_FOR_MULTI_REGION) {
@@ -354,10 +352,12 @@ public class ConsistencyWriter {
                     return Mono.delay(Duration.ofMillis(ConsistencyWriter.SHORT_BARRIER_RETRY_INTERVAL_IN_MS_FOR_MULTI_REGION));
                 }
             }
-        }).take(1)
-                .map(r -> r)
-                .switchIfEmpty(Mono.defer(() -> Mono.just(false)))
-                .single();
+        }).switchIfEmpty(Mono.defer(() -> {
+            // after retries exhausted print this log and return false
+            logger.debug("ConsistencyWriter: Highest global committed lsn received for write barrier call is {}", maxGlobalCommittedLsnReceived);
+
+            return Mono.just(false);
+        })).map(r -> r).single();
     }
 
     static void getLsnAndGlobalCommittedLsn(StoreResponse response, Utils.ValueHolder<Long> lsn, Utils.ValueHolder<Long> globalCommittedLsn) {

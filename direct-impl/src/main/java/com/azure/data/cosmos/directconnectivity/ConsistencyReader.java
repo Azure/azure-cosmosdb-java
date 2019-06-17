@@ -37,7 +37,6 @@ import com.azure.data.cosmos.internal.RequestChargeTracker;
 import com.azure.data.cosmos.internal.RxDocumentServiceRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
 
 import java.util.HashMap;
@@ -271,7 +270,7 @@ public class ConsistencyReader {
             try {
                 return Mono.just(response.toResponse());
             } catch (CosmosClientException e) {
-                throw Exceptions.propagate(e);
+                return Mono.error(e);
             }
         });
     }
@@ -286,19 +285,16 @@ public class ConsistencyReader {
                 /* useSessionToken */ false,
                 /* readMode */ readMode);
 
-        return responsesObs.flatMap(
-                responses -> {
-                    if (responses.size() == 0) {
-                        return Mono.error(new GoneException(RMResources.Gone));
-                    }
-
-                    try {
-                        return Mono.just(responses.get(0).toResponse());
-                    } catch (CosmosClientException e) {
-                        throw Exceptions.propagate(e);
-                    }
-                }
-        );
+        return responsesObs.flatMap(responses -> {
+            if (responses.size() == 0) {
+                return Mono.error(new GoneException(RMResources.Gone));
+            }
+            try {
+                return Mono.just(responses.get(0).toResponse());
+            } catch (CosmosClientException e) {
+                return Mono.error(e);
+            }
+        });
     }
 
     private Mono<StoreResponse> readSessionAsync(RxDocumentServiceRequest entity,
@@ -326,19 +322,18 @@ public class ConsistencyReader {
                 } catch (NotFoundException notFoundException) {
                     try {
                         if (entity.requestContext.sessionToken != null
-                                && responses.get(0).sessionToken != null
-                                && !entity.requestContext.sessionToken.isValid(responses.get(0).sessionToken)) {
+                            && responses.get(0).sessionToken != null
+                            && !entity.requestContext.sessionToken.isValid(responses.get(0).sessionToken)) {
                             logger.warn("Convert to session read exception, request {} SESSION Lsn {}, responseLSN {}", entity.getResourceAddress(), entity.requestContext.sessionToken.convertToString(), responses.get(0).lsn);
                             notFoundException.responseHeaders().put(WFConstants.BackendHeaders.SUB_STATUS, Integer.toString(HttpConstants.SubStatusCodes.READ_SESSION_NOT_AVAILABLE));
                         }
                         return Mono.error(notFoundException);
-                    } catch (CosmosClientException e) {
-                        throw Exceptions.propagate(e);
+                    } catch (CosmosClientException ex) {
+                        return Mono.error(ex);
                     }
-                } catch (CosmosClientException dce) {
-                    throw Exceptions.propagate(dce);
+                } catch (CosmosClientException cce) {
+                    return Mono.error(cce);
                 }
-
             }
 
             // else

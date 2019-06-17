@@ -82,7 +82,7 @@ public class BackPressureTest extends TestSuiteBase {
         super(clientBuilder);
     }
 
-    @Test(groups = { "long" }, timeOut = TIMEOUT)
+    @Test(groups = { "long" }, timeOut = 3 * TIMEOUT)
     public void readFeed() throws Exception {
         FeedOptions options = new FeedOptions();
         options.maxItemCount(1);
@@ -121,7 +121,7 @@ public class BackPressureTest extends TestSuiteBase {
         assertThat(subscriber.valueCount()).isEqualTo(createdDocuments.size());
     }
 
-    @Test(groups = { "long" }, timeOut = TIMEOUT)
+    @Test(groups = { "long" }, timeOut = 3 * TIMEOUT)
     public void query() throws Exception {
         FeedOptions options = new FeedOptions();
         options.maxItemCount(1);

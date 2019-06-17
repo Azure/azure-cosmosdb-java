@@ -47,7 +47,6 @@ public class VeryLargeDocumentQueryTest extends TestSuiteBase {
 
     private final static int TIMEOUT = 60000;
     private final static int SETUP_TIMEOUT = 60000;
-    private Database createdDatabase;
     private CosmosContainer createdCollection;
 
     private CosmosClient client;
@@ -70,7 +69,7 @@ public class VeryLargeDocumentQueryTest extends TestSuiteBase {
         options.enableCrossPartitionQuery(true);
 
         validateQuerySuccess(createdCollection.queryItems("SELECT * FROM r", options),
-            new FeedResponseListValidator.Builder().totalSize(cnt).build());
+            new FeedResponseListValidator.Builder<CosmosItemProperties>().totalSize(cnt).build());
     }
 
     private void createLargeDocument() throws InterruptedException {
@@ -109,9 +108,5 @@ public class VeryLargeDocumentQueryTest extends TestSuiteBase {
                 + "}"
                 , uuid, uuid));
         return doc;
-    }
-
-    public String getCollectionLink() {
-        return Utils.getCollectionNameLink(createdDatabase.id(), createdCollection.id());
     }
 }

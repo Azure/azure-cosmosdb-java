@@ -55,7 +55,6 @@ import io.netty.handler.codec.http.HttpMethod;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
@@ -222,7 +221,7 @@ public class HttpTransportClient extends TransportClient {
                     httpRequest, activityId.toString(), rsp, physicalAddress));
 
         } catch (Exception e) {
-            return Mono.error(Exceptions.propagate(e));
+            return Mono.error(e);
         }
     }
 
