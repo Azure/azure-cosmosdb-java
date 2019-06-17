@@ -60,7 +60,7 @@ import static org.hamcrest.core.IsInstanceOf.instanceOf;
 
 public class TokenResolverTest extends DocumentClientTest {
 
-    private final static int TIMEOUT = 60000;
+    private final static int TIMEOUT = 180000;
     private final static String USER_ID = "userId";
     private AsyncDocumentClient client;
     private Database createdDatabase;
@@ -178,7 +178,7 @@ public class TokenResolverTest extends DocumentClientTest {
                         .readDocument(documentLink, requestOptions);
                 readDocumentObservable.subscribe(capturedResponse::add);
             }
-            Thread.sleep(2000);
+            Thread.sleep(8000);
             System.out.println("capturedResponse.size() = " + capturedResponse.size());
             assertThat(capturedResponse, hasSize(10));
         } finally {
@@ -220,7 +220,7 @@ public class TokenResolverTest extends DocumentClientTest {
                     capturedResponse.add(resourceResponse);
                 });
             }
-            Thread.sleep(2000);
+            Thread.sleep(8000);
             assertThat(capturedResponse, hasSize(10));
         } finally {
             Utils.safeClose(asyncClientWithTokenResolver);
@@ -259,7 +259,7 @@ public class TokenResolverTest extends DocumentClientTest {
             List<Throwable> capturedErrors = Collections
                     .synchronizedList(new ArrayList<>());
             readObservable.subscribe(response -> {}, throwable -> capturedErrors.add(throwable));
-            Thread.sleep(2000);
+            Thread.sleep(4000);
             assertThat(capturedErrors, hasSize(1));
             assertThat(capturedErrors.get(0), instanceOf(RuntimeException.class));
             assertThat(capturedErrors.get(0).getMessage(), equalTo(errorMessage));
@@ -276,7 +276,7 @@ public class TokenResolverTest extends DocumentClientTest {
             List<DocumentCollection> capturedResponse = Collections
                     .synchronizedList(new ArrayList<>());
             readObservable.subscribe(resourceResponse -> capturedResponse.add(resourceResponse.getResource()), error -> error.printStackTrace());
-            Thread.sleep(2000);
+            Thread.sleep(4000);
             assertThat(capturedErrors, hasSize(1));
             assertThat(capturedResponse.get(0).id(), equalTo(createdCollection.id()));
         } finally {
