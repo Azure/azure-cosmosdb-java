@@ -96,7 +96,7 @@ public class AddressResolver implements IAddressResolver {
             request.requestContext.resolvedPartitionKeyRange = result.TargetPartitionKeyRange;
 
             return Mono.just(result.Addresses);
-        }).switchIfEmpty(Mono.defer(Mono::empty));
+        });
     }
 
     private static boolean isSameCollection(PartitionKeyRange initiallyResolved, PartitionKeyRange newlyResolved) {
@@ -307,20 +307,17 @@ public class AddressResolver implements IAddressResolver {
                 masterPartitionKeyRangeIdentity,forceRefreshPartitionAddresses);
 
         return addressesObs.flatMap(addresses -> {
-            if (addresses == null) {
-                logger.warn("Could not get addresses for master partition");
-
-                // return Observable.error()
-                NotFoundException e = new NotFoundException();
-                BridgeInternal.setResourceAddress(e, request.getResourceAddress());
-                return Mono.error(e);
-            }
-
             PartitionKeyRange partitionKeyRange = new PartitionKeyRange();
             partitionKeyRange.id(PartitionKeyRange.MASTER_PARTITION_KEY_RANGE_ID);
             return Mono.just(new ResolutionResult(partitionKeyRange, addresses));
+        }).switchIfEmpty(Mono.defer(() -> {
+            logger.warn("Could not get addresses for master partition");
 
-        });
+            // return Observable.error()
+            NotFoundException e = new NotFoundException();
+            BridgeInternal.setResourceAddress(e, request.getResourceAddress());
+            return Mono.error(e);
+        }));
     }
 
     private class RefreshState {
