@@ -134,6 +134,15 @@ public class CosmosUser extends CosmosResource {
                         .map(response-> BridgeInternal.createFeedResponse(CosmosPermissionSettings.getFromV2Results(response.results()),
                                 response.responseHeaders()));
     }
+
+    /**
+     * Get cosmos permission without making a call to backend
+     * @param id the id
+     * @return the cosmos permission
+     */
+    public CosmosPermission getPermission(String id){
+        return new CosmosPermission(id, this);
+    }
     
     @Override
     protected String URIPathSegment() {
