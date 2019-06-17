@@ -365,9 +365,10 @@ public class CosmosContainer extends CosmosResource {
             RxJavaInterop.toV2Flowable(getDatabase()
                 .getDocClientWrapper()
                 .queryDocumentChangeFeed(getLink(), changeFeedOptions)
-                .map(response-> BridgeInternal.createFeedResponseWithQueryMetrics(
+                .map(response-> new FeedResponse<CosmosItemProperties>(
                     CosmosItemProperties.getFromV2Results(response.results()),
-                    response.responseHeaders(), response.queryMetrics()))));
+                    response.responseHeaders(), false))
+            ));
     }
 
     /**

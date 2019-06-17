@@ -70,8 +70,8 @@ public class LeaseStoreManagerImpl implements LeaseStoreManager, LeaseStoreManag
 
     @Override
     public LeaseStoreManagerBuilderDefinition withLeaseContextClient(ChangeFeedContextClient leaseContextClient) {
-        if (leaseDocumentClient == null) {
-            throw new IllegalArgumentException("leaseDocumentClient");
+        if (leaseContextClient == null) {
+            throw new IllegalArgumentException("leaseContextClient");
         }
 
         this.leaseDocumentClient = leaseContextClient;

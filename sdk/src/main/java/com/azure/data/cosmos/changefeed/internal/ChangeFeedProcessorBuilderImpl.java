@@ -370,6 +370,7 @@ public class ChangeFeedProcessorBuilderImpl implements ChangeFeedProcessor.Build
 
                     self.leaseStoreManager = LeaseStoreManager.Builder()
                         .withLeasePrefix(leasePrefix)
+                        .withLeaseCollectionLink(self.leaseContextClient.getContainerClient())
                         .withLeaseContextClient(self.leaseContextClient)
                         .withRequestOptionsFactory(requestOptionsFactory)
                         .withHostName(self.hostName)

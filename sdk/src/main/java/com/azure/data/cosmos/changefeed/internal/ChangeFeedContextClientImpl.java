@@ -117,8 +117,13 @@ public class ChangeFeedContextClientImpl implements ChangeFeedContextClient {
 
     @Override
     public Mono<CosmosItemResponse> createItem(CosmosContainer containerLink, Object document, CosmosItemRequestOptions options, boolean disableAutomaticIdGeneration) {
-        return containerLink.createItem(document, options)
-            .subscribeOn(this.rxScheduler);
+        if (options != null) {
+            return containerLink.createItem(document, options)
+                .subscribeOn(this.rxScheduler);
+        } else {
+            return containerLink.createItem(document)
+                .subscribeOn(this.rxScheduler);
+        }
     }
 
     @Override
@@ -152,7 +157,8 @@ public class ChangeFeedContextClientImpl implements ChangeFeedContextClient {
 
     @Override
     public Mono<CosmosContainerSettings> readContainerSettings(CosmosContainer containerLink, CosmosContainerRequestOptions options) {
-        return null;
+        return containerLink.read(options)
+            .map(cosmosContainerResponse -> cosmosContainerResponse.settings());
     }
 
     @Override

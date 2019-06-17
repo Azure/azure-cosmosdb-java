@@ -34,6 +34,7 @@ import com.azure.data.cosmos.changefeed.ChangeFeedContextClient;
 import com.azure.data.cosmos.changefeed.LeaseStore;
 import com.azure.data.cosmos.changefeed.RequestOptionsFactory;
 import com.azure.data.cosmos.changefeed.ServiceItemLease;
+import com.azure.data.cosmos.internal.*;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
@@ -108,9 +109,13 @@ public class DocumentServiceLeaseStore implements LeaseStore {
     @Override
     public Mono<Boolean> acquireInitializationLock(Duration lockExpirationTime) {
         String lockId = this.getStoreLockName();
-        Document containerDocument = new Document();
+        CosmosItemProperties containerDocument = new CosmosItemProperties();
         containerDocument.id(lockId);
-        containerDocument.setTimeToLive(Long.valueOf(lockExpirationTime.getSeconds()).intValue());
+        containerDocument.set(com.azure.data.cosmos.internal.Constants.Properties.TTL, Long.valueOf(lockExpirationTime.getSeconds()).intValue());
+
+//        Document containerDocument = new Document();
+//        containerDocument.id(lockId);
+//        containerDocument.setTimeToLive(Long.valueOf(lockExpirationTime.getSeconds()).intValue());
         DocumentServiceLeaseStore self = this;
 
         return this.client.createItem(this.leaseCollectionLink, containerDocument, null, false)
