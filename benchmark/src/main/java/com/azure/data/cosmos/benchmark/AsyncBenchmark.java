@@ -208,12 +208,11 @@ abstract class AsyncBenchmark<T> {
 
                 @Override
                 protected void hookOnNext(T value) {
-                    super.hookOnNext(value);
+
                 }
 
                 @Override
                 protected void hookOnComplete() {
-                    super.hookOnComplete();
                     successMeter.mark();
                     concurrencyControlSemaphore.release();
                     AsyncBenchmark.this.onSuccess();
@@ -226,7 +225,6 @@ abstract class AsyncBenchmark<T> {
 
                 @Override
                 protected void hookOnError(Throwable throwable) {
-                    super.hookOnError(throwable);
                     failureMeter.mark();
                     logger.error("Encountered failure {} on thread {}" ,
                         throwable.getMessage(), Thread.currentThread().getName(), throwable);

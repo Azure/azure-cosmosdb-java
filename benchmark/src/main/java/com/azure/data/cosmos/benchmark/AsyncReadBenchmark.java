@@ -28,7 +28,6 @@ import com.azure.data.cosmos.PartitionKey;
 import com.azure.data.cosmos.RequestOptions;
 import com.azure.data.cosmos.ResourceResponse;
 import com.codahale.metrics.Timer;
-import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Flux;
@@ -36,7 +35,7 @@ import reactor.core.scheduler.Schedulers;
 
 class AsyncReadBenchmark extends AsyncBenchmark<ResourceResponse<Document>> {
 
-    class LatencySubscriber<T> implements Subscriber<T> {
+    class LatencySubscriber<T> extends BaseSubscriber<T> {
 
         Timer.Context context;
         BaseSubscriber<ResourceResponse<Document>> baseSubscriber;
@@ -46,25 +45,24 @@ class AsyncReadBenchmark extends AsyncBenchmark<ResourceResponse<Document>> {
         }
 
         @Override
-        public void onError(Throwable e) {
-            context.stop();
-            baseSubscriber.onError(e);
+        protected void hookOnSubscribe(Subscription subscription) {
+            super.hookOnSubscribe(subscription);
         }
 
         @Override
-        public void onComplete() {
+        protected void hookOnNext(T value) {
+        }
+
+        @Override
+        protected void hookOnComplete() {
             context.stop();
             baseSubscriber.onComplete();
         }
 
         @Override
-        public void onSubscribe(Subscription s) {
-
-        }
-
-        @Override
-        public void onNext(T t) {
-
+        protected void hookOnError(Throwable throwable) {
+            context.stop();
+            baseSubscriber.onError(throwable);
         }
     }
 

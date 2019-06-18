@@ -54,7 +54,7 @@ public class InMemoryGroupbyTest extends DocumentClientTest {
     private Database createdDatabase;
     private DocumentCollection createdCollection;
 
-    @BeforeClass(groups = "samples", timeOut = TIMEOUT)
+    @BeforeClass(groups = "samples", timeOut = 2 * TIMEOUT)
     public void setUp() throws Exception {
 
         ConnectionPolicy connectionPolicy = new ConnectionPolicy().connectionMode(ConnectionMode.DIRECT);
@@ -117,7 +117,7 @@ public class InMemoryGroupbyTest extends DocumentClientTest {
      * If you want to understand the steps in more details see {@link #groupByInMemory_MoreDetail()}
      * @throws Exception
      */
-    @Test(groups = "samples", timeOut = TIMEOUT)
+    @Test(groups = "samples", timeOut = 2 * TIMEOUT)
     public void groupByInMemory() {
         // If you want to understand the steps in more details see groupByInMemoryMoreDetail()
         int requestPageSize = 3;
@@ -149,7 +149,7 @@ public class InMemoryGroupbyTest extends DocumentClientTest {
      * This does the same thing as {@link #groupByInMemory_MoreDetail()} but with pedagogical details
      * @throws Exception
      */
-    @Test(groups = "samples", timeOut = TIMEOUT)
+    @Test(groups = "samples", timeOut = 2 * TIMEOUT)
     public void groupByInMemory_MoreDetail() {
 
         int requestPageSize = 3;
