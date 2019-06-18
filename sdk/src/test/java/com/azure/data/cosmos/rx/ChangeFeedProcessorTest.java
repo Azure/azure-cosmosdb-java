@@ -84,7 +84,6 @@ public class ChangeFeedProcessorTest extends TestSuiteBase {
 
         Mono<ChangeFeedProcessor> changeFeedProcessorObservable = ChangeFeedProcessor.Builder()
             .hostName(hostName)
-            //.observer(TestChangeFeedObserverImpl.class)
             .syncHandleChanges(docs -> {
                 ChangeFeedProcessorTest.log.info("START processing from thread {}", Thread.currentThread().getId());
                 for (CosmosItemProperties item : docs) {
@@ -94,7 +93,20 @@ public class ChangeFeedProcessorTest extends TestSuiteBase {
             })
             .feedContainerClient(createdFeedCollection)
             .leaseContainerClient(createdLeaseCollection)
-            .options(new ChangeFeedProcessorOptions().startFromBeginning(true))
+            .options(new ChangeFeedProcessorOptions()
+                .leaseRenewInterval(Duration.ofSeconds(20))
+                .leaseAcquireInterval(Duration.ofSeconds(10))
+                .leaseExpirationInterval(Duration.ofSeconds(30))
+                .feedPollDelay(Duration.ofSeconds(2))
+                .leasePrefix("TEST")
+                .maxItemCount(10)
+                .startFromBeginning(true)
+                .minPartitionCount(1)
+                .maxPartitionCount(3)
+                .discardExistingLeases(true)
+                .queryPartitionsMaxBatchSize(2)
+                .degreeOfParallelism(1)
+            )
             .build();
 
         try {
