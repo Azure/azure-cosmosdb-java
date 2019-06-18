@@ -22,9 +22,7 @@
  */
 package com.azure.data.cosmos.rx;
 
-import com.azure.data.cosmos.internal.changefeed.ChangeFeedObserver;
-import com.azure.data.cosmos.internal.changefeed.ChangeFeedObserverCloseReason;
-import com.azure.data.cosmos.internal.changefeed.ChangeFeedObserverContext;
+import com.azure.data.cosmos.CosmosClientException;
 import com.azure.data.cosmos.ChangeFeedProcessor;
 import com.azure.data.cosmos.ChangeFeedProcessorOptions;
 import com.azure.data.cosmos.CosmosClient;
@@ -40,7 +38,9 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 import reactor.core.publisher.Flux;
@@ -64,7 +64,6 @@ public class ChangeFeedProcessorTest extends TestSuiteBase {
     private CosmosContainer createdLeaseCollection;
     private List<CosmosItemProperties> createdDocuments;
     private static Map<String, CosmosItemProperties> receivedDocuments;
-    private static Map<String, String> activeLeases;
 //    private final String databaseId = "testdb1";
     private final String databaseId = CosmosDatabaseForTest.generateId();
 //    private final String hostName = "TestHost1";
@@ -79,8 +78,9 @@ public class ChangeFeedProcessorTest extends TestSuiteBase {
         super(clientBuilder);
     }
 
-    @Test(groups = { "emulator" }, timeOut = 60000)
+    @Test(groups = { "emulator" }, timeOut = TIMEOUT)
     public void readFeedDocumentsStartFromBeginning() {
+        setupReadFeedDocumentsStartFromBeginning();
 
         Mono<ChangeFeedProcessor> changeFeedProcessorObservable = ChangeFeedProcessor.Builder()
             .hostName(hostName)
@@ -121,7 +121,7 @@ public class ChangeFeedProcessorTest extends TestSuiteBase {
 
         // Wait for the feed processor to receive and process the documents.
         try {
-            Thread.sleep(5000);
+            Thread.sleep(10000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -134,16 +134,27 @@ public class ChangeFeedProcessorTest extends TestSuiteBase {
 
      }
 
-    @BeforeClass(groups = { "emulator" }, timeOut = SETUP_TIMEOUT, alwaysRun = true)
-    public void beforeClass() {
-        receivedDocuments = new ConcurrentHashMap<>();
-        activeLeases = new ConcurrentHashMap<>();
-        client = clientBuilder().build();
+     @BeforeMethod(groups = { "emulator" }, timeOut = SETUP_TIMEOUT, alwaysRun = true)
+     public void beforeMethod() {
+         receivedDocuments = new ConcurrentHashMap<>();
 
-        try {
-            client.getDatabase(databaseId).delete().block();
-            Thread.sleep(500);
-        } catch (Exception e){ }
+         try {
+             client.getDatabase(databaseId).read()
+                 .map(cosmosDatabaseResponse -> cosmosDatabaseResponse.database())
+                 .flatMap(database -> database.delete())
+                 .onErrorResume(throwable -> {
+                     if (throwable instanceof CosmosClientException) {
+                         CosmosClientException clientException = (CosmosClientException) throwable;
+                         if (clientException.statusCode() == 404) {
+                             return Mono.empty();
+                         }
+                     }
+                     return Mono.error(throwable);
+                 }).block();
+             Thread.sleep(500);
+         } catch (Exception e){
+             log.warn("Database delete", e);
+         }
 
 //        try {
 //            client.listDatabases()
@@ -155,14 +166,32 @@ public class ChangeFeedProcessorTest extends TestSuiteBase {
 //            Thread.sleep(500);
 //        } catch (Exception e){ }
 
-        createdDatabase = createDatabase(client, databaseId);
+         createdDatabase = createDatabase(client, databaseId);
+         createdFeedCollection = createFeedCollection();
+         createdLeaseCollection = createLeaseCollection();
+     }
 
-        CosmosContainerRequestOptions options = new CosmosContainerRequestOptions();
-        options.offerThroughput(10100);
-        createdFeedCollection = createCollection(createdDatabase, getCollectionDefinition(), options);
+    @BeforeClass(groups = { "emulator" }, timeOut = SETUP_TIMEOUT, alwaysRun = true)
+    public void beforeClass() {
+        client = clientBuilder().build();
+    }
 
-        createdLeaseCollection = createLeaseCollection();
+    @AfterMethod(groups = { "emulator" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)
+    public void afterMethod() {
+        safeDeleteDatabase(createdDatabase);
 
+        // Allow some time for the collections and the database to be deleted before exiting.
+        try {
+            Thread.sleep(500);
+        } catch (Exception e){ }
+    }
+
+    @AfterClass(groups = { "emulator" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)
+    public void afterClass() {
+        safeClose(client);
+    }
+
+    private void setupReadFeedDocumentsStartFromBeginning() {
         List<CosmosItemProperties> docDefList = new ArrayList<>();
 
         for(int i = 0; i < 10; i++) {
@@ -171,16 +200,6 @@ public class ChangeFeedProcessorTest extends TestSuiteBase {
 
         createdDocuments = bulkInsertBlocking(createdFeedCollection, docDefList);
         waitIfNeededForReplicasToCatchUp(clientBuilder());
-    }
-
-    @AfterClass(groups = { "emulator" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)
-    public void afterClass() {
-        safeDeleteDatabase(createdDatabase);
-
-        // Allow some time for the collections and the database to be deleted before exiting.
-        try {
-            Thread.sleep(500);
-        } catch (Exception e){ }
     }
 
     private CosmosItemProperties getDocumentDefinition() {
@@ -194,6 +213,12 @@ public class ChangeFeedProcessorTest extends TestSuiteBase {
         return doc;
     }
 
+    private CosmosContainer createFeedCollection() {
+        CosmosContainerRequestOptions optionsFeedCollection = new CosmosContainerRequestOptions();
+        optionsFeedCollection.offerThroughput(10100);
+        return createCollection(createdDatabase, getCollectionDefinition(), optionsFeedCollection);
+    }
+
     private CosmosContainer createLeaseCollection() {
         CosmosContainerRequestOptions options = new CosmosContainerRequestOptions();
         options.offerThroughput(400);
@@ -204,31 +229,5 @@ public class ChangeFeedProcessorTest extends TestSuiteBase {
     private static synchronized void processItem(CosmosItemProperties item) {
         ChangeFeedProcessorTest.log.info("RECEIVED {}", item.toJson(SerializationFormattingPolicy.INDENTED));
         receivedDocuments.put(item.id(), item);
-    }
-
-    public static class TestChangeFeedObserverImpl implements ChangeFeedObserver {
-
-        public TestChangeFeedObserverImpl() {}
-
-        @Override
-        public void open(ChangeFeedObserverContext context) {
-            ChangeFeedProcessorTest.log.info("OPEN processing from thread {}", Thread.currentThread().getId());
-            ChangeFeedProcessorTest.activeLeases.put(Thread.currentThread().getName(), context.getPartitionKeyRangeId());
-        }
-
-        @Override
-        public void close(ChangeFeedObserverContext context, ChangeFeedObserverCloseReason reason) {
-            ChangeFeedProcessorTest.log.info("CLOSE processing from thread {}", Thread.currentThread().getId());
-            ChangeFeedProcessorTest.activeLeases.remove(Thread.currentThread().getName());
-        }
-
-        @Override
-        public void processChanges(ChangeFeedObserverContext context, List<CosmosItemProperties> docs) {
-            ChangeFeedProcessorTest.log.info("START processing from thread {}", Thread.currentThread().getId());
-            for (CosmosItemProperties item : docs) {
-                processItem(item);
-            }
-            ChangeFeedProcessorTest.log.info("END processing from thread {}", Thread.currentThread().getId());
-        }
     }
 }

@@ -41,6 +41,7 @@ import com.azure.data.cosmos.internal.changefeed.ServiceItemLeaseUpdater;
 import com.azure.data.cosmos.internal.changefeed.exceptions.LeaseLostException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -196,7 +197,7 @@ public class LeaseStoreManagerImpl implements LeaseStoreManager, LeaseStoreManag
 
     @Override
     public Mono<Void> delete(Lease lease) {
-        if (lease == null || lease.getId() == null) throw new IllegalArgumentException("lease");
+        if (lease == null || lease.getId() == null) throw Exceptions.propagate(new IllegalArgumentException("lease"));
 
         CosmosItem itemForLease = this.createItemForLease(lease.getId());
 
@@ -220,7 +221,7 @@ public class LeaseStoreManagerImpl implements LeaseStoreManager, LeaseStoreManag
 
     @Override
     public Mono<Lease> acquire(Lease lease) {
-        if (lease == null) throw new IllegalArgumentException("lease");
+        if (lease == null) throw Exceptions.propagate(new IllegalArgumentException("lease"));
 
         String oldOwner = lease.getOwner();
 
@@ -231,7 +232,7 @@ public class LeaseStoreManagerImpl implements LeaseStoreManager, LeaseStoreManag
             serverLease -> {
                 if (serverLease.getOwner() != null && !serverLease.getOwner().equalsIgnoreCase(oldOwner)) {
                     logger.info("Partition {} lease was taken over by owner '{}'", lease.getLeaseToken(), serverLease.getOwner());
-                    throw new LeaseLostException(lease);
+                    throw Exceptions.propagate(new LeaseLostException(lease));
                 }
                 serverLease.setOwner(this.settings.getHostName());
                 serverLease.setProperties(lease.getProperties());
@@ -242,7 +243,7 @@ public class LeaseStoreManagerImpl implements LeaseStoreManager, LeaseStoreManag
 
     @Override
     public Mono<Void> release(Lease lease) {
-        if (lease == null) throw new IllegalArgumentException("lease");
+        if (lease == null) throw Exceptions.propagate(new IllegalArgumentException("lease"));
 
         CosmosItem itemForLease = this.createItemForLease(lease.getId());
         LeaseStoreManagerImpl self = this;
@@ -253,7 +254,7 @@ public class LeaseStoreManagerImpl implements LeaseStoreManager, LeaseStoreManag
                     CosmosClientException e = (CosmosClientException) ex;
                     if (e.statusCode() == ChangeFeedHelper.HTTP_STATUS_CODE_NOT_FOUND) {
                         logger.info("Partition {} failed to renew lease. The lease is gone already.", lease.getLeaseToken());
-                        throw new LeaseLostException(lease);
+                        throw Exceptions.propagate(new LeaseLostException(lease));
                     }
                 }
 
@@ -268,7 +269,7 @@ public class LeaseStoreManagerImpl implements LeaseStoreManager, LeaseStoreManag
                 {
                     if (!serverLease.getOwner().equalsIgnoreCase(lease.getOwner())) {
                         logger.info("Partition {} no need to release lease. The lease was already taken by another host '{}'.", lease.getLeaseToken(), serverLease.getOwner());
-                        throw new LeaseLostException(lease);
+                        throw Exceptions.propagate(new LeaseLostException(lease));
                     }
 
                     serverLease.setOwner(null);
@@ -280,7 +281,7 @@ public class LeaseStoreManagerImpl implements LeaseStoreManager, LeaseStoreManag
 
     @Override
     public Mono<Lease> renew(Lease lease) {
-        if (lease == null) throw new IllegalArgumentException("lease");
+        if (lease == null) throw Exceptions.propagate(new IllegalArgumentException("lease"));
 
         // Get fresh lease. The assumption here is that check-pointing is done with higher frequency than lease renewal so almost
         // certainly the lease was updated in between.
@@ -293,7 +294,7 @@ public class LeaseStoreManagerImpl implements LeaseStoreManager, LeaseStoreManag
                     CosmosClientException e = (CosmosClientException) ex;
                     if (e.statusCode() == ChangeFeedHelper.HTTP_STATUS_CODE_NOT_FOUND) {
                         logger.info("Partition {} failed to renew lease. The lease is gone already.", lease.getLeaseToken());
-                        throw new LeaseLostException(lease);
+                        throw Exceptions.propagate(new LeaseLostException(lease));
                     }
                 }
 
@@ -308,7 +309,7 @@ public class LeaseStoreManagerImpl implements LeaseStoreManager, LeaseStoreManag
                 {
                     if (!serverLease.getOwner().equalsIgnoreCase(lease.getOwner())) {
                         logger.info("Partition {} lease was taken over by owner '{}'", lease.getLeaseToken(), serverLease.getOwner());
-                        throw new LeaseLostException(lease);
+                        throw Exceptions.propagate(new LeaseLostException(lease));
                     }
 
                     return serverLease;
@@ -318,7 +319,7 @@ public class LeaseStoreManagerImpl implements LeaseStoreManager, LeaseStoreManag
 
     @Override
     public Mono<Lease> updateProperties(Lease lease) {
-        if (lease == null) throw new IllegalArgumentException("lease");
+        if (lease == null) throw Exceptions.propagate(new IllegalArgumentException("lease"));
 
         if (!lease.getOwner().equalsIgnoreCase(this.settings.getHostName()))
         {
@@ -333,7 +334,7 @@ public class LeaseStoreManagerImpl implements LeaseStoreManager, LeaseStoreManag
             serverLease -> {
                 if (!serverLease.getOwner().equalsIgnoreCase(lease.getOwner())) {
                     logger.info("Partition '{}' lease was taken over by owner '{}'", lease.getLeaseToken(), serverLease.getOwner());
-                    throw new LeaseLostException(lease);
+                    throw Exceptions.propagate(new LeaseLostException(lease));
                 }
                 serverLease.setProperties(lease.getProperties());
                 return serverLease;
@@ -342,7 +343,7 @@ public class LeaseStoreManagerImpl implements LeaseStoreManager, LeaseStoreManag
 
     @Override
     public Mono<Lease> checkpoint(Lease lease, String continuationToken) {
-        if (lease == null) throw new IllegalArgumentException("lease");
+        if (lease == null) throw Exceptions.propagate(new IllegalArgumentException("lease"));
 
         if (continuationToken == null || continuationToken.isEmpty()) {
             throw new IllegalArgumentException("continuationToken must be a non-empty string");
@@ -355,7 +356,7 @@ public class LeaseStoreManagerImpl implements LeaseStoreManager, LeaseStoreManag
             serverLease -> {
                 if (serverLease.getOwner() != null && !serverLease.getOwner().equalsIgnoreCase(lease.getOwner())) {
                     logger.info("Partition {} lease was taken over by owner '{}'", lease.getLeaseToken(), serverLease.getOwner());
-                    throw new LeaseLostException(lease);
+                    throw Exceptions.propagate(new LeaseLostException(lease));
                 }
                 serverLease.setContinuationToken(continuationToken);
 
