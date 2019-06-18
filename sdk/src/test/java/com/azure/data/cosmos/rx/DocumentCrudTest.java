@@ -184,7 +184,7 @@ public class DocumentCrudTest extends TestSuiteBase {
         validateSuccess(readObservable, validator);
     }
 
-    @Test(groups = { "simple" }, timeOut = TIMEOUT, dataProvider = "documentCrudArgProvider")
+    @Test(groups = { "simple" }, timeOut = 2 * TIMEOUT, dataProvider = "documentCrudArgProvider")
     public void timestamp(String documentId) throws Exception {
         OffsetDateTime before = OffsetDateTime.now();
         CosmosItemProperties docDefinition = getDocumentDefinition(documentId);
@@ -269,7 +269,7 @@ public class DocumentCrudTest extends TestSuiteBase {
         validateFailure(readObservable, notFoundValidator);
     }
 
-    @Test(groups = { "simple" }, timeOut = TIMEOUT, dataProvider = "documentCrudArgProvider")
+    @Test(groups = { "simple" }, timeOut = 2 * TIMEOUT, dataProvider = "documentCrudArgProvider")
     public void deleteDocument_DoesntExist(String documentId) throws InterruptedException {
         CosmosItemProperties docDefinition = getDocumentDefinition(documentId);
 
@@ -286,7 +286,7 @@ public class DocumentCrudTest extends TestSuiteBase {
         validateFailure(deleteObservable, validator);
     }
 
-    @Test(groups = { "simple" }, timeOut = TIMEOUT, dataProvider = "documentCrudArgProvider")
+    @Test(groups = { "simple" }, timeOut = 2 * TIMEOUT, dataProvider = "documentCrudArgProvider")
     public void replaceDocument(String documentId) throws InterruptedException {
         // create a document
         CosmosItemProperties docDefinition = getDocumentDefinition(documentId);

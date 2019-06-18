@@ -33,27 +33,31 @@ import org.reactivestreams.Subscription;
 import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
 
+import java.util.function.Consumer;
+
 class AsyncReadBenchmark extends AsyncBenchmark<ResourceResponse<Document>> {
 
     class LatencySubscriber<T> implements Subscriber<T> {
 
         Timer.Context context;
-        Subscriber<T> subscriber;
+        Runnable runnable;
+        Consumer<Throwable> errorConsumer;
 
-        LatencySubscriber(Subscriber<T> subscriber) {
-            this.subscriber = subscriber;
+        LatencySubscriber(Runnable runnable, Consumer<Throwable> errorConsumer) {
+            this.runnable = runnable;
+            this.errorConsumer = errorConsumer;
         }
 
         @Override
         public void onError(Throwable e) {
             context.stop();
-            subscriber.onError(e);
+            errorConsumer.accept(e);
         }
 
         @Override
         public void onComplete() {
             context.stop();
-            subscriber.onComplete();
+            runnable.run();
         }
 
         @Override
@@ -63,7 +67,7 @@ class AsyncReadBenchmark extends AsyncBenchmark<ResourceResponse<Document>> {
 
         @Override
         public void onNext(T t) {
-            subscriber.onNext(t);
+
         }
     }
 
@@ -72,7 +76,7 @@ class AsyncReadBenchmark extends AsyncBenchmark<ResourceResponse<Document>> {
     }
 
     @Override
-    protected void performWorkload(Subscriber<ResourceResponse<Document>> subs, long i) throws InterruptedException {
+    protected void performWorkload(Runnable runnable, Consumer<Throwable> errorConsumer, long i) throws InterruptedException {
         int index = (int) (i % docsToRead.size());
         RequestOptions options = new RequestOptions();
         options.setPartitionKey(new PartitionKey(docsToRead.get(index).id()));
@@ -82,10 +86,9 @@ class AsyncReadBenchmark extends AsyncBenchmark<ResourceResponse<Document>> {
         concurrencyControlSemaphore.acquire();
 
         if (configuration.getOperationType() == Configuration.Operation.ReadThroughput) {
-            obs.subscribeOn(Schedulers.parallel()).subscribe(subs);
+            obs.subscribeOn(Schedulers.parallel()).subscribe(onNext -> {}, errorConsumer, runnable);
         } else {
-            LatencySubscriber<ResourceResponse<Document>> latencySubscriber = new LatencySubscriber<>(
-                    subs);
+            LatencySubscriber<ResourceResponse<Document>> latencySubscriber = new LatencySubscriber<>(runnable, errorConsumer);
             latencySubscriber.context = latency.time();
             obs.subscribeOn(Schedulers.parallel()).subscribe(latencySubscriber);
         }

@@ -37,6 +37,7 @@ import com.azure.data.cosmos.internal.RequestChargeTracker;
 import com.azure.data.cosmos.internal.RxDocumentServiceRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
 
 import java.util.HashMap;
@@ -172,12 +173,12 @@ public class ConsistencyReader {
     private final Configs configs;
 
     public ConsistencyReader(
-            Configs configs,
-            AddressSelector addressSelector,
-            ISessionContainer sessionContainer,
-            TransportClient transportClient,
-            GatewayServiceConfigurationReader serviceConfigReader,
-            IAuthorizationTokenProvider authorizationTokenProvider) {
+        Configs configs,
+        AddressSelector addressSelector,
+        ISessionContainer sessionContainer,
+        TransportClient transportClient,
+        GatewayServiceConfigurationReader serviceConfigReader,
+        IAuthorizationTokenProvider authorizationTokenProvider) {
         this.configs = configs;
         this.addressSelector = addressSelector;
         this.serviceConfigReader = serviceConfigReader;
@@ -260,59 +261,62 @@ public class ConsistencyReader {
     }
 
     private Mono<StoreResponse> readPrimaryAsync(RxDocumentServiceRequest entity,
-                                                   boolean useSessionToken) {
+                                                 boolean useSessionToken) {
 
         Mono<StoreResult> responseObs = this.storeReader.readPrimaryAsync(
-                entity,
-                false /*required valid LSN*/,
-                useSessionToken);
+            entity,
+            false /*required valid LSN*/,
+            useSessionToken);
         return responseObs.flatMap(response -> {
             try {
                 return Mono.just(response.toResponse());
             } catch (CosmosClientException e) {
-                return Mono.error(e);
+                throw Exceptions.propagate(e);
             }
         });
     }
 
     private Mono<StoreResponse> readAnyAsync(RxDocumentServiceRequest entity,
-                                               ReadMode readMode) {
+                                             ReadMode readMode) {
         Mono<List<StoreResult>> responsesObs = this.storeReader.readMultipleReplicaAsync(
-                entity,
-                /* includePrimary */ true,
-                /* replicaCountToRead */ 1,
-                /* requiresValidLSN*/ false,
-                /* useSessionToken */ false,
-                /* readMode */ readMode);
+            entity,
+            /* includePrimary */ true,
+            /* replicaCountToRead */ 1,
+            /* requiresValidLSN*/ false,
+            /* useSessionToken */ false,
+            /* readMode */ readMode);
 
-        return responsesObs.flatMap(responses -> {
+        return responsesObs.flatMap(
+                responses -> {
             if (responses.size() == 0) {
-                return Mono.error(new GoneException(RMResources.Gone));
+                        return Mono.error(new GoneException(RMResources.Gone));
             }
+
             try {
-                return Mono.just(responses.get(0).toResponse());
+                        return Mono.just(responses.get(0).toResponse());
             } catch (CosmosClientException e) {
-                return Mono.error(e);
+                throw Exceptions.propagate(e);
             }
-        });
+                }
+        );
     }
 
     private Mono<StoreResponse> readSessionAsync(RxDocumentServiceRequest entity,
-                                                   ReadMode readMode) {
+                                                 ReadMode readMode) {
 
         if (entity.requestContext.timeoutHelper.isElapsed()) {
             return Mono.error(new GoneException());
         }
 
         Mono<List<StoreResult>> responsesObs = this.storeReader.readMultipleReplicaAsync(
-                entity,
-                /* includePrimary */ true,
-                /* replicaCountToRead */ 1,
-                /* requiresValidLSN */ true,
-                /* useSessionToken */ true,
-                /* readMode */ readMode,
-                /* checkMinLsn */ true,
-                /* forceReadAll */ false);
+            entity,
+            /* includePrimary */ true,
+            /* replicaCountToRead */ 1,
+            /* requiresValidLSN */ true,
+            /* useSessionToken */ true,
+            /* readMode */ readMode,
+            /* checkMinLsn */ true,
+            /* forceReadAll */ false);
 
         return responsesObs.flatMap(responses -> {
 
@@ -328,12 +332,13 @@ public class ConsistencyReader {
                             notFoundException.responseHeaders().put(WFConstants.BackendHeaders.SUB_STATUS, Integer.toString(HttpConstants.SubStatusCodes.READ_SESSION_NOT_AVAILABLE));
                         }
                         return Mono.error(notFoundException);
-                    } catch (CosmosClientException ex) {
-                        return Mono.error(ex);
+                    } catch (CosmosClientException e) {
+                        throw Exceptions.propagate(e);
                     }
-                } catch (CosmosClientException cce) {
-                    return Mono.error(cce);
+                } catch (CosmosClientException dce) {
+                    throw Exceptions.propagate(dce);
                 }
+
             }
 
             // else
@@ -401,8 +406,8 @@ public class ConsistencyReader {
                                   AddressSelector addressSelector,
                                   ISessionContainer sessionContainer) {
         return new StoreReader(transportClient,
-                               addressSelector,
-                               sessionContainer);
+            addressSelector,
+            sessionContainer);
     }
 
     QuorumReader createQuorumReader(TransportClient transportClient,
@@ -411,10 +416,10 @@ public class ConsistencyReader {
                                     GatewayServiceConfigurationReader serviceConfigurationReader,
                                     IAuthorizationTokenProvider authorizationTokenProvider) {
         return new QuorumReader(transportClient,
-                                addressSelector,
-                                storeReader,
-                                serviceConfigurationReader,
-                                authorizationTokenProvider,
-                                configs);
+            addressSelector,
+            storeReader,
+            serviceConfigurationReader,
+            authorizationTokenProvider,
+            configs);
     }
 }
