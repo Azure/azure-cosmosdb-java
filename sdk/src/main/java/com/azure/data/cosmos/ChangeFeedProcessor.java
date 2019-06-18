@@ -50,7 +50,9 @@ import java.util.function.Consumer;
  *     .hostName(hostName)
  *     .feedContainerClient(feedContainer)
  *     .leaseContainerClient(leaseContainer)
- *     .observer(SampleObserverImpl.class)
+ *     .syncHandleChanges(docs -> {
+ *         // Implementation for handling and processing CosmosItemProperties list goes here
+ *      })
  *     .build();
  * }
  */
@@ -80,7 +82,9 @@ public interface ChangeFeedProcessor {
      *       .hostName("SampleHost")
      *       .feedContainerClient(feedContainer)
      *       .leaseContainerClient(leaseContainer)
-     *       .observer(SampleObserverImpl.class)
+     *       .syncHandleChanges(docs -> {
+     *           // Implementation for handling and processing CosmosItemProperties list goes here
+     *        })
      *       .build();
      * }
      *
