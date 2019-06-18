@@ -91,7 +91,7 @@ public class AggregateQueryTests extends TestSuiteBase {
         options.populateQueryMetrics(qmEnabled);
         options.maxDegreeOfParallelism(2);
 
-        for (QueryConfig queryConfig : queryConfigs) {    
+        for (QueryConfig queryConfig : queryConfigs) {
 
             Flux<FeedResponse<CosmosItemProperties>> queryObservable = createdCollection.queryItems(queryConfig.query, options);
 
@@ -107,7 +107,7 @@ public class AggregateQueryTests extends TestSuiteBase {
 
     public void bulkInsert() {
         generateTestData();
-        bulkInsertBlocking(createdCollection, docs);
+        voidBulkInsertBlocking(createdCollection, docs);
     }
 
     public void generateTestData() {
@@ -198,7 +198,7 @@ public class AggregateQueryTests extends TestSuiteBase {
         safeClose(client);
     }
 
-    @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT * 100)
+    @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT * 2)
     public void beforeClass() throws Exception {
         client = this.clientBuilder().build();
         createdCollection = getSharedMultiPartitionCosmosContainer(client);

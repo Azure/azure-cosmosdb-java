@@ -137,27 +137,27 @@ public class StoreReader {
             } else {
                 return Mono.just(readQuorumResult.responses);
             }
-        }).doAfterTerminate(() -> SessionTokenHelper.setOriginalSessionToken(entity, originalSessionToken)).single();
+        }).flux().doAfterTerminate(() -> SessionTokenHelper.setOriginalSessionToken(entity, originalSessionToken)).single();
     }
 
-    private Mono<ReadReplicaResult> earlyResultIfNotEnoughReplicas(List<URI> replicaAddresses,
+    private Flux<ReadReplicaResult> earlyResultIfNotEnoughReplicas(List<URI> replicaAddresses,
                                                                    RxDocumentServiceRequest request,
                                                                    int replicaCountToRead) {
         if (replicaAddresses.size() < replicaCountToRead) {
             // if not enough replicas, return ReadReplicaResult
             if (!request.requestContext.forceRefreshAddressCache) {
-                return Mono.just(new ReadReplicaResult(true /*retryWithForceRefresh*/, Collections.emptyList()));
+                return Flux.just(new ReadReplicaResult(true /*retryWithForceRefresh*/, Collections.emptyList()));
             } else {
-                return Mono.just(new ReadReplicaResult(false /*retryWithForceRefresh*/, Collections.emptyList()));
+                return Flux.just(new ReadReplicaResult(false /*retryWithForceRefresh*/, Collections.emptyList()));
             }
         } else {
             // if there are enough replicas, move on
-            return Mono.empty();
+            return Flux.empty();
         }
     }
 
-    private Mono<StoreResult> toStoreResult(RxDocumentServiceRequest request,
-                                                  Pair<Mono<StoreResponse>, URI> storeRespAndURI,
+    private Flux<StoreResult> toStoreResult(RxDocumentServiceRequest request,
+                                                  Pair<Flux<StoreResponse>, URI> storeRespAndURI,
                                                   ReadMode readMode,
                                                   boolean requiresValidLsn) {
 
@@ -171,9 +171,10 @@ public class StoreReader {
                                         storeRespAndURI.getRight());
 
                                 request.requestContext.clientSideRequestStatistics.getContactedReplicas().add(storeRespAndURI.getRight());
-                                return Mono.just(storeResult);
+                                return Flux.just(storeResult);
                             } catch (Exception e) {
-                                return Mono.error(e);
+                                // RxJava1 doesn't allow throwing checked exception from Observable operators
+                                return Flux.error(e);
                             }
                         }
                 ).onErrorResume(t -> {
@@ -182,7 +183,7 @@ public class StoreReader {
                         logger.debug("Exception {} is thrown while doing readMany", t);
                         Exception storeException = Utils.as(t, Exception.class);
                         if (storeException == null) {
-                            return Mono.error(t);
+                            return Flux.error(t);
                         }
 
 //                    Exception storeException = readTask.Exception != null ? readTask.Exception.InnerException : null;
@@ -194,14 +195,15 @@ public class StoreReader {
                         if (storeException instanceof TransportException) {
                             request.requestContext.clientSideRequestStatistics.getFailedReplicas().add(storeRespAndURI.getRight());
                         }
-                        return Mono.just(storeResult);
+                        return Flux.just(storeResult);
                     } catch (Exception e) {
-                        return Mono.error(e);
+                        // RxJava1 doesn't allow throwing checked exception from Observable operators
+                        return Flux.error(e);
                     }
                 });
     }
 
-    private Mono<List<StoreResult>> readFromReplicas(List<StoreResult> resultCollector,
+    private Flux<List<StoreResult>> readFromReplicas(List<StoreResult> resultCollector,
                                                            List<URI> resolveApiResults,
                                                            final AtomicInteger replicasToRead,
                                                            RxDocumentServiceRequest entity,
@@ -217,9 +219,9 @@ public class StoreReader {
                                                            boolean enforceSessionCheck,
                                                            final MutableVolatile<ReadReplicaResult> shortCircut) {
         if (entity.requestContext.timeoutHelper.isElapsed()) {
-            return Mono.error(new GoneException());
+            return Flux.error(new GoneException());
         }
-        List<Pair<Mono<StoreResponse>, URI>> readStoreTasks = new ArrayList<>();
+        List<Pair<Flux<StoreResponse>, URI>> readStoreTasks = new ArrayList<>();
         int uriIndex = StoreReader.generateNextRandom(resolveApiResults.size());
 
         while (resolveApiResults.size() > 0) {
@@ -234,7 +236,7 @@ public class StoreReader {
                 res = Pair.of(Mono.error(e), uri);
             }
 
-            readStoreTasks.add(Pair.of(res.getLeft(), res.getRight()));
+            readStoreTasks.add(Pair.of(res.getLeft().flux(), res.getRight()));
             resolveApiResults.remove(uriIndex);
 
 
@@ -246,7 +248,7 @@ public class StoreReader {
         replicasToRead.set(readStoreTasks.size() >= replicasToRead.get() ? 0 : replicasToRead.get() - readStoreTasks.size());
 
 
-        List<Mono<StoreResult>> storeResult = readStoreTasks
+        List<Flux<StoreResult>> storeResult = readStoreTasks
                 .stream()
                 .map(item -> toStoreResult(entity, item, readMode, requiresValidLsn))
                 .collect(Collectors.toList());
@@ -298,7 +300,7 @@ public class StoreReader {
                 replicasToRead.set(replicaCountToRead - resultCollector.size());
             }
             return resultCollector;
-        });
+        }).flux();
     }
 
     private ReadReplicaResult createReadReplicaResult(List<StoreResult> responseResult,
@@ -370,7 +372,7 @@ public class StoreReader {
             }
         }
 
-        return resolveApiResultsObs
+        return resolveApiResultsObs.flux()
                 .map(list -> Collections.synchronizedList(new ArrayList<>(list)))
                 .flatMap(
                 resolveApiResults -> {
@@ -385,9 +387,9 @@ public class StoreReader {
                             entity.getHeaders().remove(HttpConstants.HttpHeaders.SESSION_TOKEN);
                         }
 
-                        Mono<ReadReplicaResult> y = earlyResultIfNotEnoughReplicas(resolveApiResults, entity, replicaCountToRead);
+                        Flux<ReadReplicaResult> y = earlyResultIfNotEnoughReplicas(resolveApiResults, entity, replicaCountToRead);
                         return y.switchIfEmpty(
-                                Mono.defer(() -> {
+                                Flux.defer(() -> {
 
                                     List<StoreResult> storeResultList = Collections.synchronizedList(new ArrayList<>());
                                     AtomicInteger replicasToRead = new AtomicInteger(replicaCountToRead);
@@ -400,7 +402,7 @@ public class StoreReader {
                                     MutableVolatile<Boolean> hasGoneException = new MutableVolatile(false);
                                     MutableVolatile<ReadReplicaResult> shortCircuitResult = new MutableVolatile();
 
-                                    return Mono.defer(() ->
+                                    return Flux.defer(() ->
                                                                     readFromReplicas(
                                                                             storeResultList,
                                                                             resolveApiResults,
@@ -429,20 +431,22 @@ public class StoreReader {
                                                     return true;
                                                 }
                                             })
-                                            .then(Mono.defer(() -> {
+                                            .thenMany(
+                                                    Flux.defer(() -> {
                                                 try {
                                                     // TODO: some fields which get updated need to be thread-safe
-                                                    return Mono.just(createReadReplicaResult(storeResultList, replicaCountToRead, resolveApiResults.size(), hasGoneException.v, entity));
+                                                                             return Flux.just(createReadReplicaResult(storeResultList, replicaCountToRead, resolveApiResults.size(), hasGoneException.v, entity));
                                                 } catch (Exception e) {
-                                                    return Mono.error(e);
+                                                                             return Flux.error(e);
                                                 }
-                                            }));
+                                                                     }
+                                                    ));
                                 }));
                     } catch (Exception e) {
-                        return Mono.error(e);
+                        return Flux.error(e);
                     }
                 }
-        );
+        ).single();
     }
 
     public Mono<StoreResult> readPrimaryAsync(
@@ -531,7 +535,7 @@ public class StoreReader {
 
                                     try {
                                         StoreResult storeResult = this.createStoreResult(
-                                            storeResponse,
+                                                storeResponse != null ? storeResponse : null,
                                                 null, requiresValidLsn,
                                                 true,
                                                 storeResponse != null ? storeResponseObsAndUri.getRight() : null);
@@ -544,6 +548,7 @@ public class StoreReader {
                         );
 
                     } catch (CosmosClientException e) {
+                        // RxJava1 doesn't allow throwing checked exception from Observable:map
                         return Mono.error(e);
                     }
 
@@ -564,6 +569,7 @@ public class StoreReader {
                         null);
                 return Mono.just(storeResult);
             } catch (CosmosClientException e) {
+                // RxJava1 doesn't allow throwing checked exception from Observable operators
                 return Mono.error(e);
             }
         });

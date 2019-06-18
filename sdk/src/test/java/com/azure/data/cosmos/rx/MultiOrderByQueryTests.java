@@ -179,7 +179,7 @@ public class MultiOrderByQueryTests extends TestSuiteBase {
             }
         }
 
-        bulkInsertBlocking(documentCollection, documents);
+        voidBulkInsertBlocking(documentCollection, documents);
 
         waitIfNeededForReplicasToCatchUp(clientBuilder());
     }

@@ -160,10 +160,6 @@ public class BackPressureTest extends TestSuiteBase {
         assertThat(subscriber.valueCount()).isEqualTo(createdDocuments.size());
     }
 
-    // TODO: DANOBLE: Investigate DIRECT TCP performance issue
-    // NOTE: This method requires multiple SHUTDOWN_TIMEOUT intervals
-    // SEE: https://msdata.visualstudio.com/CosmosDB/_workitems/edit/367028https://msdata.visualstudio.com/CosmosDB/_workitems/edit/367028
-
     @BeforeClass(groups = { "long" }, timeOut = 2 * SETUP_TIMEOUT)
     public void beforeClass() throws Exception {
 
