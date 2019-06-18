@@ -80,7 +80,7 @@ public class ChangeFeedProcessorTest extends TestSuiteBase {
     }
 
     @Test(groups = { "emulator" }, timeOut = 60000)
-    public void readFeedDocuments() {
+    public void readFeedDocumentsStartFromBeginning() {
 
         Mono<ChangeFeedProcessor> changeFeedProcessorObservable = ChangeFeedProcessor.Builder()
             .hostName(hostName)
@@ -163,7 +163,6 @@ public class ChangeFeedProcessorTest extends TestSuiteBase {
 
     @AfterClass(groups = { "emulator" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)
     public void afterClass() {
-        safeDeleteAllCollections(createdDatabase);
         safeDeleteDatabase(createdDatabase);
 
         // Allow some time for the collections and the database to be deleted before exiting.

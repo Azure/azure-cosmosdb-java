@@ -80,8 +80,7 @@ class DocumentServiceLeaseStore implements LeaseStore {
                         return Mono.just(false);
                     }
                 }
-                Mono.error(throwable);
-                return Mono.empty();
+                return Mono.error(throwable);
             });
     }
 
@@ -111,9 +110,6 @@ class DocumentServiceLeaseStore implements LeaseStore {
         containerDocument.id(lockId);
         containerDocument.set(com.azure.data.cosmos.internal.Constants.Properties.TTL, Long.valueOf(lockExpirationTime.getSeconds()).intValue());
 
-//        Document containerDocument = new Document();
-//        containerDocument.id(lockId);
-//        containerDocument.setTimeToLive(Long.valueOf(lockExpirationTime.getSeconds()).intValue());
         DocumentServiceLeaseStore self = this;
 
         return this.client.createItem(this.leaseCollectionLink, containerDocument, null, false)
@@ -132,8 +128,7 @@ class DocumentServiceLeaseStore implements LeaseStore {
                         return Mono.just(false);
                     }
                 }
-                Mono.error(throwable);
-                return Mono.empty();
+                return Mono.error(throwable);
             });
     }
 
@@ -174,8 +169,7 @@ class DocumentServiceLeaseStore implements LeaseStore {
                     }
                 }
 
-                Mono.error(throwable);
-                return Mono.empty();
+                return Mono.error(throwable);
             });
     }
 
