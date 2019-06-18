@@ -29,11 +29,11 @@ import com.codahale.metrics.Timer;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
 
 import java.util.UUID;
-import java.util.function.Consumer;
 
 class AsyncWriteBenchmark extends AsyncBenchmark<ResourceResponse<Document>> {
 
@@ -43,24 +43,22 @@ class AsyncWriteBenchmark extends AsyncBenchmark<ResourceResponse<Document>> {
     class LatencySubscriber<T> implements Subscriber<T> {
 
         Timer.Context context;
-        Runnable runnable;
-        Consumer<Throwable> errorConsumer;
+        BaseSubscriber<ResourceResponse<Document>> baseSubscriber;
 
-        LatencySubscriber(Runnable runnable, Consumer<Throwable> errorConsumer) {
-            this.runnable = runnable;
-            this.errorConsumer = errorConsumer;
+        LatencySubscriber(BaseSubscriber<ResourceResponse<Document>> baseSubscriber) {
+            this.baseSubscriber = baseSubscriber;
         }
 
         @Override
         public void onError(Throwable e) {
             context.stop();
-            errorConsumer.accept(e);
+            baseSubscriber.onError(e);
         }
 
         @Override
         public void onComplete() {
             context.stop();
-            runnable.run();
+            baseSubscriber.onComplete();
         }
 
         @Override
@@ -81,7 +79,7 @@ class AsyncWriteBenchmark extends AsyncBenchmark<ResourceResponse<Document>> {
     }
 
     @Override
-    protected void performWorkload(Runnable runnable, Consumer<Throwable> errorConsumer, long i) throws InterruptedException {
+    protected void performWorkload(BaseSubscriber<ResourceResponse<Document>> baseSubscriber, long i) throws InterruptedException {
 
         String idString = uuid + i;
         Document newDoc = new Document();
@@ -98,9 +96,9 @@ class AsyncWriteBenchmark extends AsyncBenchmark<ResourceResponse<Document>> {
         concurrencyControlSemaphore.acquire();
 
         if (configuration.getOperationType() == Configuration.Operation.WriteThroughput) {
-            obs.subscribeOn(Schedulers.parallel()).subscribe(next -> {}, errorConsumer, runnable);
+            obs.subscribeOn(Schedulers.parallel()).subscribe(baseSubscriber);
         } else {
-            LatencySubscriber<ResourceResponse<Document>> latencySubscriber = new LatencySubscriber<>(runnable, errorConsumer);
+            LatencySubscriber<ResourceResponse<Document>> latencySubscriber = new LatencySubscriber<>(baseSubscriber);
             latencySubscriber.context = latency.time();
             obs.subscribeOn(Schedulers.parallel()).subscribe(latencySubscriber);
         }

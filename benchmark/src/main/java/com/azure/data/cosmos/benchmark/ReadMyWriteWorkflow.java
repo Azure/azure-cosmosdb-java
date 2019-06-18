@@ -34,6 +34,7 @@ import com.azure.data.cosmos.SqlQuerySpec;
 import com.azure.data.cosmos.internal.NotFoundException;
 import com.azure.data.cosmos.internal.Utils;
 import org.apache.commons.lang3.RandomUtils;
+import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
 
@@ -43,7 +44,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -72,7 +72,7 @@ class ReadMyWriteWorkflow extends AsyncBenchmark<Document> {
     }
 
     @Override
-    protected void performWorkload(Runnable runnable, Consumer<Throwable> errorConsumer, long i) throws Exception {
+    protected void performWorkload(BaseSubscriber<Document> baseSubscriber, long i) throws Exception {
         Flux<Document> obs;
         boolean readyMyWrite = RandomUtils.nextBoolean();
         if (readyMyWrite) {
@@ -144,7 +144,7 @@ class ReadMyWriteWorkflow extends AsyncBenchmark<Document> {
 
         concurrencyControlSemaphore.acquire();
 
-        obs.subscribeOn(Schedulers.parallel()).subscribe(next -> {}, errorConsumer, runnable);
+        obs.subscribeOn(Schedulers.parallel()).subscribe(baseSubscriber);
     }
 
     private void populateCache() {

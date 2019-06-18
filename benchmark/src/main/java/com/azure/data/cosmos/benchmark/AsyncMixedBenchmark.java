@@ -29,12 +29,12 @@ import com.azure.data.cosmos.PartitionKey;
 import com.azure.data.cosmos.RequestOptions;
 import com.azure.data.cosmos.ResourceResponse;
 import org.apache.commons.lang3.RandomStringUtils;
+import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
 
 import java.util.Random;
 import java.util.UUID;
-import java.util.function.Consumer;
 
 class AsyncMixedBenchmark extends AsyncBenchmark<Document> {
 
@@ -50,7 +50,7 @@ class AsyncMixedBenchmark extends AsyncBenchmark<Document> {
     }
 
     @Override
-    protected void performWorkload(Runnable runnable, Consumer<Throwable> errorConsumer, long i) throws InterruptedException {
+    protected void performWorkload(BaseSubscriber<Document> documentBaseSubscriber, long i) throws InterruptedException {
         Flux<Document> obs;
         if (i % 10 == 0 && i % 100 != 0) {
 
@@ -86,6 +86,6 @@ class AsyncMixedBenchmark extends AsyncBenchmark<Document> {
 
         concurrencyControlSemaphore.acquire();
 
-        obs.subscribeOn(Schedulers.parallel()).subscribe(next -> {}, errorConsumer, runnable);
+        obs.subscribeOn(Schedulers.parallel()).subscribe(documentBaseSubscriber);
     }
 }

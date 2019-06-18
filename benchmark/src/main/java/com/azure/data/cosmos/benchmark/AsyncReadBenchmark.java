@@ -30,34 +30,31 @@ import com.azure.data.cosmos.ResourceResponse;
 import com.codahale.metrics.Timer;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
-
-import java.util.function.Consumer;
 
 class AsyncReadBenchmark extends AsyncBenchmark<ResourceResponse<Document>> {
 
     class LatencySubscriber<T> implements Subscriber<T> {
 
         Timer.Context context;
-        Runnable runnable;
-        Consumer<Throwable> errorConsumer;
+        BaseSubscriber<ResourceResponse<Document>> baseSubscriber;
 
-        LatencySubscriber(Runnable runnable, Consumer<Throwable> errorConsumer) {
-            this.runnable = runnable;
-            this.errorConsumer = errorConsumer;
+        LatencySubscriber(BaseSubscriber<ResourceResponse<Document>> baseSubscriber) {
+            this.baseSubscriber = baseSubscriber;
         }
 
         @Override
         public void onError(Throwable e) {
             context.stop();
-            errorConsumer.accept(e);
+            baseSubscriber.onError(e);
         }
 
         @Override
         public void onComplete() {
             context.stop();
-            runnable.run();
+            baseSubscriber.onComplete();
         }
 
         @Override
@@ -76,7 +73,7 @@ class AsyncReadBenchmark extends AsyncBenchmark<ResourceResponse<Document>> {
     }
 
     @Override
-    protected void performWorkload(Runnable runnable, Consumer<Throwable> errorConsumer, long i) throws InterruptedException {
+    protected void performWorkload(BaseSubscriber<ResourceResponse<Document>> baseSubscriber, long i) throws InterruptedException {
         int index = (int) (i % docsToRead.size());
         RequestOptions options = new RequestOptions();
         options.setPartitionKey(new PartitionKey(docsToRead.get(index).id()));
@@ -86,9 +83,9 @@ class AsyncReadBenchmark extends AsyncBenchmark<ResourceResponse<Document>> {
         concurrencyControlSemaphore.acquire();
 
         if (configuration.getOperationType() == Configuration.Operation.ReadThroughput) {
-            obs.subscribeOn(Schedulers.parallel()).subscribe(onNext -> {}, errorConsumer, runnable);
+            obs.subscribeOn(Schedulers.parallel()).subscribe(baseSubscriber);
         } else {
-            LatencySubscriber<ResourceResponse<Document>> latencySubscriber = new LatencySubscriber<>(runnable, errorConsumer);
+            LatencySubscriber<ResourceResponse<Document>> latencySubscriber = new LatencySubscriber<>(baseSubscriber);
             latencySubscriber.context = latency.time();
             obs.subscribeOn(Schedulers.parallel()).subscribe(latencySubscriber);
         }

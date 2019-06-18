@@ -41,8 +41,10 @@ import com.codahale.metrics.jvm.CachedThreadStatesGaugeSet;
 import com.codahale.metrics.jvm.GarbageCollectorMetricSet;
 import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.reactivestreams.Subscription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Flux;
 
 import java.net.InetSocketAddress;
@@ -53,7 +55,6 @@ import java.util.UUID;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
 
 abstract class AsyncBenchmark<T> {
     private final MetricRegistry metricsRegistry = new MetricRegistry();
@@ -163,7 +164,7 @@ abstract class AsyncBenchmark<T> {
         }
     }
 
-    protected abstract void performWorkload(Runnable runnable, Consumer<Throwable> errorConsumer, long i) throws Exception;
+    protected abstract void performWorkload(BaseSubscriber<T> baseSubscriber, long i) throws Exception;
 
     private boolean shouldContinue(long startTimeMillis, long iterationCount) {
         Duration maxDurationTime = configuration.getMaxRunningTimeDuration();
@@ -199,31 +200,47 @@ abstract class AsyncBenchmark<T> {
         long i;
         for ( i = 0; shouldContinue(startTime, i); i++) {
 
-            Consumer<Throwable> throwableConsumer = e -> {
-                failureMeter.mark();
-                logger.error("Encountered failure {} on thread {}" ,
-                    e.getMessage(), Thread.currentThread().getName(), e);
-                concurrencyControlSemaphore.release();
-                AsyncBenchmark.this.onError(e);
+            BaseSubscriber<T> baseSubscriber = new BaseSubscriber<T>() {
+                @Override
+                protected void hookOnSubscribe(Subscription subscription) {
+                    super.hookOnSubscribe(subscription);
+                }
 
-                synchronized (count) {
-                    count.incrementAndGet();
-                    count.notify();
+                @Override
+                protected void hookOnNext(T value) {
+                    super.hookOnNext(value);
+                }
+
+                @Override
+                protected void hookOnComplete() {
+                    super.hookOnComplete();
+                    successMeter.mark();
+                    concurrencyControlSemaphore.release();
+                    AsyncBenchmark.this.onSuccess();
+
+                    synchronized (count) {
+                        count.incrementAndGet();
+                        count.notify();
+                    }
+                }
+
+                @Override
+                protected void hookOnError(Throwable throwable) {
+                    super.hookOnError(throwable);
+                    failureMeter.mark();
+                    logger.error("Encountered failure {} on thread {}" ,
+                        throwable.getMessage(), Thread.currentThread().getName(), throwable);
+                    concurrencyControlSemaphore.release();
+                    AsyncBenchmark.this.onError(throwable);
+
+                    synchronized (count) {
+                        count.incrementAndGet();
+                        count.notify();
+                    }
                 }
             };
 
-            Runnable runnable = () -> {
-                successMeter.mark();
-                concurrencyControlSemaphore.release();
-                AsyncBenchmark.this.onSuccess();
-
-                synchronized (count) {
-                    count.incrementAndGet();
-                    count.notify();
-                }
-            };
-
-            performWorkload(runnable, throwableConsumer, i);
+            performWorkload(baseSubscriber, i);
         }
 
         synchronized (count) {

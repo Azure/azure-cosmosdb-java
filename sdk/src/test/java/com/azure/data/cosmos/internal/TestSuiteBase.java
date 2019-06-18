@@ -212,6 +212,7 @@ public class TestSuiteBase extends DocumentClientTest {
             logger.info("Truncating collection {} documents ...", collection.id());
 
             houseKeepingClient.queryDocuments(collection.selfLink(), "SELECT * FROM root", options)
+                              .publishOn(Schedulers.parallel())
                     .flatMap(page -> Flux.fromIterable(page.results()))
                     .flatMap(doc -> {
                         RequestOptions requestOptions = new RequestOptions();
@@ -232,6 +233,7 @@ public class TestSuiteBase extends DocumentClientTest {
             logger.info("Truncating collection {} triggers ...", collection.id());
 
             houseKeepingClient.queryTriggers(collection.selfLink(), "SELECT * FROM root", options)
+                              .publishOn(Schedulers.parallel())
                     .flatMap(page -> Flux.fromIterable(page.results()))
                     .flatMap(trigger -> {
                         RequestOptions requestOptions = new RequestOptions();
@@ -247,6 +249,7 @@ public class TestSuiteBase extends DocumentClientTest {
             logger.info("Truncating collection {} storedProcedures ...", collection.id());
 
             houseKeepingClient.queryStoredProcedures(collection.selfLink(), "SELECT * FROM root", options)
+                              .publishOn(Schedulers.parallel())
                     .flatMap(page -> Flux.fromIterable(page.results()))
                     .flatMap(storedProcedure -> {
                         RequestOptions requestOptions = new RequestOptions();
@@ -262,6 +265,7 @@ public class TestSuiteBase extends DocumentClientTest {
             logger.info("Truncating collection {} udfs ...", collection.id());
 
             houseKeepingClient.queryUserDefinedFunctions(collection.selfLink(), "SELECT * FROM root", options)
+                              .publishOn(Schedulers.parallel())
                     .flatMap(page -> Flux.fromIterable(page.results()))
                     .flatMap(udf -> {
                         RequestOptions requestOptions = new RequestOptions();
@@ -455,25 +459,13 @@ public class TestSuiteBase extends DocumentClientTest {
             result.add(client.createDocument(collectionLink, docDef, null, false));
         }
 
-        return Flux.merge(Flux.fromIterable(result), concurrencyLevel);
+        return Flux.merge(Flux.fromIterable(result), concurrencyLevel).publishOn(Schedulers.parallel());
     }
 
     public Flux<ResourceResponse<Document>> bulkInsert(AsyncDocumentClient client,
                                                              String collectionLink,
                                                              List<Document> documentDefinitionList) {
         return bulkInsert(client, collectionLink, documentDefinitionList, DEFAULT_BULK_INSERT_CONCURRENCY_LEVEL);
-    }
-
-    public List<Document> bulkInsertBlocking(AsyncDocumentClient client,
-                                             String collectionLink,
-                                             List<Document> documentDefinitionList) {
-        return bulkInsert(client, collectionLink, documentDefinitionList, DEFAULT_BULK_INSERT_CONCURRENCY_LEVEL)
-                .parallel()
-                .runOn(Schedulers.parallel())
-                .map(ResourceResponse::getResource)
-                .sequential()
-                .collectList()
-                .block();
     }
 
     public static ConsistencyLevel getAccountDefaultConsistencyLevel(AsyncDocumentClient client) {

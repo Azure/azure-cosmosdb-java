@@ -27,11 +27,11 @@ import com.azure.data.cosmos.Document;
 import com.azure.data.cosmos.FeedOptions;
 import com.azure.data.cosmos.FeedResponse;
 import com.azure.data.cosmos.PartitionKey;
+import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
 
 import java.util.Random;
-import java.util.function.Consumer;
 
 class AsyncQueryBenchmark extends AsyncBenchmark<FeedResponse<Document>> {
 
@@ -53,7 +53,7 @@ class AsyncQueryBenchmark extends AsyncBenchmark<FeedResponse<Document>> {
     }
 
     @Override
-    protected void performWorkload(Runnable runnable, Consumer<Throwable> errorConsumer, long i) throws InterruptedException {
+    protected void performWorkload(BaseSubscriber<FeedResponse<Document>> baseSubscriber, long i) throws InterruptedException {
 
         Flux<FeedResponse<Document>> obs;
         Random r = new Random();
@@ -105,6 +105,6 @@ class AsyncQueryBenchmark extends AsyncBenchmark<FeedResponse<Document>> {
         }
         concurrencyControlSemaphore.acquire();
 
-        obs.subscribeOn(Schedulers.parallel()).subscribe(onNext -> {}, errorConsumer, runnable);
+        obs.subscribeOn(Schedulers.parallel()).subscribe(baseSubscriber);
     }
 }
