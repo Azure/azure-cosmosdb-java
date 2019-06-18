@@ -20,37 +20,63 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.azure.data.cosmos.examples.ChangeFeed;
+package com.azure.data.cosmos.internal.changefeed.implementation;
 
 import com.azure.data.cosmos.internal.changefeed.ChangeFeedObserver;
 import com.azure.data.cosmos.internal.changefeed.ChangeFeedObserverCloseReason;
 import com.azure.data.cosmos.internal.changefeed.ChangeFeedObserverContext;
 import com.azure.data.cosmos.CosmosItemProperties;
-import com.azure.data.cosmos.SerializationFormattingPolicy;
+import com.azure.data.cosmos.internal.changefeed.exceptions.ObserverException;
 
 import java.util.List;
 
 /**
- * Sample ChangeFeedObserver.
+ * Exception wrapping decorator implementation for {@link ChangeFeedObserver}.
  */
-public class SampleObserverImpl implements ChangeFeedObserver {
+class ObserverExceptionWrappingChangeFeedObserverDecorator implements ChangeFeedObserver {
+    private ChangeFeedObserver changeFeedObserver;
+
+    public ObserverExceptionWrappingChangeFeedObserverDecorator(ChangeFeedObserver changeFeedObserver)
+    {
+        this.changeFeedObserver = changeFeedObserver;
+    }
+
     @Override
     public void open(ChangeFeedObserverContext context) {
-        System.out.println("--->SampleObserverImpl::open()");
+        try
+        {
+            this.changeFeedObserver.open(context);
+        }
+        catch (RuntimeException userException)
+        {
+            // Logger.WarnException("Exception happened on Observer.OpenAsync", userException);
+            throw new ObserverException(userException);
+        }
     }
 
     @Override
     public void close(ChangeFeedObserverContext context, ChangeFeedObserverCloseReason reason) {
-        System.out.println("--->SampleObserverImpl::close() -> " + reason.name());
+        try
+        {
+            this.changeFeedObserver.close(context, reason);
+        }
+        catch (RuntimeException userException)
+        {
+            // Logger.WarnException("Exception happened on Observer.CloseAsync", userException);
+            throw new ObserverException(userException);
+        }
     }
 
     @Override
     public void processChanges(ChangeFeedObserverContext context, List<CosmosItemProperties> docs) {
-        System.out.println("--->SampleObserverImpl::processChanges() START");
-
-        for (CosmosItemProperties document : docs) {
-            System.out.println("---->DOCUMENT RECEIVED: " + document.toJson(SerializationFormattingPolicy.INDENTED));
+        try
+        {
+            this.changeFeedObserver.processChanges(context, docs);
         }
-        System.out.println("--->SampleObserverImpl::processChanges() END");
+        catch (Exception userException)
+        {
+            // Logger.WarnException("Exception happened on Observer.OpenAsync", userException);
+            throw new ObserverException(userException);
+        }
     }
 }

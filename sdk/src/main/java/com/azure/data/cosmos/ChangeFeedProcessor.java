@@ -22,7 +22,9 @@
  */
 package com.azure.data.cosmos;
 
-import com.azure.data.cosmos.changefeed.internal.ChangeFeedProcessorBuilderImpl;
+import com.azure.data.cosmos.internal.changefeed.ChangeFeedObserver;
+import com.azure.data.cosmos.internal.changefeed.ChangeFeedObserverFactory;
+import com.azure.data.cosmos.internal.changefeed.implementation.ChangeFeedProcessorBuilderImpl;
 import reactor.core.publisher.Mono;
 
 /**

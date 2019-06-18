@@ -20,37 +20,36 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.azure.data.cosmos.examples.ChangeFeed;
+package com.azure.data.cosmos.internal.changefeed;
 
-import com.azure.data.cosmos.internal.changefeed.ChangeFeedObserver;
-import com.azure.data.cosmos.internal.changefeed.ChangeFeedObserverCloseReason;
-import com.azure.data.cosmos.internal.changefeed.ChangeFeedObserverContext;
 import com.azure.data.cosmos.CosmosItemProperties;
-import com.azure.data.cosmos.SerializationFormattingPolicy;
 
 import java.util.List;
 
 /**
- * Sample ChangeFeedObserver.
+ * The interface used to deliver change events to document feed observers.
  */
-public class SampleObserverImpl implements ChangeFeedObserver {
-    @Override
-    public void open(ChangeFeedObserverContext context) {
-        System.out.println("--->SampleObserverImpl::open()");
-    }
+public interface ChangeFeedObserver {
+    /**
+     * This is called when change feed observer is opened.
+     *
+     * @param context the context specifying partition for this observer, etc.
+     */
+    void open(ChangeFeedObserverContext context);
 
-    @Override
-    public void close(ChangeFeedObserverContext context, ChangeFeedObserverCloseReason reason) {
-        System.out.println("--->SampleObserverImpl::close() -> " + reason.name());
-    }
+    /**
+     * This is called when change feed observer is closed.
+     *
+     * @param context the context specifying partition for this observer, etc.
+     * @param reason the reason the observer is closed.
+     */
+    void close(ChangeFeedObserverContext context, ChangeFeedObserverCloseReason reason);
 
-    @Override
-    public void processChanges(ChangeFeedObserverContext context, List<CosmosItemProperties> docs) {
-        System.out.println("--->SampleObserverImpl::processChanges() START");
-
-        for (CosmosItemProperties document : docs) {
-            System.out.println("---->DOCUMENT RECEIVED: " + document.toJson(SerializationFormattingPolicy.INDENTED));
-        }
-        System.out.println("--->SampleObserverImpl::processChanges() END");
-    }
+    /**
+     * This is called when document changes are available on change feed.
+     *
+     * @param context the context specifying partition for this observer, etc.
+     * @param docs the documents changed.
+     */
+    void processChanges(ChangeFeedObserverContext context, List<CosmosItemProperties> docs);
 }

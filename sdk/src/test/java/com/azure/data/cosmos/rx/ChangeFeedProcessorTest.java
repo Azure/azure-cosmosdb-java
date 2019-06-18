@@ -22,9 +22,9 @@
  */
 package com.azure.data.cosmos.rx;
 
-import com.azure.data.cosmos.ChangeFeedObserver;
-import com.azure.data.cosmos.ChangeFeedObserverCloseReason;
-import com.azure.data.cosmos.ChangeFeedObserverContext;
+import com.azure.data.cosmos.internal.changefeed.ChangeFeedObserver;
+import com.azure.data.cosmos.internal.changefeed.ChangeFeedObserverCloseReason;
+import com.azure.data.cosmos.internal.changefeed.ChangeFeedObserverContext;
 import com.azure.data.cosmos.ChangeFeedProcessor;
 import com.azure.data.cosmos.ChangeFeedProcessorOptions;
 import com.azure.data.cosmos.CosmosClient;
@@ -45,6 +45,7 @@ import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,6 +63,7 @@ public class ChangeFeedProcessorTest extends TestSuiteBase {
     private CosmosContainer createdLeaseCollection;
     private List<CosmosItemProperties> createdDocuments;
     private static Map<String, CosmosItemProperties> receivedDocuments;
+    private static Map<String, String> activeLeases;
 //    private final String databaseId = "testdb1";
     private final String databaseId = CosmosDatabaseForTest.generateId();
 //    private final String hostName = "TestHost1";
@@ -76,7 +78,7 @@ public class ChangeFeedProcessorTest extends TestSuiteBase {
         super(clientBuilder);
     }
 
-    @Test(groups = { "emulator" }, timeOut = TIMEOUT)
+    @Test(groups = { "emulator" }, timeOut = 60000)
     public void readFeedDocuments() {
 
         Mono<ChangeFeedProcessor> changeFeedProcessorObservable = ChangeFeedProcessor.Builder()
@@ -89,24 +91,30 @@ public class ChangeFeedProcessorTest extends TestSuiteBase {
 
         changeFeedProcessorObservable.flatMap(processor -> {
             changeFeedProcessor = processor;
-            return changeFeedProcessor.start();
-        }).block();
+            return changeFeedProcessor.start().publishOn(Schedulers.elastic());
+        }).subscribeOn(Schedulers.elastic()).block();
 
         // Wait for the feed processor to process the documents.
         try {
-            Thread.sleep(10000);
+            Thread.sleep(5000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
 
-        changeFeedProcessor.stop().block();
+        changeFeedProcessor.stop().subscribeOn(Schedulers.elastic()).block();
 
         // Wait for the change feed threads to exit
-        try {
-            Thread.sleep(10000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        long remainingWork = 50000;
+        while (remainingWork > 0 && !activeLeases.isEmpty()) {
+            remainingWork -= 5000;
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
+
+        assertThat(activeLeases.isEmpty()).as("All processing tasks are closed").isTrue();
 
         for (CosmosItemProperties item : createdDocuments) {
             assertThat(receivedDocuments.containsKey(item.id())).as("Document with id: " + item.id()).isTrue();
@@ -117,6 +125,7 @@ public class ChangeFeedProcessorTest extends TestSuiteBase {
     @BeforeClass(groups = { "emulator" }, timeOut = SETUP_TIMEOUT, alwaysRun = true)
     public void beforeClass() {
         receivedDocuments = new ConcurrentHashMap<>();
+        activeLeases = new ConcurrentHashMap<>();
         client = clientBuilder().build();
 
         try {
@@ -193,11 +202,13 @@ public class ChangeFeedProcessorTest extends TestSuiteBase {
         @Override
         public void open(ChangeFeedObserverContext context) {
             ChangeFeedProcessorTest.log.info("OPEN processing from thread {}", Thread.currentThread().getId());
+            ChangeFeedProcessorTest.activeLeases.put(Thread.currentThread().getName(), context.getPartitionKeyRangeId());
         }
 
         @Override
         public void close(ChangeFeedObserverContext context, ChangeFeedObserverCloseReason reason) {
             ChangeFeedProcessorTest.log.info("CLOSE processing from thread {}", Thread.currentThread().getId());
+            ChangeFeedProcessorTest.activeLeases.remove(Thread.currentThread().getName());
         }
 
         @Override

@@ -20,37 +20,28 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.azure.data.cosmos.examples.ChangeFeed;
+package com.azure.data.cosmos.internal.changefeed.implementation;
 
 import com.azure.data.cosmos.internal.changefeed.ChangeFeedObserver;
-import com.azure.data.cosmos.internal.changefeed.ChangeFeedObserverCloseReason;
-import com.azure.data.cosmos.internal.changefeed.ChangeFeedObserverContext;
-import com.azure.data.cosmos.CosmosItemProperties;
-import com.azure.data.cosmos.SerializationFormattingPolicy;
-
-import java.util.List;
+import com.azure.data.cosmos.internal.changefeed.ChangeFeedObserverFactory;
+import com.azure.data.cosmos.internal.changefeed.exceptions.ObserverException;
 
 /**
- * Sample ChangeFeedObserver.
+ * DEFAULT implementation for {@link ChangeFeedObserverFactory}.
  */
-public class SampleObserverImpl implements ChangeFeedObserver {
-    @Override
-    public void open(ChangeFeedObserverContext context) {
-        System.out.println("--->SampleObserverImpl::open()");
+public class ChangeFeedObserverFactoryImpl implements ChangeFeedObserverFactory {
+    private final Class observerType;
+
+    public ChangeFeedObserverFactoryImpl(Class observerType) {
+        this.observerType = observerType;
     }
 
     @Override
-    public void close(ChangeFeedObserverContext context, ChangeFeedObserverCloseReason reason) {
-        System.out.println("--->SampleObserverImpl::close() -> " + reason.name());
-    }
-
-    @Override
-    public void processChanges(ChangeFeedObserverContext context, List<CosmosItemProperties> docs) {
-        System.out.println("--->SampleObserverImpl::processChanges() START");
-
-        for (CosmosItemProperties document : docs) {
-            System.out.println("---->DOCUMENT RECEIVED: " + document.toJson(SerializationFormattingPolicy.INDENTED));
+    public ChangeFeedObserver createObserver() {
+        try {
+            return (ChangeFeedObserver) observerType.newInstance();
+        } catch (IllegalAccessException | InstantiationException ex) {
+            throw new ObserverException(ex);
         }
-        System.out.println("--->SampleObserverImpl::processChanges() END");
     }
 }

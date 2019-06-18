@@ -22,10 +22,11 @@
  */
 package com.azure.data.cosmos;
 
-import com.azure.data.cosmos.changefeed.internal.ChangeFeedHelper;
 import hu.akarnokd.rxjava.interop.RxJavaInterop;
 import reactor.adapter.rxjava.RxJava2Adapter;
 import reactor.core.publisher.Mono;
+
+import static com.azure.data.cosmos.internal.Paths.CONFLICTS_PATH_SEGMENT;
 
 public class CosmosConflict extends CosmosResource {
 
@@ -88,7 +89,7 @@ public class CosmosConflict extends CosmosResource {
 
     @Override
     protected String URIPathSegment() {
-        return ChangeFeedHelper.Paths.CONFLICTS_PATH_SEGMENT;
+        return CONFLICTS_PATH_SEGMENT;
     }
 
     @Override

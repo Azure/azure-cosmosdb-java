@@ -22,7 +22,7 @@
  */
 package com.azure.data.cosmos;
 
-import com.azure.data.cosmos.changefeed.CheckpointFrequency;
+import com.azure.data.cosmos.internal.changefeed.CheckpointFrequency;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
