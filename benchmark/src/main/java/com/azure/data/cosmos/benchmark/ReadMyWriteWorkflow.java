@@ -34,7 +34,6 @@ import com.azure.data.cosmos.SqlQuerySpec;
 import com.azure.data.cosmos.internal.NotFoundException;
 import com.azure.data.cosmos.internal.Utils;
 import org.apache.commons.lang3.RandomUtils;
-import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
 
@@ -44,6 +43,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -72,7 +72,7 @@ class ReadMyWriteWorkflow extends AsyncBenchmark<Document> {
     }
 
     @Override
-    protected void performWorkload(Subscriber<Document> subs, long i) throws Exception {
+    protected void performWorkload(Runnable runnable, Consumer<Throwable> errorConsumer, long i) throws Exception {
         Flux<Document> obs;
         boolean readyMyWrite = RandomUtils.nextBoolean();
         if (readyMyWrite) {
@@ -86,7 +86,7 @@ class ReadMyWriteWorkflow extends AsyncBenchmark<Document> {
                     // write a random document to cosmodb and update the cache.
                     // then try to read the document which just was written
                     obs = writeDocument()
-                            .flatMap(d -> readDocument(d));
+                            .flatMap(this::readDocument);
                     break;
                 case 1:
                     // write a random document to cosmodb and update the cache.
@@ -144,7 +144,7 @@ class ReadMyWriteWorkflow extends AsyncBenchmark<Document> {
 
         concurrencyControlSemaphore.acquire();
 
-        obs.subscribeOn(Schedulers.parallel()).subscribe(subs);
+        obs.subscribeOn(Schedulers.parallel()).subscribe(next -> {}, errorConsumer, runnable);
     }
 
     private void populateCache() {

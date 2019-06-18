@@ -230,7 +230,7 @@ public class TestSuiteBase extends CosmosClientTest {
         logger.info("Truncating collection {} documents ...", cosmosContainer.id());
 
         cosmosContainer.queryItems("SELECT * FROM root", options)
-                       .publishOn(Schedulers.elastic())
+                       .publishOn(Schedulers.parallel())
                     .flatMap(page -> Flux.fromIterable(page.results()))
                         .flatMap(doc -> {
 
@@ -248,7 +248,7 @@ public class TestSuiteBase extends CosmosClientTest {
         logger.info("Truncating collection {} triggers ...", cosmosContainerId);
 
         cosmosContainer.queryTriggers("SELECT * FROM root", options)
-                       .publishOn(Schedulers.elastic())
+                       .publishOn(Schedulers.parallel())
                 .flatMap(page -> Flux.fromIterable(page.results()))
                 .flatMap(trigger -> {
                     CosmosRequestOptions requestOptions = new CosmosRequestOptions();
@@ -264,7 +264,7 @@ public class TestSuiteBase extends CosmosClientTest {
         logger.info("Truncating collection {} storedProcedures ...", cosmosContainerId);
 
         cosmosContainer.queryStoredProcedures("SELECT * FROM root", options)
-                       .publishOn(Schedulers.elastic())
+                       .publishOn(Schedulers.parallel())
                 .flatMap(page -> Flux.fromIterable(page.results()))
                 .flatMap(storedProcedure -> {
                     CosmosRequestOptions requestOptions = new CosmosRequestOptions();
@@ -280,7 +280,7 @@ public class TestSuiteBase extends CosmosClientTest {
         logger.info("Truncating collection {} udfs ...", cosmosContainerId);
 
         cosmosContainer.queryUserDefinedFunctions("SELECT * FROM root", options)
-                       .publishOn(Schedulers.elastic())
+                       .publishOn(Schedulers.parallel())
                 .flatMap(page -> Flux.fromIterable(page.results()))
                 .flatMap(udf -> {
                     CosmosRequestOptions requestOptions = new CosmosRequestOptions();
@@ -459,7 +459,7 @@ public class TestSuiteBase extends CosmosClientTest {
     public List<CosmosItemProperties> bulkInsertBlocking(CosmosContainer cosmosContainer,
                                                          List<CosmosItemProperties> documentDefinitionList) {
         return bulkInsert(cosmosContainer, documentDefinitionList, DEFAULT_BULK_INSERT_CONCURRENCY_LEVEL)
-                .publishOn(Schedulers.elastic())
+                .publishOn(Schedulers.parallel())
                 .map(CosmosItemResponse::properties)
                 .collectList()
                 .block();
@@ -468,7 +468,7 @@ public class TestSuiteBase extends CosmosClientTest {
     public void voidBulkInsertBlocking(CosmosContainer cosmosContainer,
                                                          List<CosmosItemProperties> documentDefinitionList) {
         bulkInsert(cosmosContainer, documentDefinitionList, DEFAULT_BULK_INSERT_CONCURRENCY_LEVEL)
-            .publishOn(Schedulers.elastic())
+            .publishOn(Schedulers.parallel())
             .map(CosmosItemResponse::properties)
             .then()
             .block();
