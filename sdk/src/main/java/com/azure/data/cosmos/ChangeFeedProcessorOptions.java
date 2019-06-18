@@ -38,7 +38,6 @@ public class ChangeFeedProcessorOptions {
     private Duration leaseAcquireInterval;
     private Duration leaseExpirationInterval;
     private Duration feedPollDelay;
-    private CheckpointFrequency checkpointFrequency;
 
     private String leasePrefix;
     private int maxItemCount;
@@ -60,7 +59,6 @@ public class ChangeFeedProcessorOptions {
         this.leaseExpirationInterval = DefaultExpirationInterval;
         this.feedPollDelay = DefaultFeedPollDelay;
         this.queryPartitionsMaxBatchSize = DefaultQueryPartitionsMaxBatchSize;
-        this.checkpointFrequency = new CheckpointFrequency();
         this.maxPartitionCount = 0; // unlimited
         this.degreeOfParallelism = 25; // default
     }
@@ -149,26 +147,6 @@ public class ChangeFeedProcessorOptions {
      */
     public ChangeFeedProcessorOptions feedPollDelay(Duration feedPollDelay) {
         this.feedPollDelay = feedPollDelay;
-        return this;
-    }
-
-    /**
-     * Gets the frequency how often to checkpoint leases.
-     *
-     * @return the frequency how often to checkpoint leases.
-     */
-    public CheckpointFrequency checkpointFrequency() {
-        return this.checkpointFrequency;
-    }
-
-    /**
-     * Sets the frequency how often to checkpoint leases.
-     *
-     * @param checkpointFrequency the frequency how often to checkpoint leases.
-     * @return the current ChangeFeedProcessorOptions instance.
-     */
-    public ChangeFeedProcessorOptions checkpointFrequency(CheckpointFrequency checkpointFrequency) {
-        this.checkpointFrequency = checkpointFrequency;
         return this;
     }
 

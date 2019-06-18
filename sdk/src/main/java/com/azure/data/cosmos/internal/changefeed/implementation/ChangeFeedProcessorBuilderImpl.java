@@ -30,6 +30,7 @@ import com.azure.data.cosmos.ChangeFeedProcessorOptions;
 import com.azure.data.cosmos.CosmosContainer;
 import com.azure.data.cosmos.internal.changefeed.Bootstrapper;
 import com.azure.data.cosmos.internal.changefeed.ChangeFeedContextClient;
+import com.azure.data.cosmos.internal.changefeed.CheckpointFrequency;
 import com.azure.data.cosmos.internal.changefeed.HealthMonitor;
 import com.azure.data.cosmos.internal.changefeed.LeaseStoreManager;
 import com.azure.data.cosmos.internal.changefeed.PartitionController;
@@ -409,7 +410,7 @@ public class ChangeFeedProcessorBuilderImpl implements ChangeFeedProcessor.Build
     private Mono<PartitionManager> buildPartitionManager(LeaseStoreManager leaseStoreManager) {
         ChangeFeedProcessorBuilderImpl self = this;
 
-        CheckpointerObserverFactory factory = new CheckpointerObserverFactory(this.observerFactory, this.changeFeedProcessorOptions.checkpointFrequency());
+        CheckpointerObserverFactory factory = new CheckpointerObserverFactory(this.observerFactory, new CheckpointFrequency());
 
         PartitionSynchronizerImpl synchronizer = new PartitionSynchronizerImpl(
             this.feedContextClient,
