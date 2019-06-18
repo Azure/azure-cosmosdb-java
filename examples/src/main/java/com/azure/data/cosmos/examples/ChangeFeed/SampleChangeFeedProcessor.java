@@ -40,7 +40,7 @@ import reactor.core.publisher.Mono;
 import java.time.Duration;
 
 /**
- * Sample class to test the implementation.
+ * Sample for Change Feed Processor.
  *
  */
 public class SampleChangeFeedProcessor {
@@ -87,7 +87,7 @@ public class SampleChangeFeedProcessor {
 
             if (isWorkCompleted) {
                 if (changeFeedProcessorInstance != null) {
-                    changeFeedProcessorInstance.stop().wait(10000);
+                    changeFeedProcessorInstance.stop().subscribe().wait(10000);
                 }
             } else {
                 throw new RuntimeException("The change feed processor initialization and automatic create document feeding process did not complete in the expected time");
@@ -96,7 +96,7 @@ public class SampleChangeFeedProcessor {
             System.out.println("-->DELETE sample's database: " + DATABASE_NAME);
             deleteDatabase(cosmosDatabase);
 
-            Thread.sleep(15000);
+            Thread.sleep(500);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -111,7 +111,15 @@ public class SampleChangeFeedProcessor {
             .hostName(hostName)
             .feedContainerClient(feedContainer)
             .leaseContainerClient(leaseContainer)
-            .observer(SampleObserverImpl.class)
+            .syncHandleChanges(docs -> {
+                System.out.println("--->syncHandleChanges() START");
+
+                for (CosmosItemProperties document : docs) {
+                    System.out.println("---->DOCUMENT RECEIVED: " + document.toJson(SerializationFormattingPolicy.INDENTED));
+                }
+                System.out.println("--->syncHandleChanges() END");
+
+            })
             .build();
     }
 

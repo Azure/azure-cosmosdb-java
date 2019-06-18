@@ -27,6 +27,9 @@ import com.azure.data.cosmos.internal.changefeed.ChangeFeedObserverFactory;
 import com.azure.data.cosmos.internal.changefeed.implementation.ChangeFeedProcessorBuilderImpl;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+import java.util.function.Consumer;
+
 /**
  * Simple host for distributing change feed events across observers and thus allowing these observers scale.
  * It distributes the load across its instances and allows dynamic scaling:
@@ -113,20 +116,12 @@ public interface ChangeFeedProcessor {
         BuilderDefinition options(ChangeFeedProcessorOptions changeFeedProcessorOptions);
 
         /**
-         * Sets the {@link ChangeFeedObserverFactory} to be used to generate {@link ChangeFeedObserver}
+         * Sets a consumer function which will be called to process changes.
          *
-         * @param observerFactory The instance of {@link ChangeFeedObserverFactory} to use.
+         * @param consumer the consumer of {@link ChangeFeedObserver} to call for handling the feeds.
          * @return current Builder.
          */
-        BuilderDefinition observerFactory(ChangeFeedObserverFactory observerFactory);
-
-        /**
-         * Sets an existing {@link ChangeFeedObserver} type to be used by a {@link ChangeFeedObserverFactory} to process changes.
-         *
-         * @param type the type of {@link ChangeFeedObserver} to be used.
-         * @return current Builder.
-         */
-        BuilderDefinition observer(Class<? extends ChangeFeedObserver> type);
+        BuilderDefinition syncHandleChanges(Consumer<List<CosmosItemProperties>> consumer);
 
         /**
          * Sets an existing {@link CosmosContainer} to be used to read from the leases collection.

@@ -22,6 +22,7 @@
  */
 package com.azure.data.cosmos.internal.changefeed.implementation;
 
+import com.azure.data.cosmos.CosmosItemProperties;
 import com.azure.data.cosmos.internal.changefeed.ChangeFeedObserver;
 import com.azure.data.cosmos.internal.changefeed.ChangeFeedObserverFactory;
 import com.azure.data.cosmos.ChangeFeedProcessor;
@@ -44,8 +45,10 @@ import reactor.core.scheduler.Schedulers;
 
 import java.net.URI;
 import java.time.Duration;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 
 /**
  * Helper class to build {@link ChangeFeedProcessor} instances
@@ -153,7 +156,6 @@ public class ChangeFeedProcessorBuilderImpl implements ChangeFeedProcessor.Build
      * @param observerFactory The instance of {@link ChangeFeedObserverFactory} to use.
      * @return current Builder.
      */
-    @Override
     public ChangeFeedProcessorBuilderImpl observerFactory(ChangeFeedObserverFactory observerFactory) {
         if (observerFactory == null) {
             throw new IllegalArgumentException("observerFactory");
@@ -168,7 +170,6 @@ public class ChangeFeedProcessorBuilderImpl implements ChangeFeedProcessor.Build
      * @param type the type of {@link ChangeFeedObserver} to be used.
      * @return current Builder.
      */
-    @Override
     public ChangeFeedProcessorBuilderImpl observer(Class<? extends ChangeFeedObserver> type) {
         if (type == null) {
             throw new IllegalArgumentException("type");
@@ -177,6 +178,11 @@ public class ChangeFeedProcessorBuilderImpl implements ChangeFeedProcessor.Build
         this.observerFactory = new ChangeFeedObserverFactoryImpl(type);
 
         return this;
+    }
+
+    @Override
+    public ChangeFeedProcessorBuilderImpl syncHandleChanges(Consumer<List<CosmosItemProperties>> consumer) {
+        return this.observerFactory(new DefaultObserverFactory(consumer));
     }
 
     /**

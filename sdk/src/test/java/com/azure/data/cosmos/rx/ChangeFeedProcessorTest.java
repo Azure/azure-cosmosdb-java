@@ -47,6 +47,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -83,38 +84,37 @@ public class ChangeFeedProcessorTest extends TestSuiteBase {
 
         Mono<ChangeFeedProcessor> changeFeedProcessorObservable = ChangeFeedProcessor.Builder()
             .hostName(hostName)
-            .observer(TestChangeFeedObserverImpl.class)
+            //.observer(TestChangeFeedObserverImpl.class)
+            .syncHandleChanges(docs -> {
+                ChangeFeedProcessorTest.log.info("START processing from thread {}", Thread.currentThread().getId());
+                for (CosmosItemProperties item : docs) {
+                    processItem(item);
+                }
+                ChangeFeedProcessorTest.log.info("END processing from thread {}", Thread.currentThread().getId());
+            })
             .feedContainerClient(createdFeedCollection)
             .leaseContainerClient(createdLeaseCollection)
             .options(new ChangeFeedProcessorOptions().startFromBeginning(true))
             .build();
 
-        changeFeedProcessorObservable.flatMap(processor -> {
-            changeFeedProcessor = processor;
-            return changeFeedProcessor.start().publishOn(Schedulers.elastic());
-        }).subscribeOn(Schedulers.elastic()).block();
+        try {
+            changeFeedProcessorObservable.subscribeOn(Schedulers.elastic())
+                .flatMap(processor -> {
+                    changeFeedProcessor = processor;
+                    return changeFeedProcessor.start().subscribeOn(Schedulers.elastic());
+                }).timeout(Duration.ofSeconds(5)).subscribe();
+        } catch (Exception ex) {
+            log.error("Change feed processor did not start in the expected time", ex);
+        }
 
-        // Wait for the feed processor to process the documents.
+        // Wait for the feed processor to receive and process the documents.
         try {
             Thread.sleep(5000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
 
-        changeFeedProcessor.stop().subscribeOn(Schedulers.elastic()).block();
-
-        // Wait for the change feed threads to exit
-        long remainingWork = 50000;
-        while (remainingWork > 0 && !activeLeases.isEmpty()) {
-            remainingWork -= 5000;
-            try {
-                Thread.sleep(5000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-
-        assertThat(activeLeases.isEmpty()).as("All processing tasks are closed").isTrue();
+        changeFeedProcessor.stop().subscribeOn(Schedulers.elastic()).timeout(Duration.ofSeconds(10)).subscribe();
 
         for (CosmosItemProperties item : createdDocuments) {
             assertThat(receivedDocuments.containsKey(item.id())).as("Document with id: " + item.id()).isTrue();

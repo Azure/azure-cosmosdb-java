@@ -20,37 +20,28 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.azure.data.cosmos.examples.ChangeFeed;
+package com.azure.data.cosmos.internal.changefeed.implementation;
 
-import com.azure.data.cosmos.internal.changefeed.ChangeFeedObserver;
-import com.azure.data.cosmos.internal.changefeed.ChangeFeedObserverCloseReason;
-import com.azure.data.cosmos.internal.changefeed.ChangeFeedObserverContext;
 import com.azure.data.cosmos.CosmosItemProperties;
-import com.azure.data.cosmos.SerializationFormattingPolicy;
+import com.azure.data.cosmos.internal.changefeed.ChangeFeedObserver;
+import com.azure.data.cosmos.internal.changefeed.ChangeFeedObserverFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.function.Consumer;
 
-/**
- * Sample ChangeFeedObserver.
- */
-public class SampleObserverImpl implements ChangeFeedObserver {
-    @Override
-    public void open(ChangeFeedObserverContext context) {
-        System.out.println("--->SampleObserverImpl::open()");
+class DefaultObserverFactory implements ChangeFeedObserverFactory {
+    private final Logger log = LoggerFactory.getLogger(DefaultObserverFactory.class);
+
+    private Consumer<List<CosmosItemProperties>> consumer;
+
+    public DefaultObserverFactory(Consumer<List<CosmosItemProperties>> consumer) {
+        this.consumer = consumer;
     }
 
     @Override
-    public void close(ChangeFeedObserverContext context, ChangeFeedObserverCloseReason reason) {
-        System.out.println("--->SampleObserverImpl::close() -> " + reason.name());
-    }
-
-    @Override
-    public void processChanges(ChangeFeedObserverContext context, List<CosmosItemProperties> docs) {
-        System.out.println("--->SampleObserverImpl::processChanges() START");
-
-        for (CosmosItemProperties document : docs) {
-            System.out.println("---->DOCUMENT RECEIVED: " + document.toJson(SerializationFormattingPolicy.INDENTED));
-        }
-        System.out.println("--->SampleObserverImpl::processChanges() END");
+    public ChangeFeedObserver createObserver() {
+        return new DefaultObserver(consumer);
     }
 }
