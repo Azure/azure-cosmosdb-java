@@ -176,7 +176,7 @@ public class ChangeFeedProcessorTest extends TestSuiteBase {
         client = clientBuilder().build();
     }
 
-    @AfterMethod(groups = { "emulator" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)
+    @AfterMethod(groups = { "emulator" }, timeOut = 2 * SHUTDOWN_TIMEOUT, alwaysRun = true)
     public void afterMethod() {
         safeDeleteDatabase(createdDatabase);
 
