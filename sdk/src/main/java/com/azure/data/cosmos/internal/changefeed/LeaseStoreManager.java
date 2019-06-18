@@ -39,15 +39,15 @@ public interface LeaseStoreManager extends LeaseContainer, LeaseManager, LeaseSt
      * For the actual creation of lease manager instance, delegates to lease manager factory.
      */
     interface LeaseStoreManagerBuilderDefinition {
-        LeaseStoreManagerBuilderDefinition withLeaseContextClient(ChangeFeedContextClient leaseContextClient);
+        LeaseStoreManagerBuilderDefinition leaseContextClient(ChangeFeedContextClient leaseContextClient);
 
-        LeaseStoreManagerBuilderDefinition withLeasePrefix(String leasePrefix);
+        LeaseStoreManagerBuilderDefinition leasePrefix(String leasePrefix);
 
-        LeaseStoreManagerBuilderDefinition withLeaseCollectionLink(CosmosContainer leaseCollectionLink);
+        LeaseStoreManagerBuilderDefinition leaseCollectionLink(CosmosContainer leaseCollectionLink);
 
-        LeaseStoreManagerBuilderDefinition withRequestOptionsFactory(RequestOptionsFactory requestOptionsFactory);
+        LeaseStoreManagerBuilderDefinition requestOptionsFactory(RequestOptionsFactory requestOptionsFactory);
 
-        LeaseStoreManagerBuilderDefinition withHostName(String hostName);
+        LeaseStoreManagerBuilderDefinition hostName(String hostName);
 
         Mono<LeaseStoreManager> build();
     }

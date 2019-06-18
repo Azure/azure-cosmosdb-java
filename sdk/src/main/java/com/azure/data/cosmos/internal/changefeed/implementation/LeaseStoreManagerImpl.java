@@ -69,7 +69,7 @@ public class LeaseStoreManagerImpl implements LeaseStoreManager, LeaseStoreManag
     }
 
     @Override
-    public LeaseStoreManagerBuilderDefinition withLeaseContextClient(ChangeFeedContextClient leaseContextClient) {
+    public LeaseStoreManagerBuilderDefinition leaseContextClient(ChangeFeedContextClient leaseContextClient) {
         if (leaseContextClient == null) {
             throw new IllegalArgumentException("leaseContextClient");
         }
@@ -79,7 +79,7 @@ public class LeaseStoreManagerImpl implements LeaseStoreManager, LeaseStoreManag
     }
 
     @Override
-    public LeaseStoreManagerBuilderDefinition withLeasePrefix(String leasePrefix) {
+    public LeaseStoreManagerBuilderDefinition leasePrefix(String leasePrefix) {
         if (leasePrefix == null) {
             throw new IllegalArgumentException("leasePrefix");
         }
@@ -89,7 +89,7 @@ public class LeaseStoreManagerImpl implements LeaseStoreManager, LeaseStoreManag
     }
 
     @Override
-    public LeaseStoreManagerBuilderDefinition withLeaseCollectionLink(CosmosContainer leaseCollectionLink) {
+    public LeaseStoreManagerBuilderDefinition leaseCollectionLink(CosmosContainer leaseCollectionLink) {
         if (leaseCollectionLink == null) {
             throw new IllegalArgumentException("leaseCollectionLink");
         }
@@ -99,7 +99,7 @@ public class LeaseStoreManagerImpl implements LeaseStoreManager, LeaseStoreManag
     }
 
     @Override
-    public LeaseStoreManagerBuilderDefinition withRequestOptionsFactory(RequestOptionsFactory requestOptionsFactory) {
+    public LeaseStoreManagerBuilderDefinition requestOptionsFactory(RequestOptionsFactory requestOptionsFactory) {
         if (requestOptionsFactory == null) {
             throw new IllegalArgumentException("requestOptionsFactory");
         }
@@ -109,7 +109,7 @@ public class LeaseStoreManagerImpl implements LeaseStoreManager, LeaseStoreManag
     }
 
     @Override
-    public LeaseStoreManagerBuilderDefinition withHostName(String hostName) {
+    public LeaseStoreManagerBuilderDefinition hostName(String hostName) {
         if (hostName == null) {
             throw new IllegalArgumentException("hostName");
         }

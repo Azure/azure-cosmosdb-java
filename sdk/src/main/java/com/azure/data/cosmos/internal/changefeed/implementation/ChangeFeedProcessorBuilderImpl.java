@@ -306,11 +306,12 @@ public class ChangeFeedProcessorBuilderImpl implements ChangeFeedProcessor.Build
             this.executorService = Executors.newCachedThreadPool();
         }
 
-        this.initializeCollectionPropertiesForBuild().block();
-        LeaseStoreManager leaseStoreManager = this.getLeaseStoreManager().block();
-        this.partitionManager = this.buildPartitionManager(leaseStoreManager).block();
-
-        return Mono.just(this);
+        return this.initializeCollectionPropertiesForBuild()
+            .then(self.getLeaseStoreManager().flatMap(leaseStoreManager -> self.buildPartitionManager(leaseStoreManager)))
+            .map(partitionManager1 -> {
+                self.partitionManager = partitionManager1;
+                return self;
+            });
     }
 
     public ChangeFeedProcessorBuilderImpl() {
@@ -327,31 +328,19 @@ public class ChangeFeedProcessorBuilderImpl implements ChangeFeedProcessor.Build
             this.changeFeedProcessorOptions = new ChangeFeedProcessorOptions();
         }
 
-        if (this.databaseResourceId == null) {
-            this.feedContextClient
-                .readDatabase(this.feedContextClient.getDatabaseClient(), null)
-                .map( databaseResourceResponse -> {
-                    self.databaseResourceId = databaseResourceResponse.database().id();
-                    return self.databaseResourceId;
-                })
-                .subscribeOn(Schedulers.elastic())
-                .then()
-                .block();
-        }
-
-        if (this.collectionResourceId == null) {
-            self.feedContextClient
+        return this.feedContextClient
+            .readDatabase(this.feedContextClient.getDatabaseClient(), null)
+            .map( databaseResourceResponse -> {
+                self.databaseResourceId = databaseResourceResponse.database().id();
+                return self.databaseResourceId;
+            })
+            .flatMap( id -> self.feedContextClient
                 .readContainer(self.feedContextClient.getContainerClient(), null)
                 .map(documentCollectionResourceResponse -> {
                     self.collectionResourceId = documentCollectionResourceResponse.container().id();
                     return self.collectionResourceId;
-                })
-                .subscribeOn(Schedulers.elastic())
-                .then()
-                .block();
-        }
-
-        return Mono.empty();
+                }))
+            .then();
     }
 
     private Mono<LeaseStoreManager> getLeaseStoreManager() {
@@ -360,30 +349,31 @@ public class ChangeFeedProcessorBuilderImpl implements ChangeFeedProcessor.Build
         if (this.leaseStoreManager == null) {
 
             return this.leaseContextClient.readContainerSettings(this.leaseContextClient.getContainerClient(), null)
-                .map( collectionSettings -> {
+                .flatMap( collectionSettings -> {
                     boolean isPartitioned =
                         collectionSettings.partitionKey() != null &&
                             collectionSettings.partitionKey().paths() != null &&
                             collectionSettings.partitionKey().paths().size() > 0;
                     if (!isPartitioned || (collectionSettings.partitionKey().paths().size() != 1 || !collectionSettings.partitionKey().paths().get(0).equals("/id"))) {
 //                        throw new IllegalArgumentException("The lease collection, if partitioned, must have partition key equal to id.");
-                        Mono.error(new IllegalArgumentException("The lease collection must have partition key equal to id."));
+                        return Mono.error(new IllegalArgumentException("The lease collection must have partition key equal to id."));
                     }
 
                     RequestOptionsFactory requestOptionsFactory = new PartitionedByIdCollectionRequestOptionsFactory();
 
                     String leasePrefix = self.getLeasePrefix();
 
-                    self.leaseStoreManager = LeaseStoreManager.Builder()
-                        .withLeasePrefix(leasePrefix)
-                        .withLeaseCollectionLink(self.leaseContextClient.getContainerClient())
-                        .withLeaseContextClient(self.leaseContextClient)
-                        .withRequestOptionsFactory(requestOptionsFactory)
-                        .withHostName(self.hostName)
+                    return LeaseStoreManager.Builder()
+                        .leasePrefix(leasePrefix)
+                        .leaseCollectionLink(self.leaseContextClient.getContainerClient())
+                        .leaseContextClient(self.leaseContextClient)
+                        .requestOptionsFactory(requestOptionsFactory)
+                        .hostName(self.hostName)
                         .build()
-                        .block();
-
-                    return self.leaseStoreManager;
+                        .map(manager -> {
+                            self.leaseStoreManager = manager;
+                            return self.leaseStoreManager;
+                        });
                 });
         }
 
