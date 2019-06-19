@@ -48,7 +48,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class WorkflowTest {
-    private static final int TIMEOUT = 120000;
+    private static final int TIMEOUT = 120_000;  // 2 minutes
     private Database database;
     private DocumentCollection collection;
 
