@@ -44,7 +44,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 //TODO: change to use external TestSuiteBase
-@Test(enabled = false)
 public class ReadFeedOffersTest extends TestSuiteBase {
 
     protected static final int FEED_TIMEOUT = 60000;
