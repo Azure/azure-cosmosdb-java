@@ -130,8 +130,6 @@ public class TestSuiteBase extends DocumentClientTest {
         objectMapper.configure(JsonParser.Feature.STRICT_DUPLICATE_DETECTION, true);
     }
 
-    private String testName;
-
     protected TestSuiteBase() {
         this(new AsyncDocumentClient.Builder());
     }

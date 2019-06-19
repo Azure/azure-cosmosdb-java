@@ -109,7 +109,6 @@ public class SessionTest extends TestSuiteBase {
         safeDeleteCollection(houseKeepingClient, createdCollection);
         safeClose(houseKeepingClient);
         safeClose(spyClient);
-        
     }
 
     @BeforeMethod(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
