@@ -65,7 +65,7 @@ public class ChangeFeedProcessorTest extends TestSuiteBase {
     private CosmosContainer createdFeedCollection;
     private CosmosContainer createdLeaseCollection;
     private List<CosmosItemProperties> createdDocuments;
-    private static Map<String, CosmosItemProperties> receivedDocuments = new ConcurrentHashMap<>();
+    private static Map<String, CosmosItemProperties> receivedDocuments;
 //    private final String databaseId = "testdb1";
 //    private final String hostName = "TestHost1";
     private final String hostName = RandomStringUtils.randomAlphabetic(6);
@@ -133,6 +133,8 @@ public class ChangeFeedProcessorTest extends TestSuiteBase {
         for (CosmosItemProperties item : createdDocuments) {
             assertThat(receivedDocuments.containsKey(item.id())).as("Document with id: " + item.id()).isTrue();
         }
+
+        receivedDocuments.clear();
      }
 
     @Test(groups = { "emulator" }, timeOut = TIMEOUT)
@@ -197,12 +199,12 @@ public class ChangeFeedProcessorTest extends TestSuiteBase {
         for (CosmosItemProperties item : createdDocuments) {
             assertThat(receivedDocuments.containsKey(item.id())).as("Document with id: " + item.id()).isTrue();
         }
+
+        receivedDocuments.clear();
     }
 
-     @BeforeMethod(groups = { "emulator" }, timeOut = SETUP_TIMEOUT, alwaysRun = true)
+     @BeforeMethod(groups = { "emulator" }, timeOut = 2 * SETUP_TIMEOUT, alwaysRun = true)
      public void beforeMethod() {
-         receivedDocuments.clear();
-
          createdFeedCollection = createFeedCollection();
          createdLeaseCollection = createLeaseCollection();
      }
@@ -259,6 +261,7 @@ public class ChangeFeedProcessorTest extends TestSuiteBase {
     }
 
     private void setupReadFeedDocuments() {
+        receivedDocuments = new ConcurrentHashMap<>();
         List<CosmosItemProperties> docDefList = new ArrayList<>();
 
         for(int i = 0; i < FEED_COUNT; i++) {
