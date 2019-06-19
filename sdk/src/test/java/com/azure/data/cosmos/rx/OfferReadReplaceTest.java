@@ -38,6 +38,7 @@ import reactor.core.publisher.Flux;
 import java.util.List;
 
 //TODO: change to use external TestSuiteBase
+@Test(enabled = false)
 public class OfferReadReplaceTest extends TestSuiteBase {
 
     public final String databaseId = DatabaseForTest.generateId();

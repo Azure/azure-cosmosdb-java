@@ -44,6 +44,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 //TODO: change to use external TestSuiteBase
+@Test(enabled = false)
 public class ReadFeedPermissionsTest extends TestSuiteBase {
 
     public final String databaseId = DatabaseForTest.generateId();

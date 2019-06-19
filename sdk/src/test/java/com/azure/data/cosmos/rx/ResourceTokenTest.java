@@ -56,6 +56,7 @@ import java.util.UUID;
  */
 
 // TODO: change to use external TestSuiteBase
+@Test(enabled = false)
 public class ResourceTokenTest extends TestSuiteBase {
     public final String databaseId = DatabaseForTest.generateId();
 

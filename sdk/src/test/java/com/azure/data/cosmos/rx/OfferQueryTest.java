@@ -47,6 +47,7 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 
 //TODO: change to use external TestSuiteBase
+@Test(enabled = false)
 public class OfferQueryTest extends TestSuiteBase {
 
     public final static int SETUP_TIMEOUT = 40000;
