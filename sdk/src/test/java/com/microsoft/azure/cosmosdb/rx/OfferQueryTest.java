@@ -60,7 +60,7 @@ public class OfferQueryTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuilders")
     public OfferQueryTest(Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "emulator" }, timeOut = TIMEOUT)
@@ -138,7 +138,7 @@ public class OfferQueryTest extends TestSuiteBase {
 
     @BeforeClass(groups = { "emulator" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() throws Exception {
-        client = clientBuilder.build();
+        client = this.clientBuilder().build();
 
         Database d1 = new Database();
         d1.setId(databaseId);

@@ -63,7 +63,7 @@ public class LogLevelTest extends TestSuiteBase {
     private static DocumentCollection createdCollection;
 
     public LogLevelTest() {
-        this.clientBuilder = createGatewayRxDocumentClient();
+        super(createGatewayRxDocumentClient());
     }
 
     @BeforeClass(groups = {"simple"}, timeOut = SETUP_TIMEOUT)
@@ -84,7 +84,7 @@ public class LogLevelTest extends TestSuiteBase {
         WriterAppender appender = new WriterAppender(new PatternLayout(), consoleWriter);
         LogManager.getLogger(NETWORK_LOGGING_CATEGORY).addAppender(appender);
 
-        AsyncDocumentClient client = clientBuilder.build();
+        AsyncDocumentClient client = this.clientBuilder().build();
         try {
             Document docDefinition = getDocumentDefinition();
             Observable<ResourceResponse<Document>> createObservable = client
@@ -114,7 +114,7 @@ public class LogLevelTest extends TestSuiteBase {
         WriterAppender appender = new WriterAppender(new PatternLayout(), consoleWriter);
         Logger.getLogger(NETWORK_LOGGING_CATEGORY).addAppender(appender);
 
-        AsyncDocumentClient client = clientBuilder.build();
+        AsyncDocumentClient client = this.clientBuilder().build();
         try {
             Document docDefinition = getDocumentDefinition();
             Observable<ResourceResponse<Document>> createObservable = client
@@ -143,7 +143,7 @@ public class LogLevelTest extends TestSuiteBase {
         WriterAppender appender = new WriterAppender(new PatternLayout(), consoleWriter);
         Logger.getLogger(NETWORK_LOGGING_CATEGORY).addAppender(appender);
 
-        AsyncDocumentClient client = clientBuilder.build();
+        AsyncDocumentClient client = this.clientBuilder().build();
         try {
             Document docDefinition = getDocumentDefinition();
             Observable<ResourceResponse<Document>> createObservable = client
@@ -171,7 +171,7 @@ public class LogLevelTest extends TestSuiteBase {
         WriterAppender appender = new WriterAppender(new PatternLayout(), consoleWriter);
         Logger.getLogger(NETWORK_LOGGING_CATEGORY).addAppender(appender);
 
-        AsyncDocumentClient client = clientBuilder.build();
+        AsyncDocumentClient client = this.clientBuilder().build();
         try {
             Document docDefinition = getDocumentDefinition();
             Observable<ResourceResponse<Document>> createObservable = client
@@ -198,7 +198,7 @@ public class LogLevelTest extends TestSuiteBase {
         WriterAppender appender = new WriterAppender(new PatternLayout(), consoleWriter);
         Logger.getLogger(NETWORK_LOGGING_CATEGORY).addAppender(appender);
 
-        AsyncDocumentClient client = clientBuilder.build();
+        AsyncDocumentClient client = this.clientBuilder().build();
         try {
             Document docDefinition = getDocumentDefinition();
             Observable<ResourceResponse<Document>> createObservable = client
@@ -227,7 +227,7 @@ public class LogLevelTest extends TestSuiteBase {
         WriterAppender appender = new WriterAppender(new PatternLayout(), consoleWriter);
         Logger.getLogger(NETWORK_LOGGING_CATEGORY).addAppender(appender);
 
-        AsyncDocumentClient client = clientBuilder.build();
+        AsyncDocumentClient client = this.clientBuilder().build();
         try {
             Document docDefinition = getDocumentDefinition();
             Observable<ResourceResponse<Document>> createObservable = client
@@ -256,7 +256,7 @@ public class LogLevelTest extends TestSuiteBase {
         WriterAppender appender = new WriterAppender(new PatternLayout(), consoleWriter);
         Logger.getLogger(NETWORK_LOGGING_CATEGORY).addAppender(appender);
 
-        AsyncDocumentClient client = clientBuilder.build();
+        AsyncDocumentClient client = this.clientBuilder().build();
         try {
             Document docDefinition = getDocumentDefinition();
             Observable<ResourceResponse<Document>> createObservable = client
@@ -285,7 +285,6 @@ public class LogLevelTest extends TestSuiteBase {
 
     @BeforeMethod(groups = { "simple"})
     public void beforeMethod(Method method) {
-        super.beforeMethod(method);
         LogManager.resetConfiguration();
         PropertyConfigurator.configure(this.getClass().getClassLoader().getResource("log4j.properties"));
     }

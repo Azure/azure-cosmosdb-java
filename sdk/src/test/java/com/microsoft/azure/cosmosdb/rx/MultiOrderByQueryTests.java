@@ -128,7 +128,7 @@ public class MultiOrderByQueryTests extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuilders")
     public MultiOrderByQueryTests(Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @AfterClass(groups = { "simple" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)
@@ -138,7 +138,7 @@ public class MultiOrderByQueryTests extends TestSuiteBase {
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() throws Exception {
-        client = clientBuilder.build();
+        client = this.clientBuilder().build();
         documentCollection = SHARED_MULTI_PARTITION_COLLECTION_WITH_COMPOSITE_AND_SPATIAL_INDEXES;
         truncateCollection(SHARED_MULTI_PARTITION_COLLECTION_WITH_COMPOSITE_AND_SPATIAL_INDEXES);
 
@@ -182,7 +182,7 @@ public class MultiOrderByQueryTests extends TestSuiteBase {
 
         bulkInsertBlocking(client, documentCollection.getSelfLink(), documents);
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(clientBuilder());
     }
 
     private Document generateMultiOrderByDocument() {

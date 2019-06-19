@@ -47,10 +47,10 @@ public class DocumentClientResourceLeakTest extends TestSuiteBase {
 
     @Factory(dataProvider = "simpleClientBuildersWithDirect")
     public DocumentClientResourceLeakTest(Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
-    @Test(groups = {"emulator"}, timeOut = 2 * TIMEOUT)
+    @Test(enabled = false, groups = {"emulator"}, timeOut = TIMEOUT)
     public void resourceLeak() throws Exception {
 
         System.gc();
@@ -59,7 +59,7 @@ public class DocumentClientResourceLeakTest extends TestSuiteBase {
 
         for (int i = 0; i < MAX_NUMBER; i++) {
             logger.info("CLIENT {}", i);
-            client = clientBuilder.build();
+            client = this.clientBuilder().build();
             try {
                 logger.info("creating document");
                 createDocument(client, createdDatabase.getId(), createdCollection.getId(), getDocumentDefinition());
@@ -82,7 +82,7 @@ public class DocumentClientResourceLeakTest extends TestSuiteBase {
         assertThat(usedMemoryInBytesAfter - usedMemoryInBytesBefore).isLessThan(275 * ONE_MB);
     }
 
-    @BeforeClass(groups = {"emulator"}, timeOut = SETUP_TIMEOUT)
+    @BeforeClass(enabled = false, groups = {"emulator"}, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
         createdDatabase = SHARED_DATABASE;
         createdCollection = SHARED_MULTI_PARTITION_COLLECTION;
@@ -91,11 +91,10 @@ public class DocumentClientResourceLeakTest extends TestSuiteBase {
     private Document getDocumentDefinition() {
         String uuid = UUID.randomUUID().toString();
         Document doc = new Document(String.format("{ "
-                                                          + "\"id\": \"%s\", "
-                                                          + "\"mypk\": \"%s\", "
-                                                          + "\"sgmts\": [[6519456, 1471916863], [2498434, 1455671440]]"
-                                                          + "}"
-                , uuid, uuid));
+            + "\"id\": \"%s\", "
+            + "\"mypk\": \"%s\", "
+            + "\"sgmts\": [[6519456, 1471916863], [2498434, 1455671440]]"
+            + "}", uuid, uuid));
         return doc;
     }
 }
