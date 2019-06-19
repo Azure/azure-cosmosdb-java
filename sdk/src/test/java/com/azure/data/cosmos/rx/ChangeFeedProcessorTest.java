@@ -39,6 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Factory;
@@ -48,6 +49,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 import java.time.Duration;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -63,11 +65,11 @@ public class ChangeFeedProcessorTest extends TestSuiteBase {
     private CosmosContainer createdFeedCollection;
     private CosmosContainer createdLeaseCollection;
     private List<CosmosItemProperties> createdDocuments;
-    private static Map<String, CosmosItemProperties> receivedDocuments;
+    private static Map<String, CosmosItemProperties> receivedDocuments = new ConcurrentHashMap<>();
 //    private final String databaseId = "testdb1";
-    private final String databaseId = CosmosDatabaseForTest.generateId();
 //    private final String hostName = "TestHost1";
     private final String hostName = RandomStringUtils.randomAlphabetic(6);
+    private final int FEED_COUNT = 10;
 
     private CosmosClient client;
 
@@ -80,7 +82,7 @@ public class ChangeFeedProcessorTest extends TestSuiteBase {
 
     @Test(groups = { "emulator" }, timeOut = TIMEOUT)
     public void readFeedDocumentsStartFromBeginning() {
-        setupReadFeedDocumentsStartFromBeginning();
+        setupReadFeedDocuments();
 
         Mono<ChangeFeedProcessor> changeFeedProcessorObservable = ChangeFeedProcessor.Builder()
             .hostName(hostName)
@@ -131,30 +133,83 @@ public class ChangeFeedProcessorTest extends TestSuiteBase {
         for (CosmosItemProperties item : createdDocuments) {
             assertThat(receivedDocuments.containsKey(item.id())).as("Document with id: " + item.id()).isTrue();
         }
-
      }
+
+    @Test(groups = { "emulator" }, timeOut = TIMEOUT)
+    public void readFeedDocumentsStartFromCustomDate() {
+        Mono<ChangeFeedProcessor> changeFeedProcessorObservable = ChangeFeedProcessor.Builder()
+            .hostName(hostName)
+            .syncHandleChanges(docs -> {
+                ChangeFeedProcessorTest.log.info("START processing from thread {}", Thread.currentThread().getId());
+                for (CosmosItemProperties item : docs) {
+                    processItem(item);
+                }
+                ChangeFeedProcessorTest.log.info("END processing from thread {}", Thread.currentThread().getId());
+            })
+            .feedContainerClient(createdFeedCollection)
+            .leaseContainerClient(createdLeaseCollection)
+            .options(new ChangeFeedProcessorOptions()
+                .leaseRenewInterval(Duration.ofSeconds(20))
+                .leaseAcquireInterval(Duration.ofSeconds(10))
+                .leaseExpirationInterval(Duration.ofSeconds(30))
+                .feedPollDelay(Duration.ofSeconds(1))
+                .leasePrefix("TEST")
+                .maxItemCount(10)
+                .startTime(OffsetDateTime.now().minusDays(1))
+                .minPartitionCount(1)
+                .maxPartitionCount(3)
+                .discardExistingLeases(true)
+                .queryPartitionsMaxBatchSize(2)
+                .degreeOfParallelism(2)
+            )
+            .build();
+
+        try {
+            changeFeedProcessorObservable.subscribeOn(Schedulers.elastic())
+                .flatMap(processor -> {
+                    changeFeedProcessor = processor;
+                    return changeFeedProcessor.start().subscribeOn(Schedulers.elastic());
+                }).timeout(Duration.ofSeconds(5)).subscribe();
+        } catch (Exception ex) {
+            log.error("Change feed processor did not start in the expected time", ex);
+        }
+
+        setupReadFeedDocuments();
+
+        // Wait for the feed processor to receive and process the documents.
+        long remainingWork = FEED_TIMEOUT;
+        while (remainingWork > 0 && receivedDocuments.size() < FEED_COUNT) {
+            remainingWork -= 5000;
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        assertThat(remainingWork >= 0).as("Failed to receive all the feed documents").isTrue();
+        if (remainingWork <= 0) {
+
+        }
+
+        changeFeedProcessor.stop().subscribeOn(Schedulers.elastic()).timeout(Duration.ofSeconds(10)).subscribe();
+
+        for (CosmosItemProperties item : createdDocuments) {
+            assertThat(receivedDocuments.containsKey(item.id())).as("Document with id: " + item.id()).isTrue();
+        }
+    }
 
      @BeforeMethod(groups = { "emulator" }, timeOut = SETUP_TIMEOUT, alwaysRun = true)
      public void beforeMethod() {
-         receivedDocuments = new ConcurrentHashMap<>();
+         receivedDocuments.clear();
 
-         try {
-             client.getDatabase(databaseId).read()
-                 .map(cosmosDatabaseResponse -> cosmosDatabaseResponse.database())
-                 .flatMap(database -> database.delete())
-                 .onErrorResume(throwable -> {
-                     if (throwable instanceof CosmosClientException) {
-                         CosmosClientException clientException = (CosmosClientException) throwable;
-                         if (clientException.statusCode() == 404) {
-                             return Mono.empty();
-                         }
-                     }
-                     return Mono.error(throwable);
-                 }).block();
-             Thread.sleep(500);
-         } catch (Exception e){
-             log.warn("Database delete", e);
-         }
+         createdFeedCollection = createFeedCollection();
+         createdLeaseCollection = createLeaseCollection();
+     }
+
+    @BeforeClass(groups = { "emulator" }, timeOut = SETUP_TIMEOUT, alwaysRun = true)
+    public void beforeClass() {
+        client = clientBuilder().build();
 
 //        try {
 //            client.listDatabases()
@@ -166,19 +221,31 @@ public class ChangeFeedProcessorTest extends TestSuiteBase {
 //            Thread.sleep(500);
 //        } catch (Exception e){ }
 
-         createdDatabase = createDatabase(client, databaseId);
-         createdFeedCollection = createFeedCollection();
-         createdLeaseCollection = createLeaseCollection();
-     }
-
-    @BeforeClass(groups = { "emulator" }, timeOut = SETUP_TIMEOUT, alwaysRun = true)
-    public void beforeClass() {
-        client = clientBuilder().build();
+//        try {
+//            client.getDatabase(databaseId).read()
+//                .map(cosmosDatabaseResponse -> cosmosDatabaseResponse.database())
+//                .flatMap(database -> database.delete())
+//                .onErrorResume(throwable -> {
+//                    if (throwable instanceof CosmosClientException) {
+//                        CosmosClientException clientException = (CosmosClientException) throwable;
+//                        if (clientException.statusCode() == 404) {
+//                            return Mono.empty();
+//                        }
+//                    }
+//                    return Mono.error(throwable);
+//                }).block();
+//            Thread.sleep(500);
+//        } catch (Exception e){
+//            log.warn("Database delete", e);
+//        }
+//        createdDatabase = createDatabase(client, databaseId);
+        createdDatabase = getSharedCosmosDatabase(client);
     }
 
-    @AfterMethod(groups = { "emulator" }, timeOut = 2 * SHUTDOWN_TIMEOUT, alwaysRun = true)
+    @AfterMethod(groups = { "emulator" }, timeOut = 3 * SHUTDOWN_TIMEOUT, alwaysRun = true)
     public void afterMethod() {
-        safeDeleteDatabase(createdDatabase);
+        safeDeleteCollection(createdFeedCollection);
+        safeDeleteCollection(createdLeaseCollection);
 
         // Allow some time for the collections and the database to be deleted before exiting.
         try {
@@ -186,15 +253,15 @@ public class ChangeFeedProcessorTest extends TestSuiteBase {
         } catch (Exception e){ }
     }
 
-    @AfterClass(groups = { "emulator" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)
+    @AfterClass(groups = { "emulator" }, timeOut = 2 * SHUTDOWN_TIMEOUT, alwaysRun = true)
     public void afterClass() {
         safeClose(client);
     }
 
-    private void setupReadFeedDocumentsStartFromBeginning() {
+    private void setupReadFeedDocuments() {
         List<CosmosItemProperties> docDefList = new ArrayList<>();
 
-        for(int i = 0; i < 10; i++) {
+        for(int i = 0; i < FEED_COUNT; i++) {
             docDefList.add(getDocumentDefinition());
         }
 
