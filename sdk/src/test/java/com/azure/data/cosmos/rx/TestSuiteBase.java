@@ -193,27 +193,29 @@ public class TestSuiteBase extends CosmosClientTest {
 
     @BeforeSuite(groups = {"simple", "long", "direct", "multi-master", "emulator", "non-emulator"}, timeOut = SUITE_SETUP_TIMEOUT)
     public static void beforeSuite() {
+
         logger.info("beforeSuite Started");
-        CosmosClient houseKeepingClient = createGatewayHouseKeepingDocumentClient().build();
-        CosmosDatabaseForTest dbForTest = CosmosDatabaseForTest.create(DatabaseManagerImpl.getInstance(houseKeepingClient));
-        SHARED_DATABASE = dbForTest.createdDatabase;
-        CosmosContainerRequestOptions options = new CosmosContainerRequestOptions();
-        options.offerThroughput(10100);
-        SHARED_MULTI_PARTITION_COLLECTION = createCollection(SHARED_DATABASE, getCollectionDefinitionWithRangeRangeIndex(), options);
-        SHARED_MULTI_PARTITION_COLLECTION_WITH_COMPOSITE_AND_SPATIAL_INDEXES = createCollection(SHARED_DATABASE, getCollectionDefinitionMultiPartitionWithCompositeAndSpatialIndexes(), options);
-        options.offerThroughput(6000);
-        SHARED_SINGLE_PARTITION_COLLECTION = createCollection(SHARED_DATABASE, getCollectionDefinitionWithRangeRangeIndex(), options);
+
+        try (CosmosClient houseKeepingClient = createGatewayHouseKeepingDocumentClient().build()) {
+            CosmosDatabaseForTest dbForTest = CosmosDatabaseForTest.create(DatabaseManagerImpl.getInstance(houseKeepingClient));
+            SHARED_DATABASE = dbForTest.createdDatabase;
+            CosmosContainerRequestOptions options = new CosmosContainerRequestOptions();
+            options.offerThroughput(10100);
+            SHARED_MULTI_PARTITION_COLLECTION = createCollection(SHARED_DATABASE, getCollectionDefinitionWithRangeRangeIndex(), options);
+            SHARED_MULTI_PARTITION_COLLECTION_WITH_COMPOSITE_AND_SPATIAL_INDEXES = createCollection(SHARED_DATABASE, getCollectionDefinitionMultiPartitionWithCompositeAndSpatialIndexes(), options);
+            options.offerThroughput(6000);
+            SHARED_SINGLE_PARTITION_COLLECTION = createCollection(SHARED_DATABASE, getCollectionDefinitionWithRangeRangeIndex(), options);
+        }
     }
 
     @AfterSuite(groups = {"simple", "long", "direct", "multi-master", "emulator", "non-emulator"}, timeOut = SUITE_SHUTDOWN_TIMEOUT)
     public static void afterSuite() {
+
         logger.info("afterSuite Started");
-        CosmosClient houseKeepingClient = createGatewayHouseKeepingDocumentClient().build();
-        try {
+
+        try (CosmosClient houseKeepingClient = createGatewayHouseKeepingDocumentClient().build()) {
             safeDeleteDatabase(SHARED_DATABASE);
             CosmosDatabaseForTest.cleanupStaleTestDatabases(DatabaseManagerImpl.getInstance(houseKeepingClient));
-        } finally {
-            safeClose(houseKeepingClient);
         }
     }
 
