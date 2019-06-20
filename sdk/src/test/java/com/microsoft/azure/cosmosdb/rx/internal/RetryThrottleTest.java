@@ -72,17 +72,18 @@ public class RetryThrottleTest extends TestSuiteBase {
 
     @Test(groups = { "long" }, timeOut = LARGE_TIMEOUT, enabled = false)
     public void retryCreateDocumentsOnSpike() throws Exception {
+
         ConnectionPolicy policy = new ConnectionPolicy();
         RetryOptions retryOptions = new RetryOptions();
         retryOptions.setMaxRetryAttemptsOnThrottledRequests(Integer.MAX_VALUE);
         retryOptions.setMaxRetryWaitTimeInSeconds(LARGE_TIMEOUT);
         policy.setRetryOptions(retryOptions);
 
-        AsyncDocumentClient.Builder builder = new AsyncDocumentClient.Builder()
-                .withServiceEndpoint(TestConfigurations.HOST)
-                .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
-                .withConnectionPolicy(policy)
-                .withConsistencyLevel(ConsistencyLevel.Eventual);
+        AsyncDocumentClient.Builder builder = this.clientBuilder()
+            .withServiceEndpoint(TestConfigurations.HOST)
+            .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
+            .withConnectionPolicy(policy)
+            .withConsistencyLevel(ConsistencyLevel.Eventual);
 
         client = SpyClientUnderTestFactory.createClientWithGatewaySpy(builder);
 
@@ -120,6 +121,7 @@ public class RetryThrottleTest extends TestSuiteBase {
     
     @Test(groups = { "long" }, timeOut = TIMEOUT, enabled = false)
     public void retryDocumentCreate() throws Exception {
+
         client = SpyClientUnderTestFactory.createClientWithGatewaySpy(createGatewayRxDocumentClient());
 
         // create a document to ensure collection is cached

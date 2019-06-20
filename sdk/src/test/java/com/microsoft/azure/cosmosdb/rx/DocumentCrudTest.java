@@ -58,7 +58,7 @@ public class DocumentCrudTest extends TestSuiteBase {
     
     @Factory(dataProvider = "clientBuildersWithDirect")
     public DocumentCrudTest(AsyncDocumentClient.Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @DataProvider(name = "documentCrudArgProvider")
@@ -135,7 +135,7 @@ public class DocumentCrudTest extends TestSuiteBase {
 
         Document createdDocument = TestSuiteBase.createDocument(client, createdDatabase.getId(), createdCollection.getId(), docDefinition);
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(clientBuilder());
 
         RequestOptions options = new RequestOptions();
         options.setPartitionKey(new PartitionKey(sb.toString()));
@@ -181,7 +181,7 @@ public class DocumentCrudTest extends TestSuiteBase {
         Document document = client
                 .createDocument(getCollectionLink(isNameBased), docDefinition, null, false).toBlocking().single().getResource();
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(clientBuilder());
 
         RequestOptions options = new RequestOptions();
         options.setPartitionKey(new PartitionKey(document.get("mypk")));
@@ -201,7 +201,7 @@ public class DocumentCrudTest extends TestSuiteBase {
         Document document = client
                 .createDocument(getCollectionLink(isNameBased), docDefinition, null, false).toBlocking().single().getResource();
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(clientBuilder());
 
         RequestOptions options = new RequestOptions();
         options.setPartitionKey(new PartitionKey(document.get("mypk")));
@@ -225,7 +225,7 @@ public class DocumentCrudTest extends TestSuiteBase {
         options.setPartitionKey(new PartitionKey(document.get("mypk")));
         client.deleteDocument(getDocumentLink(document, isNameBased), options).toBlocking().first();
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(clientBuilder());
 
         options.setPartitionKey(new PartitionKey("looloo"));
         Observable<ResourceResponse<Document>> readObservable = client.readDocument(getDocumentLink(document, isNameBased), options);
@@ -252,7 +252,7 @@ public class DocumentCrudTest extends TestSuiteBase {
         validateSuccess(deleteObservable, validator);
 
         // attempt to read document which was deleted
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(clientBuilder());
 
         Observable<ResourceResponse<Document>> readObservable = client.readDocument(getDocumentLink(document, isNameBased), options);
         FailureValidator notFoundValidator = new FailureValidator.Builder().resourceNotFound().build();
@@ -276,7 +276,7 @@ public class DocumentCrudTest extends TestSuiteBase {
         validateSuccess(deleteObservable, validator);
 
         // attempt to read document which was deleted
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(clientBuilder());
 
         Observable<ResourceResponse<Document>> readObservable = client.readDocument(getDocumentLink(document, isNameBased), options);
         FailureValidator notFoundValidator = new FailureValidator.Builder().resourceNotFound().build();
@@ -357,8 +357,8 @@ public class DocumentCrudTest extends TestSuiteBase {
         try {
             validateSuccess(upsertObservable, validator);
         } catch (Throwable error) {
-            if (this.clientBuilder.configs.getProtocol() == Protocol.Tcp) {
-                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.desiredConsistencyLevel);
+            if (this.clientBuilder().configs.getProtocol() == Protocol.Tcp) {
+                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder().desiredConsistencyLevel);
                 logger.info(message, error);
                 throw new SkipException(message, error);
             }
@@ -387,8 +387,8 @@ public class DocumentCrudTest extends TestSuiteBase {
         try {
             validateSuccess(readObservable, validator);
         } catch (Throwable error) {
-            if (this.clientBuilder.configs.getProtocol() == Protocol.Tcp) {
-                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.desiredConsistencyLevel);
+            if (this.clientBuilder().configs.getProtocol() == Protocol.Tcp) {
+                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder().desiredConsistencyLevel);
                 logger.info(message, error);
                 throw new SkipException(message, error);
             }
@@ -410,7 +410,7 @@ public class DocumentCrudTest extends TestSuiteBase {
     @BeforeMethod(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeMethod() {
         safeClose(client);
-        client = clientBuilder.build();
+        client = this.clientBuilder().build();
     }
     
     private String getCollectionLink(boolean isNameBased) {

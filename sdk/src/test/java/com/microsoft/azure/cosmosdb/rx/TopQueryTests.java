@@ -63,7 +63,7 @@ public class TopQueryTests extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuildersWithDirect")
     public TopQueryTests(AsyncDocumentClient.Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT, dataProvider = "queryMetricsArgProvider", retryAnalyzer = RetryAnalyzer.class
@@ -90,9 +90,8 @@ public class TopQueryTests extends TestSuiteBase {
             try {
                 validateQuerySuccess(queryObservable1, validator1, TIMEOUT);
             } catch (Throwable error) {
-                if (this.clientBuilder.configs.getProtocol() == Protocol.Tcp) {
-                    String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s",
-                            this.clientBuilder.desiredConsistencyLevel);
+                if (this.clientBuilder().configs.getProtocol() == Protocol.Tcp) {
+                    String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder().desiredConsistencyLevel);
                     logger.info(message, error);
                     throw new SkipException(message, error);
                 }
@@ -234,13 +233,13 @@ public class TopQueryTests extends TestSuiteBase {
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() throws Exception {
-        client = clientBuilder.build();
+        client = this.clientBuilder().build();
         createdDatabase = SHARED_DATABASE;
         createdCollection = SHARED_SINGLE_PARTITION_COLLECTION;
         truncateCollection(SHARED_SINGLE_PARTITION_COLLECTION);
 
         bulkInsert(client);
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(clientBuilder());
     }
 }

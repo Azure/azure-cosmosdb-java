@@ -33,6 +33,7 @@ import com.microsoft.azure.cosmosdb.Index;
 import com.microsoft.azure.cosmosdb.IndexingPolicy;
 import com.microsoft.azure.cosmosdb.PartitionKeyDefinition;
 import com.microsoft.azure.cosmosdb.RequestOptions;
+import com.microsoft.azure.cosmosdb.internal.directconnectivity.Protocol;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import com.microsoft.azure.cosmosdb.rx.TestConfigurations;
 import org.apache.commons.lang3.StringUtils;
@@ -56,55 +57,64 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ReadMyWritesConsistencyTest {
+
     private final static Logger logger = LoggerFactory.getLogger(ReadMyWritesConsistencyTest.class);
     private final int initialCollectionThroughput = 10_000;
     private final int newCollectionThroughput = 100_000;
     private final int delayForInitiationCollectionScaleUpInSeconds = 60;
     private final Duration defaultMaxRunningTimeInSeconds = Duration.ofMinutes(45);
 
-    private final String maxRunningTime =
-                    System.getProperty("MAX_RUNNING_TIME", StringUtils.defaultString(Strings.emptyToNull(
-                            System.getenv().get("MAX_RUNNING_TIME")), defaultMaxRunningTimeInSeconds.toString()));
-
     private final AtomicBoolean collectionScaleUpFailed = new AtomicBoolean(false);
+
+    private final String directModeProtocol = System.getProperty("cosmos.directModeProtocol", Protocol.Tcp.name());
+
     private final String desiredConsistency =
-            System.getProperty("DESIRED_CONSISTENCY",
-                               StringUtils.defaultString(Strings.emptyToNull(
-                                       System.getenv().get("DESIRED_CONSISTENCY")), "Session"));
+        System.getProperty("DESIRED_CONSISTENCY",
+            StringUtils.defaultString(Strings.emptyToNull(
+                System.getenv().get("DESIRED_CONSISTENCY")), "Session"));
+
+    private final String maxRunningTime =
+        System.getProperty("MAX_RUNNING_TIME", StringUtils.defaultString(Strings.emptyToNull(
+            System.getenv().get("MAX_RUNNING_TIME")), defaultMaxRunningTimeInSeconds.toString()));
 
     private final String numberOfOperationsAsString =
-            System.getProperty("NUMBER_OF_OPERATIONS",
-                               StringUtils.defaultString(Strings.emptyToNull(
-                                       System.getenv().get("NUMBER_OF_OPERATIONS")), "-1"));
+        System.getProperty("NUMBER_OF_OPERATIONS",
+            StringUtils.defaultString(Strings.emptyToNull(
+                System.getenv().get("NUMBER_OF_OPERATIONS")), "-1"));
 
     private Database database;
     private DocumentCollection collection;
 
     @Test(dataProvider = "collectionLinkTypeArgProvider", groups = "e2e")
     public void readMyWrites(boolean useNameLink) throws Exception {
+
         int concurrency = 5;
+
         String cmdFormat = "-serviceEndpoint %s -masterKey %s" +
-                " -databaseId %s -collectionId %s" +
-                " -consistencyLevel %s -concurrency %d" +
-                " -numberOfOperations %s" +
-                " -maxRunningTimeDuration %s" +
-                " -operation ReadMyWrites -connectionMode Direct -numberOfPreCreatedDocuments 100 " +
-                " -printingInterval 60";
+            " -databaseId %s -collectionId %s" +
+            " -consistencyLevel %s -concurrency %d" +
+            " -numberOfOperations %s" +
+            " -maxRunningTimeDuration %s" +
+            " -operation ReadMyWrites" +
+            " -connectionMode Direct" +
+            " -numberOfPreCreatedDocuments 100" +
+            " -printingInterval 60";
 
         String cmd = String.format(cmdFormat,
-                                   TestConfigurations.HOST,
-                                   TestConfigurations.MASTER_KEY,
-                                   database.getId(),
-                                   collection.getId(),
-                                   desiredConsistency,
-                                   concurrency,
-                                   numberOfOperationsAsString,
-                                   maxRunningTime)
-                + (useNameLink ? " -useNameLink" : "");
+            TestConfigurations.HOST,
+            TestConfigurations.MASTER_KEY,
+            database.getId(),
+            collection.getId(),
+            desiredConsistency,
+            concurrency,
+            numberOfOperationsAsString,
+            maxRunningTime
+        ) + (useNameLink ? " -useNameLink" : "");
 
         Configuration cfg = new Configuration();
-        new JCommander(cfg, StringUtils.split(cmd));
+        JCommander commander = new JCommander(cfg, StringUtils.split(cmd));
 
+        logger.info("cosmos.directModeProtocol={}, {}", directModeProtocol, cfg);
         AtomicInteger success = new AtomicInteger();
         AtomicInteger error = new AtomicInteger();
 
@@ -138,14 +148,19 @@ public class ReadMyWritesConsistencyTest {
 
     @BeforeClass(groups = "e2e")
     public void beforeClass() {
+
+        AsyncDocumentClient housekeepingClient = Utils.housekeepingClient();
+
+        database = Utils.createDatabaseForTest(housekeepingClient);
+
         RequestOptions options = new RequestOptions();
         options.setOfferThroughput(initialCollectionThroughput);
-        AsyncDocumentClient housekeepingClient = Utils.housekeepingClient();
-        database = Utils.createDatabaseForTest(housekeepingClient);
+
         collection = housekeepingClient.createCollection("dbs/" + database.getId(),
-                                                         getCollectionDefinitionWithRangeRangeIndex(),
-                                                         options)
-                .toBlocking().single().getResource();
+            getCollectionDefinitionWithRangeRangeIndex(),
+            options
+        ).toBlocking().single().getResource();
+
         housekeepingClient.close();
     }
 

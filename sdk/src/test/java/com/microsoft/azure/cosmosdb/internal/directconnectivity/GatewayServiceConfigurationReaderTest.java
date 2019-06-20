@@ -81,15 +81,15 @@ public class GatewayServiceConfigurationReaderTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuilders")
     public GatewayServiceConfigurationReaderTest(Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @BeforeClass(groups = "simple")
     public void setup() throws Exception {
-        client = clientBuilder.build();
+        client = this.clientBuilder().build();
         mockHttpClient = (CompositeHttpClient<ByteBuf, ByteBuf>) Mockito.mock(CompositeHttpClient.class);
 
-        ClientUnderTest clientUnderTest = SpyClientUnderTestFactory.createClientUnderTest(this.clientBuilder);
+        ClientUnderTest clientUnderTest = SpyClientUnderTestFactory.createClientUnderTest(this.clientBuilder());
         httpClient = clientUnderTest.getSpyHttpClient();
         baseAuthorizationTokenProvider = new BaseAuthorizationTokenProvider(TestConfigurations.MASTER_KEY);
         connectionPolicy = ConnectionPolicy.GetDefault();

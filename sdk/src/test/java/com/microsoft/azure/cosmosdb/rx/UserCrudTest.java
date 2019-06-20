@@ -52,7 +52,7 @@ public class UserCrudTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuilders")
     public UserCrudTest(AsyncDocumentClient.Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "emulator" }, timeOut = TIMEOUT)
@@ -198,7 +198,7 @@ public class UserCrudTest extends TestSuiteBase {
 
     @BeforeClass(groups = { "emulator" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
-        client = clientBuilder.build();
+        client = this.clientBuilder().build();
         Database d = new Database();
         d.setId(databaseId);
         createdDatabase = createDatabase(client, d);
