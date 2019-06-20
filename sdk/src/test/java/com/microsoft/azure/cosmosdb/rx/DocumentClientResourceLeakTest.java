@@ -55,10 +55,6 @@ public class DocumentClientResourceLeakTest extends TestSuiteBase {
     @Test(enabled = false, groups = {"emulator"}, timeOut = TIMEOUT)
     public void resourceLeak() throws Exception {
 
-        if (clientBuilder.configs.getProtocol() == Protocol.Tcp) {
-            throw new SkipException("TODO: enable test for TCP");
-        }
-
         System.gc();
         TimeUnit.SECONDS.sleep(10);
         long usedMemoryInBytesBefore = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory());
