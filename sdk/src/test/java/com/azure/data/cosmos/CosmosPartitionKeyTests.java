@@ -56,7 +56,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class CosmosPartitionKeyTests extends TestSuiteBase {
+public final class CosmosPartitionKeyTests extends TestSuiteBase {
 
     private final static String NON_PARTITIONED_CONTAINER_ID = "NonPartitionContainer" + UUID.randomUUID().toString();
     private final static String NON_PARTITIONED_CONTAINER_DOCUEMNT_ID = "NonPartitionContainer_Document" + UUID.randomUUID().toString();
@@ -71,14 +71,15 @@ public class CosmosPartitionKeyTests extends TestSuiteBase {
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() throws URISyntaxException, IOException {
+        assertThat(this.client).isNull();
         client = clientBuilder().build();
         createdDatabase = getSharedCosmosDatabase(client);
     }
 
     @AfterClass(groups = { "simple" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)
     public void afterClass() {
-        safeDeleteDatabase(createdDatabase);
-        safeClose(client);
+        assertThat(this.client).isNotNull();
+        this.client.close();
     }
 
     private void createContainerWithoutPk() throws URISyntaxException, IOException {
