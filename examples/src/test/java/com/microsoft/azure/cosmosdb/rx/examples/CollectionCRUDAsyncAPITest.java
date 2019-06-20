@@ -29,6 +29,7 @@ import com.microsoft.azure.cosmosdb.ConsistencyLevel;
 import com.microsoft.azure.cosmosdb.DataType;
 import com.microsoft.azure.cosmosdb.Database;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.DocumentClientTest;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.IncludedPath;
@@ -83,13 +84,14 @@ import static org.hamcrest.Matchers.greaterThan;
  * update the corresponding Offer. Please see
  * {@see com.microsoft.azure.cosmosdb.rx.examples.OfferCRUDAsyncAPITest#testUpdateOffer()}
  */
-public class CollectionCRUDAsyncAPITest extends TestBase {
+public class CollectionCRUDAsyncAPITest extends DocumentClientTest {
 
     private final static int TIMEOUT = 120000;
-    private static Database createdDatabase;
 
     private AsyncDocumentClient client;
     private DocumentCollection collectionDefinition;
+    private Database createdDatabase;
+
 
     @BeforeClass(groups = "samples", timeOut = TIMEOUT)
     public void setUp() {
@@ -97,13 +99,13 @@ public class CollectionCRUDAsyncAPITest extends TestBase {
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
         connectionPolicy.setConnectionMode(ConnectionMode.Direct);
 
-        this.builder = new Builder()
-                .withServiceEndpoint(TestConfigurations.HOST)
-                .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
-                .withConnectionPolicy(connectionPolicy)
-                .withConsistencyLevel(ConsistencyLevel.Session);
+        this.client = this.clientBuilder()
+            .withServiceEndpoint(TestConfigurations.HOST)
+            .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
+            .withConnectionPolicy(connectionPolicy)
+            .withConsistencyLevel(ConsistencyLevel.Session)
+            .build();
 
-        this.client = this.builder.build();
         createdDatabase = Utils.createDatabaseForTest(this.client);
     }
 

@@ -28,6 +28,7 @@ import com.microsoft.azure.cosmosdb.ConnectionPolicy;
 import com.microsoft.azure.cosmosdb.ConsistencyLevel;
 import com.microsoft.azure.cosmosdb.DataType;
 import com.microsoft.azure.cosmosdb.Database;
+import com.microsoft.azure.cosmosdb.DocumentClientTest;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.IncludedPath;
 import com.microsoft.azure.cosmosdb.Index;
@@ -58,7 +59,7 @@ import static org.hamcrest.core.Is.is;
  * This integration test class demonstrates how to use Async API to create
  * and execute Stored Procedures.
  */
-public class StoredProcedureAsyncAPITest extends TestBase {
+public class StoredProcedureAsyncAPITest extends DocumentClientTest {
     private final static int TIMEOUT = 60000;
 
     private AsyncDocumentClient client;
@@ -71,13 +72,12 @@ public class StoredProcedureAsyncAPITest extends TestBase {
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
         connectionPolicy.setConnectionMode(ConnectionMode.Direct);
 
-        this.builder = new AsyncDocumentClient.Builder()
-                .withServiceEndpoint(TestConfigurations.HOST)
-                .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
-                .withConnectionPolicy(connectionPolicy)
-                .withConsistencyLevel(ConsistencyLevel.Session);
-
-        this.client = this.builder.build();
+        this.client = this.clientBuilder()
+            .withServiceEndpoint(TestConfigurations.HOST)
+            .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
+            .withConnectionPolicy(connectionPolicy)
+            .withConsistencyLevel(ConsistencyLevel.Session)
+            .build();
 
         createdDatabase = Utils.createDatabaseForTest(client);
 

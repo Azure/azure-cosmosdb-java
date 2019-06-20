@@ -27,6 +27,7 @@ import com.microsoft.azure.cosmosdb.ConnectionMode;
 import com.microsoft.azure.cosmosdb.ConnectionPolicy;
 import com.microsoft.azure.cosmosdb.Database;
 import com.microsoft.azure.cosmosdb.DatabaseForTest;
+import com.microsoft.azure.cosmosdb.DocumentClientTest;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.ResourceResponse;
@@ -37,24 +38,24 @@ import com.microsoft.azure.cosmosdb.rx.TestConfigurations;
 import org.testng.annotations.AfterSuite;
 import rx.Observable;
 
-public class Utils {
+public class Utils extends DocumentClientTest {
 
     @AfterSuite(groups = "samples")
     public void cleanupStaleDatabase() {
+
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
         connectionPolicy.setConnectionMode(ConnectionMode.Direct);
         RetryOptions options = new RetryOptions();
         connectionPolicy.setRetryOptions(options);
-        AsyncDocumentClient client = new AsyncDocumentClient.Builder().withServiceEndpoint(TestConfigurations.HOST)
-                .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
-                .withConnectionPolicy(connectionPolicy)
-                .build();
+
+        AsyncDocumentClient client = this.clientBuilder()
+            .withServiceEndpoint(TestConfigurations.HOST)
+            .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
+            .withConnectionPolicy(connectionPolicy)
+            .build();
+
         safeCleanDatabases(client);
         client.close();
-    }
-
-    public static String getCollectionLink(Database db, DocumentCollection collection) {
-        return "dbs/" + db.getId() + "/colls/" + collection;
     }
 
     public static Database createDatabaseForTest(AsyncDocumentClient client) {

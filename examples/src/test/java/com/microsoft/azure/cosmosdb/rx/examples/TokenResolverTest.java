@@ -30,6 +30,7 @@ import com.microsoft.azure.cosmosdb.ConsistencyLevel;
 import com.microsoft.azure.cosmosdb.CosmosResourceType;
 import com.microsoft.azure.cosmosdb.Database;
 import com.microsoft.azure.cosmosdb.Document;
+import com.microsoft.azure.cosmosdb.DocumentClientTest;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.Permission;
 import com.microsoft.azure.cosmosdb.PermissionMode;
@@ -55,7 +56,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
 
-public class TokenResolverTest extends TestBase {
+public class TokenResolverTest extends DocumentClientTest {
 
     private final static int TIMEOUT = 60000;
     private final static String USER_ID = "userId";
@@ -80,13 +81,12 @@ public class TokenResolverTest extends TestBase {
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
         connectionPolicy.setConnectionMode(ConnectionMode.Direct);
 
-        this.builder = new AsyncDocumentClient.Builder()
-                .withServiceEndpoint(TestConfigurations.HOST)
-                .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
-                .withConnectionPolicy(connectionPolicy)
-                .withConsistencyLevel(ConsistencyLevel.Session);
-
-        this.client = this.builder.build();
+        this.client = this.clientBuilder()
+            .withServiceEndpoint(TestConfigurations.HOST)
+            .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
+            .withConnectionPolicy(connectionPolicy)
+            .withConsistencyLevel(ConsistencyLevel.Session)
+            .build();
 
         DocumentCollection collectionDefinition = new DocumentCollection();
         collectionDefinition.setId(UUID.randomUUID().toString());
@@ -173,8 +173,9 @@ public class TokenResolverTest extends TestBase {
                     capturedResponse.add(resourceResponse);
                 });
             }
-            // TODO: DANOBLE: Reduce wait time to 2 seconds.
-            //   link: [Direct TCP: Implement health check requests #119](https://github.com/Azure/azure-cosmosdb-java/issues/119)
+            // TODO: DANOBLE: Reduce sleep interval before completing Direct TCP: Implement health check requests #119
+            //  Emulator runs often timeout on this test, especially in Standard_D2_V2 CI environments
+            //  link: https://github.com/Azure/azure-cosmosdb-java/issues/119
             Thread.sleep(8 * 2000);
             System.out.println("capturedResponse.size() = " + capturedResponse.size());
             assertThat(capturedResponse, hasSize(10));
@@ -216,9 +217,10 @@ public class TokenResolverTest extends TestBase {
                     capturedResponse.add(resourceResponse);
                 });
             }
-            // TODO: DANOBLE: Reduce wait time to 2 seconds.
-            //  link: [Direct TCP: Implement health check requests #119](https://github.com/Azure/azure-cosmosdb-java/issues/119)
-            Thread.sleep(8 * 2000);
+            // TODO: DANOBLE: Reduce sleep interval before completing Direct TCP: Implement health check requests #119
+            //  Emulator runs often timeout on this test, notably in Standard_D2_V2 CI environments
+            //  link: https://github.com/Azure/azure-cosmosdb-java/issues/119
+            Thread.sleep(16 * 2000);
             assertThat(capturedResponse, hasSize(10));
         } finally {
             Utils.safeClose(asyncClientWithTokenResolver);

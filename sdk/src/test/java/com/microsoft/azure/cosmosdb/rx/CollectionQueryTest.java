@@ -56,7 +56,7 @@ public class CollectionQueryTest extends TestSuiteBase {
     
     @Factory(dataProvider = "clientBuilders")
     public CollectionQueryTest(Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
         this.subscriberValidationTimeout = TIMEOUT;
     }
 
@@ -134,7 +134,7 @@ public class CollectionQueryTest extends TestSuiteBase {
     
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() throws Exception {
-        client = clientBuilder.build();
+        client = this.clientBuilder().build();
         createDatabase(client, databaseId);
 
         DocumentCollection collection = new DocumentCollection();
