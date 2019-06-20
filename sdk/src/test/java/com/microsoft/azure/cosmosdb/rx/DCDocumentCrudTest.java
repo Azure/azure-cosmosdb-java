@@ -70,7 +70,7 @@ public class DCDocumentCrudTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuildsForSessionOnlyDirect")
     public DCDocumentCrudTest(Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "direct" }, timeOut = TIMEOUT)
@@ -134,7 +134,7 @@ public class DCDocumentCrudTest extends TestSuiteBase {
         Document document = client.createDocument(getCollectionLink(), docDefinition, null, false).toBlocking().single().getResource();
 
         // give times to replicas to catch up after a write
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(clientBuilder());
 
         String pkValue = document.getString(PARTITION_KEY_FIELD_NAME);
 
@@ -168,7 +168,7 @@ public class DCDocumentCrudTest extends TestSuiteBase {
             .getResource();
 
         // give times to replicas to catch up after a write
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(clientBuilder());
 
         String pkValue = document.getString(PARTITION_KEY_FIELD_NAME);
         RequestOptions options = new RequestOptions();
@@ -190,7 +190,7 @@ public class DCDocumentCrudTest extends TestSuiteBase {
     public void crossPartitionQuery() {
 
         truncateCollection(createdCollection);
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(clientBuilder());
 
         client.getCapturedRequests().clear();
 
@@ -203,7 +203,7 @@ public class DCDocumentCrudTest extends TestSuiteBase {
 
         documentList = bulkInsert(client, getCollectionLink(), documentList).map(ResourceResponse::getResource).toList().toBlocking().single();
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(clientBuilder());
 
         FeedOptions options = new FeedOptions();
         options.setEnableCrossPartitionQuery(true);
@@ -221,8 +221,8 @@ public class DCDocumentCrudTest extends TestSuiteBase {
             // validates only the first query for fetching query plan goes to gateway.
             assertThat(client.getCapturedRequests().stream().filter(r -> r.getResourceType() == ResourceType.Document)).hasSize(1);
         } catch (Throwable error) {
-            if (clientBuilder.configs.getProtocol() == Protocol.Tcp) {
-                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.desiredConsistencyLevel);
+            if (this.clientBuilder().configs.getProtocol() == Protocol.Tcp) {
+                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder().desiredConsistencyLevel);
                 logger.info(message, error);
                 throw new SkipException(message, error);
             }
@@ -285,7 +285,7 @@ public class DCDocumentCrudTest extends TestSuiteBase {
         options.setOfferThroughput(10100);
         createdDatabase = SHARED_DATABASE;
         createdCollection = createCollection(createdDatabase.getId(), getCollectionDefinition(), options);
-        client = SpyClientUnderTestFactory.createClientWithGatewaySpy(clientBuilder);
+        client = SpyClientUnderTestFactory.createClientWithGatewaySpy(clientBuilder());
 
         assertThat(client.getCapturedRequests()).isNotEmpty();
     }
@@ -297,7 +297,6 @@ public class DCDocumentCrudTest extends TestSuiteBase {
 
     @BeforeMethod(groups = { "direct" })
     public void beforeMethod(Method method) {
-        super.beforeMethod(method);
         client.getCapturedRequests().clear();
     }
 

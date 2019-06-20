@@ -46,7 +46,7 @@ public class ReadFeedPkrTests extends TestSuiteBase {
     
     @Factory(dataProvider = "clientBuildersWithDirect")
     public ReadFeedPkrTests(AsyncDocumentClient.Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "emulator" }, timeOut = FEED_TIMEOUT)
@@ -70,7 +70,7 @@ public class ReadFeedPkrTests extends TestSuiteBase {
         createdCollection = createCollection(createdDatabase.getId(),
                                              getCollectionDefinition(),
                                              null);
-        client = clientBuilder.build();
+        client = this.clientBuilder().build();
     }
 
     @AfterClass(groups = { "emulator" }, timeOut = SETUP_TIMEOUT, alwaysRun = true)

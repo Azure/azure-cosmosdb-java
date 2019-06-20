@@ -71,7 +71,7 @@ public class ParallelDocumentQueryTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuildersWithDirect")
     public ParallelDocumentQueryTest(AsyncDocumentClient.Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @DataProvider(name = "queryMetricsArgProvider")
@@ -107,8 +107,8 @@ public class ParallelDocumentQueryTest extends TestSuiteBase {
         try {
             validateQuerySuccess(queryObservable, validator, TIMEOUT);
         } catch (Throwable error) {
-            if (this.clientBuilder.configs.getProtocol() == Protocol.Tcp) {
-                String message = String.format(String.format("Direct TCP test failure: desiredConsistencyLevel=%s", this.clientBuilder.desiredConsistencyLevel));
+            if (this.clientBuilder().configs.getProtocol() == Protocol.Tcp) {
+                String message = String.format(String.format("Direct TCP test failure: desiredConsistencyLevel=%s", this.clientBuilder().desiredConsistencyLevel));
                 logger.info(message, error);
                 throw new SkipException(message, error);
             }
@@ -200,8 +200,8 @@ public class ParallelDocumentQueryTest extends TestSuiteBase {
         try {
             validateQuerySuccess(queryObservable, validator, 2 * subscriberValidationTimeout);
         } catch (Throwable error) {
-            if (this.clientBuilder.configs.getProtocol() == Protocol.Tcp) {
-                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.desiredConsistencyLevel);
+            if (this.clientBuilder().configs.getProtocol() == Protocol.Tcp) {
+                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder().desiredConsistencyLevel);
                 logger.info(message, error);
                 throw new SkipException(message, error);
             }
@@ -257,8 +257,8 @@ public class ParallelDocumentQueryTest extends TestSuiteBase {
                 sum += queryResultCount;
             }
         } catch (Throwable error) {
-            if (this.clientBuilder.configs.getProtocol() == Protocol.Tcp) {
-                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.desiredConsistencyLevel);
+            if (this.clientBuilder().configs.getProtocol() == Protocol.Tcp) {
+                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder().desiredConsistencyLevel);
                 logger.info(message, error);
                 throw new SkipException(message, error);
             }
@@ -319,7 +319,7 @@ public class ParallelDocumentQueryTest extends TestSuiteBase {
 	
     @BeforeClass(groups = { "simple", "non-emulator" }, timeOut = 2 * SETUP_TIMEOUT)
     public void beforeClass() {
-        client = clientBuilder.build();
+        client = this.clientBuilder().build();
         createdDatabase = SHARED_DATABASE;
         createdCollection = SHARED_MULTI_PARTITION_COLLECTION;
         truncateCollection(SHARED_MULTI_PARTITION_COLLECTION);
@@ -334,7 +334,7 @@ public class ParallelDocumentQueryTest extends TestSuiteBase {
 
         createdDocuments = bulkInsertBlocking(client, getCollectionLink(), docDefList);
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(clientBuilder());
     }
 
     @AfterClass(groups = { "simple", "non-emulator" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)

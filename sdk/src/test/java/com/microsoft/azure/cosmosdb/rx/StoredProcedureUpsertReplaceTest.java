@@ -53,7 +53,7 @@ public class StoredProcedureUpsertReplaceTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuildersWithDirect")
     public StoredProcedureUpsertReplaceTest(AsyncDocumentClient.Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
@@ -66,7 +66,7 @@ public class StoredProcedureUpsertReplaceTest extends TestSuiteBase {
         StoredProcedure readBackSp = client.upsertStoredProcedure(getCollectionLink(), storedProcedureDef, null).toBlocking().single().getResource();
 
         //read back stored procedure
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(clientBuilder());
         Observable<ResourceResponse<StoredProcedure>> readObservable = client.readStoredProcedure(readBackSp.getSelfLink(), null);
 
         // validate stored procedure creation
@@ -101,7 +101,7 @@ public class StoredProcedureUpsertReplaceTest extends TestSuiteBase {
         StoredProcedure readBackSp = client.createStoredProcedure(getCollectionLink(), storedProcedureDef, null).toBlocking().single().getResource();
 
         // read stored procedure to validate creation
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(clientBuilder());
         Observable<ResourceResponse<StoredProcedure>> readObservable = client.readStoredProcedure(readBackSp.getSelfLink(), null);
 
         // validate stored procedure creation
@@ -145,8 +145,8 @@ public class StoredProcedureUpsertReplaceTest extends TestSuiteBase {
         try {
             storedProcedure = client.createStoredProcedure(getCollectionLink(), storedProcedureDef, null).toBlocking().single().getResource();
         } catch (Throwable error) {
-            if (this.clientBuilder.configs.getProtocol() == Protocol.Tcp) {
-                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.desiredConsistencyLevel);
+            if (this.clientBuilder().configs.getProtocol() == Protocol.Tcp) {
+                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder().desiredConsistencyLevel);
                 logger.info(message, error);
                 throw new SkipException(message, error);
             }
@@ -158,8 +158,8 @@ public class StoredProcedureUpsertReplaceTest extends TestSuiteBase {
         try {
             result = client.executeStoredProcedure(storedProcedure.getSelfLink(), null).toBlocking().single().getResponseAsString();
         } catch (Throwable error) {
-            if (this.clientBuilder.configs.getProtocol() == Protocol.Tcp) {
-                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.desiredConsistencyLevel);
+            if (this.clientBuilder().configs.getProtocol() == Protocol.Tcp) {
+                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder().desiredConsistencyLevel);
                 logger.info(message, error);
                 throw new SkipException(message, error);
             }
@@ -171,7 +171,7 @@ public class StoredProcedureUpsertReplaceTest extends TestSuiteBase {
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
-        client = clientBuilder.build();
+        client = this.clientBuilder().build();
 
         createdDatabase = SHARED_DATABASE;
         createdCollection = SHARED_SINGLE_PARTITION_COLLECTION_WITHOUT_PARTITION_KEY;

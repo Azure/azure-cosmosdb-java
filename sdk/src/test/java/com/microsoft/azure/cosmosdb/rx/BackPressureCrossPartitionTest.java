@@ -108,7 +108,7 @@ public class BackPressureCrossPartitionTest extends TestSuiteBase {
 
     @Factory(dataProvider = "simpleClientBuildersWithDirect")
     public BackPressureCrossPartitionTest(Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     private void warmUp() {
@@ -174,8 +174,8 @@ public class BackPressureCrossPartitionTest extends TestSuiteBase {
                 i++;
             }
         } catch (Throwable error) {
-            if (this.clientBuilder.configs.getProtocol() == Protocol.Tcp) {
-                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.desiredConsistencyLevel);
+            if (this.clientBuilder().configs.getProtocol() == Protocol.Tcp) {
+                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder().desiredConsistencyLevel);
                 logger.info(message, error);
                 throw new SkipException(message, error);
             }
@@ -187,8 +187,8 @@ public class BackPressureCrossPartitionTest extends TestSuiteBase {
             subscriber.assertCompleted();
             assertThat(subscriber.getOnNextEvents().stream().mapToInt(p -> p.getResults().size()).sum()).isEqualTo(expectedNumberOfResults);
         } catch (Throwable error) {
-            if (this.clientBuilder.configs.getProtocol() == Protocol.Tcp) {
-                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.desiredConsistencyLevel);
+            if (this.clientBuilder().configs.getProtocol() == Protocol.Tcp) {
+                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder().desiredConsistencyLevel);
                 logger.info(message, error);
                 throw new SkipException(message, error);
             }
@@ -203,7 +203,7 @@ public class BackPressureCrossPartitionTest extends TestSuiteBase {
         createdDatabase = SHARED_DATABASE;
         createdCollection = createCollection(createdDatabase.getId(), getCollectionDefinition(), options);
 
-        client = new ClientUnderTestBuilder(clientBuilder).build();
+        client = new ClientUnderTestBuilder(clientBuilder()).build();
 
         ArrayList<Document> docDefList = new ArrayList<>();
         for(int i = 0; i < numberOfDocs; i++) {
@@ -221,7 +221,7 @@ public class BackPressureCrossPartitionTest extends TestSuiteBase {
         numberOfPartitions = client.readPartitionKeyRanges(getCollectionLink(), null)
                 .flatMap(p -> Observable.from(p.getResults())).toList().toBlocking().single().size();
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(clientBuilder());
         warmUp();
     }
 

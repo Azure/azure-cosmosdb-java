@@ -64,7 +64,7 @@ public class SessionTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuildersWithDirectSession")
     public SessionTest(AsyncDocumentClient.Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
         this.subscriberValidationTimeout = TIMEOUT;
     }
 
@@ -85,13 +85,13 @@ public class SessionTest extends TestSuiteBase {
         collection.setId(collectionId);
         createdCollection = createCollection(createGatewayHouseKeepingDocumentClient().build(), createdDatabase.getId(),
                 collection, null);
-        houseKeepingClient = clientBuilder.build();
+        houseKeepingClient = clientBuilder().build();
         connectionMode = houseKeepingClient.getConnectionPolicy().getConnectionMode();
 
         if (connectionMode == ConnectionMode.Direct) {
-            spyClient = SpyClientUnderTestFactory.createDirectHttpsClientUnderTest(clientBuilder);
+            spyClient = SpyClientUnderTestFactory.createDirectHttpsClientUnderTest(clientBuilder());
         } else {
-            spyClient = SpyClientUnderTestFactory.createClientUnderTest(clientBuilder);
+            spyClient = SpyClientUnderTestFactory.createClientUnderTest(clientBuilder());
         }
     }
 
@@ -105,7 +105,6 @@ public class SessionTest extends TestSuiteBase {
 
     @BeforeMethod(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeTest(Method method) {
-        super.beforeMethod(method);
         spyClient.clearCapturedRequests();
     }
 

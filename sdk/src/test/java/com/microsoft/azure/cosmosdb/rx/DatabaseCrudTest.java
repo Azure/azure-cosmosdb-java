@@ -49,7 +49,7 @@ public class DatabaseCrudTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuilders")
     public DatabaseCrudTest(Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "emulator" }, timeOut = TIMEOUT)
@@ -138,7 +138,7 @@ public class DatabaseCrudTest extends TestSuiteBase {
 
     @BeforeClass(groups = { "emulator" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
-        client = clientBuilder.build();
+        client = this.clientBuilder().build();
         createDatabase(client, preExistingDatabaseId);
     }
 
