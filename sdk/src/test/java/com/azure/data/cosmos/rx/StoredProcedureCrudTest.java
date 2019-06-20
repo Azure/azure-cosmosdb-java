@@ -117,7 +117,6 @@ public class StoredProcedureCrudTest extends TestSuiteBase {
         assertThat(this.client).isNull();
         this.client = clientBuilder().build();
         this.container = getSharedMultiPartitionCosmosContainer(this.client);
-        this.client.createDatabaseIfNotExists(this.container.getDatabase().id());
     }
 
     @AfterClass(groups = { "simple" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)
