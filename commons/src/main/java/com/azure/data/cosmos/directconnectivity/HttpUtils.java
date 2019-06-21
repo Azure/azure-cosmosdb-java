@@ -37,7 +37,6 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -77,7 +76,7 @@ public class HttpUtils {
 
     public static Map<String, String> asMap(HttpHeaders headers) {
         if (headers == null) {
-            return Collections.emptyMap();
+            return new HashMap<>();
         }
         HashMap<String, String> map = new HashMap<>(headers.size());
         for (Entry<String, String> entry : headers.toMap().entrySet()) {

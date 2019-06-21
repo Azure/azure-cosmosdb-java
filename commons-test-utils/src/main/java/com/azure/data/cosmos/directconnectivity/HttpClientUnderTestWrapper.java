@@ -33,8 +33,6 @@ import java.util.List;
 
 import static org.mockito.Mockito.doAnswer;
 
-;
-
 /**
  * This is a helper class for capturing requests sent over a httpClient.
  */

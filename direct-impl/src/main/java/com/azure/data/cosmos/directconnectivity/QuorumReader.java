@@ -38,7 +38,6 @@ import com.azure.data.cosmos.internal.RxDocumentServiceRequest;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -162,7 +161,7 @@ public class QuorumReader {
                                 try {
                                             return Flux.just(secondaryQuorumReadResult.getResponse());
                                 } catch (CosmosClientException e) {
-                                    throw Exceptions.propagate(e);
+                                    return Flux.error(e);
                                 }
 
                             case QuorumSelected:
@@ -188,7 +187,7 @@ public class QuorumReader {
                                                 try {
                                                                 return Flux.just(secondaryQuorumReadResult.getResponse());
                                                 } catch (Exception e) {
-                                                    throw Exceptions.propagate(e);
+                                                    return Flux.error(e);
                                                 }
                                             }
 
@@ -214,7 +213,7 @@ public class QuorumReader {
                             case QuorumNotSelected:
                                 if (hasPerformedReadFromPrimary.v) {
                                     logger.warn("QuorumNotSelected: Primary read already attempted. Quorum could not be selected after retrying on secondaries.");
-                                    throw Exceptions.propagate(new GoneException(RMResources.ReadQuorumNotMet));
+                                    return Flux.error(new GoneException(RMResources.ReadQuorumNotMet));
                                 }
 
                                 logger.warn("QuorumNotSelected: Quorum could not be selected with read quorum of {}", readQuorumValue);
@@ -230,7 +229,7 @@ public class QuorumReader {
                                             try {
                                                             return Flux.just(response.getResponse());
                                             } catch (CosmosClientException e) {
-                                                throw Exceptions.propagate(e);
+                                                return Flux.error(e);
                                             }
                                         } else if (response.shouldRetryOnSecondary) {
                                             shouldRetryOnSecondary.v = true;
@@ -238,7 +237,7 @@ public class QuorumReader {
                                             hasPerformedReadFromPrimary.v = true;
                                         } else {
                                             logger.warn("QuorumNotSelected: Could not get successful response from ReadPrimary");
-                                            throw Exceptions.propagate(new GoneException(String.format(RMResources.ReadQuorumNotMet, readQuorumValue)));
+                                            return Flux.error(new GoneException(String.format(RMResources.ReadQuorumNotMet, readQuorumValue)));
                                         }
 
                                                     return Flux.empty();
@@ -248,7 +247,7 @@ public class QuorumReader {
 
                             default:
                                 logger.error("Unknown ReadQuorum result {}", secondaryQuorumReadResult.quorumResult.toString());
-                                throw Exceptions.propagate(new InternalServerErrorException(RMResources.InternalServerError));
+                                return Flux.error(new InternalServerErrorException(RMResources.InternalServerError));
                         }
 
                     });
@@ -478,7 +477,7 @@ public class QuorumReader {
 
         return Flux.defer(() -> {
             if (barrierRequest.requestContext.timeoutHelper.isElapsed()) {
-                throw Exceptions.propagate(new GoneException());
+                return Flux.error(new GoneException());
             }
 
             // We would have already refreshed address before reaching here. Avoid performing here.
@@ -492,7 +491,7 @@ public class QuorumReader {
                         try {
                                 return Flux.error(storeResult.getException());
                         } catch (InternalServerErrorException e) {
-                            throw Exceptions.propagate(e);
+                            return Flux.error(e);
                         }
                     }
 

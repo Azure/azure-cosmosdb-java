@@ -42,7 +42,7 @@ class DocDBUtils {
                         new SqlParameterCollection(new SqlParameter("@id", databaseId))), null)
                 .single().block();
 
-        if (feedResponsePages == null || feedResponsePages.results().isEmpty()) {
+        if (feedResponsePages.results().isEmpty()) {
             throw new RuntimeException("cannot find datatbase " + databaseId);
         }
         return feedResponsePages.results().get(0);
@@ -57,7 +57,7 @@ class DocDBUtils {
                         null)
                 .single().block();
 
-        if (feedResponsePages == null || feedResponsePages.results().isEmpty()) {
+        if (feedResponsePages.results().isEmpty()) {
             throw new RuntimeException("cannot find collection " + collectionId);
         }
         return feedResponsePages.results().get(0);

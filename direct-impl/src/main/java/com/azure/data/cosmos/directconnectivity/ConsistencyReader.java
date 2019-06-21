@@ -37,7 +37,6 @@ import com.azure.data.cosmos.internal.RequestChargeTracker;
 import com.azure.data.cosmos.internal.RxDocumentServiceRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
 
 import java.util.HashMap;
@@ -271,7 +270,7 @@ public class ConsistencyReader {
             try {
                 return Mono.just(response.toResponse());
             } catch (CosmosClientException e) {
-                throw Exceptions.propagate(e);
+                return Mono.error(e);
             }
         });
     }
@@ -295,7 +294,7 @@ public class ConsistencyReader {
             try {
                         return Mono.just(responses.get(0).toResponse());
             } catch (CosmosClientException e) {
-                throw Exceptions.propagate(e);
+                return Mono.error(e);
             }
                 }
         );
@@ -333,10 +332,10 @@ public class ConsistencyReader {
                         }
                         return Mono.error(notFoundException);
                     } catch (CosmosClientException e) {
-                        throw Exceptions.propagate(e);
+                        return Mono.error(e);
                     }
                 } catch (CosmosClientException dce) {
-                    throw Exceptions.propagate(dce);
+                    return Mono.error(dce);
                 }
 
             }
