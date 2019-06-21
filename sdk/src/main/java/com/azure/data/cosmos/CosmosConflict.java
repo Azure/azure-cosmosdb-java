@@ -22,8 +22,6 @@
  */
 package com.azure.data.cosmos;
 
-import hu.akarnokd.rxjava.interop.RxJavaInterop;
-import reactor.adapter.rxjava.RxJava2Adapter;
 import reactor.core.publisher.Mono;
 
 import static com.azure.data.cosmos.internal.Paths.CONFLICTS_PATH_SEGMENT;
@@ -34,7 +32,8 @@ public class CosmosConflict extends CosmosResource {
 
     /**
      * Constructor
-     * @param id the conflict id
+     * 
+     * @param id        the conflict id
      * @param container the container
      */
     CosmosConflict(String id, CosmosContainer container) {
@@ -45,46 +44,42 @@ public class CosmosConflict extends CosmosResource {
     /**
      * Reads a conflict.
      * <p>
-     * After subscription the operation will be performed.
-     * The {@link Mono} upon successful completion will contain a single resource response with the read conflict.
-     * In case of failure the {@link Mono} will error.
+     * After subscription the operation will be performed. The {@link Mono} upon
+     * successful completion will contain a single resource response with the read
+     * conflict. In case of failure the {@link Mono} will error.
      *
-     * @param options      the request options.
-     * @return a {@link Mono} containing the single resource response with the read conflict or an error.
+     * @param options the request options.
+     * @return a {@link Mono} containing the single resource response with the read
+     *         conflict or an error.
      */
-    public Mono<CosmosConflictResponse> read(CosmosConflictRequestOptions options){
-        if(options == null){
+    public Mono<CosmosConflictResponse> read(CosmosConflictRequestOptions options) {
+        if (options == null) {
             options = new CosmosConflictRequestOptions();
         }
         RequestOptions requestOptions = options.toRequestOptions();
-        return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(this.container.getDatabase()
-                .getDocClientWrapper()
-                .readConflict(getLink(), requestOptions)
-                .map(response -> new CosmosConflictResponse(response, container))
-                .toSingle()));
-                
+        return this.container.getDatabase().getDocClientWrapper().readConflict(getLink(), requestOptions)
+                .map(response -> new CosmosConflictResponse(response, container)).single();
+
     }
 
     /**
      * Reads all conflicts in a document collection.
      * <p>
-     * After subscription the operation will be performed.
-     * The {@link Mono} will contain one or several feed response pages of the read conflicts.
-     * In case of failure the {@link Mono} will error.
+     * After subscription the operation will be performed. The {@link Mono} will
+     * contain one or several feed response pages of the read conflicts. In case of
+     * failure the {@link Mono} will error.
      *
-     * @param options        the feed options.
-     * @return an {@link Mono} containing one or several feed response pages of the read conflicts or an error.
+     * @param options the feed options.
+     * @return an {@link Mono} containing one or several feed response pages of the
+     *         read conflicts or an error.
      */
-    public Mono<CosmosConflictResponse> delete(CosmosConflictRequestOptions options){
-        if(options == null){
+    public Mono<CosmosConflictResponse> delete(CosmosConflictRequestOptions options) {
+        if (options == null) {
             options = new CosmosConflictRequestOptions();
         }
         RequestOptions requestOptions = options.toRequestOptions();
-        return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(this.container.getDatabase()
-                .getDocClientWrapper()
-                .deleteConflict(getLink(), requestOptions)
-                .map(response -> new CosmosConflictResponse(response, container))
-                .toSingle()));
+        return this.container.getDatabase().getDocClientWrapper().deleteConflict(getLink(), requestOptions)
+                .map(response -> new CosmosConflictResponse(response, container)).single();
     }
 
     @Override

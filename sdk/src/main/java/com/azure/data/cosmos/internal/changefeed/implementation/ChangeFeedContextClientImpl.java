@@ -40,8 +40,6 @@ import com.azure.data.cosmos.FeedResponse;
 import com.azure.data.cosmos.PartitionKeyRange;
 import com.azure.data.cosmos.SqlQuerySpec;
 import com.azure.data.cosmos.internal.changefeed.ChangeFeedContextClient;
-import hu.akarnokd.rxjava.interop.RxJavaInterop;
-import reactor.adapter.rxjava.RxJava2Adapter;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
@@ -59,10 +57,10 @@ public class ChangeFeedContextClientImpl implements ChangeFeedContextClient {
 
     /**
      * Initializes a new instance of the {@link ChangeFeedContextClient} interface.
+     * 
      * @param cosmosContainer existing client.
      */
-    public ChangeFeedContextClientImpl(CosmosContainer cosmosContainer)
-    {
+    public ChangeFeedContextClientImpl(CosmosContainer cosmosContainer) {
         if (cosmosContainer == null) {
             throw new IllegalArgumentException("cosmosContainer");
         }
@@ -74,11 +72,11 @@ public class ChangeFeedContextClientImpl implements ChangeFeedContextClient {
 
     /**
      * Initializes a new instance of the {@link ChangeFeedContextClient} interface.
+     * 
      * @param cosmosContainer existing client.
-     * @param rxScheduler the RX Java scheduler to observe on.
+     * @param rxScheduler     the RX Java scheduler to observe on.
      */
-    public ChangeFeedContextClientImpl(CosmosContainer cosmosContainer, Scheduler rxScheduler)
-    {
+    public ChangeFeedContextClientImpl(CosmosContainer cosmosContainer, Scheduler rxScheduler) {
         if (cosmosContainer == null) {
             throw new IllegalArgumentException("cosmosContainer");
         }
@@ -90,64 +88,59 @@ public class ChangeFeedContextClientImpl implements ChangeFeedContextClient {
     }
 
     @Override
-    public Flux<FeedResponse<PartitionKeyRange>> readPartitionKeyRangeFeed(String partitionKeyRangesOrCollectionLink, FeedOptions feedOptions) {
-        return RxJava2Adapter.flowableToFlux(
-            RxJavaInterop.toV2Flowable(
-                this.documentClient.readPartitionKeyRanges(partitionKeyRangesOrCollectionLink, feedOptions)))
-            .subscribeOn(this.rxScheduler);
+    public Flux<FeedResponse<PartitionKeyRange>> readPartitionKeyRangeFeed(String partitionKeyRangesOrCollectionLink,
+            FeedOptions feedOptions) {
+        return this.documentClient.readPartitionKeyRanges(partitionKeyRangesOrCollectionLink, feedOptions)
+                .subscribeOn(this.rxScheduler);
     }
 
     @Override
-    public Flux<FeedResponse<CosmosItemProperties>> createDocumentChangeFeedQuery(CosmosContainer collectionLink, ChangeFeedOptions feedOptions) {
-        return collectionLink.queryChangeFeedItems(feedOptions)
-            .subscribeOn(this.rxScheduler);
+    public Flux<FeedResponse<CosmosItemProperties>> createDocumentChangeFeedQuery(CosmosContainer collectionLink,
+            ChangeFeedOptions feedOptions) {
+        return collectionLink.queryChangeFeedItems(feedOptions).subscribeOn(this.rxScheduler);
     }
 
     @Override
     public Mono<CosmosDatabaseResponse> readDatabase(CosmosDatabase database, CosmosDatabaseRequestOptions options) {
-        return database.read()
-            .subscribeOn(this.rxScheduler);
+        return database.read().subscribeOn(this.rxScheduler);
     }
 
     @Override
-    public Mono<CosmosContainerResponse> readContainer(CosmosContainer containerLink, CosmosContainerRequestOptions options) {
-        return containerLink.read(options)
-            .subscribeOn(this.rxScheduler);
+    public Mono<CosmosContainerResponse> readContainer(CosmosContainer containerLink,
+            CosmosContainerRequestOptions options) {
+        return containerLink.read(options).subscribeOn(this.rxScheduler);
     }
 
     @Override
-    public Mono<CosmosItemResponse> createItem(CosmosContainer containerLink, Object document, CosmosItemRequestOptions options, boolean disableAutomaticIdGeneration) {
+    public Mono<CosmosItemResponse> createItem(CosmosContainer containerLink, Object document,
+            CosmosItemRequestOptions options, boolean disableAutomaticIdGeneration) {
         if (options != null) {
-            return containerLink.createItem(document, options)
-                .subscribeOn(this.rxScheduler);
+            return containerLink.createItem(document, options).subscribeOn(this.rxScheduler);
         } else {
-            return containerLink.createItem(document)
-                .subscribeOn(this.rxScheduler);
+            return containerLink.createItem(document).subscribeOn(this.rxScheduler);
         }
     }
 
     @Override
     public Mono<CosmosItemResponse> deleteItem(CosmosItem itemLink, CosmosItemRequestOptions options) {
-        return itemLink.delete(options)
-            .subscribeOn(this.rxScheduler);
+        return itemLink.delete(options).subscribeOn(this.rxScheduler);
     }
 
     @Override
-    public Mono<CosmosItemResponse> replaceItem(CosmosItem itemLink, Object document, CosmosItemRequestOptions options) {
-        return itemLink.replace(document, options)
-            .subscribeOn(this.rxScheduler);
+    public Mono<CosmosItemResponse> replaceItem(CosmosItem itemLink, Object document,
+            CosmosItemRequestOptions options) {
+        return itemLink.replace(document, options).subscribeOn(this.rxScheduler);
     }
 
     @Override
     public Mono<CosmosItemResponse> readItem(CosmosItem itemLink, CosmosItemRequestOptions options) {
-        return itemLink.read(options)
-            .subscribeOn(this.rxScheduler);
+        return itemLink.read(options).subscribeOn(this.rxScheduler);
     }
 
     @Override
-    public Flux<FeedResponse<CosmosItemProperties>> queryItems(CosmosContainer containerLink, SqlQuerySpec querySpec, FeedOptions options) {
-        return containerLink.queryItems(querySpec, options)
-            .subscribeOn(this.rxScheduler);
+    public Flux<FeedResponse<CosmosItemProperties>> queryItems(CosmosContainer containerLink, SqlQuerySpec querySpec,
+            FeedOptions options) {
+        return containerLink.queryItems(querySpec, options).subscribeOn(this.rxScheduler);
     }
 
     @Override
@@ -156,9 +149,9 @@ public class ChangeFeedContextClientImpl implements ChangeFeedContextClient {
     }
 
     @Override
-    public Mono<CosmosContainerSettings> readContainerSettings(CosmosContainer containerLink, CosmosContainerRequestOptions options) {
-        return containerLink.read(options)
-            .map(cosmosContainerResponse -> cosmosContainerResponse.settings());
+    public Mono<CosmosContainerSettings> readContainerSettings(CosmosContainer containerLink,
+            CosmosContainerRequestOptions options) {
+        return containerLink.read(options).map(cosmosContainerResponse -> cosmosContainerResponse.settings());
     }
 
     @Override
