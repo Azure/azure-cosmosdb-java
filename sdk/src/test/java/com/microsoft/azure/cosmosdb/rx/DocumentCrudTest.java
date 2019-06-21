@@ -397,9 +397,11 @@ public class DocumentCrudTest extends TestSuiteBase {
     }
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
-    public void beforeClass() {
+    public void beforeClass() throws Exception {
         createdDatabase = SHARED_DATABASE;
         createdCollection = SHARED_MULTI_PARTITION_COLLECTION;
+        TimeUnit.SECONDS.sleep(1);
+
     }
 
     @AfterClass(groups = { "simple" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)
@@ -408,7 +410,7 @@ public class DocumentCrudTest extends TestSuiteBase {
     }
 
     @BeforeMethod(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
-    public void beforeMethod() {
+    public void beforeMethod() throws Exception {
         safeClose(client);
         client = this.clientBuilder().build();
     }

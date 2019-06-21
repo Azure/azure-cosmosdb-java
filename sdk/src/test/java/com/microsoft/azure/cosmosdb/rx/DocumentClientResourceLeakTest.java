@@ -54,7 +54,6 @@ public class DocumentClientResourceLeakTest extends TestSuiteBase {
 
     @Test(enabled = false, groups = {"emulator"}, timeOut = TIMEOUT)
     public void resourceLeak() throws Exception {
-
         System.gc();
         TimeUnit.SECONDS.sleep(10);
         long usedMemoryInBytesBefore = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory());

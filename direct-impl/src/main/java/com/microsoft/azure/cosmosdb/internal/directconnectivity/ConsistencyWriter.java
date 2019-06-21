@@ -187,9 +187,10 @@ public class ConsistencyWriter {
                                         try {
                                             request.requestContext.clientSideRequestStatistics.recordResponse(request,
                                                     storeReader.createStoreResult(null, ex, false, false, primaryUri));
-                                        } catch (DocumentClientException e) {
+                                        } catch (Exception e) {
                                             logger.error("Error occurred while recording response", e);
                                         }
+
                                         String value = ex.getResponseHeaders().get(HttpConstants.HttpHeaders.WRITE_REQUEST_TRIGGER_ADDRESS_REFRESH);
                                         if (!Strings.isNullOrWhiteSpace(value)) {
                                             Integer result = Integers.tryParse(value);
@@ -208,7 +209,7 @@ public class ConsistencyWriter {
                 try {
                     request.requestContext.clientSideRequestStatistics.recordResponse(request,
                             storeReader.createStoreResult(response, null, false, false, primaryURI.get()));
-                } catch (DocumentClientException e) {
+                } catch (Exception e) {
                     logger.error("Error occurred while recording response", e);
                 }
                 return barrierForGlobalStrong(request, response);
