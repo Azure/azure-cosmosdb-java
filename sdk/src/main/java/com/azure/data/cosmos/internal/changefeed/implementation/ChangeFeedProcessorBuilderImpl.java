@@ -61,7 +61,7 @@ import java.util.function.Consumer;
  *     .hostName(hostName)
  *     .feedContainerClient(feedContainer)
  *     .leaseContainerClient(leaseContainer)
- *     .syncHandleChanges(docs -> {
+ *     .handleChanges(docs -> {
  *         // Implementation for handling and processing CosmosItemProperties list goes here
  *      })
  *     .observer(SampleObserverImpl.class)
@@ -185,7 +185,7 @@ public class ChangeFeedProcessorBuilderImpl implements ChangeFeedProcessor.Build
     }
 
     @Override
-    public ChangeFeedProcessorBuilderImpl syncHandleChanges(Consumer<List<CosmosItemProperties>> consumer) {
+    public ChangeFeedProcessorBuilderImpl handleChanges(Consumer<List<CosmosItemProperties>> consumer) {
         return this.observerFactory(new DefaultObserverFactory(consumer));
     }
 
@@ -292,7 +292,7 @@ public class ChangeFeedProcessorBuilderImpl implements ChangeFeedProcessor.Build
      * @return an instance of {@link ChangeFeedProcessor}.
      */
     @Override
-    public Mono<ChangeFeedProcessor> build() {
+    public ChangeFeedProcessor build() {
         ChangeFeedProcessorBuilderImpl self = this;
 
         if (this.hostName == null)
@@ -309,12 +309,13 @@ public class ChangeFeedProcessorBuilderImpl implements ChangeFeedProcessor.Build
             this.executorService = Executors.newCachedThreadPool();
         }
 
+        // TBD: Move this initialization code as part of the start() call.
         return this.initializeCollectionPropertiesForBuild()
             .then(self.getLeaseStoreManager().flatMap(leaseStoreManager -> self.buildPartitionManager(leaseStoreManager)))
             .map(partitionManager1 -> {
                 self.partitionManager = partitionManager1;
                 return self;
-            });
+            }).block();
     }
 
     public ChangeFeedProcessorBuilderImpl() {

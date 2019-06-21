@@ -22,7 +22,6 @@
  */
 package com.azure.data.cosmos.rx;
 
-import com.azure.data.cosmos.CosmosClientException;
 import com.azure.data.cosmos.ChangeFeedProcessor;
 import com.azure.data.cosmos.ChangeFeedProcessorOptions;
 import com.azure.data.cosmos.CosmosClient;
@@ -31,7 +30,6 @@ import com.azure.data.cosmos.CosmosContainer;
 import com.azure.data.cosmos.CosmosContainerRequestOptions;
 import com.azure.data.cosmos.CosmosContainerSettings;
 import com.azure.data.cosmos.CosmosDatabase;
-import com.azure.data.cosmos.CosmosDatabaseForTest;
 import com.azure.data.cosmos.CosmosItemProperties;
 import com.azure.data.cosmos.SerializationFormattingPolicy;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -39,12 +37,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
@@ -84,9 +80,9 @@ public class ChangeFeedProcessorTest extends TestSuiteBase {
     public void readFeedDocumentsStartFromBeginning() {
         setupReadFeedDocuments();
 
-        Mono<ChangeFeedProcessor> changeFeedProcessorObservable = ChangeFeedProcessor.Builder()
+        changeFeedProcessor = ChangeFeedProcessor.Builder()
             .hostName(hostName)
-            .syncHandleChanges(docs -> {
+            .handleChanges(docs -> {
                 ChangeFeedProcessorTest.log.info("START processing from thread {}", Thread.currentThread().getId());
                 for (CosmosItemProperties item : docs) {
                     processItem(item);
@@ -112,11 +108,9 @@ public class ChangeFeedProcessorTest extends TestSuiteBase {
             .build();
 
         try {
-            changeFeedProcessorObservable.subscribeOn(Schedulers.elastic())
-                .flatMap(processor -> {
-                    changeFeedProcessor = processor;
-                    return changeFeedProcessor.start().subscribeOn(Schedulers.elastic());
-                }).timeout(Duration.ofSeconds(5)).subscribe();
+            changeFeedProcessor.start().subscribeOn(Schedulers.elastic())
+                .timeout(Duration.ofSeconds(5))
+                .subscribe();
         } catch (Exception ex) {
             log.error("Change feed processor did not start in the expected time", ex);
         }
@@ -139,9 +133,9 @@ public class ChangeFeedProcessorTest extends TestSuiteBase {
 
     @Test(groups = { "emulator" }, timeOut = TIMEOUT)
     public void readFeedDocumentsStartFromCustomDate() {
-        Mono<ChangeFeedProcessor> changeFeedProcessorObservable = ChangeFeedProcessor.Builder()
+        ChangeFeedProcessor changeFeedProcessor = ChangeFeedProcessor.Builder()
             .hostName(hostName)
-            .syncHandleChanges(docs -> {
+            .handleChanges(docs -> {
                 ChangeFeedProcessorTest.log.info("START processing from thread {}", Thread.currentThread().getId());
                 for (CosmosItemProperties item : docs) {
                     processItem(item);
@@ -167,11 +161,9 @@ public class ChangeFeedProcessorTest extends TestSuiteBase {
             .build();
 
         try {
-            changeFeedProcessorObservable.subscribeOn(Schedulers.elastic())
-                .flatMap(processor -> {
-                    changeFeedProcessor = processor;
-                    return changeFeedProcessor.start().subscribeOn(Schedulers.elastic());
-                }).timeout(Duration.ofSeconds(5)).subscribe();
+            changeFeedProcessor.start().subscribeOn(Schedulers.elastic())
+                .timeout(Duration.ofSeconds(5))
+                .subscribe();
         } catch (Exception ex) {
             log.error("Change feed processor did not start in the expected time", ex);
         }

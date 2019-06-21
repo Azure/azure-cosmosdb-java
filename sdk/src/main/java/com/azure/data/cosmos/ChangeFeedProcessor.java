@@ -50,7 +50,7 @@ import java.util.function.Consumer;
  *     .hostName(hostName)
  *     .feedContainerClient(feedContainer)
  *     .leaseContainerClient(leaseContainer)
- *     .syncHandleChanges(docs -> {
+ *     .handleChanges(docs -> {
  *         // Implementation for handling and processing CosmosItemProperties list goes here
  *      })
  *     .build();
@@ -82,7 +82,7 @@ public interface ChangeFeedProcessor {
      *       .hostName("SampleHost")
      *       .feedContainerClient(feedContainer)
      *       .leaseContainerClient(leaseContainer)
-     *       .syncHandleChanges(docs -> {
+     *       .handleChanges(docs -> {
      *           // Implementation for handling and processing CosmosItemProperties list goes here
      *        })
      *       .build();
@@ -125,7 +125,7 @@ public interface ChangeFeedProcessor {
          * @param consumer the consumer of {@link ChangeFeedObserver} to call for handling the feeds.
          * @return current Builder.
          */
-        BuilderDefinition syncHandleChanges(Consumer<List<CosmosItemProperties>> consumer);
+        BuilderDefinition handleChanges(Consumer<List<CosmosItemProperties>> consumer);
 
         /**
          * Sets an existing {@link CosmosContainer} to be used to read from the leases collection.
@@ -140,6 +140,6 @@ public interface ChangeFeedProcessor {
          *
          * @return an instance of {@link ChangeFeedProcessor}.
          */
-        Mono<ChangeFeedProcessor> build();
+        ChangeFeedProcessor build();
     }
 }

@@ -69,15 +69,12 @@ public class SampleChangeFeedProcessor {
             System.out.println("-->CREATE container for lease: " + COLLECTION_NAME + "-leases");
             CosmosContainer leaseContainer = createNewLeaseCollection(client, DATABASE_NAME, COLLECTION_NAME + "-leases");
 
-            Mono<ChangeFeedProcessor> changeFeedProcessor1 = getChangeFeedProcessor("SampleHost_1", feedContainer, leaseContainer);
+            changeFeedProcessorInstance = getChangeFeedProcessor("SampleHost_1", feedContainer, leaseContainer);
 
-            changeFeedProcessor1.subscribe(changeFeedProcessor -> {
-                    changeFeedProcessorInstance = changeFeedProcessor;
-                    changeFeedProcessor.start().subscribe(aVoid -> {
-                        createNewDocuments(feedContainer, 10, Duration.ofSeconds(3));
-                        isWorkCompleted = true;
-                    });
-                });
+            changeFeedProcessorInstance.start().subscribe(aVoid -> {
+                createNewDocuments(feedContainer, 10, Duration.ofSeconds(3));
+                isWorkCompleted = true;
+            });
 
             long remainingWork = WAIT_FOR_WORK;
             while (!isWorkCompleted && remainingWork > 0) {
@@ -106,18 +103,18 @@ public class SampleChangeFeedProcessor {
         System.exit(0);
     }
 
-    public static Mono<ChangeFeedProcessor> getChangeFeedProcessor(String hostName, CosmosContainer feedContainer, CosmosContainer leaseContainer) {
+    public static ChangeFeedProcessor getChangeFeedProcessor(String hostName, CosmosContainer feedContainer, CosmosContainer leaseContainer) {
         return ChangeFeedProcessor.Builder()
             .hostName(hostName)
             .feedContainerClient(feedContainer)
             .leaseContainerClient(leaseContainer)
-            .syncHandleChanges(docs -> {
-                System.out.println("--->syncHandleChanges() START");
+            .handleChanges(docs -> {
+                System.out.println("--->handleChanges() START");
 
                 for (CosmosItemProperties document : docs) {
                     System.out.println("---->DOCUMENT RECEIVED: " + document.toJson(SerializationFormattingPolicy.INDENTED));
                 }
-                System.out.println("--->syncHandleChanges() END");
+                System.out.println("--->handleChanges() END");
 
             })
             .build();
