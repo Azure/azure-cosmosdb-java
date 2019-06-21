@@ -162,7 +162,7 @@ public class TestSuiteBase extends DocumentClientTest {
     }
 
     @BeforeSuite(groups = {"simple", "long", "direct", "multi-master", "emulator", "non-emulator"}, timeOut = SUITE_SETUP_TIMEOUT)
-    public static void beforeSuite() {
+    public static void beforeSuite() throws Exception {
         logger.info("beforeSuite Started");
         AsyncDocumentClient houseKeepingClient = createGatewayHouseKeepingDocumentClient().build();
         try {
@@ -177,6 +177,8 @@ public class TestSuiteBase extends DocumentClientTest {
         } finally {
             houseKeepingClient.close();
         }
+
+        TimeUnit.SECONDS.sleep(10);
     }
 
     @AfterSuite(groups = {"simple", "long", "direct", "multi-master", "emulator", "non-emulator"}, timeOut = SUITE_SHUTDOWN_TIMEOUT)

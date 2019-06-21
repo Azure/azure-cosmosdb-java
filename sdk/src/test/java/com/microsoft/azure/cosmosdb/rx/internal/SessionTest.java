@@ -48,6 +48,7 @@ import java.lang.reflect.Method;
 import java.net.URLDecoder;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -78,13 +79,13 @@ public class SessionTest extends TestSuiteBase {
     }
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
-    public void beforeClass() {
+    public void beforeClass() throws Exception {
         createdDatabase = SHARED_DATABASE;
-        
+
         DocumentCollection collection = new DocumentCollection();
         collection.setId(collectionId);
         createdCollection = createCollection(createGatewayHouseKeepingDocumentClient().build(), createdDatabase.getId(),
-                collection, null);
+                                             collection, null);
         houseKeepingClient = clientBuilder().build();
         connectionMode = houseKeepingClient.getConnectionPolicy().getConnectionMode();
 
@@ -93,6 +94,8 @@ public class SessionTest extends TestSuiteBase {
         } else {
             spyClient = SpyClientUnderTestFactory.createClientUnderTest(clientBuilder());
         }
+
+        TimeUnit.SECONDS.sleep(10);
     }
 
     @AfterClass(groups = { "simple" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)
