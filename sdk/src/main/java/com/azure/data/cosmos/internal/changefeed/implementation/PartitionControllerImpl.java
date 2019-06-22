@@ -135,13 +135,13 @@ class PartitionControllerImpl implements PartitionController {
 
                 try {
                     this.leaseManager.release(lease)
-                        .onErrorResume(throwable -> {
-                            // TODO: Remove this exception handler.
-                            if (throwable instanceof IllegalStateException) {
-                                return Mono.empty();
-                            }
-                            return Mono.error(throwable);
-                        })
+//                        .onErrorResume(throwable -> {
+//                            // TODO: Remove this exception handler.
+//                            if (throwable instanceof IllegalStateException) {
+//                                return Mono.empty();
+//                            }
+//                            return Mono.error(throwable);
+//                        })
                         .block();
                 } catch (Exception e) {
                     logger.warn(String.format("Partition %s: failed to remove lease.", lease.getLeaseToken()), e);

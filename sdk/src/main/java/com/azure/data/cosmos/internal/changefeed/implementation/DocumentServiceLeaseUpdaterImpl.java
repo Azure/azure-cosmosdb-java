@@ -53,7 +53,7 @@ import static com.azure.data.cosmos.internal.changefeed.implementation.ChangeFee
  * Implementation for service lease updater interface.
  */
 class DocumentServiceLeaseUpdaterImpl implements ServiceItemLeaseUpdater {
-    private final Logger logger = LoggerFactory.getLogger(TraceHealthMonitor.class);
+    private final Logger logger = LoggerFactory.getLogger(DocumentServiceLeaseUpdaterImpl.class);
     private final int RETRY_COUNT_ON_CONFLICT = 5;
     private final ChangeFeedContextClient client;
 
@@ -78,18 +78,6 @@ class DocumentServiceLeaseUpdaterImpl implements ServiceItemLeaseUpdater {
             }
 
             lease.setTimestamp(ZonedDateTime.now(ZoneId.of("UTC")));
-
-
-//            CosmosItemProperties leaseDocument = itemLink.replace(lease, this.getCreateIfMatchOptions(lease)).subscribeOn(Schedulers.parallel()).publishOn(Schedulers.immediate()).block().properties();
-//            this.tryReplaceLease(lease, itemLink)
-//                .subscribe(cosmosItemProperties -> tempLease = cosmosItemProperties);
-//            try {
-//                Thread.sleep(2000);
-//            } catch (Exception e) {}
-//            CosmosItemProperties leaseDocument = tempLease;
-
-
-
             CosmosItemProperties leaseDocument = this.tryReplaceLease(lease, itemLink).block();
 
             if (leaseDocument != null) {
@@ -114,13 +102,13 @@ class DocumentServiceLeaseUpdaterImpl implements ServiceItemLeaseUpdater {
             }
 
             ServiceItemLease serverLease = ServiceItemLease.fromDocument(document);
-//            Logger.InfoFormat(
-//                "Partition {0} update failed because the lease with token '{1}' was updated by host '{2}' with token '{3}'. Will retry, {4} retry(s) left.",
-//                lease.LeaseToken,
-//                lease.ConcurrencyToken,
-//                serverLease.Owner,
-//                serverLease.ConcurrencyToken,
-//                retryCount);
+            logger.info(
+                "Partition {} update failed because the lease with token '{}' was updated by host '{}' with token '{}'. Will retry, {} retry(s) left.",
+                lease.getLeaseToken(),
+                lease.getConcurrencyToken(),
+                serverLease.getOwner(),
+                serverLease.getConcurrencyToken(),
+                retryCount);
 
             lease = serverLease;
         }
