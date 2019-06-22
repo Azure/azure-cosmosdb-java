@@ -36,8 +36,11 @@ import com.azure.data.cosmos.internal.changefeed.ServiceItemLeaseUpdater;
 import com.azure.data.cosmos.internal.changefeed.exceptions.LeaseLostException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
+import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.function.Function;
@@ -64,17 +67,30 @@ class DocumentServiceLeaseUpdaterImpl implements ServiceItemLeaseUpdater {
 
     @Override
     public Mono<Lease> updateLease(Lease cachedLease, CosmosItem itemLink, CosmosItemRequestOptions requestOptions, Function<Lease, Lease> updateLease) {
+        DocumentServiceLeaseUpdaterImpl self = this;
         Lease lease = cachedLease;
 
         for (int retryCount = RETRY_COUNT_ON_CONFLICT; retryCount > 0; retryCount--) {
             lease = updateLease.apply(lease);
 
             if (lease == null) {
-                return null;
+                return Mono.empty();
             }
 
             lease.setTimestamp(ZonedDateTime.now(ZoneId.of("UTC")));
-            CosmosItemProperties leaseDocument = this.tryReplaceLease(lease, itemLink);
+
+
+//            CosmosItemProperties leaseDocument = itemLink.replace(lease, this.getCreateIfMatchOptions(lease)).subscribeOn(Schedulers.parallel()).publishOn(Schedulers.immediate()).block().properties();
+//            this.tryReplaceLease(lease, itemLink)
+//                .subscribe(cosmosItemProperties -> tempLease = cosmosItemProperties);
+//            try {
+//                Thread.sleep(2000);
+//            } catch (Exception e) {}
+//            CosmosItemProperties leaseDocument = tempLease;
+
+
+
+            CosmosItemProperties leaseDocument = this.tryReplaceLease(lease, itemLink).block();
 
             if (leaseDocument != null) {
                 return Mono.just(ServiceItemLease.fromDocument(leaseDocument));
@@ -112,31 +128,30 @@ class DocumentServiceLeaseUpdaterImpl implements ServiceItemLeaseUpdater {
         throw new LeaseLostException(lease);
     }
 
-    private CosmosItemProperties tryReplaceLease(Lease lease, CosmosItem itemLink) throws LeaseLostException {
-        try {
-            CosmosItemResponse response = this.client.replaceItem(itemLink, lease, this.getCreateIfMatchOptions(lease))
-                .block();
-            return response.properties();
-        } catch (RuntimeException re) {
-            if (re.getCause() instanceof CosmosClientException) {
-                CosmosClientException ex = (CosmosClientException) re.getCause();
-                switch (ex.statusCode()) {
-                    case HTTP_STATUS_CODE_PRECONDITION_FAILED: {
-                        return null;
-                    }
-                    case HTTP_STATUS_CODE_CONFLICT: {
-                        throw new LeaseLostException(lease, ex, false);
-                    }
-                    case HTTP_STATUS_CODE_NOT_FOUND: {
-                        throw new LeaseLostException(lease, ex, true);
-                    }
-                    default: {
-                        throw re;
+    private Mono<CosmosItemProperties> tryReplaceLease(Lease lease, CosmosItem itemLink) throws LeaseLostException {
+        DocumentServiceLeaseUpdaterImpl self = this;
+        return this.client.replaceItem(itemLink, lease, this.getCreateIfMatchOptions(lease))
+            .map(cosmosItemResponse -> cosmosItemResponse.properties())
+            .onErrorResume(re -> {
+                if (re instanceof CosmosClientException) {
+                    CosmosClientException ex = (CosmosClientException) re;
+                    switch (ex.statusCode()) {
+                        case HTTP_STATUS_CODE_PRECONDITION_FAILED: {
+                            return Mono.empty();
+                        }
+                        case HTTP_STATUS_CODE_CONFLICT: {
+                            throw Exceptions.propagate( new LeaseLostException(lease, ex, false));
+                        }
+                        case HTTP_STATUS_CODE_NOT_FOUND: {
+                            throw Exceptions.propagate( new LeaseLostException(lease, ex, true));
+                        }
+                        default: {
+                            return Mono.error(re);
+                        }
                     }
                 }
-            }
-            throw re;
-        }
+                return Mono.error(re);
+            });
     }
 
     private CosmosItemRequestOptions getCreateIfMatchOptions(Lease lease) {

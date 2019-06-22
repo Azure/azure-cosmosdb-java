@@ -22,8 +22,6 @@
  */
 package com.azure.data.cosmos;
 
-import hu.akarnokd.rxjava.interop.RxJavaInterop;
-import reactor.adapter.rxjava.RxJava2Adapter;
 import reactor.core.publisher.Mono;
 
 import static com.azure.data.cosmos.internal.Paths.CONFLICTS_PATH_SEGMENT;
@@ -57,12 +55,12 @@ public class CosmosConflict extends CosmosResource {
             options = new CosmosConflictRequestOptions();
         }
         RequestOptions requestOptions = options.toRequestOptions();
-        return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(this.container.getDatabase()
+        return this.container.getDatabase()
                 .getDocClientWrapper()
                 .readConflict(getLink(), requestOptions)
                 .map(response -> new CosmosConflictResponse(response, container))
-                .toSingle()));
-                
+                .single();
+
     }
 
     /**
@@ -80,11 +78,11 @@ public class CosmosConflict extends CosmosResource {
             options = new CosmosConflictRequestOptions();
         }
         RequestOptions requestOptions = options.toRequestOptions();
-        return RxJava2Adapter.singleToMono(RxJavaInterop.toV2Single(this.container.getDatabase()
+        return this.container.getDatabase()
                 .getDocClientWrapper()
                 .deleteConflict(getLink(), requestOptions)
                 .map(response -> new CosmosConflictResponse(response, container))
-                .toSingle()));
+                .single();
     }
 
     @Override
