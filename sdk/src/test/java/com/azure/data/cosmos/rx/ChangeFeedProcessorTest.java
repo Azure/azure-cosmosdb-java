@@ -206,22 +206,12 @@ public class ChangeFeedProcessorTest extends TestSuiteBase {
         client = clientBuilder().build();
 
 //        try {
-//            client.listDatabases()
-//                .flatMap(cosmosDatabaseSettingsFeedResponse -> Flux.fromIterable(cosmosDatabaseSettingsFeedResponse.results()))
-//                .flatMap(cosmosDatabaseSettings -> {
-//                    CosmosDatabase cosmosDatabase = client.getDatabase(cosmosDatabaseSettings.id());
-//                    return cosmosDatabase.delete();
-//                }).blockLast();
-//            Thread.sleep(500);
-//        } catch (Exception e){ }
-
-//        try {
 //            client.getDatabase(databaseId).read()
 //                .map(cosmosDatabaseResponse -> cosmosDatabaseResponse.database())
 //                .flatMap(database -> database.delete())
 //                .onErrorResume(throwable -> {
-//                    if (throwable instanceof CosmosClientException) {
-//                        CosmosClientException clientException = (CosmosClientException) throwable;
+//                    if (throwable instanceof com.azure.data.cosmos.CosmosClientException) {
+//                        com.azure.data.cosmos.CosmosClientException clientException = (com.azure.data.cosmos.CosmosClientException) throwable;
 //                        if (clientException.statusCode() == 404) {
 //                            return Mono.empty();
 //                        }
@@ -249,6 +239,16 @@ public class ChangeFeedProcessorTest extends TestSuiteBase {
 
     @AfterClass(groups = { "emulator" }, timeOut = 2 * SHUTDOWN_TIMEOUT, alwaysRun = true)
     public void afterClass() {
+//        try {
+//            client.listDatabases()
+//                .flatMap(cosmosDatabaseSettingsFeedResponse -> reactor.core.publisher.Flux.fromIterable(cosmosDatabaseSettingsFeedResponse.results()))
+//                .flatMap(cosmosDatabaseSettings -> {
+//                    CosmosDatabase cosmosDatabase = client.getDatabase(cosmosDatabaseSettings.id());
+//                    return cosmosDatabase.delete();
+//                }).blockLast();
+//            Thread.sleep(500);
+//        } catch (Exception e){ }
+
         safeClose(client);
     }
 
