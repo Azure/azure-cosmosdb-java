@@ -24,6 +24,7 @@
 package com.microsoft.azure.cosmosdb;
 
 import com.google.common.collect.ImmutableList;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -51,5 +52,11 @@ public class DocumentCollectionTests {
         assertThat(parsedColl.getPartitionKey().getKind().toString()).isEqualTo(partitionKeyDefinition.getKind().toString());
         assertThat(parsedColl.getPartitionKey().getPaths()).isEqualTo(partitionKeyDefinition.getPaths());
         assertThat(parsedColl.getPartitionKey().getVersion()).isEqualTo(partitionKeyDefinition.getVersion());
+    }
+
+    @Test(groups = {"unit"})
+    public void getIndexingPolicy() {
+        DocumentCollection collection = new DocumentCollection();
+        Assert.assertNotNull(collection.getIndexingPolicy().getCompositeIndexes());
     }
 }
