@@ -66,6 +66,7 @@ public class ChangeFeedProcessorTest extends TestSuiteBase {
 //    private final String hostName = "TestHost1";
     private final String hostName = RandomStringUtils.randomAlphabetic(6);
     private final int FEED_COUNT = 10;
+    private final int CHANGE_FEED_PROCESSOR_TIMEOUT = 5000;
 
     private CosmosClient client;
 
@@ -109,7 +110,7 @@ public class ChangeFeedProcessorTest extends TestSuiteBase {
 
         try {
             changeFeedProcessor.start().subscribeOn(Schedulers.elastic())
-                .timeout(Duration.ofSeconds(5))
+                .timeout(Duration.ofMillis(CHANGE_FEED_PROCESSOR_TIMEOUT))
                 .subscribe();
         } catch (Exception ex) {
             log.error("Change feed processor did not start in the expected time", ex);
@@ -117,17 +118,23 @@ public class ChangeFeedProcessorTest extends TestSuiteBase {
 
         // Wait for the feed processor to receive and process the documents.
         try {
-            Thread.sleep(10000);
+            Thread.sleep(2 * CHANGE_FEED_PROCESSOR_TIMEOUT);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
 
-        changeFeedProcessor.stop().subscribeOn(Schedulers.elastic()).timeout(Duration.ofSeconds(10)).subscribe();
+        changeFeedProcessor.stop().subscribeOn(Schedulers.elastic()).timeout(Duration.ofMillis(CHANGE_FEED_PROCESSOR_TIMEOUT)).subscribe();
 
         for (CosmosItemProperties item : createdDocuments) {
             assertThat(receivedDocuments.containsKey(item.id())).as("Document with id: " + item.id()).isTrue();
         }
 
+        // Wait for the feed processor to shutdown.
+        try {
+            Thread.sleep(CHANGE_FEED_PROCESSOR_TIMEOUT);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         receivedDocuments.clear();
      }
 
@@ -162,7 +169,7 @@ public class ChangeFeedProcessorTest extends TestSuiteBase {
 
         try {
             changeFeedProcessor.start().subscribeOn(Schedulers.elastic())
-                .timeout(Duration.ofSeconds(5))
+                .timeout(Duration.ofMillis(CHANGE_FEED_PROCESSOR_TIMEOUT))
                 .subscribe();
         } catch (Exception ex) {
             log.error("Change feed processor did not start in the expected time", ex);
@@ -173,25 +180,28 @@ public class ChangeFeedProcessorTest extends TestSuiteBase {
         // Wait for the feed processor to receive and process the documents.
         long remainingWork = FEED_TIMEOUT;
         while (remainingWork > 0 && receivedDocuments.size() < FEED_COUNT) {
-            remainingWork -= 5000;
+            remainingWork -= CHANGE_FEED_PROCESSOR_TIMEOUT;
             try {
-                Thread.sleep(5000);
+                Thread.sleep(CHANGE_FEED_PROCESSOR_TIMEOUT);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
 
         assertThat(remainingWork >= 0).as("Failed to receive all the feed documents").isTrue();
-        if (remainingWork <= 0) {
 
-        }
-
-        changeFeedProcessor.stop().subscribeOn(Schedulers.elastic()).timeout(Duration.ofSeconds(10)).subscribe();
+        changeFeedProcessor.stop().subscribeOn(Schedulers.elastic()).timeout(Duration.ofMillis(2 * CHANGE_FEED_PROCESSOR_TIMEOUT)).subscribe();
 
         for (CosmosItemProperties item : createdDocuments) {
             assertThat(receivedDocuments.containsKey(item.id())).as("Document with id: " + item.id()).isTrue();
         }
 
+        // Wait for the feed processor to shutdown.
+        try {
+            Thread.sleep(CHANGE_FEED_PROCESSOR_TIMEOUT);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         receivedDocuments.clear();
     }
 
