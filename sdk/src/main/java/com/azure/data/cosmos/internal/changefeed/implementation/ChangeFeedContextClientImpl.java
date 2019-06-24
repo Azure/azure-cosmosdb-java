@@ -90,60 +90,60 @@ public class ChangeFeedContextClientImpl implements ChangeFeedContextClient {
     @Override
     public Flux<FeedResponse<PartitionKeyRange>> readPartitionKeyRangeFeed(String partitionKeyRangesOrCollectionLink, FeedOptions feedOptions) {
         return this.documentClient.readPartitionKeyRanges(partitionKeyRangesOrCollectionLink, feedOptions)
-            .subscribeOn(this.rxScheduler);
+            .publishOn(this.rxScheduler);
     }
 
     @Override
     public Flux<FeedResponse<CosmosItemProperties>> createDocumentChangeFeedQuery(CosmosContainer collectionLink, ChangeFeedOptions feedOptions) {
         return collectionLink.queryChangeFeedItems(feedOptions)
-            .subscribeOn(this.rxScheduler);
+            .publishOn(this.rxScheduler);
     }
 
     @Override
     public Mono<CosmosDatabaseResponse> readDatabase(CosmosDatabase database, CosmosDatabaseRequestOptions options) {
         return database.read()
-            .subscribeOn(this.rxScheduler);
+            .publishOn(this.rxScheduler);
     }
 
     @Override
     public Mono<CosmosContainerResponse> readContainer(CosmosContainer containerLink, CosmosContainerRequestOptions options) {
         return containerLink.read(options)
-            .subscribeOn(this.rxScheduler);
+            .publishOn(this.rxScheduler);
     }
 
     @Override
     public Mono<CosmosItemResponse> createItem(CosmosContainer containerLink, Object document, CosmosItemRequestOptions options, boolean disableAutomaticIdGeneration) {
         if (options != null) {
             return containerLink.createItem(document, options)
-                .subscribeOn(this.rxScheduler);
+                .publishOn(this.rxScheduler);
         } else {
             return containerLink.createItem(document)
-                .subscribeOn(this.rxScheduler);
+                .publishOn(this.rxScheduler);
         }
     }
 
     @Override
     public Mono<CosmosItemResponse> deleteItem(CosmosItem itemLink, CosmosItemRequestOptions options) {
         return itemLink.delete(options)
-            .subscribeOn(this.rxScheduler);
+            .publishOn(this.rxScheduler);
     }
 
     @Override
     public Mono<CosmosItemResponse> replaceItem(CosmosItem itemLink, Object document, CosmosItemRequestOptions options) {
         return itemLink.replace(document, options)
-            .subscribeOn(this.rxScheduler);
+            .publishOn(this.rxScheduler);
     }
 
     @Override
     public Mono<CosmosItemResponse> readItem(CosmosItem itemLink, CosmosItemRequestOptions options) {
         return itemLink.read(options)
-            .subscribeOn(this.rxScheduler);
+            .publishOn(this.rxScheduler);
     }
 
     @Override
     public Flux<FeedResponse<CosmosItemProperties>> queryItems(CosmosContainer containerLink, SqlQuerySpec querySpec, FeedOptions options) {
         return containerLink.queryItems(querySpec, options)
-            .subscribeOn(this.rxScheduler);
+            .publishOn(this.rxScheduler);
     }
 
     @Override
