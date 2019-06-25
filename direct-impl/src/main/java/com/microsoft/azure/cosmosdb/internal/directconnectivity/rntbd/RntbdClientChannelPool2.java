@@ -24,6 +24,10 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.pool.ChannelHealthChecker;
@@ -38,6 +42,7 @@ import io.netty.util.internal.ThrowableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.SocketAddress;
 import java.nio.channels.ClosedChannelException;
 import java.util.ArrayDeque;
@@ -52,10 +57,14 @@ import static com.google.common.base.Preconditions.checkState;
 import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdReporter.reportIssueUnless;
 
 /**
- * {@link ChannelPool} implementation that takes another {@link ChannelPool} implementation and enforce a maximum
- * number of concurrent connections.
+ * {@link ChannelPool} implementation that enforces a maximum number of concurrent direct TCP Cosmos connections
  */
+@JsonSerialize(using = RntbdClientChannelPool2.JsonSerializer.class)
 public final class RntbdClientChannelPool2 extends SimpleChannelPool {
+
+    private static final TimeoutException ACQUISITION_TIMEOUT = ThrowableUtil.unknownStackTrace(
+        new TimeoutException("Acquisition took longer than the configured maximum time"),
+        RntbdClientChannelPool2.class, "<init>(...)");
 
     private static final IllegalStateException POOL_CLOSED_ON_ACQUIRE = ThrowableUtil.unknownStackTrace(
         new IllegalStateException("RntbdClientChannelPool was closed"),
@@ -71,7 +80,7 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
 
     private static final Logger logger = LoggerFactory.getLogger(RntbdClientChannelPool2.class);
 
-    private final long acquireTimeoutNanos;
+    private final long acquisitionTimeoutNanos;
     private final AtomicInteger acquiredChannelCount;
     private final AtomicInteger availableChannelCount;
     private final AtomicBoolean closed;
@@ -83,7 +92,7 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
     // There is no need to worry about synchronization as everything that modified the queue or counts is done
     // by the above EventExecutor.
     private final Queue<AcquireTask> pendingAcquisitionQueue = new ArrayDeque<AcquireTask>();
-    private final Runnable timeoutTask;
+    private final Runnable acquisitionTimeoutTask;
     private int pendingAcquisitionCount;
 
     /**
@@ -105,11 +114,54 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
         this.availableChannelCount = new AtomicInteger();
         this.closed = new AtomicBoolean();
 
-        this.acquireTimeoutNanos = -1;
-        this.timeoutTask = null;
+        // TODO: DANOBLE: add RbtbdEndpoint.Config settings for acquistion timeout and acquisition timeout action
+        //   Alternatively: drop acquisition timeout entirely
+        //   Decision should be based on performance, reliability, and usability considerations
+
+        AcquisitionTimeoutAction acquisitionTimeoutAction = null;
+        long acquisitionTimeoutNanos = -1L;
+
+        if (acquisitionTimeoutAction == null && acquisitionTimeoutNanos == -1) {
+
+            this.acquisitionTimeoutNanos = -1L;
+            this.acquisitionTimeoutTask = null;
+
+        } else {
+
+            this.acquisitionTimeoutNanos = TimeUnit.MILLISECONDS.toNanos(acquisitionTimeoutNanos);
+
+            switch (acquisitionTimeoutAction) {
+                case FAIL:
+                    acquisitionTimeoutTask = new AcquireTimeoutTask(this) {
+                        @Override
+                        public void onTimeout(AcquireTask task) {
+                            // Fail the promise as we timed out.
+                            task.promise.setFailure(ACQUISITION_TIMEOUT);
+                        }
+                    };
+                    break;
+                case NEW:
+                    acquisitionTimeoutTask = new AcquireTimeoutTask(this) {
+                        @Override
+                        public void onTimeout(AcquireTask task) {
+                            // Increment the acquire count and delegate to super to actually acquire a Channel which will
+                            // create a new connection.
+                            task.acquired();
+                            RntbdClientChannelPool2.super.acquire(task.promise);
+                        }
+                    };
+                    break;
+                default:
+                    throw new Error();
+            }
+        }
     }
 
     // region Methods
+
+    public boolean isClosed() {
+        return this.closed.get();
+    }
 
     @Override
     public Future<Channel> acquire(final Promise<Channel> promise) {
@@ -117,10 +169,10 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
         this.throwIfClosed();
 
         try {
-            if (executor.inEventLoop()) {
-                acquire0(promise);
+            if (this.executor.inEventLoop()) {
+                this.acquire0(promise);
             } else {
-                executor.execute(() -> acquire0(promise));
+                this.executor.execute(() -> this.acquire0(promise));
             }
         } catch (Throwable cause) {
             promise.setFailure(cause);
@@ -140,10 +192,10 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
     @Override
     public void close() {
         if (this.closed.compareAndSet(false, true)) {
-            if (executor.inEventLoop()) {
-                close0();
+            if (this.executor.inEventLoop()) {
+                this.close0();
             } else {
-                executor.submit(this::close0).awaitUninterruptibly();
+                this.executor.submit(this::close0).awaitUninterruptibly();
             }
         }
     }
@@ -154,6 +206,56 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
 
     public int maxRequestsPerChannel() {
         return this.maxRequestsPerChannel;
+    }
+
+    public int pendingAcquisitionCount() {
+        return this.pendingAcquisitionCount;
+    }
+
+    @Override
+    public Future<Void> release(final Channel channel, final Promise<Void> promise) {
+
+        this.throwIfClosed();
+        final Promise<Void> p = executor.newPromise();
+
+        super.release(channel, p.addListener((FutureListener<Void>)future -> {
+
+            checkState(this.executor.inEventLoop());
+
+            if (this.isClosed()) {
+                // Since the pool is closed, we have no choice but to close the channel
+                promise.setFailure(POOL_CLOSED_ON_RELEASE);
+                channel.close();
+                return;
+            }
+
+            if (future.isSuccess()) {
+
+                this.decrementAndRunTaskQueue();
+                promise.setSuccess(null);
+
+            } else {
+
+                Throwable cause = future.cause();
+
+                if (!(cause instanceof IllegalArgumentException)) {
+                    this.decrementAndRunTaskQueue();
+                }
+
+                promise.setFailure(future.cause());
+            }
+        }));
+
+        return promise;
+    }
+
+    public SocketAddress remoteAddress() {
+        return this.bootstrap().config().remoteAddress();
+    }
+
+    @Override
+    public String toString() {
+        return "RntbdClientChannelPool2(" + RntbdObjectMapper.toJson(this) + ")";
     }
 
     /**
@@ -171,10 +273,6 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
             return true;
         }
         return false;
-    }
-
-    public int pendingAcquisitionCount() {
-        return this.pendingAcquisitionCount;
     }
 
     /**
@@ -196,7 +294,7 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
             return null;
         }
 
-        if (this.closed.get()) {
+        if (this.isClosed()) {
             return first;  // because we're being called following a call to close (from super.close)
         }
 
@@ -216,61 +314,15 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
         return null;
     }
 
-    @Override
-    public Future<Void> release(final Channel channel, final Promise<Void> promise) {
-
-        this.throwIfClosed();
-        final Promise<Void> p = executor.newPromise();
-
-        super.release(channel, p.addListener((FutureListener<Void>)future -> {
-
-            checkState(executor.inEventLoop());
-
-            if (closed.get()) {
-                // Since the pool is closed, we have no choice but to close the channel
-                promise.setFailure(POOL_CLOSED_ON_RELEASE);
-                channel.close();
-                return;
-            }
-
-            if (future.isSuccess()) {
-
-                decrementAndRunTaskQueue();
-                promise.setSuccess(null);
-
-            } else {
-
-                Throwable cause = future.cause();
-
-                if (!(cause instanceof IllegalArgumentException)) {
-                    decrementAndRunTaskQueue();
-                }
-
-                promise.setFailure(future.cause());
-            }
-        }));
-
-        return promise;
-    }
-
-    public SocketAddress remoteAddress() {
-        return this.bootstrap().config().remoteAddress();
-    }
-
-    @Override
-    public String toString() {
-        return "RntbdClientChannelPool(" + RntbdObjectMapper.toJson(this) + ")";
-    }
-
     // endregion
 
     // region Privates
 
     private void acquire0(final Promise<Channel> promise) {
 
-        assert executor.inEventLoop();
+        checkState(this.executor.inEventLoop());
 
-        if (this.closed.get()) {
+        if (this.isClosed()) {
             promise.setFailure(POOL_CLOSED_ON_ACQUIRE);
             return;
         }
@@ -279,7 +331,7 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
             // We need to create a new promise as we need to ensure the AcquireListener runs in the correct
             // EventLoop
             Promise<Channel> p = executor.newPromise();
-            AcquireListener l = new AcquireListener(promise);
+            AcquireListener l = new AcquireListener(this, promise);
             l.acquired();
             p.addListener(l);
             super.acquire(p);
@@ -287,12 +339,12 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
             if (pendingAcquisitionCount >= maxPendingAcquisitions) {
                 promise.setFailure(TOO_MANY_OUTSTANDING_ACQUISITIONS);
             } else {
-                AcquireTask task = new AcquireTask(promise);
+                AcquireTask task = new AcquireTask(this, promise);
                 if (pendingAcquisitionQueue.offer(task)) {
                     ++pendingAcquisitionCount;
 
-                    if (timeoutTask != null) {
-                        task.timeoutFuture = executor.schedule(timeoutTask, acquireTimeoutNanos, TimeUnit.NANOSECONDS);
+                    if (acquisitionTimeoutTask != null) {
+                        task.timeoutFuture = executor.schedule(acquisitionTimeoutTask, acquisitionTimeoutNanos, TimeUnit.NANOSECONDS);
                     }
                 } else {
                     promise.setFailure(TOO_MANY_OUTSTANDING_ACQUISITIONS);
@@ -305,10 +357,11 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
 
     private void close0() {
 
+        checkState(this.executor.inEventLoop());
         this.availableChannelCount.set(0);
 
         for (; ; ) {
-            AcquireTask task = pendingAcquisitionQueue.poll();
+            AcquireTask task = this.pendingAcquisitionQueue.poll();
             if (task == null) {
                 break;
             }
@@ -335,7 +388,7 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
 
     private void decrementAndRunTaskQueue() {
         // We should never have a negative value.
-        int currentCount = acquiredChannelCount.decrementAndGet();
+        int currentCount = this.acquiredChannelCount.decrementAndGet();
         assert currentCount >= 0;
 
         // Run the pending acquire tasks before notify the original promise so if the user would
@@ -402,7 +455,8 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
 
     // region Types
 
-    public enum AcquireTimeoutAction {
+    private enum AcquisitionTimeoutAction {
+
         /**
          * Create a new connection when the timeout is detected.
          */
@@ -414,29 +468,32 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
         FAIL
     }
 
-    private class AcquireListener implements FutureListener<Channel> {
+    private static class AcquireListener implements FutureListener<Channel> {
 
         private final Promise<Channel> originalPromise;
-        boolean acquired;
+        private final RntbdClientChannelPool2 pool;
 
-        AcquireListener(Promise<Channel> originalPromise) {
+        private boolean acquired;
+
+        AcquireListener(RntbdClientChannelPool2 pool, Promise<Channel> originalPromise) {
             this.originalPromise = originalPromise;
+            this.pool = pool;
         }
 
         public void acquired() {
             if (acquired) {
                 return;
             }
-            acquiredChannelCount.incrementAndGet();
+            pool.acquiredChannelCount.incrementAndGet();
             acquired = true;
         }
 
         @Override
         public void operationComplete(Future<Channel> future) throws Exception {
 
-            assert executor.inEventLoop();
+            checkState(pool.executor.inEventLoop());
 
-            if (closed.get()) {
+            if (pool.isClosed()) {
                 if (future.isSuccess()) {
                     // Since the pool is closed, we have no choice but to close the channel
                     future.getNow().close();
@@ -449,9 +506,9 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
                 originalPromise.setSuccess(future.getNow());
             } else {
                 if (acquired) {
-                    decrementAndRunTaskQueue();
+                    pool.decrementAndRunTaskQueue();
                 } else {
-                    runTaskQueue();
+                    pool.runTaskQueue();
                 }
 
                 originalPromise.setFailure(future.cause());
@@ -459,19 +516,77 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
         }
     }
 
-    // AcquireTask extends AcquireListener to reduce object creations and so GC pressure
+    private static final class AcquireTask extends AcquireListener {
 
-    private final class AcquireTask extends AcquireListener {
+        // AcquireTask extends AcquireListener to reduce object creations and so GC pressure
 
-        final long expireNanoTime = System.nanoTime() + acquireTimeoutNanos;
+        final long expireNanoTime;
         final Promise<Channel> promise;
         ScheduledFuture<?> timeoutFuture;
 
-        AcquireTask(Promise<Channel> promise) {
-            super(promise);
+        AcquireTask(RntbdClientChannelPool2 pool, Promise<Channel> promise) {
+            super(pool, promise);
             // We need to create a new promise as we need to ensure the AcquireListener runs in the correct
             // EventLoop.
-            this.promise = executor.<Channel>newPromise().addListener(this);
+            this.expireNanoTime = System.nanoTime() + pool.acquisitionTimeoutNanos;
+            this.promise = pool.executor.<Channel>newPromise().addListener(this);
+        }
+    }
+
+    private static abstract class AcquireTimeoutTask implements Runnable {
+
+        RntbdClientChannelPool2 pool;
+
+        public AcquireTimeoutTask(RntbdClientChannelPool2 pool) {
+            this.pool = pool;
+        }
+
+        public abstract void onTimeout(AcquireTask task);
+
+        @Override
+        public final void run() {
+            checkState(pool.executor.inEventLoop());
+            long nanoTime = System.nanoTime();
+
+            for (; ; ) {
+                AcquireTask task = pool.pendingAcquisitionQueue.peek();
+                // Compare nanoTime as described in the System.nanoTime documentation
+                // See:
+                // * https://docs.oracle.com/javase/7/docs/api/java/lang/System.html#nanoTime()
+                // * https://github.com/netty/netty/issues/3705
+                if (task == null || nanoTime - task.expireNanoTime < 0) {
+                    break;
+                }
+                pool.pendingAcquisitionQueue.remove();
+                pool.pendingAcquisitionCount--;
+                onTimeout(task);
+            }
+        }
+    }
+
+    static final class JsonSerializer extends StdSerializer<RntbdClientChannelPool2> {
+
+        JsonSerializer() {
+            this(null);
+        }
+
+        JsonSerializer(Class<RntbdClientChannelPool2> type) {
+            super(type);
+        }
+
+        @Override
+        public void serialize(RntbdClientChannelPool2 value, JsonGenerator generator, SerializerProvider provider) throws IOException {
+            generator.writeStartObject();
+            generator.writeStringField("remoteAddress", value.remoteAddress().toString());
+            generator.writeNumberField("maxChannels", value.maxChannels());
+            generator.writeNumberField("maxRequestsPerChannel", value.maxRequestsPerChannel());
+            generator.writeObjectFieldStart("state");
+            generator.writeBooleanField("isClosed", value.isClosed());
+            generator.writeNumberField("acquiredChannelCount", value.acquiredChannelCount());
+            generator.writeNumberField("availableChannelCount", value.availableChannelCount());
+            generator.writeNumberField("pendingAcquisitionCount", value.pendingAcquisitionCount());
+            generator.writeEndObject();
+            generator.writeEndObject();
         }
     }
 

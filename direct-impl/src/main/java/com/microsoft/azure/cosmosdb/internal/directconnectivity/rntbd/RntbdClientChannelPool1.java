@@ -49,12 +49,12 @@ import static com.google.common.base.Preconditions.checkState;
 import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdReporter.reportIssue;
 import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdReporter.reportIssueUnless;
 
-@JsonSerialize(using = RntbdClientChannelPool.JsonSerializer.class)
-public final class RntbdClientChannelPool extends FixedChannelPool {
+@JsonSerialize(using = RntbdClientChannelPool1.JsonSerializer.class)
+public final class RntbdClientChannelPool1 extends FixedChannelPool {
 
     // region Fields
 
-    private static final Logger logger = LoggerFactory.getLogger(RntbdClientChannelPool.class);
+    private static final Logger logger = LoggerFactory.getLogger(RntbdClientChannelPool1.class);
     private static final AtomicReference<Field> pendingAcquireCount = new AtomicReference<>();
 
     private final AtomicInteger availableChannelCount;
@@ -67,12 +67,12 @@ public final class RntbdClientChannelPool extends FixedChannelPool {
     // region Methods
 
     /**
-     * Initializes a newly created {@link RntbdClientChannelPool} object
+     * Initializes a newly created {@link RntbdClientChannelPool1} object
      *
      * @param bootstrap the {@link Bootstrap} that is used for connections
      * @param config    the {@link RntbdEndpoint.Config} that is used for the channel pool instance created
      */
-    RntbdClientChannelPool(final Bootstrap bootstrap, final RntbdEndpoint.Config config) {
+    RntbdClientChannelPool1(final Bootstrap bootstrap, final RntbdEndpoint.Config config) {
 
         super(bootstrap, new RntbdClientChannelHandler(config), ChannelHealthChecker.ACTIVE, null,
             -1L, config.getMaxChannelsPerEndpoint(), Integer.MAX_VALUE, true
@@ -202,7 +202,7 @@ public final class RntbdClientChannelPool extends FixedChannelPool {
 
     @Override
     public String toString() {
-        return "RntbdClientChannelPool(" + RntbdObjectMapper.toJson(this) + ")";
+        return "RntbdClientChannelPool1(" + RntbdObjectMapper.toJson(this) + ")";
     }
 
     // endregion
@@ -238,18 +238,18 @@ public final class RntbdClientChannelPool extends FixedChannelPool {
 
     // region Types
 
-    static final class JsonSerializer extends StdSerializer<RntbdClientChannelPool> {
+    static final class JsonSerializer extends StdSerializer<RntbdClientChannelPool1> {
 
         public JsonSerializer() {
             this(null);
         }
 
-        public JsonSerializer(Class<RntbdClientChannelPool> type) {
+        public JsonSerializer(Class<RntbdClientChannelPool1> type) {
             super(type);
         }
 
         @Override
-        public void serialize(RntbdClientChannelPool value, JsonGenerator generator, SerializerProvider provider) throws IOException {
+        public void serialize(RntbdClientChannelPool1 value, JsonGenerator generator, SerializerProvider provider) throws IOException {
             generator.writeStartObject();
             generator.writeStringField("remoteAddress", value.remoteAddress().toString());
             generator.writeNumberField("maxChannels", value.maxChannels());

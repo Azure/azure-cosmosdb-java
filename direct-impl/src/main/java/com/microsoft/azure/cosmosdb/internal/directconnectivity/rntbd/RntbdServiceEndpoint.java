@@ -64,7 +64,7 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
     private static final Logger logger = LoggerFactory.getLogger(RntbdServiceEndpoint.class);
     private static final String namePrefix = RntbdServiceEndpoint.class.getSimpleName() + '-';
 
-    private final RntbdClientChannelPool channelPool;
+    private final RntbdClientChannelPool1 channelPool;
     private final AtomicBoolean closed;
     private final RntbdMetrics metrics;
     private final String name;
@@ -86,7 +86,7 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
             .remoteAddress(physicalAddress.getHost(), physicalAddress.getPort());
 
         this.name = RntbdServiceEndpoint.namePrefix + instanceCount.incrementAndGet();
-        this.channelPool = new RntbdClientChannelPool(bootstrap, config);
+        this.channelPool = new RntbdClientChannelPool1(bootstrap, config);
         this.remoteAddress = bootstrap.config().remoteAddress();
         this.metrics = new RntbdMetrics(this.name);
         this.closed = new AtomicBoolean();
