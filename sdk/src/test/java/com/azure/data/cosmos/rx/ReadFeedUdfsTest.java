@@ -60,7 +60,7 @@ public class ReadFeedUdfsTest extends TestSuiteBase {
         FeedOptions options = new FeedOptions();
         options.maxItemCount(2);
 
-        Flux<FeedResponse<CosmosUserDefinedFunctionSettings>> feedObservable = createdCollection.listUserDefinedFunctions(options);
+        Flux<FeedResponse<CosmosUserDefinedFunctionSettings>> feedObservable = createdCollection.getScripts().listUserDefinedFunctions(options);
 
         int expectedPageSize = (createdUserDefinedFunctions.size() + options.maxItemCount() - 1) / options.maxItemCount();
 
@@ -100,7 +100,7 @@ public class ReadFeedUdfsTest extends TestSuiteBase {
         CosmosUserDefinedFunctionSettings udf = new CosmosUserDefinedFunctionSettings();
          udf.id(UUID.randomUUID().toString());
          udf.body("function() {var x = 10;}");
-        return cosmosContainer.createUserDefinedFunction(udf, new CosmosRequestOptions()).block().settings();
+        return cosmosContainer.getScripts().createUserDefinedFunction(udf, new CosmosRequestOptions()).block().settings();
     }
 
     private String getCollectionLink() {

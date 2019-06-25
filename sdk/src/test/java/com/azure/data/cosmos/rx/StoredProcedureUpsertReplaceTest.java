@@ -60,11 +60,11 @@ public class StoredProcedureUpsertReplaceTest extends TestSuiteBase {
         CosmosStoredProcedureSettings storedProcedureDef = new CosmosStoredProcedureSettings();
         storedProcedureDef.id(UUID.randomUUID().toString());
         storedProcedureDef.body("function() {var x = 10;}");
-        CosmosStoredProcedureSettings readBackSp = createdCollection.createStoredProcedure(storedProcedureDef, new CosmosStoredProcedureRequestOptions()).block().settings();
+        CosmosStoredProcedureSettings readBackSp = createdCollection.getScripts().createStoredProcedure(storedProcedureDef, new CosmosStoredProcedureRequestOptions()).block().settings();
 
         // read stored procedure to validate creation
         waitIfNeededForReplicasToCatchUp(clientBuilder());
-        Mono<CosmosStoredProcedureResponse> readObservable = createdCollection.getStoredProcedure(readBackSp.id()).read(null);
+        Mono<CosmosStoredProcedureResponse> readObservable = createdCollection.getScripts().getStoredProcedure(readBackSp.id()).read(null);
 
         // validate stored procedure creation
         CosmosResponseValidator<CosmosStoredProcedureResponse> validatorForRead = new CosmosResponseValidator.Builder<CosmosStoredProcedureResponse>()
@@ -77,7 +77,7 @@ public class StoredProcedureUpsertReplaceTest extends TestSuiteBase {
         //update stored procedure
         readBackSp.body("function() {var x = 11;}");
 
-        Mono<CosmosStoredProcedureResponse> replaceObservable = createdCollection.getStoredProcedure(readBackSp.id()).replace(readBackSp, new RequestOptions());
+        Mono<CosmosStoredProcedureResponse> replaceObservable = createdCollection.getScripts().getStoredProcedure(readBackSp.id()).replace(readBackSp, new RequestOptions());
 
         //validate stored procedure replace
         CosmosResponseValidator<CosmosStoredProcedureResponse> validatorForReplace = new CosmosResponseValidator.Builder<CosmosStoredProcedureResponse>()
@@ -104,7 +104,7 @@ public class StoredProcedureUpsertReplaceTest extends TestSuiteBase {
 
         CosmosStoredProcedure storedProcedure = null;
 
-        storedProcedure = createdCollection.createStoredProcedure(storedProcedureDef,
+        storedProcedure = createdCollection.getScripts().createStoredProcedure(storedProcedureDef,
             new CosmosStoredProcedureRequestOptions()).block().storedProcedure();
 
         String result = null;

@@ -58,7 +58,7 @@ public class ReadFeedStoredProceduresTest extends TestSuiteBase {
         FeedOptions options = new FeedOptions();
         options.maxItemCount(2);
 
-        Flux<FeedResponse<CosmosStoredProcedureSettings>> feedObservable = createdCollection.listStoredProcedures(options);
+        Flux<FeedResponse<CosmosStoredProcedureSettings>> feedObservable = createdCollection.getScripts().listStoredProcedures(options);
 
         int expectedPageSize = (createdStoredProcedures.size() + options.maxItemCount() - 1) / options.maxItemCount();
 
@@ -98,6 +98,6 @@ public class ReadFeedStoredProceduresTest extends TestSuiteBase {
         CosmosStoredProcedureSettings sproc = new CosmosStoredProcedureSettings();
         sproc.id(UUID.randomUUID().toString());
         sproc.body("function() {var x = 10;}");
-        return cosmosContainer.createStoredProcedure(sproc, new CosmosStoredProcedureRequestOptions()).block().settings();
+        return cosmosContainer.getScripts().createStoredProcedure(sproc, new CosmosStoredProcedureRequestOptions()).block().settings();
     }
 }

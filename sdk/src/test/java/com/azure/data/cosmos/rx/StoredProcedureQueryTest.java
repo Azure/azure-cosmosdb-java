@@ -62,7 +62,7 @@ public class StoredProcedureQueryTest extends TestSuiteBase {
 
         FeedOptions options = new FeedOptions();
         options.maxItemCount(5);
-        Flux<FeedResponse<CosmosStoredProcedureSettings>> queryObservable = createdCollection.queryStoredProcedures(query, options);
+        Flux<FeedResponse<CosmosStoredProcedureSettings>> queryObservable = createdCollection.getScripts().queryStoredProcedures(query, options);
 
         List<CosmosStoredProcedureSettings> expectedDocs = createdStoredProcs.stream().filter(sp -> filterId.equals(sp.id()) ).collect(Collectors.toList());
         assertThat(expectedDocs).isNotEmpty();
@@ -86,7 +86,7 @@ public class StoredProcedureQueryTest extends TestSuiteBase {
         String query = "SELECT * from root r where r.id = '2'";
         FeedOptions options = new FeedOptions();
         options.enableCrossPartitionQuery(true);
-        Flux<FeedResponse<CosmosStoredProcedureSettings>> queryObservable = createdCollection.queryStoredProcedures(query, options);
+        Flux<FeedResponse<CosmosStoredProcedureSettings>> queryObservable = createdCollection.getScripts().queryStoredProcedures(query, options);
 
         FeedResponseListValidator<CosmosStoredProcedureSettings> validator = new FeedResponseListValidator.Builder<CosmosStoredProcedureSettings>()
                 .containsExactly(new ArrayList<>())
@@ -104,7 +104,7 @@ public class StoredProcedureQueryTest extends TestSuiteBase {
         FeedOptions options = new FeedOptions();
         options.maxItemCount(3);
         options.enableCrossPartitionQuery(true);
-        Flux<FeedResponse<CosmosStoredProcedureSettings>> queryObservable = createdCollection.queryStoredProcedures(query, options);
+        Flux<FeedResponse<CosmosStoredProcedureSettings>> queryObservable = createdCollection.getScripts().queryStoredProcedures(query, options);
 
         List<CosmosStoredProcedureSettings> expectedDocs = createdStoredProcs;
 
@@ -129,7 +129,7 @@ public class StoredProcedureQueryTest extends TestSuiteBase {
         String query = "I am an invalid query";
         FeedOptions options = new FeedOptions();
         options.enableCrossPartitionQuery(true);
-        Flux<FeedResponse<CosmosStoredProcedureSettings>> queryObservable = createdCollection.queryStoredProcedures(query, options);
+        Flux<FeedResponse<CosmosStoredProcedureSettings>> queryObservable = createdCollection.getScripts().queryStoredProcedures(query, options);
 
         FailureValidator validator = new FailureValidator.Builder()
                 .instanceOf(CosmosClientException.class)
@@ -141,7 +141,7 @@ public class StoredProcedureQueryTest extends TestSuiteBase {
 
     public CosmosStoredProcedureSettings createStoredProc(CosmosContainer cosmosContainer) {
         CosmosStoredProcedureSettings storedProcedure = getStoredProcedureDef();
-        return cosmosContainer.createStoredProcedure(storedProcedure).block().settings();
+        return cosmosContainer.getScripts().createStoredProcedure(storedProcedure).block().settings();
     }
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)

@@ -249,7 +249,7 @@ public class TestSuiteBase extends CosmosClientTest {
                     }).then().block();
         logger.info("Truncating collection {} triggers ...", cosmosContainerId);
 
-        cosmosContainer.queryTriggers("SELECT * FROM root", options)
+        cosmosContainer.getScripts().queryTriggers("SELECT * FROM root", options)
                        .publishOn(Schedulers.parallel())
                 .flatMap(page -> Flux.fromIterable(page.results()))
                 .flatMap(trigger -> {
@@ -260,12 +260,12 @@ public class TestSuiteBase extends CosmosClientTest {
 //                        requestOptions.partitionKey(new PartitionKey(propertyValue));
 //                    }
 
-                        return cosmosContainer.getTrigger(trigger.id()).delete(requestOptions);
+                        return cosmosContainer.getScripts().getTrigger(trigger.id()).delete(requestOptions);
                     }).then().block();
 
         logger.info("Truncating collection {} storedProcedures ...", cosmosContainerId);
 
-        cosmosContainer.queryStoredProcedures("SELECT * FROM root", options)
+        cosmosContainer.getScripts().queryStoredProcedures("SELECT * FROM root", options)
                        .publishOn(Schedulers.parallel())
                 .flatMap(page -> Flux.fromIterable(page.results()))
                 .flatMap(storedProcedure -> {
@@ -276,12 +276,12 @@ public class TestSuiteBase extends CosmosClientTest {
 //                        requestOptions.partitionKey(new PartitionKey(propertyValue));
 //                    }
 
-                    return cosmosContainer.getStoredProcedure(storedProcedure.id()).delete(requestOptions);
+                    return cosmosContainer.getScripts().getStoredProcedure(storedProcedure.id()).delete(requestOptions);
                     }).then().block();
 
         logger.info("Truncating collection {} udfs ...", cosmosContainerId);
 
-        cosmosContainer.queryUserDefinedFunctions("SELECT * FROM root", options)
+        cosmosContainer.getScripts().queryUserDefinedFunctions("SELECT * FROM root", options)
                        .publishOn(Schedulers.parallel())
                 .flatMap(page -> Flux.fromIterable(page.results()))
                 .flatMap(udf -> {
@@ -292,7 +292,7 @@ public class TestSuiteBase extends CosmosClientTest {
 //                        requestOptions.partitionKey(new PartitionKey(propertyValue));
 //                    }
 
-                    return cosmosContainer.getUserDefinedFunction(udf.id()).delete(requestOptions);
+                    return cosmosContainer.getScripts().getUserDefinedFunction(udf.id()).delete(requestOptions);
                     }).then().block();
 
         logger.info("Finished truncating collection {}.", cosmosContainerId);

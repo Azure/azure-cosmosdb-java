@@ -60,7 +60,7 @@ public class ReadFeedTriggersTest extends TestSuiteBase {
         FeedOptions options = new FeedOptions();
         options.maxItemCount(2);
 
-        Flux<FeedResponse<CosmosTriggerSettings>> feedObservable = createdCollection.listTriggers(options);
+        Flux<FeedResponse<CosmosTriggerSettings>> feedObservable = createdCollection.getScripts().listTriggers(options);
 
         int expectedPageSize = (createdTriggers.size() + options.maxItemCount() - 1) / options.maxItemCount();
 
@@ -102,6 +102,6 @@ public class ReadFeedTriggersTest extends TestSuiteBase {
         trigger.body("function() {var x = 10;}");
         trigger.triggerOperation(TriggerOperation.CREATE);
         trigger.triggerType(TriggerType.PRE);
-        return cosmosContainer.createTrigger(trigger, new CosmosRequestOptions()).block().settings();
+        return cosmosContainer.getScripts().createTrigger(trigger, new CosmosRequestOptions()).block().settings();
     }
 }

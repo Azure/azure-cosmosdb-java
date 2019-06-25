@@ -69,7 +69,7 @@ public class UserDefinedFunctionQueryTest extends TestSuiteBase {
 
         FeedOptions options = new FeedOptions();
         options.maxItemCount(5);
-        Flux<FeedResponse<CosmosUserDefinedFunctionSettings>> queryObservable = createdCollection.queryUserDefinedFunctions(query, options);
+        Flux<FeedResponse<CosmosUserDefinedFunctionSettings>> queryObservable = createdCollection.getScripts().queryUserDefinedFunctions(query, options);
 
         List<CosmosUserDefinedFunctionSettings> expectedDocs = createdUDF.stream().filter(sp -> filterId.equals(sp.id()) ).collect(Collectors.toList());
         assertThat(expectedDocs).isNotEmpty();
@@ -93,7 +93,7 @@ public class UserDefinedFunctionQueryTest extends TestSuiteBase {
         String query = "SELECT * from root r where r.id = '2'";
         FeedOptions options = new FeedOptions();
         options.enableCrossPartitionQuery(true);
-        Flux<FeedResponse<CosmosUserDefinedFunctionSettings>> queryObservable = createdCollection.queryUserDefinedFunctions(query, options);
+        Flux<FeedResponse<CosmosUserDefinedFunctionSettings>> queryObservable = createdCollection.getScripts().queryUserDefinedFunctions(query, options);
 
         FeedResponseListValidator<CosmosUserDefinedFunctionSettings> validator = new FeedResponseListValidator.Builder<CosmosUserDefinedFunctionSettings>()
                 .containsExactly(new ArrayList<>())
@@ -111,7 +111,7 @@ public class UserDefinedFunctionQueryTest extends TestSuiteBase {
         FeedOptions options = new FeedOptions();
         options.maxItemCount(3);
         options.enableCrossPartitionQuery(true);
-        Flux<FeedResponse<CosmosUserDefinedFunctionSettings>> queryObservable = createdCollection.queryUserDefinedFunctions(query, options);
+        Flux<FeedResponse<CosmosUserDefinedFunctionSettings>> queryObservable = createdCollection.getScripts().queryUserDefinedFunctions(query, options);
 
         List<CosmosUserDefinedFunctionSettings> expectedDocs = createdUDF;      
 
@@ -135,7 +135,7 @@ public class UserDefinedFunctionQueryTest extends TestSuiteBase {
         String query = "I am an invalid query";
         FeedOptions options = new FeedOptions();
         options.enableCrossPartitionQuery(true);
-        Flux<FeedResponse<CosmosUserDefinedFunctionSettings>> queryObservable = createdCollection.queryUserDefinedFunctions(query, options);
+        Flux<FeedResponse<CosmosUserDefinedFunctionSettings>> queryObservable = createdCollection.getScripts().queryUserDefinedFunctions(query, options);
 
         FailureValidator validator = new FailureValidator.Builder()
                 .instanceOf(CosmosClientException.class)
@@ -147,7 +147,7 @@ public class UserDefinedFunctionQueryTest extends TestSuiteBase {
 
     public CosmosUserDefinedFunctionSettings createUserDefinedFunction(CosmosContainer cosmosContainer) {
         CosmosUserDefinedFunctionSettings storedProcedure = getUserDefinedFunctionDef();
-        return cosmosContainer.createUserDefinedFunction(storedProcedure, new CosmosRequestOptions()).block().settings();
+        return cosmosContainer.getScripts().createUserDefinedFunction(storedProcedure, new CosmosRequestOptions()).block().settings();
     }
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
