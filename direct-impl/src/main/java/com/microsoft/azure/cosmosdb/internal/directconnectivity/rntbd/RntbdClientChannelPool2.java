@@ -326,32 +326,40 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
             promise.setFailure(POOL_CLOSED_ON_ACQUIRE);
             return;
         }
-        if (acquiredChannelCount.get() < this.maxChannels) {
-            assert acquiredChannelCount.get() >= 0;
-            // We need to create a new promise as we need to ensure the AcquireListener runs in the correct
-            // EventLoop
+
+        if (this.acquiredChannelCount.get() < this.maxChannels) {
+
+            checkState(this.acquiredChannelCount.get() >= 0);
+
+            // We need to create a new promise to ensure the AcquireListener runs in the correct event loop
             Promise<Channel> p = executor.newPromise();
             AcquireListener l = new AcquireListener(this, promise);
             l.acquired();
             p.addListener(l);
             super.acquire(p);
+
         } else {
-            if (pendingAcquisitionCount >= maxPendingAcquisitions) {
+
+            if (this.pendingAcquisitionCount >= this.maxPendingAcquisitions) {
                 promise.setFailure(TOO_MANY_OUTSTANDING_ACQUISITIONS);
             } else {
+
                 AcquireTask task = new AcquireTask(this, promise);
-                if (pendingAcquisitionQueue.offer(task)) {
-                    ++pendingAcquisitionCount;
+
+                if (this.pendingAcquisitionQueue.offer(task)) {
+
+                    this.pendingAcquisitionCount++;
 
                     if (acquisitionTimeoutTask != null) {
                         task.timeoutFuture = executor.schedule(acquisitionTimeoutTask, acquisitionTimeoutNanos, TimeUnit.NANOSECONDS);
                     }
+
                 } else {
                     promise.setFailure(TOO_MANY_OUTSTANDING_ACQUISITIONS);
                 }
             }
 
-            assert pendingAcquisitionCount > 0;
+            checkState(this.pendingAcquisitionCount > 0);
         }
     }
 
@@ -376,14 +384,9 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
         this.pendingAcquisitionCount = 0;
 
         // Ensure we dispatch this on another Thread as close0 will be called from the EventExecutor and we need
-        // to ensure we will not block in a EventExecutor
+        // to ensure we will not block in an EventExecutor
 
-        GlobalEventExecutor.INSTANCE.execute(new Runnable() {
-            @Override
-            public void run() {
-                RntbdClientChannelPool2.super.close();
-            }
-        });
+        GlobalEventExecutor.INSTANCE.execute(RntbdClientChannelPool2.super::close);
     }
 
     private void decrementAndRunTaskQueue() {
@@ -448,7 +451,7 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
     }
 
     private void throwIfClosed() {
-        checkState(!this.closed.get(), "%s is closed", this);
+        checkState(!this.isClosed(), "%s is closed", this);
     }
 
     // endregion
@@ -522,12 +525,12 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
 
         final long expireNanoTime;
         final Promise<Channel> promise;
+
         ScheduledFuture<?> timeoutFuture;
 
         AcquireTask(RntbdClientChannelPool2 pool, Promise<Channel> promise) {
+            // We need to create a new promise to ensure the AcquireListener runs in the correct event loop
             super(pool, promise);
-            // We need to create a new promise as we need to ensure the AcquireListener runs in the correct
-            // EventLoop.
             this.expireNanoTime = System.nanoTime() + pool.acquisitionTimeoutNanos;
             this.promise = pool.executor.<Channel>newPromise().addListener(this);
         }
@@ -545,6 +548,7 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
 
         @Override
         public final void run() {
+
             checkState(pool.executor.inEventLoop());
             long nanoTime = System.nanoTime();
 
@@ -559,7 +563,7 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
                 }
                 pool.pendingAcquisitionQueue.remove();
                 pool.pendingAcquisitionCount--;
-                onTimeout(task);
+                this.onTimeout(task);
             }
         }
     }
