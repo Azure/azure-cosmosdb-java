@@ -121,18 +121,18 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
         AcquisitionTimeoutAction acquisitionTimeoutAction = null;
         long acquisitionTimeoutNanos = -1L;
 
-        if (acquisitionTimeoutAction == null && acquisitionTimeoutNanos == -1) {
+        if (acquisitionTimeoutAction == null) {
 
             this.acquisitionTimeoutNanos = -1L;
             this.acquisitionTimeoutTask = null;
 
         } else {
 
-            this.acquisitionTimeoutNanos = TimeUnit.MILLISECONDS.toNanos(acquisitionTimeoutNanos);
+            this.acquisitionTimeoutNanos = acquisitionTimeoutNanos;
 
             switch (acquisitionTimeoutAction) {
                 case FAIL:
-                    acquisitionTimeoutTask = new AcquireTimeoutTask(this) {
+                    this.acquisitionTimeoutTask = new AcquireTimeoutTask(this) {
                         @Override
                         public void onTimeout(AcquireTask task) {
                             // Fail the promise as we timed out.
@@ -141,7 +141,7 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
                     };
                     break;
                 case NEW:
-                    acquisitionTimeoutTask = new AcquireTimeoutTask(this) {
+                    this.acquisitionTimeoutTask = new AcquireTimeoutTask(this) {
                         @Override
                         public void onTimeout(AcquireTask task) {
                             // Increment the acquire count and delegate to super to actually acquire a Channel which will
