@@ -316,12 +316,21 @@ public class CosmosDatabase {
                 new CosmosUserResponse(response, this)).single();
     }
 
+    /**
+     * Upsert a user. Upsert will create a new user if it doesn't exist, or replace the existing one if it does.
+     * After subscription the operation will be performed.
+     * The {@link Mono} upon successful completion will contain a single resource response with the created user.
+     * In case of failure the {@link Mono} will error.
+     *
+     * @param settings the cosmos user settings
+     * @return an {@link Mono} containing the single resource response with the upserted user or an error.
+     */
     public Mono<CosmosUserResponse> upsertUser(CosmosUserSettings settings) {
         return this.upsertUser(settings, null);
     }
 
     /**
-     * Upsert a user
+     * Upsert a user. Upsert will create a new user if it doesn't exist, or replace the existing one if it does.
      * After subscription the operation will be performed.
      * The {@link Mono} upon successful completion will contain a single resource response with the created user.
      * In case of failure the {@link Mono} will error.
@@ -416,7 +425,7 @@ public class CosmosDatabase {
      * @param requestUnitsPerSecond the cosmos container throughput, expressed in Request Units per second
      * @return a {@link Mono} containing throughput or an error.
      */
-    public Mono<Integer> replaceProvisionedThroughputAsync(int requestUnitsPerSecond){
+    public Mono<Integer> replaceProvisionedThroughput(int requestUnitsPerSecond){
         return this.read()
                 .flatMap(cosmosDatabaseResponse ->
                         this.getDocClientWrapper()

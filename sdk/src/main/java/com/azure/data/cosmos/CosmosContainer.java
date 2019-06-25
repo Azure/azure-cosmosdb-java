@@ -741,7 +741,7 @@ public class CosmosContainer {
      * @param requestUnitsPerSecond the cosmos container throughput, expressed in Request Units per second
      * @return a {@link Mono} containing throughput or an error.
      */
-    public Mono<Integer> replaceProvisionedThroughputAsync(int requestUnitsPerSecond){
+    public Mono<Integer> replaceProvisionedThroughput(int requestUnitsPerSecond){
         return this.read()
                 .flatMap(cosmosContainerResponse ->
                         database.getDocClientWrapper()
