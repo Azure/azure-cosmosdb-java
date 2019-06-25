@@ -2,6 +2,9 @@ package com.azure.data.cosmos;
 
 import reactor.core.publisher.Mono;
 
+/**
+ * DO NOT USE. For internal use only by the SDK. These methods might break at any time. No support will be provided.
+ */
 public class CosmosBridgeInternal {
     
     public static DocumentCollection toDocumentCollection(CosmosContainerProperties cosmosContainerProperties) {
@@ -22,5 +25,13 @@ public class CosmosBridgeInternal {
 
     public static Mono<DatabaseAccount> getDatabaseAccount(CosmosClient client) {
         return client.getDatabaseAccount();
+    }
+
+    public static AsyncDocumentClient getContextClient(CosmosDatabase database) {
+        return database.getClient().getContextClient();
+    }
+
+    public static AsyncDocumentClient getContextClient(CosmosContainer container) {
+        return container.getDatabase().getClient().getContextClient();
     }
 }
