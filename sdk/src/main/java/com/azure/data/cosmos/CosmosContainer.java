@@ -27,13 +27,34 @@ import com.azure.data.cosmos.internal.Paths;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-public class CosmosContainer extends CosmosResource {
+import static com.azure.data.cosmos.Resource.validateResource;
+
+public class CosmosContainer {
 
     private CosmosDatabase database;
+    private String id;
 
     CosmosContainer(String id, CosmosDatabase database) {
-        super(id);
+        this.id = id;
         this.database = database;
+    }
+
+    /**
+     * Get the id of the {@link CosmosContainer}
+     * @return the id of the {@link CosmosContainer}
+     */
+    public String id() {
+        return id;
+    }
+
+    /**
+     * Set the id of the {@link CosmosContainer}
+     * @param id the id of the {@link CosmosContainer}
+     * @return the same {@link CosmosContainer} that had the id set
+     */
+    CosmosContainer id(String id) {
+        this.id = id;
+        return this;
     }
 
     AsyncDocumentClient getContextClient() {
@@ -50,7 +71,7 @@ public class CosmosContainer extends CosmosResource {
      * @param cosmosContainer the container client.
      * @return the context client.
      */
-    public static AsyncDocumentClient getContextClient(CosmosContainer cosmosContainer) {
+    static AsyncDocumentClient getContextClient(CosmosContainer cosmosContainer) {
         if(cosmosContainer == null) {
             return null;
         }
@@ -748,14 +769,22 @@ public class CosmosContainer extends CosmosResource {
         return database;
     }
 
-    @Override
-    protected String URIPathSegment() {
+    String URIPathSegment() {
         return Paths.COLLECTIONS_PATH_SEGMENT;
     }
 
-    @Override
-    protected String parentLink() {
+    String parentLink() {
         return database.getLink();
+    }
+
+    String getLink() {
+        StringBuilder builder = new StringBuilder();
+        builder.append(parentLink());
+        builder.append("/");
+        builder.append(URIPathSegment());
+        builder.append("/");
+        builder.append(id());
+        return builder.toString();
     }
 
 }

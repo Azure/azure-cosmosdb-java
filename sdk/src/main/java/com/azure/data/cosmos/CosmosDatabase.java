@@ -28,15 +28,36 @@ import org.apache.commons.lang3.StringUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import static com.azure.data.cosmos.Resource.validateResource;
+
 /**
- * Cosmos Database
+ * Perform read & delete databases, update database throughput, and perform operations on child resources
  */
-public class CosmosDatabase extends CosmosResource {
+public class CosmosDatabase {
     private CosmosClient client;
+    private String id;
 
     CosmosDatabase(String id, CosmosClient client) {
-        super(id);
+        this.id = id;
         this.client = client;
+    }
+
+    /**
+     * Get the id of the CosmosDatabase
+     * @return the id of the CosmosDatabase
+     */
+    public String id() {
+        return id;
+    }
+
+    /**
+     * Set the id of the CosmosDatabase
+     * @param id the id of the CosmosDatabase
+     * @return the same CosmosConflict that had the id set
+     */
+    CosmosDatabase id(String id) {
+        this.id = id;
+        return this;
     }
 
     /**
@@ -422,13 +443,21 @@ public class CosmosDatabase extends CosmosResource {
         return client.getDocClientWrapper();
     }
 
-    @Override
-    protected String URIPathSegment() {
+    String URIPathSegment() {
         return Paths.DATABASES_PATH_SEGMENT;
     }
 
-    @Override
-    protected String parentLink() {
+    String parentLink() {
         return StringUtils.EMPTY;
+    }
+
+    String getLink() {
+        StringBuilder builder = new StringBuilder();
+        builder.append(parentLink());
+        builder.append("/");
+        builder.append(URIPathSegment());
+        builder.append("/");
+        builder.append(id());
+        return builder.toString();
     }
 }
