@@ -57,21 +57,17 @@ import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.Rnt
  */
 public final class RntbdClientChannelPool2 extends SimpleChannelPool {
 
-    private static final IllegalStateException FULL_EXCEPTION = ThrowableUtil.unknownStackTrace(
-        new IllegalStateException("Too many outstanding acquire operations"),
+    private static final IllegalStateException POOL_CLOSED_ON_ACQUIRE = ThrowableUtil.unknownStackTrace(
+        new IllegalStateException("RntbdClientChannelPool was closed"),
         RntbdClientChannelPool2.class, "acquire0(...)");
 
-    private static final IllegalStateException POOL_CLOSED_ON_ACQUIRE_EXCEPTION = ThrowableUtil.unknownStackTrace(
-        new IllegalStateException("FixedChannelPool was closed"),
-        RntbdClientChannelPool2.class, "acquire0(...)");
-
-    private static final IllegalStateException POOL_CLOSED_ON_RELEASE_EXCEPTION = ThrowableUtil.unknownStackTrace(
-        new IllegalStateException("FixedChannelPool was closed"),
+    private static final IllegalStateException POOL_CLOSED_ON_RELEASE = ThrowableUtil.unknownStackTrace(
+        new IllegalStateException("RntbdClientChannelPool was closed"),
         RntbdClientChannelPool2.class, "release(...)");
 
-    private static final TimeoutException TIMEOUT_EXCEPTION = ThrowableUtil.unknownStackTrace(
-        new TimeoutException("Acquire operation took longer then configured maximum time"),
-        RntbdClientChannelPool2.class, "<init>(...)");
+    private static final IllegalStateException TOO_MANY_OUTSTANDING_ACQUISITIONS = ThrowableUtil.unknownStackTrace(
+        new IllegalStateException("Too many outstanding acquire operations"),
+        RntbdClientChannelPool2.class, "acquire0(...)");
 
     private static final Logger logger = LoggerFactory.getLogger(RntbdClientChannelPool2.class);
 
@@ -232,7 +228,7 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
 
             if (closed.get()) {
                 // Since the pool is closed, we have no choice but to close the channel
-                promise.setFailure(POOL_CLOSED_ON_RELEASE_EXCEPTION);
+                promise.setFailure(POOL_CLOSED_ON_RELEASE);
                 channel.close();
                 return;
             }
@@ -275,7 +271,7 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
         assert executor.inEventLoop();
 
         if (this.closed.get()) {
-            promise.setFailure(POOL_CLOSED_ON_ACQUIRE_EXCEPTION);
+            promise.setFailure(POOL_CLOSED_ON_ACQUIRE);
             return;
         }
         if (acquiredChannelCount.get() < this.maxChannels) {
@@ -289,7 +285,7 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
             super.acquire(p);
         } else {
             if (pendingAcquisitionCount >= maxPendingAcquisitions) {
-                promise.setFailure(FULL_EXCEPTION);
+                promise.setFailure(TOO_MANY_OUTSTANDING_ACQUISITIONS);
             } else {
                 AcquireTask task = new AcquireTask(promise);
                 if (pendingAcquisitionQueue.offer(task)) {
@@ -299,7 +295,7 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
                         task.timeoutFuture = executor.schedule(timeoutTask, acquireTimeoutNanos, TimeUnit.NANOSECONDS);
                     }
                 } else {
-                    promise.setFailure(FULL_EXCEPTION);
+                    promise.setFailure(TOO_MANY_OUTSTANDING_ACQUISITIONS);
                 }
             }
 
@@ -445,7 +441,7 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
                     // Since the pool is closed, we have no choice but to close the channel
                     future.getNow().close();
                 }
-                originalPromise.setFailure(POOL_CLOSED_ON_ACQUIRE_EXCEPTION);
+                originalPromise.setFailure(POOL_CLOSED_ON_ACQUIRE);
                 return;
             }
 
