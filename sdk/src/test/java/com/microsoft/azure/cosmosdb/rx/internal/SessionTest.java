@@ -48,6 +48,7 @@ import java.lang.reflect.Method;
 import java.net.URLDecoder;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -78,13 +79,13 @@ public class SessionTest extends TestSuiteBase {
     }
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
-    public void beforeClass() {
+    public void beforeClass() throws Exception {
         createdDatabase = SHARED_DATABASE;
-        
+
         DocumentCollection collection = new DocumentCollection();
         collection.setId(collectionId);
         createdCollection = createCollection(createGatewayHouseKeepingDocumentClient().build(), createdDatabase.getId(),
-                collection, null);
+                                             collection, null);
         houseKeepingClient = clientBuilder().build();
         connectionMode = houseKeepingClient.getConnectionPolicy().getConnectionMode();
 
@@ -93,6 +94,8 @@ public class SessionTest extends TestSuiteBase {
         } else {
             spyClient = SpyClientUnderTestFactory.createClientUnderTest(clientBuilder());
         }
+
+        TimeUnit.SECONDS.sleep(10);
     }
 
     @AfterClass(groups = { "simple" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)
@@ -112,6 +115,10 @@ public class SessionTest extends TestSuiteBase {
         return spyClient.getCapturedRequests().stream()
                 .map(r -> r.getHeaders().get(HttpConstants.HttpHeaders.SESSION_TOKEN)).collect(Collectors.toList());
     }
+
+    private void clearCapturedRequests() {
+        spyClient.clearCapturedRequests();
+    }
     
     @Test(groups = { "simple" }, timeOut = TIMEOUT, dataProvider = "sessionTestArgProvider")
     public void sessionConsistency_ReadYourWrites(boolean isNameBased) {
@@ -124,21 +131,17 @@ public class SessionTest extends TestSuiteBase {
             Document documentCreated = spyClient.createDocument(getCollectionLink(isNameBased), new Document(), null, false)
                     .toBlocking().single().getResource();
 
-            // We send session tokens on Writes in Gateway mode
-            if (connectionMode == ConnectionMode.Gateway) {
-                assertThat(getSessionTokensInRequests()).hasSize(3 * i + 1);
-                assertThat(getSessionTokensInRequests().get(3 * i + 0)).isNotEmpty();
-            }
+            clearCapturedRequests();
 
             spyClient.readDocument(getDocumentLink(documentCreated, isNameBased), null).toBlocking().single();
 
-            assertThat(getSessionTokensInRequests()).hasSize(3 * i + 2);
-            assertThat(getSessionTokensInRequests().get(3 * i + 1)).isNotEmpty();
+            assertThat(getSessionTokensInRequests()).hasSize(1);
+            assertThat(getSessionTokensInRequests().get(0)).isNotEmpty();
 
             spyClient.readDocument(getDocumentLink(documentCreated, isNameBased), null).toBlocking().single();
 
-            assertThat(getSessionTokensInRequests()).hasSize(3 * i + 3);
-            assertThat(getSessionTokensInRequests().get(3 * i + 2)).isNotEmpty();
+            assertThat(getSessionTokensInRequests()).hasSize(2);
+            assertThat(getSessionTokensInRequests().get(1)).isNotEmpty();
         }
     }
 
