@@ -24,7 +24,6 @@
 package com.microsoft.azure.cosmosdb;
 
 import com.google.common.collect.ImmutableList;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -57,6 +56,6 @@ public class DocumentCollectionTests {
     @Test(groups = {"unit"})
     public void getIndexingPolicy() {
         DocumentCollection collection = new DocumentCollection();
-        Assert.assertNotNull(collection.getIndexingPolicy().getCompositeIndexes());
+        assertThat(collection.getIndexingPolicy().getCompositeIndexes()).isNotNull();
     }
 }
