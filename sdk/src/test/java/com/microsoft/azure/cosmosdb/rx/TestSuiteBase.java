@@ -109,6 +109,12 @@ public class TestSuiteBase extends DocumentClientTest {
     }
 
     static {
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        objectMapper.configure(JsonParser.Feature.ALLOW_SINGLE_QUOTES, true);
+        objectMapper.configure(JsonParser.Feature.ALLOW_TRAILING_COMMA, true);
+        objectMapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
+        objectMapper.configure(JsonParser.Feature.STRICT_DUPLICATE_DETECTION, true);
+
         accountConsistency = parseConsistency(TestConfigurations.CONSISTENCY);
         desiredConsistencies = immutableListOrNull(
                 ObjectUtils.defaultIfNull(parseDesiredConsistencies(TestConfigurations.DESIRED_CONSISTENCIES),
@@ -123,14 +129,7 @@ public class TestSuiteBase extends DocumentClientTest {
     }
 
     protected TestSuiteBase(AsyncDocumentClient.Builder clientBuilder) {
-
         super(clientBuilder);
-
-        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        objectMapper.configure(JsonParser.Feature.ALLOW_SINGLE_QUOTES, true);
-        objectMapper.configure(JsonParser.Feature.ALLOW_TRAILING_COMMA, true);
-        objectMapper.configure(JsonParser.Feature.STRICT_DUPLICATE_DETECTION, true);
-
         logger.debug("Initializing {} ...", this.getClass().getSimpleName());
     }
 
@@ -163,7 +162,7 @@ public class TestSuiteBase extends DocumentClientTest {
     }
 
     @BeforeSuite(groups = {"simple", "long", "direct", "multi-master", "emulator", "non-emulator"}, timeOut = SUITE_SETUP_TIMEOUT)
-    public static void beforeSuite() {
+    public static void beforeSuite() throws Exception {
         logger.info("beforeSuite Started");
         AsyncDocumentClient houseKeepingClient = createGatewayHouseKeepingDocumentClient().build();
         try {
@@ -178,6 +177,8 @@ public class TestSuiteBase extends DocumentClientTest {
         } finally {
             houseKeepingClient.close();
         }
+
+        TimeUnit.SECONDS.sleep(10);
     }
 
     @AfterSuite(groups = {"simple", "long", "direct", "multi-master", "emulator", "non-emulator"}, timeOut = SUITE_SHUTDOWN_TIMEOUT)
