@@ -283,8 +283,7 @@
           <additionalOptions>${javadoc.opts}</additionalOptions>
           <sourceFileExcludes>
             <sourceFileExclude>**/internal/**/*.java</sourceFileExclude>
-            <sourceFileExclude>**/com.azure.data.cosmos.BridgeInternal.java</sourceFileExclude>
-            <sourceFileExclude>**/com.azure.data.cosmos.CosmosBridgeInternal.java</sourceFileExclude>
+            <sourceFileExclude>**/*BridgeInternal.java</sourceFileExclude>
           </sourceFileExcludes>
         </configuration>
         <executions>

@@ -67,7 +67,7 @@ final class SpatialIndex extends Index {
      *
      * @return the data type.
      */
-    private DataType dataType() {
+    public DataType dataType() {
         DataType result = null;
         try {
             result = DataType.valueOf(StringUtils.upperCase(super.getString(Constants.Properties.DATA_TYPE)));
@@ -83,7 +83,7 @@ final class SpatialIndex extends Index {
      * @param dataType the data type.
      * @return the SpatialIndex.
      */
-    private SpatialIndex dataType(DataType dataType) {
+    public SpatialIndex dataType(DataType dataType) {
         super.set(Constants.Properties.DATA_TYPE, dataType.toString());
         return this;
     }

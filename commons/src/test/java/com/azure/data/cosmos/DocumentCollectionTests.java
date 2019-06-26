@@ -57,7 +57,7 @@ public class DocumentCollectionTests {
     }
 
     @Test(groups = { "unit"})
-    public void IndexingPolicy_serializeAndDeserialize() {
+    public void indexingPolicy_serializeAndDeserialize() {
         SpatialSpec spatialSpec = new SpatialSpec();
         List<SpatialSpec> spatialSpecList = new ArrayList<>();
         spatialSpecList.add(spatialSpec);
