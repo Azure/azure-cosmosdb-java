@@ -52,4 +52,16 @@ public class DocumentCollectionTests {
         assertThat(parsedColl.getPartitionKey().paths()).isEqualTo(partitionKeyDefinition.paths());
         assertThat(parsedColl.getPartitionKey().version()).isEqualTo(partitionKeyDefinition.version());
     }
+
+    @Test(groups = { "unit"})
+    public void IndexingPolicy_serializeAndDeserialize() {
+        IndexingPolicy indexingPolicy = new IndexingPolicy();
+        DocumentCollection documentCollection = new DocumentCollection();
+        documentCollection.setIndexingPolicy(indexingPolicy);
+        String json = documentCollection.toJson();
+
+        DocumentCollection documentCollectionPostSerialization = new DocumentCollection(json);
+        IndexingPolicy indexingPolicyPostSerialization = documentCollectionPostSerialization.getIndexingPolicy();
+        assertThat(indexingPolicyPostSerialization != null);
+    }
 }

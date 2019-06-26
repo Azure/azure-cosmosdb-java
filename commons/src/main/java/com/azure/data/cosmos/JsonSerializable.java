@@ -310,7 +310,7 @@ public class JsonSerializable {
                 }
             } else if (JsonSerializable.class.isAssignableFrom(c)) {
                 try {
-                    Constructor<T> constructor = c.getConstructor(String.class);
+                    Constructor<T> constructor = c.getDeclaredConstructor(String.class);
                     if(Modifier.isPrivate(constructor.getModifiers())) {
                         constructor.setAccessible(true);
                     }
