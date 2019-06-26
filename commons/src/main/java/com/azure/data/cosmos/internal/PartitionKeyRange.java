@@ -51,7 +51,7 @@ public class PartitionKeyRange extends Resource {
      *            the json string that represents the partition key range
      *            object.
      */
-    PartitionKeyRange(String jsonString) {
+    public PartitionKeyRange(String jsonString) {
         super(jsonString);
     }
 
