@@ -30,6 +30,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Represents the indexing policy configuration for a collection in the Azure Cosmos DB database service.
@@ -38,10 +39,10 @@ public final class IndexingPolicy extends JsonSerializable {
 
     private static final String DEFAULT_PATH = "/*";
 
-    private Collection<IncludedPath> includedPaths;
-    private Collection<ExcludedPath> excludedPaths;
-    private Collection<ArrayList<CompositePath>> compositeIndexes;
-    private Collection<SpatialSpec> spatialIndexes;
+    private List<IncludedPath> includedPaths;
+    private List<ExcludedPath> excludedPaths;
+    private List<List<CompositePath>> compositeIndexes;
+    private List<SpatialSpec> spatialIndexes;
 
     /**
      * Constructor.
@@ -95,7 +96,7 @@ public final class IndexingPolicy extends JsonSerializable {
      *
      * @param jsonString the json string that represents the indexing policy.
      */
-    public IndexingPolicy(String jsonString) {
+    IndexingPolicy(String jsonString) {
         super(jsonString);
     }
 
@@ -158,7 +159,7 @@ public final class IndexingPolicy extends JsonSerializable {
      */
     public Collection<IncludedPath> includedPaths() {
         if (this.includedPaths == null) {
-            this.includedPaths = super.getCollection(Constants.Properties.INCLUDED_PATHS, IncludedPath.class);
+            this.includedPaths = super.getList(Constants.Properties.INCLUDED_PATHS, IncludedPath.class);
 
             if (this.includedPaths == null) {
                 this.includedPaths = new ArrayList<IncludedPath>();
@@ -168,7 +169,7 @@ public final class IndexingPolicy extends JsonSerializable {
         return this.includedPaths;
     }
 
-    public void setIncludedPaths(Collection<IncludedPath> includedPaths) {
+    public void setIncludedPaths(List<IncludedPath> includedPaths) {
         this.includedPaths = includedPaths;
     }
 
@@ -179,7 +180,7 @@ public final class IndexingPolicy extends JsonSerializable {
      */
     public Collection<ExcludedPath> excludedPaths() {
         if (this.excludedPaths == null) {
-            this.excludedPaths = super.getCollection(Constants.Properties.EXCLUDED_PATHS, ExcludedPath.class);
+            this.excludedPaths = super.getList(Constants.Properties.EXCLUDED_PATHS, ExcludedPath.class);
 
             if (this.excludedPaths == null) {
                 this.excludedPaths = new ArrayList<ExcludedPath>();
@@ -189,7 +190,7 @@ public final class IndexingPolicy extends JsonSerializable {
         return this.excludedPaths;
     }
 
-    public IndexingPolicy excludedPaths(Collection<ExcludedPath> excludedPaths) {
+    public IndexingPolicy excludedPaths(List<ExcludedPath> excludedPaths) {
         this.excludedPaths = excludedPaths;
         return this;
     }
@@ -199,9 +200,9 @@ public final class IndexingPolicy extends JsonSerializable {
      *
      * @return the composite indexes.
      */
-    public Collection<ArrayList<CompositePath>> compositeIndexes() {
+    public List<List<CompositePath>> compositeIndexes() {
         if (this.compositeIndexes == null) {
-            this.compositeIndexes = new ArrayList<ArrayList<CompositePath>>();
+            this.compositeIndexes = new ArrayList<>();
             ArrayNode compositeIndexes = (ArrayNode) super.get(Constants.Properties.COMPOSITE_INDEXES);
             for (int i = 0; i < compositeIndexes.size(); i ++) {
                 ArrayNode compositeIndex = (ArrayNode) compositeIndexes.get(i);
@@ -223,7 +224,7 @@ public final class IndexingPolicy extends JsonSerializable {
      * @param compositeIndexes the composite indexes.
      * @return the Indexing Policy.
      */
-    public IndexingPolicy compositeIndexes(Collection<ArrayList<CompositePath>> compositeIndexes) {
+    public IndexingPolicy compositeIndexes(List<List<CompositePath>> compositeIndexes) {
         this.compositeIndexes = compositeIndexes;
         super.set(Constants.Properties.COMPOSITE_INDEXES, this.compositeIndexes);
         return this;
@@ -236,7 +237,7 @@ public final class IndexingPolicy extends JsonSerializable {
      */
     public Collection<SpatialSpec> spatialIndexes() {
         if (this.spatialIndexes == null) {
-            this.spatialIndexes = super.getCollection(Constants.Properties.SPATIAL_INDEXES, SpatialSpec.class);
+            this.spatialIndexes = super.getList(Constants.Properties.SPATIAL_INDEXES, SpatialSpec.class);
 
             if (this.spatialIndexes == null) {
                 this.spatialIndexes = new ArrayList<SpatialSpec>();
@@ -252,7 +253,7 @@ public final class IndexingPolicy extends JsonSerializable {
      * @param spatialIndexes the spatial indexes.
      * @return the Indexing Policy.
      */
-    public IndexingPolicy spatialIndexes(Collection<SpatialSpec> spatialIndexes) {
+    public IndexingPolicy spatialIndexes(List<SpatialSpec> spatialIndexes) {
         this.spatialIndexes = spatialIndexes;
         super.set(Constants.Properties.SPATIAL_INDEXES, this.spatialIndexes);
         return this;

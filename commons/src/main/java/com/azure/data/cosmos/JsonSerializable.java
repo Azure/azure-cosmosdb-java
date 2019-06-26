@@ -103,7 +103,7 @@ public class JsonSerializable {
         }
     }
 
-    Logger getLogger() {
+    public Logger getLogger() {
         return logger;
     }
 
