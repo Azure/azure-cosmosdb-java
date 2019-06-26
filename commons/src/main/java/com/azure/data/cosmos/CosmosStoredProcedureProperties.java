@@ -27,59 +27,71 @@ import com.azure.data.cosmos.internal.Constants;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class CosmosUserDefinedFunctionSettings extends Resource {
-
-    /**
-     * Constructor
-     */
-    public CosmosUserDefinedFunctionSettings(){
-        super();
-    }
-
-    CosmosUserDefinedFunctionSettings(ResourceResponse<UserDefinedFunction> response) {
-        super(response.getResource().toJson());
-    }
+public class CosmosStoredProcedureProperties extends Resource {
 
     /**
      * Constructor.
      *
-     * @param jsonString the json string that represents the cosmos user defined function settings.
      */
-    public CosmosUserDefinedFunctionSettings(String jsonString) {
-        super(jsonString);
+    public CosmosStoredProcedureProperties() {
+        super();
     }
 
     /**
      * Sets the id
      * @param id the name of the resource.
-     * @return the current instance of cosmos user defined function settings
+     * @return return the Cosmos stored procedure settings with id set
      */
-    public CosmosUserDefinedFunctionSettings id(String id) {
+    public CosmosStoredProcedureProperties id(String id){
         super.id(id);
         return this;
     }
 
     /**
-     * Get the body of the user defined function.
+     * Constructor.
      *
-     * @return the body.
+     * @param jsonString the json string that represents the stored procedure.
+     */
+    CosmosStoredProcedureProperties(String jsonString) {
+        super(jsonString);
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param id the id of the stored procedure
+     * @param body the body of the stored procedure
+     */
+    public CosmosStoredProcedureProperties(String id, String body) {
+        super();
+        super.id(id);
+        this.body(body);
+    }
+
+    CosmosStoredProcedureProperties(ResourceResponse<StoredProcedure> response) {
+        super(response.getResource().toJson());
+    }
+
+    /**
+     * Get the body of the stored procedure.
+     *
+     * @return the body of the stored procedure.
      */
     public String body() {
         return super.getString(Constants.Properties.BODY);
     }
 
     /**
-     * Set the body of the user defined function.
+     * Set the body of the stored procedure.
      *
-     * @param body the body.
-     * @return the CosmosUserDefinedFunctionSettings.
+     * @param body the body of the stored procedure.
      */
-    public CosmosUserDefinedFunctionSettings body(String body) {
+    public void body(String body) {
         super.set(Constants.Properties.BODY, body);
-        return this;
     }
 
-    static List<CosmosUserDefinedFunctionSettings> getFromV2Results(List<UserDefinedFunction> results) {
-        return results.stream().map(udf -> new CosmosUserDefinedFunctionSettings(udf.toJson())).collect(Collectors.toList());
+
+    static List<CosmosStoredProcedureProperties> getFromV2Results(List<StoredProcedure> results) {
+        return results.stream().map(sproc -> new CosmosStoredProcedureProperties(sproc.toJson())).collect(Collectors.toList());
     }
 }

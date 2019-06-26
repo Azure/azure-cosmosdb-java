@@ -22,7 +22,7 @@
  */
 package com.azure.data.cosmos;
 
-public class CosmosStoredProcedureResponse extends CosmosResponse<CosmosStoredProcedureSettings> {
+public class CosmosStoredProcedureResponse extends CosmosResponse<CosmosStoredProcedureProperties> {
 
     private CosmosStoredProcedure storedProcedure;
     private StoredProcedureResponse storedProcedureResponse;
@@ -30,7 +30,7 @@ public class CosmosStoredProcedureResponse extends CosmosResponse<CosmosStoredPr
     CosmosStoredProcedureResponse(ResourceResponse<StoredProcedure> response, CosmosContainer cosmosContainer) {
         super(response);
         if(response.getResource() != null){
-            super.resourceSettings(new CosmosStoredProcedureSettings(response));
+            super.resourceSettings(new CosmosStoredProcedureProperties(response));
             storedProcedure = new CosmosStoredProcedure(resourceSettings().id(), cosmosContainer);
         }
     }
@@ -44,7 +44,7 @@ public class CosmosStoredProcedureResponse extends CosmosResponse<CosmosStoredPr
      * Gets the stored procedure settings
      * @return the stored procedure settings or null
      */
-    public CosmosStoredProcedureSettings settings() {
+    public CosmosStoredProcedureProperties settings() {
         return super.resourceSettings();
     }
 

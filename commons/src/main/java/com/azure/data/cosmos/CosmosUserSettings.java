@@ -26,7 +26,7 @@ public class CosmosUserSettings extends Resource {
         super(response.getResource().toJson()); 
     }
 
-    // Converting document collection to CosmosContainerSettings
+    // Converting document collection to CosmosContainerProperties
     CosmosUserSettings(User user){
         super(user.toJson());
     }

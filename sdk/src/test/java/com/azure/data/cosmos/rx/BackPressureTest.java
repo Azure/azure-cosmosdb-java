@@ -27,8 +27,8 @@ import com.azure.data.cosmos.CosmosBridgeInternal;
 import com.azure.data.cosmos.CosmosClient;
 import com.azure.data.cosmos.CosmosClientBuilder;
 import com.azure.data.cosmos.CosmosContainer;
+import com.azure.data.cosmos.CosmosContainerProperties;
 import com.azure.data.cosmos.CosmosContainerRequestOptions;
-import com.azure.data.cosmos.CosmosContainerSettings;
 import com.azure.data.cosmos.CosmosDatabase;
 import com.azure.data.cosmos.CosmosItemProperties;
 import com.azure.data.cosmos.FeedOptions;
@@ -67,13 +67,13 @@ public class BackPressureTest extends TestSuiteBase {
         return Utils.getCollectionNameLink(createdDatabase.id(), createdCollection.id());
     }
 
-    private static CosmosContainerSettings getSinglePartitionCollectionDefinition() {
+    private static CosmosContainerProperties getSinglePartitionCollectionDefinition() {
         PartitionKeyDefinition partitionKeyDef = new PartitionKeyDefinition();
         ArrayList<String> paths = new ArrayList<String>();
         paths.add("/mypk");
         partitionKeyDef.paths(paths);
 
-        CosmosContainerSettings collectionDefinition = new CosmosContainerSettings(UUID.randomUUID().toString(), partitionKeyDef);
+        CosmosContainerProperties collectionDefinition = new CosmosContainerProperties(UUID.randomUUID().toString(), partitionKeyDef);
         return collectionDefinition;
     }
 

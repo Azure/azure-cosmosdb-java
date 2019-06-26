@@ -29,9 +29,9 @@ import com.azure.data.cosmos.CosmosClient;
 import com.azure.data.cosmos.CosmosClientBuilder;
 import com.azure.data.cosmos.CosmosClientException;
 import com.azure.data.cosmos.CosmosContainer;
+import com.azure.data.cosmos.CosmosContainerProperties;
 import com.azure.data.cosmos.CosmosContainerRequestOptions;
 import com.azure.data.cosmos.CosmosContainerResponse;
-import com.azure.data.cosmos.CosmosContainerSettings;
 import com.azure.data.cosmos.CosmosDatabase;
 import com.azure.data.cosmos.CosmosDatabaseForTest;
 import com.azure.data.cosmos.PartitionKeyDefinition;
@@ -67,7 +67,7 @@ public class MultiMasterConflictResolutionTest extends TestSuiteBase {
     public void conflictResolutionPolicyCRUD() {
 
         // default last writer wins, path _ts
-        CosmosContainerSettings collectionSettings = new CosmosContainerSettings(UUID.randomUUID().toString(), partitionKeyDef);
+        CosmosContainerProperties collectionSettings = new CosmosContainerProperties(UUID.randomUUID().toString(), partitionKeyDef);
         CosmosContainer collection = database.createContainer(collectionSettings, new CosmosContainerRequestOptions()).block().container();
         collectionSettings = collection.read().block().settings();
 
@@ -132,7 +132,7 @@ public class MultiMasterConflictResolutionTest extends TestSuiteBase {
     private void testConflictResolutionPolicyRequiringPath(ConflictResolutionMode conflictResolutionMode,
             String[] paths, String[] expectedPaths) {
         for (int i = 0; i < paths.length; i++) {            
-            CosmosContainerSettings collectionSettings = new CosmosContainerSettings(UUID.randomUUID().toString(), partitionKeyDef);
+            CosmosContainerProperties collectionSettings = new CosmosContainerProperties(UUID.randomUUID().toString(), partitionKeyDef);
             
             if (conflictResolutionMode == ConflictResolutionMode.LAST_WRITER_WINS) {
                 collectionSettings.conflictResolutionPolicy(ConflictResolutionPolicy.createLastWriterWinsPolicy(paths[i]));
@@ -152,7 +152,7 @@ public class MultiMasterConflictResolutionTest extends TestSuiteBase {
     
     @Test(groups = "multi-master", timeOut = TIMEOUT)
     public void invalidConflictResolutionPolicy_LastWriterWinsWithStoredProc() throws Exception {
-        CosmosContainerSettings collection = new CosmosContainerSettings(UUID.randomUUID().toString(), partitionKeyDef);
+        CosmosContainerProperties collection = new CosmosContainerProperties(UUID.randomUUID().toString(), partitionKeyDef);
 
         // LWW without path specified, should default to _ts
         ConflictResolutionPolicy policy = BridgeUtils.createConflictResolutionPolicy();
@@ -174,7 +174,7 @@ public class MultiMasterConflictResolutionTest extends TestSuiteBase {
 
     @Test(groups = "multi-master", timeOut = TIMEOUT)
     public void invalidConflictResolutionPolicy_CustomWithPath() throws Exception {
-        CosmosContainerSettings collection = new CosmosContainerSettings(UUID.randomUUID().toString(), partitionKeyDef);
+        CosmosContainerProperties collection = new CosmosContainerProperties(UUID.randomUUID().toString(), partitionKeyDef);
 
         // LWW without path specified, should default to _ts
         ConflictResolutionPolicy policy = BridgeUtils.createConflictResolutionPolicy();
