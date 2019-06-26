@@ -31,8 +31,7 @@ import reactor.core.publisher.Mono;
 import static com.azure.data.cosmos.Resource.validateResource;
 
 /**
- * Perform read & delete databases, update database throughput, and perform
- * operations on child resources
+ * Perform read and delete databases, update database throughput, and perform operations on child resources
  */
 public class CosmosDatabase {
     private CosmosClient client;
@@ -298,6 +297,15 @@ public class CosmosDatabase {
 
     /** User operations **/
 
+    /**
+     * Creates a user
+     * After subscription the operation will be performed.
+     * The {@link Mono} upon successful completion will contain a single resource response with the created user.
+     * In case of failure the {@link Mono} will error.
+     *
+     * @param settings the cosmos user settings
+     * @return an {@link Mono} containing the single resource response with the created cosmos user or an error.
+     */
     public Mono<CosmosUserResponse> createUser(CosmosUserProperties settings) {
         return this.createUser(settings, null);
     }
