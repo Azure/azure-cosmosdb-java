@@ -381,7 +381,11 @@ public class JsonSerializable {
                 } else if (isJsonSerializable) {
                     // JsonSerializable
                     try {
-                        result.add(c.getConstructor(String.class).newInstance(toJson(n)));
+                        Constructor<T> constructor = c.getDeclaredConstructor(String.class);
+                        if(Modifier.isPrivate(constructor.getModifiers())) {
+                            constructor.setAccessible(true);
+                        }
+                        result.add(constructor.newInstance(toJson(n)));
                     } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
                             | InvocationTargetException | NoSuchMethodException | SecurityException e) {
                         throw new IllegalStateException("Failed to instantiate class object.", e);

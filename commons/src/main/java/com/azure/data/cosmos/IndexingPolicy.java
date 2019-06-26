@@ -29,7 +29,6 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -157,7 +156,7 @@ public final class IndexingPolicy extends JsonSerializable {
      *
      * @return the included paths.
      */
-    public Collection<IncludedPath> includedPaths() {
+    public List<IncludedPath> includedPaths() {
         if (this.includedPaths == null) {
             this.includedPaths = super.getList(Constants.Properties.INCLUDED_PATHS, IncludedPath.class);
 
@@ -178,7 +177,7 @@ public final class IndexingPolicy extends JsonSerializable {
      *
      * @return the excluded paths.
      */
-    public Collection<ExcludedPath> excludedPaths() {
+    public List<ExcludedPath> excludedPaths() {
         if (this.excludedPaths == null) {
             this.excludedPaths = super.getList(Constants.Properties.EXCLUDED_PATHS, ExcludedPath.class);
 
@@ -235,7 +234,7 @@ public final class IndexingPolicy extends JsonSerializable {
      *
      * @return the spatial indexes.
      */
-    public Collection<SpatialSpec> spatialIndexes() {
+    public List<SpatialSpec> spatialIndexes() {
         if (this.spatialIndexes == null) {
             this.spatialIndexes = super.getList(Constants.Properties.SPATIAL_INDEXES, SpatialSpec.class);
 
