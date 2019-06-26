@@ -27,23 +27,32 @@ import com.azure.data.cosmos.internal.RequestOptions;
 import com.azure.data.cosmos.internal.Trigger;
 import reactor.core.publisher.Mono;
 
-public class CosmosTrigger extends CosmosResource {
+public class CosmosTrigger {
 
     private CosmosContainer container;
+    private String id;
 
     CosmosTrigger(String id, CosmosContainer container) {
-        super(id);
+        this.id = id;
         this.container = container;
     }
 
-    @Override
-    protected String URIPathSegment() {
-        return Paths.TRIGGERS_PATH_SEGMENT;
+    /**
+     * Get the id of the {@link CosmosTrigger}
+     * @return the id of the {@link CosmosTrigger}
+     */
+    public String id() {
+        return id;
     }
 
-    @Override
-    protected String parentLink() {
-        return container.getLink();
+    /**
+     * Set the id of the {@link CosmosTrigger}
+     * @param id the id of the {@link CosmosTrigger}
+     * @return the same {@link CosmosTrigger} that had the id set
+     */
+    CosmosTrigger id(String id) {
+        this.id = id;
+        return this;
     }
 
     /**
@@ -100,6 +109,24 @@ public class CosmosTrigger extends CosmosResource {
                 .deleteTrigger(getLink(), options.toRequestOptions())
                 .map(response -> new CosmosResponse(response.getResource()))
                 .single();
+    }
+
+    String URIPathSegment() {
+        return Paths.TRIGGERS_PATH_SEGMENT;
+    }
+
+    String parentLink() {
+        return container.getLink();
+    }
+
+    String getLink() {
+        StringBuilder builder = new StringBuilder();
+        builder.append(parentLink());
+        builder.append("/");
+        builder.append(URIPathSegment());
+        builder.append("/");
+        builder.append(id());
+        return builder.toString();
     }
 
 }

@@ -27,13 +27,32 @@ import com.azure.data.cosmos.internal.RequestOptions;
 import com.azure.data.cosmos.internal.UserDefinedFunction;
 import reactor.core.publisher.Mono;
 
-public class CosmosUserDefinedFunction extends CosmosResource {
+public class CosmosUserDefinedFunction {
 
     private CosmosContainer container;
+    private String id;
 
     CosmosUserDefinedFunction(String id, CosmosContainer container) {
-        super(id);
+        this.id = id;
         this.container = container;
+    }
+
+    /**
+     * Get the id of the {@link CosmosUserDefinedFunction}
+     * @return the id of the {@link CosmosUserDefinedFunction}
+     */
+    public String id() {
+        return id;
+    }
+
+    /**
+     * Set the id of the {@link CosmosUserDefinedFunction}
+     * @param id the id of the {@link CosmosUserDefinedFunction}
+     * @return the same {@link CosmosUserDefinedFunction} that had the id set
+     */
+    CosmosUserDefinedFunction id(String id) {
+        this.id = id;
+        return this;
     }
 
     /**
@@ -94,13 +113,21 @@ public class CosmosUserDefinedFunction extends CosmosResource {
                 .single();
     }
 
-    @Override
-    protected String URIPathSegment() {
+    String URIPathSegment() {
         return Paths.USER_DEFINED_FUNCTIONS_PATH_SEGMENT;
     }
 
-    @Override
-    protected String parentLink() {
+    String parentLink() {
         return container.getLink();
+    }
+
+    String getLink() {
+        StringBuilder builder = new StringBuilder();
+        builder.append(parentLink());
+        builder.append("/");
+        builder.append(URIPathSegment());
+        builder.append("/");
+        builder.append(id());
+        return builder.toString();
     }
 }
