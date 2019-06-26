@@ -47,7 +47,7 @@ import com.azure.data.cosmos.CosmosRequestOptions;
 import com.azure.data.cosmos.CosmosResponse;
 import com.azure.data.cosmos.CosmosResponseValidator;
 import com.azure.data.cosmos.CosmosUser;
-import com.azure.data.cosmos.CosmosUserSettings;
+import com.azure.data.cosmos.CosmosUserProperties;
 import com.azure.data.cosmos.DataType;
 import com.azure.data.cosmos.FeedOptions;
 import com.azure.data.cosmos.FeedResponse;
@@ -477,11 +477,11 @@ public class TestSuiteBase extends CosmosClientTest {
             .block();
     }
 
-    public static CosmosUser createUser(CosmosClient client, String databaseId, CosmosUserSettings userSettings) {
+    public static CosmosUser createUser(CosmosClient client, String databaseId, CosmosUserProperties userSettings) {
         return client.getDatabase(databaseId).read().block().database().createUser(userSettings).block().user();
     }
 
-    public static CosmosUser safeCreateUser(CosmosClient client, String databaseId, CosmosUserSettings user) {
+    public static CosmosUser safeCreateUser(CosmosClient client, String databaseId, CosmosUserProperties user) {
         deleteUserIfExists(client, databaseId, user.id());
         return createUser(client, databaseId, user);
     }
@@ -582,7 +582,7 @@ public class TestSuiteBase extends CosmosClientTest {
 
     public static void deleteUserIfExists(CosmosClient client, String databaseId, String userId) {
         CosmosDatabase database = client.getDatabase(databaseId).read().block().database();
-        List<CosmosUserSettings> res = database
+        List<CosmosUserProperties> res = database
                 .queryUsers(String.format("SELECT * FROM root r where r.id = '%s'", userId), null)
                 .flatMap(page -> Flux.fromIterable(page.results()))
                 .collectList().block();

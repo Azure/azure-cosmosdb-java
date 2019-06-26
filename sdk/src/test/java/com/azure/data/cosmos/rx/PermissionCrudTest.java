@@ -31,7 +31,7 @@ import com.azure.data.cosmos.CosmosPermissionResponse;
 import com.azure.data.cosmos.CosmosPermissionProperties;
 import com.azure.data.cosmos.CosmosResponseValidator;
 import com.azure.data.cosmos.CosmosUser;
-import com.azure.data.cosmos.CosmosUserSettings;
+import com.azure.data.cosmos.CosmosUserProperties;
 import com.azure.data.cosmos.PermissionMode;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -229,8 +229,8 @@ public class PermissionCrudTest extends TestSuiteBase {
         safeClose(client);
     }
 
-    private static CosmosUserSettings getUserDefinition() {
-        return new CosmosUserSettings()
+    private static CosmosUserProperties getUserDefinition() {
+        return new CosmosUserProperties()
                 .id(UUID.randomUUID().toString());
     }
     

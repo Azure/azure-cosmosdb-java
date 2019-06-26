@@ -37,7 +37,7 @@ public class CosmosUser extends CosmosResource {
      * @param options      the request options
      * @return a {@link Mono} containing the single resource response with the replaced user or an error.
      */
-    public Mono<CosmosUserResponse> replace(CosmosUserSettings userSettings, RequestOptions options) {
+    public Mono<CosmosUserResponse> replace(CosmosUserProperties userSettings, RequestOptions options) {
         return this.database.getDocClientWrapper()
                 .replaceUser(userSettings.getV2User(), options)
                 .map(response -> new CosmosUserResponse(response, database)).single();

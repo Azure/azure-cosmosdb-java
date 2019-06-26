@@ -275,7 +275,7 @@ public class CosmosDatabase extends CosmosResource {
 
     /** User operations **/
 
-    public Mono<CosmosUserResponse> createUser(CosmosUserSettings settings) {
+    public Mono<CosmosUserResponse> createUser(CosmosUserProperties settings) {
         return this.createUser(settings, null);
     }
 
@@ -289,13 +289,13 @@ public class CosmosDatabase extends CosmosResource {
      * @param options the request options
      * @return an {@link Mono} containing the single resource response with the created cosmos user or an error.
      */
-    public Mono<CosmosUserResponse> createUser(CosmosUserSettings settings, RequestOptions options){
+    public Mono<CosmosUserResponse> createUser(CosmosUserProperties settings, RequestOptions options){
         return getDocClientWrapper().createUser(this.getLink(),
                 settings.getV2User(), options).map(response ->
                 new CosmosUserResponse(response, this)).single();
     }
 
-    public Mono<CosmosUserResponse> upsertUser(CosmosUserSettings settings) {
+    public Mono<CosmosUserResponse> upsertUser(CosmosUserProperties settings) {
         return this.upsertUser(settings, null);
     }
 
@@ -309,13 +309,13 @@ public class CosmosDatabase extends CosmosResource {
      * @param options the request options
      * @return an {@link Mono} containing the single resource response with the upserted user or an error.
      */
-    public Mono<CosmosUserResponse> upsertUser(CosmosUserSettings settings, RequestOptions options){
+    public Mono<CosmosUserResponse> upsertUser(CosmosUserProperties settings, RequestOptions options){
         return getDocClientWrapper().upsertUser(this.getLink(),
                 settings.getV2User(), options).map(response ->
                 new CosmosUserResponse(response, this)).single();
     }
 
-    public Flux<FeedResponse<CosmosUserSettings>> listUsers() {
+    public Flux<FeedResponse<CosmosUserProperties>> listUsers() {
         return listUsers(new FeedOptions());
     }
 
@@ -329,14 +329,14 @@ public class CosmosDatabase extends CosmosResource {
      * @param options        the feed options.
      * @return an {@link Flux} containing one or several feed response pages of the read cosmos users or an error.
      */
-    public Flux<FeedResponse<CosmosUserSettings>> listUsers(FeedOptions options){
+    public Flux<FeedResponse<CosmosUserProperties>> listUsers(FeedOptions options){
         return getDocClientWrapper()
                         .readUsers(getLink(), options)
-                        .map(response-> BridgeInternal.createFeedResponse(CosmosUserSettings.getFromV2Results(response.results(),this),
+                        .map(response-> BridgeInternal.createFeedResponse(CosmosUserProperties.getFromV2Results(response.results()),
                                 response.responseHeaders()));
     }
 
-    public Flux<FeedResponse<CosmosUserSettings>> queryUsers(String query, FeedOptions options){
+    public Flux<FeedResponse<CosmosUserProperties>> queryUsers(String query, FeedOptions options){
         return queryUsers(new SqlQuerySpec(query), options);
     }
 
@@ -351,11 +351,11 @@ public class CosmosDatabase extends CosmosResource {
      * @param options        the feed options.
      * @return an {@link Flux} containing one or several feed response pages of the obtained users or an error.
      */
-    public Flux<FeedResponse<CosmosUserSettings>> queryUsers(SqlQuerySpec querySpec, FeedOptions options){
+    public Flux<FeedResponse<CosmosUserProperties>> queryUsers(SqlQuerySpec querySpec, FeedOptions options){
         return getDocClientWrapper()
                         .queryUsers(getLink(), querySpec, options)
                         .map(response-> BridgeInternal.createFeedResponseWithQueryMetrics(
-                                CosmosUserSettings.getFromV2Results(response.results(), this),
+                                CosmosUserProperties.getFromV2Results(response.results()),
                                 response.responseHeaders(), response.queryMetrics()));
     }
 
