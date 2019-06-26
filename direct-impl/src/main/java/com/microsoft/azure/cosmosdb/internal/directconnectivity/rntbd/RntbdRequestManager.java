@@ -441,6 +441,10 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
             context.write(this.addPendingRequestRecord(context, (RntbdRequestRecord)message), promise);
 
+        } else if (message instanceof RntbdHealthCheckRequest) {
+
+            context.write(message, promise);
+
         } else {
 
             final IllegalStateException error = new IllegalStateException(

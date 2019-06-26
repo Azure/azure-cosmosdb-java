@@ -74,7 +74,7 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
         new IllegalStateException("RntbdClientChannelPool was closed"),
         RntbdClientChannelPool2.class, "release(...)");
 
-    private static final IllegalStateException TOO_MANY_OUTSTANDING_ACQUISITIONS = ThrowableUtil.unknownStackTrace(
+    private static final IllegalStateException TOO_MANY_PENDING_ACQUISITIONS = ThrowableUtil.unknownStackTrace(
         new IllegalStateException("Too many outstanding acquire operations"),
         RntbdClientChannelPool2.class, "acquire0(...)");
 
@@ -110,11 +110,11 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
         this.maxPendingAcquisitions = Integer.MAX_VALUE;
         this.maxRequestsPerChannel = config.getMaxRequestsPerChannel();
 
-        this.acquiredChannelCount = new AtomicInteger();
         this.availableChannelCount = new AtomicInteger();
+        this.acquiredChannelCount = new AtomicInteger();
         this.closed = new AtomicBoolean();
 
-        // TODO: DANOBLE: Add RbtbdEndpoint.Config settings for acquisition timeout and acquisition timeout action
+        // TODO: DANOBLE: Add RntbdEndpoint.Config settings for acquisition timeout and acquisition timeout action
         //   Alternatively: drop acquisition timeout and acquisition timeout action
         //   Decision should be based on performance, reliability, and usability considerations
 
@@ -135,7 +135,6 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
                     this.acquisitionTimeoutTask = new AcquireTimeoutTask(this) {
                         @Override
                         public void onTimeout(AcquireTask task) {
-                            // Fail the promise as we timed out.
                             task.promise.setFailure(ACQUISITION_TIMEOUT);
                         }
                     };
@@ -144,8 +143,7 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
                     this.acquisitionTimeoutTask = new AcquireTimeoutTask(this) {
                         @Override
                         public void onTimeout(AcquireTask task) {
-                            // Increment the acquire count and delegate to super to actually acquire a Channel which will
-                            // create a new connection.
+                            // Increment the acquire count and get a new Channel by delegating to super.acquire
                             task.acquired();
                             RntbdClientChannelPool2.super.acquire(task.promise);
                         }
@@ -328,20 +326,27 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
 
         if (this.acquiredChannelCount.get() < this.maxChannels) {
 
+            // We need to create a new promise to ensure the AcquireListener runs in the correct event loop
+
             checkState(this.acquiredChannelCount.get() >= 0);
 
-            // We need to create a new promise to ensure the AcquireListener runs in the correct event loop
-            Promise<Channel> p = executor.newPromise();
             AcquireListener l = new AcquireListener(this, promise);
             l.acquired();
+
+            Promise<Channel> p = this.executor.newPromise();
             p.addListener(l);
-            super.acquire(p);
+
+            super.acquire(p); // acquire an existing channel or create and acquire a new channel
 
         } else {
 
             if (this.pendingAcquisitionCount >= this.maxPendingAcquisitions) {
-                promise.setFailure(TOO_MANY_OUTSTANDING_ACQUISITIONS);
+
+                promise.setFailure(TOO_MANY_PENDING_ACQUISITIONS);
+
             } else {
+
+                // Add a task to the pending acquisition queue and we'll satisfy this request later
 
                 AcquireTask task = new AcquireTask(this, promise);
 
@@ -354,7 +359,7 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
                     }
 
                 } else {
-                    promise.setFailure(TOO_MANY_OUTSTANDING_ACQUISITIONS);
+                    promise.setFailure(TOO_MANY_PENDING_ACQUISITIONS);
                 }
             }
 
@@ -372,9 +377,9 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
             if (task == null) {
                 break;
             }
-            ScheduledFuture<?> f = task.timeoutFuture;
-            if (f != null) {
-                f.cancel(false);
+            ScheduledFuture<?> timeoutFuture = task.timeoutFuture;
+            if (timeoutFuture != null) {
+                timeoutFuture.cancel(false);
             }
             task.promise.setFailure(new ClosedChannelException());
         }
@@ -389,14 +394,13 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
     }
 
     private void decrementAndRunTaskQueue() {
-        // We should never have a negative value.
-        int currentCount = this.acquiredChannelCount.decrementAndGet();
-        assert currentCount >= 0;
 
-        // Run the pending acquire tasks before notify the original promise so if the user would
-        // try to acquire again from the ChannelFutureListener and the pendingAcquireCount is >=
-        // maxPendingAcquires we may be able to run some pending tasks first and so allow to add
-        // more.
+        int currentCount = this.acquiredChannelCount.decrementAndGet();
+        checkState(currentCount >= 0);
+
+        // Run the pending acquisition tasks before notifying the original promise so that if the user tries to
+        // acquire again from the ChannelFutureListener and the pendingAcquisitionCount is greater than
+        // maxPendingAcquisitions we may be able to run some pending tasks first and so allow to add more
         runTaskQueue();
     }
 
@@ -431,7 +435,6 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
                 break;
             }
 
-            // Cancel the timeout if one was scheduled
             ScheduledFuture<?> timeoutFuture = task.timeoutFuture;
 
             if (timeoutFuture != null) {
@@ -444,7 +447,7 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
             super.acquire(task.promise);
         }
 
-        // We should never have a negative value
+        // We should never have negative values
 
         checkState(this.acquiredChannelCount.get() >= 0);
         checkState(this.pendingAcquisitionCount >= 0);
@@ -492,7 +495,7 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
         }
 
         @Override
-        public void operationComplete(Future<Channel> future) throws Exception {
+        public void operationComplete(Future<Channel> future) {
 
             checkState(this.pool.executor.inEventLoop());
 
@@ -507,7 +510,36 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
 
             if (future.isSuccess()) {
 
-                this.originalPromise.setSuccess(future.getNow());
+                // TODO: DANOBLE: Ensure that the channel is active and ready to receive requests:
+                //   A Direct TCP channel is ready to receive requests when it:
+                //   * is active and
+                //   * has an RntbdContext
+                //   We use a health check request on a channel without an RntbdContext to force:
+                //   1. SSL negotiation
+                //   2. RntbdContextRequest message
+                //   3. RntbdHealthCheckRequest message
+
+                Channel channel = future.getNow();
+                checkState(channel.isActive());
+
+                RntbdRequestManager requestManager = channel.pipeline().get(RntbdRequestManager.class);
+                checkState(requestManager != null);
+
+                if (requestManager.hasRntbdContext()) {
+
+                    this.originalPromise.setSuccess(channel);
+
+                } else {
+
+                    channel.writeAndFlush(new RntbdHealthCheckRequest(null, null)).addListener(completed -> {
+                        if (completed.isSuccess()) {
+                            this.originalPromise.setSuccess(channel);
+                        } else {
+                            this.originalPromise.setFailure(completed.cause());
+                            this.pool.release(channel);
+                        }
+                    });
+                }
 
             } else {
 
