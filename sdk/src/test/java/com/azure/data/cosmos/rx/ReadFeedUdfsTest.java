@@ -60,7 +60,7 @@ public class ReadFeedUdfsTest extends TestSuiteBase {
         FeedOptions options = new FeedOptions();
         options.maxItemCount(2);
 
-        Flux<FeedResponse<CosmosUserDefinedFunctionSettings>> feedObservable = createdCollection.getScripts()
+        Flux<FeedResponse<CosmosUserDefinedFunctionProperties>> feedObservable = createdCollection.getScripts()
                 .listUserDefinedFunctions(options);
 
         int expectedPageSize = (createdUserDefinedFunctions.size() + options.maxItemCount() - 1)

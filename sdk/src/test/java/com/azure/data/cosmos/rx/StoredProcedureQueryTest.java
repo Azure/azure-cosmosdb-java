@@ -106,7 +106,7 @@ public class StoredProcedureQueryTest extends TestSuiteBase {
         FeedOptions options = new FeedOptions();
         options.maxItemCount(3);
         options.enableCrossPartitionQuery(true);
-        Flux<FeedResponse<CosmosStoredProcedureSettings>> queryObservable = createdCollection.getScripts()
+        Flux<FeedResponse<CosmosStoredProcedureProperties>> queryObservable = createdCollection.getScripts()
                 .queryStoredProcedures(query, options);
 
         List<CosmosStoredProcedureProperties> expectedDocs = createdStoredProcs;
@@ -138,7 +138,7 @@ public class StoredProcedureQueryTest extends TestSuiteBase {
 
     public CosmosStoredProcedureProperties createStoredProc(CosmosContainer cosmosContainer) {
         CosmosStoredProcedureProperties storedProcedure = getStoredProcedureDef();
-        return cosmosContainer.getScripts().createStoredProcedure(storedProcedure).block().settings();
+        return cosmosContainer.getScripts().createStoredProcedure(storedProcedure).block().properties();
     }
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)

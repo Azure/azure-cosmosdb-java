@@ -43,11 +43,11 @@ public class CosmosScripts {
      * created cosmos stored procedure.
      * In case of failure the {@link Mono} will error.
      *
-     * @param settings  the cosmos stored procedure settings.
+     * @param properties  the cosmos stored procedure properties.
      * @return an {@link Mono} containing the single cosmos stored procedure resource response or an error.
      */
-    public Mono<CosmosStoredProcedureResponse> createStoredProcedure(CosmosStoredProcedureSettings settings){
-        return this.createStoredProcedure(settings, new CosmosStoredProcedureRequestOptions());
+    public Mono<CosmosStoredProcedureResponse> createStoredProcedure(CosmosStoredProcedureProperties properties){
+        return this.createStoredProcedure(properties, new CosmosStoredProcedureRequestOptions());
     }
 
     /**
@@ -58,18 +58,18 @@ public class CosmosScripts {
      * created cosmos stored procedure.
      * In case of failure the {@link Mono} will error.
      *
-     * @param settings  the cosmos stored procedure settings.
+     * @param properties  the cosmos stored procedure properties.
      * @param options the stored procedure request options.
      * @return an {@link Mono} containing the single cosmos stored procedure resource response or an error.
      */
-    public Mono<CosmosStoredProcedureResponse> createStoredProcedure(CosmosStoredProcedureSettings settings,
+    public Mono<CosmosStoredProcedureResponse> createStoredProcedure(CosmosStoredProcedureProperties properties,
                                                                      CosmosStoredProcedureRequestOptions options){
         if(options == null){
             options = new CosmosStoredProcedureRequestOptions();
         }
         StoredProcedure sProc = new StoredProcedure();
-        sProc.id(settings.id());
-        sProc.setBody(settings.body());
+        sProc.id(properties.id());
+        sProc.setBody(properties.body());
         return database.getDocClientWrapper()
                 .createStoredProcedure(container.getLink(), sProc, options.toRequestOptions())
                 .map(response -> new CosmosStoredProcedureResponse(response, this.container))
@@ -87,10 +87,10 @@ public class CosmosScripts {
      * @return an {@link Flux} containing one or several feed response pages of the read cosmos stored procedures
      * settings or an error.
      */
-    public Flux<FeedResponse<CosmosStoredProcedureSettings>> listStoredProcedures(FeedOptions options){
+    public Flux<FeedResponse<CosmosStoredProcedureProperties>> listStoredProcedures(FeedOptions options){
         return database.getDocClientWrapper()
                 .readStoredProcedures(container.getLink(), options)
-                .map(response -> BridgeInternal.createFeedResponse(CosmosStoredProcedureSettings.getFromV2Results(response.results()),
+                .map(response -> BridgeInternal.createFeedResponse(CosmosStoredProcedureProperties.getFromV2Results(response.results()),
                         response.responseHeaders()));
     }
 
@@ -106,7 +106,7 @@ public class CosmosScripts {
      * @return an {@link Flux} containing one or several feed response pages of the obtained stored procedures or
      * an error.
      */
-    public Flux<FeedResponse<CosmosStoredProcedureSettings>> queryStoredProcedures(String query,
+    public Flux<FeedResponse<CosmosStoredProcedureProperties>> queryStoredProcedures(String query,
                                                                                    FeedOptions options){
         return queryStoredProcedures(new SqlQuerySpec(query), options);
     }
@@ -123,11 +123,11 @@ public class CosmosScripts {
      * @return an {@link Flux} containing one or several feed response pages of the obtained stored procedures or
      * an error.
      */
-    public Flux<FeedResponse<CosmosStoredProcedureSettings>> queryStoredProcedures(SqlQuerySpec querySpec,
+    public Flux<FeedResponse<CosmosStoredProcedureProperties>> queryStoredProcedures(SqlQuerySpec querySpec,
                                                                                    FeedOptions options){
         return database.getDocClientWrapper()
                 .queryStoredProcedures(container.getLink(), querySpec,options)
-                .map(response -> BridgeInternal.createFeedResponse( CosmosStoredProcedureSettings.getFromV2Results(response.results()),
+                .map(response -> BridgeInternal.createFeedResponse( CosmosStoredProcedureProperties.getFromV2Results(response.results()),
                         response.responseHeaders()));
     }
 
@@ -150,15 +150,15 @@ public class CosmosScripts {
      * The {@link Mono} upon successful completion will contain a single cosmos user defined function response.
      * In case of failure the {@link Mono} will error.
      *
-     * @param settings       the cosmos user defined function settings
+     * @param properties       the cosmos user defined function properties
      * @param options        the cosmos request options.
      * @return an {@link Mono} containing the single resource response with the created user defined function or an error.
      */
-    public Mono<CosmosUserDefinedFunctionResponse> createUserDefinedFunction(CosmosUserDefinedFunctionSettings settings,
+    public Mono<CosmosUserDefinedFunctionResponse> createUserDefinedFunction(CosmosUserDefinedFunctionProperties properties,
                                                                              CosmosRequestOptions options){
         UserDefinedFunction udf = new UserDefinedFunction();
-        udf.id(settings.id());
-        udf.setBody(settings.body());
+        udf.id(properties.id());
+        udf.setBody(properties.body());
         if(options == null){
             options = new CosmosRequestOptions();
         }
@@ -177,10 +177,10 @@ public class CosmosScripts {
      * @param options        the feed options.
      * @return an {@link Flux} containing one or several feed response pages of the read user defined functions or an error.
      */
-    public Flux<FeedResponse<CosmosUserDefinedFunctionSettings>> listUserDefinedFunctions(FeedOptions options){
+    public Flux<FeedResponse<CosmosUserDefinedFunctionProperties>> listUserDefinedFunctions(FeedOptions options){
         return database.getDocClientWrapper()
                 .readUserDefinedFunctions(container.getLink(), options)
-                .map(response -> BridgeInternal.createFeedResponse(CosmosUserDefinedFunctionSettings.getFromV2Results(response.results()),
+                .map(response -> BridgeInternal.createFeedResponse(CosmosUserDefinedFunctionProperties.getFromV2Results(response.results()),
                         response.responseHeaders()));
     }
 
@@ -195,7 +195,7 @@ public class CosmosScripts {
      * @param options        the feed options.
      * @return an {@link Flux} containing one or several feed response pages of the obtained user defined functions or an error.
      */
-    public Flux<FeedResponse<CosmosUserDefinedFunctionSettings>> queryUserDefinedFunctions(String query,
+    public Flux<FeedResponse<CosmosUserDefinedFunctionProperties>> queryUserDefinedFunctions(String query,
                                                                                            FeedOptions options){
         return queryUserDefinedFunctions(new SqlQuerySpec(query), options);
     }
@@ -211,11 +211,11 @@ public class CosmosScripts {
      * @param options        the feed options.
      * @return an {@link Flux} containing one or several feed response pages of the obtained user defined functions or an error.
      */
-    public Flux<FeedResponse<CosmosUserDefinedFunctionSettings>> queryUserDefinedFunctions(SqlQuerySpec querySpec,
+    public Flux<FeedResponse<CosmosUserDefinedFunctionProperties>> queryUserDefinedFunctions(SqlQuerySpec querySpec,
                                                                                            FeedOptions options){
         return database.getDocClientWrapper()
                 .queryUserDefinedFunctions(container.getLink(),querySpec, options)
-                .map(response -> BridgeInternal.createFeedResponse(CosmosUserDefinedFunctionSettings.getFromV2Results(response.results()),
+                .map(response -> BridgeInternal.createFeedResponse(CosmosUserDefinedFunctionProperties.getFromV2Results(response.results()),
                         response.responseHeaders()));
     }
 
@@ -236,13 +236,13 @@ public class CosmosScripts {
      * The {@link Mono} upon successful completion will contain a cosmos trigger response
      * In case of failure the {@link Mono} will error.
      *
-     * @param settings the cosmos trigger settings
+     * @param properties the cosmos trigger properties
      * @param options        the request options.
      * @return an {@link Mono} containing the single resource response with the created trigger or an error.
      */
-    public Mono<CosmosTriggerResponse> createTrigger(CosmosTriggerSettings settings,
+    public Mono<CosmosTriggerResponse> createTrigger(CosmosTriggerProperties properties,
                                                      CosmosRequestOptions options){
-        Trigger trigger = new Trigger(settings.toJson());
+        Trigger trigger = new Trigger(properties.toJson());
         if(options == null){
             options = new CosmosRequestOptions();
         }
@@ -262,10 +262,10 @@ public class CosmosScripts {
      * @param options        the feed options.
      * @return an {@link Flux} containing one or several feed response pages of the read cosmos rigger settings or an error.
      */
-    public Flux<FeedResponse<CosmosTriggerSettings>> listTriggers(FeedOptions options){
+    public Flux<FeedResponse<CosmosTriggerProperties>> listTriggers(FeedOptions options){
         return database.getDocClientWrapper()
                 .readTriggers(container.getLink(), options)
-                .map(response -> BridgeInternal.createFeedResponse(CosmosTriggerSettings.getFromV2Results(response.results()),
+                .map(response -> BridgeInternal.createFeedResponse(CosmosTriggerProperties.getFromV2Results(response.results()),
                         response.responseHeaders()));
     }
 
@@ -280,7 +280,7 @@ public class CosmosScripts {
      * @param options        the feed options.
      * @return an {@link Flux} containing one or several feed response pages of the obtained triggers or an error.
      */
-    public Flux<FeedResponse<CosmosTriggerSettings>> queryTriggers(String query, FeedOptions options){
+    public Flux<FeedResponse<CosmosTriggerProperties>> queryTriggers(String query, FeedOptions options){
         return queryTriggers(new SqlQuerySpec(query), options);
     }
 
@@ -295,11 +295,11 @@ public class CosmosScripts {
      * @param options        the feed options.
      * @return an {@link Flux} containing one or several feed response pages of the obtained triggers or an error.
      */
-    public Flux<FeedResponse<CosmosTriggerSettings>> queryTriggers(SqlQuerySpec querySpec,
+    public Flux<FeedResponse<CosmosTriggerProperties>> queryTriggers(SqlQuerySpec querySpec,
                                                                    FeedOptions options){
         return database.getDocClientWrapper()
                 .queryTriggers(container.getLink(), querySpec, options)
-                .map(response -> BridgeInternal.createFeedResponse(CosmosTriggerSettings.getFromV2Results(response.results()),
+                .map(response -> BridgeInternal.createFeedResponse(CosmosTriggerProperties.getFromV2Results(response.results()),
                         response.responseHeaders()));
     }
 

@@ -149,7 +149,7 @@ public class TriggerQueryTest extends TestSuiteBase {
 
     public CosmosTriggerProperties createTrigger(CosmosContainer cosmosContainer) {
         CosmosTriggerProperties storedProcedure = getTriggerDef();
-        return cosmosContainer.getScripts().createTrigger(storedProcedure, new CosmosRequestOptions()).block().settings();
+        return cosmosContainer.getScripts().createTrigger(storedProcedure, new CosmosRequestOptions()).block().properties();
     }
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
