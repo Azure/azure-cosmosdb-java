@@ -33,7 +33,7 @@ public class PartitionKey {
 
     private PartitionKeyInternal internalPartitionKey;
 
-    PartitionKey(PartitionKeyInternal partitionKeyInternal) {
+    public PartitionKey(PartitionKeyInternal partitionKeyInternal) {
         this.internalPartitionKey = partitionKeyInternal;
     }
 
