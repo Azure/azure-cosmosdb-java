@@ -45,7 +45,7 @@ public class CosmosPermissionProperties extends Resource {
      * Sets the id
      *
      * @param id the name of the resource.
-     * @return the cosmos permission settings with id set
+     * @return the cosmos permission properties with id set
      */
     public CosmosPermissionProperties id(String id) {
         super.id(id);

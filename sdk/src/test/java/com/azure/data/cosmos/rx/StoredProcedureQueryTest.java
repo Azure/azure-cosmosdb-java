@@ -141,7 +141,7 @@ public class StoredProcedureQueryTest extends TestSuiteBase {
 
     public CosmosStoredProcedureProperties createStoredProc(CosmosContainer cosmosContainer) {
         CosmosStoredProcedureProperties storedProcedure = getStoredProcedureDef();
-        return cosmosContainer.createStoredProcedure(storedProcedure).block().settings();
+        return cosmosContainer.createStoredProcedure(storedProcedure).block().properties();
     }
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)

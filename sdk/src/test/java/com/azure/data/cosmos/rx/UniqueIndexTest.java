@@ -206,7 +206,7 @@ public class UniqueIndexTest extends TestSuiteBase {
 
         CosmosContainer createdCollection = database.createContainer(collectionDefinition).block().container();
 
-        CosmosContainerProperties collection = createdCollection.read().block().settings();
+        CosmosContainerProperties collection = createdCollection.read().block().properties();
 
         assertThat(collection.uniqueKeyPolicy()).isNotNull();
         assertThat(collection.uniqueKeyPolicy().uniqueKeys()).isNotNull();

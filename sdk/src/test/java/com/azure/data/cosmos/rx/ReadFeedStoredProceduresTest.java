@@ -98,6 +98,6 @@ public class ReadFeedStoredProceduresTest extends TestSuiteBase {
         CosmosStoredProcedureProperties sproc = new CosmosStoredProcedureProperties();
         sproc.id(UUID.randomUUID().toString());
         sproc.body("function() {var x = 10;}");
-        return cosmosContainer.createStoredProcedure(sproc, new CosmosStoredProcedureRequestOptions()).block().settings();
+        return cosmosContainer.createStoredProcedure(sproc, new CosmosStoredProcedureRequestOptions()).block().properties();
     }
 }

@@ -239,7 +239,7 @@ public class CollectionCrudTest extends TestSuiteBase {
         CosmosContainerProperties collectionDefinition = getCollectionDefinition(collectionName);
         Mono<CosmosContainerResponse> createObservable = database.createContainer(collectionDefinition);
         CosmosContainer collection = createObservable.block().container();
-        CosmosContainerProperties collectionSettings = collection.read().block().settings();
+        CosmosContainerProperties collectionSettings = collection.read().block().properties();
         // sanity check
         assertThat(collectionSettings.indexingPolicy().indexingMode()).isEqualTo(IndexingMode.CONSISTENT);
         

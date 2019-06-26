@@ -154,7 +154,7 @@ public class ChangeFeedContextClientImpl implements ChangeFeedContextClient {
     @Override
     public Mono<CosmosContainerProperties> readContainerSettings(CosmosContainer containerLink, CosmosContainerRequestOptions options) {
         return containerLink.read(options)
-            .map(cosmosContainerResponse -> cosmosContainerResponse.settings());
+            .map(cosmosContainerResponse -> cosmosContainerResponse.properties());
     }
 
     @Override

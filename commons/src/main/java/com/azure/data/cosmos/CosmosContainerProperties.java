@@ -53,7 +53,7 @@ public class CosmosContainerProperties extends Resource {
         ArrayList<String> paths = new ArrayList<>();
         paths.add(partitionKeyPath);
         partitionKeyDef.paths(paths);
-        partitionKey(partitionKeyDef);
+        partitionKeyDefinition(partitionKeyDef);
     }
 
     /**
@@ -63,7 +63,7 @@ public class CosmosContainerProperties extends Resource {
      */
     public CosmosContainerProperties(String id, PartitionKeyDefinition partitionKeyDefinition) {
         super.id(id);
-        partitionKey(partitionKeyDefinition);
+        partitionKeyDefinition(partitionKeyDefinition);
     }
 
     CosmosContainerProperties(ResourceResponse<DocumentCollection> response) {
@@ -170,7 +170,7 @@ public class CosmosContainerProperties extends Resource {
      * @param partitionKeyDefinition the partition key definition.
      * @return the CosmosContainerProperties.
      */
-    public CosmosContainerProperties partitionKey(PartitionKeyDefinition partitionKeyDefinition) {
+    public CosmosContainerProperties partitionKeyDefinition(PartitionKeyDefinition partitionKeyDefinition) {
         if (partitionKeyDefinition == null) {
             throw new IllegalArgumentException("partitionKeyDefinition cannot be null.");
         }

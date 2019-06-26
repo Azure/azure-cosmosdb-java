@@ -61,7 +61,7 @@ public class StoredProcedureUpsertReplaceTest extends TestSuiteBase {
         CosmosStoredProcedureProperties storedProcedureDef = new CosmosStoredProcedureProperties();
         storedProcedureDef.id(UUID.randomUUID().toString());
         storedProcedureDef.body("function() {var x = 10;}");
-        CosmosStoredProcedureProperties readBackSp = createdCollection.createStoredProcedure(storedProcedureDef, new CosmosStoredProcedureRequestOptions()).block().settings();
+        CosmosStoredProcedureProperties readBackSp = createdCollection.createStoredProcedure(storedProcedureDef, new CosmosStoredProcedureRequestOptions()).block().properties();
 
         // read stored procedure to validate creation
         waitIfNeededForReplicasToCatchUp(clientBuilder());

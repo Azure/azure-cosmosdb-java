@@ -69,13 +69,13 @@ public class MultiMasterConflictResolutionTest extends TestSuiteBase {
         // default last writer wins, path _ts
         CosmosContainerProperties collectionSettings = new CosmosContainerProperties(UUID.randomUUID().toString(), partitionKeyDef);
         CosmosContainer collection = database.createContainer(collectionSettings, new CosmosContainerRequestOptions()).block().container();
-        collectionSettings = collection.read().block().settings();
+        collectionSettings = collection.read().block().properties();
 
         assertThat(collectionSettings.conflictResolutionPolicy().mode()).isEqualTo(ConflictResolutionMode.LAST_WRITER_WINS);
 
         // LWW without path specified, should default to _ts
         collectionSettings.conflictResolutionPolicy(ConflictResolutionPolicy.createLastWriterWinsPolicy());
-        collectionSettings = collection.replace(collectionSettings, null).block().settings();
+        collectionSettings = collection.replace(collectionSettings, null).block().properties();
 
         assertThat(collectionSettings.conflictResolutionPolicy().mode()).isEqualTo(ConflictResolutionMode.LAST_WRITER_WINS);
         assertThat(collectionSettings.conflictResolutionPolicy().conflictResolutionPath()).isEqualTo("/_ts");
@@ -91,7 +91,7 @@ public class MultiMasterConflictResolutionTest extends TestSuiteBase {
         collectionSettings.conflictResolutionPolicy(ConflictResolutionPolicy.createLastWriterWinsPolicy("/a/b"));
 
         try {
-            collectionSettings = collection.replace(collectionSettings, null).block().settings();
+            collectionSettings = collection.replace(collectionSettings, null).block().properties();
             fail("Expected exception on invalid path.");
         } catch (Exception e) {
 
@@ -109,7 +109,7 @@ public class MultiMasterConflictResolutionTest extends TestSuiteBase {
         collectionSettings.conflictResolutionPolicy(ConflictResolutionPolicy.createLastWriterWinsPolicy("someText"));
 
         try {
-            collectionSettings = collection.replace(collectionSettings, null).block().settings();
+            collectionSettings = collection.replace(collectionSettings, null).block().properties();
             fail("Expected exception on invalid path.");
         } catch (Exception e) {
             // when (e.StatusCode == HttpStatusCode.BadRequest)
@@ -139,7 +139,7 @@ public class MultiMasterConflictResolutionTest extends TestSuiteBase {
             } else {
                 collectionSettings.conflictResolutionPolicy(ConflictResolutionPolicy.createCustomPolicy(paths[i]));
             }
-            collectionSettings = database.createContainer(collectionSettings, new CosmosContainerRequestOptions()).block().settings();
+            collectionSettings = database.createContainer(collectionSettings, new CosmosContainerRequestOptions()).block().properties();
             assertThat(collectionSettings.conflictResolutionPolicy().mode()).isEqualTo(conflictResolutionMode);
             
             if (conflictResolutionMode == ConflictResolutionMode.LAST_WRITER_WINS) {

@@ -65,7 +65,7 @@ public class DatabaseQueryTest extends TestSuiteBase {
         Flux<FeedResponse<CosmosDatabaseProperties>> queryObservable = client.queryDatabases(query, options);
 
         List<CosmosDatabaseProperties> expectedDatabases = createdDatabases.stream()
-                                                                           .filter(d -> StringUtils.equals(databaseId1, d.id()) ).map(d -> d.read().block().settings()).collect(Collectors.toList());
+                                                                           .filter(d -> StringUtils.equals(databaseId1, d.id()) ).map(d -> d.read().block().properties()).collect(Collectors.toList());
 
         assertThat(expectedDatabases).isNotEmpty();
 
@@ -93,7 +93,7 @@ public class DatabaseQueryTest extends TestSuiteBase {
         options.maxItemCount(2);
         Flux<FeedResponse<CosmosDatabaseProperties>> queryObservable = client.queryDatabases(query, options);
 
-        List<CosmosDatabaseProperties> expectedDatabases = createdDatabases.stream().map(d -> d.read().block().settings()).collect(Collectors.toList());
+        List<CosmosDatabaseProperties> expectedDatabases = createdDatabases.stream().map(d -> d.read().block().properties()).collect(Collectors.toList());
 
         assertThat(expectedDatabases).isNotEmpty();
 

@@ -36,11 +36,11 @@ public class CosmosPermissionResponse extends CosmosResponse<CosmosPermissionPro
     }
 
     /**
-     * Get the permission settings
+     * Get the permission properties
      *
-     * @return the permission settings
+     * @return the permission properties
      */
-    public CosmosPermissionProperties settings() {
+    public CosmosPermissionProperties properties() {
         return super.resourceSettings();
     }
 

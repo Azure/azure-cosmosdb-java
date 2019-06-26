@@ -55,10 +55,10 @@ public class CosmosContainerResponse extends CosmosResponse<CosmosContainerPrope
     }
 
     /**
-     * Gets the container settings
-     * @return the cosmos container settings
+     * Gets the container properties
+     * @return the cosmos container properties
      */
-    public CosmosContainerProperties settings() {
+    public CosmosContainerProperties properties() {
         return resourceSettings();
     }
 

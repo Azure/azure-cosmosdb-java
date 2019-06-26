@@ -88,7 +88,7 @@ public class ReadFeedDatabasesTest extends TestSuiteBase {
 
     public CosmosDatabaseProperties createDatabase(CosmosClient client) {
         CosmosDatabaseProperties db = new CosmosDatabaseProperties(UUID.randomUUID().toString());
-        return client.createDatabase(db, new CosmosDatabaseRequestOptions()).block().settings();
+        return client.createDatabase(db, new CosmosDatabaseRequestOptions()).block().properties();
     }
 
     @AfterClass(groups = { "simple" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)

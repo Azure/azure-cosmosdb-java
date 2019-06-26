@@ -221,7 +221,7 @@ public class TestSuiteBase extends CosmosClientTest {
     }
 
     protected static void truncateCollection(CosmosContainer cosmosContainer) {
-        CosmosContainerProperties cosmosContainerProperties = cosmosContainer.read().block().settings();
+        CosmosContainerProperties cosmosContainerProperties = cosmosContainer.read().block().properties();
         String cosmosContainerId = cosmosContainerProperties.id();
         logger.info("Truncating collection {} ...", cosmosContainerId);
         List<String> paths = cosmosContainerProperties.partitionKeyDefinition().paths();

@@ -102,6 +102,6 @@ public class ReadFeedTriggersTest extends TestSuiteBase {
         trigger.body("function() {var x = 10;}");
         trigger.triggerOperation(TriggerOperation.CREATE);
         trigger.triggerType(TriggerType.PRE);
-        return cosmosContainer.createTrigger(trigger, new CosmosRequestOptions()).block().settings();
+        return cosmosContainer.createTrigger(trigger, new CosmosRequestOptions()).block().properties();
     }
 }

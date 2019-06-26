@@ -37,11 +37,11 @@ public class CosmosTriggerResponse extends CosmosResponse<CosmosTriggerPropertie
     }
 
     /**
-     * Gets the cosmos trigger settings or null
+     * Gets the cosmos trigger properties or null
      *
      * @return {@link CosmosTriggerProperties}
      */
-    public CosmosTriggerProperties settings() {
+    public CosmosTriggerProperties properties() {
         return cosmosTriggerProperties;
     }
 

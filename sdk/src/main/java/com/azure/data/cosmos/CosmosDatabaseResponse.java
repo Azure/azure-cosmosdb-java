@@ -45,11 +45,11 @@ public class CosmosDatabaseResponse extends CosmosResponse<CosmosDatabasePropert
     }
 
     /**
-     * Gets the cosmos database settings
+     * Gets the cosmos database properties
      *
-     * @return the cosmos database settings
+     * @return the cosmos database properties
      */
-    public CosmosDatabaseProperties settings() {
+    public CosmosDatabaseProperties properties() {
         return resourceSettings();
     }
 

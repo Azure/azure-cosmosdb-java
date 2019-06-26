@@ -43,7 +43,7 @@ public class CosmosUserDefinedFunctionProperties extends Resource {
     /**
      * Constructor.
      *
-     * @param jsonString the json string that represents the cosmos user defined function settings.
+     * @param jsonString the json string that represents the cosmos user defined function properties.
      */
     CosmosUserDefinedFunctionProperties(String jsonString) {
         super(jsonString);
@@ -52,7 +52,7 @@ public class CosmosUserDefinedFunctionProperties extends Resource {
     /**
      * Sets the id
      * @param id the name of the resource.
-     * @return the current instance of cosmos user defined function settings
+     * @return the current instance of cosmos user defined function properties
      */
     public CosmosUserDefinedFunctionProperties id(String id) {
         super.id(id);

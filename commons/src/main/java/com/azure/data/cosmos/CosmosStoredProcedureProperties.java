@@ -40,7 +40,7 @@ public class CosmosStoredProcedureProperties extends Resource {
     /**
      * Sets the id
      * @param id the name of the resource.
-     * @return return the Cosmos stored procedure settings with id set
+     * @return return the Cosmos stored procedure properties with id set
      */
     public CosmosStoredProcedureProperties id(String id){
         super.id(id);

@@ -210,7 +210,7 @@ public class MultiOrderByQueryTests extends TestSuiteBase {
         feedOptions.enableCrossPartitionQuery(true);
 
         boolean[] booleanValues = new boolean[] {true, false};
-        CosmosContainerProperties containerSettings = documentCollection.read().block().settings();
+        CosmosContainerProperties containerSettings = documentCollection.read().block().properties();
         Iterator<ArrayList<CompositePath>> compositeIndexesIterator = containerSettings.indexingPolicy().compositeIndexes().iterator();
         while (compositeIndexesIterator.hasNext()) {
         ArrayList<CompositePath> compositeIndex = compositeIndexesIterator.next();

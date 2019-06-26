@@ -77,7 +77,7 @@ public class CollectionQueryTest extends TestSuiteBase {
 
         FeedResponseListValidator<CosmosContainerProperties> validator = new FeedResponseListValidator.Builder<CosmosContainerProperties>()
                 .totalSize(expectedCollections.size())
-                .exactlyContainsInAnyOrder(expectedCollections.stream().map(d -> d.read().block().settings().resourceId()).collect(Collectors.toList()))
+                .exactlyContainsInAnyOrder(expectedCollections.stream().map(d -> d.read().block().properties().resourceId()).collect(Collectors.toList()))
                 .numberOfPages(expectedPageSize)
                 .pageSatisfy(0, new FeedResponseValidator.Builder<CosmosContainerProperties>()
                         .requestChargeGreaterThanOrEqualTo(1.0).build())
@@ -103,7 +103,7 @@ public class CollectionQueryTest extends TestSuiteBase {
 
         FeedResponseListValidator<CosmosContainerProperties> validator = new FeedResponseListValidator.Builder<CosmosContainerProperties>()
                 .totalSize(expectedCollections.size())
-                .exactlyContainsInAnyOrder(expectedCollections.stream().map(d -> d.read().block().settings().resourceId()).collect(Collectors.toList()))
+                .exactlyContainsInAnyOrder(expectedCollections.stream().map(d -> d.read().block().properties().resourceId()).collect(Collectors.toList()))
                 .numberOfPages(expectedPageSize)
                 .pageSatisfy(0, new FeedResponseValidator.Builder<CosmosContainerProperties>()
                         .requestChargeGreaterThanOrEqualTo(1.0).build())

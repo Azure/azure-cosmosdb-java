@@ -41,10 +41,10 @@ public class CosmosStoredProcedureResponse extends CosmosResponse<CosmosStoredPr
     }
 
     /**
-     * Gets the stored procedure settings
-     * @return the stored procedure settings or null
+     * Gets the stored procedure properties
+     * @return the stored procedure properties or null
      */
-    public CosmosStoredProcedureProperties settings() {
+    public CosmosStoredProcedureProperties properties() {
         return super.resourceSettings();
     }
 

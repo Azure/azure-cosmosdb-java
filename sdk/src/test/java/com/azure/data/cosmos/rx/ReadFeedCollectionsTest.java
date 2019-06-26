@@ -73,7 +73,7 @@ public class ReadFeedCollectionsTest extends TestSuiteBase {
 
         FeedResponseListValidator<CosmosContainerProperties> validator = new FeedResponseListValidator.Builder<CosmosContainerProperties>()
                 .totalSize(createdCollections.size())
-                .exactlyContainsInAnyOrder(createdCollections.stream().map(d -> d.read().block().settings().resourceId()).collect(Collectors.toList()))
+                .exactlyContainsInAnyOrder(createdCollections.stream().map(d -> d.read().block().properties().resourceId()).collect(Collectors.toList()))
                 .numberOfPages(expectedPageSize)
                 .pageSatisfy(0, new FeedResponseValidator.Builder<CosmosContainerProperties>()
                         .requestChargeGreaterThanOrEqualTo(1.0).build())

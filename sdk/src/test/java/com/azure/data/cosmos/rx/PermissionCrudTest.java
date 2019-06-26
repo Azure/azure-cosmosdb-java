@@ -145,7 +145,7 @@ public class PermissionCrudTest extends TestSuiteBase {
                 .resourceLink("dbs/AQAAAA==/colls/AQAAAJ0fgTc=");
         CosmosPermissionResponse readBackPermissionResponse = createdUser.createPermission(permissionSettings, null)
                 .block();
-        CosmosPermissionProperties readBackPermission = readBackPermissionResponse.settings();
+        CosmosPermissionProperties readBackPermission = readBackPermissionResponse.properties();
         // read Permission
         Mono<CosmosPermissionResponse> readObservable = readBackPermissionResponse.permission()
                 .read( null);
@@ -201,7 +201,7 @@ public class PermissionCrudTest extends TestSuiteBase {
         validateSuccess(readObservable, validator);
         
         //update permission
-        CosmosPermissionProperties readBackPermission = readBackPermissionResponse.settings();
+        CosmosPermissionProperties readBackPermission = readBackPermissionResponse.properties();
         readBackPermission = readBackPermission.permissionMode(PermissionMode.ALL);
         
         CosmosPermission cosmosPermission = createdUser.getPermission(id);
