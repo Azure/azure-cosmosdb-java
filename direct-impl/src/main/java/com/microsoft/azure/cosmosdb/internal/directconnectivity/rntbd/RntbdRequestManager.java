@@ -441,9 +441,9 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
             context.write(this.addPendingRequestRecord(context, (RntbdRequestRecord)message), promise);
 
-        } else if (message instanceof RntbdHealthCheckRequest) {
+        } else if (message == RntbdHealthCheckRequest.MESSAGE) {
 
-            context.write(message, promise);
+            context.write(RntbdHealthCheckRequest.MESSAGE, promise);
 
         } else {
 
@@ -464,6 +464,10 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
     CompletableFuture<RntbdContextRequest> getRntbdContextRequestFuture() {
         return this.contextRequestFuture;
+    }
+
+    boolean hasRequestedRntbdContext() {
+        return this.contextRequestFuture.getNow(null) != null;
     }
 
     boolean hasRntbdContext() {

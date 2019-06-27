@@ -38,6 +38,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.pool.ChannelPool;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.ssl.SslContext;
@@ -64,7 +65,7 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
     private static final Logger logger = LoggerFactory.getLogger(RntbdServiceEndpoint.class);
     private static final String namePrefix = RntbdServiceEndpoint.class.getSimpleName() + '-';
 
-    private final RntbdClientChannelPool1 channelPool;
+    private final ChannelPool channelPool;
     private final AtomicBoolean closed;
     private final RntbdMetrics metrics;
     private final String name;
@@ -86,7 +87,7 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
             .remoteAddress(physicalAddress.getHost(), physicalAddress.getPort());
 
         this.name = RntbdServiceEndpoint.namePrefix + instanceCount.incrementAndGet();
-        this.channelPool = new RntbdClientChannelPool1(bootstrap, config);
+        this.channelPool = new RntbdClientChannelPool(bootstrap, config);
         this.remoteAddress = bootstrap.config().remoteAddress();
         this.metrics = new RntbdMetrics(this.name);
         this.closed = new AtomicBoolean();

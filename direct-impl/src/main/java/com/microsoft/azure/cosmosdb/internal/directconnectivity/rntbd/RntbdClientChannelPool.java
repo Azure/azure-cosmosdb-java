@@ -59,26 +59,26 @@ import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.Rnt
 /**
  * {@link ChannelPool} implementation that enforces a maximum number of concurrent direct TCP Cosmos connections
  */
-@JsonSerialize(using = RntbdClientChannelPool2.JsonSerializer.class)
-public final class RntbdClientChannelPool2 extends SimpleChannelPool {
+@JsonSerialize(using = RntbdClientChannelPool.JsonSerializer.class)
+public final class RntbdClientChannelPool extends SimpleChannelPool {
 
     private static final TimeoutException ACQUISITION_TIMEOUT = ThrowableUtil.unknownStackTrace(
         new TimeoutException("Acquisition took longer than the configured maximum time"),
-        RntbdClientChannelPool2.class, "<init>(...)");
+        RntbdClientChannelPool.class, "<init>(...)");
 
     private static final IllegalStateException POOL_CLOSED_ON_ACQUIRE = ThrowableUtil.unknownStackTrace(
         new IllegalStateException("RntbdClientChannelPool was closed"),
-        RntbdClientChannelPool2.class, "acquire0(...)");
+        RntbdClientChannelPool.class, "acquire0(...)");
 
     private static final IllegalStateException POOL_CLOSED_ON_RELEASE = ThrowableUtil.unknownStackTrace(
         new IllegalStateException("RntbdClientChannelPool was closed"),
-        RntbdClientChannelPool2.class, "release(...)");
+        RntbdClientChannelPool.class, "release(...)");
 
     private static final IllegalStateException TOO_MANY_PENDING_ACQUISITIONS = ThrowableUtil.unknownStackTrace(
         new IllegalStateException("Too many outstanding acquire operations"),
-        RntbdClientChannelPool2.class, "acquire0(...)");
+        RntbdClientChannelPool.class, "acquire0(...)");
 
-    private static final Logger logger = LoggerFactory.getLogger(RntbdClientChannelPool2.class);
+    private static final Logger logger = LoggerFactory.getLogger(RntbdClientChannelPool.class);
 
     private final long acquisitionTimeoutNanos;
     private final AtomicInteger acquiredChannelCount;
@@ -96,12 +96,12 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
     private int pendingAcquisitionCount;
 
     /**
-     * Initializes a newly created {@link RntbdClientChannelPool2} object
+     * Initializes a newly created {@link RntbdClientChannelPool} object
      *
      * @param bootstrap the {@link Bootstrap} that is used for connections
      * @param config    the {@link RntbdEndpoint.Config} that is used for the channel pool instance created
      */
-    RntbdClientChannelPool2(final Bootstrap bootstrap, final RntbdEndpoint.Config config) {
+    RntbdClientChannelPool(final Bootstrap bootstrap, final RntbdEndpoint.Config config) {
 
         super(bootstrap, new RntbdClientChannelHandler(config), ChannelHealthChecker.ACTIVE, true, true);
 
@@ -115,8 +115,8 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
         this.closed = new AtomicBoolean();
 
         // TODO: DANOBLE: Add RntbdEndpoint.Config settings for acquisition timeout and acquisition timeout action
-        //   Alternatively: drop acquisition timeout and acquisition timeout action
-        //   Decision should be based on performance, reliability, and usability considerations
+        //  Alternatively: drop acquisition timeout and acquisition timeout action
+        //  Decision should be based on performance, reliability, and usability considerations
 
         AcquisitionTimeoutAction acquisitionTimeoutAction = null;
         long acquisitionTimeoutNanos = -1L;
@@ -145,7 +145,7 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
                         public void onTimeout(AcquireTask task) {
                             // Increment the acquire count and get a new Channel by delegating to super.acquire
                             task.acquired();
-                            RntbdClientChannelPool2.super.acquire(task.promise);
+                            RntbdClientChannelPool.super.acquire(task.promise);
                         }
                     };
                     break;
@@ -252,7 +252,7 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
 
     @Override
     public String toString() {
-        return "RntbdClientChannelPool2(" + RntbdObjectMapper.toJson(this) + ")";
+        return "RntbdClientChannelPool(" + RntbdObjectMapper.toJson(this) + ")";
     }
 
     /**
@@ -390,7 +390,7 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
         // Ensure we dispatch this on another Thread as close0 will be called from the EventExecutor and we need
         // to ensure we will not block in an EventExecutor
 
-        GlobalEventExecutor.INSTANCE.execute(RntbdClientChannelPool2.super::close);
+        GlobalEventExecutor.INSTANCE.execute(RntbdClientChannelPool.super::close);
     }
 
     private void decrementAndRunTaskQueue() {
@@ -422,7 +422,7 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
             return true; // inactive
         }
 
-        return requestManager.isServiceable(this.maxRequestsPerChannel);
+        return requestManager.isServiceable(1 /* this.maxRequestsPerChannel */);
     }
 
     private void runTaskQueue() {
@@ -477,11 +477,11 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
     private static class AcquireListener implements FutureListener<Channel> {
 
         private final Promise<Channel> originalPromise;
-        private final RntbdClientChannelPool2 pool;
+        private final RntbdClientChannelPool pool;
 
         private boolean acquired;
 
-        AcquireListener(RntbdClientChannelPool2 pool, Promise<Channel> originalPromise) {
+        AcquireListener(RntbdClientChannelPool pool, Promise<Channel> originalPromise) {
             this.originalPromise = originalPromise;
             this.pool = pool;
         }
@@ -510,14 +510,14 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
 
             if (future.isSuccess()) {
 
-                // TODO: DANOBLE: Ensure that the channel is active and ready to receive requests:
-                //   A Direct TCP channel is ready to receive requests when it:
-                //   * is active and
-                //   * has an RntbdContext
-                //   We use a health check request on a channel without an RntbdContext to force:
-                //   1. SSL negotiation
-                //   2. RntbdContextRequest message
-                //   3. RntbdHealthCheckRequest message
+                // Ensure that the channel is active and ready to receive requests
+                // A Direct TCP channel is ready to receive requests when it:
+                // * is active and
+                // * has an RntbdContext
+                // We use a health check request on a channel without an RntbdContext to force:
+                // 1. SSL negotiation
+                // 2. RntbdContextRequest -> RntbdContext
+                // 3. RntbdHealthCheckRequest -> RntbdHealthCheck
 
                 Channel channel = future.getNow();
                 checkState(channel.isActive());
@@ -525,18 +525,20 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
                 RntbdRequestManager requestManager = channel.pipeline().get(RntbdRequestManager.class);
                 checkState(requestManager != null);
 
-                if (requestManager.hasRntbdContext()) {
+                if (requestManager.hasRequestedRntbdContext()) {
 
                     this.originalPromise.setSuccess(channel);
 
                 } else {
 
-                    channel.writeAndFlush(new RntbdHealthCheckRequest(null, null)).addListener(completed -> {
+                    channel.writeAndFlush(RntbdHealthCheckRequest.MESSAGE).addListener(completed -> {
                         if (completed.isSuccess()) {
+                            reportIssueUnless(requestManager.hasRequestedRntbdContext(), logger, channel, "context request did not complete");
                             this.originalPromise.setSuccess(channel);
                         } else {
+                            logger.error("{} health check request failed due to ", channel, completed.cause());
+                            channel.close().addListener(closed -> this.pool.release(channel));
                             this.originalPromise.setFailure(completed.cause());
-                            this.pool.release(channel);
                         }
                     });
                 }
@@ -563,7 +565,7 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
 
         ScheduledFuture<?> timeoutFuture;
 
-        AcquireTask(RntbdClientChannelPool2 pool, Promise<Channel> promise) {
+        AcquireTask(RntbdClientChannelPool pool, Promise<Channel> promise) {
             // We need to create a new promise to ensure the AcquireListener runs in the correct event loop
             super(pool, promise);
             this.promise = pool.executor.<Channel>newPromise().addListener(this);
@@ -573,9 +575,9 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
 
     private static abstract class AcquireTimeoutTask implements Runnable {
 
-        RntbdClientChannelPool2 pool;
+        RntbdClientChannelPool pool;
 
-        public AcquireTimeoutTask(RntbdClientChannelPool2 pool) {
+        public AcquireTimeoutTask(RntbdClientChannelPool pool) {
             this.pool = pool;
         }
 
@@ -603,18 +605,18 @@ public final class RntbdClientChannelPool2 extends SimpleChannelPool {
         }
     }
 
-    static final class JsonSerializer extends StdSerializer<RntbdClientChannelPool2> {
+    static final class JsonSerializer extends StdSerializer<RntbdClientChannelPool> {
 
         JsonSerializer() {
             this(null);
         }
 
-        JsonSerializer(Class<RntbdClientChannelPool2> type) {
+        JsonSerializer(Class<RntbdClientChannelPool> type) {
             super(type);
         }
 
         @Override
-        public void serialize(RntbdClientChannelPool2 pool, JsonGenerator generator, SerializerProvider provider) throws IOException {
+        public void serialize(RntbdClientChannelPool pool, JsonGenerator generator, SerializerProvider provider) throws IOException {
             generator.writeStartObject();
             generator.writeStringField("remoteAddress", pool.remoteAddress().toString());
             generator.writeNumberField("maxChannels", pool.maxChannels());

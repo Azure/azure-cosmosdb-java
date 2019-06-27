@@ -71,9 +71,7 @@ public final class RntbdContextNegotiator extends CombinedChannelDuplexHandler<R
      * @throws Exception thrown if an error occurs
      */
     @Override
-    public void write(
-        final ChannelHandlerContext context, final Object message, final ChannelPromise promise
-    ) throws Exception {
+    public void write(final ChannelHandlerContext context, final Object message, final ChannelPromise promise) throws Exception {
 
         checkArgument(message instanceof ByteBuf, "message: %s", message.getClass());
         final ByteBuf out = (ByteBuf)message;
