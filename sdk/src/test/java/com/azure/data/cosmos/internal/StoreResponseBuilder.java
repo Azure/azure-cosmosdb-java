@@ -23,8 +23,8 @@
 
 package com.azure.data.cosmos.internal;
 
-import com.azure.data.cosmos.directconnectivity.StoreResponse;
-import com.azure.data.cosmos.directconnectivity.WFConstants;
+import com.azure.data.cosmos.internal.directconnectivity.StoreResponse;
+import com.azure.data.cosmos.internal.directconnectivity.WFConstants;
 
 import java.math.BigDecimal;
 import java.util.AbstractMap;

@@ -23,7 +23,7 @@
 
 package com.azure.data.cosmos;
 
-import com.azure.data.cosmos.directconnectivity.Protocol;
+import com.azure.data.cosmos.internal.directconnectivity.Protocol;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 

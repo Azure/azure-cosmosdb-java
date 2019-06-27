@@ -25,7 +25,7 @@ package com.azure.data.cosmos.internal;
 import com.azure.data.cosmos.BridgeInternal;
 import com.azure.data.cosmos.CosmosClientException;
 import com.azure.data.cosmos.CosmosError;
-import com.azure.data.cosmos.directconnectivity.WFConstants;
+import com.azure.data.cosmos.internal.directconnectivity.WFConstants;
 
 import java.util.ArrayList;
 import java.util.List;

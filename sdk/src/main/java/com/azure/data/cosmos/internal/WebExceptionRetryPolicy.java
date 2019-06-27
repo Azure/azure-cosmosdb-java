@@ -23,7 +23,7 @@
 
 package com.azure.data.cosmos.internal;
 
-import com.azure.data.cosmos.directconnectivity.WebExceptionUtility;
+import com.azure.data.cosmos.internal.directconnectivity.WebExceptionUtility;
 import org.apache.commons.lang3.time.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

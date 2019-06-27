@@ -27,7 +27,7 @@ import com.azure.data.cosmos.ChangeFeedOptions;
 import com.azure.data.cosmos.FeedOptions;
 import com.azure.data.cosmos.Resource;
 import com.azure.data.cosmos.SqlQuerySpec;
-import com.azure.data.cosmos.directconnectivity.WFConstants;
+import com.azure.data.cosmos.internal.directconnectivity.WFConstants;
 import com.azure.data.cosmos.internal.routing.PartitionKeyRangeIdentity;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;

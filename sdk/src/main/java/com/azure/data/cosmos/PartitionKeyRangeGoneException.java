@@ -23,8 +23,8 @@
 
 package com.azure.data.cosmos;
 
-import com.azure.data.cosmos.directconnectivity.HttpUtils;
-import com.azure.data.cosmos.directconnectivity.WFConstants;
+import com.azure.data.cosmos.internal.directconnectivity.HttpUtils;
+import com.azure.data.cosmos.internal.directconnectivity.WFConstants;
 import com.azure.data.cosmos.internal.HttpConstants;
 import com.azure.data.cosmos.internal.RMResources;
 import com.azure.data.cosmos.internal.http.HttpHeaders;

@@ -22,7 +22,7 @@
  */
 package com.azure.data.cosmos.internal;
 
-import com.azure.data.cosmos.directconnectivity.Protocol;
+import com.azure.data.cosmos.internal.directconnectivity.Protocol;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslProvider;

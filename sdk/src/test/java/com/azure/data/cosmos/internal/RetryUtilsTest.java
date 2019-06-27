@@ -23,8 +23,8 @@
 package com.azure.data.cosmos.internal;
 
 import com.azure.data.cosmos.GoneException;
-import com.azure.data.cosmos.directconnectivity.StoreResponse;
-import com.azure.data.cosmos.directconnectivity.StoreResponseValidator;
+import com.azure.data.cosmos.internal.directconnectivity.StoreResponse;
+import com.azure.data.cosmos.internal.directconnectivity.StoreResponseValidator;
 import com.azure.data.cosmos.internal.IRetryPolicy.ShouldRetryResult;
 import io.reactivex.subscribers.TestSubscriber;
 import org.mockito.Matchers;

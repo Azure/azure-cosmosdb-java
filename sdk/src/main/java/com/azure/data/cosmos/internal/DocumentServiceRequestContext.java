@@ -26,9 +26,9 @@ package com.azure.data.cosmos.internal;
 
 import com.azure.data.cosmos.ClientSideRequestStatistics;
 import com.azure.data.cosmos.ConsistencyLevel;
-import com.azure.data.cosmos.directconnectivity.StoreResponse;
-import com.azure.data.cosmos.directconnectivity.StoreResult;
-import com.azure.data.cosmos.directconnectivity.TimeoutHelper;
+import com.azure.data.cosmos.internal.directconnectivity.StoreResponse;
+import com.azure.data.cosmos.internal.directconnectivity.StoreResult;
+import com.azure.data.cosmos.internal.directconnectivity.TimeoutHelper;
 import com.azure.data.cosmos.internal.routing.PartitionKeyInternal;
 
 import java.net.URL;

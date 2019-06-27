@@ -22,7 +22,7 @@
  */
 package com.azure.data.cosmos;
 
-import com.azure.data.cosmos.directconnectivity.StoreResult;
+import com.azure.data.cosmos.internal.directconnectivity.StoreResult;
 import com.azure.data.cosmos.internal.OperationType;
 import com.azure.data.cosmos.internal.ResourceType;
 import com.azure.data.cosmos.internal.RxDocumentServiceRequest;

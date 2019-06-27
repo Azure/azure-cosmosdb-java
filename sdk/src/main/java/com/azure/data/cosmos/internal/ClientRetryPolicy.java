@@ -25,7 +25,7 @@ package com.azure.data.cosmos.internal;
 import com.azure.data.cosmos.ClientSideRequestStatistics;
 import com.azure.data.cosmos.CosmosClientException;
 import com.azure.data.cosmos.RetryOptions;
-import com.azure.data.cosmos.directconnectivity.WebExceptionUtility;
+import com.azure.data.cosmos.internal.directconnectivity.WebExceptionUtility;
 import org.apache.commons.collections4.list.UnmodifiableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
