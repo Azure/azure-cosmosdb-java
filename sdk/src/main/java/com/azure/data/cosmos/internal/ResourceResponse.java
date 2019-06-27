@@ -25,9 +25,6 @@ package com.azure.data.cosmos.internal;
 
 import com.azure.data.cosmos.ClientSideRequestStatistics;
 import com.azure.data.cosmos.Resource;
-import com.azure.data.cosmos.internal.Constants;
-import com.azure.data.cosmos.internal.HttpConstants;
-import com.azure.data.cosmos.internal.RxDocumentServiceResponse;
 import org.apache.commons.lang3.StringUtils;
 
 import java.time.Duration;

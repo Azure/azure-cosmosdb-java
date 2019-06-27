@@ -23,7 +23,9 @@
 
 package com.azure.data.cosmos.internal.query;
 
-import com.azure.data.cosmos.*;
+import com.azure.data.cosmos.BridgeInternal;
+import com.azure.data.cosmos.FeedResponse;
+import com.azure.data.cosmos.Resource;
 import com.azure.data.cosmos.internal.RxDocumentServiceRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;

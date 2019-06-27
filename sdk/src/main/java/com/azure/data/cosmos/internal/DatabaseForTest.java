@@ -23,7 +23,11 @@
 
 package com.azure.data.cosmos.internal;
 
-import com.azure.data.cosmos.*;
+import com.azure.data.cosmos.Database;
+import com.azure.data.cosmos.FeedResponse;
+import com.azure.data.cosmos.SqlParameter;
+import com.azure.data.cosmos.SqlParameterList;
+import com.azure.data.cosmos.SqlQuerySpec;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;

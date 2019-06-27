@@ -22,15 +22,15 @@
  */
 package com.azure.data.cosmos.internal.query;
 
+import com.azure.data.cosmos.BadRequestException;
 import com.azure.data.cosmos.BridgeInternal;
 import com.azure.data.cosmos.DocumentCollection;
 import com.azure.data.cosmos.FeedOptions;
 import com.azure.data.cosmos.PartitionKey;
-import com.azure.data.cosmos.internal.PartitionKeyRange;
 import com.azure.data.cosmos.Resource;
 import com.azure.data.cosmos.SqlQuerySpec;
-import com.azure.data.cosmos.BadRequestException;
 import com.azure.data.cosmos.internal.OperationType;
+import com.azure.data.cosmos.internal.PartitionKeyRange;
 import com.azure.data.cosmos.internal.ResourceType;
 import com.azure.data.cosmos.internal.RxDocumentServiceRequest;
 import com.azure.data.cosmos.internal.Utils;

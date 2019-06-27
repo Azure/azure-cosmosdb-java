@@ -34,11 +34,11 @@ import io.netty.handler.codec.CorruptedFrameException;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
+import static com.azure.data.cosmos.internal.HttpConstants.Versions;
 import static com.azure.data.cosmos.internal.directconnectivity.rntbd.RntbdConstants.CurrentProtocolVersion;
 import static com.azure.data.cosmos.internal.directconnectivity.rntbd.RntbdConstants.RntbdContextRequestHeader;
 import static com.azure.data.cosmos.internal.directconnectivity.rntbd.RntbdConstants.RntbdOperationType;
 import static com.azure.data.cosmos.internal.directconnectivity.rntbd.RntbdConstants.RntbdResourceType;
-import static com.azure.data.cosmos.internal.HttpConstants.Versions;
 
 public final class RntbdContextRequest {
 

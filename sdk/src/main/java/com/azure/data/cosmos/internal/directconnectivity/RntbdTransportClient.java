@@ -24,15 +24,15 @@
 
 package com.azure.data.cosmos.internal.directconnectivity;
 
+import com.azure.data.cosmos.internal.Configs;
+import com.azure.data.cosmos.internal.RxDocumentServiceRequest;
+import com.azure.data.cosmos.internal.UserAgentContainer;
 import com.azure.data.cosmos.internal.directconnectivity.rntbd.RntbdEndpoint;
 import com.azure.data.cosmos.internal.directconnectivity.rntbd.RntbdMetrics;
 import com.azure.data.cosmos.internal.directconnectivity.rntbd.RntbdObjectMapper;
 import com.azure.data.cosmos.internal.directconnectivity.rntbd.RntbdRequestArgs;
 import com.azure.data.cosmos.internal.directconnectivity.rntbd.RntbdRequestRecord;
 import com.azure.data.cosmos.internal.directconnectivity.rntbd.RntbdServiceEndpoint;
-import com.azure.data.cosmos.internal.Configs;
-import com.azure.data.cosmos.internal.RxDocumentServiceRequest;
-import com.azure.data.cosmos.internal.UserAgentContainer;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;

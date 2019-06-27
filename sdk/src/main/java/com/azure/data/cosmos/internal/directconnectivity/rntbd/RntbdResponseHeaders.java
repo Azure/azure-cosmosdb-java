@@ -41,10 +41,10 @@ import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
+import static com.azure.data.cosmos.internal.HttpConstants.HttpHeaders;
 import static com.azure.data.cosmos.internal.directconnectivity.WFConstants.BackendHeaders;
 import static com.azure.data.cosmos.internal.directconnectivity.rntbd.RntbdConstants.RntbdIndexingDirective;
 import static com.azure.data.cosmos.internal.directconnectivity.rntbd.RntbdConstants.RntbdResponseHeader;
-import static com.azure.data.cosmos.internal.HttpConstants.HttpHeaders;
 
 @JsonFilter("RntbdToken")
 class RntbdResponseHeaders extends RntbdTokenStream<RntbdResponseHeader> {

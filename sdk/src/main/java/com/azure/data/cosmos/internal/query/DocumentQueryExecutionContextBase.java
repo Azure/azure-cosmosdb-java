@@ -26,12 +26,12 @@ import com.azure.data.cosmos.BridgeInternal;
 import com.azure.data.cosmos.ConsistencyLevel;
 import com.azure.data.cosmos.FeedOptions;
 import com.azure.data.cosmos.FeedResponse;
-import com.azure.data.cosmos.SqlParameterList;
-import com.azure.data.cosmos.internal.PartitionKeyRange;
 import com.azure.data.cosmos.Resource;
+import com.azure.data.cosmos.SqlParameterList;
 import com.azure.data.cosmos.SqlQuerySpec;
 import com.azure.data.cosmos.internal.HttpConstants;
 import com.azure.data.cosmos.internal.OperationType;
+import com.azure.data.cosmos.internal.PartitionKeyRange;
 import com.azure.data.cosmos.internal.ReplicatedResourceClientUtils;
 import com.azure.data.cosmos.internal.ResourceType;
 import com.azure.data.cosmos.internal.RuntimeConstants.MediaTypes;
@@ -48,8 +48,6 @@ import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-
-import static com.azure.data.cosmos.CommonsBridgeInternal.partitionKeyRangeIdInternal;
 
 /**
  * While this class is public, but it is not part of our published public APIs.

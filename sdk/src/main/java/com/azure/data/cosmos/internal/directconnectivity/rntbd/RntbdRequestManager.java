@@ -23,30 +23,30 @@
 
 package com.azure.data.cosmos.internal.directconnectivity.rntbd;
 
+import com.azure.data.cosmos.BadRequestException;
 import com.azure.data.cosmos.BridgeInternal;
+import com.azure.data.cosmos.ConflictException;
 import com.azure.data.cosmos.CosmosClientException;
 import com.azure.data.cosmos.CosmosError;
-import com.azure.data.cosmos.ConflictException;
 import com.azure.data.cosmos.ForbiddenException;
 import com.azure.data.cosmos.GoneException;
+import com.azure.data.cosmos.InternalServerErrorException;
+import com.azure.data.cosmos.InvalidPartitionException;
 import com.azure.data.cosmos.LockedException;
 import com.azure.data.cosmos.MethodNotAllowedException;
+import com.azure.data.cosmos.NotFoundException;
+import com.azure.data.cosmos.PartitionIsMigratingException;
 import com.azure.data.cosmos.PartitionKeyRangeGoneException;
+import com.azure.data.cosmos.PartitionKeyRangeIsSplittingException;
 import com.azure.data.cosmos.PreconditionFailedException;
 import com.azure.data.cosmos.RequestEntityTooLargeException;
 import com.azure.data.cosmos.RequestRateTooLargeException;
 import com.azure.data.cosmos.RequestTimeoutException;
 import com.azure.data.cosmos.RetryWithException;
 import com.azure.data.cosmos.ServiceUnavailableException;
-import com.azure.data.cosmos.internal.directconnectivity.StoreResponse;
 import com.azure.data.cosmos.UnauthorizedException;
+import com.azure.data.cosmos.internal.directconnectivity.StoreResponse;
 import com.azure.data.cosmos.internal.directconnectivity.rntbd.RntbdConstants.RntbdResponseHeader;
-import com.azure.data.cosmos.BadRequestException;
-import com.azure.data.cosmos.InternalServerErrorException;
-import com.azure.data.cosmos.InvalidPartitionException;
-import com.azure.data.cosmos.NotFoundException;
-import com.azure.data.cosmos.PartitionIsMigratingException;
-import com.azure.data.cosmos.PartitionKeyRangeIsSplittingException;
 import com.google.common.base.Strings;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -76,10 +76,10 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static com.azure.data.cosmos.internal.directconnectivity.rntbd.RntbdReporter.reportIssue;
-import static com.azure.data.cosmos.internal.directconnectivity.rntbd.RntbdReporter.reportIssueUnless;
 import static com.azure.data.cosmos.internal.HttpConstants.StatusCodes;
 import static com.azure.data.cosmos.internal.HttpConstants.SubStatusCodes;
+import static com.azure.data.cosmos.internal.directconnectivity.rntbd.RntbdReporter.reportIssue;
+import static com.azure.data.cosmos.internal.directconnectivity.rntbd.RntbdReporter.reportIssueUnless;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 

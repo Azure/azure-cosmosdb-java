@@ -22,11 +22,11 @@
  */
 package com.azure.data.cosmos;
 
-import com.azure.data.cosmos.internal.directconnectivity.StoreResult;
 import com.azure.data.cosmos.internal.OperationType;
 import com.azure.data.cosmos.internal.ResourceType;
 import com.azure.data.cosmos.internal.RxDocumentServiceRequest;
 import com.azure.data.cosmos.internal.Utils;
+import com.azure.data.cosmos.internal.directconnectivity.StoreResult;
 import org.apache.commons.lang3.StringUtils;
 
 import java.net.URI;
