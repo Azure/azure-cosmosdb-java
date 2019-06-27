@@ -32,6 +32,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.ser.PropertyFilter;
 import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
+import com.google.common.base.Strings;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.handler.codec.CorruptedFrameException;
@@ -76,7 +77,7 @@ public final class RntbdObjectMapper {
             return (ObjectNode)node;
         }
 
-        final String cause = String.format("Expected %s, not %s", JsonNodeType.OBJECT, node.getNodeType());
+        final String cause = Strings.lenientFormat("Expected %s, not %s", JsonNodeType.OBJECT, node.getNodeType());
         throw new CorruptedFrameException(cause);
     }
 

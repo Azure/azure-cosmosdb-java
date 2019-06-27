@@ -31,6 +31,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.PropertyWriter;
 import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
+import com.google.common.base.Strings;
 import io.netty.buffer.ByteBuf;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -170,7 +171,7 @@ final class RntbdToken {
 
         if (!this.isPresent()) {
             if (this.isRequired()) {
-                final String message = String.format("Missing value for required header: %s", this);
+                final String message = Strings.lenientFormat("Missing value for required header: %s", this);
                 throw new IllegalStateException(message);
             }
             return;

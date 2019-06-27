@@ -28,6 +28,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.microsoft.azure.cosmosdb.BridgeInternal;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
@@ -214,7 +215,7 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
                 final String reason = cause.getMessage();
 
                 final GoneException goneException = new GoneException(
-                    String.format("failed to establish connection to %s: %s", this.remoteAddress, reason),
+                    Strings.lenientFormat("failed to establish connection to %s: %s", this.remoteAddress, reason),
                     cause instanceof Exception ? (Exception)cause : new IOException(reason, cause),
                     ImmutableMap.of(HttpConstants.HttpHeaders.ACTIVITY_ID, activityId.toString()),
                     requestArgs.getReplicaPath()

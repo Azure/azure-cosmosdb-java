@@ -93,7 +93,7 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
     // by the above EventExecutor.
     private final Queue<AcquireTask> pendingAcquisitionQueue = new ArrayDeque<AcquireTask>();
     private final Runnable acquisitionTimeoutTask;
-    private int pendingAcquisitionCount;
+    private int pendingChannelAcquisitionCount;
 
     /**
      * Initializes a newly created {@link RntbdClientChannelPool} object
@@ -118,8 +118,8 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
         //  Alternatively: drop acquisition timeout and acquisition timeout action
         //  Decision should be based on performance, reliability, and usability considerations
 
-        AcquisitionTimeoutAction acquisitionTimeoutAction = null;
-        long acquisitionTimeoutNanos = -1L;
+        final AcquisitionTimeoutAction acquisitionTimeoutAction = null;
+        final long acquisitionTimeoutNanos = -1L;
 
         if (acquisitionTimeoutAction == null) {
 
@@ -206,8 +206,8 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
         return this.maxRequestsPerChannel;
     }
 
-    public int pendingAcquisitionCount() {
-        return this.pendingAcquisitionCount;
+    public int pendingChannelAcquisitionCount() {
+        return this.pendingChannelAcquisitionCount;
     }
 
     @Override
@@ -233,13 +233,13 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
 
             } else {
 
-                Throwable cause = future.cause();
+                final Throwable cause = future.cause();
 
                 if (!(cause instanceof IllegalArgumentException)) {
                     this.decrementAndRunTaskQueue();
                 }
 
-                promise.setFailure(future.cause());
+                promise.setFailure(cause);
             }
         }));
 
@@ -292,7 +292,7 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
         }
 
         if (this.isClosed()) {
-            return first;  // because we're being called following a call to close (from super.close)
+            return first;  // because this.close -> this.close0 -> super.close -> this.pollChannel
         }
 
         if (this.isInactiveOrServiceableChannel(first)) {
@@ -330,17 +330,17 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
 
             checkState(this.acquiredChannelCount.get() >= 0);
 
-            AcquireListener l = new AcquireListener(this, promise);
+            final AcquireListener l = new AcquireListener(this, promise);
             l.acquired();
 
-            Promise<Channel> p = this.executor.newPromise();
+            final Promise<Channel> p = this.executor.newPromise();
             p.addListener(l);
 
             super.acquire(p); // acquire an existing channel or create and acquire a new channel
 
         } else {
 
-            if (this.pendingAcquisitionCount >= this.maxPendingAcquisitions) {
+            if (this.pendingChannelAcquisitionCount >= this.maxPendingAcquisitions) {
 
                 promise.setFailure(TOO_MANY_PENDING_ACQUISITIONS);
 
@@ -352,7 +352,7 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
 
                 if (this.pendingAcquisitionQueue.offer(task)) {
 
-                    this.pendingAcquisitionCount++;
+                    this.pendingChannelAcquisitionCount++;
 
                     if (acquisitionTimeoutTask != null) {
                         task.timeoutFuture = executor.schedule(acquisitionTimeoutTask, acquisitionTimeoutNanos, TimeUnit.NANOSECONDS);
@@ -363,21 +363,20 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
                 }
             }
 
-            checkState(this.pendingAcquisitionCount > 0);
+            checkState(this.pendingChannelAcquisitionCount > 0);
         }
     }
 
     private void close0() {
 
         checkState(this.executor.inEventLoop());
-        this.availableChannelCount.set(0);
 
         for (; ; ) {
-            AcquireTask task = this.pendingAcquisitionQueue.poll();
+            final AcquireTask task = this.pendingAcquisitionQueue.poll();
             if (task == null) {
                 break;
             }
-            ScheduledFuture<?> timeoutFuture = task.timeoutFuture;
+            final ScheduledFuture<?> timeoutFuture = task.timeoutFuture;
             if (timeoutFuture != null) {
                 timeoutFuture.cancel(false);
             }
@@ -385,7 +384,8 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
         }
 
         this.acquiredChannelCount.set(0);
-        this.pendingAcquisitionCount = 0;
+        this.availableChannelCount.set(0);
+        this.pendingChannelAcquisitionCount = 0;
 
         // Ensure we dispatch this on another Thread as close0 will be called from the EventExecutor and we need
         // to ensure we will not block in an EventExecutor
@@ -395,11 +395,11 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
 
     private void decrementAndRunTaskQueue() {
 
-        int currentCount = this.acquiredChannelCount.decrementAndGet();
+        final int currentCount = this.acquiredChannelCount.decrementAndGet();
         checkState(currentCount >= 0);
 
         // Run the pending acquisition tasks before notifying the original promise so that if the user tries to
-        // acquire again from the ChannelFutureListener and the pendingAcquisitionCount is greater than
+        // acquire again from the ChannelFutureListener and the pendingChannelAcquisitionCount is greater than
         // maxPendingAcquisitions we may be able to run some pending tasks first and so allow to add more
         runTaskQueue();
     }
@@ -429,19 +429,19 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
 
         while (this.acquiredChannelCount.get() < this.maxChannels) {
 
-            AcquireTask task = this.pendingAcquisitionQueue.poll();
+            final AcquireTask task = this.pendingAcquisitionQueue.poll();
 
             if (task == null) {
                 break;
             }
 
-            ScheduledFuture<?> timeoutFuture = task.timeoutFuture;
+            final ScheduledFuture<?> timeoutFuture = task.timeoutFuture;
 
             if (timeoutFuture != null) {
                 timeoutFuture.cancel(false);
             }
 
-            this.pendingAcquisitionCount--;
+            this.pendingChannelAcquisitionCount--;
             task.acquired();
 
             super.acquire(task.promise);
@@ -450,7 +450,7 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
         // We should never have negative values
 
         checkState(this.acquiredChannelCount.get() >= 0);
-        checkState(this.pendingAcquisitionCount >= 0);
+        checkState(this.pendingChannelAcquisitionCount >= 0);
     }
 
     private void throwIfClosed() {
@@ -478,7 +478,6 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
 
         private final Promise<Channel> originalPromise;
         private final RntbdClientChannelPool pool;
-
         private boolean acquired;
 
         AcquireListener(RntbdClientChannelPool pool, Promise<Channel> originalPromise) {
@@ -519,10 +518,10 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
                 // 2. RntbdContextRequest -> RntbdContext
                 // 3. RntbdHealthCheckRequest -> RntbdHealthCheck
 
-                Channel channel = future.getNow();
+                final Channel channel = future.getNow();
                 checkState(channel.isActive());
 
-                RntbdRequestManager requestManager = channel.pipeline().get(RntbdRequestManager.class);
+                final RntbdRequestManager requestManager = channel.pipeline().get(RntbdRequestManager.class);
                 checkState(requestManager != null);
 
                 if (requestManager.hasRequestedRntbdContext()) {
@@ -575,7 +574,7 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
 
     private static abstract class AcquireTimeoutTask implements Runnable {
 
-        RntbdClientChannelPool pool;
+        final RntbdClientChannelPool pool;
 
         public AcquireTimeoutTask(RntbdClientChannelPool pool) {
             this.pool = pool;
@@ -587,7 +586,7 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
         public final void run() {
 
             checkState(this.pool.executor.inEventLoop());
-            long nanoTime = System.nanoTime();
+            final long nanoTime = System.nanoTime();
 
             for (; ; ) {
                 AcquireTask task = this.pool.pendingAcquisitionQueue.peek();
@@ -599,7 +598,7 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
                     break;
                 }
                 this.pool.pendingAcquisitionQueue.remove();
-                this.pool.pendingAcquisitionCount--;
+                this.pool.pendingChannelAcquisitionCount--;
                 this.onTimeout(task);
             }
         }
@@ -608,11 +607,7 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
     static final class JsonSerializer extends StdSerializer<RntbdClientChannelPool> {
 
         JsonSerializer() {
-            this(null);
-        }
-
-        JsonSerializer(Class<RntbdClientChannelPool> type) {
-            super(type);
+            super(RntbdClientChannelPool.class);
         }
 
         @Override
@@ -625,7 +620,7 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
             generator.writeBooleanField("isClosed", pool.isClosed());
             generator.writeNumberField("acquiredChannelCount", pool.acquiredChannelCount());
             generator.writeNumberField("availableChannelCount", pool.availableChannelCount());
-            generator.writeNumberField("pendingAcquisitionCount", pool.pendingAcquisitionCount());
+            generator.writeNumberField("pendingChannelAcquisitionCount", pool.pendingChannelAcquisitionCount());
             generator.writeEndObject();
             generator.writeEndObject();
         }
