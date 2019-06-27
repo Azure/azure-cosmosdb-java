@@ -159,11 +159,6 @@ SOFTWARE.
     </plugins>
   </reporting>
   <dependencies>
-    <!--<dependency>-->
-      <!--<groupId>com.microsoft.azure</groupId>-->
-      <!--<artifactId>azure-cosmos-commons-test-utils</artifactId>-->
-      <!--<scope>test</scope>-->
-    <!--</dependency>-->
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>

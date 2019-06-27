@@ -32,11 +32,7 @@
   <description>Java Async SDK (with Reactive Extension RX support) for Azure Cosmos DB SQL API</description>
   <url>https://docs.microsoft.com/en-us/azure/cosmos-db</url>
   <modules>
-    <!--<module>commons</module>-->
-    <!--<module>gateway</module>-->
-    <!--<module>commons-test-utils</module>-->
     <module>sdk</module>
-    <!--<module>direct-impl</module>-->
     <module>benchmark</module>
     <module>examples</module>
   </modules>
