@@ -26,7 +26,7 @@ package com.azure.data.cosmos.directconnectivity;
 
 import com.azure.data.cosmos.DocumentCollection;
 import com.azure.data.cosmos.PartitionKeyRangeGoneException;
-import com.azure.data.cosmos.internal.PartitionKey;
+import com.azure.data.cosmos.PartitionKey;
 import com.azure.data.cosmos.PartitionKeyDefinition;
 import com.azure.data.cosmos.internal.PartitionKeyRange;
 import com.azure.data.cosmos.internal.HttpConstants;

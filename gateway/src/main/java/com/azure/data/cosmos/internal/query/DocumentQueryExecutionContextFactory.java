@@ -25,7 +25,7 @@ package com.azure.data.cosmos.internal.query;
 import com.azure.data.cosmos.BridgeInternal;
 import com.azure.data.cosmos.DocumentCollection;
 import com.azure.data.cosmos.FeedOptions;
-import com.azure.data.cosmos.internal.PartitionKey;
+import com.azure.data.cosmos.PartitionKey;
 import com.azure.data.cosmos.internal.PartitionKeyRange;
 import com.azure.data.cosmos.Resource;
 import com.azure.data.cosmos.SqlQuerySpec;

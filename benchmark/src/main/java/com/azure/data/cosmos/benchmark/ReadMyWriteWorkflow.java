@@ -27,7 +27,7 @@ import com.azure.data.cosmos.BridgeInternal;
 import com.azure.data.cosmos.Document;
 import com.azure.data.cosmos.FeedOptions;
 import com.azure.data.cosmos.SqlParameterList;
-import com.azure.data.cosmos.internal.PartitionKey;
+import com.azure.data.cosmos.PartitionKey;
 import com.azure.data.cosmos.internal.RequestOptions;
 import com.azure.data.cosmos.internal.ResourceResponse;
 import com.azure.data.cosmos.SqlParameter;

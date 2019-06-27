@@ -25,7 +25,6 @@ package com.azure.data.cosmos;
 
 import com.azure.data.cosmos.internal.Constants;
 import com.azure.data.cosmos.internal.HttpConstants;
-import com.azure.data.cosmos.internal.PartitionKey;
 import com.azure.data.cosmos.internal.QueryMetrics;
 import com.azure.data.cosmos.internal.ReplicationPolicy;
 import com.azure.data.cosmos.internal.ResourceResponse;

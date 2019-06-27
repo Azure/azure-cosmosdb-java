@@ -41,6 +41,7 @@ import com.azure.data.cosmos.FeedOptionsBase;
 import com.azure.data.cosmos.FeedResponse;
 import com.azure.data.cosmos.ISessionContainer;
 import com.azure.data.cosmos.JsonSerializable;
+import com.azure.data.cosmos.PartitionKey;
 import com.azure.data.cosmos.PartitionKeyDefinition;
 import com.azure.data.cosmos.Resource;
 import com.azure.data.cosmos.SqlQuerySpec;
