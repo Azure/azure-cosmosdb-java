@@ -29,7 +29,7 @@ import com.azure.data.cosmos.internal.PartitionKey;
 import com.azure.data.cosmos.internal.PartitionKeyRange;
 import com.azure.data.cosmos.Resource;
 import com.azure.data.cosmos.SqlQuerySpec;
-import com.azure.data.cosmos.internal.BadRequestException;
+import com.azure.data.cosmos.BadRequestException;
 import com.azure.data.cosmos.internal.OperationType;
 import com.azure.data.cosmos.internal.ResourceType;
 import com.azure.data.cosmos.internal.RxDocumentServiceRequest;
