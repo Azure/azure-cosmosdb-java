@@ -1752,15 +1752,15 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
 
             Observable<RxDocumentServiceRequest> reqObs = addPartitionKeyInformation(request, null, options).toObservable();
             return reqObs.flatMap(req -> {
-                    if (retryPolicyInstance != null) {
-                        retryPolicyInstance.onBeforeSendRequest(request);
-                    }
-                    return create(request);
-                    })
-                    .map(response -> {
-                        this.captureSessionToken(request, response);
-                        return toStoredProcedureResponse(response);
-                    });
+                if (retryPolicyInstance != null) {
+                    retryPolicyInstance.onBeforeSendRequest(request);
+                }
+                return create(request).map(response -> {
+                    this.captureSessionToken(request, response);
+                    return toStoredProcedureResponse(response);
+                });
+            });
+                    
 
         } catch (Exception e) {
             logger.debug("Failure in executing a StoredProcedure due to [{}]", e.getMessage(), e);
