@@ -23,6 +23,7 @@
 
 package com.azure.data.cosmos;
 
+import com.azure.data.cosmos.internal.PartitionKey;
 import com.azure.data.cosmos.internal.PartitionKeyRange;
 
 import java.time.OffsetDateTime;
