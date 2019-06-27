@@ -35,7 +35,7 @@ import com.azure.data.cosmos.internal.http.HttpClient;
 import com.azure.data.cosmos.internal.http.HttpHeaders;
 import com.azure.data.cosmos.internal.http.HttpRequest;
 import com.azure.data.cosmos.internal.http.HttpResponse;
-import com.azure.data.cosmos.rx.TestConfigurations;
+import com.azure.data.cosmos.internal.TestConfigurations;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.ByteBufUtil;
 import io.reactivex.subscribers.TestSubscriber;

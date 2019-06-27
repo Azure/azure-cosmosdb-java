@@ -32,7 +32,7 @@ import com.azure.data.cosmos.internal.ResourceType;
 import com.azure.data.cosmos.internal.RxDocumentClientImpl;
 import com.azure.data.cosmos.internal.RxDocumentServiceRequest;
 import com.azure.data.cosmos.internal.routing.PartitionKeyRangeIdentity;
-import com.azure.data.cosmos.rx.TestConfigurations;
+import com.azure.data.cosmos.internal.TestConfigurations;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
