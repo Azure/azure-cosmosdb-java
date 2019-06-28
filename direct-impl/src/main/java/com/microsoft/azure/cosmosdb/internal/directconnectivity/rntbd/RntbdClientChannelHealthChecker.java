@@ -24,6 +24,10 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import io.netty.channel.Channel;
 import io.netty.channel.pool.ChannelHealthChecker;
 import io.netty.util.concurrent.Future;
@@ -31,6 +35,7 @@ import io.netty.util.concurrent.Promise;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -38,6 +43,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdReporter.reportIssueUnless;
 import static java.util.concurrent.atomic.AtomicLongFieldUpdater.newUpdater;
 
+@JsonSerialize(using = RntbdClientChannelHealthChecker.JsonSerializer.class)
 final class RntbdClientChannelHealthChecker implements ChannelHealthChecker {
 
     // region Fields
@@ -45,7 +51,7 @@ final class RntbdClientChannelHealthChecker implements ChannelHealthChecker {
     private static final Logger logger = LoggerFactory.getLogger(RntbdClientChannelHealthChecker.class);
     private static final long NANOS_PER_SECOND = 1_000_000_000L;
 
-    // A channel will be declared healthy if data was read recently as defined by this value.
+    // A channel will be declared healthy if a read succeeded recently as defined by this value.
     private static final long recentReadWindow = NANOS_PER_SECOND;
 
     // A channel should not be declared unhealthy if a write succeeded recently. As such gaps between
@@ -93,6 +99,18 @@ final class RntbdClientChannelHealthChecker implements ChannelHealthChecker {
     // endregion
 
     // region Methods
+
+    public long idleConnectionTimeout() {
+        return this.idleConnectionTimeout;
+    }
+
+    public long readDelayLimit() {
+        return this.readDelayLimit;
+    }
+
+    public long writeDelayLimit() {
+        return this.writeDelayLimit;
+    }
 
     public Future<Boolean> isHealthy(Channel channel) {
 
@@ -146,10 +164,32 @@ final class RntbdClientChannelHealthChecker implements ChannelHealthChecker {
         return promise;
     }
 
+    @Override
+    public String toString() {
+        return "RntbdClientChannelHealthChecker(" + RntbdObjectMapper.toJson(this) + ')';
+    }
+
     // endregion
 
     // region Types
 
+    static final class JsonSerializer extends StdSerializer<RntbdClientChannelHealthChecker> {
+
+        JsonSerializer() {
+            super(RntbdClientChannelHealthChecker.class);
+        }
+
+        @Override
+        public void serialize(RntbdClientChannelHealthChecker value, JsonGenerator generator, SerializerProvider provider) throws IOException {
+            generator.writeStartObject();
+            generator.writeNumberField("idleConnectionTimeout", value.idleConnectionTimeout());
+            generator.writeNumberField("readDelayLimit", value.readDelayLimit());
+            generator.writeNumberField("writeDelayLimit", value.writeDelayLimit());
+            generator.writeEndObject();
+        }
+    }
+
+    @JsonSerialize(using = Timestamps.JsonSerializer.class)
     static final class Timestamps {
 
         private static final AtomicLongFieldUpdater<Timestamps> lastReadUpdater = newUpdater(Timestamps.class, "lastRead");
@@ -192,6 +232,27 @@ final class RntbdClientChannelHealthChecker implements ChannelHealthChecker {
 
         public long lastChannelWriteAttempt() {
             return lastWriteAttemptUpdater.get(this);
+        }
+
+        @Override
+        public String toString() {
+            return "RntbdClientChannelHealthChecker.Timestamps(" + RntbdObjectMapper.toJson(this) + ')';
+        }
+
+        static final class JsonSerializer extends StdSerializer<Timestamps> {
+
+            JsonSerializer() {
+                super(Timestamps.class);
+            }
+
+            @Override
+            public void serialize(Timestamps value, JsonGenerator generator, SerializerProvider provider) throws IOException {
+                generator.writeStartObject();
+                generator.writeNumberField("lastChannelRead", value.lastChannelRead());
+                generator.writeNumberField("lastChannelWrite", value.lastChannelWrite());
+                generator.writeNumberField("lastChannelWriteAttempt", value.lastChannelWriteAttempt());
+                generator.writeEndObject();
+            }
         }
     }
 
