@@ -22,12 +22,6 @@
  */
 package com.azure.data.cosmos;
 
-import com.azure.data.cosmos.internal.RequestOptions;
-
 public class CosmosConflictRequestOptions extends CosmosRequestOptions{
 
-    @Override
-    protected RequestOptions toRequestOptions() {
-        return super.toRequestOptions();
-    }
 }
