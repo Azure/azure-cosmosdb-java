@@ -87,6 +87,8 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static com.azure.data.cosmos.BridgeInternal.extractConfigs;
+import static com.azure.data.cosmos.BridgeInternal.injectConfigs;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
@@ -298,7 +300,7 @@ public class TestSuiteBase extends CosmosClientTest {
     }
 
     protected static void waitIfNeededForReplicasToCatchUp(CosmosClientBuilder clientBuilder) {
-        switch (clientBuilder.getDesiredConsistencyLevel()) {
+        switch (clientBuilder.consistencyLevel()) {
             case EVENTUAL:
             case CONSISTENT_PREFIX:
                 logger.info(" additional wait in EVENTUAL mode so the replica catch up");
@@ -830,9 +832,9 @@ public class TestSuiteBase extends CosmosClientTest {
         }
 
         cosmosConfigurations.forEach(c -> logger.info("Will Use ConnectionMode [{}], Consistency [{}], Protocol [{}]",
-                                          c.getConnectionPolicy().connectionMode(),
-                                          c.getDesiredConsistencyLevel(),
-                                          c.getConfigs().getProtocol()
+                                          c.connectionPolicy().connectionMode(),
+                                          c.consistencyLevel(),
+                                          extractConfigs(c).getProtocol()
         ));
 
         cosmosConfigurations.add(createGatewayRxDocumentClient(ConsistencyLevel.SESSION, false, null));
@@ -921,9 +923,9 @@ public class TestSuiteBase extends CosmosClientTest {
         }
 
         cosmosConfigurations.forEach(c -> logger.info("Will Use ConnectionMode [{}], Consistency [{}], Protocol [{}]",
-                                          c.getConnectionPolicy().connectionMode(),
-                                          c.getDesiredConsistencyLevel(),
-                                          c.getConfigs().getProtocol()
+                                          c.connectionPolicy().connectionMode(),
+                                          c.consistencyLevel(),
+                                          extractConfigs(c).getProtocol()
         ));
 
         cosmosConfigurations.add(createGatewayRxDocumentClient(ConsistencyLevel.SESSION, isMultiMasterEnabled, preferredLocations));
@@ -976,11 +978,12 @@ public class TestSuiteBase extends CosmosClientTest {
         Configs configs = spy(new Configs());
         doAnswer((Answer<Protocol>)invocation -> protocol).when(configs).getProtocol();
 
-        return CosmosClient.builder().endpoint(TestConfigurations.HOST)
+        CosmosClientBuilder builder = CosmosClient.builder().endpoint(TestConfigurations.HOST)
                 .key(TestConfigurations.MASTER_KEY)
                 .connectionPolicy(connectionPolicy)
-                .consistencyLevel(consistencyLevel)
-                .configs(configs);
+                .consistencyLevel(consistencyLevel);
+
+        return injectConfigs(builder, configs);
     }
 
     protected int expectedNumberOfPages(int totalExpectedResult, int maxPageSize) {

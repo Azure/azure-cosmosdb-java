@@ -23,6 +23,7 @@
 
 package com.azure.data.cosmos;
 
+import com.azure.data.cosmos.internal.Configs;
 import com.azure.data.cosmos.internal.Constants;
 import com.azure.data.cosmos.internal.HttpConstants;
 import com.azure.data.cosmos.internal.QueryMetrics;
@@ -366,5 +367,13 @@ public class BridgeInternal {
         CosmosClientException cosmosClientException = new CosmosClientException(statusCode, message, responseHeaders, exception);
         cosmosClientException.resourceAddress = resourceAddress;
         return cosmosClientException;
+    }
+
+    public static Configs extractConfigs(CosmosClientBuilder cosmosClientBuilder) {
+        return cosmosClientBuilder.configs();
+    }
+
+    public static CosmosClientBuilder injectConfigs(CosmosClientBuilder cosmosClientBuilder, Configs configs) {
+        return cosmosClientBuilder.configs(configs);
     }
 }

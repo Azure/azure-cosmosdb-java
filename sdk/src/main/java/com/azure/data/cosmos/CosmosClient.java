@@ -50,13 +50,13 @@ public class CosmosClient implements AutoCloseable {
 
 
      CosmosClient(CosmosClientBuilder builder) {
-         this.configs = builder.getConfigs();
-         this.serviceEndpoint = builder.getServiceEndpoint();
-        this.keyOrResourceToken = builder.getKeyOrResourceToken();
-        this.connectionPolicy = builder.getConnectionPolicy();
-        this.desiredConsistencyLevel = builder.getDesiredConsistencyLevel();
-        this.permissions = builder.getPermissions();
-        this.tokenResolver = builder.getTokenResolver();
+         this.configs = builder.configs();
+         this.serviceEndpoint = builder.endpoint();
+        this.keyOrResourceToken = builder.key();
+        this.connectionPolicy = builder.connectionPolicy();
+        this.desiredConsistencyLevel = builder.consistencyLevel();
+        this.permissions = builder.permissions();
+        this.tokenResolver = builder.tokenResolver();
         this.asyncDocumentClient = new AsyncDocumentClient.Builder()
                 .withServiceEndpoint(this.serviceEndpoint)
                 .withMasterKeyOrResourceToken(this.keyOrResourceToken)
