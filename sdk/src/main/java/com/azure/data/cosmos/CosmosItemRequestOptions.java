@@ -176,7 +176,7 @@ public class CosmosItemRequestOptions extends CosmosRequestOptions {
     }
 
     @Override
-    protected RequestOptions toRequestOptions() {
+    RequestOptions toRequestOptions() {
         //TODO: Should we set any default values instead of nulls?
         super.toRequestOptions();
         requestOptions.setAccessCondition(accessCondition());
