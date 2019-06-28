@@ -633,7 +633,7 @@ public class TestSuiteBase extends CosmosClientTest {
 
     static protected void safeDeleteAllCollections(CosmosDatabase database) {
         if (database != null) {
-            List<CosmosContainerProperties> collections = database.listContainers()
+            List<CosmosContainerProperties> collections = database.readAllContainers()
                                                                   .flatMap(p -> Flux.fromIterable(p.results()))
                                                                   .collectList()
                                                                   .block();

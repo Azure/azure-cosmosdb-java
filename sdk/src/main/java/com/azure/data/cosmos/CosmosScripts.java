@@ -90,7 +90,7 @@ public class CosmosScripts {
      * @return an {@link Flux} containing one or several feed response pages of the read cosmos stored procedures
      * properties or an error.
      */
-    public Flux<FeedResponse<CosmosStoredProcedureProperties>> listStoredProcedures(FeedOptions options){
+    public Flux<FeedResponse<CosmosStoredProcedureProperties>> readAllStoredProcedures(FeedOptions options){
         return database.getDocClientWrapper()
                 .readStoredProcedures(container.getLink(), options)
                 .map(response -> BridgeInternal.createFeedResponse(CosmosStoredProcedureProperties.getFromV2Results(response.results()),
@@ -176,7 +176,7 @@ public class CosmosScripts {
      * @param options        the feed options.
      * @return an {@link Flux} containing one or several feed response pages of the read user defined functions or an error.
      */
-    public Flux<FeedResponse<CosmosUserDefinedFunctionProperties>> listUserDefinedFunctions(FeedOptions options){
+    public Flux<FeedResponse<CosmosUserDefinedFunctionProperties>> readAllUserDefinedFunctions(FeedOptions options){
         return database.getDocClientWrapper()
                 .readUserDefinedFunctions(container.getLink(), options)
                 .map(response -> BridgeInternal.createFeedResponse(CosmosUserDefinedFunctionProperties.getFromV2Results(response.results()),
@@ -257,7 +257,7 @@ public class CosmosScripts {
      * @param options        the feed options.
      * @return an {@link Flux} containing one or several feed response pages of the read cosmos rigger properties or an error.
      */
-    public Flux<FeedResponse<CosmosTriggerProperties>> listTriggers(FeedOptions options){
+    public Flux<FeedResponse<CosmosTriggerProperties>> readAllTriggers(FeedOptions options){
         return database.getDocClientWrapper()
                 .readTriggers(container.getLink(), options)
                 .map(response -> BridgeInternal.createFeedResponse(CosmosTriggerProperties.getFromV2Results(response.results()),

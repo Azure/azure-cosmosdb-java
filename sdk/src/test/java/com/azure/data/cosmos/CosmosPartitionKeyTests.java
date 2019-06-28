@@ -182,7 +182,7 @@ public final class CosmosPartitionKeyTests extends TestSuiteBase {
                 .build();
         validateQuerySuccess(queryFlux, queryValidator);
 
-        queryFlux = createdContainer.listItems(feedOptions);
+        queryFlux = createdContainer.readAllItems(feedOptions);
         queryValidator = new FeedResponseListValidator.Builder<CosmosItemProperties>()
                 .totalSize(3)
                 .numberOfPages(1)
@@ -215,7 +215,7 @@ public final class CosmosPartitionKeyTests extends TestSuiteBase {
 
         // 3 previous items + 1 created from the sproc
         expectedIds.add(documentCreatedBySprocId);
-        queryFlux = createdContainer.listItems(feedOptions);
+        queryFlux = createdContainer.readAllItems(feedOptions);
         queryValidator = new FeedResponseListValidator.Builder<CosmosItemProperties>()
                 .totalSize(4)
                 .numberOfPages(1)
@@ -243,7 +243,7 @@ public final class CosmosPartitionKeyTests extends TestSuiteBase {
                 .nullResource().build();
         validateSuccess(deleteMono, validator);
 
-        queryFlux = createdContainer.listItems(feedOptions);
+        queryFlux = createdContainer.readAllItems(feedOptions);
         queryValidator = new FeedResponseListValidator.Builder<CosmosItemProperties>()
                 .totalSize(0)
                 .numberOfPages(1)

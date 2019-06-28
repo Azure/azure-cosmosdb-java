@@ -244,7 +244,7 @@ public class ChangeFeedProcessorTest extends TestSuiteBase {
     @AfterClass(groups = { "emulator" }, timeOut = 2 * SHUTDOWN_TIMEOUT, alwaysRun = true)
     public void afterClass() {
 //        try {
-//            client.listDatabases()
+//            client.readAllDatabases()
 //                .flatMap(cosmosDatabaseSettingsFeedResponse -> reactor.core.publisher.Flux.fromIterable(cosmosDatabaseSettingsFeedResponse.results()))
 //                .flatMap(cosmosDatabaseSettings -> {
 //                    CosmosDatabase cosmosDatabase = client.getDatabase(cosmosDatabaseSettings.id());

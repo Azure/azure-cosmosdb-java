@@ -331,7 +331,7 @@ public class CosmosDatabase {
      * @return a {@link Flux} containing one or several feed response pages of read
      *         containers or an error.
      */
-    public Flux<FeedResponse<CosmosContainerProperties>> listContainers(FeedOptions options) {
+    public Flux<FeedResponse<CosmosContainerProperties>> readAllContainers(FeedOptions options) {
         return getDocClientWrapper().readCollections(getLink(), options)
                 .map(response -> BridgeInternal.createFeedResponse(
                         CosmosContainerProperties.getFromV2Results(response.results()), response.responseHeaders()));
@@ -347,8 +347,8 @@ public class CosmosDatabase {
      * @return a {@link Flux} containing one or several feed response pages of read
      *         containers or an error.
      */
-    public Flux<FeedResponse<CosmosContainerProperties>> listContainers() {
-        return listContainers(new FeedOptions());
+    public Flux<FeedResponse<CosmosContainerProperties>> readAllContainers() {
+        return readAllContainers(new FeedOptions());
     }
 
     /**
@@ -469,8 +469,8 @@ public class CosmosDatabase {
      * @return an {@link Flux} containing one or several feed response pages of the
      *         read cosmos users or an error.
      */
-    public Flux<FeedResponse<CosmosUserProperties>> listUsers() {
-        return listUsers(new FeedOptions());
+    public Flux<FeedResponse<CosmosUserProperties>> readAllUsers() {
+        return readAllUsers(new FeedOptions());
     }
 
     /**
@@ -484,7 +484,7 @@ public class CosmosDatabase {
      * @return an {@link Flux} containing one or several feed response pages of the
      *         read cosmos users or an error.
      */
-    public Flux<FeedResponse<CosmosUserProperties>> listUsers(FeedOptions options) {
+    public Flux<FeedResponse<CosmosUserProperties>> readAllUsers(FeedOptions options) {
         return getDocClientWrapper().readUsers(getLink(), options).map(response -> BridgeInternal.createFeedResponse(
                 CosmosUserProperties.getFromV2Results(response.results()), response.responseHeaders()));
     }

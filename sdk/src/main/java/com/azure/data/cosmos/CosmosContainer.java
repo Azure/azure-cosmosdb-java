@@ -259,8 +259,8 @@ public class CosmosContainer {
      * @return an {@link Flux} containing one or several feed response pages of the
      *         read cosmos items or an error.
      */
-    public Flux<FeedResponse<CosmosItemProperties>> listItems() {
-        return listItems(new FeedOptions());
+    public Flux<FeedResponse<CosmosItemProperties>> readAllItems() {
+        return readAllItems(new FeedOptions());
     }
 
     /**
@@ -274,7 +274,7 @@ public class CosmosContainer {
      * @return an {@link Flux} containing one or several feed response pages of the
      *         read cosmos items or an error.
      */
-    public Flux<FeedResponse<CosmosItemProperties>> listItems(FeedOptions options) {
+    public Flux<FeedResponse<CosmosItemProperties>> readAllItems(FeedOptions options) {
         return getDatabase().getDocClientWrapper().readDocuments(getLink(), options).map(
                 response -> BridgeInternal.createFeedResponse(CosmosItemProperties.getFromV2Results(response.results()),
                         response.responseHeaders()));
@@ -387,7 +387,7 @@ public class CosmosContainer {
      * @return a {@link Flux} containing one or several feed response pages of the
      *         obtained conflicts or an error.
      */
-    public Flux<FeedResponse<CosmosConflictProperties>> listConflicts(FeedOptions options) {
+    public Flux<FeedResponse<CosmosConflictProperties>> readAllConflicts(FeedOptions options) {
         return database.getDocClientWrapper().readConflicts(getLink(), options)
                 .map(response -> BridgeInternal.createFeedResponse(
                         CosmosConflictProperties.getFromV2Results(response.results()), response.responseHeaders()));

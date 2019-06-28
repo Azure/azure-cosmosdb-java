@@ -303,7 +303,7 @@ public class CosmosClient implements AutoCloseable {
      * @param options {@link FeedOptions}
      * @return a {@link Flux} containing one or several feed response pages of read databases or an error.
      */
-    public Flux<FeedResponse<CosmosDatabaseProperties>> listDatabases(FeedOptions options) {
+    public Flux<FeedResponse<CosmosDatabaseProperties>> readAllDatabases(FeedOptions options) {
         return getDocClientWrapper().readDatabases(options)
                 .map(response-> BridgeInternal.createFeedResponse(CosmosDatabaseProperties.getFromV2Results(response.results()),
                         response.responseHeaders()));
@@ -318,8 +318,8 @@ public class CosmosClient implements AutoCloseable {
      * 
      * @return a {@link Flux} containing one or several feed response pages of read databases or an error.
      */
-    public Flux<FeedResponse<CosmosDatabaseProperties>> listDatabases() {
-        return listDatabases(new FeedOptions());
+    public Flux<FeedResponse<CosmosDatabaseProperties>> readAllDatabases() {
+        return readAllDatabases(new FeedOptions());
     }
 
 

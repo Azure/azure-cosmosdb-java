@@ -120,7 +120,7 @@ public class CosmosUser {
      * @param options        the feed options.
      * @return an {@link Flux} containing one or several feed response pages of the read permissions or an error.
      */
-    public Flux<FeedResponse<CosmosPermissionProperties>> listPermissions(FeedOptions options) {
+    public Flux<FeedResponse<CosmosPermissionProperties>> readAllPermissions(FeedOptions options) {
         return getDatabase().getDocClientWrapper()
                         .readPermissions(getLink(), options)
                         .map(response-> BridgeInternal.createFeedResponse(CosmosPermissionProperties.getFromV2Results(response.results()),
