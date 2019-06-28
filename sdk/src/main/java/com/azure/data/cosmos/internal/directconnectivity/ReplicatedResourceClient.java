@@ -139,8 +139,8 @@ public class ReplicatedResourceClient {
         // 2. enableReadRequestsFallback is set to true. (can only ever be true if
         // direct mode, on client)
         if (request.isReadOnlyRequest() && this.enableReadRequestsFallback) {
-            if (request.requestContext.cosmosResponseDiagnosticStatistics == null) {
-                request.requestContext.cosmosResponseDiagnosticStatistics = BridgeInternal.createCosmosResponseDiagnosticStatistics();
+            if (request.requestContext.cosmosResponseDiagnostics == null) {
+                request.requestContext.cosmosResponseDiagnostics = BridgeInternal.createCosmosResponseDiagnostics();
             }
             RxDocumentServiceRequest freshRequest = request.clone();
             inBackoffFuncDelegate = (Quadruple<Boolean, Boolean, Duration, Integer> forceRefreshAndTimeout) -> {

@@ -335,8 +335,8 @@ public class BridgeInternal {
         return JsonSerializable.getValue(value);
     }
 
-    public static CosmosClientException setCosmosResponseDiagnosticStatistics(CosmosClientException cosmosClientException, CosmosResponseDiagnosticStatistics cosmosResponseDiagnosticStatistics) {
-        return cosmosClientException.cosmosResponseDiagnosticStatistics(cosmosResponseDiagnosticStatistics);
+    public static CosmosClientException setCosmosResponseDiagnostics(CosmosClientException cosmosClientException, CosmosResponseDiagnostics cosmosResponseDiagnostics) {
+        return cosmosClientException.cosmosResponseDiagnostics(cosmosResponseDiagnostics);
     }
 
     public static CosmosClientException createCosmosClientException(int statusCode) {
@@ -371,34 +371,34 @@ public class BridgeInternal {
         return cosmosClientException;
     }
 
-    public static CosmosResponseDiagnosticStatistics createCosmosResponseDiagnosticStatistics() {
-        return new CosmosResponseDiagnosticStatistics();
+    public static CosmosResponseDiagnostics createCosmosResponseDiagnostics() {
+        return new CosmosResponseDiagnostics();
     }
 
-    public static void recordResponse(CosmosResponseDiagnosticStatistics cosmosResponseDiagnosticStatistics,
+    public static void recordResponse(CosmosResponseDiagnostics cosmosResponseDiagnostics,
                                       RxDocumentServiceRequest request, StoreResult storeResult) {
-        cosmosResponseDiagnosticStatistics.clientSideRequestStatistics().recordResponse(request, storeResult);
+        cosmosResponseDiagnostics.clientSideRequestStatistics().recordResponse(request, storeResult);
     }
 
-    public static String recordAddressResolutionStart(CosmosResponseDiagnosticStatistics cosmosResponseDiagnosticStatistics,
+    public static String recordAddressResolutionStart(CosmosResponseDiagnostics cosmosResponseDiagnostics,
                                                       URI targetEndpoint) {
-        return cosmosResponseDiagnosticStatistics.clientSideRequestStatistics().recordAddressResolutionStart(targetEndpoint);
+        return cosmosResponseDiagnostics.clientSideRequestStatistics().recordAddressResolutionStart(targetEndpoint);
     }
 
-    public static void recordAddressResolutionEnd(CosmosResponseDiagnosticStatistics cosmosResponseDiagnosticStatistics,
+    public static void recordAddressResolutionEnd(CosmosResponseDiagnostics cosmosResponseDiagnostics,
                                                   String identifier) {
-        cosmosResponseDiagnosticStatistics.clientSideRequestStatistics().recordAddressResolutionEnd(identifier);
+        cosmosResponseDiagnostics.clientSideRequestStatistics().recordAddressResolutionEnd(identifier);
     }
 
-    public static List<URI> getContactedReplicas(CosmosResponseDiagnosticStatistics cosmosResponseDiagnosticStatistics) {
-        return cosmosResponseDiagnosticStatistics.clientSideRequestStatistics().getContactedReplicas();
+    public static List<URI> getContactedReplicas(CosmosResponseDiagnostics cosmosResponseDiagnostics) {
+        return cosmosResponseDiagnostics.clientSideRequestStatistics().getContactedReplicas();
     }
 
-    public static void setContactedReplicas(CosmosResponseDiagnosticStatistics cosmosResponseDiagnosticStatistics, List<URI> contactedReplicas) {
-        cosmosResponseDiagnosticStatistics.clientSideRequestStatistics().setContactedReplicas(contactedReplicas);
+    public static void setContactedReplicas(CosmosResponseDiagnostics cosmosResponseDiagnostics, List<URI> contactedReplicas) {
+        cosmosResponseDiagnostics.clientSideRequestStatistics().setContactedReplicas(contactedReplicas);
     }
 
-    public static Set<URI> getFailedReplicas(CosmosResponseDiagnosticStatistics cosmosResponseDiagnosticStatistics) {
-        return cosmosResponseDiagnosticStatistics.clientSideRequestStatistics().getFailedReplicas();
+    public static Set<URI> getFailedReplicas(CosmosResponseDiagnostics cosmosResponseDiagnostics) {
+        return cosmosResponseDiagnostics.clientSideRequestStatistics().getFailedReplicas();
     }
 }

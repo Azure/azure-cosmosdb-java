@@ -209,8 +209,8 @@ public class ConsistencyReader {
             entity.requestContext.requestChargeTracker = new RequestChargeTracker();
         }
 
-        if(entity.requestContext.cosmosResponseDiagnosticStatistics == null) {
-            entity.requestContext.cosmosResponseDiagnosticStatistics = BridgeInternal.createCosmosResponseDiagnosticStatistics();
+        if(entity.requestContext.cosmosResponseDiagnostics == null) {
+            entity.requestContext.cosmosResponseDiagnostics = BridgeInternal.createCosmosResponseDiagnostics();
         }
 
         entity.requestContext.forceRefreshAddressCache = forceRefresh;

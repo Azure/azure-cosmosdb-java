@@ -27,11 +27,11 @@ import java.time.Duration;
 /**
  * This class represents response diagnostic statistics associated with a request to Azure Cosmos DB
  */
-public class CosmosResponseDiagnosticStatistics {
+public class CosmosResponseDiagnostics {
 
     private ClientSideRequestStatistics clientSideRequestStatistics;
 
-    CosmosResponseDiagnosticStatistics() {
+    CosmosResponseDiagnostics() {
         this.clientSideRequestStatistics = new ClientSideRequestStatistics();
     }
 
@@ -39,15 +39,17 @@ public class CosmosResponseDiagnosticStatistics {
         return clientSideRequestStatistics;
     }
 
-    void clientSideRequestStatistics(ClientSideRequestStatistics clientSideRequestStatistics) {
+    CosmosResponseDiagnostics clientSideRequestStatistics(ClientSideRequestStatistics clientSideRequestStatistics) {
         this.clientSideRequestStatistics = clientSideRequestStatistics;
+        return this;
     }
 
     /**
      * Retrieves Response Diagnostic String
      * @return Response Diagnostic String
      */
-    public String getCosmosResponseDiagnosticString() {
+    @Override
+    public String toString() {
         return this.clientSideRequestStatistics.toString();
     }
 
@@ -55,7 +57,7 @@ public class CosmosResponseDiagnosticStatistics {
      * Retrieves latency related to the completion of the request
      * @return request completion latency
      */
-    public Duration getRequestLatency() {
+    public Duration requestLatency() {
         return this.clientSideRequestStatistics.getRequestLatency();
     }
 }

@@ -115,8 +115,8 @@ public class StoreReader {
 
         String originalSessionToken = entity.getHeaders().get(HttpConstants.HttpHeaders.SESSION_TOKEN);
 
-        if (entity.requestContext.cosmosResponseDiagnosticStatistics == null) {
-            entity.requestContext.cosmosResponseDiagnosticStatistics = BridgeInternal.createCosmosResponseDiagnosticStatistics();
+        if (entity.requestContext.cosmosResponseDiagnostics == null) {
+            entity.requestContext.cosmosResponseDiagnostics = BridgeInternal.createCosmosResponseDiagnostics();
         }
 
         Mono<ReadReplicaResult> readQuorumResultObs = this.readMultipleReplicasInternalAsync(
@@ -171,7 +171,7 @@ public class StoreReader {
                                         readMode != ReadMode.Strong,
                                         storeRespAndURI.getRight());
 
-                                BridgeInternal.getContactedReplicas(request.requestContext.cosmosResponseDiagnosticStatistics).add(storeRespAndURI.getRight());
+                                BridgeInternal.getContactedReplicas(request.requestContext.cosmosResponseDiagnostics).add(storeRespAndURI.getRight());
                                 return Flux.just(storeResult);
                             } catch (Exception e) {
                                 // RxJava1 doesn't allow throwing checked exception from Observable operators
@@ -194,7 +194,7 @@ public class StoreReader {
                                 readMode != ReadMode.Strong,
                                 null);
                         if (storeException instanceof TransportException) {
-                            BridgeInternal.getFailedReplicas(request.requestContext.cosmosResponseDiagnosticStatistics).add(storeRespAndURI.getRight());
+                            BridgeInternal.getFailedReplicas(request.requestContext.cosmosResponseDiagnostics).add(storeRespAndURI.getRight());
                         }
                         return Flux.just(storeResult);
                     } catch (Exception e) {
@@ -268,7 +268,7 @@ public class StoreReader {
             for (StoreResult srr : newStoreResults) {
 
                 entity.requestContext.requestChargeTracker.addCharge(srr.requestCharge);
-                BridgeInternal.recordResponse(entity.requestContext.cosmosResponseDiagnosticStatistics, entity, srr);
+                BridgeInternal.recordResponse(entity.requestContext.cosmosResponseDiagnostics, entity, srr);
                 if (srr.isValid) {
 
                     try {
@@ -459,8 +459,8 @@ public class StoreReader {
         }
 
         String originalSessionToken = entity.getHeaders().get(HttpConstants.HttpHeaders.SESSION_TOKEN);
-        if (entity.requestContext.cosmosResponseDiagnosticStatistics == null) {
-            entity.requestContext.cosmosResponseDiagnosticStatistics = BridgeInternal.createCosmosResponseDiagnosticStatistics();
+        if (entity.requestContext.cosmosResponseDiagnostics == null) {
+            entity.requestContext.cosmosResponseDiagnostics = BridgeInternal.createCosmosResponseDiagnostics();
         }
 
         return this.readPrimaryInternalAsync(
@@ -576,7 +576,7 @@ public class StoreReader {
         });
 
         return storeResultObs.map(storeResult -> {
-            BridgeInternal.recordResponse(entity.requestContext.cosmosResponseDiagnosticStatistics, entity, storeResult);
+            BridgeInternal.recordResponse(entity.requestContext.cosmosResponseDiagnostics, entity, storeResult);
             entity.requestContext.requestChargeTracker.addCharge(storeResult.requestCharge);
 
             if (storeResult.isGoneException && !storeResult.isInvalidPartitionException) {

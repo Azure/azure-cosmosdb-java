@@ -24,7 +24,7 @@
 package com.azure.data.cosmos.internal;
 
 import com.azure.data.cosmos.Attachment;
-import com.azure.data.cosmos.CosmosResponseDiagnosticStatistics;
+import com.azure.data.cosmos.CosmosResponseDiagnostics;
 import com.azure.data.cosmos.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -159,7 +159,7 @@ public final class StoredProcedureResponse {
      *
      * @return request diagnostic statistics for execution of stored procedure.
      */
-    public CosmosResponseDiagnosticStatistics getCosmosResponseDiagnosticStatistics() {
+    public CosmosResponseDiagnostics getCosmosResponseDiagnostics() {
         return this.response.getCosmosResponseRequestDiagnosticStatistics();
     }
 }

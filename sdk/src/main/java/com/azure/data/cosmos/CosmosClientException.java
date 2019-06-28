@@ -53,7 +53,7 @@ public class CosmosClientException extends Exception {
     private final int statusCode;
     private final Map<String, String> responseHeaders;
 
-    private CosmosResponseDiagnosticStatistics cosmosResponseDiagnosticStatistics;
+    private CosmosResponseDiagnostics cosmosResponseDiagnostics;
     private CosmosError cosmosError;
 
     long lsn;
@@ -141,10 +141,10 @@ public class CosmosClientException extends Exception {
 
     @Override
     public String getMessage() {
-        if (cosmosResponseDiagnosticStatistics == null) {
+        if (cosmosResponseDiagnostics == null) {
             return innerErrorMessage();
         }
-        return innerErrorMessage() + ", " + cosmosResponseDiagnosticStatistics.getCosmosResponseDiagnosticString();
+        return innerErrorMessage() + ", " + cosmosResponseDiagnostics.toString();
     }
 
     /**
@@ -254,12 +254,12 @@ public class CosmosClientException extends Exception {
      *
      * @return Cosmos Response Diagnostic Statistics associated with this exception.
      */
-    public CosmosResponseDiagnosticStatistics cosmosResponseDiagnosticStatistics() {
-        return cosmosResponseDiagnosticStatistics;
+    public CosmosResponseDiagnostics cosmosResponseDiagnostics() {
+        return cosmosResponseDiagnostics;
     }
 
-    CosmosClientException cosmosResponseDiagnosticStatistics(CosmosResponseDiagnosticStatistics cosmosResponseDiagnosticStatistics) {
-        this.cosmosResponseDiagnosticStatistics = cosmosResponseDiagnosticStatistics;
+    CosmosClientException cosmosResponseDiagnostics(CosmosResponseDiagnostics cosmosResponseDiagnostics) {
+        this.cosmosResponseDiagnostics = cosmosResponseDiagnostics;
         return this;
     }
 
