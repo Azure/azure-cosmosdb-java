@@ -37,6 +37,8 @@ import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.Rnt
 
 final class RntbdClientChannelHealthChecker implements ChannelHealthChecker {
 
+    // region Fields
+
     private static final Logger logger = LoggerFactory.getLogger(RntbdClientChannelHealthChecker.class);
     private static final long NANOS_PER_SECOND = 1_000_000_000L;
 
@@ -70,6 +72,10 @@ final class RntbdClientChannelHealthChecker implements ChannelHealthChecker {
     // Constraint: writeDelayLimit > writeHangGracePeriod
     private final long writeDelayLimit;
 
+    // endregion
+
+    // region Constructors
+
     public RntbdClientChannelHealthChecker(RntbdEndpoint.Config config) {
 
         this.idleConnectionTimeout = config.idleConnectionTimeout();
@@ -80,6 +86,10 @@ final class RntbdClientChannelHealthChecker implements ChannelHealthChecker {
         this.writeDelayLimit = config.sendHangDetectionTime();
         checkArgument(this.writeDelayLimit > writeHangGracePeriod, "config.sendHangDetectionTime: %s", this.writeDelayLimit);
     }
+
+    // endregion
+
+    // region Methods
 
     public Future<Boolean> isHealthy(Channel channel) {
 
@@ -133,6 +143,10 @@ final class RntbdClientChannelHealthChecker implements ChannelHealthChecker {
         return promise;
     }
 
+    // endregion
+
+    // region Types
+
     static final class Timestamps {
 
         private volatile long lastRead;
@@ -172,4 +186,6 @@ final class RntbdClientChannelHealthChecker implements ChannelHealthChecker {
             return this.lastWriteAttempt;
         }
     }
+
+    // endregion
 }
