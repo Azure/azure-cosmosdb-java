@@ -100,7 +100,6 @@ public class CosmosTrigger {
      * The {@link Mono} upon successful completion will contain a single resource response for the deleted trigger.
      * In case of failure the {@link Mono} will error.
      *
-     * @param options the request options.
      * @return an {@link Mono} containing the single resource response for the deleted cosmos trigger or an error.
      */
     public Mono<CosmosResponse> delete() {
