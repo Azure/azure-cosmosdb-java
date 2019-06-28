@@ -17,7 +17,7 @@ public class FeedResponseDiagnostics {
         return queryMetricsMap;
     }
 
-    public FeedResponseDiagnostics queryMetricsMap(Map<String, QueryMetrics> queryMetricsMap) {
+    FeedResponseDiagnostics queryMetricsMap(Map<String, QueryMetrics> queryMetricsMap) {
         this.queryMetricsMap = queryMetricsMap;
         return this;
     }
