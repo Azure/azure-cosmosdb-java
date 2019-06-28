@@ -30,7 +30,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
-import io.netty.channel.pool.ChannelHealthChecker;
 import io.netty.channel.pool.ChannelPool;
 import io.netty.channel.pool.SimpleChannelPool;
 import io.netty.util.concurrent.EventExecutor;
@@ -103,12 +102,12 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
      */
     RntbdClientChannelPool(final Bootstrap bootstrap, final RntbdEndpoint.Config config) {
 
-        super(bootstrap, new RntbdClientChannelHandler(config), ChannelHealthChecker.ACTIVE, true, true);
+        super(bootstrap, new RntbdClientChannelHandler(config), new RntbdClientChannelHealthChecker(config), true, true);
 
         this.executor = bootstrap.config().group().next();
-        this.maxChannels = config.getMaxChannelsPerEndpoint();
+        this.maxChannels = config.maxChannelsPerEndpoint();
         this.maxPendingAcquisitions = Integer.MAX_VALUE;
-        this.maxRequestsPerChannel = config.getMaxRequestsPerChannel();
+        this.maxRequestsPerChannel = config.maxRequestsPerChannel();
 
         this.availableChannelCount = new AtomicInteger();
         this.acquiredChannelCount = new AtomicInteger();
@@ -418,7 +417,7 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
         final RntbdRequestManager requestManager = channel.pipeline().get(RntbdRequestManager.class);
 
         if (requestManager == null) {
-            reportIssueUnless(!channel.isActive(), logger, this, "{} active with no request manager", channel);
+            reportIssueUnless(!channel.isActive(), logger, channel, "active with no request manager");
             return true; // inactive
         }
 

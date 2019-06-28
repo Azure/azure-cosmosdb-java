@@ -83,7 +83,7 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
             .channel(NioSocketChannel.class)
             .group(group)
             .option(ChannelOption.AUTO_READ, true)
-            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, config.getConnectionTimeout())
+            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, config.connectionTimeout())
             .option(ChannelOption.SO_KEEPALIVE, true)
             .remoteAddress(physicalAddress.getHost(), physicalAddress.getPort());
 
@@ -282,7 +282,7 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
             }
 
             this.config = new Config(options, sslContext, wireLogLevel);
-            this.requestTimer = new RntbdRequestTimer(config.getRequestTimeout());
+            this.requestTimer = new RntbdRequestTimer(config.requestTimeout());
             this.eventLoopGroup = new NioEventLoopGroup(threadCount, threadFactory);
         }
 

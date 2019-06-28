@@ -112,24 +112,24 @@ public class RntbdClientChannelHandler extends ChannelInitializer<Channel> imple
 
         checkNotNull(channel);
 
-        final RntbdRequestManager requestManager = new RntbdRequestManager(this.config.getMaxRequestsPerChannel());
-        final long readerIdleTime = this.config.getReceiveHangDetectionTime();
-        final long writerIdleTime = this.config.getSendHangDetectionTime();
+        final RntbdRequestManager requestManager = new RntbdRequestManager(this.config.maxRequestsPerChannel());
+        final long readerIdleTime = this.config.receiveHangDetectionTime();
+        final long writerIdleTime = this.config.sendHangDetectionTime();
         final ChannelPipeline pipeline = channel.pipeline();
 
         pipeline.addFirst(
-            new RntbdContextNegotiator(requestManager, this.config.getUserAgent()),
+            new RntbdContextNegotiator(requestManager, this.config.userAgent()),
             new RntbdResponseDecoder(),
             new RntbdRequestEncoder(),
             new WriteTimeoutHandler(writerIdleTime, TimeUnit.NANOSECONDS),
             requestManager
         );
 
-        if (this.config.getWireLogLevel() != null) {
-            pipeline.addFirst(new LoggingHandler(this.config.getWireLogLevel()));
+        if (this.config.wireLogLevel() != null) {
+            pipeline.addFirst(new LoggingHandler(this.config.wireLogLevel()));
         }
 
-        final SSLEngine sslEngine = this.config.getSslContext().newEngine(channel.alloc());
+        final SSLEngine sslEngine = this.config.sslContext().newEngine(channel.alloc());
 
         pipeline.addFirst(
             new ReadTimeoutHandler(readerIdleTime, TimeUnit.NANOSECONDS),

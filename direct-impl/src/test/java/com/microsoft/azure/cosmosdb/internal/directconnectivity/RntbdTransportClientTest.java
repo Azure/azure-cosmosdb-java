@@ -842,7 +842,7 @@ public final class RntbdTransportClientTest {
             this.requestTimer = timer;
 
             this.fakeChannel = new FakeChannel(responses,
-                new RntbdContextNegotiator(requestManager, config.getUserAgent()),
+                new RntbdContextNegotiator(requestManager, config.userAgent()),
                 new RntbdRequestEncoder(),
                 new RntbdResponseDecoder(),
                 requestManager
@@ -874,7 +874,7 @@ public final class RntbdTransportClientTest {
 
             Provider(RntbdTransportClient.Options options, SslContext sslContext, RntbdResponse expected) {
                 this.config = new Config(options, sslContext, LogLevel.WARN);
-                this.timer = new RntbdRequestTimer(config.getRequestTimeout());
+                this.timer = new RntbdRequestTimer(config.requestTimeout());
                 this.expected = expected;
             }
 

@@ -198,9 +198,10 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
         // region Fields
 
         private final String certificateHostNameOverride;
+        private final Duration connectionTimeout;
+        private final Duration idleTimeout;
         private final int maxChannelsPerEndpoint;
         private final int maxRequestsPerChannel;
-        private final Duration connectionTimeout;
         private final int partitionCount;
         private final Duration receiveHangDetectionTime;
         private final Duration requestTimeout;
@@ -214,12 +215,13 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
         private Options(Builder builder) {
 
             this.certificateHostNameOverride = builder.certificateHostNameOverride;
+            this.connectionTimeout = builder.connectionTimeout == null ? builder.requestTimeout : builder.connectionTimeout;
+            this.idleTimeout = builder.idleTimeout;
             this.maxChannelsPerEndpoint = builder.maxChannelsPerEndpoint;
             this.maxRequestsPerChannel = builder.maxRequestsPerChannel;
-            this.connectionTimeout = builder.connectionTimeout == null ? builder.requestTimeout : builder.connectionTimeout;
             this.partitionCount = builder.partitionCount;
-            this.requestTimeout = builder.requestTimeout;
             this.receiveHangDetectionTime = builder.receiveHangDetectionTime;
+            this.requestTimeout = builder.requestTimeout;
             this.sendHangDetectionTime = builder.sendHangDetectionTime;
             this.userAgent = builder.userAgent;
         }
@@ -228,39 +230,43 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
 
         // region Accessors
 
-        public String getCertificateHostNameOverride() {
+        public String certificateHostNameOverride() {
             return this.certificateHostNameOverride;
         }
 
-        public int getMaxChannelsPerEndpoint() {
-            return this.maxChannelsPerEndpoint;
-        }
-
-        public int getMaxRequestsPerChannel() {
-            return this.maxRequestsPerChannel;
-        }
-
-        public Duration getConnectionTimeout() {
+        public Duration connectionTimeout() {
             return this.connectionTimeout;
         }
 
-        public int getPartitionCount() {
+        public Duration idleTimeout() {
+            return this.idleTimeout;
+        }
+
+        public int maxChannelsPerEndpoint() {
+            return this.maxChannelsPerEndpoint;
+        }
+
+        public int maxRequestsPerChannel() {
+            return this.maxRequestsPerChannel;
+        }
+
+        public int partitionCount() {
             return this.partitionCount;
         }
 
-        public Duration getReceiveHangDetectionTime() {
+        public Duration receiveHangDetectionTime() {
             return this.receiveHangDetectionTime;
         }
 
-        public Duration getRequestTimeout() {
+        public Duration requestTimeout() {
             return this.requestTimeout;
         }
 
-        public Duration getSendHangDetectionTime() {
+        public Duration sendHangDetectionTime() {
             return this.sendHangDetectionTime;
         }
 
-        public UserAgentContainer getUserAgent() {
+        public UserAgentContainer userAgent() {
             return this.userAgent;
         }
 
@@ -290,10 +296,10 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
             private String certificateHostNameOverride = null;
 
             // Optional parameters
-
+            private Duration connectionTimeout = null;
+            private Duration idleTimeout = Duration.ZERO;
             private int maxChannelsPerEndpoint = 10;
             private int maxRequestsPerChannel = 30;
-            private Duration connectionTimeout = null;
             private int partitionCount = 1;
             private Duration receiveHangDetectionTime = SIXTY_FIVE_SECONDS;
             private Duration requestTimeout;
@@ -331,15 +337,21 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
                 return this;
             }
 
-            public Builder maxRequestsPerChannel(final int value) {
-                checkArgument(value > 0, "value: %s", value);
-                this.maxRequestsPerChannel = value;
+            public Builder idleTimeout(final Duration value) {
+                checkNotNull(value, "value: null");
+                this.idleTimeout = value;
                 return this;
             }
 
             public Builder maxChannelsPerEndpoint(final int value) {
                 checkArgument(value > 0, "value: %s", value);
                 this.maxChannelsPerEndpoint = value;
+                return this;
+            }
+
+            public Builder maxRequestsPerChannel(final int value) {
+                checkArgument(value > 0, "value: %s", value);
+                this.maxRequestsPerChannel = value;
                 return this;
             }
 

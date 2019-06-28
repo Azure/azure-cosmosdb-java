@@ -51,6 +51,7 @@ import com.microsoft.azure.cosmosdb.rx.internal.PartitionKeyRangeIsSplittingExce
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelException;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandler;
@@ -62,6 +63,8 @@ import io.netty.channel.CoalescingBufferQueue;
 import io.netty.channel.EventLoop;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.ssl.SslHandler;
+import io.netty.handler.timeout.IdleState;
+import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.Timeout;
 import io.netty.util.concurrent.EventExecutor;
@@ -80,6 +83,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.SubStatusCodes;
+import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdClientChannelHealthChecker.Timestamps;
 import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdReporter.reportIssue;
 import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdReporter.reportIssueUnless;
 
@@ -92,6 +96,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
     private final CompletableFuture<RntbdContext> contextFuture = new CompletableFuture<>();
     private final CompletableFuture<RntbdContextRequest> contextRequestFuture = new CompletableFuture<>();
     private final ConcurrentHashMap<Long, RntbdRequestRecord> pendingRequests;
+    private final Timestamps timestamps = new Timestamps();
     private final int pendingRequestLimit;
 
     private boolean closingExceptionally = false;
@@ -186,7 +191,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
     }
 
     /**
-     * Invoked when the last message read by the current read operation has been consumed
+     * Invoked when the most-recent message read by the current read operation has been consumed
      * <p>
      * If {@link ChannelOption#AUTO_READ} is off, no further attempt to read an inbound data from the current
      * {@link Channel} will be made until {@link ChannelHandlerContext#read} is called. This leaves time
@@ -197,6 +202,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
     @Override
     public void channelReadComplete(final ChannelHandlerContext context) {
         this.traceOperation(context, "channelReadComplete");
+        this.timestamps.channelReadCompleted();
         context.fireChannelReadComplete();
     }
 
@@ -296,6 +302,13 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         this.traceOperation(context, "userEventTriggered", event);
 
         try {
+
+            if (event instanceof IdleStateEvent) {
+                if (((IdleStateEvent)event).state() == IdleState.WRITER_IDLE) {
+                    context.writeAndFlush(RntbdHealthCheckRequest.MESSAGE);
+                }
+                return;
+            }
             if (event instanceof RntbdContext) {
                 this.contextFuture.complete((RntbdContext)event);
                 this.removeContextNegotiatorAndFlushPendingWrites(context);
@@ -434,28 +447,33 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
     public void write(final ChannelHandlerContext context, final Object message, final ChannelPromise promise) {
 
         // TODO: DANOBLE: Ensure that all write errors are reported with a root cause of type EncoderException
+        //  Requires a full scan of the rntbd code
 
         this.traceOperation(context, "write", message);
+        this.timestamps.channelWriteAttempted();
+        final ChannelFuture future;
 
         if (message instanceof RntbdRequestRecord) {
 
-            context.write(this.addPendingRequestRecord(context, (RntbdRequestRecord)message), promise);
+            future = context.write(this.addPendingRequestRecord(context, (RntbdRequestRecord)message), promise);
 
         } else if (message == RntbdHealthCheckRequest.MESSAGE) {
 
-            context.write(RntbdHealthCheckRequest.MESSAGE, promise);
+            future = context.write(RntbdHealthCheckRequest.MESSAGE, promise);
 
         } else {
 
-            final IllegalStateException error = new IllegalStateException(
-                Strings.lenientFormat("expected message of %s, not %s: %s",
-                    RntbdRequestRecord.class, message.getClass(), message
-                )
-            );
-
+            final IllegalStateException error = new IllegalStateException(Strings.lenientFormat("message of %s: %s", message.getClass(), message));
             reportIssue(logger, context, "", error);
             this.exceptionCaught(context, error);
+            return;
         }
+
+        future.addListener(completed -> {
+            if (completed.isSuccess()) {
+                this.timestamps.channelWriteCompleted();
+            }
+        });
     }
 
     // endregion
@@ -481,6 +499,10 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
     void pendWrite(final ByteBuf out, final ChannelPromise promise) {
         this.pendingWrites.add(out, promise);
+    }
+
+    RntbdClientChannelHealthChecker.Timestamps timestamps() {
+        return new RntbdClientChannelHealthChecker.Timestamps(this.timestamps);
     }
 
     private RntbdRequestArgs addPendingRequestRecord(final ChannelHandlerContext context, final RntbdRequestRecord record) {
