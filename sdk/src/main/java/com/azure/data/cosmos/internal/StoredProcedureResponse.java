@@ -23,7 +23,6 @@
 
 package com.azure.data.cosmos.internal;
 
-import com.azure.data.cosmos.Attachment;
 import com.azure.data.cosmos.ClientSideRequestStatistics;
 import com.azure.data.cosmos.Document;
 import org.slf4j.Logger;
@@ -125,15 +124,6 @@ public final class StoredProcedureResponse {
      */
     public Document getResponseAsDocument() {
         return this.response.getResource(Document.class);
-    }
-
-    /**
-     * Gets the response of a stored procedure, serialized into an attachment.
-     *
-     * @return the response as an attachment.
-     */
-    public Attachment getResponseAsAttachment() {
-        return this.response.getResource(Attachment.class);
     }
 
     /**

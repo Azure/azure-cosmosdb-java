@@ -23,7 +23,6 @@
 
 package com.azure.data.cosmos.internal;
 
-import com.azure.data.cosmos.Attachment;
 import com.azure.data.cosmos.BadRequestException;
 import com.azure.data.cosmos.Conflict;
 import com.azure.data.cosmos.Database;
@@ -71,8 +70,6 @@ public class PathsHelper {
             return resourceOwnerFullName + "/" + Paths.TRIGGERS_PATH_SEGMENT + "/" + resourceName;
         } else if (resourceType instanceof Conflict) {
             return resourceOwnerFullName + "/" + Paths.CONFLICTS_PATH_SEGMENT + "/" + resourceName;
-        } else if (resourceType instanceof Attachment) {
-            return resourceOwnerFullName + "/" + Paths.ATTACHMENTS_PATH_SEGMENT + "/" + resourceName;
         } else if (resourceType instanceof User) {
             return resourceOwnerFullName + "/" + Paths.USERS_PATH_SEGMENT + "/" + resourceName;
         } else if (resourceType instanceof Permission) {
@@ -859,7 +856,6 @@ public class PathsHelper {
                 resourceType instanceof UserDefinedFunction ||
                 resourceType instanceof Trigger ||
                 resourceType instanceof Conflict ||
-                resourceType instanceof Attachment ||
                 resourceType instanceof User ||
                 resourceType instanceof Permission ||
                 resourceType instanceof Document ||

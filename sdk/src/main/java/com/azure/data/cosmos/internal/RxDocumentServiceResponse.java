@@ -23,7 +23,6 @@
 
 package com.azure.data.cosmos.internal;
 
-import com.azure.data.cosmos.Attachment;
 import com.azure.data.cosmos.BridgeInternal;
 import com.azure.data.cosmos.ClientSideRequestStatistics;
 import com.azure.data.cosmos.Conflict;
@@ -72,9 +71,7 @@ public class RxDocumentServiceResponse {
     }
 
     public static <T extends Resource> String getResourceKey(Class<T> c) {
-        if (c.equals(Attachment.class)) {
-            return InternalConstants.ResourceKeys.ATTACHMENTS;
-        } else if (c.equals(Conflict.class)) {
+        if (c.equals(Conflict.class)) {
             return InternalConstants.ResourceKeys.CONFLICTS;
         } else if (c.equals(Database.class)) {
             return InternalConstants.ResourceKeys.DATABASES;
