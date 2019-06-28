@@ -26,7 +26,6 @@ package com.azure.data.cosmos.internal;
 
 import com.azure.data.cosmos.AccessCondition;
 import com.azure.data.cosmos.AccessConditionType;
-import com.azure.data.cosmos.AsyncDocumentClient;
 import com.azure.data.cosmos.BridgeInternal;
 import com.azure.data.cosmos.ConnectionMode;
 import com.azure.data.cosmos.ConnectionPolicy;

@@ -22,8 +22,7 @@
  */
 package com.azure.data.cosmos.internal;
 
-import com.azure.data.cosmos.AsyncDocumentClient;
-import com.azure.data.cosmos.AsyncDocumentClient.Builder;
+import com.azure.data.cosmos.internal.AsyncDocumentClient.Builder;
 import com.azure.data.cosmos.BridgeInternal;
 import com.azure.data.cosmos.CompositePath;
 import com.azure.data.cosmos.CompositePathSortOrder;

@@ -22,7 +22,7 @@
  */
 package com.azure.data.cosmos.rx.examples;
 
-import com.azure.data.cosmos.AsyncDocumentClient;
+import com.azure.data.cosmos.internal.AsyncDocumentClient;
 import com.azure.data.cosmos.Conflict;
 import com.azure.data.cosmos.ConnectionMode;
 import com.azure.data.cosmos.ConnectionPolicy;

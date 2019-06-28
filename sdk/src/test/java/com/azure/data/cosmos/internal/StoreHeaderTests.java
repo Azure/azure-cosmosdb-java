@@ -22,7 +22,6 @@
  */
 package com.azure.data.cosmos.internal;
 
-import com.azure.data.cosmos.AsyncDocumentClient;
 import com.azure.data.cosmos.Database;
 import com.azure.data.cosmos.Document;
 import com.azure.data.cosmos.DocumentCollection;

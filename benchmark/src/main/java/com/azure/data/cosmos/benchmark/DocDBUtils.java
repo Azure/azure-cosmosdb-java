@@ -23,7 +23,7 @@
 
 package com.azure.data.cosmos.benchmark;
 
-import com.azure.data.cosmos.AsyncDocumentClient;
+import com.azure.data.cosmos.internal.AsyncDocumentClient;
 import com.azure.data.cosmos.Database;
 import com.azure.data.cosmos.DocumentCollection;
 import com.azure.data.cosmos.FeedResponse;

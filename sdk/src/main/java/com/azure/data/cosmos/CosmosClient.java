@@ -22,6 +22,7 @@
  */
 package com.azure.data.cosmos;
 
+import com.azure.data.cosmos.internal.AsyncDocumentClient;
 import com.azure.data.cosmos.internal.Configs;
 import com.azure.data.cosmos.internal.HttpConstants;
 import com.azure.data.cosmos.internal.Permission;

@@ -22,7 +22,7 @@
  */
 package com.azure.data.cosmos.rx;
 
-import com.azure.data.cosmos.AsyncDocumentClient;
+import com.azure.data.cosmos.internal.AsyncDocumentClient;
 import com.azure.data.cosmos.BridgeInternal;
 import com.azure.data.cosmos.ChangeFeedOptions;
 import com.azure.data.cosmos.Database;

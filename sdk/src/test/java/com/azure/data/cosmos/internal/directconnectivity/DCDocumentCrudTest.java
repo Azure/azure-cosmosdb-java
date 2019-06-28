@@ -22,7 +22,7 @@
  */
 package com.azure.data.cosmos.internal.directconnectivity;
 
-import com.azure.data.cosmos.AsyncDocumentClient.Builder;
+import com.azure.data.cosmos.internal.AsyncDocumentClient.Builder;
 import com.azure.data.cosmos.BridgeInternal;
 import com.azure.data.cosmos.ConnectionMode;
 import com.azure.data.cosmos.ConnectionPolicy;
@@ -47,7 +47,6 @@ import com.azure.data.cosmos.internal.DocumentServiceRequestValidator;
 import com.azure.data.cosmos.internal.FeedResponseListValidator;
 import com.azure.data.cosmos.internal.ResourceResponseValidator;
 import com.azure.data.cosmos.internal.TestConfigurations;
-import com.azure.data.cosmos.internal.directconnectivity.Protocol;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;

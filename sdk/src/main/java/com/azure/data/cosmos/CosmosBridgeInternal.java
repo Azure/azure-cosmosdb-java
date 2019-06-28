@@ -1,5 +1,6 @@
 package com.azure.data.cosmos;
 
+import com.azure.data.cosmos.internal.AsyncDocumentClient;
 import reactor.core.publisher.Mono;
 
 /**

@@ -24,7 +24,7 @@
 package com.azure.data.cosmos.rx.examples.multimaster.samples;
 
 
-import com.azure.data.cosmos.AsyncDocumentClient;
+import com.azure.data.cosmos.internal.AsyncDocumentClient;
 import com.azure.data.cosmos.CosmosClientException;
 import com.azure.data.cosmos.Document;
 import com.azure.data.cosmos.FeedOptions;
