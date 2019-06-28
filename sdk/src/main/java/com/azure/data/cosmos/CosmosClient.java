@@ -71,10 +71,6 @@ public class CosmosClient implements AutoCloseable {
         return this.asyncDocumentClient;
     }
 
-    public static AsyncDocumentClient getContextClient(CosmosClient cosmosClient) {
-        return cosmosClient.asyncDocumentClient;
-    }
-
     /**
      * Instantiate the cosmos client builder to build cosmos client
      * @return {@link CosmosClientBuilder}
@@ -87,7 +83,7 @@ public class CosmosClient implements AutoCloseable {
      * Get the service endpoint
      * @return the service endpoint
      */
-    public String getServiceEndpoint() {
+    String getServiceEndpoint() {
         return serviceEndpoint;
     }
 
@@ -103,7 +99,7 @@ public class CosmosClient implements AutoCloseable {
      * Get the connection policy
      * @return {@link ConnectionPolicy}
      */
-    public ConnectionPolicy getConnectionPolicy() {
+    ConnectionPolicy getConnectionPolicy() {
         return connectionPolicy;
     }
 
@@ -111,7 +107,7 @@ public class CosmosClient implements AutoCloseable {
      * Gets the consistency level
      * @return the (@link ConsistencyLevel)
      */
-    public ConsistencyLevel getDesiredConsistencyLevel() {
+    ConsistencyLevel getDesiredConsistencyLevel() {
         return desiredConsistencyLevel;
     }
 
@@ -119,7 +115,7 @@ public class CosmosClient implements AutoCloseable {
      * Gets the permission list
      * @return the permission list
      */
-    public List<Permission> getPermissions() {
+    List<Permission> getPermissions() {
         return permissions;
     }
 
@@ -131,7 +127,7 @@ public class CosmosClient implements AutoCloseable {
      * Gets the configs
      * @return the configs
      */
-    public Configs getConfigs() {
+    Configs getConfigs() {
         return configs;
     }
 
@@ -139,7 +135,7 @@ public class CosmosClient implements AutoCloseable {
      * Gets the token resolver
      * @return the token resolver
      */
-    public TokenResolver getTokenResolver() {
+    TokenResolver getTokenResolver() {
         return tokenResolver;
     }
 
