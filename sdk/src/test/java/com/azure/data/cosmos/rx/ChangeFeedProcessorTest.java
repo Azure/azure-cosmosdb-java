@@ -281,15 +281,13 @@ public class ChangeFeedProcessorTest extends TestSuiteBase {
 
     private CosmosContainer createFeedCollection() {
         CosmosContainerRequestOptions optionsFeedCollection = new CosmosContainerRequestOptions();
-        optionsFeedCollection.offerThroughput(10100);
-        return createCollection(createdDatabase, getCollectionDefinition(), optionsFeedCollection);
+        return createCollection(createdDatabase, getCollectionDefinition(), optionsFeedCollection, 10100);
     }
 
     private CosmosContainer createLeaseCollection() {
         CosmosContainerRequestOptions options = new CosmosContainerRequestOptions();
-        options.offerThroughput(400);
         CosmosContainerProperties collectionDefinition = new CosmosContainerProperties(UUID.randomUUID().toString(), "/id");
-        return createCollection(createdDatabase, collectionDefinition, options);
+        return createCollection(createdDatabase, collectionDefinition, options, 400);
     }
 
     private static synchronized void processItem(CosmosItemProperties item) {

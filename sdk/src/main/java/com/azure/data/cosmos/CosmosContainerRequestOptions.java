@@ -38,7 +38,7 @@ public class CosmosContainerRequestOptions extends CosmosRequestOptions {
      *
      * @return the throughput value.
      */
-    public Integer offerThroughput() {
+    Integer offerThroughput() {
         return offerThroughput;
     }
 
@@ -48,7 +48,7 @@ public class CosmosContainerRequestOptions extends CosmosRequestOptions {
      * @param offerThroughput the throughput value.
      * @return the current request options
      */
-    public CosmosContainerRequestOptions offerThroughput(Integer offerThroughput) {
+    CosmosContainerRequestOptions offerThroughput(Integer offerThroughput) {
         this.offerThroughput = offerThroughput;
         return this;
     }
@@ -117,13 +117,12 @@ public class CosmosContainerRequestOptions extends CosmosRequestOptions {
         return this;
     }
 
-    @Override
-    protected RequestOptions toRequestOptions() {
-        super.toRequestOptions();
-        requestOptions.setOfferThroughput(offerThroughput);
-        requestOptions.setPopulateQuotaInfo(populateQuotaInfo);
-        requestOptions.setSessionToken(sessionToken);
-        requestOptions.setConsistencyLevel(consistencyLevel);
+    RequestOptions toRequestOptions() {
+        RequestOptions options = super.toRequestOptions();
+        options.setOfferThroughput(offerThroughput);
+        options.setPopulateQuotaInfo(populateQuotaInfo);
+        options.setSessionToken(sessionToken);
+        options.setConsistencyLevel(consistencyLevel);
         return requestOptions;
     }
 }

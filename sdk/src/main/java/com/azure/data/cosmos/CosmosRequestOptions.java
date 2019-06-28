@@ -51,7 +51,7 @@ public  class CosmosRequestOptions {
         return this;
     }
 
-    protected RequestOptions toRequestOptions(){
+    RequestOptions toRequestOptions(){
         requestOptions.setAccessCondition(accessCondition);
         return requestOptions;
     }

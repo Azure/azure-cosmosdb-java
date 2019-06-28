@@ -201,11 +201,9 @@ public class TestSuiteBase extends CosmosClientTest {
             CosmosDatabaseForTest dbForTest = CosmosDatabaseForTest.create(DatabaseManagerImpl.getInstance(houseKeepingClient));
             SHARED_DATABASE = dbForTest.createdDatabase;
             CosmosContainerRequestOptions options = new CosmosContainerRequestOptions();
-            options.offerThroughput(10100);
-            SHARED_MULTI_PARTITION_COLLECTION = createCollection(SHARED_DATABASE, getCollectionDefinitionWithRangeRangeIndex(), options);
+            SHARED_MULTI_PARTITION_COLLECTION = createCollection(SHARED_DATABASE, getCollectionDefinitionWithRangeRangeIndex(), options, 10100);
             SHARED_MULTI_PARTITION_COLLECTION_WITH_COMPOSITE_AND_SPATIAL_INDEXES = createCollection(SHARED_DATABASE, getCollectionDefinitionMultiPartitionWithCompositeAndSpatialIndexes(), options);
-            options.offerThroughput(6000);
-            SHARED_SINGLE_PARTITION_COLLECTION = createCollection(SHARED_DATABASE, getCollectionDefinitionWithRangeRangeIndex(), options);
+            SHARED_SINGLE_PARTITION_COLLECTION = createCollection(SHARED_DATABASE, getCollectionDefinitionWithRangeRangeIndex(), options, 6000);
         }
     }
 
@@ -317,6 +315,11 @@ public class TestSuiteBase extends CosmosClientTest {
             default:
                 break;
         }
+    }
+
+    public static CosmosContainer createCollection(CosmosDatabase database, CosmosContainerProperties cosmosContainerProperties,
+                                                   CosmosContainerRequestOptions options, int throughput) {
+        return database.createContainer(cosmosContainerProperties, throughput, options).block().container();
     }
 
     public static CosmosContainer createCollection(CosmosDatabase database, CosmosContainerProperties cosmosContainerProperties,

@@ -165,11 +165,10 @@ public class BackPressureTest extends TestSuiteBase {
     public void beforeClass() throws Exception {
 
         CosmosContainerRequestOptions options = new CosmosContainerRequestOptions();
-        options.offerThroughput(1000);
         client = new ClientUnderTestBuilder(clientBuilder()).build();
         createdDatabase = getSharedCosmosDatabase(client);
 
-        createdCollection = createCollection(createdDatabase, getSinglePartitionCollectionDefinition(), options);
+        createdCollection = createCollection(createdDatabase, getSinglePartitionCollectionDefinition(), options, 1000);
 
         RxDocumentClientUnderTest rxClient = (RxDocumentClientUnderTest)CosmosBridgeInternal.getAsyncDocumentClient(client);
 
