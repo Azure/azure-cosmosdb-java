@@ -150,7 +150,7 @@ public class UserDefinedFunctionQueryTest extends TestSuiteBase {
 
     public CosmosUserDefinedFunctionProperties createUserDefinedFunction(CosmosContainer cosmosContainer) {
         CosmosUserDefinedFunctionProperties storedProcedure = getUserDefinedFunctionDef();
-        return cosmosContainer.getScripts().createUserDefinedFunction(storedProcedure).block().settings();
+        return cosmosContainer.getScripts().createUserDefinedFunction(storedProcedure).block().properties();
     }
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)

@@ -43,7 +43,7 @@ public class CosmosUserDefinedFunctionResponse extends CosmosResponse<CosmosUser
      * Gets the cosmos user defined function settings
      * @return the cosmos user defined function settings
      */
-    public CosmosUserDefinedFunctionProperties settings() {
+    public CosmosUserDefinedFunctionProperties properties() {
         return cosmosUserDefinedFunctionProperties;
     }
 

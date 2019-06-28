@@ -57,7 +57,7 @@ public class UserDefinedFunctionUpsertReplaceTest extends TestSuiteBase {
 
         CosmosUserDefinedFunctionProperties readBackUdf = null;
 
-            readBackUdf = createdCollection.getScripts().createUserDefinedFunction(udf).block().settings();
+            readBackUdf = createdCollection.getScripts().createUserDefinedFunction(udf).block().properties();
 
         // read udf to validate creation
         waitIfNeededForReplicasToCatchUp(clientBuilder());

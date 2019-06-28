@@ -101,7 +101,7 @@ public class ReadFeedUdfsTest extends TestSuiteBase {
         udf.id(UUID.randomUUID().toString());
         udf.body("function() {var x = 10;}");
         return cosmosContainer.getScripts().createUserDefinedFunction(udf).block()
-                .settings();
+                .properties();
     }
 
     private String getCollectionLink() {
