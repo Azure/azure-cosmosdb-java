@@ -112,7 +112,7 @@ public class CosmosStoredProcedureRequestOptions {
         return this;
     }
 
-    protected RequestOptions toRequestOptions() {
+    RequestOptions toRequestOptions() {
         RequestOptions requestOptions = new RequestOptions();
         requestOptions.setAccessCondition(accessCondition);
         requestOptions.setConsistencyLevel(consistencyLevel());
