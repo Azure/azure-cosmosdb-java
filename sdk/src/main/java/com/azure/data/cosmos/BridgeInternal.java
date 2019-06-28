@@ -376,4 +376,8 @@ public class BridgeInternal {
     public static CosmosClientBuilder injectConfigs(CosmosClientBuilder cosmosClientBuilder, Configs configs) {
         return cosmosClientBuilder.configs(configs);
     }
+
+    public static String extractContainerSelfLink(CosmosContainer container) {
+        return container.getLink();
+    }
 }
