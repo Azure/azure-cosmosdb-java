@@ -52,7 +52,7 @@ public class CosmosContainerResponse extends CosmosResponse<CosmosContainerPrope
      *
      * @return the progress of lazy indexing.
      */
-    public long lazyIndexingProgress() {
+    long lazyIndexingProgress() {
         return resourceResponseWrapper.getLazyIndexingProgress();
     }
 
