@@ -60,7 +60,7 @@ public class CosmosContainerProperties extends Resource {
     /**
      * Constructor
      * @param id id of the container
-     * @param partitionKeyDefinition the (@link PartitionKeyDefinition)
+     * @param partitionKeyDefinition the {@link PartitionKeyDefinition}
      */
     public CosmosContainerProperties(String id, PartitionKeyDefinition partitionKeyDefinition) {
         super.id(id);
