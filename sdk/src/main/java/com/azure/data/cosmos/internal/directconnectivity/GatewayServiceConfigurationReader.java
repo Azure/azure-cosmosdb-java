@@ -161,7 +161,7 @@ public class GatewayServiceConfigurationReader {
                         userReplicationPolicy = BridgeInternal.getReplicationPolicy(databaseAccount);
                         systemReplicationPolicy = BridgeInternal.getSystemReplicationPolicy(databaseAccount);
                         queryEngineConfiguration = BridgeInternal.getQueryEngineConfiuration(databaseAccount);
-                        consistencyLevel = BridgeInternal.getConsistencyPolicy(databaseAccount).getDefaultConsistencyLevel();
+                        consistencyLevel = BridgeInternal.getConsistencyPolicy(databaseAccount).defaultConsistencyLevel();
                         initialized = true;
                     });
         } catch (MalformedURLException e) {

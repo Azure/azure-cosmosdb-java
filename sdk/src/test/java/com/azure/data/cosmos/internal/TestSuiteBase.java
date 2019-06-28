@@ -457,7 +457,7 @@ public class TestSuiteBase extends DocumentClientTest {
     }
 
     public static ConsistencyLevel getAccountDefaultConsistencyLevel(AsyncDocumentClient client) {
-        return client.getDatabaseAccount().single().block().getConsistencyPolicy().getDefaultConsistencyLevel();
+        return client.getDatabaseAccount().single().block().getConsistencyPolicy().defaultConsistencyLevel();
     }
 
     public static User createUser(AsyncDocumentClient client, String databaseId, User user) {

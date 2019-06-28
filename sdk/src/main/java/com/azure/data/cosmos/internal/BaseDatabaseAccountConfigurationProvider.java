@@ -39,7 +39,7 @@ public class BaseDatabaseAccountConfigurationProvider implements DatabaseAccount
     }
 
     public ConsistencyLevel getStoreConsistencyPolicy() {
-        ConsistencyLevel databaseAccountConsistency = this.databaseAccount.getConsistencyPolicy().getDefaultConsistencyLevel();
+        ConsistencyLevel databaseAccountConsistency = this.databaseAccount.getConsistencyPolicy().defaultConsistencyLevel();
         if (this.desiredConsistencyLevel == null) {
             return databaseAccountConsistency;
         } else if (!Utils.isValidConsistency(databaseAccountConsistency, this.desiredConsistencyLevel)) {

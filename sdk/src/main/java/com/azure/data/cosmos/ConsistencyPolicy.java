@@ -49,7 +49,7 @@ public final class ConsistencyPolicy extends JsonSerializable {
      *
      * @param jsonString the json string that represents the consistency policy.
      */
-    public ConsistencyPolicy(String jsonString) {
+    ConsistencyPolicy(String jsonString) {
         super(jsonString);
     }
 
@@ -58,7 +58,7 @@ public final class ConsistencyPolicy extends JsonSerializable {
      *
      * @return the default consistency level.
      */
-    public ConsistencyLevel getDefaultConsistencyLevel() {
+    public ConsistencyLevel defaultConsistencyLevel() {
 
         ConsistencyLevel result = ConsistencyPolicy.DEFAULT_DEFAULT_CONSISTENCY_LEVEL;
         try {
