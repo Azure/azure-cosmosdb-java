@@ -30,7 +30,6 @@ import com.azure.data.cosmos.CosmosResponseValidator;
 import com.azure.data.cosmos.CosmosTrigger;
 import com.azure.data.cosmos.CosmosTriggerProperties;
 import com.azure.data.cosmos.CosmosTriggerResponse;
-import com.azure.data.cosmos.internal.RequestOptions;
 import com.azure.data.cosmos.TriggerOperation;
 import com.azure.data.cosmos.TriggerType;
 import org.testng.annotations.AfterClass;
@@ -85,7 +84,7 @@ public class TriggerCrudTest extends TestSuiteBase {
 
         // read trigger
         waitIfNeededForReplicasToCatchUp(clientBuilder());
-        Mono<CosmosTriggerResponse> readObservable = readBackTrigger.read(new RequestOptions());
+        Mono<CosmosTriggerResponse> readObservable = readBackTrigger.read();
 
         // validate read trigger
         CosmosResponseValidator<CosmosTriggerResponse> validator = new CosmosResponseValidator.Builder<CosmosTriggerResponse>()
