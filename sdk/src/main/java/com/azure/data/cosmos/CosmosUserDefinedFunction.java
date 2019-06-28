@@ -77,7 +77,7 @@ public class CosmosUserDefinedFunction {
      * defined function.
      * In case of failure the {@link Mono} will error.
      *
-     * @param udfSettings the cosmos user defined function settings.
+     * @param udfSettings the cosmos user defined function properties.
      * @return an {@link Mono} containing the single resource response with the replaced cosmos user defined function
      * or an error.
      */

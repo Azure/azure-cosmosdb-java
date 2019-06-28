@@ -131,7 +131,7 @@ public class CosmosDatabase {
      * successful completion will contain a cosmos container response with the
      * created collection. In case of failure the {@link Mono} will error.
      *
-     * @param containerSettings the container settings.
+     * @param containerSettings the container properties.
      * @return an {@link Flux} containing the single cosmos container response with
      *         the created container or an error.
      */
@@ -146,7 +146,7 @@ public class CosmosDatabase {
      * successful completion will contain a cosmos container response with the
      * created collection. In case of failure the {@link Mono} will error.
      *
-     * @param containerSettings the container settings.
+     * @param containerSettings the container properties.
      * @param throughput the throughput for the container
      * @return an {@link Flux} containing the single cosmos container response with
      *         the created container or an error.
@@ -241,7 +241,7 @@ public class CosmosDatabase {
      * created or existing collection. In case of failure the {@link Mono} will
      * error.
      *
-     * @param containerSettings the container settings
+     * @param containerSettings the container properties
      * @return a {@link Mono} containing the cosmos container response with the
      *         created or existing container or an error.
      */
@@ -258,7 +258,7 @@ public class CosmosDatabase {
      * created or existing collection. In case of failure the {@link Mono} will
      * error.
      *
-     * @param containerSettings the container settings
+     * @param containerSettings the container properties
      * @param throughput the throughput for the container
      * @return a {@link Mono} containing the cosmos container response with the
      *         created or existing container or an error.
@@ -433,7 +433,7 @@ public class CosmosDatabase {
      * response with the created user. In case of failure the {@link Mono} will
      * error.
      *
-     * @param settings the cosmos user settings
+     * @param settings the cosmos user properties
      * @return an {@link Mono} containing the single resource response with the
      *         created cosmos user or an error.
      */
@@ -450,7 +450,7 @@ public class CosmosDatabase {
      * resource response with the created user. In case of failure the {@link Mono}
      * will error.
      *
-     * @param settings the cosmos user settings
+     * @param settings the cosmos user properties
      * @return an {@link Mono} containing the single resource response with the
      *         upserted user or an error.
      */

@@ -138,7 +138,7 @@ public class UserCrudTest extends TestSuiteBase {
         CosmosUserProperties user = new CosmosUserProperties();
         user.id(UUID.randomUUID().toString());
         
-        CosmosUserProperties readBackUser = createdDatabase.createUser(user).block().settings();
+        CosmosUserProperties readBackUser = createdDatabase.createUser(user).block().properties();
         
         // read user to validate creation
         Mono<CosmosUserResponse> readObservable = createdDatabase.getUser(user.id()).read();

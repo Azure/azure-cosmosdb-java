@@ -150,7 +150,7 @@ public class CosmosStoredProcedure {
      * The {@link Mono} upon successful completion will contain a single resource response with the replaced stored procedure.
      * In case of failure the {@link Mono} will error.
      *
-     * @param storedProcedureSettings the stored procedure settings
+     * @param storedProcedureSettings the stored procedure properties
      * @return an {@link Mono} containing the single resource response with the replaced stored procedure or an error.
      */
     public Mono<CosmosStoredProcedureResponse> replace(CosmosStoredProcedureProperties storedProcedureSettings) {
@@ -164,7 +164,7 @@ public class CosmosStoredProcedure {
      * The {@link Mono} upon successful completion will contain a single resource response with the replaced stored procedure.
      * In case of failure the {@link Mono} will error.
      *
-     * @param storedProcedureSettings the stored procedure settings.
+     * @param storedProcedureSettings the stored procedure properties.
      * @param options                 the request options.
      * @return an {@link Mono} containing the single resource response with the replaced stored procedure or an error.
      */

@@ -45,7 +45,7 @@ public class CosmosUser {
     /**
      * REPLACE a cosmos user
      *
-     * @param userSettings the user settings to use
+     * @param userSettings the user properties to use
      * @return a {@link Mono} containing the single resource response with the replaced user or an error.
      */
     public Mono<CosmosUserResponse> replace(CosmosUserProperties userSettings) {
@@ -72,7 +72,7 @@ public class CosmosUser {
      * The {@link Mono} upon successful completion will contain a single resource response with the created permission.
      * In case of failure the {@link Mono} will error.
      *
-     * @param permissionSettings the permission settings to create.
+     * @param permissionSettings the permission properties to create.
      * @param options    the request options.
      * @return an {@link Mono} containing the single resource response with the created permission or an error.
      */
@@ -94,7 +94,7 @@ public class CosmosUser {
      * The {@link Mono} upon successful completion will contain a single resource response with the upserted permission.
      * In case of failure the {@link Mono} will error.
      *
-     * @param permissionSettings the permission settings to upsert.
+     * @param permissionSettings the permission properties to upsert.
      * @param options    the request options.
      * @return an {@link Mono} containing the single resource response with the upserted permission or an error.
      */

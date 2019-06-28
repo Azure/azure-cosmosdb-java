@@ -96,6 +96,6 @@ public class ReadFeedUsersTest extends TestSuiteBase {
     public CosmosUserProperties createUsers(CosmosDatabase cosmosDatabase) {
         CosmosUserProperties user = new CosmosUserProperties();
         user.id(UUID.randomUUID().toString());
-        return cosmosDatabase.createUser(user).block().settings();
+        return cosmosDatabase.createUser(user).block().properties();
     }
 }

@@ -80,7 +80,7 @@ public class CosmosPermission {
      * The {@link Mono} upon successful completion will contain a single resource response with the replaced permission.
      * In case of failure the {@link Mono} will error.
      *
-     * @param permissionSettings the permission settings to use.
+     * @param permissionSettings the permission properties to use.
      * @param options    the request options.
      * @return an {@link Mono} containing the single resource response with the replaced permission or an error.
      */

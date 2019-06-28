@@ -193,7 +193,7 @@ public class CosmosClientBuilder {
     }
 
     /**
-     * Builds a cosmos configuration object with the provided settings
+     * Builds a cosmos configuration object with the provided properties
      * @return CosmosClient
      */
     public CosmosClient build() {

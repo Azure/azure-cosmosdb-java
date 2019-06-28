@@ -140,7 +140,7 @@ public class CosmosContainer {
      * the replaced document container. In case of failure the {@link Mono} will
      * error.
      *
-     * @param containerSettings the item container settings
+     * @param containerSettings the item container properties
      * @return an {@link Mono} containing the single cosmos container response with
      *         the replaced document container or an error.
      */
@@ -156,7 +156,7 @@ public class CosmosContainer {
      * the replaced document container. In case of failure the {@link Mono} will
      * error.
      *
-     * @param containerSettings the item container settings
+     * @param containerSettings the item container properties
      * @param options           the cosmos container request options.
      * @return an {@link Mono} containing the single cosmos container response with
      *         the replaced document container or an error.

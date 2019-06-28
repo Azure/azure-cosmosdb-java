@@ -146,7 +146,7 @@ public class DatabaseAccount extends Resource {
     }
 
     /**
-     * Gets the ConsistencyPolicy settings.
+     * Gets the ConsistencyPolicy properties.
      *
      * @return the consistency policy.
      */
@@ -163,7 +163,7 @@ public class DatabaseAccount extends Resource {
     }
 
     /**
-     * Gets the ReplicationPolicy settings.
+     * Gets the ReplicationPolicy properties.
      *
      * @return the replication policy.
      */
@@ -181,7 +181,7 @@ public class DatabaseAccount extends Resource {
     }
 
     /**
-     * Gets the SystemReplicationPolicy settings.
+     * Gets the SystemReplicationPolicy properties.
      *
      * @return the system replication policy.
      */
@@ -199,7 +199,7 @@ public class DatabaseAccount extends Resource {
     }
 
     /**
-     * Gets the QueryEngineConfiuration settings.
+     * Gets the QueryEngineConfiuration properties.
      *
      * @return the query engine configuration.
      */

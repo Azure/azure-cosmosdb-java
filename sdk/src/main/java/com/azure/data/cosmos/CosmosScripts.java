@@ -83,12 +83,12 @@ public class CosmosScripts {
      * Reads all cosmos stored procedures in a container.
      *
      * After subscription the operation will be performed.
-     * The {@link Flux} will contain one or several feed response pages of the read cosmos stored procedure settings.
+     * The {@link Flux} will contain one or several feed response pages of the read cosmos stored procedure properties.
      * In case of failure the {@link Flux} will error.
      *
      * @param options        the feed options.
      * @return an {@link Flux} containing one or several feed response pages of the read cosmos stored procedures
-     * settings or an error.
+     * properties or an error.
      */
     public Flux<FeedResponse<CosmosStoredProcedureProperties>> listStoredProcedures(FeedOptions options){
         return database.getDocClientWrapper()
@@ -251,11 +251,11 @@ public class CosmosScripts {
      * Reads all triggers in a container
      *
      * After subscription the operation will be performed.
-     * The {@link Flux} will contain one or several feed response pages of the read cosmos trigger settings.
+     * The {@link Flux} will contain one or several feed response pages of the read cosmos trigger properties.
      * In case of failure the {@link Flux} will error.
      *
      * @param options        the feed options.
-     * @return an {@link Flux} containing one or several feed response pages of the read cosmos rigger settings or an error.
+     * @return an {@link Flux} containing one or several feed response pages of the read cosmos rigger properties or an error.
      */
     public Flux<FeedResponse<CosmosTriggerProperties>> listTriggers(FeedOptions options){
         return database.getDocClientWrapper()

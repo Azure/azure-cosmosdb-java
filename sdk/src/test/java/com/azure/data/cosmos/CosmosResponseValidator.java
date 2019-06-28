@@ -75,7 +75,7 @@ public interface CosmosResponseValidator<T extends CosmosResponse> {
             } else if (resourceResponse instanceof CosmosUserDefinedFunctionResponse) {
                 return ((CosmosUserDefinedFunctionResponse)resourceResponse).properties();
             } else if (resourceResponse instanceof CosmosUserResponse) {
-                return ((CosmosUserResponse)resourceResponse).settings();
+                return ((CosmosUserResponse)resourceResponse).properties();
             } else if (resourceResponse instanceof CosmosPermissionResponse) {
                 return ((CosmosPermissionResponse) resourceResponse).properties();
             }
