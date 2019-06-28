@@ -23,7 +23,6 @@
 package com.azure.data.cosmos.internal;
 
 import com.azure.data.cosmos.ChangeFeedOptions;
-import com.azure.data.cosmos.Conflict;
 import com.azure.data.cosmos.ConnectionPolicy;
 import com.azure.data.cosmos.ConsistencyLevel;
 import com.azure.data.cosmos.Database;

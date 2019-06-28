@@ -27,7 +27,7 @@ import com.azure.data.cosmos.AccessCondition;
 import com.azure.data.cosmos.AccessConditionType;
 import com.azure.data.cosmos.internal.AsyncDocumentClient;
 import com.azure.data.cosmos.BridgeInternal;
-import com.azure.data.cosmos.Conflict;
+import com.azure.data.cosmos.internal.Conflict;
 import com.azure.data.cosmos.ConflictResolutionPolicy;
 import com.azure.data.cosmos.CosmosClientException;
 import com.azure.data.cosmos.Document;

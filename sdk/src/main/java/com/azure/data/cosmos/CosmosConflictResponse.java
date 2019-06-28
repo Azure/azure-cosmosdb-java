@@ -22,6 +22,7 @@
  */
 package com.azure.data.cosmos;
 
+import com.azure.data.cosmos.internal.Conflict;
 import com.azure.data.cosmos.internal.ResourceResponse;
 
 public class CosmosConflictResponse extends CosmosResponse<CosmosConflictProperties> {

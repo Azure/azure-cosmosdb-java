@@ -23,6 +23,7 @@
 
 package com.azure.data.cosmos;
 
+import com.azure.data.cosmos.internal.Conflict;
 import org.apache.commons.io.IOUtils;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;

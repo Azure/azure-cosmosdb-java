@@ -25,7 +25,6 @@ package com.azure.data.cosmos.internal;
 import com.azure.data.cosmos.AccessConditionType;
 import com.azure.data.cosmos.BridgeInternal;
 import com.azure.data.cosmos.ChangeFeedOptions;
-import com.azure.data.cosmos.Conflict;
 import com.azure.data.cosmos.ConnectionMode;
 import com.azure.data.cosmos.ConnectionPolicy;
 import com.azure.data.cosmos.ConsistencyLevel;
