@@ -2,7 +2,6 @@ package com.azure.data.cosmos;
 
 import com.azure.data.cosmos.internal.Paths;
 import com.azure.data.cosmos.internal.Permission;
-import com.azure.data.cosmos.internal.RequestOptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -35,20 +34,11 @@ public class CosmosUser {
 
     /**
      * Reads a cosmos user
-     * @return an {@link Mono} containing the single cosmos user response with the read user or an error.
-     */
-    public Mono<CosmosUserResponse> read() {
-        return this.read(null);
-    }
-
-    /**
-     * Reads a cosmos user
-     * @param options the request options
      * @return a {@link Mono} containing the single resource response with the read user or an error.
      */
-    public Mono<CosmosUserResponse> read(RequestOptions options) {
+    public Mono<CosmosUserResponse> read() {
         return this.database.getDocClientWrapper()
-                .readUser(getLink(), options)
+                .readUser(getLink(), null)
                 .map(response -> new CosmosUserResponse(response, database)).single();
     }
 
@@ -56,24 +46,22 @@ public class CosmosUser {
      * REPLACE a cosmos user
      *
      * @param userSettings the user settings to use
-     * @param options      the request options
      * @return a {@link Mono} containing the single resource response with the replaced user or an error.
      */
-    public Mono<CosmosUserResponse> replace(CosmosUserProperties userSettings, RequestOptions options) {
+    public Mono<CosmosUserResponse> replace(CosmosUserProperties userSettings) {
         return this.database.getDocClientWrapper()
-                .replaceUser(userSettings.getV2User(), options)
+                .replaceUser(userSettings.getV2User(), null)
                 .map(response -> new CosmosUserResponse(response, database)).single();
     }
 
     /**
-     * DELETE a cosmos user
+     * Delete a cosmos user
      *
-     * @param options the request options
      * @return a {@link Mono} containing the single resource response with the deleted user or an error.
      */
-    public Mono<CosmosUserResponse> delete(RequestOptions options) {
+    public Mono<CosmosUserResponse> delete() {
         return this.database.getDocClientWrapper()
-                .deleteUser(getLink(), options)
+                .deleteUser(getLink(), null)
                 .map(response -> new CosmosUserResponse(response, database)).single();
     }
 
@@ -137,6 +125,20 @@ public class CosmosUser {
                         .readPermissions(getLink(), options)
                         .map(response-> BridgeInternal.createFeedResponse(CosmosPermissionProperties.getFromV2Results(response.results()),
                                 response.responseHeaders()));
+    }
+
+    /**
+     * Query for permissions.
+     * <p>
+     * After subscription the operation will be performed.
+     * The {@link Flux} will contain one or several feed response pages of the obtained permissions.
+     * In case of failure the {@link Flux} will error.
+     *
+     * @param query          the query.
+     * @return an {@link Flux} containing one or several feed response pages of the obtained permissions or an error.
+     */
+    public Flux<FeedResponse<CosmosPermissionProperties>> queryPermissions(String query) {
+        return queryPermissions(query);
     }
 
     /**

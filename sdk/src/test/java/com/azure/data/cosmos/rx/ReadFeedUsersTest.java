@@ -31,7 +31,6 @@ import com.azure.data.cosmos.FeedOptions;
 import com.azure.data.cosmos.FeedResponse;
 import com.azure.data.cosmos.internal.FeedResponseListValidator;
 import com.azure.data.cosmos.internal.FeedResponseValidator;
-import com.azure.data.cosmos.internal.RequestOptions;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
@@ -97,6 +96,6 @@ public class ReadFeedUsersTest extends TestSuiteBase {
     public CosmosUserProperties createUsers(CosmosDatabase cosmosDatabase) {
         CosmosUserProperties user = new CosmosUserProperties();
         user.id(UUID.randomUUID().toString());
-        return cosmosDatabase.createUser(user, new RequestOptions()).block().settings();
+        return cosmosDatabase.createUser(user).block().settings();
     }
 }

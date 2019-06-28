@@ -26,7 +26,6 @@ import com.azure.data.cosmos.internal.AsyncDocumentClient;
 import com.azure.data.cosmos.internal.HttpConstants;
 import com.azure.data.cosmos.internal.Offer;
 import com.azure.data.cosmos.internal.Paths;
-import com.azure.data.cosmos.internal.RequestOptions;
 import org.apache.commons.lang3.StringUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -429,33 +428,20 @@ public class CosmosDatabase {
     /** User operations **/
 
     /**
-     * Creates a user
-     * After subscription the operation will be performed.
-     * The {@link Mono} upon successful completion will contain a single resource response with the created user.
-     * In case of failure the {@link Mono} will error.
-     *
-     * @param settings the cosmos user settings
-     * @return an {@link Mono} containing the single resource response with the created cosmos user or an error.
-     */
-    public Mono<CosmosUserResponse> createUser(CosmosUserProperties settings) {
-        return this.createUser(settings, null);
-    }
-
-    /**
      * Creates a user After subscription the operation will be performed. The
      * {@link Mono} upon successful completion will contain a single resource
      * response with the created user. In case of failure the {@link Mono} will
      * error.
      *
      * @param settings the cosmos user settings
-     * @param options  the request options
      * @return an {@link Mono} containing the single resource response with the
      *         created cosmos user or an error.
      */
-    public Mono<CosmosUserResponse> createUser(CosmosUserProperties settings, RequestOptions options) {
-        return getDocClientWrapper().createUser(this.getLink(), settings.getV2User(), options)
+    public Mono<CosmosUserResponse> createUser(CosmosUserProperties settings) {
+        return getDocClientWrapper().createUser(this.getLink(), settings.getV2User(), null)
                 .map(response -> new CosmosUserResponse(response, this)).single();
     }
+
 
     /**
      * Upsert a user. Upsert will create a new user if it doesn't exist, or replace
@@ -469,23 +455,7 @@ public class CosmosDatabase {
      *         upserted user or an error.
      */
     public Mono<CosmosUserResponse> upsertUser(CosmosUserProperties settings) {
-        return this.upsertUser(settings, null);
-    }
-
-    /**
-     * Upsert a user. Upsert will create a new user if it doesn't exist, or replace
-     * the existing one if it does. After subscription the operation will be
-     * performed. The {@link Mono} upon successful completion will contain a single
-     * resource response with the created user. In case of failure the {@link Mono}
-     * will error.
-     *
-     * @param settings the cosmos user settings
-     * @param options  the request options
-     * @return an {@link Mono} containing the single resource response with the
-     *         upserted user or an error.
-     */
-    public Mono<CosmosUserResponse> upsertUser(CosmosUserProperties settings, RequestOptions options) {
-        return getDocClientWrapper().upsertUser(this.getLink(), settings.getV2User(), options)
+        return getDocClientWrapper().upsertUser(this.getLink(), settings.getV2User(), null)
                 .map(response -> new CosmosUserResponse(response, this)).single();
     }
 

@@ -59,8 +59,13 @@ import com.azure.data.cosmos.PartitionKeyDefinition;
 import com.azure.data.cosmos.Resource;
 import com.azure.data.cosmos.RetryOptions;
 import com.azure.data.cosmos.SqlQuerySpec;
+import com.azure.data.cosmos.internal.Configs;
+import com.azure.data.cosmos.internal.FailureValidator;
+import com.azure.data.cosmos.internal.FeedResponseListValidator;
+import com.azure.data.cosmos.internal.PathParser;
+import com.azure.data.cosmos.internal.TestConfigurations;
+import com.azure.data.cosmos.internal.Utils;
 import com.azure.data.cosmos.internal.directconnectivity.Protocol;
-import com.azure.data.cosmos.internal.*;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -591,7 +596,7 @@ public class TestSuiteBase extends CosmosClientTest {
     }
 
     public static void deleteUser(CosmosDatabase database, String userId) {
-        database.getUser(userId).read().block().user().delete(null).block();
+        database.getUser(userId).read().block().user().delete().block();
     }
 
     static private CosmosDatabase safeCreateDatabase(CosmosClient client, CosmosDatabaseProperties databaseSettings) {
