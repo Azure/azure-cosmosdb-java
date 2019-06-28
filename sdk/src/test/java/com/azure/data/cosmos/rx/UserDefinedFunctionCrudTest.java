@@ -76,7 +76,7 @@ public class UserDefinedFunctionCrudTest extends TestSuiteBase {
 
         // read udf
         waitIfNeededForReplicasToCatchUp(clientBuilder());
-        Mono<CosmosUserDefinedFunctionResponse> readObservable = readBackUdf.read(null);
+        Mono<CosmosUserDefinedFunctionResponse> readObservable = readBackUdf.read();
 
         //validate udf read
         CosmosResponseValidator<CosmosUserDefinedFunctionResponse> validator = new CosmosResponseValidator.Builder<CosmosUserDefinedFunctionResponse>()
