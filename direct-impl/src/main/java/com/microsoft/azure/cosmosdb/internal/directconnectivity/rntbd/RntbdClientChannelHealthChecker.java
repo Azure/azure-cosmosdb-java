@@ -31,9 +31,12 @@ import io.netty.util.concurrent.Promise;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.atomic.AtomicLongFieldUpdater;
+
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdReporter.reportIssueUnless;
+import static java.util.concurrent.atomic.AtomicLongFieldUpdater.newUpdater;
 
 final class RntbdClientChannelHealthChecker implements ChannelHealthChecker {
 
@@ -149,6 +152,10 @@ final class RntbdClientChannelHealthChecker implements ChannelHealthChecker {
 
     static final class Timestamps {
 
+        private static final AtomicLongFieldUpdater<Timestamps> lastReadUpdater = newUpdater(Timestamps.class, "lastRead");
+        private static final AtomicLongFieldUpdater<Timestamps> lastWriteUpdater = newUpdater(Timestamps.class, "lastWrite");
+        private static final AtomicLongFieldUpdater<Timestamps> lastWriteAttemptUpdater = newUpdater(Timestamps.class, "lastWriteAttempt");
+
         private volatile long lastRead;
         private volatile long lastWrite;
         private volatile long lastWriteAttempt;
@@ -156,34 +163,35 @@ final class RntbdClientChannelHealthChecker implements ChannelHealthChecker {
         public Timestamps() {
         }
 
+        @SuppressWarnings("CopyConstructorMissesField")
         public Timestamps(Timestamps other) {
-            this.lastRead = other.lastRead;
-            this.lastWrite = other.lastWrite;
-            this.lastWriteAttempt = other.lastWriteAttempt;
+            lastReadUpdater.set(this, lastReadUpdater.get(other));
+            lastWriteUpdater.set(this, lastWriteUpdater.get(other));
+            lastWriteAttemptUpdater.set(this, lastWriteAttemptUpdater.get(other));
         }
 
         public void channelReadCompleted() {
-            this.lastRead = System.nanoTime();
+            lastReadUpdater.set(this, System.nanoTime());
         }
 
         public void channelWriteAttempted() {
-            this.lastWriteAttempt = System.nanoTime();
+            lastWriteUpdater.set(this, System.nanoTime());
         }
 
         public void channelWriteCompleted() {
-            this.lastWrite = System.nanoTime();
+            lastWriteAttemptUpdater.set(this, System.nanoTime());
         }
 
         public long lastChannelRead() {
-            return this.lastRead;
+            return lastReadUpdater.get(this);
         }
 
         public long lastChannelWrite() {
-            return this.lastWrite;
+            return lastWriteUpdater.get(this);
         }
 
         public long lastChannelWriteAttempt() {
-            return this.lastWriteAttempt;
+            return lastWriteAttemptUpdater.get(this);
         }
     }
 
