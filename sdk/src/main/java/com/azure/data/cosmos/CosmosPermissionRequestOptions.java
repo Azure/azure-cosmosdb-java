@@ -27,12 +27,12 @@ import com.azure.data.cosmos.internal.RequestOptions;
 /**
  * Contains the request options of CosmosPermission
  */
-public class CosmosPermissionsRequestOptions extends CosmosRequestOptions {
+public class CosmosPermissionRequestOptions extends CosmosRequestOptions {
     //TODO: Need to add respective options
     
 
     @Override
-    protected RequestOptions toRequestOptions() {
+    RequestOptions toRequestOptions() {
         //TODO: Should we set any default values instead of nulls?
         super.toRequestOptions();
         return requestOptions;

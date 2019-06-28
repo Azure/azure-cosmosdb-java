@@ -88,9 +88,9 @@ public class CosmosUser {
      * @param options    the request options.
      * @return an {@link Mono} containing the single resource response with the created permission or an error.
      */
-    public Mono<CosmosPermissionResponse> createPermission(CosmosPermissionProperties permissionSettings, CosmosPermissionsRequestOptions options) {
+    public Mono<CosmosPermissionResponse> createPermission(CosmosPermissionProperties permissionSettings, CosmosPermissionRequestOptions options) {
         if(options == null){
-            options = new CosmosPermissionsRequestOptions();
+            options = new CosmosPermissionRequestOptions();
         }
         Permission permission = permissionSettings.getV2Permissions();
         return database.getDocClientWrapper()
@@ -110,10 +110,10 @@ public class CosmosUser {
      * @param options    the request options.
      * @return an {@link Mono} containing the single resource response with the upserted permission or an error.
      */
-    public Mono<CosmosPermissionResponse> upsertPermission(CosmosPermissionProperties permissionSettings, CosmosPermissionsRequestOptions options) {
+    public Mono<CosmosPermissionResponse> upsertPermission(CosmosPermissionProperties permissionSettings, CosmosPermissionRequestOptions options) {
         Permission permission = permissionSettings.getV2Permissions();
         if(options == null){
-            options = new CosmosPermissionsRequestOptions();
+            options = new CosmosPermissionRequestOptions();
         }
         return database.getDocClientWrapper()
                 .upsertPermission(getLink(), permission, options.toRequestOptions())

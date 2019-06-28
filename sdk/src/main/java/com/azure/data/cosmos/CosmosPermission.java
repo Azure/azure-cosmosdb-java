@@ -103,9 +103,9 @@ public class CosmosPermission {
      * @param options        the request options.
      * @return an {@link Mono} containing the single resource response for the deleted permission or an error.
      */
-    public Mono<CosmosPermissionResponse> delete(CosmosPermissionsRequestOptions options) {
+    public Mono<CosmosPermissionResponse> delete(CosmosPermissionRequestOptions options) {
         if(options == null){
-            options = new CosmosPermissionsRequestOptions();
+            options = new CosmosPermissionRequestOptions();
         }
         return cosmosUser.getDatabase()
                 .getDocClientWrapper()
