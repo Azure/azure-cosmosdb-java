@@ -28,9 +28,11 @@ import com.azure.data.cosmos.internal.HttpConstants;
 import com.azure.data.cosmos.internal.QueryMetrics;
 import com.azure.data.cosmos.internal.ReplicationPolicy;
 import com.azure.data.cosmos.internal.ResourceResponse;
+import com.azure.data.cosmos.internal.RxDocumentServiceRequest;
 import com.azure.data.cosmos.internal.RxDocumentServiceResponse;
 import com.azure.data.cosmos.internal.StoredProcedureResponse;
 import com.azure.data.cosmos.internal.Strings;
+import com.azure.data.cosmos.internal.directconnectivity.StoreResult;
 import com.azure.data.cosmos.internal.query.metrics.ClientSideMetrics;
 import com.azure.data.cosmos.internal.routing.PartitionKeyInternal;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -43,6 +45,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
 import static com.azure.data.cosmos.internal.Constants.QueryExecutionContext.INCREMENTAL_FEED_HEADER_VALUE;
@@ -332,8 +335,8 @@ public class BridgeInternal {
         return JsonSerializable.getValue(value);
     }
 
-    public static CosmosClientException setClientSideRequestStatistics(CosmosClientException cosmosClientException, ClientSideRequestStatistics clientSideRequestStatistics) {
-        return cosmosClientException.clientSideRequestStatistics(clientSideRequestStatistics);
+    public static CosmosClientException setCosmosResponseDiagnosticStatistics(CosmosClientException cosmosClientException, CosmosResponseDiagnosticStatistics cosmosResponseDiagnosticStatistics) {
+        return cosmosClientException.cosmosResponseDiagnosticStatistics(cosmosResponseDiagnosticStatistics);
     }
 
     public static CosmosClientException createCosmosClientException(int statusCode) {
@@ -366,5 +369,36 @@ public class BridgeInternal {
         CosmosClientException cosmosClientException = new CosmosClientException(statusCode, message, responseHeaders, exception);
         cosmosClientException.resourceAddress = resourceAddress;
         return cosmosClientException;
+    }
+
+    public static CosmosResponseDiagnosticStatistics createCosmosResponseDiagnosticStatistics() {
+        return new CosmosResponseDiagnosticStatistics();
+    }
+
+    public static void recordResponse(CosmosResponseDiagnosticStatistics cosmosResponseDiagnosticStatistics,
+                                      RxDocumentServiceRequest request, StoreResult storeResult) {
+        cosmosResponseDiagnosticStatistics.clientSideRequestStatistics().recordResponse(request, storeResult);
+    }
+
+    public static String recordAddressResolutionStart(CosmosResponseDiagnosticStatistics cosmosResponseDiagnosticStatistics,
+                                                      URI targetEndpoint) {
+        return cosmosResponseDiagnosticStatistics.clientSideRequestStatistics().recordAddressResolutionStart(targetEndpoint);
+    }
+
+    public static void recordAddressResolutionEnd(CosmosResponseDiagnosticStatistics cosmosResponseDiagnosticStatistics,
+                                                  String identifier) {
+        cosmosResponseDiagnosticStatistics.clientSideRequestStatistics().recordAddressResolutionEnd(identifier);
+    }
+
+    public static List<URI> getContactedReplicas(CosmosResponseDiagnosticStatistics cosmosResponseDiagnosticStatistics) {
+        return cosmosResponseDiagnosticStatistics.clientSideRequestStatistics().getContactedReplicas();
+    }
+
+    public static void setContactedReplicas(CosmosResponseDiagnosticStatistics cosmosResponseDiagnosticStatistics, List<URI> contactedReplicas) {
+        cosmosResponseDiagnosticStatistics.clientSideRequestStatistics().setContactedReplicas(contactedReplicas);
+    }
+
+    public static Set<URI> getFailedReplicas(CosmosResponseDiagnosticStatistics cosmosResponseDiagnosticStatistics) {
+        return cosmosResponseDiagnosticStatistics.clientSideRequestStatistics().getFailedReplicas();
     }
 }
