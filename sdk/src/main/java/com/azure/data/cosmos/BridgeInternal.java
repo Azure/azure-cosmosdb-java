@@ -401,4 +401,8 @@ public class BridgeInternal {
     public static Set<URI> getFailedReplicas(CosmosResponseDiagnostics cosmosResponseDiagnostics) {
         return cosmosResponseDiagnostics.clientSideRequestStatistics().getFailedReplicas();
     }
+
+    public static ConcurrentMap<String, QueryMetrics> queryMetricsFromFeedResponse(FeedResponse feedResponse) {
+        return feedResponse.queryMetrics();
+    }
 }
