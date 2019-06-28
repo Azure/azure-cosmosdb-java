@@ -25,9 +25,6 @@ package com.azure.data.cosmos.internal;
 
 import com.azure.data.cosmos.BridgeInternal;
 import com.azure.data.cosmos.CosmosError;
-import com.azure.data.cosmos.Database;
-import com.azure.data.cosmos.Document;
-import com.azure.data.cosmos.DocumentCollection;
 import com.google.common.collect.ImmutableMap;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;

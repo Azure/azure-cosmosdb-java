@@ -61,7 +61,7 @@ public interface CosmosResponseValidator<T extends CosmosResponse> {
             return this;
         }
 
-        private  Resource getResource(T resourceResponse) {
+        private Resource getResource(T resourceResponse) {
             if (resourceResponse instanceof CosmosDatabaseResponse) {
                 return ((CosmosDatabaseResponse)resourceResponse).properties();
             } else if (resourceResponse instanceof CosmosContainerResponse) {

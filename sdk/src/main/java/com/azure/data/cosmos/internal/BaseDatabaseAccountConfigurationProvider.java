@@ -24,7 +24,6 @@
 package com.azure.data.cosmos.internal;
 
 import com.azure.data.cosmos.ConsistencyLevel;
-import com.azure.data.cosmos.DatabaseAccount;
 
 /**
  * Used internally to provides functionality to work with database account configuration in the Azure Cosmos DB database service.

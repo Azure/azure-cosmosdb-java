@@ -27,7 +27,7 @@ import com.azure.data.cosmos.internal.AsyncDocumentClient;
 import com.azure.data.cosmos.internal.AsyncDocumentClient.Builder;
 import com.azure.data.cosmos.BridgeInternal;
 import com.azure.data.cosmos.ConnectionPolicy;
-import com.azure.data.cosmos.DatabaseAccount;
+import com.azure.data.cosmos.internal.DatabaseAccount;
 import com.azure.data.cosmos.internal.BaseAuthorizationTokenProvider;
 import com.azure.data.cosmos.internal.SpyClientUnderTestFactory;
 import com.azure.data.cosmos.internal.TestSuiteBase;

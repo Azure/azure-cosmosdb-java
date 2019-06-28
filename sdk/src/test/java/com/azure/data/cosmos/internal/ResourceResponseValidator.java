@@ -23,7 +23,6 @@
 package com.azure.data.cosmos.internal;
 
 import com.azure.data.cosmos.CompositePath;
-import com.azure.data.cosmos.DocumentCollection;
 import com.azure.data.cosmos.IndexingMode;
 import com.azure.data.cosmos.PermissionMode;
 import com.azure.data.cosmos.Resource;

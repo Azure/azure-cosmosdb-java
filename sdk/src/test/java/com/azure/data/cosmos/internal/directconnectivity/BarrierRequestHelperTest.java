@@ -24,7 +24,7 @@
 package com.azure.data.cosmos.internal.directconnectivity;
 
 import com.azure.data.cosmos.internal.AsyncDocumentClient;
-import com.azure.data.cosmos.Document;
+import com.azure.data.cosmos.internal.Document;
 import com.azure.data.cosmos.internal.HttpConstants;
 import com.azure.data.cosmos.internal.IAuthorizationTokenProvider;
 import com.azure.data.cosmos.internal.OperationType;

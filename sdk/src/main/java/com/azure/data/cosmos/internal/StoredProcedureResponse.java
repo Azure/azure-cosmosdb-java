@@ -24,7 +24,6 @@
 package com.azure.data.cosmos.internal;
 
 import com.azure.data.cosmos.ClientSideRequestStatistics;
-import com.azure.data.cosmos.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

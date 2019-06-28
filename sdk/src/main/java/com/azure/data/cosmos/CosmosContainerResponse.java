@@ -22,6 +22,7 @@
  */
 package com.azure.data.cosmos;
 
+import com.azure.data.cosmos.internal.DocumentCollection;
 import com.azure.data.cosmos.internal.ResourceResponse;
 
 public class CosmosContainerResponse extends CosmosResponse<CosmosContainerProperties> {

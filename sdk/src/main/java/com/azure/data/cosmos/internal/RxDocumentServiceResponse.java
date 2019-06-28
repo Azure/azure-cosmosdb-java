@@ -25,9 +25,6 @@ package com.azure.data.cosmos.internal;
 
 import com.azure.data.cosmos.BridgeInternal;
 import com.azure.data.cosmos.ClientSideRequestStatistics;
-import com.azure.data.cosmos.Database;
-import com.azure.data.cosmos.Document;
-import com.azure.data.cosmos.DocumentCollection;
 import com.azure.data.cosmos.Resource;
 import com.azure.data.cosmos.internal.directconnectivity.Address;
 import com.azure.data.cosmos.internal.directconnectivity.StoreResponse;
