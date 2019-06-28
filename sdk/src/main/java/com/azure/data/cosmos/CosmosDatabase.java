@@ -359,9 +359,24 @@ public class CosmosDatabase {
      * contain one or several feed response of the obtained containers. In case of
      * failure the {@link Flux} will error.
      *
+     * @param query   the query
+     * @return a {@link Flux} containing one or several feed response pages of the
+     *         obtained containers or an error.
+     */
+    public Flux<FeedResponse<CosmosContainerProperties>> queryContainers(String query) {
+        return queryContainers(new SqlQuerySpec(query));
+    }
+
+    /**
+     * Query for cosmos containers in a cosmos database.
+     *
+     * After subscription the operation will be performed. The {@link Flux} will
+     * contain one or several feed response of the obtained containers. In case of
+     * failure the {@link Flux} will error.
+     *
      * @param query   the query.
      * @param options the feed options.
-     * @return an {@link Flux} containing one or several feed response pages of the
+     * @return a {@link Flux} containing one or several feed response pages of the
      *         obtained containers or an error.
      */
     public Flux<FeedResponse<CosmosContainerProperties>> queryContainers(String query, FeedOptions options) {
@@ -376,8 +391,23 @@ public class CosmosDatabase {
      * failure the {@link Flux} will error.
      *
      * @param querySpec the SQL query specification.
+     * @return a {@link Flux} containing one or several feed response pages of the
+     *         obtained containers or an error.
+     */
+    public Flux<FeedResponse<CosmosContainerProperties>> queryContainers(SqlQuerySpec querySpec) {
+        return queryContainers(querySpec, null);
+    }
+
+    /**
+     * Query for cosmos containers in a cosmos database.
+     *
+     * After subscription the operation will be performed. The {@link Flux} will
+     * contain one or several feed response of the obtained containers. In case of
+     * failure the {@link Flux} will error.
+     *
+     * @param querySpec the SQL query specification.
      * @param options   the feed options.
-     * @return an {@link Flux} containing one or several feed response pages of the
+     * @return a {@link Flux} containing one or several feed response pages of the
      *         obtained containers or an error.
      */
     public Flux<FeedResponse<CosmosContainerProperties>> queryContainers(SqlQuerySpec querySpec, FeedOptions options) {
@@ -459,6 +489,16 @@ public class CosmosDatabase {
                 .map(response -> new CosmosUserResponse(response, this)).single();
     }
 
+    /**
+     * Reads all cosmos users in a database.
+     *
+     * After subscription the operation will be performed. The {@link Flux} will
+     * contain one or several feed response of the read cosmos users. In case of
+     * failure the {@link Flux} will error.
+     *
+     * @return an {@link Flux} containing one or several feed response pages of the
+     *         read cosmos users or an error.
+     */
     public Flux<FeedResponse<CosmosUserProperties>> listUsers() {
         return listUsers(new FeedOptions());
     }
@@ -479,6 +519,33 @@ public class CosmosDatabase {
                 CosmosUserProperties.getFromV2Results(response.results()), response.responseHeaders()));
     }
 
+    /**
+     * Query for cosmos users in a database.
+     *
+     * After subscription the operation will be performed. The {@link Flux} will
+     * contain one or several feed response of the obtained users. In case of
+     * failure the {@link Flux} will error.
+     *
+     * @param query query as string
+     * @return a {@link Flux} containing one or several feed response pages of the
+     *      obtained users or an error.
+     */
+    public Flux<FeedResponse<CosmosUserProperties>> queryUsers(String query) {
+        return queryUsers(query, null);
+    }
+
+    /**
+     * Query for cosmos users in a database.
+     *
+     * After subscription the operation will be performed. The {@link Flux} will
+     * contain one or several feed response of the obtained users. In case of
+     * failure the {@link Flux} will error.
+     *
+     * @param query query as string
+     * @param options the feed options
+     * @return a {@link Flux} containing one or several feed response pages of the
+     *      obtained users or an error.
+     */
     public Flux<FeedResponse<CosmosUserProperties>> queryUsers(String query, FeedOptions options) {
         return queryUsers(new SqlQuerySpec(query), options);
     }
@@ -491,8 +558,23 @@ public class CosmosDatabase {
      * failure the {@link Flux} will error.
      *
      * @param querySpec the SQL query specification.
+     * @return a {@link Flux} containing one or several feed response pages of the
+     *         obtained users or an error.
+     */
+    public Flux<FeedResponse<CosmosUserProperties>> queryUsers(SqlQuerySpec querySpec) {
+        return queryUsers(querySpec, null);
+    }
+
+    /**
+     * Query for cosmos users in a database.
+     *
+     * After subscription the operation will be performed. The {@link Flux} will
+     * contain one or several feed response of the obtained users. In case of
+     * failure the {@link Flux} will error.
+     *
+     * @param querySpec the SQL query specification.
      * @param options   the feed options.
-     * @return an {@link Flux} containing one or several feed response pages of the
+     * @return a {@link Flux} containing one or several feed response pages of the
      *         obtained users or an error.
      */
     public Flux<FeedResponse<CosmosUserProperties>> queryUsers(SqlQuerySpec querySpec, FeedOptions options) {
