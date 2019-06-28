@@ -35,7 +35,6 @@ import com.azure.data.cosmos.CosmosDatabase;
 import com.azure.data.cosmos.CosmosItemProperties;
 import com.azure.data.cosmos.SerializationFormattingPolicy;
 import org.apache.commons.lang3.RandomStringUtils;
-import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 
@@ -106,8 +105,8 @@ public class SampleChangeFeedProcessor {
     public static ChangeFeedProcessor getChangeFeedProcessor(String hostName, CosmosContainer feedContainer, CosmosContainer leaseContainer) {
         return ChangeFeedProcessor.Builder()
             .hostName(hostName)
-            .feedContainerClient(feedContainer)
-            .leaseContainerClient(leaseContainer)
+            .feedContainer(feedContainer)
+            .leaseContainer(leaseContainer)
             .handleChanges(docs -> {
                 System.out.println("--->handleChanges() START");
 
