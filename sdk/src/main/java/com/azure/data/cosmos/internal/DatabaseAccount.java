@@ -282,4 +282,10 @@ public class DatabaseAccount extends Resource {
             setProperty(this, Constants.Properties.USER_CONSISTENCY_POLICY, this.consistencyPolicy);
         }
     }
+
+    @Override
+    public String toJson() {
+        this.populatePropertyBag();
+        return super.toJson();
+    }
 }

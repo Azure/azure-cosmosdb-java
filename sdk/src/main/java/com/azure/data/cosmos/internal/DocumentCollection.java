@@ -287,7 +287,7 @@ public final class DocumentCollection extends Resource {
         }
 
         if (this.partitionKeyDefinition != null) {
-            populatePropertyBagJsonSerializable(this);
+            populatePropertyBagJsonSerializable(this.partitionKeyDefinition);
             setProperty(this, Constants.Properties.PARTITION_KEY, this.partitionKeyDefinition);
         }
         populatePropertyBagJsonSerializable(this.indexingPolicy);
@@ -310,5 +310,11 @@ public final class DocumentCollection extends Resource {
     @Override
     public int hashCode() {
         return this.resourceId().hashCode();
+    }
+
+    @Override
+    public String toJson() {
+        this.populatePropertyBag();
+        return super.toJson();
     }
 }
