@@ -42,7 +42,6 @@ import com.azure.data.cosmos.PartitionKey;
 import com.azure.data.cosmos.PartitionKeyDefinition;
 import com.azure.data.cosmos.RetryOptions;
 import com.azure.data.cosmos.SqlQuerySpec;
-import com.azure.data.cosmos.Undefined;
 import com.azure.data.cosmos.internal.directconnectivity.Protocol;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;

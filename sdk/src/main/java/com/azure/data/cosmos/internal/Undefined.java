@@ -21,7 +21,9 @@
  * SOFTWARE.
  */
 
-package com.azure.data.cosmos;
+package com.azure.data.cosmos.internal;
+
+import com.azure.data.cosmos.JsonSerializable;
 
 /**
  * Represents the 'Undefined' partition key in the Azure Cosmos DB database service.
