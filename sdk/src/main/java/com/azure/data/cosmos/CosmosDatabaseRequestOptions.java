@@ -35,7 +35,7 @@ public class CosmosDatabaseRequestOptions extends CosmosRequestOptions{
      *
      * @return the throughput value.
      */
-    public Integer offerThroughput() {
+    Integer offerThroughput() {
         return offerThroughput;
     }
 
@@ -45,13 +45,13 @@ public class CosmosDatabaseRequestOptions extends CosmosRequestOptions{
      * @param offerThroughput the throughput value.
      * @return the current request options
      */
-    public CosmosDatabaseRequestOptions offerThroughput(Integer offerThroughput) {
+    CosmosDatabaseRequestOptions offerThroughput(Integer offerThroughput) {
         this.offerThroughput = offerThroughput;
         return this;
     }
 
     @Override
-    protected RequestOptions toRequestOptions() {
+    RequestOptions toRequestOptions() {
         super.toRequestOptions();
         requestOptions.setOfferThroughput(offerThroughput);
         return requestOptions;

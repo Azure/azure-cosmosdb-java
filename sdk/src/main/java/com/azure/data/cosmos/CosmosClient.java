@@ -230,6 +230,68 @@ public class CosmosClient implements AutoCloseable {
     }
 
     /**
+     * Creates a database.
+     *
+     * After subscription the operation will be performed.
+     * The {@link Mono} upon successful completion will contain a single resource response with the
+     *      created database.
+     * In case of failure the {@link Mono} will error.
+     *
+     * @param databaseSettings {@link CosmosDatabaseProperties}
+     * @param throughput the throughput for the database
+     * @param options {@link CosmosDatabaseRequestOptions}
+     * @return an {@link Mono} containing the single cosmos database response with the created database or an error.
+     */
+    public Mono<CosmosDatabaseResponse> createDatabase(CosmosDatabaseProperties databaseSettings,
+                                                       int throughput,
+                                                       CosmosDatabaseRequestOptions options) {
+        if (options == null) {
+            options = new CosmosDatabaseRequestOptions();
+        }
+        options.offerThroughput(throughput);
+        Database wrappedDatabase = new Database();
+        wrappedDatabase.id(databaseSettings.id());
+        return asyncDocumentClient.createDatabase(wrappedDatabase, options.toRequestOptions()).map(databaseResourceResponse ->
+                new CosmosDatabaseResponse(databaseResourceResponse, this)).single();
+    }
+
+    /**
+     * Creates a database.
+     *
+     * After subscription the operation will be performed.
+     * The {@link Mono} upon successful completion will contain a single resource response with the
+     *      created database.
+     * In case of failure the {@link Mono} will error.
+     *
+     * @param databaseSettings {@link CosmosDatabaseProperties}
+     * @param throughput the throughput for the database
+     * @return an {@link Mono} containing the single cosmos database response with the created database or an error.
+     */
+    public Mono<CosmosDatabaseResponse> createDatabase(CosmosDatabaseProperties databaseSettings, int throughput) {
+        CosmosDatabaseRequestOptions options = new CosmosDatabaseRequestOptions();
+        options.offerThroughput(throughput);
+        return createDatabase(databaseSettings, options);
+    }
+
+    /**
+     * Creates a database.
+     *
+     * After subscription the operation will be performed.
+     * The {@link Mono} upon successful completion will contain a single resource response with the
+     *      created database.
+     * In case of failure the {@link Mono} will error.
+     *
+     * @param id id of the database
+     * @param throughput the throughput for the database
+     * @return a {@link Mono} containing the single cosmos database response with the created database or an error.
+     */
+    public Mono<CosmosDatabaseResponse> createDatabase(String id, int throughput) {
+        CosmosDatabaseRequestOptions options = new CosmosDatabaseRequestOptions();
+        options.offerThroughput(throughput);
+        return createDatabase(new CosmosDatabaseProperties(id), options);
+    }
+
+    /**
      * Reads all databases.
      * 
      * After subscription the operation will be performed. 
