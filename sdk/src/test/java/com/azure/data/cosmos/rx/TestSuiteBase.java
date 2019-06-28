@@ -43,9 +43,9 @@ import com.azure.data.cosmos.CosmosDatabaseResponse;
 import com.azure.data.cosmos.CosmosItem;
 import com.azure.data.cosmos.CosmosItemProperties;
 import com.azure.data.cosmos.CosmosItemResponse;
-import com.azure.data.cosmos.CosmosRequestOptions;
 import com.azure.data.cosmos.CosmosResponse;
 import com.azure.data.cosmos.CosmosResponseValidator;
+import com.azure.data.cosmos.CosmosStoredProcedureRequestOptions;
 import com.azure.data.cosmos.CosmosUser;
 import com.azure.data.cosmos.CosmosUserProperties;
 import com.azure.data.cosmos.DataType;
@@ -252,14 +252,12 @@ public class TestSuiteBase extends CosmosClientTest {
                        .publishOn(Schedulers.parallel())
                 .flatMap(page -> Flux.fromIterable(page.results()))
                 .flatMap(trigger -> {
-                    CosmosRequestOptions requestOptions = new CosmosRequestOptions();
-
 //                    if (paths != null && !paths.isEmpty()) {
 //                        Object propertyValue = trigger.getObjectByPath(PathParser.getPathParts(paths.get(0)));
 //                        requestOptions.partitionKey(new PartitionKey(propertyValue));
 //                    }
 
-                        return cosmosContainer.getScripts().getTrigger(trigger.id()).delete(requestOptions);
+                        return cosmosContainer.getScripts().getTrigger(trigger.id()).delete();
                     }).then().block();
 
         logger.info("Truncating collection {} storedProcedures ...", cosmosContainerId);
@@ -268,14 +266,13 @@ public class TestSuiteBase extends CosmosClientTest {
                        .publishOn(Schedulers.parallel())
                 .flatMap(page -> Flux.fromIterable(page.results()))
                 .flatMap(storedProcedure -> {
-                    CosmosRequestOptions requestOptions = new CosmosRequestOptions();
 
 //                    if (paths != null && !paths.isEmpty()) {
 //                        Object propertyValue = storedProcedure.getObjectByPath(PathParser.getPathParts(paths.get(0)));
 //                        requestOptions.partitionKey(new PartitionKey(propertyValue));
 //                    }
 
-                    return cosmosContainer.getScripts().getStoredProcedure(storedProcedure.id()).delete(requestOptions);
+                    return cosmosContainer.getScripts().getStoredProcedure(storedProcedure.id()).delete(new CosmosStoredProcedureRequestOptions());
                     }).then().block();
 
         logger.info("Truncating collection {} udfs ...", cosmosContainerId);
@@ -284,14 +281,13 @@ public class TestSuiteBase extends CosmosClientTest {
                        .publishOn(Schedulers.parallel())
                 .flatMap(page -> Flux.fromIterable(page.results()))
                 .flatMap(udf -> {
-                    CosmosRequestOptions requestOptions = new CosmosRequestOptions();
 
 //                    if (paths != null && !paths.isEmpty()) {
 //                        Object propertyValue = udf.getObjectByPath(PathParser.getPathParts(paths.get(0)));
 //                        requestOptions.partitionKey(new PartitionKey(propertyValue));
 //                    }
 
-                    return cosmosContainer.getScripts().getUserDefinedFunction(udf.id()).delete(requestOptions);
+                    return cosmosContainer.getScripts().getUserDefinedFunction(udf.id()).delete();
                     }).then().block();
 
         logger.info("Finished truncating collection {}.", cosmosContainerId);

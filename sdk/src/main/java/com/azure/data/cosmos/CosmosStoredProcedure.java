@@ -81,7 +81,7 @@ public class CosmosStoredProcedure {
      * @param options the request options.
      * @return an {@link Mono} containing the single resource response for the deleted stored procedure or an error.
      */
-    public Mono<CosmosResponse> delete(CosmosRequestOptions options) {
+    public Mono<CosmosResponse> delete(CosmosStoredProcedureRequestOptions options) {
         return cosmosContainer.getDatabase()
                 .getDocClientWrapper()
                 .deleteStoredProcedure(getLink(), options.toRequestOptions())

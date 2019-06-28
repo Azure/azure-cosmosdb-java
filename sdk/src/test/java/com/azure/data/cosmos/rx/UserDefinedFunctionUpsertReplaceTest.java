@@ -25,7 +25,6 @@ package com.azure.data.cosmos.rx;
 import com.azure.data.cosmos.CosmosClient;
 import com.azure.data.cosmos.CosmosClientBuilder;
 import com.azure.data.cosmos.CosmosContainer;
-import com.azure.data.cosmos.CosmosRequestOptions;
 import com.azure.data.cosmos.CosmosResponseValidator;
 import com.azure.data.cosmos.CosmosUserDefinedFunctionProperties;
 import com.azure.data.cosmos.CosmosUserDefinedFunctionResponse;
@@ -59,7 +58,7 @@ public class UserDefinedFunctionUpsertReplaceTest extends TestSuiteBase {
 
         CosmosUserDefinedFunctionProperties readBackUdf = null;
 
-            readBackUdf = createdCollection.getScripts().createUserDefinedFunction(udf, new CosmosRequestOptions()).block().settings();
+            readBackUdf = createdCollection.getScripts().createUserDefinedFunction(udf).block().settings();
 
         // read udf to validate creation
         waitIfNeededForReplicasToCatchUp(clientBuilder());

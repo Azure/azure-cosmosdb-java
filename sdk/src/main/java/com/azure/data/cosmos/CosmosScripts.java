@@ -154,19 +154,15 @@ public class CosmosScripts {
      * In case of failure the {@link Mono} will error.
      *
      * @param properties       the cosmos user defined function properties
-     * @param options        the cosmos request options.
      * @return an {@link Mono} containing the single resource response with the created user defined function or an error.
      */
-    public Mono<CosmosUserDefinedFunctionResponse> createUserDefinedFunction(CosmosUserDefinedFunctionProperties properties,
-                                                                             CosmosRequestOptions options){
+    public Mono<CosmosUserDefinedFunctionResponse> createUserDefinedFunction(CosmosUserDefinedFunctionProperties properties){
         UserDefinedFunction udf = new UserDefinedFunction();
         udf.id(properties.id());
         udf.setBody(properties.body());
-        if(options == null){
-            options = new CosmosRequestOptions();
-        }
+
         return database.getDocClientWrapper()
-                .createUserDefinedFunction(container.getLink(), udf, options.toRequestOptions())
+                .createUserDefinedFunction(container.getLink(), udf, null)
                 .map(response -> new CosmosUserDefinedFunctionResponse(response, this.container)).single();
     }
 
@@ -240,17 +236,13 @@ public class CosmosScripts {
      * In case of failure the {@link Mono} will error.
      *
      * @param properties the cosmos trigger properties
-     * @param options        the request options.
      * @return an {@link Mono} containing the single resource response with the created trigger or an error.
      */
-    public Mono<CosmosTriggerResponse> createTrigger(CosmosTriggerProperties properties,
-                                                     CosmosRequestOptions options){
+    public Mono<CosmosTriggerResponse> createTrigger(CosmosTriggerProperties properties){
         Trigger trigger = new Trigger(properties.toJson());
-        if(options == null){
-            options = new CosmosRequestOptions();
-        }
+
         return database.getDocClientWrapper()
-                .createTrigger(container.getLink(), trigger,options.toRequestOptions())
+                .createTrigger(container.getLink(), trigger, null)
                 .map(response -> new CosmosTriggerResponse(response, this.container))
                 .single();
     }

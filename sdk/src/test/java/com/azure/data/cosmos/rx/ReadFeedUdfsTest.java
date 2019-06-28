@@ -25,7 +25,6 @@ package com.azure.data.cosmos.rx;
 import com.azure.data.cosmos.CosmosClient;
 import com.azure.data.cosmos.CosmosClientBuilder;
 import com.azure.data.cosmos.CosmosContainer;
-import com.azure.data.cosmos.CosmosRequestOptions;
 import com.azure.data.cosmos.CosmosUserDefinedFunctionProperties;
 import com.azure.data.cosmos.Database;
 import com.azure.data.cosmos.FeedOptions;
@@ -101,7 +100,7 @@ public class ReadFeedUdfsTest extends TestSuiteBase {
         CosmosUserDefinedFunctionProperties udf = new CosmosUserDefinedFunctionProperties();
         udf.id(UUID.randomUUID().toString());
         udf.body("function() {var x = 10;}");
-        return cosmosContainer.getScripts().createUserDefinedFunction(udf, new CosmosRequestOptions()).block()
+        return cosmosContainer.getScripts().createUserDefinedFunction(udf).block()
                 .settings();
     }
 

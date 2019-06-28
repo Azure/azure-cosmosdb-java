@@ -105,7 +105,7 @@ public class CosmosDatabase {
      * @return an {@link Mono} containing the single cosmos database response
      */
     public Mono<CosmosDatabaseResponse> delete() {
-        return delete(new CosmosRequestOptions());
+        return delete(new CosmosDatabaseRequestOptions());
     }
 
     /**
@@ -118,7 +118,7 @@ public class CosmosDatabase {
      * @param options the request options
      * @return an {@link Mono} containing the single cosmos database response
      */
-    public Mono<CosmosDatabaseResponse> delete(CosmosRequestOptions options) {
+    public Mono<CosmosDatabaseResponse> delete(CosmosDatabaseRequestOptions options) {
         return getDocClientWrapper().deleteDatabase(getLink(), options.toRequestOptions())
                 .map(response -> new CosmosDatabaseResponse(response, getClient())).single();
     }

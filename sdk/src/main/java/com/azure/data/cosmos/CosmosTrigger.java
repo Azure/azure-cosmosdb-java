@@ -103,10 +103,10 @@ public class CosmosTrigger {
      * @param options the request options.
      * @return an {@link Mono} containing the single resource response for the deleted cosmos trigger or an error.
      */
-    public Mono<CosmosResponse> delete(CosmosRequestOptions options) {
+    public Mono<CosmosResponse> delete() {
         return container.getDatabase()
                 .getDocClientWrapper()
-                .deleteTrigger(getLink(), options.toRequestOptions())
+                .deleteTrigger(getLink(), null)
                 .map(response -> new CosmosResponse(response.getResource()))
                 .single();
     }
