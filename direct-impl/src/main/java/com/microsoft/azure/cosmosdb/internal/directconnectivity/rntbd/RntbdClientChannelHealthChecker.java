@@ -143,10 +143,10 @@ final class RntbdClientChannelHealthChecker implements ChannelHealthChecker {
 
         // Black hole detection, part 2:
         // Treat the connection as unhealthy if the gap between the last successful write and the last successful read
-        // grew beyond acceptable limits, unless a write succeeded recently.
+        // grew beyond acceptable limits, unless a write succeeded recently. This is a sign of a hung read.
 
         if (timestamps.lastChannelWrite() - timestamps.lastChannelRead() > this.readDelayLimit && currentTime - timestamps.lastChannelWrite() > readHangGracePeriod) {
-            logger.warn("{} health check failed due to response lag: {lastWriteTime: {}, lastReadTime: {}. readDelayLimit: {}}",
+            logger.warn("{} health check failed due to response delay: {lastWriteTime: {}, lastReadTime: {}, readDelayLimit: {}}",
                 channel, timestamps.lastChannelWrite(), timestamps.lastChannelRead(), this.readDelayLimit);
             return promise.setSuccess(Boolean.FALSE);
         }

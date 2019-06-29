@@ -294,14 +294,14 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
             return first;  // because this.close -> this.close0 -> super.close -> this.pollChannel
         }
 
-        if (this.isInactiveOrServiceableChannel(first)) {
+        if (this.isServiceableOrInactiveChannel(first)) {
             return this.decrementAvailableChannelCountAndAccept(first);
         }
 
         super.offerChannel(first);  // because we need a non-null sentinel to stop the search for a channel
 
         for (Channel next = super.pollChannel(); next != first; super.offerChannel(next), next = super.pollChannel()) {
-            if (this.isInactiveOrServiceableChannel(next)) {
+            if (this.isServiceableOrInactiveChannel(next)) {
                 return this.decrementAvailableChannelCountAndAccept(next);
             }
         }
@@ -408,7 +408,7 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
         return first;
     }
 
-    private boolean isInactiveOrServiceableChannel(final Channel channel) {
+    private boolean isServiceableOrInactiveChannel(final Channel channel) {
 
         if (!channel.isActive()) {
             return true;
@@ -615,6 +615,7 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
             generator.writeStringField("remoteAddress", pool.remoteAddress().toString());
             generator.writeNumberField("maxChannels", pool.maxChannels());
             generator.writeNumberField("maxRequestsPerChannel", pool.maxRequestsPerChannel());
+            generator.writeObjectField("healthChecker", pool.healthChecker());
             generator.writeObjectFieldStart("state");
             generator.writeBooleanField("isClosed", pool.isClosed());
             generator.writeNumberField("acquiredChannelCount", pool.acquiredChannelCount());
