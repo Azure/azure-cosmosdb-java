@@ -44,7 +44,7 @@ import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.Rnt
 import static java.util.concurrent.atomic.AtomicLongFieldUpdater.newUpdater;
 
 @JsonSerialize(using = RntbdClientChannelHealthChecker.JsonSerializer.class)
-final class RntbdClientChannelHealthChecker implements ChannelHealthChecker {
+public final class RntbdClientChannelHealthChecker implements ChannelHealthChecker {
 
     // region Fields
 

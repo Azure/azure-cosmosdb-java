@@ -94,15 +94,9 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
     private final Runnable acquisitionTimeoutTask;
     private int pendingChannelAcquisitionCount;
 
-    /**
-     * Initializes a newly created {@link RntbdClientChannelPool} object
-     *
-     * @param bootstrap the {@link Bootstrap} that is used for connections
-     * @param config    the {@link RntbdEndpoint.Config} that is used for the channel pool instance created
-     */
-    RntbdClientChannelPool(final Bootstrap bootstrap, final RntbdEndpoint.Config config) {
+    private RntbdClientChannelPool(final Bootstrap bootstrap, RntbdEndpoint.Config config, RntbdClientChannelHealthChecker healthChecker) {
 
-        super(bootstrap, new RntbdClientChannelHandler(config), new RntbdClientChannelHealthChecker(config), true, true);
+        super(bootstrap, new RntbdClientChannelHandler(config, healthChecker), healthChecker, true, true);
 
         this.executor = bootstrap.config().group().next();
         this.maxChannels = config.maxChannelsPerEndpoint();
@@ -152,6 +146,15 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
                     throw new Error();
             }
         }
+    }
+    /**
+     * Initializes a newly created {@link RntbdClientChannelPool} object
+     *
+     * @param bootstrap the {@link Bootstrap} that is used for connections
+     * @param config    the {@link RntbdEndpoint.Config} that is used for the channel pool instance created
+     */
+    RntbdClientChannelPool(final Bootstrap bootstrap, final RntbdEndpoint.Config config) {
+        this(bootstrap, config, new RntbdClientChannelHealthChecker(config));
     }
 
     // region Methods

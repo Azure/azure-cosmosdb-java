@@ -33,6 +33,7 @@ import com.microsoft.azure.cosmosdb.internal.Paths;
 import com.microsoft.azure.cosmosdb.internal.ResourceType;
 import com.microsoft.azure.cosmosdb.internal.UserAgentContainer;
 import com.microsoft.azure.cosmosdb.internal.Utils;
+import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdClientChannelHealthChecker;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdContext;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdContextNegotiator;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdContextRequest;
@@ -837,7 +838,7 @@ public final class RntbdTransportClientTest {
                 expected.length, true, Arrays.asList(expected)
             );
 
-            RntbdRequestManager requestManager = new RntbdRequestManager(30);
+            RntbdRequestManager requestManager = new RntbdRequestManager(new RntbdClientChannelHealthChecker(config), 30);
             this.physicalAddress = physicalAddress;
             this.requestTimer = timer;
 

@@ -28,12 +28,12 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoop;
+import io.netty.channel.pool.ChannelHealthChecker;
 import io.netty.channel.pool.ChannelPool;
 import io.netty.channel.pool.ChannelPoolHandler;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.SslHandler;
-import io.netty.handler.timeout.ReadTimeoutHandler;
-import io.netty.handler.timeout.WriteTimeoutHandler;
+import io.netty.handler.timeout.IdleStateHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,10 +45,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class RntbdClientChannelHandler extends ChannelInitializer<Channel> implements ChannelPoolHandler {
 
     private static Logger logger = LoggerFactory.getLogger(RntbdClientChannelHandler.class);
+    private final ChannelHealthChecker healthChecker;
     private final RntbdEndpoint.Config config;
 
-    RntbdClientChannelHandler(final RntbdEndpoint.Config config) {
+    RntbdClientChannelHandler(final RntbdEndpoint.Config config, final ChannelHealthChecker healthChecker) {
+        checkNotNull(healthChecker, "healthChecker");
         checkNotNull(config, "config");
+        this.healthChecker = healthChecker;
         this.config = config;
     }
 
@@ -112,16 +115,16 @@ public class RntbdClientChannelHandler extends ChannelInitializer<Channel> imple
 
         checkNotNull(channel);
 
-        final RntbdRequestManager requestManager = new RntbdRequestManager(this.config.maxRequestsPerChannel());
+        final RntbdRequestManager requestManager = new RntbdRequestManager(this.healthChecker, this.config.maxRequestsPerChannel());
         final long readerIdleTime = this.config.receiveHangDetectionTime();
         final long writerIdleTime = this.config.sendHangDetectionTime();
+        final long allIdleTime = this.config.idleConnectionTimeout();
         final ChannelPipeline pipeline = channel.pipeline();
 
         pipeline.addFirst(
             new RntbdContextNegotiator(requestManager, this.config.userAgent()),
             new RntbdResponseDecoder(),
             new RntbdRequestEncoder(),
-            new WriteTimeoutHandler(writerIdleTime, TimeUnit.NANOSECONDS),
             requestManager
         );
 
@@ -132,7 +135,7 @@ public class RntbdClientChannelHandler extends ChannelInitializer<Channel> imple
         final SSLEngine sslEngine = this.config.sslContext().newEngine(channel.alloc());
 
         pipeline.addFirst(
-            new ReadTimeoutHandler(readerIdleTime, TimeUnit.NANOSECONDS),
+            new IdleStateHandler(readerIdleTime, writerIdleTime, allIdleTime, TimeUnit.NANOSECONDS),
             new SslHandler(sslEngine)
         );
     }

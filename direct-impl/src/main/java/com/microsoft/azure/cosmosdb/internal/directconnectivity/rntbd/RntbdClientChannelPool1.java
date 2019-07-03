@@ -74,7 +74,7 @@ public final class RntbdClientChannelPool1 extends FixedChannelPool {
      */
     RntbdClientChannelPool1(final Bootstrap bootstrap, final RntbdEndpoint.Config config) {
 
-        super(bootstrap, new RntbdClientChannelHandler(config), ChannelHealthChecker.ACTIVE, null,
+        super(bootstrap, new RntbdClientChannelHandler(config, ChannelHealthChecker.ACTIVE), ChannelHealthChecker.ACTIVE, null,
             -1L, config.maxChannelsPerEndpoint(), Integer.MAX_VALUE, true
         );
 

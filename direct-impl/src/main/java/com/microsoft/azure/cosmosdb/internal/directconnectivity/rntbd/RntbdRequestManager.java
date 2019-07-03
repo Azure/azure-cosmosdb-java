@@ -61,6 +61,7 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.CoalescingBufferQueue;
 import io.netty.channel.EventLoop;
+import io.netty.channel.pool.ChannelHealthChecker;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.IdleState;
@@ -68,6 +69,7 @@ import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.Timeout;
 import io.netty.util.concurrent.EventExecutor;
+import io.netty.util.concurrent.Future;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,6 +82,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.SubStatusCodes;
@@ -95,19 +98,24 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
     private final CompletableFuture<RntbdContext> contextFuture = new CompletableFuture<>();
     private final CompletableFuture<RntbdContextRequest> contextRequestFuture = new CompletableFuture<>();
+    private final ChannelHealthChecker healthChecker;
+    private final int pendingRequestLimit;
     private final ConcurrentHashMap<Long, RntbdRequestRecord> pendingRequests;
     private final Timestamps timestamps = new Timestamps();
-    private final int pendingRequestLimit;
 
     private boolean closingExceptionally = false;
     private CoalescingBufferQueue pendingWrites;
 
     // endregion
 
-    public RntbdRequestManager(int capacity) {
-        checkArgument(capacity > 0, "capacity: %s", capacity);
-        this.pendingRequests = new ConcurrentHashMap<>(capacity);
-        this.pendingRequestLimit = capacity;
+    public RntbdRequestManager(ChannelHealthChecker healthChecker, int pendingRequestLimit) {
+
+        checkArgument(pendingRequestLimit > 0, "pendingRequestLimit: %s", pendingRequestLimit);
+        checkNotNull(healthChecker, "healthChecker");
+
+        this.pendingRequests = new ConcurrentHashMap<>(pendingRequestLimit);
+        this.pendingRequestLimit = pendingRequestLimit;
+        this.healthChecker = healthChecker;
     }
 
     // region ChannelHandler methods
@@ -302,11 +310,28 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         this.traceOperation(context, "userEventTriggered", event);
 
         try {
-
             if (event instanceof IdleStateEvent) {
-                if (((IdleStateEvent)event).state() == IdleState.WRITER_IDLE) {
-                    context.writeAndFlush(RntbdHealthCheckRequest.MESSAGE);
-                }
+
+                Channel channel = context.channel();
+
+                this.healthChecker.isHealthy(channel).addListener((Future<Boolean> future) -> {
+
+                    final Throwable cause;
+
+                    if (future.isSuccess()) {
+                        if (future.get()) {
+                            return;
+                        }
+                        cause = UnhealthyChannelException.INSTANCE;
+                    } else {
+                        IdleState state = ((IdleStateEvent)event).state();
+                        cause = future.cause();
+                        reportIssue(logger, channel, "health check during {} event failed due to ", state, cause);
+                    }
+
+                    this.exceptionCaught(context, cause);
+                });
+
                 return;
             }
             if (event instanceof RntbdContext) {
@@ -819,6 +844,20 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
         private ClosedWithPendingRequestsException() {
             super(null, null, /* enableSuppression */ false, /* writableStackTrace */ false);
+        }
+    }
+
+    private static class UnhealthyChannelException extends ChannelException {
+
+        static UnhealthyChannelException INSTANCE = new UnhealthyChannelException();
+
+        private UnhealthyChannelException() {
+            super("health check failed");
+        }
+
+        @Override
+        public Throwable fillInStackTrace() {
+            return this;
         }
     }
 
