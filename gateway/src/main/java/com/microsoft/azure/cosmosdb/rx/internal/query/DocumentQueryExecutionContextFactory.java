@@ -22,6 +22,7 @@
  */
 package com.microsoft.azure.cosmosdb.rx.internal.query;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -36,12 +37,14 @@ import com.microsoft.azure.cosmosdb.internal.OperationType;
 import com.microsoft.azure.cosmosdb.internal.ResourceType;
 import com.microsoft.azure.cosmosdb.internal.query.PartitionedQueryExecutionInfo;
 import com.microsoft.azure.cosmosdb.internal.query.QueryInfo;
+import com.microsoft.azure.cosmosdb.internal.routing.Range;
 import com.microsoft.azure.cosmosdb.rx.internal.BadRequestException;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
 import com.microsoft.azure.cosmosdb.rx.internal.Strings;
 import com.microsoft.azure.cosmosdb.rx.internal.Utils;
 import com.microsoft.azure.cosmosdb.rx.internal.caches.RxCollectionCache;
 
+import org.apache.commons.lang3.StringUtils;
 import rx.Observable;
 import rx.Single;
 
@@ -119,10 +122,26 @@ public class DocumentQueryExecutionContextFactory {
                         }
                         return Observable.just( queryExecutionContext);
                     }
-                    
-                    Single<List<PartitionKeyRange>> partitionKeyRanges = queryExecutionContext
-                            .getTargetPartitionKeyRanges(collection.getResourceId(), partitionedQueryExecutionInfo.getQueryRanges());
 
+                    Single<List<PartitionKeyRange>> partitionKeyRanges;
+
+                    if (feedOptions != null && !StringUtils.isEmpty(feedOptions.getPartitionKeyRangeIdInternal())) {
+                        partitionKeyRanges = queryExecutionContext.getTargetPartitionKeyRangesById(collection.getResourceId(),
+                                feedOptions.getPartitionKeyRangeIdInternal());
+                    } else {
+                        List<Range<String>> queryRanges = partitionedQueryExecutionInfo.getQueryRanges();
+
+                        if (feedOptions.getPartitionKey() != null) {
+                            Range<String> range = Range.getPointRange(feedOptions.getPartitionKey()
+                                    .getInternalPartitionKey()
+                                    .getEffectivePartitionKeyString(feedOptions.getPartitionKey()
+                                            .getInternalPartitionKey(), collection.getPartitionKey()));
+                            queryRanges = Collections.singletonList(range);
+                        }
+                        partitionKeyRanges = queryExecutionContext
+                                .getTargetPartitionKeyRanges(collection.getResourceId(), queryRanges);
+                    }
+                    
                     Observable<IDocumentQueryExecutionContext<T>> exContext = partitionKeyRanges
                             .toObservable()
                             .flatMap(pkranges -> createSpecializedDocumentQueryExecutionContextAsync(client,

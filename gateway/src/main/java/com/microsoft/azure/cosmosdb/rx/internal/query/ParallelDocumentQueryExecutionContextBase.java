@@ -84,11 +84,7 @@ public abstract class ParallelDocumentQueryExecutionContextBase<T extends Resour
         Map<String, String> commonRequestHeaders = createCommonHeadersAsync(this.getFeedOptions(null, null));
 
         for (PartitionKeyRange targetRange : partitionKeyRangeToContinuationTokenMap.keySet()) {
-            // If partitionkey is supplied, then we dont need to run through all ranges as we only add 
-            // x-ms-documentdb-partitionkey header and skip the partitionkeyrangeid id header
-            if(feedOptions.getPartitionKey() != null && Integer.parseInt(targetRange.getId()) <= 0){
-                continue;
-            }
+
             Func3<PartitionKeyRange, String, Integer, RxDocumentServiceRequest> createRequestFunc = (partitionKeyRange,
                     continuationToken, pageSize) -> {
                 Map<String, String> headers = new HashMap<>(commonRequestHeaders);
