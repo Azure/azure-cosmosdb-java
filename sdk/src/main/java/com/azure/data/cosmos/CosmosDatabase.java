@@ -246,8 +246,9 @@ public class CosmosDatabase {
      *         created or existing container or an error.
      */
     public Mono<CosmosContainerResponse> createContainerIfNotExists(CosmosContainerProperties containerSettings) {
+        CosmosContainerRequestOptions options = new CosmosContainerRequestOptions();
         CosmosContainer container = getContainer(containerSettings.id());
-        return createContainerIfNotExistsInternal(containerSettings, container, null);
+        return createContainerIfNotExistsInternal(containerSettings, container, options);
     }
 
     /**
