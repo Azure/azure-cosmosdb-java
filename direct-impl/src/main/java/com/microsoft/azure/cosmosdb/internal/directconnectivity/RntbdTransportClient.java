@@ -206,6 +206,7 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
         private final Duration receiveHangDetectionTime;
         private final Duration requestTimeout;
         private final Duration sendHangDetectionTime;
+        private final Duration shutdownTimeout;
         private final UserAgentContainer userAgent;
 
         // endregion
@@ -223,6 +224,7 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
             this.receiveHangDetectionTime = builder.receiveHangDetectionTime;
             this.requestTimeout = builder.requestTimeout;
             this.sendHangDetectionTime = builder.sendHangDetectionTime;
+            this.shutdownTimeout = builder.shutdownTimeout;
             this.userAgent = builder.userAgent;
         }
 
@@ -266,6 +268,10 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
             return this.sendHangDetectionTime;
         }
 
+        public Duration shutdownTimeout() {
+            return this.shutdownTimeout;
+        }
+
         public UserAgentContainer userAgent() {
             return this.userAgent;
         }
@@ -288,6 +294,7 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
             // region Fields
 
             private static final UserAgentContainer DEFAULT_USER_AGENT_CONTAINER = new UserAgentContainer();
+            private static final Duration FIFTEEN_SECONDS = Duration.ofSeconds(15L);
             private static final Duration SIXTY_FIVE_SECONDS = Duration.ofSeconds(65L);
             private static final Duration TEN_SECONDS = Duration.ofSeconds(10L);
 
@@ -304,6 +311,7 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
             private Duration receiveHangDetectionTime = SIXTY_FIVE_SECONDS;
             private Duration requestTimeout;
             private Duration sendHangDetectionTime = TEN_SECONDS;
+            private Duration shutdownTimeout = FIFTEEN_SECONDS;
             private UserAgentContainer userAgent = DEFAULT_USER_AGENT_CONTAINER;
 
             // endregion
@@ -385,6 +393,15 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
                 checkArgument(value.compareTo(Duration.ZERO) > 0, "value: %s", value);
 
                 this.sendHangDetectionTime = value;
+                return this;
+            }
+
+            public Builder shutdownTimeout(final Duration value) {
+
+                checkNotNull(value, "value: null");
+                checkArgument(value.compareTo(Duration.ZERO) > 0, "value: %s", value);
+
+                this.shutdownTimeout = value;
                 return this;
             }
 

@@ -28,6 +28,8 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import com.google.common.collect.ImmutableMap;
+import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdEndpoint.Config;
 import io.netty.channel.Channel;
 import io.netty.channel.pool.ChannelHealthChecker;
 import io.netty.util.concurrent.Future;
@@ -49,23 +51,22 @@ public final class RntbdClientChannelHealthChecker implements ChannelHealthCheck
     // region Fields
 
     private static final Logger logger = LoggerFactory.getLogger(RntbdClientChannelHealthChecker.class);
-    private static final long NANOS_PER_SECOND = 1_000_000_000L;
 
     // A channel will be declared healthy if a read succeeded recently as defined by this value.
-    private static final long recentReadWindow = NANOS_PER_SECOND;
+    private static final long recentReadWindow = 1_000_000_000L;
 
     // A channel should not be declared unhealthy if a write succeeded recently. As such gaps between
     // Timestamps.lastChannelWrite and Timestamps.lastChannelRead lower than this value are ignored.
     // Guidance: The grace period should be large enough to accommodate the round trip time of the slowest server
     // request. Assuming 1s of network RTT, a 2 MB request, a 2 MB response, a connection that can sustain 1 MB/s
     // both ways, and a 5-second deadline at the server, 10 seconds should be enough.
-    private static final long readHangGracePeriod = 10L * NANOS_PER_SECOND;
+    private static final long readHangGracePeriod = 10L * 1_000_000_000L;
 
     // A channel will not be declared unhealthy if a write was attempted recently. As such gaps between
     // Timestamps.lastChannelWriteAttempt and Timestamps.lastChannelWrite lower than this value are ignored.
     // Guidance: The grace period should be large enough to accommodate slow writes. For example, a value of 2s requires
     // that the client can sustain data rates of at least 1 MB/s when writing 2 MB documents.
-    private static final long writeHangGracePeriod = 2L * NANOS_PER_SECOND;
+    private static final long writeHangGracePeriod = 2L * 1_000_000_000L;
 
     // A channel is considered idle if:
     // idleConnectionTimeout > 0L && System.nanoTime() - Timestamps.lastChannelRead() >= idleConnectionTimeout
@@ -85,7 +86,9 @@ public final class RntbdClientChannelHealthChecker implements ChannelHealthCheck
 
     // region Constructors
 
-    public RntbdClientChannelHealthChecker(RntbdEndpoint.Config config) {
+    public RntbdClientChannelHealthChecker(final Config config) {
+
+        checkNotNull(config, "config: null");
 
         this.idleConnectionTimeout = config.idleConnectionTimeout();
 
@@ -112,32 +115,40 @@ public final class RntbdClientChannelHealthChecker implements ChannelHealthCheck
         return this.writeDelayLimit;
     }
 
-    public Future<Boolean> isHealthy(Channel channel) {
+    public Future<Boolean> isHealthy(final Channel channel) {
 
-        checkNotNull(channel);
+        checkNotNull(channel, "channel: null");
 
-        RntbdRequestManager requestManager = channel.pipeline().get(RntbdRequestManager.class);
-        Promise<Boolean> promise = channel.eventLoop().newPromise();
+        final RntbdRequestManager requestManager = channel.pipeline().get(RntbdRequestManager.class);
+        final Promise<Boolean> promise = channel.eventLoop().newPromise();
 
         if (requestManager == null) {
-            reportIssueUnless(!channel.isActive(), logger, channel, "{} active with no request manager");
+            reportIssueUnless(!channel.isActive(), logger, channel, "active with no request manager");
             return promise.setSuccess(Boolean.FALSE);
         }
 
-        Timestamps timestamps = requestManager.timestamps();
-        long currentTime = System.nanoTime();
+        final Timestamps timestamps = requestManager.snapshotTimestamps();
+        final long currentTime = System.nanoTime();
 
         if (currentTime - timestamps.lastChannelRead() < recentReadWindow) {
-            return promise.setSuccess(Boolean.TRUE); // because we recently received data
+            return promise.setSuccess(Boolean.TRUE);  // because we recently received data
         }
 
         // Black hole detection, part 1:
         // Treat the channel as unhealthy if the gap between the last attempted write and the last successful write
         // grew beyond acceptable limits, unless a write was attempted recently. This is a sign of a hung write.
 
-        if (timestamps.lastChannelWriteAttempt() - timestamps.lastChannelWrite() > this.writeDelayLimit && currentTime - timestamps.lastChannelWriteAttempt() > writeHangGracePeriod) {
-            logger.warn("{} health check failed due to a hung write: {lastChannelWriteAttempt: {}, lastChannelWrite: {}, writeDelayLimit: {}}",
-                channel, timestamps.lastChannelWriteAttempt(), timestamps.lastChannelWrite(), this.writeDelayLimit);
+        final long writeDelay = timestamps.lastChannelWriteAttempt() - timestamps.lastChannelWrite();
+
+        if (writeDelay > this.writeDelayLimit && currentTime - timestamps.lastChannelWriteAttempt() > writeHangGracePeriod) {
+
+            final int pendingRequestCount = requestManager.pendingRequestCount();
+
+            logger.warn("{} health check failed due to hung write: {lastChannelWriteAttempt: {}, lastChannelWrite: {}, "
+                + "writeDelay: {}, writeDelayLimit: {}, pendingRequestCount: {}}", channel,
+                timestamps.lastChannelWriteAttempt(), timestamps.lastChannelWrite(),
+                writeDelay, this.writeDelayLimit, pendingRequestCount);
+
             return promise.setSuccess(Boolean.FALSE);
         }
 
@@ -145,9 +156,19 @@ public final class RntbdClientChannelHealthChecker implements ChannelHealthCheck
         // Treat the connection as unhealthy if the gap between the last successful write and the last successful read
         // grew beyond acceptable limits, unless a write succeeded recently. This is a sign of a hung read.
 
-        if (timestamps.lastChannelWrite() - timestamps.lastChannelRead() > this.readDelayLimit && currentTime - timestamps.lastChannelWrite() > readHangGracePeriod) {
-            logger.warn("{} health check failed due to response delay: {lastWriteTime: {}, lastReadTime: {}, readDelayLimit: {}}",
-                channel, timestamps.lastChannelWrite(), timestamps.lastChannelRead(), this.readDelayLimit);
+        final long readDelay = timestamps.lastChannelWrite() - timestamps.lastChannelRead();
+
+        if (readDelay > this.readDelayLimit && currentTime - timestamps.lastChannelWrite() > readHangGracePeriod) {
+
+            final int pendingRequestCount = requestManager.pendingRequestCount();
+
+            if (pendingRequestCount > 0) {
+                logger.warn("{} health check failed due to read hang: {lastWriteTime: {}, lastReadTime: {}, "
+                    + "readDelay: {}, readDelayLimit: {}, pendingRequestCount: {}}", channel,
+                    timestamps.lastChannelWrite(), timestamps.lastChannelRead(), readDelay,
+                    this.readDelayLimit, pendingRequestCount);
+            }
+
             return promise.setSuccess(Boolean.FALSE);
         }
 
@@ -205,6 +226,7 @@ public final class RntbdClientChannelHealthChecker implements ChannelHealthCheck
 
         @SuppressWarnings("CopyConstructorMissesField")
         public Timestamps(Timestamps other) {
+            checkNotNull(other, "other: null");
             lastReadUpdater.set(this, lastReadUpdater.get(other));
             lastWriteUpdater.set(this, lastWriteUpdater.get(other));
             lastWriteAttemptUpdater.set(this, lastWriteAttemptUpdater.get(other));

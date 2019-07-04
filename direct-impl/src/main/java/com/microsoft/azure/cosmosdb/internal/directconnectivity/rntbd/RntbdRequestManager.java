@@ -108,7 +108,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
     // endregion
 
-    public RntbdRequestManager(ChannelHealthChecker healthChecker, int pendingRequestLimit) {
+    public RntbdRequestManager(final ChannelHealthChecker healthChecker, final int pendingRequestLimit) {
 
         checkArgument(pendingRequestLimit > 0, "pendingRequestLimit: %s", pendingRequestLimit);
         checkNotNull(healthChecker, "healthChecker");
@@ -503,9 +503,13 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
     // endregion
 
-    // region Private and package private methods
+    // region Package private methods
 
-    CompletableFuture<RntbdContextRequest> getRntbdContextRequestFuture() {
+    int pendingRequestCount() {
+        return this.pendingRequests.size();
+    }
+
+    CompletableFuture<RntbdContextRequest> rntbdContextRequestFuture() {
         return this.contextRequestFuture;
     }
 
@@ -526,9 +530,13 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         this.pendingWrites.add(out, promise);
     }
 
-    RntbdClientChannelHealthChecker.Timestamps timestamps() {
+    RntbdClientChannelHealthChecker.Timestamps snapshotTimestamps() {
         return new RntbdClientChannelHealthChecker.Timestamps(this.timestamps);
     }
+
+    // endregion
+
+    // region Private methods
 
     private RntbdRequestArgs addPendingRequestRecord(final ChannelHandlerContext context, final RntbdRequestRecord record) {
 

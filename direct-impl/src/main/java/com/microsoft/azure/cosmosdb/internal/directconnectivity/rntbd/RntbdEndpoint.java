@@ -103,6 +103,10 @@ public interface RntbdEndpoint extends AutoCloseable {
             return this.options.sendHangDetectionTime().toNanos();
         }
 
+        public long shutdownTimeout() {
+            return this.options.shutdownTimeout().toNanos();
+        }
+
         public SslContext sslContext() {
             return this.sslContext;
         }

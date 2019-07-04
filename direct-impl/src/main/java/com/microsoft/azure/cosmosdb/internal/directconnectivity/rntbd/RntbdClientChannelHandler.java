@@ -24,6 +24,7 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd;
 
+import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdEndpoint.Config;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
@@ -46,9 +47,9 @@ public class RntbdClientChannelHandler extends ChannelInitializer<Channel> imple
 
     private static Logger logger = LoggerFactory.getLogger(RntbdClientChannelHandler.class);
     private final ChannelHealthChecker healthChecker;
-    private final RntbdEndpoint.Config config;
+    private final Config config;
 
-    RntbdClientChannelHandler(final RntbdEndpoint.Config config, final ChannelHealthChecker healthChecker) {
+    RntbdClientChannelHandler(final Config config, final ChannelHealthChecker healthChecker) {
         checkNotNull(healthChecker, "healthChecker");
         checkNotNull(config, "config");
         this.healthChecker = healthChecker;

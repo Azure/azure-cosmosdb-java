@@ -28,6 +28,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdEndpoint.Config;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.pool.ChannelPool;
@@ -94,7 +95,7 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
     private final Runnable acquisitionTimeoutTask;
     private int pendingChannelAcquisitionCount;
 
-    private RntbdClientChannelPool(final Bootstrap bootstrap, RntbdEndpoint.Config config, RntbdClientChannelHealthChecker healthChecker) {
+    private RntbdClientChannelPool(final Bootstrap bootstrap, final Config config, final RntbdClientChannelHealthChecker healthChecker) {
 
         super(bootstrap, new RntbdClientChannelHandler(config, healthChecker), healthChecker, true, true);
 
@@ -151,9 +152,9 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
      * Initializes a newly created {@link RntbdClientChannelPool} object
      *
      * @param bootstrap the {@link Bootstrap} that is used for connections
-     * @param config    the {@link RntbdEndpoint.Config} that is used for the channel pool instance created
+     * @param config    the {@link Config} that is used for the channel pool instance created
      */
-    RntbdClientChannelPool(final Bootstrap bootstrap, final RntbdEndpoint.Config config) {
+    RntbdClientChannelPool(final Bootstrap bootstrap, final Config config) {
         this(bootstrap, config, new RntbdClientChannelHealthChecker(config));
     }
 
