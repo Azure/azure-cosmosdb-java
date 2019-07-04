@@ -131,7 +131,7 @@ public class DocumentQueryExecutionContextFactory {
                     } else {
                         List<Range<String>> queryRanges = partitionedQueryExecutionInfo.getQueryRanges();
 
-                        if (feedOptions.getPartitionKey() != null) {
+                        if (feedOptions != null && feedOptions.getPartitionKey() != null) {
                             Range<String> range = Range.getPointRange(feedOptions.getPartitionKey()
                                     .getInternalPartitionKey()
                                     .getEffectivePartitionKeyString(feedOptions.getPartitionKey()
