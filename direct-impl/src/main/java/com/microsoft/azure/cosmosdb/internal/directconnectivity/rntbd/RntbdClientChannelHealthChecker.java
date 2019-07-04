@@ -41,6 +41,7 @@ import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdReporter.reportIssueUnless;
 import static java.util.concurrent.atomic.AtomicLongFieldUpdater.newUpdater;
 
@@ -160,12 +161,13 @@ public final class RntbdClientChannelHealthChecker implements ChannelHealthCheck
         if (readDelay > this.readDelayLimit && currentTime - timestamps.lastChannelWrite() > readHangGracePeriod) {
 
             final int pendingRequestCount = requestManager.pendingRequestCount();
+            final RntbdContext rntbdContext = requestManager.rntbdContext();
 
-            if (pendingRequestCount > 0) {
+            if (rntbdContext == null || pendingRequestCount > 0) {
                 logger.warn("{} health check failed due to read hang: {lastWriteTime: {}, lastReadTime: {}, "
-                    + "readDelay: {}, readDelayLimit: {}, pendingRequestCount: {}}", channel,
-                    timestamps.lastChannelWrite(), timestamps.lastChannelRead(), readDelay,
-                    this.readDelayLimit, pendingRequestCount);
+                    + "readDelay: {}, readDelayLimit: {}, pendingRequestCount: {}, rntbdContext: {}}",
+                    channel, timestamps.lastChannelWrite(), timestamps.lastChannelRead(), readDelay,
+                    this.readDelayLimit, pendingRequestCount, rntbdContext);
             }
 
             return promise.setSuccess(Boolean.FALSE);

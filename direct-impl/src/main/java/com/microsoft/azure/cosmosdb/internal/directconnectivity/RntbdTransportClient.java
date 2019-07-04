@@ -47,8 +47,6 @@ import rx.SingleEmitter;
 import java.io.IOException;
 import java.net.URI;
 import java.time.Duration;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -181,7 +179,7 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
                 try {
                     generator.writeObject(endpoint);
                 } catch (IOException error) {
-                    logger.error("failed to serialize {} due to ", endpoint.getName(), error);
+                    logger.error("failed to serialize {} due to ", endpoint.name(), error);
                 }
             });
 

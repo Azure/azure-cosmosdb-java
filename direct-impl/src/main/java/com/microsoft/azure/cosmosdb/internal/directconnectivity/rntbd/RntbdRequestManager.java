@@ -509,6 +509,10 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         return this.pendingRequests.size();
     }
 
+    RntbdContext rntbdContext() {
+        return this.contextFuture.getNow(null);
+    }
+
     CompletableFuture<RntbdContextRequest> rntbdContextRequestFuture() {
         return this.contextRequestFuture;
     }

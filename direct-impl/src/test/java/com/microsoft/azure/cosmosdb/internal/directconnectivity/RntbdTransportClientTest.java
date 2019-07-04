@@ -851,7 +851,7 @@ public final class RntbdTransportClientTest {
         }
 
         @Override
-        public String getName() {
+        public String name() {
             return "FakeEndpoint";
         }
 

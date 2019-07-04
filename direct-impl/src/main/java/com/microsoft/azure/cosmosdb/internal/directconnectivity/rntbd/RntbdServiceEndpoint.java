@@ -103,7 +103,7 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
     // region Accessors
 
     @Override
-    public String getName() {
+    public String name() {
         return this.name;
     }
 
