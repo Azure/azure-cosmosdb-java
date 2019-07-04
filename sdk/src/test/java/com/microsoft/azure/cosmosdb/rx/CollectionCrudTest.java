@@ -30,7 +30,7 @@ import java.util.UUID;
 
 import com.microsoft.azure.cosmosdb.DatabaseForTest;
 import com.microsoft.azure.cosmosdb.PartitionKeyDefinition;
-import com.microsoft.azure.cosmosdb.RetryAnalyzier;
+import com.microsoft.azure.cosmosdb.RetryAnalyzer;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -61,7 +61,7 @@ public class CollectionCrudTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuildersWithDirect")
     public CollectionCrudTest(AsyncDocumentClient.Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
         this.subscriberValidationTimeout = TIMEOUT;
     }
 
@@ -259,10 +259,10 @@ public class CollectionCrudTest extends TestSuiteBase {
         safeDeleteAllCollections(client, database);
     }
 
-    @Test(groups = { "emulator" }, timeOut = 10 * TIMEOUT, retryAnalyzer = RetryAnalyzier.class)
+    @Test(groups = { "emulator" }, timeOut = 10 * TIMEOUT, retryAnalyzer = RetryAnalyzer.class)
     public void sessionTokenConsistencyCollectionDeleteCreateSameName() {
-        AsyncDocumentClient client1 = clientBuilder.build();
-        AsyncDocumentClient client2 = clientBuilder.build();
+        AsyncDocumentClient client1 = clientBuilder().build();
+        AsyncDocumentClient client2 = clientBuilder().build();
 
         String dbId = DatabaseForTest.generateId();
         String collectionId = "coll";
@@ -316,7 +316,7 @@ public class CollectionCrudTest extends TestSuiteBase {
 
     @BeforeClass(groups = { "emulator" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
-        client = clientBuilder.build();
+        client = this.clientBuilder().build();
         database = createDatabase(client, databaseId);
     }
 

@@ -22,13 +22,52 @@
  */
 package com.microsoft.azure.cosmosdb.rx;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.spy;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableList;
+import com.microsoft.azure.cosmosdb.CompositePath;
+import com.microsoft.azure.cosmosdb.CompositePathSortOrder;
+import com.microsoft.azure.cosmosdb.ConnectionMode;
+import com.microsoft.azure.cosmosdb.ConnectionPolicy;
+import com.microsoft.azure.cosmosdb.ConsistencyLevel;
+import com.microsoft.azure.cosmosdb.DataType;
+import com.microsoft.azure.cosmosdb.Database;
+import com.microsoft.azure.cosmosdb.DatabaseForTest;
+import com.microsoft.azure.cosmosdb.Document;
+import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.DocumentClientTest;
+import com.microsoft.azure.cosmosdb.DocumentCollection;
+import com.microsoft.azure.cosmosdb.FeedOptions;
+import com.microsoft.azure.cosmosdb.FeedResponse;
+import com.microsoft.azure.cosmosdb.IncludedPath;
+import com.microsoft.azure.cosmosdb.Index;
+import com.microsoft.azure.cosmosdb.IndexingPolicy;
+import com.microsoft.azure.cosmosdb.PartitionKey;
+import com.microsoft.azure.cosmosdb.PartitionKeyDefinition;
+import com.microsoft.azure.cosmosdb.RequestOptions;
+import com.microsoft.azure.cosmosdb.Resource;
+import com.microsoft.azure.cosmosdb.ResourceResponse;
+import com.microsoft.azure.cosmosdb.RetryOptions;
+import com.microsoft.azure.cosmosdb.SqlQuerySpec;
+import com.microsoft.azure.cosmosdb.Undefined;
+import com.microsoft.azure.cosmosdb.User;
+import com.microsoft.azure.cosmosdb.internal.PathParser;
+import com.microsoft.azure.cosmosdb.internal.directconnectivity.Protocol;
+import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient.Builder;
+import com.microsoft.azure.cosmosdb.rx.internal.Configs;
+import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.mockito.stubbing.Answer;
+import org.testng.annotations.AfterSuite;
+import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.DataProvider;
+import rx.Observable;
+import rx.observers.TestSubscriber;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -36,85 +75,46 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableList;
-import com.microsoft.azure.cosmosdb.DataType;
-import com.microsoft.azure.cosmosdb.DatabaseForTest;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
-import com.microsoft.azure.cosmosdb.IncludedPath;
-import com.microsoft.azure.cosmosdb.Index;
-import com.microsoft.azure.cosmosdb.IndexingPolicy;
-import com.microsoft.azure.cosmosdb.RetryOptions;
-import com.microsoft.azure.cosmosdb.SqlQuerySpec;
-import com.microsoft.azure.cosmosdb.Undefined;
-import com.microsoft.azure.cosmosdb.internal.PathParser;
-import com.microsoft.azure.cosmosdb.internal.directconnectivity.Protocol;
-import com.microsoft.azure.cosmosdb.rx.internal.Configs;
-import org.apache.commons.lang3.ObjectUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.mockito.stubbing.Answer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.AfterSuite;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.BeforeSuite;
-import org.testng.annotations.DataProvider;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.spy;
 
-import com.microsoft.azure.cosmosdb.CompositePath;
-import com.microsoft.azure.cosmosdb.CompositePathSortOrder;
-import com.microsoft.azure.cosmosdb.ConnectionMode;
-import com.microsoft.azure.cosmosdb.ConnectionPolicy;
-import com.microsoft.azure.cosmosdb.ConsistencyLevel;
-import com.microsoft.azure.cosmosdb.Database;
-import com.microsoft.azure.cosmosdb.Document;
-import com.microsoft.azure.cosmosdb.DocumentCollection;
-import com.microsoft.azure.cosmosdb.FeedOptions;
-import com.microsoft.azure.cosmosdb.FeedResponse;
-import com.microsoft.azure.cosmosdb.PartitionKey;
-import com.microsoft.azure.cosmosdb.PartitionKeyDefinition;
-import com.microsoft.azure.cosmosdb.RequestOptions;
-import com.microsoft.azure.cosmosdb.Resource;
-import com.microsoft.azure.cosmosdb.ResourceResponse;
-import com.microsoft.azure.cosmosdb.User;
-import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient.Builder;
+public class TestSuiteBase extends DocumentClientTest {
 
-import org.testng.annotations.Test;
-import rx.Observable;
-import rx.observers.TestSubscriber;
-
-public class TestSuiteBase {
-    private static final int DEFAULT_BULK_INSERT_CONCURRENCY_LEVEL = 500;
-    private static final ObjectMapper objectMapper = new ObjectMapper();
-    protected static Logger logger = LoggerFactory.getLogger(TestSuiteBase.class.getSimpleName());
-    protected static final int TIMEOUT = 40000;
     protected static final int FEED_TIMEOUT = 40000;
     protected static final int SETUP_TIMEOUT = 60000;
     protected static final int SHUTDOWN_TIMEOUT = 12000;
-
     protected static final int SUITE_SETUP_TIMEOUT = 120000;
     protected static final int SUITE_SHUTDOWN_TIMEOUT = 60000;
-
+    protected static final int TIMEOUT = 40000;
     protected static final int WAIT_REPLICA_CATCH_UP_IN_MILLIS = 4000;
-
-    protected final static ConsistencyLevel accountConsistency;
+    protected static final ConsistencyLevel accountConsistency;
     protected static final ImmutableList<String> preferredLocations;
-    private static final ImmutableList<ConsistencyLevel> desiredConsistencies;
-    private static final ImmutableList<Protocol> protocols;
 
-    protected int subscriberValidationTimeout = TIMEOUT;
-    protected Builder clientBuilder;
+    private static final int DEFAULT_BULK_INSERT_CONCURRENCY_LEVEL = 500;
+    private static final ImmutableList<ConsistencyLevel> desiredConsistencies;
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final ImmutableList<Protocol> protocols;
 
     protected static Database SHARED_DATABASE;
     protected static DocumentCollection SHARED_MULTI_PARTITION_COLLECTION;
+    protected static DocumentCollection SHARED_MULTI_PARTITION_COLLECTION_WITH_COMPOSITE_AND_SPATIAL_INDEXES;
     protected static DocumentCollection SHARED_SINGLE_PARTITION_COLLECTION;
     protected static DocumentCollection SHARED_SINGLE_PARTITION_COLLECTION_WITHOUT_PARTITION_KEY;
-    protected static DocumentCollection SHARED_MULTI_PARTITION_COLLECTION_WITH_COMPOSITE_AND_SPATIAL_INDEXES;
+
+    protected int subscriberValidationTimeout = TIMEOUT;
+
+    private static <T> ImmutableList<T> immutableListOrNull(List<T> list) {
+        return list != null ? ImmutableList.copyOf(list) : null;
+    }
 
     static {
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        objectMapper.configure(JsonParser.Feature.ALLOW_SINGLE_QUOTES, true);
+        objectMapper.configure(JsonParser.Feature.ALLOW_TRAILING_COMMA, true);
+        objectMapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
+        objectMapper.configure(JsonParser.Feature.STRICT_DUPLICATE_DETECTION, true);
+
         accountConsistency = parseConsistency(TestConfigurations.CONSISTENCY);
         desiredConsistencies = immutableListOrNull(
                 ObjectUtils.defaultIfNull(parseDesiredConsistencies(TestConfigurations.DESIRED_CONSISTENCIES),
@@ -125,34 +125,12 @@ public class TestSuiteBase {
     }
 
     protected TestSuiteBase() {
-        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        objectMapper.configure(JsonParser.Feature.ALLOW_SINGLE_QUOTES, true);
-        objectMapper.configure(JsonParser.Feature.ALLOW_TRAILING_COMMA, true);
-        objectMapper.configure(JsonParser.Feature.STRICT_DUPLICATE_DETECTION, true);
+        this(new AsyncDocumentClient.Builder());
+    }
+
+    protected TestSuiteBase(AsyncDocumentClient.Builder clientBuilder) {
+        super(clientBuilder);
         logger.debug("Initializing {} ...", this.getClass().getSimpleName());
-    }
-
-    private static <T> ImmutableList<T> immutableListOrNull(List<T> list) {
-        return list != null ? ImmutableList.copyOf(list) : null;
-    }
-
-    @BeforeMethod(groups = {"simple", "long", "direct", "multi-master", "emulator", "non-emulator"})
-    public void beforeMethod(Method method) {
-        if (this.clientBuilder != null) {
-            logger.info("Starting {}::{} using {} {} mode with {} consistency",
-                        method.getDeclaringClass().getSimpleName(), method.getName(),
-                        this.clientBuilder.connectionPolicy.getConnectionMode(),
-                        this.clientBuilder.configs.getProtocol(),
-                        this.clientBuilder.desiredConsistencyLevel);
-            return;
-        }
-        logger.info("Starting {}::{}", method.getDeclaringClass().getSimpleName(), method.getName());
-    }
-
-    @AfterMethod(groups = {"simple", "long", "direct", "multi-master", "emulator", "non-emulator"})
-    public void afterMethod(Method m) {
-        Test t = m.getAnnotation(Test.class);
-        logger.info("Finished {}:{}.", m.getDeclaringClass().getSimpleName(), m.getName());
     }
 
     private static class DatabaseManagerImpl implements DatabaseForTest.DatabaseManager {
@@ -184,7 +162,7 @@ public class TestSuiteBase {
     }
 
     @BeforeSuite(groups = {"simple", "long", "direct", "multi-master", "emulator", "non-emulator"}, timeOut = SUITE_SETUP_TIMEOUT)
-    public static void beforeSuite() {
+    public static void beforeSuite() throws Exception {
         logger.info("beforeSuite Started");
         AsyncDocumentClient houseKeepingClient = createGatewayHouseKeepingDocumentClient().build();
         try {
@@ -199,6 +177,8 @@ public class TestSuiteBase {
         } finally {
             houseKeepingClient.close();
         }
+
+        TimeUnit.SECONDS.sleep(10);
     }
 
     @AfterSuite(groups = {"simple", "long", "direct", "multi-master", "emulator", "non-emulator"}, timeOut = SUITE_SHUTDOWN_TIMEOUT)

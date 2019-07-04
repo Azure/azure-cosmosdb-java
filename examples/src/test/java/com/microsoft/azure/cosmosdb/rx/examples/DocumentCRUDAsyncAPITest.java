@@ -33,6 +33,7 @@ import com.microsoft.azure.cosmosdb.ConsistencyLevel;
 import com.microsoft.azure.cosmosdb.Database;
 import com.microsoft.azure.cosmosdb.Document;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.DocumentClientTest;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
@@ -42,7 +43,6 @@ import com.microsoft.azure.cosmosdb.RequestOptions;
 import com.microsoft.azure.cosmosdb.ResourceResponse;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import org.apache.commons.lang3.RandomUtils;
-import org.assertj.core.api.Assertions;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -57,6 +57,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 
+import static com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient.Builder;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -87,24 +88,27 @@ import static org.hamcrest.Matchers.is;
  * transform an observable to ListenableFuture. Please see
  * {@link #transformObservableToGoogleGuavaListenableFuture()}
  */
-public class DocumentCRUDAsyncAPITest {
+public class DocumentCRUDAsyncAPITest extends DocumentClientTest {
+
     private final static String PARTITION_KEY_PATH = "/mypk";
     private final static int TIMEOUT = 60000;
-    private AsyncDocumentClient asyncClient;
+
+    private AsyncDocumentClient client;
     private Database createdDatabase;
     private DocumentCollection createdCollection;
 
     @BeforeClass(groups = "samples", timeOut = TIMEOUT)
     public void setUp() {
-        // Sets up the requirements for each test
+
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
         connectionPolicy.setConnectionMode(ConnectionMode.Direct);
-        asyncClient = new AsyncDocumentClient.Builder()
-                .withServiceEndpoint(TestConfigurations.HOST)
-                .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
-                .withConnectionPolicy(connectionPolicy)
-                .withConsistencyLevel(ConsistencyLevel.Session)
-                .build();
+
+        this.client = this.clientBuilder()
+            .withServiceEndpoint(TestConfigurations.HOST)
+            .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
+            .withConnectionPolicy(connectionPolicy)
+            .withConsistencyLevel(ConsistencyLevel.Session)
+            .build();
 
         DocumentCollection collectionDefinition = new DocumentCollection();
         collectionDefinition.setId(UUID.randomUUID().toString());
@@ -116,18 +120,18 @@ public class DocumentCRUDAsyncAPITest {
         collectionDefinition.setPartitionKey(partitionKeyDefinition);
 
         // Create database
-        createdDatabase = Utils.createDatabaseForTest(asyncClient);
+        createdDatabase = Utils.createDatabaseForTest(client);
 
         // Create collection
-        createdCollection = asyncClient
-                .createCollection("dbs/" + createdDatabase.getId(), collectionDefinition, null)
-                .toBlocking().single().getResource();
+        createdCollection = client
+            .createCollection("dbs/" + createdDatabase.getId(), collectionDefinition, null)
+            .toBlocking().single().getResource();
     }
 
     @AfterClass(groups = "samples", timeOut = TIMEOUT)
     public void shutdown() {
-        Utils.safeClean(asyncClient, createdDatabase);
-        Utils.safeClose(asyncClient);
+        Utils.safeClean(client, createdDatabase);
+        Utils.safeClose(client);
     }
 
     /**
@@ -136,7 +140,7 @@ public class DocumentCRUDAsyncAPITest {
     @Test(groups = "samples", timeOut = TIMEOUT)
     public void createDocument_Async() throws Exception {
         Document doc = new Document(String.format("{ 'id': 'doc%s', 'counter': '%d'}", UUID.randomUUID().toString(), 1));
-        Observable<ResourceResponse<Document>> createDocumentObservable = asyncClient
+        Observable<ResourceResponse<Document>> createDocumentObservable = client
                 .createDocument(getCollectionLink(), doc, null, true);
 
         final CountDownLatch completionLatch = new CountDownLatch(1);
@@ -162,8 +166,8 @@ public class DocumentCRUDAsyncAPITest {
     @Test(groups = "samples", timeOut = TIMEOUT)
     public void createDocument_Async_withoutLambda() throws Exception {
         Document doc = new Document(String.format("{ 'id': 'doc%s', 'counter': '%d'}", UUID.randomUUID().toString(), 1));
-        Observable<ResourceResponse<Document>> createDocumentObservable = asyncClient
-                .createDocument(getCollectionLink(), doc, null, true);
+        Observable<ResourceResponse<Document>> createDocumentObservable = client
+            .createDocument(getCollectionLink(), doc, null, true);
 
         final CountDownLatch completionLatch = new CountDownLatch(1);
 
@@ -180,14 +184,14 @@ public class DocumentCRUDAsyncAPITest {
 
             public void call(Throwable error) {
                 System.err
-                        .println("an error occurred while creating the document: actual cause: " + error.getMessage());
+                    .println("an error occurred while creating the document: actual cause: " + error.getMessage());
                 completionLatch.countDown();
             }
         };
 
         // Subscribe to Document resource response emitted by the observable
         createDocumentObservable.single() // We know there will be one response
-                .subscribe(onNext, onError);
+                                .subscribe(onNext, onError);
 
         // Wait till document creation completes
         completionLatch.await();
@@ -199,8 +203,8 @@ public class DocumentCRUDAsyncAPITest {
     @Test(groups = "samples", timeOut = TIMEOUT)
     public void createDocument_toBlocking() {
         Document doc = new Document(String.format("{ 'id': 'doc%s', 'counter': '%d'}", UUID.randomUUID().toString(), 1));
-        Observable<ResourceResponse<Document>> createDocumentObservable = asyncClient
-                .createDocument(getCollectionLink(), doc, null, true);
+        Observable<ResourceResponse<Document>> createDocumentObservable = client
+            .createDocument(getCollectionLink(), doc, null, true);
 
         // toBlocking() converts to a blocking observable.
         // single() gets the only result.
@@ -217,13 +221,13 @@ public class DocumentCRUDAsyncAPITest {
         documentDefinition.set("counter", 1);
 
         // Create a document
-        Document createdDocument = asyncClient
-                .createDocument(getCollectionLink(), documentDefinition, null, false).toBlocking().single()
-                .getResource();
+        Document createdDocument = client
+            .createDocument(getCollectionLink(), documentDefinition, null, false).toBlocking().single()
+            .getResource();
 
         // Read the created document
-        Observable<ResourceResponse<Document>> readDocumentObservable = asyncClient
-                .readDocument(getDocumentLink(createdDocument), null);
+        Observable<ResourceResponse<Document>> readDocumentObservable = client
+            .readDocument(getDocumentLink(createdDocument), null);
 
         final CountDownLatch completionLatch = new CountDownLatch(1);
 
@@ -253,8 +257,8 @@ public class DocumentCRUDAsyncAPITest {
         for (int i = 0; i < 10; i++) {
             Document doc = new Document(String.format("{ 'id': 'doc%s', 'counter': '%d'}", UUID.randomUUID().toString(), i));
 
-            Observable<ResourceResponse<Document>> createDocumentObservable = asyncClient
-                    .createDocument(getCollectionLink(), doc, null, false);
+            Observable<ResourceResponse<Document>> createDocumentObservable = client
+                .createDocument(getCollectionLink(), doc, null, false);
             listOfCreateDocumentObservables.add(createDocumentObservable);
         }
 
@@ -264,19 +268,19 @@ public class DocumentCRUDAsyncAPITest {
         // Create a new observable emitting the total charge of creating all 10
         // documents.
         Observable<Double> totalChargeObservable = mergedObservable
-                .map(ResourceResponse::getRequestCharge)
-                // Map to request charge
-                .reduce((totalCharge, charge) -> totalCharge + charge);
+            .map(ResourceResponse::getRequestCharge)
+            // Map to request charge
+            .reduce((totalCharge, charge) -> totalCharge + charge);
         // Sum up all the charges
 
         final CountDownLatch completionLatch = new CountDownLatch(1);
 
         // Subscribe to the total request charge observable
         totalChargeObservable.subscribe(totalCharge -> {
-                                            // Print the total charge
-                                            System.out.println(totalCharge);
-                                            completionLatch.countDown();
-                                        }, e -> completionLatch.countDown()
+                // Print the total charge
+                System.out.println(totalCharge);
+                completionLatch.countDown();
+            }, e -> completionLatch.countDown()
         );
 
         completionLatch.await();
@@ -292,19 +296,19 @@ public class DocumentCRUDAsyncAPITest {
     @Test(groups = "samples", timeOut = TIMEOUT)
     public void createDocument_toBlocking_DocumentAlreadyExists_Fails() {
         Document doc = new Document(String.format("{ 'id': 'doc%s', 'counter': '%d'}", UUID.randomUUID().toString(), 1));
-        asyncClient.createDocument(getCollectionLink(), doc, null, false).toBlocking().single();
+        client.createDocument(getCollectionLink(), doc, null, false).toBlocking().single();
 
         // Create the document
-        Observable<ResourceResponse<Document>> createDocumentObservable = asyncClient
-                .createDocument(getCollectionLink(), doc, null, false);
+        Observable<ResourceResponse<Document>> createDocumentObservable = client
+            .createDocument(getCollectionLink(), doc, null, false);
 
         try {
             createDocumentObservable.toBlocking() // Converts the observable to a blocking observable
-                    .single(); // Gets the single result
+                                    .single(); // Gets the single result
             Assert.fail("Document Already Exists. Document Creation must fail");
         } catch (Exception e) {
             assertThat("Document already exists.", ((DocumentClientException) e.getCause()).getStatusCode(),
-                       equalTo(409));
+                equalTo(409));
         }
     }
 
@@ -318,11 +322,11 @@ public class DocumentCRUDAsyncAPITest {
     @Test(groups = "samples", timeOut = TIMEOUT)
     public void createDocument_Async_DocumentAlreadyExists_Fails() throws Exception {
         Document doc = new Document(String.format("{ 'id': 'doc%s', 'counter': '%d'}", UUID.randomUUID().toString(), 1));
-        asyncClient.createDocument(getCollectionLink(), doc, null, false).toBlocking().single();
+        client.createDocument(getCollectionLink(), doc, null, false).toBlocking().single();
 
         // Create the document
-        Observable<ResourceResponse<Document>> createDocumentObservable = asyncClient
-                .createDocument(getCollectionLink(), doc, null, false);
+        Observable<ResourceResponse<Document>> createDocumentObservable = client
+            .createDocument(getCollectionLink(), doc, null, false);
 
         List<Throwable> errorList = Collections.synchronizedList(new ArrayList<>());
 
@@ -345,17 +349,17 @@ public class DocumentCRUDAsyncAPITest {
     public void documentReplace_Async() throws Exception {
         // Create a document
         Document createdDocument = new Document(String.format("{ 'id': 'doc%s', 'counter': '%d'}", UUID.randomUUID().toString(), 1));
-        createdDocument = asyncClient.createDocument(getCollectionLink(), createdDocument, null, false).toBlocking()
-                .single().getResource();
+        createdDocument = client.createDocument(getCollectionLink(), createdDocument, null, false).toBlocking()
+                                .single().getResource();
 
         // Try to replace the existing document
         Document replacingDocument = new Document(
-                String.format("{ 'id': 'doc%s', 'counter': '%d', 'new-prop' : '2'}", createdDocument.getId(), 1));
-        Observable<ResourceResponse<Document>> replaceDocumentObservable = asyncClient
-                .replaceDocument(getDocumentLink(createdDocument), replacingDocument, null);
+            String.format("{ 'id': 'doc%s', 'counter': '%d', 'new-prop' : '2'}", createdDocument.getId(), 1));
+        Observable<ResourceResponse<Document>> replaceDocumentObservable = client
+            .replaceDocument(getDocumentLink(createdDocument), replacingDocument, null);
 
         List<ResourceResponse<Document>> capturedResponse = Collections
-                .synchronizedList(new ArrayList<>());
+            .synchronizedList(new ArrayList<>());
 
         replaceDocumentObservable.subscribe(resourceResponse -> {
             capturedResponse.add(resourceResponse);
@@ -374,16 +378,16 @@ public class DocumentCRUDAsyncAPITest {
     public void documentUpsert_Async() throws Exception {
         // Create a document
         Document doc = new Document(String.format("{ 'id': 'doc%s', 'counter': '%d'}", UUID.randomUUID().toString(), 1));
-        asyncClient.createDocument(getCollectionLink(), doc, null, false).toBlocking().single();
+        client.createDocument(getCollectionLink(), doc, null, false).toBlocking().single();
 
         // Upsert the existing document
         Document upsertingDocument = new Document(
-                String.format("{ 'id': 'doc%s', 'counter': '%d', 'new-prop' : '2'}", doc.getId(), 1));
-        Observable<ResourceResponse<Document>> upsertDocumentObservable = asyncClient
-                .upsertDocument(getCollectionLink(), upsertingDocument, null, false);
+            String.format("{ 'id': 'doc%s', 'counter': '%d', 'new-prop' : '2'}", doc.getId(), 1));
+        Observable<ResourceResponse<Document>> upsertDocumentObservable = client
+            .upsertDocument(getCollectionLink(), upsertingDocument, null, false);
 
         List<ResourceResponse<Document>> capturedResponse = Collections
-                .synchronizedList(new ArrayList<>());
+            .synchronizedList(new ArrayList<>());
 
         upsertDocumentObservable.subscribe(resourceResponse -> {
             capturedResponse.add(resourceResponse);
@@ -402,14 +406,14 @@ public class DocumentCRUDAsyncAPITest {
     public void documentDelete_Async() throws Exception {
         // Create a document
         Document createdDocument = new Document(String.format("{ 'id': 'doc%s', 'counter': '%d', 'mypk' : '%s'}", UUID.randomUUID().toString(), 1, UUID.randomUUID().toString()));
-        createdDocument = asyncClient.createDocument(getCollectionLink(), createdDocument, null, false).toBlocking()
-                .single().getResource();
+        createdDocument = client.createDocument(getCollectionLink(), createdDocument, null, false).toBlocking()
+                                .single().getResource();
 
         RequestOptions options = new RequestOptions();
         options.setPartitionKey(new PartitionKey(createdDocument.getString("mypk")));
 
         // Delete the existing document
-        Observable<ResourceResponse<Document>> deleteDocumentObservable = asyncClient
+        Observable<ResourceResponse<Document>> deleteDocumentObservable = client
                 .deleteDocument(getDocumentLink(createdDocument), options);
 
         List<ResourceResponse<Document>> capturedResponse = Collections
@@ -426,7 +430,7 @@ public class DocumentCRUDAsyncAPITest {
         // Assert document is deleted
         FeedOptions queryOptions = new FeedOptions();
         queryOptions.setEnableCrossPartitionQuery(true);
-        List<Document> listOfDocuments = asyncClient
+        List<Document> listOfDocuments = client
                 .queryDocuments(getCollectionLink(), String.format("SELECT * FROM r where r.id = '%s'", createdDocument.getId()), queryOptions)
                 .map(FeedResponse::getResults) // Map page to its list of documents
                 .concatMap(Observable::from) // Flatten the observable
@@ -445,13 +449,13 @@ public class DocumentCRUDAsyncAPITest {
     public void documentRead_Async() throws Exception {
         // Create a document
         Document createdDocument = new Document(String.format("{ 'id': 'doc%s', 'counter': '%d', 'mypk' : '%s'}", UUID.randomUUID().toString(), 1, UUID.randomUUID().toString()));
-        createdDocument = asyncClient.createDocument(getCollectionLink(), createdDocument, null, false).toBlocking()
-                .single().getResource();
+        createdDocument = client.createDocument(getCollectionLink(), createdDocument, null, false).toBlocking()
+                                .single().getResource();
 
         // Read the document
         RequestOptions options = new RequestOptions();
         options.setPartitionKey(new PartitionKey(createdDocument.getString("mypk")));
-        Observable<ResourceResponse<Document>> readDocumentObservable = asyncClient
+        Observable<ResourceResponse<Document>> readDocumentObservable = client
                 .readDocument(getDocumentLink(createdDocument), options);
 
         List<ResourceResponse<Document>> capturedResponse = Collections
@@ -491,20 +495,20 @@ public class DocumentCRUDAsyncAPITest {
         String itemAsJsonString = mapper.writeValueAsString(testObject);
         Document doc = new Document(itemAsJsonString);
 
-        Document createdDocument = asyncClient
-                .createDocument(getCollectionLink(), doc, null, false)
-                .toBlocking()
-                .single()
-                .getResource();
+        Document createdDocument = client
+            .createDocument(getCollectionLink(), doc, null, false)
+            .toBlocking()
+            .single()
+            .getResource();
 
         RequestOptions options = new RequestOptions();
         options.setPartitionKey(new PartitionKey(testObject.mypk));
 
-        Document readDocument = asyncClient
-                .readDocument(createdDocument.getSelfLink(), options)
-                .toBlocking()
-                .single()
-                .getResource();
+        Document readDocument = client
+            .readDocument(createdDocument.getSelfLink(), options)
+            .toBlocking()
+            .single()
+            .getResource();
 
         TestObject readObject = mapper.readValue(readDocument.toJson(), TestObject.class);
         assertThat(readObject.prop, equalTo(testObject.prop));
@@ -519,7 +523,7 @@ public class DocumentCRUDAsyncAPITest {
     @Test(groups = "samples", timeOut = TIMEOUT)
     public void transformObservableToGoogleGuavaListenableFuture() throws Exception {
         Document doc = new Document(String.format("{ 'id': 'doc%d', 'counter': '%d'}", RandomUtils.nextInt(), 1));
-        Observable<ResourceResponse<Document>> createDocumentObservable = asyncClient
+        Observable<ResourceResponse<Document>> createDocumentObservable = client
                 .createDocument(getCollectionLink(), doc, null, false);
         ListenableFuture<ResourceResponse<Document>> listenableFuture = ListenableFutureObservable
                 .to(createDocumentObservable);

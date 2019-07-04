@@ -26,7 +26,7 @@ import com.microsoft.azure.cosmosdb.Database;
 import com.microsoft.azure.cosmosdb.Document;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.ResourceResponse;
-import com.microsoft.azure.cosmosdb.RetryAnalyzier;
+import com.microsoft.azure.cosmosdb.RetryAnalyzer;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.Protocol;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient.Builder;
 import org.apache.commons.lang3.StringUtils;
@@ -51,10 +51,10 @@ public class VeryLargeDocumentQueryTest extends TestSuiteBase {
 
     @Factory(dataProvider = "simpleClientBuildersWithDirect")
     public VeryLargeDocumentQueryTest(Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
-    @Test(groups = { "emulator" }, timeOut = TIMEOUT, retryAnalyzer = RetryAnalyzier.class)
+    @Test(groups = { "emulator" }, timeOut = TIMEOUT, retryAnalyzer = RetryAnalyzer.class)
     public void queryLargeDocuments() {
         int cnt = 5;
         for(int i = 0; i < cnt; i++) {
@@ -83,7 +83,7 @@ public class VeryLargeDocumentQueryTest extends TestSuiteBase {
 
     @BeforeClass(groups = { "emulator" }, timeOut = 2 * SETUP_TIMEOUT)
     public void beforeClass() throws Exception {
-        client = clientBuilder.build();
+        client = this.clientBuilder().build();
         createdDatabase = SHARED_DATABASE;
         createdCollection = SHARED_SINGLE_PARTITION_COLLECTION_WITHOUT_PARTITION_KEY;
         truncateCollection(SHARED_SINGLE_PARTITION_COLLECTION_WITHOUT_PARTITION_KEY);

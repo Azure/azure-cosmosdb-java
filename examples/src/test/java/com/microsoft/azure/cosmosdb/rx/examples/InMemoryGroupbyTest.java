@@ -27,6 +27,7 @@ import com.microsoft.azure.cosmosdb.ConnectionPolicy;
 import com.microsoft.azure.cosmosdb.ConsistencyLevel;
 import com.microsoft.azure.cosmosdb.Database;
 import com.microsoft.azure.cosmosdb.Document;
+import com.microsoft.azure.cosmosdb.DocumentClientTest;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.SqlParameter;
@@ -40,40 +41,46 @@ import rx.Observable;
 import rx.observables.GroupedObservable;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public class InMemoryGroupbyTest {
+public class InMemoryGroupbyTest extends DocumentClientTest {
+
     private final static int TIMEOUT = 60000;
 
-    private static AsyncDocumentClient asyncClient;
-    private static Database createdDatabase;
-    private static DocumentCollection createdCollection;
+    private AsyncDocumentClient client;
+    private Database createdDatabase;
+    private DocumentCollection createdCollection;
 
     @BeforeClass(groups = "samples", timeOut = TIMEOUT)
-    public static void setUp() throws Exception {
+    public void setUp() throws Exception {
+
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
         connectionPolicy.setConnectionMode(ConnectionMode.Direct);
-        asyncClient = new AsyncDocumentClient.Builder()
-                .withServiceEndpoint(TestConfigurations.HOST)
-                .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
-                .withConnectionPolicy(connectionPolicy)
-                .withConsistencyLevel(ConsistencyLevel.Session)
-                .build();
+
+        this.client = this.clientBuilder()
+            .withServiceEndpoint(TestConfigurations.HOST)
+            .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
+            .withConnectionPolicy(connectionPolicy)
+            .withConsistencyLevel(ConsistencyLevel.Session)
+            .build();
 
         // Create database
-        createdDatabase = Utils.createDatabaseForTest(asyncClient);
+        createdDatabase = Utils.createDatabaseForTest(client);
 
         DocumentCollection collectionDefinition = new DocumentCollection();
         collectionDefinition.setId(UUID.randomUUID().toString());
 
         // Create collection
-        createdCollection = asyncClient
+        createdCollection = client
                 .createCollection("dbs/" + createdDatabase.getId(), collectionDefinition, null)
                 .toBlocking().single().getResource();
 
         int numberOfPayers = 10;
         int numberOfDocumentsPerPayer = 10;
+
+        ArrayList<rx.Observable> list = new ArrayList<>();
 
         for (int i = 0; i < numberOfPayers; i++) {
 
@@ -87,18 +94,18 @@ public class InMemoryGroupbyTest {
                         + "'payer_id': %d, "
                         + " 'created_time' : %d "
                         + "}", UUID.randomUUID().toString(), i, currentTime.getSecond()));
-                asyncClient.createDocument(getCollectionLink(), doc, null, true).toBlocking().single();
-
-                Thread.sleep(100);
+                list.add(client.createDocument(getCollectionLink(), doc, null, true));
             }
         }
+
+        Observable.merge(list.toArray(new Observable[0]), 1).toCompletable().await();
         System.out.println("finished inserting documents");
     }
 
     @AfterClass(groups = "samples", timeOut = TIMEOUT)
-    public static void shutdown() {
-        Utils.safeClean(asyncClient, createdDatabase);
-        asyncClient.close();
+    public void shutdown() {
+        Utils.safeClean(client, createdDatabase);
+        client.close();
     }
 
     /**
@@ -113,7 +120,7 @@ public class InMemoryGroupbyTest {
         FeedOptions options = new FeedOptions();
         options.setMaxItemCount(requestPageSize);
 
-        Observable<Document> documentsObservable = asyncClient
+        Observable<Document> documentsObservable = client
                 .queryDocuments(getCollectionLink(),
                         new SqlQuerySpec("SELECT * FROM root r WHERE r.site_id=@site_id",
                                 new SqlParameterCollection(new SqlParameter("@site_id", "ABC"))),
@@ -146,7 +153,7 @@ public class InMemoryGroupbyTest {
         options.setMaxItemCount(requestPageSize);
 
 
-        Observable<Document> documentsObservable = asyncClient
+        Observable<Document> documentsObservable = client
                 .queryDocuments(getCollectionLink(),
                         new SqlQuerySpec("SELECT * FROM root r WHERE r.site_id=@site_id",
                                 new SqlParameterCollection(new SqlParameter("@site_id", "ABC"))),
@@ -171,7 +178,7 @@ public class InMemoryGroupbyTest {
         }
     }
 
-    private static  String getCollectionLink() {
-        return "dbs/" + createdDatabase.getId() + "/colls/" + createdCollection.getId();
+    private String getCollectionLink() {
+        return "dbs/" + this.createdDatabase.getId() + "/colls/" + this.createdCollection.getId();
     }
 }

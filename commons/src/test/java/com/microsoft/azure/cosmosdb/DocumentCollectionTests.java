@@ -52,4 +52,10 @@ public class DocumentCollectionTests {
         assertThat(parsedColl.getPartitionKey().getPaths()).isEqualTo(partitionKeyDefinition.getPaths());
         assertThat(parsedColl.getPartitionKey().getVersion()).isEqualTo(partitionKeyDefinition.getVersion());
     }
+
+    @Test(groups = {"unit"})
+    public void getIndexingPolicy() {
+        DocumentCollection collection = new DocumentCollection();
+        assertThat(collection.getIndexingPolicy().getCompositeIndexes()).isNotNull();
+    }
 }

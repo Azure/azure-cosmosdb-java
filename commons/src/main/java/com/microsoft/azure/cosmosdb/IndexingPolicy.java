@@ -198,14 +198,16 @@ public final class IndexingPolicy extends JsonSerializable {
         if (this.compositeIndexes == null) {
             this.compositeIndexes = new ArrayList<ArrayList<CompositePath>>();
             ArrayNode compositeIndexes = (ArrayNode) super.get(Constants.Properties.COMPOSITE_INDEXES);
-            for (int i = 0; i < compositeIndexes.size(); i ++) {
-                ArrayNode compositeIndex = (ArrayNode) compositeIndexes.get(i);
-                ArrayList<CompositePath> compositePaths = new ArrayList<CompositePath>();
-                for (int j = 0; j < compositeIndex.size(); j ++) {
-                    CompositePath candidateCompositePath = new CompositePath(compositeIndex.get(j).toString());
-                    compositePaths.add(candidateCompositePath);
+            if (compositeIndexes != null) {
+                for (int i = 0; i < compositeIndexes.size(); i++) {
+                    ArrayNode compositeIndex = (ArrayNode) compositeIndexes.get(i);
+                    ArrayList<CompositePath> compositePaths = new ArrayList<CompositePath>();
+                    for (int j = 0; j < compositeIndex.size(); j++) {
+                        CompositePath candidateCompositePath = new CompositePath(compositeIndex.get(j).toString());
+                        compositePaths.add(candidateCompositePath);
+                    }
+                    this.compositeIndexes.add(compositePaths);
                 }
-                this.compositeIndexes.add(compositePaths);
             }
         }
 

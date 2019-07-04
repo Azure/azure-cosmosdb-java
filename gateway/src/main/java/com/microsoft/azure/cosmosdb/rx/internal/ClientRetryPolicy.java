@@ -108,7 +108,7 @@ public class ClientRetryPolicy implements IDocumentClientRetryPolicy {
         if (clientException != null &&
                 Exceptions.isStatusCode(clientException, HttpConstants.StatusCodes.FORBIDDEN) &&
                 Exceptions.isSubStatusCode(clientException, HttpConstants.SubStatusCodes.DATABASE_ACCOUNT_NOTFOUND) &&
-                this.isReadRequest)
+                (this.isReadRequest || this.canUseMultipleWriteLocations))
         {
             logger.warn("Endpoint not available for reads. Will refresh cache and retry. {}", e.toString());
             return this.shouldRetryOnEndpointFailureAsync(true);

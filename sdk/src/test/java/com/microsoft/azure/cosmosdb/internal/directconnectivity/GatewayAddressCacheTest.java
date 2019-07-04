@@ -77,7 +77,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuilders")
     public GatewayAddressCacheTest(Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @DataProvider(name = "targetPartitionsKeyRangeListAndCollectionLinkParams")
@@ -414,7 +414,11 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
                 .describedAs("getServerAddressesViaGatewayAsync will read addresses from gateway")
                 .asList().hasSize(1);
         httpClientWrapper.capturedRequest.clear();
-        assertThat(suboptimalAddresses).hasSize(ServiceConfig.SystemReplicationPolicy.MaxReplicaSetSize - 1);
+
+        // relaxes one replica being down
+        assertThat(suboptimalAddresses.length).isLessThanOrEqualTo((ServiceConfig.SystemReplicationPolicy.MaxReplicaSetSize - 1));
+        assertThat(suboptimalAddresses.length).isGreaterThanOrEqualTo(ServiceConfig.SystemReplicationPolicy.MaxReplicaSetSize - 2);
+
         assertThat(fetchCounter.get()).isEqualTo(1);
 
         // no refresh, use cache
@@ -821,7 +825,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
     
     @BeforeClass(groups = { "direct" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
-        client = clientBuilder.build();
+        client = this.clientBuilder().build();
         createdDatabase = SHARED_DATABASE;
 
         RequestOptions options = new RequestOptions();

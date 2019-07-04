@@ -29,6 +29,7 @@ import com.microsoft.azure.cosmosdb.ConnectionPolicy;
 import com.microsoft.azure.cosmosdb.ConsistencyLevel;
 import com.microsoft.azure.cosmosdb.Database;
 import com.microsoft.azure.cosmosdb.Document;
+import com.microsoft.azure.cosmosdb.DocumentClientTest;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
@@ -37,13 +38,16 @@ import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import rx.Completable;
 import rx.Observable;
 import rx.observable.ListenableFutureObservable;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 
+import static com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient.Builder;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -57,7 +61,8 @@ import static org.hamcrest.Matchers.notNullValue;
  * transform an observable to ListenableFuture. Please see
  * {@link #transformObservableToGoogleGuavaListenableFuture()}
  */
-public class ConflictAPITest {
+public class ConflictAPITest extends DocumentClientTest {
+
     private final static int TIMEOUT = 60000;
 
     private AsyncDocumentClient client;
@@ -66,14 +71,16 @@ public class ConflictAPITest {
 
     @BeforeClass(groups = "samples", timeOut = TIMEOUT)
     public void setUp() {
+
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
         connectionPolicy.setConnectionMode(ConnectionMode.Direct);
-        client = new AsyncDocumentClient.Builder()
-                .withServiceEndpoint(TestConfigurations.HOST)
-                .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
-                .withConnectionPolicy(connectionPolicy)
-                .withConsistencyLevel(ConsistencyLevel.Session)
-                .build();
+
+        this.client = this.clientBuilder()
+            .withServiceEndpoint(TestConfigurations.HOST)
+            .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
+            .withConnectionPolicy(connectionPolicy)
+            .withConsistencyLevel(ConsistencyLevel.Session)
+            .build();
 
         DocumentCollection collectionDefinition = new DocumentCollection();
         collectionDefinition.setId(UUID.randomUUID().toString());
@@ -88,10 +95,13 @@ public class ConflictAPITest {
 
         int numberOfDocuments = 20;
         // Add documents
+        List<Completable> tasks = new ArrayList<>();
         for (int i = 0; i < numberOfDocuments; i++) {
             Document doc = new Document(String.format("{ 'id': 'loc%d', 'counter': %d}", i, i));
-            client.createDocument(getCollectionLink(), doc, null, true).toBlocking().single();
+            tasks.add(client.createDocument(getCollectionLink(), doc, null, true).toCompletable());
         }
+
+        Completable.merge(tasks).await();
     }
 
     @AfterClass(groups = "samples", timeOut = TIMEOUT)

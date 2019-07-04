@@ -80,7 +80,7 @@ public class DocumentQuerySpyWireContentTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuilders")
     public DocumentQuerySpyWireContentTest(Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @DataProvider(name = "responseContinuationTokenLimitParamProvider")
@@ -174,7 +174,7 @@ public class DocumentQuerySpyWireContentTest extends TestSuiteBase {
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() throws Exception {
-        client = new SpyClientBuilder(clientBuilder).build();
+        client = new SpyClientBuilder(clientBuilder()).build();
         createdDatabase = SHARED_DATABASE;
         createdSinglePartitionCollection = SHARED_SINGLE_PARTITION_COLLECTION;
         truncateCollection(SHARED_SINGLE_PARTITION_COLLECTION);

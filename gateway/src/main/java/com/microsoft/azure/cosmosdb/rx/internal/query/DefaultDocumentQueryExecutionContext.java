@@ -156,10 +156,10 @@ public class DefaultDocumentQueryExecutionContext<T extends Resource> extends Do
         final IDocumentClientRetryPolicy finalRetryPolicyInstance = retryPolicyInstance;
 
         Func1<RxDocumentServiceRequest, Observable<FeedResponse<T>>> executeFunc = req -> {
-            finalRetryPolicyInstance.onBeforeSendRequest(req);
             this.fetchExecutionRangeAccumulator.beginFetchRange();
             this.fetchSchedulingMetrics.start();
             return BackoffRetryUtility.executeRetry(() -> {
+                finalRetryPolicyInstance.onBeforeSendRequest(req);
                 ++this.retries;
                 return executeRequestAsync(req);
             }, finalRetryPolicyInstance).toObservable()
