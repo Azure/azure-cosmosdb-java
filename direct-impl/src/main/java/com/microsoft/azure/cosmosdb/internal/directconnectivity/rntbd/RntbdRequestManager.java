@@ -51,7 +51,6 @@ import com.microsoft.azure.cosmosdb.rx.internal.PartitionKeyRangeIsSplittingExce
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelException;
-import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandler;
@@ -64,7 +63,6 @@ import io.netty.channel.EventLoop;
 import io.netty.channel.pool.ChannelHealthChecker;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.ssl.SslHandler;
-import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.Timeout;
@@ -312,9 +310,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         try {
             if (event instanceof IdleStateEvent) {
 
-                Channel channel = context.channel();
-
-                this.healthChecker.isHealthy(channel).addListener((Future<Boolean> future) -> {
+                this.healthChecker.isHealthy(context.channel()).addListener((Future<Boolean> future) -> {
 
                     final Throwable cause;
 
@@ -324,9 +320,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
                         }
                         cause = UnhealthyChannelException.INSTANCE;
                     } else {
-                        IdleState state = ((IdleStateEvent)event).state();
                         cause = future.cause();
-                        reportIssue(logger, channel, "health check during {} event failed due to ", state, cause);
                     }
 
                     this.exceptionCaught(context, cause);
@@ -475,30 +469,34 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         //  Requires a full scan of the rntbd code
 
         this.traceOperation(context, "write", message);
-        this.timestamps.channelWriteAttempted();
-        final ChannelFuture future;
 
         if (message instanceof RntbdRequestRecord) {
 
-            future = context.write(this.addPendingRequestRecord(context, (RntbdRequestRecord)message), promise);
+            this.timestamps.channelWriteAttempted();
 
-        } else if (message == RntbdHealthCheckRequest.MESSAGE) {
+            context.write(this.addPendingRequestRecord(context, (RntbdRequestRecord)message), promise).addListener(completed -> {
+                if (completed.isSuccess()) {
+                    this.timestamps.channelWriteCompleted();
+                }
+            });
 
-            future = context.write(RntbdHealthCheckRequest.MESSAGE, promise);
-
-        } else {
-
-            final IllegalStateException error = new IllegalStateException(Strings.lenientFormat("message of %s: %s", message.getClass(), message));
-            reportIssue(logger, context, "", error);
-            this.exceptionCaught(context, error);
             return;
         }
 
-        future.addListener(completed -> {
-            if (completed.isSuccess()) {
-                this.timestamps.channelWriteCompleted();
-            }
-        });
+        if (message == RntbdHealthCheckRequest.MESSAGE) {
+
+            context.write(RntbdHealthCheckRequest.MESSAGE, promise).addListener(completed -> {
+                if (completed.isSuccess()) {
+                    this.timestamps.channelPingCompleted();
+                }
+            });
+
+            return;
+        }
+
+        final IllegalStateException error = new IllegalStateException(Strings.lenientFormat("message of %s: %s", message.getClass(), message));
+        reportIssue(logger, context, "", error);
+        this.exceptionCaught(context, error);
     }
 
     // endregion

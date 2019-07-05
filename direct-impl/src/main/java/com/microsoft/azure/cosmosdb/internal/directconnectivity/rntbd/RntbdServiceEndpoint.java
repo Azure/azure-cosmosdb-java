@@ -239,11 +239,7 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
     static final class JsonSerializer extends StdSerializer<RntbdServiceEndpoint> {
 
         public JsonSerializer() {
-            this(null);
-        }
-
-        public JsonSerializer(Class<RntbdServiceEndpoint> type) {
-            super(type);
+            super(RntbdServiceEndpoint.class);
         }
 
         @Override

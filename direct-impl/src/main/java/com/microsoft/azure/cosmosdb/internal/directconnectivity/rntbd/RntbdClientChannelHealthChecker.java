@@ -41,7 +41,6 @@ import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdReporter.reportIssueUnless;
 import static java.util.concurrent.atomic.AtomicLongFieldUpdater.newUpdater;
 
@@ -143,11 +142,12 @@ public final class RntbdClientChannelHealthChecker implements ChannelHealthCheck
         if (writeDelay > this.writeDelayLimit && currentTime - timestamps.lastChannelWriteAttempt() > writeHangGracePeriod) {
 
             final int pendingRequestCount = requestManager.pendingRequestCount();
+            final RntbdContext rntbdContext = requestManager.rntbdContext();
 
             logger.warn("{} health check failed due to hung write: {lastChannelWriteAttempt: {}, lastChannelWrite: {}, "
-                + "writeDelay: {}, writeDelayLimit: {}, pendingRequestCount: {}}", channel,
-                timestamps.lastChannelWriteAttempt(), timestamps.lastChannelWrite(),
-                writeDelay, this.writeDelayLimit, pendingRequestCount);
+                + "writeDelay: {}, writeDelayLimit: {}, rntbdContext: {}, pendingRequestCount: {}}", channel,
+                timestamps.lastChannelWriteAttempt(), timestamps.lastChannelWrite(), writeDelay,
+                this.writeDelayLimit, rntbdContext, pendingRequestCount);
 
             return promise.setSuccess(Boolean.FALSE);
         }
@@ -163,12 +163,10 @@ public final class RntbdClientChannelHealthChecker implements ChannelHealthCheck
             final int pendingRequestCount = requestManager.pendingRequestCount();
             final RntbdContext rntbdContext = requestManager.rntbdContext();
 
-            if (rntbdContext == null || pendingRequestCount > 0) {
-                logger.warn("{} health check failed due to read hang: {lastWriteTime: {}, lastReadTime: {}, "
-                    + "readDelay: {}, readDelayLimit: {}, pendingRequestCount: {}, rntbdContext: {}}",
-                    channel, timestamps.lastChannelWrite(), timestamps.lastChannelRead(), readDelay,
-                    this.readDelayLimit, pendingRequestCount, rntbdContext);
-            }
+            logger.warn("{} health check failed due to hung read: {lastChannelWrite: {}, lastChannelRead: {}, "
+                + "readDelay: {}, readDelayLimit: {}, rntbdContext: {}, pendingRequestCount: {}}", channel,
+                timestamps.lastChannelWrite(), timestamps.lastChannelRead(), readDelay,
+                this.readDelayLimit, rntbdContext, pendingRequestCount);
 
             return promise.setSuccess(Boolean.FALSE);
         }
@@ -180,7 +178,12 @@ public final class RntbdClientChannelHealthChecker implements ChannelHealthCheck
         }
 
         channel.writeAndFlush(RntbdHealthCheckRequest.MESSAGE).addListener(completed -> {
-            promise.setSuccess(completed.isSuccess() ? Boolean.TRUE : Boolean.FALSE);
+            if (completed.isSuccess()) {
+                promise.setSuccess(Boolean.TRUE);
+            } else {
+                logger.warn("{} health check request failed due to ", channel, completed.cause());
+                promise.setSuccess(Boolean.FALSE);
+            }
         });
 
         return promise;
@@ -214,10 +217,19 @@ public final class RntbdClientChannelHealthChecker implements ChannelHealthCheck
     @JsonSerialize(using = Timestamps.JsonSerializer.class)
     static final class Timestamps {
 
-        private static final AtomicLongFieldUpdater<Timestamps> lastReadUpdater = newUpdater(Timestamps.class, "lastRead");
-        private static final AtomicLongFieldUpdater<Timestamps> lastWriteUpdater = newUpdater(Timestamps.class, "lastWrite");
-        private static final AtomicLongFieldUpdater<Timestamps> lastWriteAttemptUpdater = newUpdater(Timestamps.class, "lastWriteAttempt");
+        private static final AtomicLongFieldUpdater<Timestamps> lastPingUpdater =
+            newUpdater(Timestamps.class, "lastPing");
 
+        private static final AtomicLongFieldUpdater<Timestamps> lastReadUpdater =
+            newUpdater(Timestamps.class, "lastRead");
+
+        private static final AtomicLongFieldUpdater<Timestamps> lastWriteUpdater =
+            newUpdater(Timestamps.class, "lastWrite");
+
+        private static final AtomicLongFieldUpdater<Timestamps> lastWriteAttemptUpdater =
+            newUpdater(Timestamps.class, "lastWriteAttempt");
+
+        private volatile long lastPing;
         private volatile long lastRead;
         private volatile long lastWrite;
         private volatile long lastWriteAttempt;
@@ -228,9 +240,14 @@ public final class RntbdClientChannelHealthChecker implements ChannelHealthCheck
         @SuppressWarnings("CopyConstructorMissesField")
         public Timestamps(Timestamps other) {
             checkNotNull(other, "other: null");
-            lastReadUpdater.set(this, lastReadUpdater.get(other));
-            lastWriteUpdater.set(this, lastWriteUpdater.get(other));
-            lastWriteAttemptUpdater.set(this, lastWriteAttemptUpdater.get(other));
+            this.lastPing = lastPingUpdater.get(other);
+            this.lastRead = lastReadUpdater.get(other);
+            this.lastWrite = lastWriteUpdater.get(other);
+            this.lastWriteAttempt = lastWriteAttemptUpdater.get(other);
+        }
+
+        public void channelPingCompleted() {
+            lastPingUpdater.set(this, System.nanoTime());
         }
 
         public void channelReadCompleted() {
@@ -243,6 +260,10 @@ public final class RntbdClientChannelHealthChecker implements ChannelHealthCheck
 
         public void channelWriteCompleted() {
             lastWriteAttemptUpdater.set(this, System.nanoTime());
+        }
+
+        public long lastChannelPing() {
+            return lastPingUpdater.get(this);
         }
 
         public long lastChannelRead() {
@@ -271,6 +292,7 @@ public final class RntbdClientChannelHealthChecker implements ChannelHealthCheck
             @Override
             public void serialize(Timestamps value, JsonGenerator generator, SerializerProvider provider) throws IOException {
                 generator.writeStartObject();
+                generator.writeNumberField("lastChannelPing", value.lastChannelPing());
                 generator.writeNumberField("lastChannelRead", value.lastChannelRead());
                 generator.writeNumberField("lastChannelWrite", value.lastChannelWrite());
                 generator.writeNumberField("lastChannelWriteAttempt", value.lastChannelWriteAttempt());
