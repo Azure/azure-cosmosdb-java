@@ -35,7 +35,6 @@ import com.microsoft.azure.cosmosdb.rx.internal.IAuthorizationTokenProvider;
 import com.microsoft.azure.cosmosdb.rx.internal.RMResources;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
 import com.microsoft.azure.cosmosdb.rx.internal.Strings;
-import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rx.Single;
@@ -113,6 +112,7 @@ public class BarrierRequestHelper {
                         barrierLsnRequest.getHeaders(),
                         originalRequestTokenType,
                         request.properties);
+                authorizationToken = HttpUtils.urlEncode(authorizationToken);
                 break;
 
 

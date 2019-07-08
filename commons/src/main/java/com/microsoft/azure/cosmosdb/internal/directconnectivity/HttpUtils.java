@@ -42,14 +42,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class HttpUtils {
 
     private static Logger log = LoggerFactory.getLogger(HttpUtils.class);
+    private static final Pattern URL_PERCENT_ENCODING = Pattern.compile("%[0-9A-Fa-f]{2}");
 
     public static String urlEncode(String url) {
         try {
-            return URLEncoder.encode(url, UrlEncodingInfo.UTF_8).replaceAll(UrlEncodingInfo.PLUS_SYMBOL_ESCAPED, UrlEncodingInfo.SINGLE_SPACE_URI_ENCODING);
+            String encodedString = URLEncoder.encode(url, UrlEncodingInfo.UTF_8).replaceAll(UrlEncodingInfo.PLUS_SYMBOL_ESCAPED, UrlEncodingInfo.SINGLE_SPACE_URI_ENCODING);
+            return toLowerCasePercentEncoding(encodedString);
         } catch (UnsupportedEncodingException e) {
             log.error("failed to encode {}", url, e);
             throw new IllegalArgumentException("failed to encode url " + url, e);
@@ -127,4 +131,16 @@ public class HttpUtils {
         }
         return result;
     }
+    
+    public static String toLowerCasePercentEncoding(String encodedString) {
+        StringBuffer result = new StringBuffer();
+        Matcher percentEncodingMatcher = URL_PERCENT_ENCODING.matcher(encodedString);
+
+        while (percentEncodingMatcher.find()) {
+            percentEncodingMatcher.appendReplacement(result, percentEncodingMatcher.group().toLowerCase());
+        }
+        percentEncodingMatcher.appendTail(result);
+
+        return result.toString();
+    } 
 }

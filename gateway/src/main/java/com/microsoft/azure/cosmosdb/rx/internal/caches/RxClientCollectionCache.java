@@ -35,6 +35,7 @@ import com.microsoft.azure.cosmosdb.internal.OperationType;
 import com.microsoft.azure.cosmosdb.internal.PathsHelper;
 import com.microsoft.azure.cosmosdb.internal.ResourceType;
 import com.microsoft.azure.cosmosdb.internal.Utils;
+import com.microsoft.azure.cosmosdb.internal.directconnectivity.HttpUtils;
 import com.microsoft.azure.cosmosdb.rx.internal.AuthorizationTokenType;
 import com.microsoft.azure.cosmosdb.rx.internal.ClearingSessionContainerClientRetryPolicy;
 import com.microsoft.azure.cosmosdb.rx.internal.IAuthorizationTokenProvider;
@@ -104,11 +105,7 @@ public class RxClientCollectionCache extends RxCollectionCache {
                 AuthorizationTokenType.PrimaryMasterKey,
                 properties);
 
-        try {
-            authorizationToken = URLEncoder.encode(authorizationToken, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            return Single.error(new IllegalStateException("Failed to encode authtoken.", e));
-        }
+        authorizationToken = HttpUtils.urlEncode(authorizationToken);
         request.getHeaders().put(HttpConstants.HttpHeaders.AUTHORIZATION, authorizationToken);
 
         if (retryPolicyInstance != null){

@@ -16,6 +16,7 @@ hs_err_pid*
 .classpath
 .idea
 *.iml
+*/test-output/
 
 doc
 docs

@@ -639,7 +639,7 @@ public final class RntbdTransportClientTest {
                 builder.build()
             );
 
-            builder.put(HttpHeaders.AUTHORIZATION, token);
+            builder.put(HttpHeaders.AUTHORIZATION, HttpUtils.urlEncode(token));
 
             final RxDocumentServiceRequest request = RxDocumentServiceRequest.create(OperationType.Read,
                 ResourceType.DatabaseAccount,

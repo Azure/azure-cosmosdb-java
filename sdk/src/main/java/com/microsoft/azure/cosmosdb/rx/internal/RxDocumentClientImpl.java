@@ -79,6 +79,7 @@ import com.microsoft.azure.cosmosdb.internal.SessionContainer;
 import com.microsoft.azure.cosmosdb.internal.UserAgentContainer;
 import com.microsoft.azure.cosmosdb.internal.Utils;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.GatewayServiceConfigurationReader;
+import com.microsoft.azure.cosmosdb.internal.directconnectivity.HttpUtils;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.ServerStoreModel;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.StoreClient;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.StoreClientFactory;
@@ -1058,11 +1059,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
             String authorization = this.getUserAuthorizationToken(
                     resourceName, request.getResourceType(), httpMethod, request.getHeaders(),
                     AuthorizationTokenType.PrimaryMasterKey, request.properties);
-            try {
-                authorization = URLEncoder.encode(authorization, "UTF-8");
-            } catch (UnsupportedEncodingException e) {
-                throw new IllegalStateException("Failed to encode authtoken.", e);
-            }
+            authorization = HttpUtils.urlEncode(authorization);
             request.getHeaders().put(HttpConstants.HttpHeaders.AUTHORIZATION, authorization);
         }
 
