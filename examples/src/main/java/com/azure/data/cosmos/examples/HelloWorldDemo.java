@@ -65,7 +65,7 @@ public class HelloWorldDemo {
                     return response.item().replace(p);
                 } catch (IOException e) {
                     System.err.println(e);
-                    throw new RuntimeException("Couldn't replace item", e);
+                    return Mono.error(e);
                 }
             })
             // delete that item 💣
