@@ -1,10 +1,9 @@
 # Java SDK for SQL API of Azure Cosmos DB
 
-[![Maven Central](https://img.shields.io/maven-central/v/com.microsoft.azure/azure-cosmosdb.svg)](https://search.maven.org/artifact/com.microsoft.azure/azure-cosmosdb/2.4.3/jar)
-[![Build Status](https://api.travis-ci.org/Azure/azure-cosmosdb-java.svg?branch=master)](https://travis-ci.org/Azure/azure-cosmosdb-java)
+[![Maven Central](https://img.shields.io/maven-central/v/com.microsoft.azure/azure-cosmos.svg)](https://search.maven.org/artifact/com.microsoft.azure/azure-cosmosdb/2.4.3/jar)
 [![Known Vulnerabilities](https://snyk.io/test/github/Azure/azure-cosmosdb-java/badge.svg?targetFile=sdk%2Fpom.xml)](https://snyk.io/test/github/Azure/azure-cosmosdb-java?targetFile=sdk%2Fpom.xml)
 
-<!--[![Coverage Status](https://img.shields.io/codecov/c/github/Azure/azure-cosmosdb-java.svg)](https://codecov.io/gh/Azure/azure-cosmosdb-java)
+<!--[![Coverage Status](https://img.shields.io/codecov/c/github/Azure/azure-cosmos-java.svg)](https://codecov.io/gh/Azure/azure-cosmosdb-java)
 ![](https://img.shields.io/github/issues/azure/azure-cosmosdb-java.svg)
  -->
 
@@ -29,15 +28,15 @@
 This project provides a SDK library in Java for interacting with [SQL API](https://docs.microsoft.com/en-us/azure/cosmos-db/sql-api-sql-query) of [Azure Cosmos DB
 Database Service](https://azure.microsoft.com/en-us/services/cosmos-db/). This project also includes samples, tools, and utilities.
 
-Jar dependency binary information for maven and gradle can be found here at [maven](https://mvnrepository.com/artifact/com.microsoft.azure/azure-cosmosdb/2.4.3).
+Jar dependency binary information for maven and gradle can be found here at [maven](https://mvnrepository.com/artifact/com.microsoft.azure/azure-cosmos).
 
 For example, using maven, you can add the following dependency to your maven pom file:
 
 ```xml
 <dependency>
   <groupId>com.microsoft.azure</groupId>
-  <artifactId>azure-cosmosdb</artifactId>
-  <version>2.4.3</version>
+  <artifactId>azure-cosmos</artifactId>
+  <version>3.0.0</version>
 </dependency>
 ```
 
@@ -46,8 +45,8 @@ Useful links:
 - [Sample Get Started APP](https://github.com/Azure-Samples/azure-cosmos-db-sql-api-async-java-getting-started)
 - [Introduction to Resource Model of Azure Cosmos DB Service](https://docs.microsoft.com/en-us/azure/cosmos-db/sql-api-resources)
 - [Introduction to SQL API of Azure Cosmos DB Service](https://docs.microsoft.com/en-us/azure/cosmos-db/sql-api-sql-query)
-- [SDK JavaDoc API](https://azure.github.io/azure-cosmosdb-java/2.4.0/com/microsoft/azure/cosmosdb/rx/AsyncDocumentClient.html)
-- [RxJava Observable JavaDoc API](http://reactivex.io/RxJava/1.x/javadoc/rx/Observable.html)
+<!-- - [SDK JavaDoc API](https://azure.github.io/azure-cosmosdb-java/2.4.0/com/microsoft/azure/cosmosdb/rx/AsyncDocumentClient.html) -->
+- [Reactor Observable JavaDoc API](https://projectreactor.io/docs/core/release/api/)
 - [SDK FAQ](faq/)
 
 ## Prerequisites
@@ -64,7 +63,7 @@ SLF4J is only needed if you plan to use logging, please also download an SLF4J b
 
 Javadoc is available [here](https://azure.github.io/azure-cosmosdb-java/2.4.0/com/microsoft/azure/cosmosdb/rx/AsyncDocumentClient.html).
 
-The SDK provide Reactive Extension Observable based async API. You can read more about RxJava and [Observable APIs here](http://reactivex.io/RxJava/1.x/javadoc/rx/Observable.html).
+The SDK provides Reactor Core based async APIs. You can read more about Reactor Core and [Flux/Mono types here](https://projectreactor.io/docs/core/release/api/).
 
 ## Usage Code Sample
 
