@@ -112,9 +112,10 @@ public class BarrierRequestHelper {
                         barrierLsnRequest.getHeaders(),
                         originalRequestTokenType,
                         request.properties);
-                authorizationToken = HttpUtils.urlEncode(authorizationToken);
+                if (authorizationToken != null) {
+                    authorizationToken = HttpUtils.urlEncode(authorizationToken);
+                }
                 break;
-
 
             case ResourceToken:
                 authorizationToken = request.getHeaders().get(HttpConstants.HttpHeaders.AUTHORIZATION);
