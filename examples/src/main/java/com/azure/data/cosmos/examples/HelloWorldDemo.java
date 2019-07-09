@@ -81,7 +81,10 @@ public class HelloWorldDemo {
         String source;
 
         public Passenger(String id, String name, String destination, String source) {
-            this.id = id; this.name = name; this.destination = destination; this.source = source;
+            this.id = id;
+            this.name = name;
+            this.destination = destination;
+            this.source = source;
         }
         public String getId() {
             return id;

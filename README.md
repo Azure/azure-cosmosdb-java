@@ -1,6 +1,6 @@
 # Java SDK for SQL API of Azure Cosmos DB
 
-[![Maven Central](https://img.shields.io/maven-central/v/com.microsoft.azure/azure-cosmos.svg)](https://search.maven.org/artifact/com.microsoft.azure/azure-cosmosdb/2.4.3/jar)
+[![Maven Central](https://img.shields.io/maven-central/v/com.microsoft.azure/azure-cosmos.svg)](https://search.maven.org/artifact/com.microsoft.azure/azure-cosmos/3.0.0/jar)
 [![Known Vulnerabilities](https://snyk.io/test/github/Azure/azure-cosmosdb-java/badge.svg?targetFile=sdk%2Fpom.xml)](https://snyk.io/test/github/Azure/azure-cosmosdb-java?targetFile=sdk%2Fpom.xml)
 
 <!--[![Coverage Status](https://img.shields.io/codecov/c/github/Azure/azure-cosmos-java.svg)](https://codecov.io/gh/Azure/azure-cosmosdb-java)
@@ -23,7 +23,7 @@
 
 ## Example
 
-See the complete code for the above sample in [`HelloWorldExample.java`](./examples\src\main\java\com\azure\data\cosmos\examples\HelloWorldExample.java)
+See the complete code for the above sample in [`HelloWorldExample.java`](./examples/src/main/java/com/azure/data/cosmos/examples/HelloWorldExample.java)
 
 ```java
 import com.azure.data.cosmos.*;
@@ -113,11 +113,13 @@ Useful links:
 
 SLF4J is only needed if you plan to use logging, please also download an SLF4J binding which will link the SLF4J API with the logging implementation of your choice. See the [SLF4J user manual](http://www.slf4j.org/manual.html) for more information.
 
+<!-- TODO - update once JavaDoc is published
 ## API Documentation
 
 Javadoc is available [here](https://azure.github.io/azure-cosmosdb-java/2.4.0/com/microsoft/azure/cosmosdb/rx/AsyncDocumentClient.html).
 
 The SDK provides Reactor Core based async APIs. You can read more about Reactor Core and [Flux/Mono types here](https://projectreactor.io/docs/core/release/api/).
+-->
 
 ## Guide for Prod
 
