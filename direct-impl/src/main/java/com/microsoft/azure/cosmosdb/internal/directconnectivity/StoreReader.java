@@ -270,7 +270,11 @@ public class StoreReader {
             for (StoreResult srr : newStoreResults) {
 
                 entity.requestContext.requestChargeTracker.addCharge(srr.requestCharge);
-                entity.requestContext.clientSideRequestStatistics.recordResponse(entity, srr);
+                try {
+                    entity.requestContext.clientSideRequestStatistics.recordResponse(entity, srr);
+                } catch (Exception e) {
+                    logger.error("unexpected failure failure", e);
+                }
                 if (srr.isValid) {
 
                     try {
@@ -579,7 +583,11 @@ public class StoreReader {
         });
 
         return storeResultObs.map(storeResult -> {
-            entity.requestContext.clientSideRequestStatistics.recordResponse(entity, storeResult);
+            try {
+                entity.requestContext.clientSideRequestStatistics.recordResponse(entity, storeResult);
+            } catch (Exception e) {
+                logger.error("unexpected failure failure", e);
+            }
             entity.requestContext.requestChargeTracker.addCharge(storeResult.requestCharge);
 
             if (storeResult.isGoneException && !storeResult.isInvalidPartitionException) {

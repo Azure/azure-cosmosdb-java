@@ -24,8 +24,6 @@ package com.microsoft.azure.cosmosdb.rx;
 
 import java.util.ArrayList;
 
-import com.microsoft.azure.cosmosdb.internal.directconnectivity.Protocol;
-import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;

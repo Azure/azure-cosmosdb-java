@@ -41,6 +41,7 @@ import rx.Observable;
 import rx.observables.GroupedObservable;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -79,6 +80,8 @@ public class InMemoryGroupbyTest extends DocumentClientTest {
         int numberOfPayers = 10;
         int numberOfDocumentsPerPayer = 10;
 
+        ArrayList<rx.Observable> list = new ArrayList<>();
+
         for (int i = 0; i < numberOfPayers; i++) {
 
             for (int j = 0; j < numberOfDocumentsPerPayer; j++) {
@@ -91,11 +94,11 @@ public class InMemoryGroupbyTest extends DocumentClientTest {
                         + "'payer_id': %d, "
                         + " 'created_time' : %d "
                         + "}", UUID.randomUUID().toString(), i, currentTime.getSecond()));
-                client.createDocument(getCollectionLink(), doc, null, true).toBlocking().single();
-
-                Thread.sleep(100);
+                list.add(client.createDocument(getCollectionLink(), doc, null, true));
             }
         }
+
+        Observable.merge(list.toArray(new Observable[0]), 1).toCompletable().await();
         System.out.println("finished inserting documents");
     }
 
