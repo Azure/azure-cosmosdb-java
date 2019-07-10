@@ -90,6 +90,9 @@ public class CosmosDatabase {
      *         the read database or an error.
      */
     public Mono<CosmosDatabaseResponse> read(CosmosDatabaseRequestOptions options) {
+        if (options == null) {
+            options = new CosmosDatabaseRequestOptions();
+        }
         return getDocClientWrapper().readDatabase(getLink(), options.toRequestOptions())
                 .map(response -> new CosmosDatabaseResponse(response, getClient())).single();
     }
@@ -118,6 +121,9 @@ public class CosmosDatabase {
      * @return an {@link Mono} containing the single cosmos database response
      */
     public Mono<CosmosDatabaseResponse> delete(CosmosDatabaseRequestOptions options) {
+        if (options == null) {
+            options = new CosmosDatabaseRequestOptions();
+        }
         return getDocClientWrapper().deleteDatabase(getLink(), options.toRequestOptions())
                 .map(response -> new CosmosDatabaseResponse(response, getClient())).single();
     }
@@ -129,7 +135,7 @@ public class CosmosDatabase {
      *
      * After subscription the operation will be performed. The {@link Mono} upon
      * successful completion will contain a cosmos container response with the
-     * created collection. In case of failure the {@link Mono} will error.
+     * created container. In case of failure the {@link Mono} will error.
      *
      * @param containerSettings the container properties.
      * @return an {@link Flux} containing the single cosmos container response with
@@ -144,18 +150,21 @@ public class CosmosDatabase {
      *
      * After subscription the operation will be performed. The {@link Mono} upon
      * successful completion will contain a cosmos container response with the
-     * created collection. In case of failure the {@link Mono} will error.
+     * created container. In case of failure the {@link Mono} will error.
      *
-     * @param containerSettings the container properties.
+     * @param containerProperties the container properties.
      * @param throughput the throughput for the container
      * @return an {@link Flux} containing the single cosmos container response with
      *         the created container or an error.
      */
-    public Mono<CosmosContainerResponse> createContainer(CosmosContainerProperties containerSettings, int throughput) {
-        validateResource(containerSettings);
+    public Mono<CosmosContainerResponse> createContainer(CosmosContainerProperties containerProperties, int throughput) {
+        if (containerProperties == null) {
+            throw new IllegalArgumentException("containerProperties");
+        }
+        validateResource(containerProperties);
         CosmosContainerRequestOptions options =  new CosmosContainerRequestOptions();
         options.offerThroughput(throughput);
-        return createContainer(containerSettings, options);
+        return createContainer(containerProperties, options);
     }
 
     /**
@@ -163,18 +172,24 @@ public class CosmosDatabase {
      *
      * After subscription the operation will be performed. The {@link Mono} upon
      * successful completion will contain a cosmos container response with the
-     * created collection. In case of failure the {@link Mono} will error.
+     * created container. In case of failure the {@link Mono} will error.
      *
-     * @param containerSettings the containerSettings.
+     * @param containerProperties the containerProperties.
      * @param options           the cosmos container request options
      * @return an {@link Flux} containing the cosmos container response with the
      *         created container or an error.
      */
-    public Mono<CosmosContainerResponse> createContainer(CosmosContainerProperties containerSettings,
+    public Mono<CosmosContainerResponse> createContainer(CosmosContainerProperties containerProperties,
             CosmosContainerRequestOptions options) {
-        validateResource(containerSettings);
+        if (containerProperties == null) {
+            throw new IllegalArgumentException("containerProperties");
+        }
+        validateResource(containerProperties);
+        if (options == null) {
+            options = new CosmosContainerRequestOptions();
+        }
         return getDocClientWrapper()
-                .createCollection(this.getLink(), containerSettings.getV2Collection(), options.toRequestOptions())
+                .createCollection(this.getLink(), containerProperties.getV2Collection(), options.toRequestOptions())
                 .map(response -> new CosmosContainerResponse(response, this)).single();
     }
 
@@ -183,19 +198,22 @@ public class CosmosDatabase {
      *
      * After subscription the operation will be performed. The {@link Mono} upon
      * successful completion will contain a cosmos container response with the
-     * created collection. In case of failure the {@link Mono} will error.
+     * created container. In case of failure the {@link Mono} will error.
      *
-     * @param containerSettings the containerSettings.
+     * @param containerProperties the containerProperties.
      * @param throughput the throughput for the container
      * @param options           the cosmos container request options
      * @return an {@link Flux} containing the cosmos container response with the
      *         created container or an error.
      */
-    public Mono<CosmosContainerResponse> createContainer(CosmosContainerProperties containerSettings,
+    public Mono<CosmosContainerResponse> createContainer(CosmosContainerProperties containerProperties,
                                                          int throughput,
                                                          CosmosContainerRequestOptions options) {
+        if (options == null) {
+            options = new CosmosContainerRequestOptions();
+        }
         options.offerThroughput(throughput);
-        return createContainer(containerSettings, options);
+        return createContainer(containerProperties, options);
     }
 
     /**
@@ -203,7 +221,7 @@ public class CosmosDatabase {
      *
      * After subscription the operation will be performed. The {@link Mono} upon
      * successful completion will contain a cosmos container response with the
-     * created collection. In case of failure the {@link Mono} will error.
+     * created container. In case of failure the {@link Mono} will error.
      *
      * @param id               the cosmos container id
      * @param partitionKeyPath the partition key path
@@ -219,7 +237,7 @@ public class CosmosDatabase {
      *
      * After subscription the operation will be performed. The {@link Mono} upon
      * successful completion will contain a cosmos container response with the
-     * created collection. In case of failure the {@link Mono} will error.
+     * created container. In case of failure the {@link Mono} will error.
      *
      * @param id               the cosmos container id
      * @param partitionKeyPath the partition key path
@@ -238,16 +256,16 @@ public class CosmosDatabase {
      * <p>
      * After subscription the operation will be performed. The {@link Mono} upon
      * successful completion will contain a cosmos container response with the
-     * created or existing collection. In case of failure the {@link Mono} will
+     * created or existing container. In case of failure the {@link Mono} will
      * error.
      *
-     * @param containerSettings the container properties
+     * @param containerProperties the container properties
      * @return a {@link Mono} containing the cosmos container response with the
      *         created or existing container or an error.
      */
-    public Mono<CosmosContainerResponse> createContainerIfNotExists(CosmosContainerProperties containerSettings) {
-        CosmosContainer container = getContainer(containerSettings.id());
-        return createContainerIfNotExistsInternal(containerSettings, container, null);
+    public Mono<CosmosContainerResponse> createContainerIfNotExists(CosmosContainerProperties containerProperties) {
+        CosmosContainer container = getContainer(containerProperties.id());
+        return createContainerIfNotExistsInternal(containerProperties, container, null);
     }
 
     /**
@@ -255,19 +273,19 @@ public class CosmosDatabase {
      * <p>
      * After subscription the operation will be performed. The {@link Mono} upon
      * successful completion will contain a cosmos container response with the
-     * created or existing collection. In case of failure the {@link Mono} will
+     * created or existing container. In case of failure the {@link Mono} will
      * error.
      *
-     * @param containerSettings the container properties
+     * @param containerProperties the container properties
      * @param throughput the throughput for the container
      * @return a {@link Mono} containing the cosmos container response with the
      *         created or existing container or an error.
      */
-    public Mono<CosmosContainerResponse> createContainerIfNotExists(CosmosContainerProperties containerSettings, int throughput) {
+    public Mono<CosmosContainerResponse> createContainerIfNotExists(CosmosContainerProperties containerProperties, int throughput) {
         CosmosContainerRequestOptions options = new CosmosContainerRequestOptions();
         options.offerThroughput(throughput);
-        CosmosContainer container = getContainer(containerSettings.id());
-        return createContainerIfNotExistsInternal(containerSettings, container, options);
+        CosmosContainer container = getContainer(containerProperties.id());
+        return createContainerIfNotExistsInternal(containerProperties, container, options);
     }
 
     /**
@@ -275,7 +293,7 @@ public class CosmosDatabase {
      *
      * After subscription the operation will be performed. The {@link Mono} upon
      * successful completion will contain a cosmos container response with the
-     * created collection. In case of failure the {@link Mono} will error.
+     * created container. In case of failure the {@link Mono} will error.
      *
      * @param id               the cosmos container id
      * @param partitionKeyPath the partition key path
@@ -292,7 +310,7 @@ public class CosmosDatabase {
      *
      * After subscription the operation will be performed. The {@link Mono} upon
      * successful completion will contain a cosmos container response with the
-     * created collection. In case of failure the {@link Mono} will error.
+     * created container. In case of failure the {@link Mono} will error.
      *
      * @param id               the cosmos container id
      * @param partitionKeyPath the partition key path
@@ -308,12 +326,12 @@ public class CosmosDatabase {
     }
 
     private Mono<CosmosContainerResponse> createContainerIfNotExistsInternal(
-            CosmosContainerProperties containerSettings, CosmosContainer container, CosmosContainerRequestOptions options) {
+            CosmosContainerProperties containerProperties, CosmosContainer container, CosmosContainerRequestOptions options) {
         return container.read(options).onErrorResume(exception -> {
             if (exception instanceof CosmosClientException) {
                 CosmosClientException cosmosClientException = (CosmosClientException) exception;
                 if (cosmosClientException.statusCode() == HttpConstants.StatusCodes.NOTFOUND) {
-                    return createContainer(containerSettings, options);
+                    return createContainer(containerProperties, options);
                 }
             }
             return Mono.error(exception);
