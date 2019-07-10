@@ -719,6 +719,7 @@ public final class RntbdTransportClientTest {
         try (final RntbdTransportClient client = getRntbdTransportClientUnderTest(userAgent, timeout, response)) {
 
             final Single<StoreResponse> responseSingle;
+            client.toString();
 
             try {
                 responseSingle = client.invokeStoreAsync(physicalAddress, null, request);

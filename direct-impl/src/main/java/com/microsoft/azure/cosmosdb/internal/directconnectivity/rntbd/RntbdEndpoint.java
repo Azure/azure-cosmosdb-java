@@ -24,10 +24,16 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import com.google.common.base.Strings;
 import com.microsoft.azure.cosmosdb.internal.UserAgentContainer;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.ssl.SslContext;
 
+import java.io.IOException;
 import java.net.URI;
 import java.util.stream.Stream;
 
@@ -57,6 +63,7 @@ public interface RntbdEndpoint extends AutoCloseable {
         Stream<RntbdEndpoint> list();
     }
 
+    @JsonSerialize(using = Config.JsonSerializer.class)
     final class Config {
 
         private final Options options;
@@ -121,7 +128,30 @@ public interface RntbdEndpoint extends AutoCloseable {
 
         @Override
         public String toString() {
-            return RntbdObjectMapper.toJson(this);
+            return "RntbdEndpoint.Config(" + RntbdObjectMapper.toJson(this) + ')';
+        }
+
+        static class JsonSerializer extends StdSerializer<Config> {
+
+            public JsonSerializer() {
+                super(Config.class);
+            }
+
+            @Override
+            public void serialize(Config value, JsonGenerator generator, SerializerProvider provider) throws IOException {
+                generator.writeStartObject();
+                generator.writeNumberField("connectionTimeout", value.connectionTimeout());
+                generator.writeNumberField("idleConnectionTimeout", value.idleConnectionTimeout());
+                generator.writeNumberField("maxChannelPerEndpoint", value.maxChannelsPerEndpoint());
+                generator.writeNumberField("maxRequestsPerChannel", value.maxChannelsPerEndpoint());
+                generator.writeNumberField("receiveHangDetectionTime", value.receiveHangDetectionTime());
+                generator.writeNumberField("requestTimeout", value.requestTimeout());
+                generator.writeNumberField("sendHangDetectionTime", value.sendHangDetectionTime());
+                generator.writeNumberField("shutdownTimeout", value.shutdownTimeout());
+                generator.writeObjectField("userAgent", value.userAgent());
+                generator.writeStringField("wireLogLevel", value.wireLogLevel() == null ? null : value.wireLogLevel().toString());
+                generator.writeEndObject();
+            }
         }
     }
 }

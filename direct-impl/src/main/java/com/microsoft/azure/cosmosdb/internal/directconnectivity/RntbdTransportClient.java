@@ -161,11 +161,7 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
     static final class JsonSerializer extends StdSerializer<RntbdTransportClient> {
 
         public JsonSerializer() {
-            this(null);
-        }
-
-        public JsonSerializer(Class<RntbdTransportClient> type) {
-            super(type);
+            super(RntbdTransportClient.class);
         }
 
         @Override
