@@ -31,9 +31,7 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.microsoft.azure.cosmosdb.BridgeInternal;
-import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.GoneException;
-import com.microsoft.azure.cosmosdb.internal.directconnectivity.RntbdTransportClient.Options;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -57,6 +55,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 
+import static com.microsoft.azure.cosmosdb.internal.HttpConstants.HttpHeaders;
+import static com.microsoft.azure.cosmosdb.internal.directconnectivity.RntbdTransportClient.Options;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
@@ -220,7 +220,7 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
                 final GoneException goneException = new GoneException(
                     Strings.lenientFormat("failed to establish connection to %s: %s", this.remoteAddress, reason),
                     cause instanceof Exception ? (Exception)cause : new IOException(reason, cause),
-                    ImmutableMap.of(HttpConstants.HttpHeaders.ACTIVITY_ID, activityId.toString()),
+                    ImmutableMap.of(HttpHeaders.ACTIVITY_ID, activityId.toString()),
                     requestArgs.getReplicaPath()
                 );
 

@@ -99,12 +99,12 @@ public class RntbdClientChannelHandler extends ChannelInitializer<Channel> imple
      * This method constructs this pipeline:
      * <pre>{@code
      * ChannelPipeline {
-     *     (ReadTimeoutHandler#0 = io.netty.handler.timeout.ReadTimeoutHandler),
+     *     (ReadTimeoutHandler#0 = io.netty.handler.timeout.IdleTimeoutHandler),
      *     (SslHandler#0 = io.netty.handler.ssl.SslHandler),
+     * .   (LoggingHandler#0 = io.netty.handler.logging.LoggingHandler),  // iff RntbdClientChannelHandler.config.wireLogLevel != null
      *     (RntbdContextNegotiator#0 = com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdContextNegotiator),
      *     (RntbdResponseDecoder#0 = com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdResponseDecoder),
      *     (RntbdRequestEncoder#0 = com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdRequestEncoder),
-     *     (WriteTimeoutHandler#0 = io.netty.handler.timeout.WriteTimeoutHandler),
      *     (RntbdRequestManager#0 = com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdRequestManager),
      * }
      * }</pre>
