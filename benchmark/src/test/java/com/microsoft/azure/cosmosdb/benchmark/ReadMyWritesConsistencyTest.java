@@ -59,31 +59,35 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class ReadMyWritesConsistencyTest {
 
     private final static Logger logger = LoggerFactory.getLogger(ReadMyWritesConsistencyTest.class);
-    private final int initialCollectionThroughput = 10_000;
-    private final int newCollectionThroughput = 100_000;
-    private final int delayForInitiationCollectionScaleUpInSeconds = 60;
-    private final Duration defaultMaxRunningTimeInSeconds = Duration.ofMinutes(45);
 
     private final AtomicBoolean collectionScaleUpFailed = new AtomicBoolean(false);
 
-    private final String directModeProtocol = System.getProperty("cosmos.directModeProtocol", Protocol.Tcp.name());
+    private final Duration defaultMaxRunningTime = Duration.ofMinutes(45);
+
+    private final int delayForInitiationCollectionScaleUpInSeconds = 60;
 
     private final String desiredConsistency =
         System.getProperty("DESIRED_CONSISTENCY",
             StringUtils.defaultString(Strings.emptyToNull(
                 System.getenv().get("DESIRED_CONSISTENCY")), "Session"));
 
+    private final String directModeProtocol = System.getProperty("cosmos.directModeProtocol", Protocol.Tcp.name());
+
+    private final int initialCollectionThroughput = 10_000;
+
     private final String maxRunningTime =
         System.getProperty("MAX_RUNNING_TIME", StringUtils.defaultString(Strings.emptyToNull(
-            System.getenv().get("MAX_RUNNING_TIME")), defaultMaxRunningTimeInSeconds.toString()));
+            System.getenv().get("MAX_RUNNING_TIME")), defaultMaxRunningTime.toString()));
+
+    private final int newCollectionThroughput = 100_000;
 
     private final String numberOfOperationsAsString =
         System.getProperty("NUMBER_OF_OPERATIONS",
             StringUtils.defaultString(Strings.emptyToNull(
                 System.getenv().get("NUMBER_OF_OPERATIONS")), "-1"));
 
-    private Database database;
     private DocumentCollection collection;
+    private Database database;
 
     @Test(dataProvider = "collectionLinkTypeArgProvider", groups = "e2e")
     public void readMyWrites(boolean useNameLink) throws Exception {

@@ -34,12 +34,12 @@
   <url>https://docs.microsoft.com/en-us/azure/cosmos-db</url>
   <modules>
     <module>commons</module>
-    <module>gateway</module>
-    <module>examples</module>
-    <module>benchmark</module>
     <module>commons-test-utils</module>
-    <module>sdk</module>
     <module>direct-impl</module>
+    <module>gateway</module>
+    <module>sdk</module>
+    <module>benchmark</module>
+    <module>examples</module>
   </modules>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -64,9 +64,9 @@
     <slf4j.version>1.7.6</slf4j.version>
     <testng.version>6.14.3</testng.version>
     <test.groups>unit</test.groups>
-    <cosmosdb-sdk-direct-impl.version>2.5.1</cosmosdb-sdk-direct-impl.version>
-    <sdk-version>2.5.1</sdk-version>
-    <direct-connectivity-version>2.5.1</direct-connectivity-version>
+    <cosmosdb-sdk-direct-impl.version>${version}</cosmosdb-sdk-direct-impl.version>
+    <sdk-version>${version}</sdk-version>
+    <direct-connectivity-version>${version}</direct-connectivity-version>
     <collectedArtifactsForReleaseLocation>${project.basedir}/target/collectedArtifactsForRelease</collectedArtifactsForReleaseLocation>
     <javadoc.opts/>
   </properties>

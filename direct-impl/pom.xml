@@ -35,7 +35,6 @@ SOFTWARE.
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <test.groups>unit</test.groups>
-    <cosmosdb-sdk.version>2.5.2-SNAPSHOT</cosmosdb-sdk.version>
     <guava.version>27.0.1-jre</guava.version>
     <metrics.version>4.0.5</metrics.version>
   </properties>
@@ -287,12 +286,12 @@ SOFTWARE.
     <dependency>
       <groupId>com.microsoft.azure</groupId>
       <artifactId>azure-cosmosdb-gateway</artifactId>
-      <version>${cosmosdb-sdk.version}</version>
+      <version>${version}</version>
     </dependency>
     <dependency>
       <groupId>com.microsoft.azure</groupId>
       <artifactId>azure-cosmosdb-commons-test-utils</artifactId>
-      <version>${cosmosdb-sdk.version}</version>
+      <version>${version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
