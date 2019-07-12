@@ -292,11 +292,7 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
             private static final Duration SIXTY_FIVE_SECONDS = Duration.ofSeconds(65L);
             private static final Duration TEN_SECONDS = Duration.ofSeconds(10L);
 
-            // Required parameters
-
             private String certificateHostNameOverride = null;
-
-            // Optional parameters
             private Duration connectionTimeout = null;
             private Duration idleTimeout = Duration.ZERO;
             private int maxChannelsPerEndpoint = 10;

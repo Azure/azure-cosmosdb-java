@@ -528,6 +528,8 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
 
                 final Channel channel = future.getNow();
 
+                // TODO: DANOBLE: Consider running the code that follows on the channel's event loop
+
                 if (channel.isActive()) {
 
                     final RntbdRequestManager requestManager = channel.pipeline().get(RntbdRequestManager.class);
