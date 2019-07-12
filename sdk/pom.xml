@@ -155,7 +155,7 @@ SOFTWARE.
     <dependency>
       <groupId>com.microsoft.azure</groupId>
       <artifactId>azure-cosmosdb-direct</artifactId>
-      <version>${version}</version>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>com.microsoft.azure</groupId>

@@ -286,12 +286,12 @@ SOFTWARE.
     <dependency>
       <groupId>com.microsoft.azure</groupId>
       <artifactId>azure-cosmosdb-gateway</artifactId>
-      <version>${version}</version>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>com.microsoft.azure</groupId>
       <artifactId>azure-cosmosdb-commons-test-utils</artifactId>
-      <version>${version}</version>
+      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>

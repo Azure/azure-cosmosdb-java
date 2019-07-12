@@ -64,9 +64,9 @@
     <slf4j.version>1.7.6</slf4j.version>
     <testng.version>6.14.3</testng.version>
     <test.groups>unit</test.groups>
-    <cosmosdb-sdk-direct-impl.version>${version}</cosmosdb-sdk-direct-impl.version>
-    <sdk-version>${version}</sdk-version>
-    <direct-connectivity-version>${version}</direct-connectivity-version>
+    <cosmosdb-sdk-direct-impl.version>${project.version}</cosmosdb-sdk-direct-impl.version>
+    <sdk-version>${project.version}</sdk-version>
+    <direct-connectivity-version>${project.version}</direct-connectivity-version>
     <collectedArtifactsForReleaseLocation>${project.basedir}/target/collectedArtifactsForRelease</collectedArtifactsForReleaseLocation>
     <javadoc.opts/>
   </properties>
