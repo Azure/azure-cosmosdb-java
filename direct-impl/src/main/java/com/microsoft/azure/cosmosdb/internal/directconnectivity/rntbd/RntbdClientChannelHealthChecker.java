@@ -181,7 +181,7 @@ public final class RntbdClientChannelHealthChecker implements ChannelHealthCheck
             if (completed.isSuccess()) {
                 promise.setSuccess(Boolean.TRUE);
             } else {
-                logger.warn("{} health check request failed due to ", channel, completed.cause());
+                logger.warn("{} health check request failed due to:", channel, completed.cause());
                 promise.setSuccess(Boolean.FALSE);
             }
         });

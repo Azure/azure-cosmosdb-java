@@ -116,7 +116,7 @@ public class ReadMyWritesConsistencyTest {
         ) + (useNameLink ? " -useNameLink" : "");
 
         Configuration cfg = new Configuration();
-        JCommander commander = new JCommander(cfg, StringUtils.split(cmd));
+        new JCommander(cfg, StringUtils.split(cmd));
 
         logger.info("cosmos.directModeProtocol={}, {}", directModeProtocol, cfg);
         AtomicInteger success = new AtomicInteger();
