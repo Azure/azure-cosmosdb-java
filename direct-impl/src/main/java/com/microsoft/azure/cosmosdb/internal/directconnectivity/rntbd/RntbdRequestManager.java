@@ -258,6 +258,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
      */
     @Override
     public void channelWritabilityChanged(final ChannelHandlerContext context) {
+        logger.info("channelWritabilityChanged: {}", context.channel().isWritable());
         this.traceOperation(context, "channelWritabilityChanged");
         context.fireChannelWritabilityChanged();
     }
