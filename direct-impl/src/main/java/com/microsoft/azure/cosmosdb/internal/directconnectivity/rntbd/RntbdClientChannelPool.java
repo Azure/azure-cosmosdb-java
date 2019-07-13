@@ -549,9 +549,10 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
                         channel.writeAndFlush(RntbdHealthCheckRequest.MESSAGE).addListener(completed -> {
                             if (completed.isSuccess()) {
                                 reportIssueUnless(requestManager.hasRequestedRntbdContext(), logger, channel, "context request did not complete");
+                                logger.info("\n  Channel({})\n  {}\n  health check request succeeded", channel, requestManager.rntbdContext());
                                 this.originalPromise.setSuccess(channel);
                             } else {
-                                logger.warn("{} health check request failed due to:", channel, completed.cause());
+                                logger.warn("Channel({}) health check request failed due to:", channel, completed.cause());
                                 this.fail(completed.cause());
                             }
                         });
