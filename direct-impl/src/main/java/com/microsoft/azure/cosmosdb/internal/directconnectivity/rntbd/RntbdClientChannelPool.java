@@ -31,6 +31,7 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdEndpoint.Config;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelPipeline;
 import io.netty.channel.pool.ChannelPool;
 import io.netty.channel.pool.SimpleChannelPool;
 import io.netty.util.concurrent.EventExecutor;
@@ -513,8 +514,6 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
                 return;
             }
 
-            final Throwable cause;
-
             if (future.isSuccess()) {
 
                 // Ensure that the channel is active and ready to receive requests
@@ -524,56 +523,53 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
                 // We use a health check request on a channel without an RntbdContext to force:
                 // 1. SSL negotiation
                 // 2. RntbdContextRequest -> RntbdContext
-                // 3. RntbdHealthCheckRequest -> RntbdHealthCheck
+                // 3. RntbdHealthCheckRequest -> receive acknowledgement
 
                 final Channel channel = future.getNow();
 
-                // TODO: DANOBLE: Consider running the code that follows on the channel's event loop
+                channel.eventLoop().execute(() -> {
 
-                if (channel.isActive()) {
-
-                    final RntbdRequestManager requestManager = channel.pipeline().get(RntbdRequestManager.class);
-
-                    if (requestManager != null) {
-
-                        if (requestManager.hasRequestedRntbdContext()) {
-
-                            this.originalPromise.setSuccess(channel);
-
-                        } else {
-
-                            channel.writeAndFlush(RntbdHealthCheckRequest.MESSAGE).addListener(completed -> {
-                                if (completed.isSuccess()) {
-                                    reportIssueUnless(requestManager.hasRequestedRntbdContext(), logger, channel, "context request did not complete");
-                                    this.originalPromise.setSuccess(channel);
-                                } else {
-                                    logger.warn("{} health check request failed due to:", channel, completed.cause());
-                                    channel.close().addListener(closed -> this.pool.release(channel));
-                                    this.originalPromise.setFailure(completed.cause());
-                                }
-                            });
-                        }
-
+                    if (!channel.isActive()) {
+                        this.fail(CHANNEL_CLOSED_ON_ACQUIRE);
                         return;
                     }
 
-                    reportIssueUnless(!channel.isActive(), logger, channel, "requestManager: null");
-                }
+                    final ChannelPipeline pipeline = channel.pipeline();
+                    checkState(pipeline != null);
 
-                cause = CHANNEL_CLOSED_ON_ACQUIRE;
+                    final RntbdRequestManager requestManager = pipeline.get(RntbdRequestManager.class);
+                    checkState(requestManager != null);
+
+                    if (requestManager.hasRequestedRntbdContext()) {
+
+                        this.originalPromise.setSuccess(channel);
+
+                    } else {
+
+                        channel.writeAndFlush(RntbdHealthCheckRequest.MESSAGE).addListener(completed -> {
+                            if (completed.isSuccess()) {
+                                reportIssueUnless(requestManager.hasRequestedRntbdContext(), logger, channel, "context request did not complete");
+                                this.originalPromise.setSuccess(channel);
+                            } else {
+                                logger.warn("{} health check request failed due to:", channel, completed.cause());
+                                this.fail(completed.cause());
+                            }
+                        });
+                    }
+                });
 
             } else {
-
-                cause = future.cause();
-
+                logger.warn("channel acquisition failed due to:", future.cause());
+                fail(future.cause());
             }
+        }
 
+        private void fail(Throwable cause) {
             if (this.acquired) {
                 this.pool.decrementAndRunTaskQueue();
             } else {
                 this.pool.runTaskQueue();
             }
-
             this.originalPromise.setFailure(cause);
         }
     }

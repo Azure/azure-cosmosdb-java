@@ -290,7 +290,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
                 "expected an exception other than ", ClosedWithPendingRequestsException.INSTANCE);
 
             this.completeAllPendingRequestsExceptionally(context, cause);
-            context.pipeline().flush().close();
+            context.close();
         }
     }
 
@@ -581,8 +581,8 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
                 "throwable: ", throwable);
 
             reportIssueUnless(this.pendingRequests.isEmpty() && this.pendingWrites.isEmpty(), logger, context,
-                "pendingRequests: {}, pendingWrites: {}", this.pendingRequests.isEmpty(),
-                this.pendingWrites.isEmpty());
+                "pendingRequests: {}, pendingWrites: {}, throwable: {}", this.pendingRequests.isEmpty(),
+                this.pendingWrites.isEmpty(), throwable);
 
             return;
         }
