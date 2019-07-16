@@ -118,7 +118,7 @@ public class HttpTransportClient extends TransportClient {
         try {
 
             // uuid correlation manager
-            UUID activityId = UUID.fromString(request.getActivityId());
+            String activityId = request.getActivityId();
 
             if (resourceOperation.operationType == OperationType.Recreate) {
                 Map<String, String> errorResponseHeaders = new HashMap<>();
@@ -231,12 +231,12 @@ public class HttpTransportClient extends TransportClient {
         }
     }
 
-    private void beforeRequest(UUID activityId, String uri, ResourceType resourceType, HttpRequestHeaders requestHeaders) {
+    private void beforeRequest(String activityId, String uri, ResourceType resourceType, HttpRequestHeaders requestHeaders) {
         // TODO: perf counters
         // https://msdata.visualstudio.com/CosmosDB/_workitems/edit/258624
     }
 
-    private void afterRequest(UUID activityId,
+    private void afterRequest(String activityId,
                               int statusCode,
                               double durationInMilliSeconds,
                               HttpResponseHeaders responseHeaders) {
@@ -276,7 +276,7 @@ public class HttpTransportClient extends TransportClient {
     }
 
     private HttpClientRequest<ByteBuf> prepareHttpMessage(
-        UUID activityId,
+        String activityId,
         URI physicalAddress,
         ResourceOperation resourceOperation,
         RxDocumentServiceRequest request) throws Exception {
