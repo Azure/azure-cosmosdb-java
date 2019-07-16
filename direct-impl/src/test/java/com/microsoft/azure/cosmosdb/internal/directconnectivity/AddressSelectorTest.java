@@ -73,9 +73,9 @@ public class AddressSelectorTest {
         replicaAddresses.add(new AddressInformation(true, true, "https://cosmos2", Protocol.Https));
         replicaAddresses.add(new AddressInformation(true, false, "https://cosmos3", Protocol.Https));
 
-        URI res = AddressSelector.getPrimaryUri(request, replicaAddresses);
+        Uri res = AddressSelector.getPrimaryUri(request, replicaAddresses);
 
-        assertThat(res).isEqualTo(URI.create("https://cosmos2"));
+        assertThat(res).isEqualTo(Uri.create("https://cosmos2"));
     }
 
     @Test(groups = "unit")
@@ -89,9 +89,9 @@ public class AddressSelectorTest {
         replicaAddresses.add(new AddressInformation(true, false, "https://cosmos2", Protocol.Https));
         replicaAddresses.add(new AddressInformation(true, false, "https://cosmos3", Protocol.Https));
 
-        URI res = AddressSelector.getPrimaryUri(request, replicaAddresses);
+        Uri res = AddressSelector.getPrimaryUri(request, replicaAddresses);
 
-        assertThat(res).isEqualTo(URI.create("https://cosmos2"));
+        assertThat(res).isEqualTo(Uri.create("https://cosmos2"));
     }
 
     @Test(groups = "unit")
@@ -112,9 +112,9 @@ public class AddressSelectorTest {
 
         Mockito.doReturn(Single.just(replicaAddresses.toArray(new AddressInformation[0]))).when(addressResolver).resolveAsync(Mockito.any(RxDocumentServiceRequest.class), Matchers.eq(false));
 
-        URI res = selector.resolvePrimaryUriAsync(request, false).toBlocking().value();
+        Uri res = selector.resolvePrimaryUriAsync(request, false).toBlocking().value();
 
-        assertThat(res).isEqualTo(URI.create("https://cosmos2"));
+        assertThat(res).isEqualTo(Uri.create("https://cosmos2"));
     }
 
     @Test(groups = "unit")
@@ -135,9 +135,9 @@ public class AddressSelectorTest {
 
         Mockito.doReturn(Single.just(replicaAddresses.toArray(new AddressInformation[0]))).when(addressResolver).resolveAsync(Mockito.any(RxDocumentServiceRequest.class), Matchers.eq(false));
 
-        List<URI> res = selector.resolveAllUriAsync(request, true, false).toBlocking().value();
+        List<Uri> res = selector.resolveAllUriAsync(request, true, false).toBlocking().value();
 
-        assertThat(res).isEqualTo(ImmutableList.of(URI.create("https://cosmos1"), URI.create("https://cosmos2"), URI.create("https://cosmos3")));
+        assertThat(res).isEqualTo(ImmutableList.of(Uri.create("https://cosmos1"), Uri.create("https://cosmos2"), Uri.create("https://cosmos3")));
     }
 
     @Test(groups = "unit")
@@ -181,9 +181,9 @@ public class AddressSelectorTest {
 
         Mockito.doReturn(Single.just(replicaAddresses.toArray(new AddressInformation[0]))).when(addressResolver).resolveAsync(Mockito.any(RxDocumentServiceRequest.class), Matchers.eq(false));
 
-        List<URI> res = selector.resolveAllUriAsync(request, true, false).toBlocking().value();
+        List<Uri> res = selector.resolveAllUriAsync(request, true, false).toBlocking().value();
 
-        assertThat(res).isEqualTo(ImmutableList.of(URI.create("rntbd://cosmos1"), URI.create("rntbd://cosmos2")));
+        assertThat(res).isEqualTo(ImmutableList.of(Uri.create("rntbd://cosmos1"), Uri.create("rntbd://cosmos2")));
     }
 
 }

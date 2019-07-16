@@ -27,6 +27,7 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.microsoft.azure.cosmosdb.internal.directconnectivity.Uri;
 import org.apache.commons.lang3.StringUtils;
 
 import com.microsoft.azure.cosmosdb.internal.Constants;
@@ -55,7 +56,7 @@ public class DocumentClientException extends Exception {
     private ClientSideRequestStatistics clientSideRequestStatistics;
     String resourceAddress;
     String partitionKeyRangeId;
-    URI requestUri;
+    Uri requestUri;
     long lsn;
     Map<String, String> requestHeaders;
 

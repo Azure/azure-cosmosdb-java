@@ -122,8 +122,10 @@ final public class RntbdTransportClient extends TransportClient implements AutoC
 
     @Override
     public Single<StoreResponse> invokeStoreAsync(
-        URI physicalAddress, ResourceOperation unused, RxDocumentServiceRequest request
+        Uri physicalAddressUri, ResourceOperation unused, RxDocumentServiceRequest request
     ) {
+        URI physicalAddress = physicalAddressUri.uri;
+
         Objects.requireNonNull(physicalAddress, "physicalAddress");
         Objects.requireNonNull(request, "request");
         this.throwIfClosed();

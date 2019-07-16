@@ -65,13 +65,8 @@ public class HttpUtils {
         }
     }
 
-    public static URI toURI(String uri) {
-        try {
-            return new URI(uri);
-        } catch (Exception e) {
-            log.error("failed to parse {}", uri, e);
-            throw new IllegalArgumentException("failed to parse uri " + uri, e);
-        }
+    public static Uri toURI(Uri uri) {
+        return uri;
     }
 
     public static Map<String, String> asMap(HttpResponseHeaders headers) {

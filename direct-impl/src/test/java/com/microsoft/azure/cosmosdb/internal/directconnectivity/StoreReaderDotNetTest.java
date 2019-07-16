@@ -122,13 +122,13 @@ public class StoreReaderDotNetTest {
         Mockito.doReturn(Single.just(srb.build()))
                 .when(mockTransportClient)
                 .invokeResourceOperationAsync(
-                        Mockito.eq(URI.create(addressInformation[0].getPhysicalUri())),
+                        Mockito.eq(addressInformation[0].getPhysicalUri()),
                         Mockito.any(RxDocumentServiceRequest.class));
 
 
 
         // get response from mock object
-        StoreResponse response = mockTransportClient.invokeResourceOperationAsync(URI.create(addressInformation[0].getPhysicalUri()), entity).toBlocking().value();
+        StoreResponse response = mockTransportClient.invokeResourceOperationAsync(addressInformation[0].getPhysicalUri(), entity).toBlocking().value();
 
         // validate that the LSN matches
         // validate that the ActivityId Matches
@@ -156,7 +156,7 @@ public class StoreReaderDotNetTest {
         // setup mock transport client for the first replica
         Mockito.doReturn(Single.just(mockStoreResponseFast))
                 .when(mockTransportClient)
-                .invokeResourceOperationAsync(Mockito.eq(URI.create(addressInformation[0].getPhysicalUri())), Mockito.any(RxDocumentServiceRequest.class));
+                .invokeResourceOperationAsync(Mockito.eq(addressInformation[0].getPhysicalUri()), Mockito.any(RxDocumentServiceRequest.class));
 
 
         // setup mock transport client with a sequence of outputs
@@ -169,7 +169,7 @@ public class StoreReaderDotNetTest {
                 .doReturn(Single.just(mockStoreResponseFast))
                 .doReturn(Single.just(mockStoreResponseFast))
                 .when(mockTransportClient).invokeResourceOperationAsync(
-                        Mockito.eq(URI.create(addressInformation[1].getPhysicalUri())),
+                        Mockito.eq(addressInformation[1].getPhysicalUri()),
                         Mockito.any(RxDocumentServiceRequest.class));
 
         // After this, the product code should reset target identity, and lsn response
@@ -189,7 +189,7 @@ public class StoreReaderDotNetTest {
 
         Mockito.doAnswer((params) -> Single.just(queueOfResponses.poll()))
                 .when(mockTransportClient).invokeResourceOperationAsync(
-                        Mockito.eq(URI.create(addressInformation[2].getPhysicalUri())),
+                        Mockito.eq(addressInformation[2].getPhysicalUri()),
                         Mockito.any(RxDocumentServiceRequest.class));
 
         return mockTransportClient;
@@ -255,7 +255,7 @@ public class StoreReaderDotNetTest {
             // setup mock transport client for the first replica
             Mockito.doReturn(Single.just(mockStoreResponse5))
                     .when(mockTransportClient).invokeResourceOperationAsync(
-                            Mockito.eq(URI.create(addressInformation[0].getPhysicalUri())), Mockito.any(RxDocumentServiceRequest.class));
+                            Mockito.eq(addressInformation[0].getPhysicalUri()), Mockito.any(RxDocumentServiceRequest.class));
 
             Mockito.doReturn(Single.just(mockStoreResponse1))
                     .doReturn(Single.just(mockStoreResponse1))
@@ -264,7 +264,7 @@ public class StoreReaderDotNetTest {
                     .doReturn(Single.just(mockStoreResponse1))
                     .doReturn(Single.just(mockStoreResponse5))
                     .when(mockTransportClient).invokeResourceOperationAsync(
-                            Mockito.eq(URI.create(addressInformation[1].getPhysicalUri())),
+                            Mockito.eq(addressInformation[1].getPhysicalUri()),
                             Mockito.any(RxDocumentServiceRequest.class));
 
             Mockito.doReturn(Single.just(mockStoreResponse2))
@@ -274,7 +274,7 @@ public class StoreReaderDotNetTest {
                     .doReturn(Single.just(mockStoreResponse4))
                     .doReturn(Single.just(mockStoreResponse5))
                     .when(mockTransportClient).invokeResourceOperationAsync(
-                            Mockito.eq(URI.create(addressInformation[2].getPhysicalUri())),
+                            Mockito.eq(addressInformation[2].getPhysicalUri()),
                             Mockito.any(RxDocumentServiceRequest.class));
         }
 
@@ -282,32 +282,32 @@ public class StoreReaderDotNetTest {
             // setup mock transport client for the first replica
             Mockito.doReturn(Single.just(mockStoreResponse2))
                     .when(mockTransportClient).invokeResourceOperationAsync(
-                            Mockito.eq(URI.create(addressInformation[0].getPhysicalUri())), Mockito.any(RxDocumentServiceRequest.class));
+                            Mockito.eq(addressInformation[0].getPhysicalUri()), Mockito.any(RxDocumentServiceRequest.class));
 
             // setup mock transport client with a sequence of outputs
             Mockito.doReturn(Single.just(mockStoreResponse1))
                     .when(mockTransportClient).invokeResourceOperationAsync(
-                            Mockito.eq(URI.create(addressInformation[1].getPhysicalUri())), Mockito.any(RxDocumentServiceRequest.class));
+                            Mockito.eq(addressInformation[1].getPhysicalUri()), Mockito.any(RxDocumentServiceRequest.class));
 
 
             // setup mock transport client with a sequence of outputs
             Mockito.doReturn(Single.just(mockStoreResponse2))
                     .when(mockTransportClient).invokeResourceOperationAsync(
-                            Mockito.eq(URI.create(addressInformation[2].getPhysicalUri())), Mockito.any(RxDocumentServiceRequest.class));
+                            Mockito.eq(addressInformation[2].getPhysicalUri()), Mockito.any(RxDocumentServiceRequest.class));
         } else if (result == ReadQuorumResultKind.QuorumNotSelected) {
             // setup mock transport client for the first replica
 
             Mockito.doReturn(Single.just(mockStoreResponse5))
                     .when(mockTransportClient).invokeResourceOperationAsync(
-                    Mockito.eq(URI.create(addressInformation[0].getPhysicalUri())), Mockito.any(RxDocumentServiceRequest.class));
+                    Mockito.eq(addressInformation[0].getPhysicalUri()), Mockito.any(RxDocumentServiceRequest.class));
 
             Mockito.doReturn(Single.just(mockStoreResponse5))
                     .when(mockTransportClient).invokeResourceOperationAsync(
-                    Mockito.eq(URI.create(addressInformation[1].getPhysicalUri())), Mockito.any(RxDocumentServiceRequest.class));
+                    Mockito.eq(addressInformation[1].getPhysicalUri()), Mockito.any(RxDocumentServiceRequest.class));
 
             Mockito.doReturn(Single.error(new GoneException("test")))
                     .when(mockTransportClient).invokeResourceOperationAsync(
-                    Mockito.eq(URI.create(addressInformation[2].getPhysicalUri())), Mockito.any(RxDocumentServiceRequest.class));
+                    Mockito.eq(addressInformation[2].getPhysicalUri()), Mockito.any(RxDocumentServiceRequest.class));
         }
 
         return mockTransportClient;
@@ -387,7 +387,7 @@ public class StoreReaderDotNetTest {
                     .doReturn(Single.just(mockStoreResponse1))
                     .doReturn(Single.just(finalResponse))
                         .when(mockTransportClient).invokeResourceOperationAsync(
-                            Mockito.eq(URI.create(addressInformation[i].getPhysicalUri())), Mockito.any(RxDocumentServiceRequest.class));
+                            Mockito.eq(addressInformation[i].getPhysicalUri()), Mockito.any(RxDocumentServiceRequest.class));
 
             } else {
                 Mockito.doReturn(Single.just(mockStoreResponse1))
@@ -397,7 +397,7 @@ public class StoreReaderDotNetTest {
                         .doReturn(Single.just(mockStoreResponse1))
                         .doReturn(Single.just(mockStoreResponse1))
                         .when(mockTransportClient).invokeResourceOperationAsync(
-                        Mockito.eq(URI.create(addressInformation[i].getPhysicalUri())), Mockito.any(RxDocumentServiceRequest.class));
+                        Mockito.eq(addressInformation[i].getPhysicalUri()), Mockito.any(RxDocumentServiceRequest.class));
             }
         }
 
@@ -478,16 +478,16 @@ public class StoreReaderDotNetTest {
         assertThat(addressInfo[0]).isEqualTo(addressInformation[0]);
 
         AddressSelector addressSelector = new AddressSelector(mockAddressCache, Protocol.Tcp);
-        URI primaryAddress = addressSelector.resolvePrimaryUriAsync(entity, false /*forceAddressRefresh*/).toBlocking().value();
+        Uri primaryAddress = addressSelector.resolvePrimaryUriAsync(entity, false /*forceAddressRefresh*/).toBlocking().value();
 
         // check if the address return from Address Selector matches the original address info
-        assertThat(primaryAddress.toString()).isEqualTo(addressInformation[0].getPhysicalUri());
+        assertThat(primaryAddress).isEqualTo(addressInformation[0].getPhysicalUri());
 
         // get mock transport client that returns a sequence of responses to simulate upgrade
         TransportClient mockTransportClient = getMockTransportClientDuringUpgrade(addressInformation);
 
         // get response from mock object
-        StoreResponse response = mockTransportClient.invokeResourceOperationAsync(URI.create(addressInformation[0].getPhysicalUri()), entity).toBlocking().value();
+        StoreResponse response = mockTransportClient.invokeResourceOperationAsync(addressInformation[0].getPhysicalUri(), entity).toBlocking().value();
 
         // validate that the LSN matches
         assertThat(response.getLSN()).isEqualTo(50);
@@ -606,7 +606,7 @@ public class StoreReaderDotNetTest {
         assertThat(addressInfo[0]).isEqualTo(addressInformations[0]);
 
         AddressSelector addressSelector = new AddressSelector(mockAddressCache, Protocol.Tcp);
-        URI primaryAddress = addressSelector.resolvePrimaryUriAsync(entity, false).toBlocking().value();
+        Uri primaryAddress = addressSelector.resolvePrimaryUriAsync(entity, false).toBlocking().value();
 
         // check if the address return from Address Selector matches the original address info
         assertThat(primaryAddress.toString()).isEqualTo(addressInformations[0].getPhysicalUri());
@@ -615,7 +615,7 @@ public class StoreReaderDotNetTest {
         TransportClient mockTransportClient = getMockTransportClientDuringUpgrade(addressInformations);
 
         // get response from mock object
-        StoreResponse response = mockTransportClient.invokeResourceOperationAsync(new URI(addressInformations[0].getPhysicalUri()), entity).toBlocking().value();
+        StoreResponse response = mockTransportClient.invokeResourceOperationAsync(addressInformations[0].getPhysicalUri(), entity).toBlocking().value();
 
         // validate that the LSN matches
         assertThat(response.getLSN()).isEqualTo(50);
@@ -694,10 +694,10 @@ public class StoreReaderDotNetTest {
         assertThat(addressInformations[0]).isEqualTo(addressInfo[0]);
 
         AddressSelector addressSelector = new AddressSelector(mockAddressCache, Protocol.Tcp);
-        URI primaryAddress = addressSelector.resolvePrimaryUriAsync(entity, false).toBlocking().value();
+        Uri primaryAddress = addressSelector.resolvePrimaryUriAsync(entity, false).toBlocking().value();
 
         // check if the address return from Address Selector matches the original address info
-        assertThat(primaryAddress.toString()).isEqualTo(addressInformations[0].getPhysicalUri());
+        assertThat(primaryAddress).isEqualTo(addressInformations[0].getPhysicalUri());
 
         // create a real session container - we don't need session for this test anyway
         SessionContainer sessionContainer = new SessionContainer(StringUtils.EMPTY);
@@ -780,10 +780,10 @@ public class StoreReaderDotNetTest {
         assertThat(addressInfo[0]).isEqualTo(addressInformations[0]);
 
         AddressSelector addressSelector = new AddressSelector(mockAddressCache, Protocol.Tcp);
-        URI primaryAddress = addressSelector.resolvePrimaryUriAsync(entity, false).toBlocking().value();
+        Uri primaryAddress = addressSelector.resolvePrimaryUriAsync(entity, false).toBlocking().value();
 
         // check if the address return from Address Selector matches the original address info
-        assertThat(primaryAddress.toString()).isEqualTo(addressInformations[0].getPhysicalUri());
+        assertThat(primaryAddress).isEqualTo(addressInformations[0].getPhysicalUri());
 
         // Quorum Met scenario Start
         {
