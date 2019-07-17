@@ -191,9 +191,11 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
 
         // region Fields
 
+        private final int bufferPageSize;
         private final String certificateHostNameOverride;
         private final Duration connectionTimeout;
         private final Duration idleTimeout;
+        private final int maxBufferCapacity;
         private final int maxChannelsPerEndpoint;
         private final int maxRequestsPerChannel;
         private final int partitionCount;
@@ -208,10 +210,11 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
         // region Constructors
 
         private Options(Builder builder) {
-
+            this.bufferPageSize = builder.bufferPageSize;
             this.certificateHostNameOverride = builder.certificateHostNameOverride;
             this.connectionTimeout = builder.connectionTimeout == null ? builder.requestTimeout : builder.connectionTimeout;
             this.idleTimeout = builder.idleTimeout;
+            this.maxBufferCapacity = builder.maxBufferCapacity;
             this.maxChannelsPerEndpoint = builder.maxChannelsPerEndpoint;
             this.maxRequestsPerChannel = builder.maxRequestsPerChannel;
             this.partitionCount = builder.partitionCount;
@@ -226,6 +229,10 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
 
         // region Accessors
 
+        public int bufferPageSize() {
+            return this.bufferPageSize;
+        }
+
         public String certificateHostNameOverride() {
             return this.certificateHostNameOverride;
         }
@@ -236,6 +243,10 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
 
         public Duration idleTimeout() {
             return this.idleTimeout;
+        }
+
+        public int maxBufferCapacity() {
+            return this.maxBufferCapacity;
         }
 
         public int maxChannelsPerEndpoint() {
@@ -292,9 +303,11 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
             private static final Duration SIXTY_FIVE_SECONDS = Duration.ofSeconds(65L);
             private static final Duration TEN_SECONDS = Duration.ofSeconds(10L);
 
+            private int bufferPageSize = 8192;
             private String certificateHostNameOverride = null;
             private Duration connectionTimeout = null;
             private Duration idleTimeout = Duration.ZERO;
+            private int maxBufferCapacity = 8192 << 10;
             private int maxChannelsPerEndpoint = 10;
             private int maxRequestsPerChannel = 30;
             private int partitionCount = 1;
@@ -321,7 +334,16 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
             // region Methods
 
             public Options build() {
+                checkState(this.bufferPageSize <= this.maxBufferCapacity, "bufferPageSize (%s) > maxBufferCapacity (%s)",
+                    this.bufferPageSize, this.maxBufferCapacity
+                );
                 return new Options(this);
+            }
+
+            public Builder bufferPageSize(final int value) {
+                checkArgument(value >= 4096 && (value & (value - 1)) == 0, "value: %s", value);
+                this.bufferPageSize = value;
+                return this;
             }
 
             public Builder certificateHostNameOverride(final String value) {
@@ -338,6 +360,12 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
             public Builder idleTimeout(final Duration value) {
                 checkNotNull(value, "value: null");
                 this.idleTimeout = value;
+                return this;
+            }
+
+            public Builder maxBufferCapacity(final int value) {
+                checkArgument(value > 0 && (value & (value - 1)) == 0, "value: %s", value);
+                this.maxBufferCapacity = value;
                 return this;
             }
 

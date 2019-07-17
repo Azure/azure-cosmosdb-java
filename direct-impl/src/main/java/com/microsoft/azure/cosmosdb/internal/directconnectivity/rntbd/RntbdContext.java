@@ -27,6 +27,7 @@ package com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.base.Strings;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.ServerProperties;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -40,6 +41,8 @@ import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.Rnt
 import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdConstants.RntbdContextHeader;
 
 public final class RntbdContext {
+
+    private final static String simpleClassName = RntbdContext.class.getSimpleName();
 
     private final RntbdResponseStatus frame;
     private final Headers headers;
@@ -174,7 +177,7 @@ public final class RntbdContext {
 
     @Override
     public String toString() {
-        return RntbdObjectMapper.toJson(this);
+        return Strings.lenientFormat("%s(%s)", simpleClassName, RntbdObjectMapper.toJson(this));
     }
 
     private static final class Headers extends RntbdTokenStream<RntbdContextHeader> {

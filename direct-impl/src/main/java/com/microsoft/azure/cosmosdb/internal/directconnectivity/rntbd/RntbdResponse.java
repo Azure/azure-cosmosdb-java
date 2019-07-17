@@ -31,6 +31,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import com.google.common.base.Strings;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.StoreResponse;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
@@ -57,8 +58,8 @@ public final class RntbdResponse implements ReferenceCounted {
 
     private static final String simpleClassName = RntbdResponse.class.getSimpleName();
 
-    @JsonProperty
     @JsonSerialize(using = PayloadSerializer.class)
+    @JsonProperty
     private final ByteBuf content;
 
     @JsonProperty
@@ -240,7 +241,7 @@ public final class RntbdResponse implements ReferenceCounted {
 
     @Override
     public String toString() {
-        return simpleClassName + '(' + RntbdObjectMapper.toJson(this) + ')';
+        return Strings.lenientFormat("%s(%s)", simpleClassName, RntbdObjectMapper.toJson(this));
     }
 
     /**

@@ -29,6 +29,7 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import com.microsoft.azure.cosmosdb.internal.UserAgentContainer;
+import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.ssl.SslContext;
 
@@ -65,6 +66,7 @@ public interface RntbdEndpoint extends AutoCloseable {
     @JsonSerialize(using = Config.JsonSerializer.class)
     final class Config {
 
+        private final PooledByteBufAllocator allocator;
         private final Options options;
         private final SslContext sslContext;
         private final LogLevel wireLogLevel;
@@ -74,9 +76,19 @@ public interface RntbdEndpoint extends AutoCloseable {
             checkNotNull(options, "options");
             checkNotNull(sslContext, "sslContext");
 
+            int directArenaCount = PooledByteBufAllocator.defaultNumDirectArena();
+            int heapArenaCount = PooledByteBufAllocator.defaultNumHeapArena();
+            int pageSize = options.bufferPageSize();
+            int maxOrder = Integer.numberOfTrailingZeros(options.maxBufferCapacity()) - Integer.numberOfTrailingZeros(pageSize);
+
+            this.allocator = new PooledByteBufAllocator(heapArenaCount, directArenaCount, pageSize, maxOrder);
             this.options = options;
             this.sslContext = sslContext;
             this.wireLogLevel = wireLogLevel;
+        }
+
+        public PooledByteBufAllocator allocator() {
+            return this.allocator;
         }
 
         public int connectionTimeout() {

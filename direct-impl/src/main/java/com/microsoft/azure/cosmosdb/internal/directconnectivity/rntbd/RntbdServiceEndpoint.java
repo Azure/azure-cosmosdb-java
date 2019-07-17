@@ -33,6 +33,7 @@ import com.google.common.collect.ImmutableMap;
 import com.microsoft.azure.cosmosdb.BridgeInternal;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.GoneException;
 import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.AdaptiveRecvByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelOption;
@@ -55,10 +56,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 
-import static com.microsoft.azure.cosmosdb.internal.HttpConstants.HttpHeaders;
-import static com.microsoft.azure.cosmosdb.internal.directconnectivity.RntbdTransportClient.Options;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static com.microsoft.azure.cosmosdb.internal.HttpConstants.HttpHeaders;
+import static com.microsoft.azure.cosmosdb.internal.directconnectivity.RntbdTransportClient.Options;
 
 @JsonSerialize(using = RntbdServiceEndpoint.JsonSerializer.class)
 public final class RntbdServiceEndpoint implements RntbdEndpoint {
@@ -68,6 +69,7 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
     private static final AtomicLong instanceCount = new AtomicLong();
     private static final Logger logger = LoggerFactory.getLogger(RntbdServiceEndpoint.class);
     private static final String namePrefix = RntbdServiceEndpoint.class.getSimpleName() + '-';
+    private static final AdaptiveRecvByteBufAllocator receiveBufferAllocator = new AdaptiveRecvByteBufAllocator();
 
     private final ChannelPool channelPool;
     private final AtomicBoolean closed;
@@ -85,8 +87,10 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
         final Bootstrap bootstrap = new Bootstrap()
             .channel(NioSocketChannel.class)
             .group(group)
+            .option(ChannelOption.ALLOCATOR, config.allocator())
             .option(ChannelOption.AUTO_READ, true)
             .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, config.connectionTimeout())
+            .option(ChannelOption.RCVBUF_ALLOCATOR, receiveBufferAllocator)
             .option(ChannelOption.SO_KEEPALIVE, true)
             .remoteAddress(physicalAddress.getHost(), physicalAddress.getPort());
 

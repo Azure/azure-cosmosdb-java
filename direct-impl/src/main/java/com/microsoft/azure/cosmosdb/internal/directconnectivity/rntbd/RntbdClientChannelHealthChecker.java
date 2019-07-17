@@ -37,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -141,8 +142,8 @@ public final class RntbdClientChannelHealthChecker implements ChannelHealthCheck
 
         if (writeDelay > this.writeDelayLimit && currentTime - timestamps.lastChannelWriteAttempt() > writeHangGracePeriod) {
 
+            final Optional<RntbdContext> rntbdContext = requestManager.rntbdContext();
             final int pendingRequestCount = requestManager.pendingRequestCount();
-            final RntbdContext rntbdContext = requestManager.rntbdContext();
 
             logger.warn("{} health check failed due to hung write: {lastChannelWriteAttempt: {}, lastChannelWrite: {}, "
                 + "writeDelay: {}, writeDelayLimit: {}, rntbdContext: {}, pendingRequestCount: {}}", channel,
@@ -160,8 +161,8 @@ public final class RntbdClientChannelHealthChecker implements ChannelHealthCheck
 
         if (readDelay > this.readDelayLimit && currentTime - timestamps.lastChannelWrite() > readHangGracePeriod) {
 
+            final Optional<RntbdContext> rntbdContext = requestManager.rntbdContext();
             final int pendingRequestCount = requestManager.pendingRequestCount();
-            final RntbdContext rntbdContext = requestManager.rntbdContext();
 
             logger.warn("{} health check failed due to hung read: {lastChannelWrite: {}, lastChannelRead: {}, "
                 + "readDelay: {}, readDelayLimit: {}, rntbdContext: {}, pendingRequestCount: {}}", channel,

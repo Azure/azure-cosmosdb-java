@@ -520,7 +520,7 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
                 // A Direct TCP channel is ready to receive requests when it:
                 // * is active and
                 // * has an RntbdContext
-                // We use a health check request on a channel without an RntbdContext to force:
+                // We send a health check request on a channel without an RntbdContext to force:
                 // 1. SSL negotiation
                 // 2. RntbdContextRequest -> RntbdContext
                 // 3. RntbdHealthCheckRequest -> receive acknowledgement
@@ -547,11 +547,17 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
                     } else {
 
                         channel.writeAndFlush(RntbdHealthCheckRequest.MESSAGE).addListener(completed -> {
+
                             if (completed.isSuccess()) {
-                                reportIssueUnless(requestManager.hasRequestedRntbdContext(), logger, channel, "context request did not complete");
-                                logger.info("\n  Channel({})\n  {}\n  health check request succeeded", channel, requestManager.rntbdContext());
+
+                                reportIssueUnless(this.acquired && requestManager.hasRntbdContext(), logger,
+                                    channel,"acquired: {}, rntbdContext: {}", this.acquired,
+                                    requestManager.rntbdContext());
+
                                 this.originalPromise.setSuccess(channel);
+
                             } else {
+
                                 logger.warn("Channel({}) health check request failed due to:", channel, completed.cause());
                                 this.fail(completed.cause());
                             }
@@ -561,7 +567,7 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
 
             } else {
                 logger.warn("channel acquisition failed due to:", future.cause());
-                fail(future.cause());
+                this.fail(future.cause());
             }
         }
 
