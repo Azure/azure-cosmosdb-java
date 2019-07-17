@@ -152,7 +152,10 @@ public class BaseAuthorizationTokenProvider implements AuthorizationTokenProvide
         }
 
         // Skipping lower casing of resourceId since it may now contain "ID" of the resource as part of the FullName
-        StringBuilder body = new StringBuilder();
+
+        int len = verb.length() + resourceSegment.length() + resourceIdOrFullName.length() +
+                "EEE, dd MMM yyyy HH:mm:ss zzz".length() + 5;
+        StringBuilder body = new StringBuilder(len);
         body.append(verb.toLowerCase())
                 .append('\n')
                 .append(resourceSegment)
@@ -297,7 +300,11 @@ public class BaseAuthorizationTokenProvider implements AuthorizationTokenProvide
             resourceId = resourceId.toLowerCase();
         }
 
-        StringBuilder payload = new StringBuilder();
+        String xDateOrDateOrEmpty = StringUtils.isEmpty(xDate) ? date.toLowerCase() : "";
+        int len = verb.length() + resourceType.length() + resourceId.length() + xDate.length() +
+                xDateOrDateOrEmpty.length() + 5;
+
+        StringBuilder payload = new StringBuilder(len);
         payload.append(verb.toLowerCase())
                 .append('\n')
                 .append(resourceType.toLowerCase())
@@ -306,7 +313,7 @@ public class BaseAuthorizationTokenProvider implements AuthorizationTokenProvide
                 .append('\n')
                 .append(xDate.toLowerCase())
                 .append('\n')
-                .append(StringUtils.isEmpty(xDate) ? date.toLowerCase() : "")
+                .append(xDateOrDateOrEmpty)
                 .append('\n');
 
         return payload.toString();
