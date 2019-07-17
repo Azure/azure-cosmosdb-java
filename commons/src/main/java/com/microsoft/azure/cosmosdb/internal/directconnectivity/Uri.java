@@ -56,4 +56,9 @@ public class Uri {
     public int hashCode() {
         return Objects.hash(uriAsString, uri);
     }
+
+    @Override
+    public String toString() {
+        return this.uriAsString;
+    }
 }
