@@ -49,7 +49,7 @@ public class AddressSelectorTest {
     }
 
     @Test(groups = "unit", expectedExceptions = GoneException.class, expectedExceptionsMessageRegExp =
-        "The requested resource is no longer available at the server. Returned addresses are \\{https://cosmos1,https://cosmos2\\}")
+        "The requested resource is no longer available at the server. Returned addresses are \\{https://cosmos1/,https://cosmos2/\\}")
     public void getPrimaryUri_NoPrimaryAddress() throws Exception {
         RxDocumentServiceRequest request = Mockito.mock(RxDocumentServiceRequest.class);
         Mockito.doReturn(null).when(request).getDefaultReplicaIndex();
@@ -75,7 +75,7 @@ public class AddressSelectorTest {
 
         Uri res = AddressSelector.getPrimaryUri(request, replicaAddresses);
 
-        assertThat(res).isEqualTo(Uri.create("https://cosmos2"));
+        assertThat(res).isEqualTo(Uri.create("https://cosmos2/"));
     }
 
     @Test(groups = "unit")
@@ -91,7 +91,7 @@ public class AddressSelectorTest {
 
         Uri res = AddressSelector.getPrimaryUri(request, replicaAddresses);
 
-        assertThat(res).isEqualTo(Uri.create("https://cosmos2"));
+        assertThat(res).isEqualTo(Uri.create("https://cosmos2/"));
     }
 
     @Test(groups = "unit")
@@ -114,7 +114,7 @@ public class AddressSelectorTest {
 
         Uri res = selector.resolvePrimaryUriAsync(request, false).toBlocking().value();
 
-        assertThat(res).isEqualTo(Uri.create("https://cosmos2"));
+        assertThat(res).isEqualTo(Uri.create("https://cosmos2/"));
     }
 
     @Test(groups = "unit")
@@ -137,7 +137,7 @@ public class AddressSelectorTest {
 
         List<Uri> res = selector.resolveAllUriAsync(request, true, false).toBlocking().value();
 
-        assertThat(res).isEqualTo(ImmutableList.of(Uri.create("https://cosmos1"), Uri.create("https://cosmos2"), Uri.create("https://cosmos3")));
+        assertThat(res).isEqualTo(ImmutableList.of(Uri.create("https://cosmos1/"), Uri.create("https://cosmos2/"), Uri.create("https://cosmos3/")));
     }
 
     @Test(groups = "unit")
@@ -183,7 +183,7 @@ public class AddressSelectorTest {
 
         List<Uri> res = selector.resolveAllUriAsync(request, true, false).toBlocking().value();
 
-        assertThat(res).isEqualTo(ImmutableList.of(Uri.create("rntbd://cosmos1"), Uri.create("rntbd://cosmos2")));
+        assertThat(res).isEqualTo(ImmutableList.of(Uri.create("rntbd://cosmos1/"), Uri.create("rntbd://cosmos2/")));
     }
 
 }
