@@ -91,6 +91,10 @@ public interface RntbdEndpoint extends AutoCloseable {
             return this.allocator;
         }
 
+        public int bufferPageSize() {
+            return this.options.bufferPageSize();
+        }
+
         public int connectionTimeout() {
             final long value = this.options.connectionTimeout().toMillis();
             assert value <= Integer.MAX_VALUE;
@@ -99,6 +103,10 @@ public interface RntbdEndpoint extends AutoCloseable {
 
         public long idleConnectionTimeout() {
             return this.options.idleTimeout().toNanos();
+        }
+
+        public int maxBufferCapacity() {
+            return this.options.maxBufferCapacity();
         }
 
         public int maxChannelsPerEndpoint() {
@@ -151,8 +159,10 @@ public interface RntbdEndpoint extends AutoCloseable {
             @Override
             public void serialize(Config value, JsonGenerator generator, SerializerProvider provider) throws IOException {
                 generator.writeStartObject();
+                generator.writeNumberField("bufferPageSize", value.bufferPageSize());
                 generator.writeNumberField("connectionTimeout", value.connectionTimeout());
                 generator.writeNumberField("idleConnectionTimeout", value.idleConnectionTimeout());
+                generator.writeNumberField("maxBufferCapacity", value.maxBufferCapacity());
                 generator.writeNumberField("maxChannelPerEndpoint", value.maxChannelsPerEndpoint());
                 generator.writeNumberField("maxRequestsPerChannel", value.maxChannelsPerEndpoint());
                 generator.writeNumberField("receiveHangDetectionTime", value.receiveHangDetectionTime());
