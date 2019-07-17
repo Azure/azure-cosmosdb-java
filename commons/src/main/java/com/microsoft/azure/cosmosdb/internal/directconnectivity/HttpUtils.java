@@ -65,10 +65,6 @@ public class HttpUtils {
         }
     }
 
-    public static Uri toURI(Uri uri) {
-        return uri;
-    }
-
     public static Map<String, String> asMap(HttpResponseHeaders headers) {
         if (headers == null) {
             return new HashMap<>();

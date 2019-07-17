@@ -153,7 +153,7 @@ public class ConsistencyWriter {
             return replicaAddressesObs.flatMap(replicaAddresses -> {
                 try {
                     List<URI> contactedReplicas = new ArrayList<>();
-                    replicaAddresses.forEach(replicaAddress -> contactedReplicas.add(HttpUtils.toURI(replicaAddress.getPhysicalUri()).uri));
+                    replicaAddresses.forEach(replicaAddress -> contactedReplicas.add(replicaAddress.getPhysicalUri().uri));
                     request.requestContext.clientSideRequestStatistics.setContactedReplicas(contactedReplicas);
                     return Single.just(AddressSelector.getPrimaryUri(request, replicaAddresses));
                 } catch (GoneException e) {

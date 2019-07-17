@@ -49,8 +49,8 @@ public class ByteBufferPool {
     }
 
     private class PoolSegment {
-        public PoolSegment(int byteBufferCount, ConcurrentLinkedDeque<ByteBufferWrapper> byteBuffersPool) {
-            this.byteBufferSize = byteBufferCount;
+        public PoolSegment(int byteBufferSize, ConcurrentLinkedDeque<ByteBufferWrapper> byteBuffersPool) {
+            this.byteBufferSize = byteBufferSize;
             this.byteBuffersPool = byteBuffersPool;
         }
 
@@ -70,7 +70,7 @@ public class ByteBufferPool {
     private final Logger logger = LoggerFactory.getLogger(ByteBufferPool.class);
 
     private ByteBufferPool() {
-        logger.info("Initializing ByteBuffer Pool");
+        logger.debug("Initializing ByteBuffer Pool");
         long totalSize = 0;
 
         for(int byteBufferSize = 1024, segmentSize = 1024; segmentSize > 0; byteBufferSize *= 2, segmentSize /= 2) {
@@ -79,7 +79,7 @@ public class ByteBufferPool {
             totalSize += (byteBufferSize * segmentSize);
         }
 
-        logger.info("Total ByteBuffer Pool Size {}", totalSize);
+        logger.debug("Total ByteBuffer Pool Size {}", totalSize);
     }
 
     private PoolSegment createByteBufferPoolSegment(int byteBufferSize, int count) {

@@ -47,7 +47,7 @@ public class AddressSelector {
         boolean forceRefresh) {
         Single<List<AddressInformation>> allReplicaAddressesObs = this.resolveAddressesAsync(request, forceRefresh);
         return allReplicaAddressesObs.map(allReplicaAddresses -> allReplicaAddresses.stream().filter(a -> includePrimary || !a.isPrimary())
-            .map(a -> HttpUtils.toURI(a.getPhysicalUri())).collect(Collectors.toList()));
+            .map(a -> a.getPhysicalUri()).collect(Collectors.toList()));
     }
 
     public Single<Uri> resolvePrimaryUriAsync(RxDocumentServiceRequest request, boolean forceAddressRefresh) {
@@ -80,7 +80,7 @@ public class AddressSelector {
                 String.join(",", replicaAddresses.stream().map(address -> address.getPhysicalUri().uriAsString).collect(Collectors.toList()))), null);
         }
 
-        return HttpUtils.toURI(primaryAddress.getPhysicalUri());
+        return primaryAddress.getPhysicalUri();
     }
 
     public Single<List<AddressInformation>> resolveAddressesAsync(RxDocumentServiceRequest request, boolean forceAddressRefresh) {
