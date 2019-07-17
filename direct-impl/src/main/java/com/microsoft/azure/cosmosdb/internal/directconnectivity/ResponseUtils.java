@@ -62,11 +62,9 @@ class ResponseUtils {
                 .map(out -> {
                     try {
                         out.getByteBuffer().position(0);
-                        String str = new String(out.getByteBuffer().array(), Charset.forName("UTF-8"));
-                        return str;
-                    } catch (Throwable t) {
+                        return new String(out.getByteBuffer().array(), Charset.forName("UTF-8"));
+                    } finally {
                         ByteBufferPool.getInstant().release(byteBufferWrapper);
-                        throw t;
                     }
                 });
     }

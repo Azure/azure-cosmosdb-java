@@ -564,9 +564,9 @@ public class HttpTransportClient extends TransportClient {
 
     static String createURI(String baseAddress, String resourcePath) {
         if (baseAddress.charAt(baseAddress.length()-1) == '/') {
-            return baseAddress + HttpUtils.urlEncode(trimBeginningAndEndingSlashes(resourcePath));
+            return baseAddress + trimBeginningAndEndingSlashes(resourcePath);
         } else {
-            return baseAddress + '/' + HttpUtils.urlEncode(trimBeginningAndEndingSlashes(resourcePath));
+            return baseAddress + '/' + trimBeginningAndEndingSlashes(resourcePath);
         }
     }
 

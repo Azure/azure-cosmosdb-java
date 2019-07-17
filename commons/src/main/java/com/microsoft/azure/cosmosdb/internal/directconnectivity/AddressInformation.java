@@ -60,7 +60,7 @@ public class AddressInformation {
             i--;
         }
 
-        return physicalUri.substring(0, i) + '/';
+        return physicalUri.substring(0, i + 1) + '/';
     }
 
     public AddressInformation(boolean isPublic, boolean isPrimary, String physicalUri, String protocolScheme) {
