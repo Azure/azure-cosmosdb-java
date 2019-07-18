@@ -30,6 +30,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
 
+import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import org.apache.commons.io.IOUtils;
 import org.mockito.Matchers;
 import org.mockito.Mockito;
@@ -182,10 +183,14 @@ public class GatewayServiceConfigurationReaderTest extends TestSuiteBase {
     private HttpClientResponse<ByteBuf> getMockResponse(String databaseAccountJson) {
         HttpClientResponse<ByteBuf> resp = Mockito.mock(HttpClientResponse.class);
         Mockito.doReturn(HttpResponseStatus.valueOf(200)).when(resp).getStatus();
-        Mockito.doReturn(Observable.just(ByteBufUtil.writeUtf8(ByteBufAllocator.DEFAULT, databaseAccountJson)))
+        ByteBuf byteBuffer = ByteBufUtil.writeUtf8(ByteBufAllocator.DEFAULT, databaseAccountJson);
+
+        Mockito.doReturn(Observable.just(byteBuffer))
                 .when(resp).getContent();
 
         HttpHeaders httpHeaders = new DefaultHttpHeaders();
+        httpHeaders = httpHeaders.add(HttpConstants.HttpHeaders.CONTENT_LENGTH, byteBuffer.writerIndex());
+
         DefaultHttpResponse httpResponse = new DefaultHttpResponse(HttpVersion.HTTP_1_1,
                 HttpResponseStatus.valueOf(200), httpHeaders);
 
