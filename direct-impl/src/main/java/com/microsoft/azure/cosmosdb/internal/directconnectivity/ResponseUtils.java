@@ -33,6 +33,7 @@ import rx.Observable;
 import rx.Single;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 class ResponseUtils {
     public static Observable<String> toString(Observable<ByteBuf> contentObservable, final int contentLength) {
@@ -50,8 +51,7 @@ class ResponseUtils {
                                 int limit = bb.readableBytes();
                                 out.getByteBuffer().limit(limit);
                                 bb.readBytes(out.getByteBuffer());
-                                assert contentLength == limit :
-                                        "contentLength " + contentLength + " is not equal to ByteBuffer readable bytes" + limit;
+                                assert contentLength == limit;
 
                                 return out;
                             } catch (Throwable t) {
@@ -62,7 +62,7 @@ class ResponseUtils {
                 .map(out -> {
                     try {
                         out.getByteBuffer().position(0);
-                        return new String(out.getByteBuffer().array(), Charset.forName("UTF-8"));
+                        return new String(out.getByteBuffer().array(), 0, contentLength, StandardCharsets.UTF_8);
                     } finally {
                         ByteBufferPool.getInstant().release(byteBufferWrapper);
                     }
