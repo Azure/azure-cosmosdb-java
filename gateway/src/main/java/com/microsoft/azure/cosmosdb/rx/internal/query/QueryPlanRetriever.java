@@ -37,7 +37,6 @@ import java.util.Map;
 
 class QueryPlanRetriever {
     private static final String TRUE = "True";
-    private static final String QUERY_VERSION = "1.0";
     private static final String SUPPORTED_QUERY_FEATURES = QueryFeature.Aggregate.name() + ", " +
             QueryFeature.CompositeAggregate.name() + ", " +
             QueryFeature.Distinct.name() + ", " +
@@ -52,7 +51,7 @@ class QueryPlanRetriever {
         requestHeaders.put(HttpConstants.HttpHeaders.CONTENT_TYPE, RuntimeConstants.MediaTypes.JSON);
         requestHeaders.put(HttpConstants.HttpHeaders.IS_QUERY_PLAN_REQUEST, TRUE);
         requestHeaders.put(HttpConstants.HttpHeaders.SUPPORTED_QUERY_FEATURES, SUPPORTED_QUERY_FEATURES);
-        requestHeaders.put(HttpConstants.HttpHeaders.QUERY_VERSION, QUERY_VERSION);
+        requestHeaders.put(HttpConstants.HttpHeaders.QUERY_VERSION, HttpConstants.Versions.QUERY_VERSION);
 
         RxDocumentServiceRequest request;
         request = RxDocumentServiceRequest.create(OperationType.QueryPlan,

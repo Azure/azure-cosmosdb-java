@@ -240,8 +240,8 @@ public final class FeedOptions extends FeedOptionsBase {
     }
 
     /**
-     * Sets the option to allow empty result pages in feed response.
-     * @param allowEmptyPages
+     * Sets the option to allow empty result pages in feed response. Defaults to false
+     * @param allowEmptyPages whether to allow empty pages in feed response
      */
     public void setAllowEmptyPages(boolean allowEmptyPages) {
         this.allowEmptyPages = allowEmptyPages;
