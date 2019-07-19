@@ -93,7 +93,7 @@ public class RntbdTransportClientTest {
     final private static int lsn = 5;
     final private static ByteBuf noContent = Unpooled.wrappedBuffer(new byte[0]);
     final private static String partitionKeyRangeId = "3";
-    final private static URI physicalAddress = URI.create("rntbd://host:10251/replica-path/");
+    final private static Uri physicalAddress = new Uri("rntbd://host:10251/replica-path/");
     final private static Duration requestTimeout = Duration.ofSeconds(1000);
 
     @DataProvider(name = "fromMockedNetworkFailureToExpectedDocumentClientException")
@@ -606,7 +606,7 @@ public class RntbdTransportClientTest {
                 RntbdTestConfiguration.AccountKey
             );
 
-            final URI physicalAddress = new URI("rntbd://"
+            final Uri physicalAddress = new Uri("rntbd://"
                 + RntbdTestConfiguration.RntbdAuthority
                 + "/apps/DocDbApp/services/DocDbMaster0/partitions/780e44f4-38c8-11e6-8106-8cdcd42c33be/replicas/1p/"
             );

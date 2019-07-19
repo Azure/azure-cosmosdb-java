@@ -44,6 +44,7 @@ import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentClientImpl;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
 import io.netty.buffer.ByteBuf;
 import io.reactivex.netty.protocol.http.client.CompositeHttpClient;
+import org.apache.commons.lang3.StringUtils;
 import org.mockito.Matchers;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -775,7 +776,7 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
     }
 
     private static void assertEqual(AddressInformation actual, Address expected) {
-        assertThat(actual.getPhysicalUri()).isEqualTo(expected.getPhyicalUri());
+        assertThat(actual.getPhysicalUri().uriAsString).isEqualTo(fixPhysicalURI(expected.getPhyicalUri()));
         assertThat(actual.getProtocolScheme()).isEqualTo(expected.getProtocolScheme().toLowerCase());
         assertThat(actual.isPrimary()).isEqualTo(expected.IsPrimary());
     }
@@ -876,5 +877,16 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
                 + "}"
                 , uuid, uuid));
         return doc;
+    }
+
+    private static String fixPhysicalURI(String physicalURI) {
+        // BE returns a physical URI ending with "//"
+        // this ensures there is only one "/" at the end
+        int i = physicalURI.length() - 1;
+        while(i >= 0 && physicalURI.charAt(i) == '/') {
+            i--;
+        }
+
+        return physicalURI.substring(0, i + 1) + '/';
     }
 }

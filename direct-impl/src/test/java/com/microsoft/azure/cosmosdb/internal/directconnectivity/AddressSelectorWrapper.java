@@ -34,7 +34,6 @@ import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import rx.Single;
 
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -312,7 +311,7 @@ public class AddressSelectorWrapper {
                 addressSelector = Mockito.mock(AddressSelector.class);
             }
 
-            public PrimaryReplicaMoveBuilder withPrimaryReplicaMove(URI primaryURIBeforeForceRefresh, URI primaryURIAfterForceRefresh) {
+            public PrimaryReplicaMoveBuilder withPrimaryReplicaMove(Uri primaryURIBeforeForceRefresh, Uri primaryURIAfterForceRefresh) {
                 AtomicBoolean refreshed = new AtomicBoolean(false);
                 Mockito.doAnswer((invocation) -> {
                     capture(invocation);
@@ -347,8 +346,8 @@ public class AddressSelectorWrapper {
 
         public static class ReplicaMoveBuilder extends Builder {
 
-            List<Pair<URI, URI>> secondary = new ArrayList<>();
-            Pair<URI, URI> primary;
+            List<Pair<Uri, Uri>> secondary = new ArrayList<>();
+            Pair<Uri, Uri> primary;
             private Function<RxDocumentServiceRequest, PartitionKeyRange> partitionKeyRangeFunction;
 
             static ReplicaMoveBuilder  create(Protocol protocol) {
@@ -360,12 +359,12 @@ public class AddressSelectorWrapper {
                 addressSelector = Mockito.mock(AddressSelector.class);
             }
 
-            public ReplicaMoveBuilder withPrimaryMove(URI uriBeforeForceRefresh, URI uriAfterForceRefresh) {
+            public ReplicaMoveBuilder withPrimaryMove(Uri uriBeforeForceRefresh, Uri uriAfterForceRefresh) {
                 withReplicaMove(uriBeforeForceRefresh, uriAfterForceRefresh, true);
                 return this;
             }
 
-            public ReplicaMoveBuilder withSecondaryMove(URI uriBeforeForceRefresh, URI uriAfterForceRefresh) {
+            public ReplicaMoveBuilder withSecondaryMove(Uri uriBeforeForceRefresh, Uri uriAfterForceRefresh) {
                 withReplicaMove(uriBeforeForceRefresh, uriAfterForceRefresh, false);
                 return this;
             }
@@ -375,7 +374,7 @@ public class AddressSelectorWrapper {
                 return this;
             }
 
-            public ReplicaMoveBuilder withReplicaMove(URI uriBeforeForceRefresh, URI uriAfterForceRefresh, boolean isPrimary) {
+            public ReplicaMoveBuilder withReplicaMove(Uri uriBeforeForceRefresh, Uri uriAfterForceRefresh, boolean isPrimary) {
                 if (isPrimary) {
                     primary = ImmutablePair.of(uriBeforeForceRefresh, uriAfterForceRefresh);
                 } else {
@@ -409,7 +408,7 @@ public class AddressSelectorWrapper {
                     boolean includePrimary = invocation.getArgumentAt(1, Boolean.class);
                     boolean forceRefresh = invocation.getArgumentAt(2, Boolean.class);
 
-                    ImmutableList.Builder<URI> b = ImmutableList.builder();
+                    ImmutableList.Builder<Uri> b = ImmutableList.builder();
 
                     if (forceRefresh || refreshed.get()) {
                         if (partitionKeyRangeFunction != null) {
@@ -437,7 +436,7 @@ public class AddressSelectorWrapper {
                     RxDocumentServiceRequest request = invocation.getArgumentAt(0, RxDocumentServiceRequest.class);
                     boolean forceRefresh = invocation.getArgumentAt(1, Boolean.class);
 
-                    ImmutableList.Builder<URI> b = ImmutableList.builder();
+                    ImmutableList.Builder<Uri> b = ImmutableList.builder();
 
                     if (forceRefresh || refreshed.get()) {
                         if (partitionKeyRangeFunction != null) {
@@ -461,8 +460,8 @@ public class AddressSelectorWrapper {
         }
 
         public static class Simple extends Builder {
-            private URI primaryAddress;
-            private List<URI> secondaryAddresses;
+            private Uri primaryAddress;
+            private List<Uri> secondaryAddresses;
             static Simple  create() {
                 return new Simple(Protocol.Https);
             }
@@ -472,15 +471,16 @@ public class AddressSelectorWrapper {
                 addressSelector = Mockito.mock(AddressSelector.class);
             }
 
-            public Simple withPrimary(URI primaryAddress) {
+            public Simple withPrimary(Uri primaryAddress) {
                 this.primaryAddress = primaryAddress;
                 return this;
             }
 
-            public Simple withSecondary(List<URI> secondaryAddresses) {
+            public Simple withSecondary(List<Uri> secondaryAddresses) {
                 this.secondaryAddresses = secondaryAddresses;
                 return this;
             }
+
 
             public AddressSelectorWrapper build() {
                 Mockito.doAnswer((invocation) -> {
@@ -515,8 +515,8 @@ public class AddressSelectorWrapper {
                 return new AddressSelectorWrapper(this.addressSelector, this.invocationOnMockList);
             }
 
-            private AddressInformation toAddressInformation(URI uri, boolean isPrimary, Protocol protocol) {
-                return new AddressInformation(true, isPrimary, uri.toString(), protocol);
+            private AddressInformation toAddressInformation(Uri uri, boolean isPrimary, Protocol protocol) {
+                return new AddressInformation(true, isPrimary, uri.uriAsString, protocol);
             }
         }
 
