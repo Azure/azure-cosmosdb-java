@@ -79,12 +79,12 @@ final class RntbdRequestHeaders extends RntbdTokenStream<RntbdRequestHeader> {
         checkNotNull(args, "args");
         checkNotNull(frame, "frame");
 
-        final RxDocumentServiceRequest request = args.getServiceRequest();
+        final RxDocumentServiceRequest request = args.serviceRequest();
         final byte[] content = request.getContent();
 
         this.getPayloadPresent().setValue(content != null && content.length > 0);
-        this.getReplicaPath().setValue(args.getReplicaPath());
-        this.getTransportRequestID().setValue(args.getTransportRequestId());
+        this.getReplicaPath().setValue(args.replicaPath());
+        this.getTransportRequestID().setValue(args.transportRequestId());
 
         final Map<String, String> headers = request.getHeaders();
 

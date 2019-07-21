@@ -56,8 +56,6 @@ public final class RntbdResponse implements ReferenceCounted {
 
     // region Fields
 
-    private static final String simpleClassName = RntbdResponse.class.getSimpleName();
-
     @JsonSerialize(using = PayloadSerializer.class)
     @JsonProperty
     private final ByteBuf content;
@@ -241,7 +239,7 @@ public final class RntbdResponse implements ReferenceCounted {
 
     @Override
     public String toString() {
-        return Strings.lenientFormat("%s(%s)", simpleClassName, RntbdObjectMapper.toJson(this));
+        return RntbdObjectMapper.toString(this);
     }
 
     /**

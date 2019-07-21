@@ -123,7 +123,7 @@ public final class RntbdClientChannelHealthChecker implements ChannelHealthCheck
         final Promise<Boolean> promise = channel.eventLoop().newPromise();
 
         if (requestManager == null) {
-            reportIssueUnless(!channel.isActive(), logger, channel, "active with no request manager");
+            reportIssueUnless(logger, !channel.isActive(), channel, "active with no request manager");
             return promise.setSuccess(Boolean.FALSE);
         }
 
@@ -192,7 +192,7 @@ public final class RntbdClientChannelHealthChecker implements ChannelHealthCheck
 
     @Override
     public String toString() {
-        return "RntbdClientChannelHealthChecker(" + RntbdObjectMapper.toJson(this) + ')';
+        return RntbdObjectMapper.toString(this);
     }
 
     // endregion

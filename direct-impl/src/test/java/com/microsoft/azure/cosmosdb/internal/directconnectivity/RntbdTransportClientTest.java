@@ -852,13 +852,13 @@ public final class RntbdTransportClientTest {
         }
 
         @Override
-        public String name() {
-            return "FakeEndpoint";
+        public void close() {
+            this.fakeChannel.close().syncUninterruptibly();
         }
 
         @Override
-        public void close() {
-            this.fakeChannel.close().syncUninterruptibly();
+        public long id() {
+            return 0L;
         }
 
         @Override

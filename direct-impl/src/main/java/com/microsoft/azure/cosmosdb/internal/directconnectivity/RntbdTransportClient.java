@@ -31,9 +31,9 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.internal.UserAgentContainer;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdEndpoint;
-import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdMetrics;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdObjectMapper;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdRequestArgs;
+import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdRequestMetrics;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdRequestRecord;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdServiceEndpoint;
 import com.microsoft.azure.cosmosdb.rx.internal.Configs;
@@ -62,21 +62,20 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
 
     private static final AtomicLong instanceCount = new AtomicLong();
     private static final Logger logger = LoggerFactory.getLogger(RntbdTransportClient.class);
-    private static final String namePrefix = RntbdTransportClient.class.getSimpleName() + '-';
 
     private final AtomicBoolean closed = new AtomicBoolean();
     private final RntbdEndpoint.Provider endpointProvider;
-    private final RntbdMetrics metrics;
-    private final String name;
+    private final long id;
+    private final RntbdRequestMetrics metrics;
 
     // endregion
 
     // region Constructors
 
     RntbdTransportClient(final RntbdEndpoint.Provider endpointProvider) {
-        this.name = RntbdTransportClient.namePrefix + RntbdTransportClient.instanceCount.incrementAndGet();
+        this.id = instanceCount.incrementAndGet();
         this.endpointProvider = endpointProvider;
-        this.metrics = new RntbdMetrics(this.name);
+        this.metrics = new RntbdRequestMetrics(RntbdTransportClient.class, this.id);
     }
 
     RntbdTransportClient(final Options options, final SslContext sslContext) {
@@ -98,11 +97,14 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
 
         if (this.closed.compareAndSet(false, true)) {
             this.endpointProvider.close();
-            this.metrics.close();
             return;
         }
 
         logger.debug("\n  [{}]\n  already closed", this);
+    }
+
+    public long id() {
+        return this.id;
     }
 
     @Override
@@ -114,6 +116,7 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
         this.throwIfClosed();
 
         final RntbdRequestArgs requestArgs = new RntbdRequestArgs(request, physicalAddress);
+        this.metrics.markRequestStart();
 
         if (logger.isDebugEnabled()) {
             requestArgs.traceOperation(logger, null, "invokeStoreAsync");
@@ -121,22 +124,19 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
         }
 
         final RntbdEndpoint endpoint = this.endpointProvider.get(physicalAddress);
-        this.metrics.incrementRequestCount();
-
-        final RntbdRequestRecord requestRecord = endpoint.request(requestArgs);
+        final RntbdRequestRecord record = endpoint.request(requestArgs);
 
         return Single.fromEmitter((SingleEmitter<StoreResponse> emitter) -> {
 
-            requestRecord.whenComplete((response, error) -> {
+            record.whenComplete((response, error) -> {
 
                 requestArgs.traceOperation(logger, null, "emitSingle", response, error);
-                this.metrics.incrementResponseCount();
+                this.metrics.markRequestComplete(record);
 
                 if (error == null) {
                     emitter.onSuccess(response);
                 } else {
-                    reportIssueUnless(error instanceof DocumentClientException, logger, requestRecord, "", error);
-                    this.metrics.incrementErrorResponseCount();
+                    reportIssueUnless(logger, error instanceof DocumentClientException, record, "", error);
                     emitter.onError(error);
                 }
 
@@ -147,7 +147,7 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
 
     @Override
     public String toString() {
-        return RntbdObjectMapper.toJson(this);
+        return RntbdObjectMapper.toString(this);
     }
 
     private void throwIfClosed() {
@@ -169,19 +169,19 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
 
             generator.writeStartObject();
 
-            generator.writeArrayFieldStart(value.name);
+            generator.writeArrayFieldStart("serviceEndpoints");
 
             value.endpointProvider.list().forEach(endpoint -> {
                 try {
                     generator.writeObject(endpoint);
                 } catch (IOException error) {
-                    logger.error("failed to serialize {} due to ", endpoint.name(), error);
+                    logger.error("failed to serialize instance {} due to:", value.id(), error);
                 }
             });
 
             generator.writeEndArray();
 
-            generator.writeObjectField("config", value.endpointProvider.config());
+            generator.writeObjectField("configuration", value.endpointProvider.config());
             generator.writeObjectField("metrics", value.metrics);
             generator.writeEndObject();
         }

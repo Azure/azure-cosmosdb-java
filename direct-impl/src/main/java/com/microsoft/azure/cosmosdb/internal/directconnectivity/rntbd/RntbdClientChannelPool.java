@@ -30,6 +30,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdEndpoint.Config;
 import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.PooledByteBufAllocatorMetric;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.pool.ChannelPool;
@@ -65,52 +66,63 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
 
     private static final TimeoutException ACQUISITION_TIMEOUT = ThrowableUtil.unknownStackTrace(
         new TimeoutException("Acquisition took longer than the configured maximum time"),
-        RntbdClientChannelPool.class, "<init>(...)");
+        RntbdClientChannelPool.class, "<init>");
 
     private static final ClosedChannelException CHANNEL_CLOSED_ON_ACQUIRE = ThrowableUtil.unknownStackTrace(
         new ClosedChannelException(), RntbdClientChannelPool.class, "acquire0(...)");
 
     private static final IllegalStateException POOL_CLOSED_ON_ACQUIRE = ThrowableUtil.unknownStackTrace(
         new IllegalStateException("RntbdClientChannelPool was closed"),
-        RntbdClientChannelPool.class, "acquire0(...)");
+        RntbdClientChannelPool.class, "acquire0");
 
     private static final IllegalStateException POOL_CLOSED_ON_RELEASE = ThrowableUtil.unknownStackTrace(
         new IllegalStateException("RntbdClientChannelPool was closed"),
-        RntbdClientChannelPool.class, "release(...)");
+        RntbdClientChannelPool.class, "release");
 
     private static final IllegalStateException TOO_MANY_PENDING_ACQUISITIONS = ThrowableUtil.unknownStackTrace(
         new IllegalStateException("Too many outstanding acquire operations"),
-        RntbdClientChannelPool.class, "acquire0(...)");
+        RntbdClientChannelPool.class, "acquire0");
 
     private static final Logger logger = LoggerFactory.getLogger(RntbdClientChannelPool.class);
 
     private final long acquisitionTimeoutNanos;
-    private final AtomicInteger acquiredChannelCount;
-    private final AtomicInteger availableChannelCount;
-    private final AtomicBoolean closed;
+    private final PooledByteBufAllocatorMetric allocatorMetric;
     private final EventExecutor executor;
     private final int maxChannels;
     private final int maxPendingAcquisitions;
     private final int maxRequestsPerChannel;
 
-    // There is no need to worry about synchronization as everything that modified the queue or counts is done
-    // by the above EventExecutor.
+    // No need to worry about synchronization as everything that modified the queue or counts is done by this.executor
+
     private final Queue<AcquireTask> pendingAcquisitionQueue = new ArrayDeque<AcquireTask>();
     private final Runnable acquisitionTimeoutTask;
-    private int pendingChannelAcquisitionCount;
 
-    private RntbdClientChannelPool(final Bootstrap bootstrap, final Config config, final RntbdClientChannelHealthChecker healthChecker) {
+    // Because these values can be requested on any thread...
+
+    private final AtomicInteger acquiredChannelCount = new AtomicInteger();
+    private final AtomicInteger availableChannelCount = new AtomicInteger();
+    private final AtomicBoolean closed = new AtomicBoolean();
+
+    /**
+     * Initializes a newly created {@link RntbdClientChannelPool} object
+     *  @param bootstrap the {@link Bootstrap} that is used for connections
+     * @param config    the {@link Config} that is used for the channel pool instance created
+     */
+    RntbdClientChannelPool(final Bootstrap bootstrap, final Config config) {
+        this(bootstrap, config, new RntbdClientChannelHealthChecker(config));
+    }
+
+    private RntbdClientChannelPool(
+        final Bootstrap bootstrap, final Config config, final RntbdClientChannelHealthChecker healthChecker
+    ) {
 
         super(bootstrap, new RntbdClientChannelHandler(config, healthChecker), healthChecker, true, true);
 
+        this.allocatorMetric = config.allocator().metric();
         this.executor = bootstrap.config().group().next();
         this.maxChannels = config.maxChannelsPerEndpoint();
         this.maxPendingAcquisitions = Integer.MAX_VALUE;
         this.maxRequestsPerChannel = config.maxRequestsPerChannel();
-
-        this.availableChannelCount = new AtomicInteger();
-        this.acquiredChannelCount = new AtomicInteger();
-        this.closed = new AtomicBoolean();
 
         // TODO: DANOBLE: Add RntbdEndpoint.Config settings for acquisition timeout and acquisition timeout action
         //  Alternatively: drop acquisition timeout and acquisition timeout action
@@ -152,15 +164,42 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
             }
         }
     }
-    /**
-     * Initializes a newly created {@link RntbdClientChannelPool} object
-     *
-     * @param bootstrap the {@link Bootstrap} that is used for connections
-     * @param config    the {@link Config} that is used for the channel pool instance created
-     */
-    RntbdClientChannelPool(final Bootstrap bootstrap, final Config config) {
-        this(bootstrap, config, new RntbdClientChannelHealthChecker(config));
+
+    // region Accessors
+
+    public int acquiredChannels() {
+        return this.acquiredChannelCount.get();
     }
+
+    public int availableChannels() {
+        return this.availableChannelCount.get();
+    }
+
+    public int maxChannels() {
+        return this.maxChannels;
+    }
+
+    public int maxRequestsPerChannel() {
+        return this.maxRequestsPerChannel;
+    }
+
+    public SocketAddress remoteAddress() {
+        return this.bootstrap().config().remoteAddress();
+    }
+
+    public int requestQueueLength() {
+        return this.pendingAcquisitionQueue.size();
+    }
+
+    public long usedDirectMemory() {
+        return this.allocatorMetric.usedDirectMemory();
+    }
+
+    public long usedHeapMemory() {
+        return this.allocatorMetric.usedHeapMemory();
+    }
+
+    // endregion
 
     // region Methods
 
@@ -186,14 +225,6 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
         return promise;
     }
 
-    public int acquiredChannelCount() {
-        return acquiredChannelCount.get();
-    }
-
-    public int availableChannelCount() {
-        return this.availableChannelCount.get();
-    }
-
     @Override
     public void close() {
         if (this.closed.compareAndSet(false, true)) {
@@ -203,18 +234,6 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
                 this.executor.submit(this::close0).awaitUninterruptibly();
             }
         }
-    }
-
-    public int maxChannels() {
-        return this.maxChannels;
-    }
-
-    public int maxRequestsPerChannel() {
-        return this.maxRequestsPerChannel;
-    }
-
-    public int pendingChannelAcquisitionCount() {
-        return this.pendingChannelAcquisitionCount;
     }
 
     @Override
@@ -253,13 +272,9 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
         return promise;
     }
 
-    public SocketAddress remoteAddress() {
-        return this.bootstrap().config().remoteAddress();
-    }
-
     @Override
     public String toString() {
-        return "RntbdClientChannelPool(" + RntbdObjectMapper.toJson(this) + ")";
+        return RntbdObjectMapper.toString(this);
     }
 
     /**
@@ -347,7 +362,7 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
 
         } else {
 
-            if (this.pendingChannelAcquisitionCount >= this.maxPendingAcquisitions) {
+            if (this.pendingAcquisitionQueue.size() >= this.maxPendingAcquisitions) {
 
                 promise.setFailure(TOO_MANY_PENDING_ACQUISITIONS);
 
@@ -359,8 +374,6 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
 
                 if (this.pendingAcquisitionQueue.offer(task)) {
 
-                    this.pendingChannelAcquisitionCount++;
-
                     if (acquisitionTimeoutTask != null) {
                         task.timeoutFuture = executor.schedule(acquisitionTimeoutTask, acquisitionTimeoutNanos, TimeUnit.NANOSECONDS);
                     }
@@ -370,13 +383,16 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
                 }
             }
 
-            checkState(this.pendingChannelAcquisitionCount > 0);
+            checkState(this.pendingAcquisitionQueue.size() > 0);
         }
     }
 
     private void close0() {
 
         checkState(this.executor.inEventLoop());
+
+        this.acquiredChannelCount.set(0);
+        this.availableChannelCount.set(0);
 
         for (; ; ) {
             final AcquireTask task = this.pendingAcquisitionQueue.poll();
@@ -390,10 +406,6 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
             task.promise.setFailure(new ClosedChannelException());
         }
 
-        this.acquiredChannelCount.set(0);
-        this.availableChannelCount.set(0);
-        this.pendingChannelAcquisitionCount = 0;
-
         // Ensure we dispatch this on another Thread as close0 will be called from the EventExecutor and we need
         // to ensure we will not block in an EventExecutor
 
@@ -402,8 +414,7 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
 
     private void decrementAndRunTaskQueue() {
 
-        final int currentCount = this.acquiredChannelCount.decrementAndGet();
-        checkState(currentCount >= 0);
+        checkState(acquiredChannelCount.decrementAndGet() >= 0);
 
         // Run the pending acquisition tasks before notifying the original promise so that if the user tries to
         // acquire again from the ChannelFutureListener and the pendingChannelAcquisitionCount is greater than
@@ -425,7 +436,7 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
         final RntbdRequestManager requestManager = channel.pipeline().get(RntbdRequestManager.class);
 
         if (requestManager == null) {
-            reportIssueUnless(!channel.isActive(), logger, channel, "active with no request manager");
+            reportIssueUnless(logger, !channel.isActive(), channel, "active with no request manager");
             return true; // inactive
         }
 
@@ -448,16 +459,12 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
                 timeoutFuture.cancel(false);
             }
 
-            this.pendingChannelAcquisitionCount--;
             task.acquired();
 
             super.acquire(task.promise);
         }
 
-        // We should never have negative values
-
-        checkState(this.acquiredChannelCount.get() >= 0);
-        checkState(this.pendingChannelAcquisitionCount >= 0);
+        checkState(this.acquiredChannelCount.get() >= 0);  // we should never have negative values
     }
 
     private void throwIfClosed() {
@@ -550,7 +557,7 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
 
                             if (completed.isSuccess()) {
 
-                                reportIssueUnless(this.acquired && requestManager.hasRntbdContext(), logger,
+                                reportIssueUnless(logger, this.acquired && requestManager.hasRntbdContext(),
                                     channel,"acquired: {}, rntbdContext: {}", this.acquired,
                                     requestManager.rntbdContext());
 
@@ -624,7 +631,6 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
                     break;
                 }
                 this.pool.pendingAcquisitionQueue.remove();
-                this.pool.pendingChannelAcquisitionCount--;
                 this.onTimeout(task);
             }
         }
@@ -637,17 +643,25 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
         }
 
         @Override
-        public void serialize(RntbdClientChannelPool pool, JsonGenerator generator, SerializerProvider provider) throws IOException {
+        public void serialize(final RntbdClientChannelPool value, final JsonGenerator generator, final SerializerProvider provider) throws IOException {
+
+            RntbdClientChannelHealthChecker healthChecker = (RntbdClientChannelHealthChecker)value.healthChecker();
+
             generator.writeStartObject();
-            generator.writeStringField("remoteAddress", pool.remoteAddress().toString());
-            generator.writeNumberField("maxChannels", pool.maxChannels());
-            generator.writeNumberField("maxRequestsPerChannel", pool.maxRequestsPerChannel());
-            generator.writeObjectField("healthChecker", pool.healthChecker());
+            generator.writeBooleanField("isClosed", value.isClosed());
+            generator.writeObjectFieldStart("configuration");
+            generator.writeNumberField("maxChannels", value.maxChannels());
+            generator.writeNumberField("maxRequestsPerChannel", value.maxRequestsPerChannel());
+            generator.writeNumberField("idleConnectionTimeout", healthChecker.idleConnectionTimeout());
+            generator.writeNumberField("readDelayLimit", healthChecker.readDelayLimit());
+            generator.writeNumberField("writeDelayLimit", healthChecker.writeDelayLimit());
+            generator.writeEndObject();
             generator.writeObjectFieldStart("state");
-            generator.writeBooleanField("isClosed", pool.isClosed());
-            generator.writeNumberField("acquiredChannelCount", pool.acquiredChannelCount());
-            generator.writeNumberField("availableChannelCount", pool.availableChannelCount());
-            generator.writeNumberField("pendingChannelAcquisitionCount", pool.pendingChannelAcquisitionCount());
+            generator.writeNumberField("acquiredChannels", value.acquiredChannels());
+            generator.writeNumberField("availableChannels", value.availableChannels());
+            generator.writeNumberField("requestQueueLength", value.requestQueueLength());
+            generator.writeNumberField("usedDirectMemory", value.usedDirectMemory());
+            generator.writeNumberField("usedHeapMemory", value.usedHeapMemory());
             generator.writeEndObject();
             generator.writeEndObject();
         }

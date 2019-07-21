@@ -42,8 +42,6 @@ import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.Rnt
 
 public final class RntbdContext {
 
-    private final static String simpleClassName = RntbdContext.class.getSimpleName();
-
     private final RntbdResponseStatus frame;
     private final Headers headers;
     private ServerProperties serverProperties;
@@ -177,7 +175,7 @@ public final class RntbdContext {
 
     @Override
     public String toString() {
-        return Strings.lenientFormat("%s(%s)", simpleClassName, RntbdObjectMapper.toJson(this));
+        return RntbdObjectMapper.toString(this);
     }
 
     private static final class Headers extends RntbdTokenStream<RntbdContextHeader> {

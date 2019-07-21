@@ -40,21 +40,35 @@ import io.netty.handler.codec.EncoderException;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class RntbdObjectMapper {
 
-    private static final SimpleFilterProvider filterProvider;
-    private static final ObjectMapper objectMapper;
-    private static final ObjectWriter objectWriter;
-
-    static {
-        objectMapper = new ObjectMapper().setFilterProvider(filterProvider = new SimpleFilterProvider());
-        objectWriter = objectMapper.writer();
-    }
+    private static final SimpleFilterProvider filterProvider = new SimpleFilterProvider();
+    private static final ObjectMapper objectMapper = new ObjectMapper().setFilterProvider(filterProvider);
+    private static final ObjectWriter objectWriter = objectMapper.writer();
+    private static final ConcurrentHashMap<Class<?>, String> simpleClassNames = new ConcurrentHashMap<>();
 
     private RntbdObjectMapper() {
+    }
+
+    public static String toJson(final Object value) {
+        try {
+            return objectWriter.writeValueAsString(value);
+        } catch (final JsonProcessingException error) {
+            throw new EncoderException(error);
+        }
+    }
+
+    public static String toString(final Object value) {
+        final String name = simpleClassNames.computeIfAbsent(value.getClass(), Class::getSimpleName);
+        return Strings.lenientFormat("%s(%s)", name, toJson(value));
+    }
+
+    public static ObjectWriter writer() {
+        return objectWriter;
     }
 
     static ObjectNode readTree(final RntbdResponse response) {
@@ -91,17 +105,5 @@ public final class RntbdObjectMapper {
         } catch (final ReflectiveOperationException error) {
             throw new IllegalStateException(error);
         }
-    }
-
-    public static String toJson(Object value) {
-        try {
-            return objectWriter.writeValueAsString(value);
-        } catch (final JsonProcessingException error) {
-            throw new EncoderException(error);
-        }
-    }
-
-    public static ObjectWriter writer() {
-        return objectWriter;
     }
 }

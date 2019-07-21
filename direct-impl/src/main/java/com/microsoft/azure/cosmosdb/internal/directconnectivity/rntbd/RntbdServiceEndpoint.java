@@ -24,6 +24,8 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -32,13 +34,15 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.microsoft.azure.cosmosdb.BridgeInternal;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.GoneException;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.Measurement;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.AdaptiveRecvByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.pool.ChannelPool;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.ssl.SslContext;
@@ -68,13 +72,12 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
 
     private static final AtomicLong instanceCount = new AtomicLong();
     private static final Logger logger = LoggerFactory.getLogger(RntbdServiceEndpoint.class);
-    private static final String namePrefix = RntbdServiceEndpoint.class.getSimpleName() + '-';
     private static final AdaptiveRecvByteBufAllocator receiveBufferAllocator = new AdaptiveRecvByteBufAllocator();
 
-    private final ChannelPool channelPool;
+    private final RntbdClientChannelPool channelPool;
     private final AtomicBoolean closed;
-    private final RntbdMetrics metrics;
-    private final String name;
+    private final long id;
+    private final RntbdRequestMetrics metrics;
     private final SocketAddress remoteAddress;
     private final RntbdRequestTimer requestTimer;
 
@@ -83,6 +86,8 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
     private RntbdServiceEndpoint(
         final Config config, final NioEventLoopGroup group, final RntbdRequestTimer timer, final URI physicalAddress
     ) {
+
+        this.id = instanceCount.incrementAndGet();
 
         final Bootstrap bootstrap = new Bootstrap()
             .channel(NioSocketChannel.class)
@@ -94,11 +99,10 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
             .option(ChannelOption.SO_KEEPALIVE, true)
             .remoteAddress(physicalAddress.getHost(), physicalAddress.getPort());
 
-        this.name = RntbdServiceEndpoint.namePrefix + instanceCount.incrementAndGet();
         this.channelPool = new RntbdClientChannelPool(bootstrap, config);
-        this.remoteAddress = bootstrap.config().remoteAddress();
-        this.metrics = new RntbdMetrics(this.name);
         this.closed = new AtomicBoolean();
+        this.metrics = new Metrics(this);
+        this.remoteAddress = bootstrap.config().remoteAddress();
         this.requestTimer = timer;
     }
 
@@ -107,8 +111,8 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
     // region Accessors
 
     @Override
-    public String name() {
-        return this.name;
+    public long id() {
+        return this.id;
     }
 
     // endregion
@@ -119,7 +123,6 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
     public void close() {
         if (this.closed.compareAndSet(false, true)) {
             this.channelPool.close();
-            this.metrics.close();
         }
     }
 
@@ -127,39 +130,35 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
 
         this.throwIfClosed();
 
+        this.metrics.markRequestStart();
+
         if (logger.isDebugEnabled()) {
             args.traceOperation(logger, null, "request");
             logger.debug("\n  {}\n  {}\n  REQUEST", this, args);
         }
 
-        final RntbdRequestRecord requestRecord = this.write(args);
-        this.metrics.incrementRequestCount();
+        final RntbdRequestRecord record = this.write(args);
 
-        requestRecord.whenComplete((response, error) -> {
+        record.whenComplete((response, error) -> {
 
             args.traceOperation(logger, null, "requestComplete", response, error);
-            this.metrics.incrementResponseCount();
+            this.metrics.markRequestComplete(record);
 
-            if (error != null) {
-                this.metrics.incrementErrorResponseCount();
+            if (error == null) {
+                logger.debug("\n  [{}]\n  {}\n  request succeeded with response status: {}", this, args,
+                    response.status());
+            } else {
+                logger.debug("\n  [{}]\n  {}\n  request failed due to ", this, args, error);
             }
 
-            if (logger.isDebugEnabled()) {
-                if (error == null) {
-                    final int status = response.getStatus();
-                    logger.debug("\n  [{}]\n  {}\n  request succeeded with response status: {}", this, args, status);
-                } else {
-                    logger.debug("\n  [{}]\n  {}\n  request failed due to ", this, args, error);
-                }
-            }
         });
 
-        return requestRecord;
+        return record;
     }
 
     @Override
     public String toString() {
-        return RntbdObjectMapper.toJson(this);
+        return RntbdObjectMapper.toString(this);
     }
 
     // endregion
@@ -200,15 +199,12 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
 
                 channel.write(requestRecord).addListener((ChannelFuture future) -> {
                     requestArgs.traceOperation(logger, null, "writeComplete", channel);
-                    if (!future.isSuccess()) {
-                        this.metrics.incrementErrorResponseCount();
-                    }
                 });
 
                 return;
             }
 
-            final UUID activityId = requestArgs.getActivityId();
+            final UUID activityId = requestArgs.activityId();
             final Throwable cause = connected.cause();
 
             if (connected.isCancelled()) {
@@ -225,10 +221,10 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
                     Strings.lenientFormat("failed to establish connection to %s: %s", this.remoteAddress, reason),
                     cause instanceof Exception ? (Exception)cause : new IOException(reason, cause),
                     ImmutableMap.of(HttpHeaders.ACTIVITY_ID, activityId.toString()),
-                    requestArgs.getReplicaPath()
+                    requestArgs.replicaPath()
                 );
 
-                BridgeInternal.setRequestHeaders(goneException, requestArgs.getServiceRequest().getHeaders());
+                BridgeInternal.setRequestHeaders(goneException, requestArgs.serviceRequest().getHeaders());
                 requestRecord.completeExceptionally(goneException);
             }
         });
@@ -249,11 +245,91 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
         @Override
         public void serialize(RntbdServiceEndpoint value, JsonGenerator generator, SerializerProvider provider)
             throws IOException {
-
             generator.writeStartObject();
-            generator.writeStringField(value.name, value.remoteAddress.toString());
+            generator.writeStringField("remoteAddress", value.remoteAddress.toString());
             generator.writeObjectField("channelPool", value.channelPool);
             generator.writeEndObject();
+        }
+    }
+
+    @JsonPropertyOrder({
+        "acquiredChannels", "availableChannels", "requestQueueLength", "usedDirectMemory", "usedHeapMemory"
+    })
+    static final class Metrics extends RntbdRequestMetrics {
+
+        private final DistributionSummary acquiredChannels;
+        private final DistributionSummary availableChannels;
+        private final DistributionSummary requestQueueLength;
+        private final DistributionSummary usedDirectMemory;
+        private final DistributionSummary usedHeapMemory;
+
+        private final RntbdClientChannelPool pool;
+
+        private Metrics(final RntbdServiceEndpoint endpoint) {
+
+            super(endpoint.getClass(), endpoint.id());
+            this.pool = endpoint.channelPool;
+
+            MeterRegistry registry = RntbdMetrics.registry();
+
+            this.acquiredChannels = registry.summary(this.nameOf("acquiredChannels"));
+            this.availableChannels = registry.summary(this.nameOf("availableChannels"));
+            this.requestQueueLength = registry.summary(this.nameOf("requestQueueLength"));
+            this.usedDirectMemory = registry.summary(this.nameOf("usedDirectMemory"));
+            this.usedHeapMemory = registry.summary(this.nameOf("usedHeapMemory"));
+        }
+
+        // region Accessors
+
+        @JsonProperty
+        public Iterable<Measurement> acquiredChannels() {
+            return this.acquiredChannels.measure();
+        }
+
+        @JsonProperty
+        public Iterable<Measurement> availableChannels() {
+            return this.availableChannels.measure();
+        }
+
+        @JsonProperty
+        public Iterable<Measurement> requestQueueLength() {
+            return this.requestQueueLength.measure();
+        }
+
+        @JsonProperty
+        public Iterable<Measurement> usedDirectMemory() {
+            return this.usedDirectMemory.measure();
+        }
+
+        @JsonProperty
+        public Iterable<Measurement> usedHeapMemory() {
+            return this.usedHeapMemory.measure();
+        }
+
+        // endregion
+
+        // region Methods
+
+        @Override
+        public void markRequestStart() {
+            super.markRequestStart();
+            this.takeMeasurements();
+        }
+
+        @Override
+        public void markRequestComplete(RntbdRequestRecord record) {
+            super.markRequestComplete(record);
+            this.takeMeasurements();
+        }
+
+        // endregion
+
+        private void takeMeasurements() {
+            this.acquiredChannels.record(this.pool.acquiredChannels());
+            this.availableChannels.record(this.pool.availableChannels());
+            this.requestQueueLength.record(this.pool.requestQueueLength());
+            this.usedDirectMemory.record(this.pool.usedDirectMemory());
+            this.usedHeapMemory.record(this.pool.usedHeapMemory());
         }
     }
 

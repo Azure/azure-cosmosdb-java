@@ -115,10 +115,10 @@ public final class RntbdRequest {
 
     public static RntbdRequest from(final RntbdRequestArgs args) {
 
-        final RxDocumentServiceRequest serviceRequest = args.getServiceRequest();
+        final RxDocumentServiceRequest serviceRequest = args.serviceRequest();
 
         final RntbdRequestFrame frame = new RntbdRequestFrame(
-            args.getActivityId(),
+            args.activityId(),
             serviceRequest.getOperationType(),
             serviceRequest.getResourceType());
 

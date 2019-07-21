@@ -322,6 +322,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         this.traceOperation(context, "userEventTriggered", event);
 
         try {
+
             if (event instanceof IdleStateEvent) {
 
                 this.healthChecker.isHealthy(context.channel()).addListener((Future<Boolean> future) -> {
@@ -569,7 +570,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
     private RntbdRequestArgs addPendingRequestRecord(final ChannelHandlerContext context, final RntbdRequestRecord record) {
 
-        return this.pendingRequests.compute(record.getTransportRequestId(), (id, current) -> {
+        return this.pendingRequests.compute(record.transportRequestId(), (id, current) -> {
 
             boolean predicate = current == null;
             String format = "id: {}, current: {}, request: {}";
@@ -596,7 +597,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
             return record;
 
-        }).getArgs();
+        }).args();
     }
 
     private void completeAllPendingRequestsExceptionally(final ChannelHandlerContext context, final Throwable throwable) {
@@ -676,8 +677,8 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
             for (RntbdRequestRecord record : this.pendingRequests.values()) {
 
-                final Map<String, String> requestHeaders = record.getArgs().getServiceRequest().getHeaders();
-                final String requestUri = record.getArgs().getPhysicalAddress().toString();
+                final Map<String, String> requestHeaders = record.args().serviceRequest().getHeaders();
+                final String requestUri = record.args().physicalAddress().toString();
 
                 final GoneException error = new GoneException(message, cause, (Map<String, String>)null, requestUri);
                 BridgeInternal.setRequestHeaders(error, requestHeaders);
@@ -844,14 +845,14 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         }
     }
 
-    private static void reportIssue(final ChannelHandlerContext context, final String format, final Object... args) {
-        RntbdReporter.reportIssue(logger, context, format, args);
+    private static void reportIssue(final Object subject, final String format, final Object... args) {
+        RntbdReporter.reportIssue(logger, subject, format, args);
     }
 
     private static void reportIssueUnless(
-        final boolean predicate, final ChannelHandlerContext context, final String format, final Object... args
+        final boolean predicate, final Object subject, final String format, final Object... args
     ) {
-        RntbdReporter.reportIssueUnless(predicate, logger, context, format, args);
+        RntbdReporter.reportIssueUnless(logger, predicate, subject, format, args);
     }
 
     private void traceOperation(final ChannelHandlerContext context, final String operationName, final Object... args) {

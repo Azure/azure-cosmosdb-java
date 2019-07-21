@@ -24,6 +24,8 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -42,7 +44,7 @@ import static com.microsoft.azure.cosmosdb.internal.directconnectivity.RntbdTran
 
 public interface RntbdEndpoint extends AutoCloseable {
 
-    String name();
+    long id();
 
     @Override
     void close() throws RuntimeException;
@@ -63,7 +65,6 @@ public interface RntbdEndpoint extends AutoCloseable {
         Stream<RntbdEndpoint> list();
     }
 
-    @JsonSerialize(using = Config.JsonSerializer.class)
     final class Config {
 
         private final PooledByteBufAllocator allocator;
@@ -87,92 +88,81 @@ public interface RntbdEndpoint extends AutoCloseable {
             this.wireLogLevel = wireLogLevel;
         }
 
+        @JsonIgnore
         public PooledByteBufAllocator allocator() {
             return this.allocator;
         }
 
+        @JsonProperty
         public int bufferPageSize() {
             return this.options.bufferPageSize();
         }
 
+        @JsonProperty
         public int connectionTimeout() {
             final long value = this.options.connectionTimeout().toMillis();
             assert value <= Integer.MAX_VALUE;
             return (int)value;
         }
 
+        @JsonProperty
         public long idleConnectionTimeout() {
             return this.options.idleTimeout().toNanos();
         }
 
+        @JsonProperty
         public int maxBufferCapacity() {
             return this.options.maxBufferCapacity();
         }
 
+        @JsonProperty
         public int maxChannelsPerEndpoint() {
             return this.options.maxChannelsPerEndpoint();
         }
 
+        @JsonProperty
         public int maxRequestsPerChannel() {
             return this.options.maxRequestsPerChannel();
         }
 
+        @JsonProperty
         public long receiveHangDetectionTime() {
             return this.options.receiveHangDetectionTime().toNanos();
         }
 
+        @JsonProperty
         public long requestTimeout() {
             return this.options.requestTimeout().toNanos();
         }
 
+        @JsonProperty
         public long sendHangDetectionTime() {
             return this.options.sendHangDetectionTime().toNanos();
         }
 
+        @JsonProperty
         public long shutdownTimeout() {
             return this.options.shutdownTimeout().toNanos();
         }
 
+        @JsonIgnore
         public SslContext sslContext() {
             return this.sslContext;
         }
 
+        @JsonProperty
         public UserAgentContainer userAgent() {
             return this.options.userAgent();
         }
 
+        @JsonProperty
         public LogLevel wireLogLevel() {
             return this.wireLogLevel;
         }
 
         @Override
         public String toString() {
-            return "RntbdEndpoint.Config(" + RntbdObjectMapper.toJson(this) + ')';
-        }
-
-        static class JsonSerializer extends StdSerializer<Config> {
-
-            public JsonSerializer() {
-                super(Config.class);
-            }
-
-            @Override
-            public void serialize(Config value, JsonGenerator generator, SerializerProvider provider) throws IOException {
-                generator.writeStartObject();
-                generator.writeNumberField("bufferPageSize", value.bufferPageSize());
-                generator.writeNumberField("connectionTimeout", value.connectionTimeout());
-                generator.writeNumberField("idleConnectionTimeout", value.idleConnectionTimeout());
-                generator.writeNumberField("maxBufferCapacity", value.maxBufferCapacity());
-                generator.writeNumberField("maxChannelPerEndpoint", value.maxChannelsPerEndpoint());
-                generator.writeNumberField("maxRequestsPerChannel", value.maxChannelsPerEndpoint());
-                generator.writeNumberField("receiveHangDetectionTime", value.receiveHangDetectionTime());
-                generator.writeNumberField("requestTimeout", value.requestTimeout());
-                generator.writeNumberField("sendHangDetectionTime", value.sendHangDetectionTime());
-                generator.writeNumberField("shutdownTimeout", value.shutdownTimeout());
-                generator.writeObjectField("userAgent", value.userAgent());
-                generator.writeStringField("wireLogLevel", value.wireLogLevel() == null ? null : value.wireLogLevel().toString());
-                generator.writeEndObject();
-            }
+            return RntbdObjectMapper.toString(this);
         }
     }
 }
