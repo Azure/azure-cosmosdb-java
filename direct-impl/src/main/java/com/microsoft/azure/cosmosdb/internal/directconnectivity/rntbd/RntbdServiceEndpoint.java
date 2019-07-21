@@ -145,8 +145,7 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
             this.metrics.markRequestComplete(record);
 
             if (error == null) {
-                logger.debug("\n  [{}]\n  {}\n  request succeeded with response status: {}", this, args,
-                    response.status());
+                logger.debug("\n  [{}]\n  {}\n  request succeeded with response status: {}", this, args, response.getStatus());
             } else {
                 logger.debug("\n  [{}]\n  {}\n  request failed due to ", this, args, error);
             }

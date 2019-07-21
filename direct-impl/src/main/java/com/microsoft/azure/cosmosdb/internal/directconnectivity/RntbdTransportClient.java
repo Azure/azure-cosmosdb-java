@@ -168,6 +168,7 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
         public void serialize(RntbdTransportClient value, JsonGenerator generator, SerializerProvider provider) throws IOException {
 
             generator.writeStartObject();
+            generator.writeNumberField("id", value.id());
 
             generator.writeArrayFieldStart("serviceEndpoints");
 
