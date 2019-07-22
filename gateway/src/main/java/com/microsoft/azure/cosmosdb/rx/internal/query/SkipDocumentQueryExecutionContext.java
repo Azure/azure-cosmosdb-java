@@ -61,7 +61,7 @@ public final class SkipDocumentQueryExecutionContext<T extends Resource> impleme
 
             Map<String, String> headers = new HashMap<>(tFeedResponse.getResponseHeaders());
             if (this.skipCount >= 0) {
-                // Add Take Continuation Token
+                // Add Offset Continuation Token
                 String sourceContinuationToken = tFeedResponse.getResponseContinuation();
                 OffsetContinuationToken offsetContinuationToken = new OffsetContinuationToken(this.skipCount,
                         sourceContinuationToken);
