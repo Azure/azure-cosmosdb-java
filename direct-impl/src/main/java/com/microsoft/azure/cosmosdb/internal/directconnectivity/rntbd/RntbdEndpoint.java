@@ -26,16 +26,13 @@ package com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import com.microsoft.azure.cosmosdb.internal.UserAgentContainer;
+import io.micrometer.core.instrument.Tag;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.ssl.SslContext;
 
-import java.io.IOException;
+import java.net.SocketAddress;
 import java.net.URI;
 import java.util.stream.Stream;
 
@@ -44,17 +41,43 @@ import static com.microsoft.azure.cosmosdb.internal.directconnectivity.RntbdTran
 
 public interface RntbdEndpoint extends AutoCloseable {
 
+    // region Accessors
+
+    int acquiredChannels();
+
+    int availableChannels();
+
     long id();
 
+    boolean isClosed();
+
+    SocketAddress remoteAddress();
+
+    int requestQueueLength();
+
+    Tag tag();
+
+    long usedDirectMemory();
+
+    long usedHeapMemory();
+
+    // endregion
+
+    // region Methods
+
     @Override
-    void close() throws RuntimeException;
+    void close();
 
     RntbdRequestRecord request(RntbdRequestArgs requestArgs);
+
+    // endregion
+
+    // region Types
 
     interface Provider extends AutoCloseable {
 
         @Override
-        void close() throws RuntimeException;
+        void close();
 
         Config config();
 
@@ -165,4 +188,6 @@ public interface RntbdEndpoint extends AutoCloseable {
             return RntbdObjectMapper.toString(this);
         }
     }
+
+    // endregion
 }

@@ -34,6 +34,7 @@ import com.microsoft.azure.cosmosdb.internal.ResourceType;
 import com.microsoft.azure.cosmosdb.internal.UserAgentContainer;
 import com.microsoft.azure.cosmosdb.internal.Utils;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdClientChannelHealthChecker;
+import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdClientChannelPool;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdContext;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdContextNegotiator;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdContextRequest;
@@ -54,6 +55,7 @@ import com.microsoft.azure.cosmosdb.rx.internal.NotFoundException;
 import com.microsoft.azure.cosmosdb.rx.internal.PartitionIsMigratingException;
 import com.microsoft.azure.cosmosdb.rx.internal.PartitionKeyRangeIsSplittingException;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
+import io.micrometer.core.instrument.Tag;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandler;
@@ -73,6 +75,8 @@ import rx.Subscriber;
 import rx.observers.TestSubscriber;
 
 import java.net.ConnectException;
+import java.net.Socket;
+import java.net.SocketAddress;
 import java.net.URI;
 import java.time.Duration;
 import java.util.Arrays;
@@ -829,6 +833,7 @@ public final class RntbdTransportClientTest {
         final RntbdRequestTimer requestTimer;
         final FakeChannel fakeChannel;
         final URI physicalAddress;
+        final Tag tag;
 
         private FakeEndpoint(
             final Config config, final RntbdRequestTimer timer, final URI physicalAddress,
@@ -849,11 +854,20 @@ public final class RntbdTransportClientTest {
                 new RntbdResponseDecoder(),
                 requestManager
             );
+
+            this.tag = Tag.of(FakeEndpoint.class.getSimpleName(), this.fakeChannel.remoteAddress().toString());
+        }
+
+        // region Accessors
+
+        @Override
+        public int acquiredChannels() {
+            return 0;
         }
 
         @Override
-        public void close() {
-            this.fakeChannel.close().syncUninterruptibly();
+        public int availableChannels() {
+            return 0;
         }
 
         @Override
@@ -862,11 +876,54 @@ public final class RntbdTransportClientTest {
         }
 
         @Override
+        public boolean isClosed() {
+            return !this.fakeChannel.isOpen();
+        }
+
+        @Override
+        public SocketAddress remoteAddress() {
+            return this.fakeChannel.remoteAddress();
+        }
+
+        @Override
+        public int requestQueueLength() {
+            return 0;
+        }
+
+        @Override
+        public Tag tag() {
+            return this.tag;
+        }
+
+        @Override
+        public long usedDirectMemory() {
+            return 0;
+        }
+
+        @Override
+        public long usedHeapMemory() {
+            return 0;
+        }
+
+        // endregion
+
+        // region Methods
+
+        @Override
+        public void close() {
+            this.fakeChannel.close().syncUninterruptibly();
+        }
+
+        @Override
         public RntbdRequestRecord request(final RntbdRequestArgs requestArgs) {
             final RntbdRequestRecord requestRecord = new RntbdRequestRecord(requestArgs, this.requestTimer);
             this.fakeChannel.writeOutbound(requestRecord);
             return requestRecord;
         }
+
+        // endregion
+
+        // region Types
 
         static class Provider implements RntbdEndpoint.Provider {
 
@@ -905,6 +962,8 @@ public final class RntbdTransportClientTest {
                 return Stream.empty();
             }
         }
+
+        // endregion
     }
 
     private static final class RntbdTestConfiguration {

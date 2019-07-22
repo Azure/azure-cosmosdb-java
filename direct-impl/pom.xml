@@ -36,6 +36,7 @@ SOFTWARE.
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <test.groups>unit</test.groups>
     <guava.version>27.0.1-jre</guava.version>
+    <metrics.version>4.0.5</metrics.version>
     <micrometer.version>1.2.0</micrometer.version>
   </properties>
   <profiles>
@@ -298,6 +299,11 @@ SOFTWARE.
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
       <version>${guava.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.dropwizard.metrics</groupId>
+      <artifactId>metrics-core</artifactId>
+      <version>${metrics.version}</version>
     </dependency>
     <dependency>
       <groupId>io.micrometer</groupId>

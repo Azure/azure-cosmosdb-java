@@ -33,11 +33,12 @@ import com.microsoft.azure.cosmosdb.internal.UserAgentContainer;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdEndpoint;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdObjectMapper;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdRequestArgs;
-import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdRequestMetrics;
+import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdMetrics;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdRequestRecord;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdServiceEndpoint;
 import com.microsoft.azure.cosmosdb.rx.internal.Configs;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
+import io.micrometer.core.instrument.Tag;
 import io.netty.handler.ssl.SslContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,16 +67,16 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
     private final AtomicBoolean closed = new AtomicBoolean();
     private final RntbdEndpoint.Provider endpointProvider;
     private final long id;
-    private final RntbdRequestMetrics metrics;
+    private final Tag tag;
 
     // endregion
 
     // region Constructors
 
     RntbdTransportClient(final RntbdEndpoint.Provider endpointProvider) {
-        this.id = instanceCount.incrementAndGet();
         this.endpointProvider = endpointProvider;
-        this.metrics = new RntbdRequestMetrics(RntbdTransportClient.class, this.id);
+        this.id = instanceCount.incrementAndGet();
+        this.tag = Tag.of(RntbdServiceEndpoint.class.getSimpleName(), Long.toHexString(this.id));
     }
 
     RntbdTransportClient(final Options options, final SslContext sslContext) {
@@ -84,6 +85,22 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
 
     RntbdTransportClient(final Configs configs, final int requestTimeoutInSeconds, final UserAgentContainer userAgent) {
         this(new Options.Builder(requestTimeoutInSeconds).userAgent(userAgent).build(), configs.getSslContext());
+    }
+
+    // endregion
+
+    // region Accessors
+
+    public long id() {
+        return this.id;
+    }
+
+    public boolean isClosed() {
+        return this.closed.get();
+    }
+
+    public Tag tag() {
+        return this.tag;
     }
 
     // endregion
@@ -103,10 +120,6 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
         logger.debug("\n  [{}]\n  already closed", this);
     }
 
-    public long id() {
-        return this.id;
-    }
-
     @Override
     public Single<StoreResponse> invokeStoreAsync(
         final URI physicalAddress, final ResourceOperation unused, final RxDocumentServiceRequest request
@@ -116,7 +129,6 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
         this.throwIfClosed();
 
         final RntbdRequestArgs requestArgs = new RntbdRequestArgs(request, physicalAddress);
-        this.metrics.markRequestStart();
 
         if (logger.isDebugEnabled()) {
             requestArgs.traceOperation(logger, null, "invokeStoreAsync");
@@ -124,6 +136,9 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
         }
 
         final RntbdEndpoint endpoint = this.endpointProvider.get(physicalAddress);
+        final RntbdMetrics metrics = new RntbdMetrics(this, endpoint);
+        metrics.markRequestStart();
+
         final RntbdRequestRecord record = endpoint.request(requestArgs);
 
         return Single.fromEmitter((SingleEmitter<StoreResponse> emitter) -> {
@@ -131,7 +146,7 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
             record.whenComplete((response, error) -> {
 
                 requestArgs.traceOperation(logger, null, "emitSingle", response, error);
-                this.metrics.markRequestComplete(record);
+                metrics.markRequestComplete(record);
 
                 if (error == null) {
                     emitter.onSuccess(response);
@@ -169,7 +184,8 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
 
             generator.writeStartObject();
             generator.writeNumberField("id", value.id());
-
+            generator.writeBooleanField("isClosed", value.isClosed());
+            generator.writeObjectField("configuration", value.endpointProvider.config());
             generator.writeArrayFieldStart("serviceEndpoints");
 
             value.endpointProvider.list().forEach(endpoint -> {
@@ -181,9 +197,6 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
             });
 
             generator.writeEndArray();
-
-            generator.writeObjectField("configuration", value.endpointProvider.config());
-            generator.writeObjectField("metrics", value.metrics);
             generator.writeEndObject();
         }
     }

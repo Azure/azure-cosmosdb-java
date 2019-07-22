@@ -167,11 +167,11 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
 
     // region Accessors
 
-    public int acquiredChannels() {
+    public int channelsAcquired() {
         return this.acquiredChannelCount.get();
     }
 
-    public int availableChannels() {
+    public int channelsAvailable() {
         return this.availableChannelCount.get();
     }
 
@@ -657,8 +657,8 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
             generator.writeNumberField("writeDelayLimit", healthChecker.writeDelayLimit());
             generator.writeEndObject();
             generator.writeObjectFieldStart("state");
-            generator.writeNumberField("acquiredChannels", value.acquiredChannels());
-            generator.writeNumberField("availableChannels", value.availableChannels());
+            generator.writeNumberField("channelsAcquired", value.channelsAcquired());
+            generator.writeNumberField("channelsAvailable", value.channelsAvailable());
             generator.writeNumberField("requestQueueLength", value.requestQueueLength());
             generator.writeNumberField("usedDirectMemory", value.usedDirectMemory());
             generator.writeNumberField("usedHeapMemory", value.usedHeapMemory());
