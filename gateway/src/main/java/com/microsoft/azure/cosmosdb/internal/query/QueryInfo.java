@@ -41,6 +41,8 @@ public final class QueryInfo extends JsonSerializable {
     private Collection<AggregateOperator> aggregates;
     private Collection<String> orderByExpressions;
     private String rewrittenQuery;
+    private Integer offset;
+    private Integer limit;
 
     public QueryInfo() { }
 
@@ -90,8 +92,24 @@ public final class QueryInfo extends JsonSerializable {
                 ? this.orderByExpressions
                 : (this.orderByExpressions = super.getCollection("orderByExpressions", String.class));
     }
-    
-    public boolean hasSelectValue(){
+
+    public boolean hasSelectValue() {
         return super.has(HAS_SELECT_VALUE) && super.getBoolean(HAS_SELECT_VALUE);
+    }
+
+    public boolean hasOffset() {
+        return this.getOffset() != null;
+    }
+
+    public boolean hasLimit() {
+        return this.getLimit() != null;
+    }
+
+    public Integer getLimit() {
+        return this.limit != null ? this.limit : (this.limit = super.getInt("limit"));
+    }
+
+    public Integer getOffset() {
+        return this.offset != null ? this.offset : (this.offset = super.getInt("offset"));
     }
 }

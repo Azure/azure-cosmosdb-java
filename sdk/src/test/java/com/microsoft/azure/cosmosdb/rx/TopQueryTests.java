@@ -233,7 +233,7 @@ public class TopQueryTests extends TestSuiteBase {
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() throws Exception {
-        client = this.clientBuilder().build();
+        client =  this.clientBuilder().build();
         createdDatabase = SHARED_DATABASE;
         createdCollection = SHARED_SINGLE_PARTITION_COLLECTION;
         truncateCollection(SHARED_SINGLE_PARTITION_COLLECTION);
