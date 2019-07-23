@@ -26,29 +26,29 @@ package com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd;
 
 import com.codahale.metrics.ConsoleReporter;
 import com.codahale.metrics.MetricRegistry;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import com.google.common.collect.ImmutableList;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.RntbdTransportClient;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.dropwizard.DropwizardConfig;
 import io.micrometer.core.instrument.dropwizard.DropwizardMeterRegistry;
+import io.micrometer.core.instrument.search.Search;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.core.lang.Nullable;
 
-import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @JsonPropertyOrder({
-    "concurrentRequests", "requests", "responseErrors", "responseSuccesses", "completionRate", "responseRate",
+    "tags", "concurrentRequests", "requests", "responseErrors", "responseSuccesses", "completionRate", "responseRate",
     "channelsAcquired", "channelsAvailable", "requestQueueLength", "usedDirectMemory", "usedHeapMemory"
 })
 public final class RntbdMetrics {
@@ -59,18 +59,12 @@ public final class RntbdMetrics {
     private static final String prefix = "cosmos.directTcp.";
     private static MeterRegistry consoleLoggingRegistry;
 
-    private final DistributionSummary channelsAcquired;
-    private final DistributionSummary channelsAvailable;
-    private final AtomicInteger concurrentRequestCount = new AtomicInteger();
-    private final DistributionSummary concurrentRequests;
     private final RntbdEndpoint endpoint;
-    private final DistributionSummary requestQueueLength;
+
     private final Timer requests;
     private final Timer responseErrors;
     private final Timer responseSuccesses;
-    private final List<Tag> tags;
-    private final DistributionSummary usedDirectMemory;
-    private final DistributionSummary usedHeapMemory;
+    private final Tags tags;
 
     static {
         if (Boolean.getBoolean("cosmos.directTcp.consoleMetricsReporter.enabled")) {
@@ -84,41 +78,73 @@ public final class RntbdMetrics {
 
     public RntbdMetrics(RntbdTransportClient client, RntbdEndpoint endpoint) {
 
-        this.tags = ImmutableList.of(client.tag(), endpoint.tag());
+        this.endpoint = endpoint;
+        this.tags = Tags.of(client.tag(), endpoint.tag());
 
-        this.concurrentRequests = registry.summary(nameOf("concurrentRequests"), tags);
         this.requests = registry.timer(nameOf("requests"), tags);
         this.responseErrors = registry.timer(nameOf("responseErrors"), tags);
         this.responseSuccesses = registry.timer(nameOf("responseSuccesses"), tags);
 
-        this.channelsAcquired = registry.summary(nameOf("channelsAcquired"), tags);
-        this.channelsAvailable = registry.summary(nameOf("channelsAvailable"), tags);
-        this.requestQueueLength = registry.summary(nameOf("requestQueueLength"), tags);
-        this.usedDirectMemory = registry.summary(nameOf("usedDirectMemory"), tags);
-        this.usedHeapMemory = registry.summary(nameOf("usedHeapMemory"), tags);
+        final Timer responseSuccesses = this.responseSuccesses;
+        final Timer requests = this.requests;
 
-        registry.gauge(nameOf("completionRate"), tags, this, RntbdMetrics::completionRate);
-        registry.gauge(nameOf("responseRate"), tags, this, RntbdMetrics::responseRate);
+        Gauge.builder(nameOf("concurrentRequests"), endpoint, RntbdEndpoint::concurrentRequests)
+             .description("executing or queued request count")
+             .tags(this.tags)
+             .register(registry);
 
-        this.endpoint = endpoint;
+        Gauge.builder(nameOf("requestQueueLength"), endpoint, RntbdEndpoint::requestQueueLength)
+            .description("queued request count")
+            .tags(this.tags)
+            .register(registry);
+
+        Gauge.builder(nameOf("completionRate"), endpoint, x -> responseSuccesses.count() / (double)requests.count())
+             .description("successful (non-error) responses / total responses")
+             .baseUnit("%")
+             .tags(this.tags)
+             .register(registry);
+
+        Gauge.builder(nameOf("responseRate"), endpoint, x -> responseSuccesses.count() / (double)(requests.count() + x.concurrentRequests()))
+             .description("successful (non-error) responses / total requests")
+             .baseUnit("%")
+             .tags(this.tags)
+             .register(registry);
+
+        Gauge.builder(nameOf("channelsAcquired"), endpoint, RntbdEndpoint::channelsAcquired)
+             .description("acquired channel count")
+             .tags(this.tags)
+             .register(registry);
+
+        Gauge.builder(nameOf("channelsAvailable"), endpoint, RntbdEndpoint::channelsAvailable)
+             .description("available channel count")
+             .tags(this.tags)
+             .register(registry);
+
+        Gauge.builder(nameOf("usedDirectMemory"), endpoint, x -> (double)x.usedDirectMemory() / (1024L * 1024L))
+             .description("Java direct memory usage")
+             .baseUnit("MiB")
+             .tags(this.tags)
+             .register(registry);
+
+        Gauge.builder(nameOf("usedHeapMemory"), endpoint, x -> (double)x.usedHeapMemory() / (1024L * 1024L))
+             .description("Java heap memory usage")
+             .baseUnit("MiB")
+             .tags(this.tags)
+             .register(registry);
     }
 
     // endregion
 
     // region Accessors
 
-    public static void add(MeterRegistry registry) {
-        RntbdMetrics.registry.add(registry);
+    @JsonProperty
+    public int channelsAcquired() {
+        return this.endpoint.channelsAcquired();
     }
 
     @JsonProperty
-    public Iterable<Measurement> channelsAcquired() {
-        return this.channelsAcquired.measure();
-    }
-
-    @JsonProperty
-    public Iterable<Measurement> channelsAvailable() {
-        return this.channelsAvailable.measure();
+    public int channelsAvailable() {
+        return this.endpoint.channelsAvailable();
     }
 
     /***
@@ -131,10 +157,11 @@ public final class RntbdMetrics {
     }
 
     @JsonProperty
-    public Iterable<Measurement> concurrentRequests() {
-        return this.concurrentRequests.measure();
+    public long concurrentRequests() {
+        return this.endpoint.concurrentRequests();
     }
 
+    @JsonIgnore
     public static synchronized MeterRegistry consoleLoggingRegistry() {
 
         if (consoleLoggingRegistry == null) {
@@ -147,7 +174,7 @@ public final class RntbdMetrics {
                 .convertDurationsTo(TimeUnit.MILLISECONDS)
                 .build();
 
-            consoleReporter.start(1, TimeUnit.SECONDS);
+            consoleReporter.start(Long.getLong("cosmos.directTcp.consoleMetricsReporter.period", 30), TimeUnit.SECONDS);
 
             DropwizardConfig dropwizardConfig = new DropwizardConfig() {
 
@@ -178,8 +205,8 @@ public final class RntbdMetrics {
     }
 
     @JsonProperty
-    public Iterable<Measurement> requestQueueLength() {
-        return this.requestQueueLength.measure();
+    public int requestQueueLength() {
+        return this.endpoint.requestQueueLength();
     }
 
     @JsonProperty
@@ -197,7 +224,7 @@ public final class RntbdMetrics {
      */
     @JsonProperty
     public double responseRate() {
-        return this.responseSuccesses.count() / (double)(this.requests.count() + this.concurrentRequests.count());
+        return this.responseSuccesses.count() / (double)(this.requests.count() + this.endpoint.concurrentRequests());
     }
 
     @JsonProperty
@@ -211,28 +238,25 @@ public final class RntbdMetrics {
     }
 
     @JsonProperty
-    public Iterable<Measurement> usedDirectMemory() {
-        return this.usedDirectMemory.measure();
+    public long usedDirectMemory() {
+        return this.endpoint.usedDirectMemory();
     }
 
     @JsonProperty
-    public Iterable<Measurement> usedHeapMemory() {
-        return this.usedHeapMemory.measure();
+    public long usedHeapMemory() {
+        return this.endpoint.usedHeapMemory();
     }
 
     // endregion
 
     // region Methods
 
-    public void markRequestComplete(RntbdRequestRecord record) {
-        record.stop(this.requests, record.isCompletedExceptionally() ? this.responseErrors : this.responseSuccesses);
-        this.concurrentRequests.record(this.concurrentRequestCount.decrementAndGet());
-        this.takeChannelPoolMeasurements();
+    public static void add(MeterRegistry registry) {
+        RntbdMetrics.registry.add(registry);
     }
 
-    public void markRequestStart() {
-        this.concurrentRequests.record(this.concurrentRequestCount.incrementAndGet());
-        this.takeChannelPoolMeasurements();
+    public void markComplete(RntbdRequestRecord record) {
+        record.stop(this.requests, record.isCompletedExceptionally() ? this.responseErrors : this.responseSuccesses);
     }
 
     @Override
@@ -246,14 +270,6 @@ public final class RntbdMetrics {
 
     private static String nameOf(final String member) {
         return prefix + member;
-    }
-
-    private void takeChannelPoolMeasurements() {
-        this.channelsAcquired.record(this.endpoint.acquiredChannels());
-        this.channelsAvailable.record(this.endpoint.availableChannels());
-        this.requestQueueLength.record(this.endpoint.requestQueueLength());
-        this.usedDirectMemory.record(this.endpoint.usedDirectMemory());
-        this.usedHeapMemory.record(this.endpoint.usedHeapMemory());
     }
 
     // endregion

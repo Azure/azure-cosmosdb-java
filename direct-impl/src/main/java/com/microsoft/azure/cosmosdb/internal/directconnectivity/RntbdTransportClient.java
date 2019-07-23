@@ -129,16 +129,10 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
         this.throwIfClosed();
 
         final RntbdRequestArgs requestArgs = new RntbdRequestArgs(request, physicalAddress);
-
-        if (logger.isDebugEnabled()) {
-            requestArgs.traceOperation(logger, null, "invokeStoreAsync");
-            logger.debug("\n  [{}]\n  {}\n  INVOKE_STORE_ASYNC", this, requestArgs);
-        }
+        requestArgs.traceOperation(logger, null, "invokeStoreAsync");
 
         final RntbdEndpoint endpoint = this.endpointProvider.get(physicalAddress);
         final RntbdMetrics metrics = new RntbdMetrics(this, endpoint);
-        metrics.markRequestStart();
-
         final RntbdRequestRecord record = endpoint.request(requestArgs);
 
         return Single.fromEmitter((SingleEmitter<StoreResponse> emitter) -> {
@@ -146,7 +140,7 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
             record.whenComplete((response, error) -> {
 
                 requestArgs.traceOperation(logger, null, "emitSingle", response, error);
-                metrics.markRequestComplete(record);
+                metrics.markComplete(record);
 
                 if (error == null) {
                     emitter.onSuccess(response);

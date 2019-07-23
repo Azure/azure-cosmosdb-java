@@ -43,9 +43,11 @@ public interface RntbdEndpoint extends AutoCloseable {
 
     // region Accessors
 
-    int acquiredChannels();
+    int channelsAcquired();
 
-    int availableChannels();
+    int channelsAvailable();
+
+    int concurrentRequests();
 
     long id();
 

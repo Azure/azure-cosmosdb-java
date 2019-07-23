@@ -53,6 +53,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 
@@ -72,6 +73,7 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
 
     private final RntbdClientChannelPool channelPool;
     private final AtomicBoolean closed;
+    private final AtomicInteger concurrentRequests;
     private final long id;
     private final SocketAddress remoteAddress;
     private final RntbdRequestTimer requestTimer;
@@ -95,6 +97,7 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
 
         this.channelPool = new RntbdClientChannelPool(bootstrap, config);
         this.closed = new AtomicBoolean();
+        this.concurrentRequests = new AtomicInteger();
         this.remoteAddress = bootstrap.config().remoteAddress();
         this.requestTimer = timer;
 
@@ -107,13 +110,18 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
     // region Accessors
 
     @Override
-    public int acquiredChannels() {
+    public int channelsAcquired() {
         return this.channelPool.channelsAcquired();
     }
 
     @Override
-    public int availableChannels() {
+    public int channelsAvailable() {
         return this.channelPool.channelsAvailable();
+    }
+
+    @Override
+    public int concurrentRequests() {
+        return this.concurrentRequests.get();
     }
 
     @Override
@@ -165,6 +173,7 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
     public RntbdRequestRecord request(final RntbdRequestArgs args) {
 
         this.throwIfClosed();
+        this.concurrentRequests.incrementAndGet();
 
         if (logger.isDebugEnabled()) {
             args.traceOperation(logger, null, "request");
@@ -182,6 +191,8 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
             } else {
                 logger.debug("\n  [{}]\n  {}\n  request failed due to ", this, args, error);
             }
+
+            this.concurrentRequests.decrementAndGet();
 
         });
 
@@ -280,6 +291,7 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
             generator.writeStartObject();
             generator.writeNumberField("id", value.id);
             generator.writeBooleanField("isClosed", value.isClosed());
+            generator.writeNumberField("concurrentRequests", value.concurrentRequests());
             generator.writeStringField("remoteAddress", value.remoteAddress.toString());
             generator.writeObjectField("channelPool", value.channelPool);
             generator.writeEndObject();
