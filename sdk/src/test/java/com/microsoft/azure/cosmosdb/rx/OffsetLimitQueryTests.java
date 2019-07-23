@@ -95,18 +95,22 @@ public class OffsetLimitQueryTests extends TestSuiteBase {
 
     @Test(groups = {"simple"}, timeOut = TIMEOUT)
     public void offsetContinuationTokenRoundTrips() {
-        {
-            // Positive
-            OffsetContinuationToken offsetContinuationToken = new OffsetContinuationToken(42, "asdf");
-            String serialized = offsetContinuationToken.toString();
-            ValueHolder<OffsetContinuationToken> outOffsetContinuationToken = new ValueHolder<>();
+        // Positive
+        OffsetContinuationToken offsetContinuationToken = new OffsetContinuationToken(42, "asdf");
+        String serialized = offsetContinuationToken.toString();
+        ValueHolder<OffsetContinuationToken> outOffsetContinuationToken = new ValueHolder<>();
 
-            assertThat(OffsetContinuationToken.tryParse(serialized, outOffsetContinuationToken)).isTrue();
-            OffsetContinuationToken deserialized = outOffsetContinuationToken.v;
+        assertThat(OffsetContinuationToken.tryParse(serialized, outOffsetContinuationToken)).isTrue();
+        OffsetContinuationToken deserialized = outOffsetContinuationToken.v;
 
-            assertThat(deserialized.getOffset()).isEqualTo(42);
-            assertThat(deserialized.getSourceToken()).isEqualTo("asdf");
-        }
+        assertThat(deserialized.getOffset()).isEqualTo(42);
+        assertThat(deserialized.getSourceToken()).isEqualTo("asdf");
+        
+        // Negative
+        ValueHolder<OffsetContinuationToken> outTakeContinuationToken = new ValueHolder<OffsetContinuationToken>();
+        assertThat(
+                OffsetContinuationToken.tryParse("{\"property\": \"Not a valid token\"}", outTakeContinuationToken))
+                .isFalse();
     }
 
     @Test(groups = {"simple"}, timeOut = TIMEOUT * 10)

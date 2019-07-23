@@ -20,19 +20,23 @@ public final class SkipDocumentQueryExecutionContext<T extends Resource> impleme
     private int skipCount;
 
     SkipDocumentQueryExecutionContext(IDocumentQueryExecutionComponent<T> component, int skipCount) {
+        if (component == null){
+            throw new IllegalArgumentException("documentQueryExecutionComponent cannot be null");
+        }
         this.component = component;
         this.skipCount = skipCount;
     }
 
-    public static <T extends Resource> Observable<IDocumentQueryExecutionComponent<T>> createAsync(Function<String,
-            Observable<IDocumentQueryExecutionComponent<T>>> createSourceComponentFunction, int skipCount,
-                                                                                                   String continuationToken) {
+    public static <T extends Resource> Observable<IDocumentQueryExecutionComponent<T>> createAsync(
+            Function<String, Observable<IDocumentQueryExecutionComponent<T>>> createSourceComponentFunction,
+            int skipCount,
+            String continuationToken) {
         OffsetContinuationToken offsetContinuationToken;
         Utils.ValueHolder<OffsetContinuationToken> outOffsetContinuationToken = new Utils.ValueHolder<>();
 
         if (continuationToken != null) {
             if (!OffsetContinuationToken.tryParse(continuationToken, outOffsetContinuationToken)) {
-                String message = String.format("Invalid JSON in continuation token %s for Parallel~Context",
+                String message = String.format("Invalid JSON in continuation token %s for Skip~Context",
                         continuationToken);
                 DocumentClientException dce = new DocumentClientException(HttpConstants.StatusCodes.BADREQUEST,
                         message);

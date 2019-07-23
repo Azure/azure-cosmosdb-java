@@ -6,7 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class OffsetContinuationToken extends JsonSerializable {
+public final class OffsetContinuationToken extends JsonSerializable {
     private static final String TOKEN_PROPERTY_NAME = "sourceToken";
     private static final String OFFSET_PROPERTY_NAME = "offset";
     private static final Logger logger = LoggerFactory.getLogger(CompositeContinuationToken.class);
@@ -40,9 +40,6 @@ public class OffsetContinuationToken extends JsonSerializable {
     }
 
     public int getOffset() {
-        if (super.getInt(OFFSET_PROPERTY_NAME) == null) {
-            return 0;
-        }
         return super.getInt(OFFSET_PROPERTY_NAME);
     }
 

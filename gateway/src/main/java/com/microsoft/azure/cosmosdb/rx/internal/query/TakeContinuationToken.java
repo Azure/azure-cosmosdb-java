@@ -75,9 +75,6 @@ public final class TakeContinuationToken extends JsonSerializable {
     }
 
     public int getTakeCount() {
-        if (super.getInt(LimitPropertyName) == null) {
-            return 0;
-        }
         return super.getInt(LimitPropertyName);
     }
 
