@@ -27,7 +27,6 @@ package com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.base.Strings;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.ServerProperties;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.HttpResponseStatus;

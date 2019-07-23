@@ -41,7 +41,6 @@ import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.instrument.dropwizard.DropwizardConfig;
 import io.micrometer.core.instrument.dropwizard.DropwizardMeterRegistry;
-import io.micrometer.core.instrument.search.Search;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.core.lang.Nullable;
 
@@ -59,6 +58,7 @@ public final class RntbdMetrics {
     private static final String prefix = "cosmos.directTcp.";
     private static MeterRegistry consoleLoggingRegistry;
 
+    private final RntbdTransportClient transportClient;
     private final RntbdEndpoint endpoint;
 
     private final Timer requests;
@@ -78,7 +78,9 @@ public final class RntbdMetrics {
 
     public RntbdMetrics(RntbdTransportClient client, RntbdEndpoint endpoint) {
 
+        this.transportClient = client;
         this.endpoint = endpoint;
+
         this.tags = Tags.of(client.tag(), endpoint.tag());
 
         this.requests = registry.timer(nameOf("requests"), tags);
@@ -87,6 +89,11 @@ public final class RntbdMetrics {
 
         final Timer responseSuccesses = this.responseSuccesses;
         final Timer requests = this.requests;
+
+        Gauge.builder(nameOf("endpoints"), client, RntbdTransportClient::endpointCount)
+             .description("endpoint count")
+             .tag(client.tag().getKey(), client.tag().getValue())
+             .register(registry);
 
         Gauge.builder(nameOf("concurrentRequests"), endpoint, RntbdEndpoint::concurrentRequests)
              .description("executing or queued request count")
@@ -97,18 +104,6 @@ public final class RntbdMetrics {
             .description("queued request count")
             .tags(this.tags)
             .register(registry);
-
-        Gauge.builder(nameOf("completionRate"), endpoint, x -> responseSuccesses.count() / (double)requests.count())
-             .description("successful (non-error) responses / total responses")
-             .baseUnit("%")
-             .tags(this.tags)
-             .register(registry);
-
-        Gauge.builder(nameOf("responseRate"), endpoint, x -> responseSuccesses.count() / (double)(requests.count() + x.concurrentRequests()))
-             .description("successful (non-error) responses / total requests")
-             .baseUnit("%")
-             .tags(this.tags)
-             .register(registry);
 
         Gauge.builder(nameOf("channelsAcquired"), endpoint, RntbdEndpoint::channelsAcquired)
              .description("acquired channel count")
@@ -136,30 +131,6 @@ public final class RntbdMetrics {
     // endregion
 
     // region Accessors
-
-    @JsonProperty
-    public int channelsAcquired() {
-        return this.endpoint.channelsAcquired();
-    }
-
-    @JsonProperty
-    public int channelsAvailable() {
-        return this.endpoint.channelsAvailable();
-    }
-
-    /***
-     * Computes the number of successful (non-error) responses received divided by the total number of completed
-     * requests
-     */
-    @JsonProperty
-    public double completionRate() {
-        return this.responseSuccesses.count() / (double)this.requests.count();
-    }
-
-    @JsonProperty
-    public long concurrentRequests() {
-        return this.endpoint.concurrentRequests();
-    }
 
     @JsonIgnore
     public static synchronized MeterRegistry consoleLoggingRegistry() {
@@ -202,6 +173,35 @@ public final class RntbdMetrics {
         }
 
         return consoleLoggingRegistry;
+    }
+
+    @JsonProperty
+    public int channelsAcquired() {
+        return this.endpoint.channelsAcquired();
+    }
+
+    @JsonProperty
+    public int channelsAvailable() {
+        return this.endpoint.channelsAvailable();
+    }
+
+    /***
+     * Computes the number of successful (non-error) responses received divided by the total number of completed
+     * requests
+     */
+    @JsonProperty
+    public double completionRate() {
+        return this.responseSuccesses.count() / (double)this.requests.count();
+    }
+
+    @JsonProperty
+    public long concurrentRequests() {
+        return this.endpoint.concurrentRequests();
+    }
+
+    @JsonProperty
+    public int endpoints() {
+        return this.transportClient.endpointCount();
     }
 
     @JsonProperty

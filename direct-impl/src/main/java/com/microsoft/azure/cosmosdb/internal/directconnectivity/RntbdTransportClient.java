@@ -28,12 +28,13 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import com.google.common.base.Strings;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.internal.UserAgentContainer;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdEndpoint;
+import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdMetrics;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdObjectMapper;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdRequestArgs;
-import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdMetrics;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdRequestRecord;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdServiceEndpoint;
 import com.microsoft.azure.cosmosdb.rx.internal.Configs;
@@ -74,9 +75,13 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
     // region Constructors
 
     RntbdTransportClient(final RntbdEndpoint.Provider endpointProvider) {
+
         this.endpointProvider = endpointProvider;
         this.id = instanceCount.incrementAndGet();
-        this.tag = Tag.of(RntbdServiceEndpoint.class.getSimpleName(), Long.toHexString(this.id));
+
+        this.tag = Tag.of(RntbdTransportClient.class.getSimpleName(), Strings.padStart(
+            Long.toHexString(this.id).toUpperCase(), 4, '0')
+        );
     }
 
     RntbdTransportClient(final Options options, final SslContext sslContext) {
@@ -90,6 +95,10 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
     // endregion
 
     // region Accessors
+
+    public int endpointCount() {
+        return this.endpointProvider.count();
+    }
 
     public long id() {
         return this.id;
