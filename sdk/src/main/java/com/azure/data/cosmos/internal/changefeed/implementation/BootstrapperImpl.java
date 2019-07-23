@@ -102,42 +102,5 @@ class BootstrapperImpl implements Bootstrapper {
             })
             .repeat( () -> !self.isInitialized)
             .then();
-
-//        return Mono.fromRunnable( () -> {
-//            self.isInitialized = false;
-//
-//            while (!self.isInitialized) {
-//                self.isInitialized = self.leaseStore.isInitialized().block();
-//
-//                if (self.isInitialized) break;
-//
-//                boolean isLockAcquired = self.leaseStore.acquireInitializationLock(self.lockTime).block();
-//
-//                try {
-//                    if (!isLockAcquired) {
-//                        logger.info("Another instance is initializing the store");
-//                        try {
-//                            Thread.sleep(self.sleepTime.toMillis());
-//                        } catch (InterruptedException ex) {
-//                            logger.warn("Unexpected exception caught", ex);
-//                        }
-//                        continue;
-//                    }
-//
-//                    logger.info("Initializing the store");
-//                    self.synchronizer.createMissingLeases().block();
-//                    self.leaseStore.markInitialized().block();
-//
-//                } catch (RuntimeException ex) {
-//                    break;
-//                } finally {
-//                    if (isLockAcquired) {
-//                        self.leaseStore.releaseInitializationLock().block();
-//                    }
-//                }
-//            }
-//
-//            logger.info("The store is initialized");
-//        });
     }
 }
