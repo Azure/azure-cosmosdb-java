@@ -87,9 +87,6 @@ class PartitionControllerImpl implements PartitionController {
                     logger.debug("Partition {}: updated.", updatedLease.getLeaseToken());
                     return updatedLease;
                 });
-//            Lease updatedLease = this.leaseManager.updateProperties(lease).block();
-//            logger.info("Partition {}: updated.", lease.getLeaseToken());
-//            return Mono.just(updatedLease);
         }
 
         return self.leaseManager.acquire(lease)
@@ -101,21 +98,6 @@ class PartitionControllerImpl implements PartitionController {
                 return updatedLease;
             })
             .onErrorResume(throwable -> self.removeLease(lease).then(Mono.error(throwable)));
-
-//        try {
-//            Lease updatedLease = this.leaseManager.acquire(lease).block();
-//            if (updatedLease != null) lease = updatedLease;
-//
-//            logger.info("Partition {}: acquired.", lease.getLeaseToken());
-//        } catch (RuntimeException ex) {
-//            this.removeLease(lease).block();
-//            throw ex;
-//        }
-//
-//        PartitionSupervisor supervisor = this.partitionSupervisorFactory.create(lease);
-//        this.currentlyOwnedPartitions.put(lease.getLeaseToken(), this.processPartition(supervisor, lease));
-//
-//        return Mono.just(lease);
     }
 
     @Override

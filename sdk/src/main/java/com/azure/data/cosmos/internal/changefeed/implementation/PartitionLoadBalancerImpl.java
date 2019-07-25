@@ -147,35 +147,5 @@ class PartitionLoadBalancerImpl implements PartitionLoadBalancer {
                 logger.info("Partition load balancer task stopped.");
                 return this.stop();
             });
-
-//            try {
-//                while (!cancellationToken.isCancellationRequested()) {
-//
-//
-//                    List<Lease> allLeases = self.leaseContainer.getAllLeases().collectList().block();
-//                    List<Lease> leasesToTake = self.partitionLoadBalancingStrategy.selectLeasesToTake(allLeases);
-//                    for (Lease lease : leasesToTake) {
-//                        self.partitionController.addOrUpdateLease(lease).block();
-//                    }
-//
-//                    long remainingWork = this.leaseAcquireInterval.toMillis();
-//
-//                    try {
-//                        while (!cancellationToken.isCancellationRequested() && remainingWork > 0) {
-//                            Thread.sleep(100);
-//                            remainingWork -= 100;
-//                        }
-//                    } catch (InterruptedException ex) {
-//                        // exception caught
-//                        logger.warn("Partition load balancer caught an interrupted exception", ex);
-//                    }
-//                }
-//            } catch (Exception ex) {
-//                // We should not get here.
-//                logger.info("Partition load balancer task stopped.");
-//                return this.stop();
-//            }
-//            return Mono.empty();
-
     }
 }
