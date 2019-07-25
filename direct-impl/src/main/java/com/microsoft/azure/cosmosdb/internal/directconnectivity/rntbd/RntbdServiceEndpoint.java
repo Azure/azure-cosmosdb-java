@@ -32,6 +32,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.microsoft.azure.cosmosdb.BridgeInternal;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.GoneException;
+import com.microsoft.azure.cosmosdb.internal.directconnectivity.RntbdTransportClient;
 import io.micrometer.core.instrument.Tag;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.AdaptiveRecvByteBufAllocator;
@@ -75,6 +76,7 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
     private final AtomicBoolean closed;
     private final AtomicInteger concurrentRequests;
     private final long id;
+    private final RntbdMetrics metrics;
     private final SocketAddress remoteAddress;
     private final RntbdRequestTimer requestTimer;
     private final Tag tag;
@@ -82,7 +84,8 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
     // region Constructors
 
     private RntbdServiceEndpoint(
-        final Config config, final NioEventLoopGroup group, final RntbdRequestTimer timer, final URI physicalAddress
+        final RntbdTransportClient transportClient, final Config config, final NioEventLoopGroup group,
+        final RntbdRequestTimer timer, final URI physicalAddress
     ) {
 
         final Bootstrap bootstrap = new Bootstrap()
@@ -103,6 +106,7 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
 
         this.tag = Tag.of(RntbdServiceEndpoint.class.getSimpleName(), this.remoteAddress.toString());
         this.id = instanceCount.incrementAndGet();
+        this.metrics = new RntbdMetrics(transportClient, this);
     }
 
     // endregion
@@ -193,7 +197,7 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
             }
 
             this.concurrentRequests.decrementAndGet();
-
+            this.metrics.markComplete(record);
         });
 
         return record;
@@ -307,9 +311,11 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
         private final ConcurrentHashMap<String, RntbdEndpoint> endpoints = new ConcurrentHashMap<>();
         private final NioEventLoopGroup eventLoopGroup;
         private final RntbdRequestTimer requestTimer;
+        private final RntbdTransportClient transportClient;
 
-        public Provider(final Options options, final SslContext sslContext) {
+        public Provider(final RntbdTransportClient transportClient, final Options options, final SslContext sslContext) {
 
+            checkNotNull(transportClient, "transportClient");
             checkNotNull(options, "options");
             checkNotNull(sslContext, "sslContext");
 
@@ -325,6 +331,7 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
                 wireLogLevel = null;
             }
 
+            this.transportClient = transportClient;
             this.config = new Config(options, sslContext, wireLogLevel);
             this.requestTimer = new RntbdRequestTimer(config.requestTimeout());
             this.eventLoopGroup = new NioEventLoopGroup(threadCount, threadFactory);
@@ -367,7 +374,7 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
         @Override
         public RntbdEndpoint get(URI physicalAddress) {
             return endpoints.computeIfAbsent(physicalAddress.getAuthority(), authority ->
-                new RntbdServiceEndpoint(config, eventLoopGroup, requestTimer, physicalAddress)
+                new RntbdServiceEndpoint(this.transportClient, config, eventLoopGroup, requestTimer, physicalAddress)
             );
         }
 

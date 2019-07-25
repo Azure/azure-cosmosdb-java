@@ -71,7 +71,10 @@ public class ReadMyWritesConsistencyTest {
             StringUtils.defaultString(Strings.emptyToNull(
                 System.getenv().get("DESIRED_CONSISTENCY")), "Session"));
 
-    private final String directModeProtocol = System.getProperty("cosmos.directModeProtocol", Protocol.Tcp.name());
+    private final String directModeProtocol =
+        System.getProperty("cosmos.directModeProtocol",
+            StringUtils.defaultString(Strings.emptyToNull(
+                System.getenv().get("DIRECT_MODE_PROTOCOL")), Protocol.Tcp.name()));
 
     private final int initialCollectionThroughput = 10_000;
 
@@ -95,16 +98,19 @@ public class ReadMyWritesConsistencyTest {
         int concurrency = 5;
 
         String cmdFormat = "-serviceEndpoint %s -masterKey %s" +
-            " -databaseId %s -collectionId %s" +
-            " -consistencyLevel %s -concurrency %d" +
+            " -databaseId %s" +
+            " -collectionId %s" +
+            " -consistencyLevel %s" +
+            " -concurrency %s" +
             " -numberOfOperations %s" +
             " -maxRunningTimeDuration %s" +
             " -operation ReadMyWrites" +
             " -connectionMode Direct" +
             " -numberOfPreCreatedDocuments 100" +
-            " -printingInterval 60";
+            " -printingInterval 60" +
+            "%s";
 
-        String cmd = String.format(cmdFormat,
+        String cmd = Strings.lenientFormat(cmdFormat,
             TestConfigurations.HOST,
             TestConfigurations.MASTER_KEY,
             database.getId(),
@@ -112,8 +118,8 @@ public class ReadMyWritesConsistencyTest {
             desiredConsistency,
             concurrency,
             numberOfOperationsAsString,
-            maxRunningTime
-        ) + (useNameLink ? " -useNameLink" : "");
+            maxRunningTime,
+            (useNameLink ? " -useNameLink" : ""));
 
         Configuration cfg = new Configuration();
         new JCommander(cfg, StringUtils.split(cmd));

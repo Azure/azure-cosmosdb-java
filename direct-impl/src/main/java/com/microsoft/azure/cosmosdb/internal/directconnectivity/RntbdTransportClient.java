@@ -32,7 +32,6 @@ import com.google.common.base.Strings;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.internal.UserAgentContainer;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdEndpoint;
-import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdMetrics;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdObjectMapper;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdRequestArgs;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdRequestRecord;
@@ -85,7 +84,13 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
     }
 
     RntbdTransportClient(final Options options, final SslContext sslContext) {
-        this(new RntbdServiceEndpoint.Provider(options, sslContext));
+
+        this.endpointProvider = new RntbdServiceEndpoint.Provider(this, options, sslContext);
+        this.id = instanceCount.incrementAndGet();
+
+        this.tag = Tag.of(RntbdTransportClient.class.getSimpleName(), Strings.padStart(
+            Long.toHexString(this.id).toUpperCase(), 4, '0')
+        );
     }
 
     RntbdTransportClient(final Configs configs, final int requestTimeoutInSeconds, final UserAgentContainer userAgent) {
@@ -141,7 +146,6 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
         requestArgs.traceOperation(logger, null, "invokeStoreAsync");
 
         final RntbdEndpoint endpoint = this.endpointProvider.get(physicalAddress);
-        final RntbdMetrics metrics = new RntbdMetrics(this, endpoint);
         final RntbdRequestRecord record = endpoint.request(requestArgs);
 
         return Single.fromEmitter((SingleEmitter<StoreResponse> emitter) -> {
@@ -149,7 +153,6 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
             record.whenComplete((response, error) -> {
 
                 requestArgs.traceOperation(logger, null, "emitSingle", response, error);
-                metrics.markComplete(record);
 
                 if (error == null) {
                     emitter.onSuccess(response);

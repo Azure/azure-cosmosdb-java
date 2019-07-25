@@ -67,8 +67,9 @@ public final class RntbdMetrics {
     private final Tags tags;
 
     static {
-        if (Boolean.getBoolean("cosmos.directTcp.consoleMetricsReporter.enabled")) {
-            RntbdMetrics.add(RntbdMetrics.consoleLoggingRegistry());
+        int period = Integer.getInteger("cosmos.monitoring.consoleLogging.period", 0);
+        if (period > 0) {
+            RntbdMetrics.add(RntbdMetrics.consoleLoggingRegistry(period));
         }
     }
 
@@ -133,7 +134,7 @@ public final class RntbdMetrics {
     // region Accessors
 
     @JsonIgnore
-    public static synchronized MeterRegistry consoleLoggingRegistry() {
+    private static synchronized MeterRegistry consoleLoggingRegistry(int period) {
 
         if (consoleLoggingRegistry == null) {
 
@@ -145,7 +146,7 @@ public final class RntbdMetrics {
                 .convertDurationsTo(TimeUnit.MILLISECONDS)
                 .build();
 
-            consoleReporter.start(Long.getLong("cosmos.directTcp.consoleMetricsReporter.period", 30), TimeUnit.SECONDS);
+            consoleReporter.start(period, TimeUnit.SECONDS);
 
             DropwizardConfig dropwizardConfig = new DropwizardConfig() {
 
