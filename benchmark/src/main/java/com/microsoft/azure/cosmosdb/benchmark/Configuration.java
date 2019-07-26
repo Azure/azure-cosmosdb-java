@@ -36,6 +36,7 @@ import io.micrometer.azuremonitor.AzureMonitorConfig;
 import io.micrometer.azuremonitor.AzureMonitorMeterRegistry;
 import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.graphite.GraphiteConfig;
 import io.micrometer.graphite.GraphiteMeterRegistry;
@@ -434,6 +435,7 @@ class Configuration {
             };
 
             this.graphiteMeterRegistry = new GraphiteMeterRegistry(config, Clock.SYSTEM);
+            this.graphiteMeterRegistry.config().namingConvention(NamingConvention.dot);
         }
 
         return this.graphiteMeterRegistry;
