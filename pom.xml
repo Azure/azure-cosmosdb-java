@@ -53,7 +53,7 @@
     <jackson-databind.version>2.9.9</jackson-databind.version>
     <java-uuid-generator.version>3.1.4</java-uuid-generator.version>
     <log4j.version>1.2.17</log4j.version>
-    <metrics.version>4.0.5</metrics.version>
+    <metrics.version>4.1.0</metrics.version>
     <micrometer.version>1.2.0</micrometer.version>
     <mockito.version>1.10.19</mockito.version>
     <netty.version>4.1.36.Final</netty.version>
