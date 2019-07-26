@@ -39,6 +39,7 @@ import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdConte
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdContextNegotiator;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdContextRequest;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdEndpoint;
+import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdReporter;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdRequest;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdRequestArgs;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdRequestEncoder;
@@ -723,7 +724,6 @@ public final class RntbdTransportClientTest {
         try (final RntbdTransportClient client = getRntbdTransportClientUnderTest(userAgent, timeout, response)) {
 
             final Single<StoreResponse> responseSingle;
-            client.toString();
 
             try {
                 responseSingle = client.invokeStoreAsync(physicalAddress, null, request);

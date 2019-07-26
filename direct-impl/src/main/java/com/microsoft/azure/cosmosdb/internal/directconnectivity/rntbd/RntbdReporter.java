@@ -73,12 +73,12 @@ public final class RntbdReporter {
 
         if (throwable == null) {
             logger.error("Report this {} issue to ensure it is addressed:\n[{}]\n[{}]\n[{}]",
-                codeSource, subject, stackTrace, formattingTuple.getMessage()
+                codeSource, subject, stackTrace[2], formattingTuple.getMessage()
             );
         } else {
-            logger.error("Report this {} issue to ensure it is addressed:\n[{}]\n[{}]\n[{}{}{}]",
-                codeSource, subject, stackTrace, formattingTuple.getMessage(),
-                throwable, ExceptionUtils.getStackTrace(throwable)
+            logger.error("Report this {} issue to ensure it is addressed:\n[{}]\n[{}]\n[{}{}]",
+                codeSource, subject, stackTrace[2], formattingTuple.getMessage(),
+                ExceptionUtils.getStackTrace(throwable)
             );
         }
     }
