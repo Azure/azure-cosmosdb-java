@@ -54,7 +54,6 @@ class PartitionProcessorImpl implements PartitionProcessor {
     private final Logger logger = LoggerFactory.getLogger(PartitionProcessorImpl.class);
 
     private static final int DefaultMaxItemCount = 100;
-    // private final Observable<FeedResponse<Document>> query;
     private final ProcessorSettings settings;
     private final PartitionCheckpointer checkpointer;
     private final ChangeFeedObserver observer;
@@ -82,23 +81,29 @@ class PartitionProcessorImpl implements PartitionProcessor {
     @Override
     public Mono<Void> run(CancellationToken cancellationToken) {
         PartitionProcessorImpl self = this;
-        this.lastContinuation = this.settings.getStartContinuation();
+        self.lastContinuation = self.settings.getStartContinuation();
 
         self.options.requestContinuation(self.lastContinuation);
 
-        return self.documentClient.createDocumentChangeFeedQuery(self.settings.getCollectionSelfLink(), self.options)
+        return Flux.just(self)
+            .flatMap(value -> self.documentClient.createDocumentChangeFeedQuery(self.settings.getCollectionSelfLink(), self.options))
             .flatMap(documentFeedResponse -> {
-                if (cancellationToken.isCancellationRequested()) throw Exceptions.propagate(new TaskCancelledException());
+                if (cancellationToken.isCancellationRequested()) return Flux.error(new TaskCancelledException());//throw Exceptions.propagate(new TaskCancelledException());
 
                 self.lastContinuation = documentFeedResponse.continuationToken();
                 if (documentFeedResponse.results() != null && documentFeedResponse.results().size() > 0) {
-                    self.dispatchChanges(documentFeedResponse);
+                    return self.dispatchChanges(documentFeedResponse)
+                        .doFinally( (Void) -> {
+                            self.options.requestContinuation(self.lastContinuation);
+
+                            if (cancellationToken.isCancellationRequested()) throw Exceptions.propagate(new TaskCancelledException());//throw Exceptions.propagate(new TaskCancelledException());
+                        }).flux();
                 }
                 self.options.requestContinuation(self.lastContinuation);
 
-                if (cancellationToken.isCancellationRequested()) throw Exceptions.propagate(new TaskCancelledException());
+                if (cancellationToken.isCancellationRequested()) return Flux.error(new TaskCancelledException());//throw Exceptions.propagate(new TaskCancelledException());
 
-                return Flux.just(documentFeedResponse);
+                return Flux.empty();
             })
             .doOnComplete(() -> {
                 if (this.options.maxItemCount().compareTo(this.settings.getMaxItemCount()) != 0) {
@@ -140,7 +145,7 @@ class PartitionProcessorImpl implements PartitionProcessor {
                         }
                     }
                 } else if (throwable instanceof TaskCancelledException) {
-                    // this.logger.WarnException("exception: partition '{0}'", canceledException, this.properties.PartitionKeyRangeId);
+                    self.logger.warn("Exception: partition {}", self.settings.getPartitionKeyRangeId(), throwable);
                     self.resultException = (TaskCancelledException) throwable;
                 }
                 return Flux.error(throwable);
@@ -171,6 +176,7 @@ class PartitionProcessorImpl implements PartitionProcessor {
 
                 return true;
             })
+            .onErrorResume(throwable -> Flux.empty())
             .then();
     }
 
@@ -179,9 +185,10 @@ class PartitionProcessorImpl implements PartitionProcessor {
         return this.resultException;
     }
 
-    private void dispatchChanges(FeedResponse<CosmosItemProperties> response) {
+    private Mono<Void> dispatchChanges(FeedResponse<CosmosItemProperties> response) {
         ChangeFeedObserverContext context = new ChangeFeedObserverContextImpl(this.settings.getPartitionKeyRangeId(), response, this.checkpointer);
 
         this.observer.processChanges(context, response.results());
+        return Mono.empty();
     }
 }

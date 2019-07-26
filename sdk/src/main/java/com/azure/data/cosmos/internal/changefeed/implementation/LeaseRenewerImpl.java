@@ -68,7 +68,8 @@ class LeaseRenewerImpl implements LeaseRenewer {
             return Mono.empty();
         }
 
-        return self.renew(cancellationToken)
+        return Mono.just(self)
+            .flatMap(value -> self.renew(cancellationToken))
             .repeat(() -> {
                 if (cancellationToken.isCancellationRequested()) return false;
 

@@ -109,7 +109,8 @@ class PartitionLoadBalancerImpl implements PartitionLoadBalancer {
     private Mono<Void> run(CancellationToken cancellationToken) {
         PartitionLoadBalancerImpl self = this;
 
-        return self.leaseContainer.getAllLeases()
+        return Flux.just(self)
+            .flatMap(value -> self.leaseContainer.getAllLeases())
             .collectList()
             .flatMap(allLeases -> {
                 if (cancellationToken.isCancellationRequested()) return Mono.empty();
