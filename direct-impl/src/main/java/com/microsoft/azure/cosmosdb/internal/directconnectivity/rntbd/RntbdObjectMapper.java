@@ -37,6 +37,8 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.handler.codec.CorruptedFrameException;
 import io.netty.handler.codec.EncoderException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,6 +48,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class RntbdObjectMapper {
 
+    private static final Logger logger = LoggerFactory.getLogger(RntbdObjectMapper.class);
     private static final SimpleFilterProvider filterProvider = new SimpleFilterProvider();
     private static final ObjectMapper objectMapper = new ObjectMapper().setFilterProvider(filterProvider);
     private static final ObjectWriter objectWriter = objectMapper.writer();
@@ -58,7 +61,12 @@ public final class RntbdObjectMapper {
         try {
             return objectWriter.writeValueAsString(value);
         } catch (final JsonProcessingException error) {
-            throw new EncoderException(error);
+            logger.error("could not convert {} value to JSON due to:", value.getClass(), error);
+            try {
+                return Strings.lenientFormat("{\"error\":%s", objectWriter.writeValueAsString(error.toString()));
+            } catch (final JsonProcessingException exception) {
+                return "null";
+            }
         }
     }
 

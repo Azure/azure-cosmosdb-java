@@ -28,10 +28,13 @@ import com.google.common.base.Strings;
 import com.google.common.base.Utf8;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
+import io.netty.handler.codec.CorruptedFrameException;
 import io.netty.handler.codec.DecoderException;
 
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
+
+import static com.google.common.base.Preconditions.checkState;
 
 enum RntbdTokenType {
 
@@ -109,6 +112,14 @@ enum RntbdTokenType {
         Class<?> valueType();
 
         void write(Object value, ByteBuf out);
+
+        static void checkReadableBytes(final ByteBuf in, final long length, final long maxLength) {
+            if (length != in.readableBytes() || length > maxLength) {
+                String message = Strings.lenientFormat("maxLength: %s, length: %s, readableBytes: %s",
+                    maxLength, length, in.readableBytes());
+                throw new CorruptedFrameException(message);
+            }
+        }
     }
 
     private static class RntbdByte implements Codec {
@@ -199,6 +210,7 @@ enum RntbdTokenType {
         @Override
         public Object read(final ByteBuf in) {
             final int length = in.readUnsignedShortLE();
+            Codec.checkReadableBytes(in, length, 0xFFFF);
             return in.readBytes(length);
         }
 
@@ -500,28 +512,20 @@ enum RntbdTokenType {
 
         @Override
         public final boolean isValid(final Object value) {
-            return value instanceof byte[] && ((byte[])value).length < 0xFFFF;
+            return value instanceof byte[];
         }
 
         @Override
         public final Object read(final ByteBuf in) {
-
             final long length = in.readUnsignedIntLE();
-
-            if (length > Integer.MAX_VALUE) {
-                throw new IllegalStateException();
-            }
+            Codec.checkReadableBytes(in, length, Integer.MAX_VALUE);
             return in.readBytes((int)length);
         }
 
         @Override
         public final ByteBuf readSlice(final ByteBuf in) {
-
             final long length = in.getUnsignedIntLE(in.readerIndex());
-
-            if (length > Integer.MAX_VALUE) {
-                throw new IllegalStateException();
-            }
+            checkState(length <= Integer.MAX_VALUE);
             return in.readSlice(Integer.BYTES + (int)length);
         }
 
@@ -550,19 +554,13 @@ enum RntbdTokenType {
 
         @Override
         public final Object read(final ByteBuf in) {
-
             final long length = in.readUnsignedIntLE();
-
-            if (length > Integer.MAX_VALUE) {
-                throw new IllegalStateException();
-            }
-
+            Codec.checkReadableBytes(in, length, Integer.MAX_VALUE);
             return in.readCharSequence((int)length, StandardCharsets.UTF_8).toString();
         }
 
         @Override
         public final void write(final Object value, final ByteBuf out) {
-
             final int length = this.computeLength(value, Integer.MAX_VALUE);
             out.writeIntLE(length);
             writeValue(out, value, length);
@@ -628,13 +626,14 @@ enum RntbdTokenType {
 
         @Override
         public final boolean isValid(final Object value) {
-            return value instanceof byte[] && ((byte[])value).length < 0xFFFF;
+            return value instanceof byte[] && ((byte[])value).length <= 0xFF;
         }
 
         @Override
         public final Object read(final ByteBuf in) {
 
             final int length = in.readUnsignedByte();
+            Codec.checkReadableBytes(in, length, 0xFF);
             final byte[] bytes = new byte[length];
             in.readBytes(bytes);
 
@@ -677,7 +676,9 @@ enum RntbdTokenType {
 
         @Override
         public final Object read(final ByteBuf in) {
-            return in.readCharSequence(in.readUnsignedByte(), StandardCharsets.UTF_8).toString();
+            final int length = in.readUnsignedByte();
+            Codec.checkReadableBytes(in, length, 0xFF);
+            return in.readCharSequence(length, StandardCharsets.UTF_8).toString();
         }
 
         @Override
@@ -755,6 +756,7 @@ enum RntbdTokenType {
         @Override
         public Object read(final ByteBuf in) {
             final int length = in.readUnsignedShortLE();
+            Codec.checkReadableBytes(in, length, 0xFFFF);
             return in.readCharSequence(length, StandardCharsets.UTF_8).toString();
         }
 
