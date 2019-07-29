@@ -36,7 +36,6 @@ import io.netty.buffer.ByteBuf;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdConstants.RntbdHeader;
 
 @JsonPropertyOrder({ "id", "name", "type", "present", "required", "value" })
@@ -164,7 +163,7 @@ final class RntbdToken {
             ((ByteBuf)this.value).release();
         }
 
-        this.value = this.header.type().codec().readSlice(in).retain(); // No data transfer until the first call to RntbdToken.getValue
+        this.value = this.header.type().codec().readSlice(in).retain(); // No data transfer until first call to RntbdToken.getValue
     }
 
     public void encode(final ByteBuf out) {
@@ -196,7 +195,7 @@ final class RntbdToken {
 
     @Override
     public String toString() {
-        return RntbdObjectMapper.toJson(this);
+        return RntbdObjectMapper.toString(this);
     }
 
     // endregion
@@ -204,8 +203,8 @@ final class RntbdToken {
     // region Privates
 
     private void ensureValid(final Object value) {
-        checkNotNull(value, "value");
-        checkArgument(this.header.type().codec().isValid(value), "value: %s", value.getClass());
+        checkArgument(value != null, "value: null");
+        checkArgument(this.header.type().codec().isValid(value), "value: %s = %s", value.getClass().getName(), value);
     }
 
     // endregion
