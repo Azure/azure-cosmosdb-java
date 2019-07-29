@@ -34,7 +34,7 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.StoreResponse;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
-import io.netty.buffer.EmptyByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.util.ReferenceCounted;
 import io.netty.util.ResourceLeakDetector;
@@ -72,7 +72,7 @@ public final class RntbdResponse implements ReferenceCounted {
     public RntbdResponse(final UUID activityId, final int statusCode, final Map<String, String> map, final ByteBuf content) {
 
         this.headers = RntbdResponseHeaders.fromMap(map, content.readableBytes() > 0);
-        this.content = content.retain();
+        this.content = content.copy();
 
         final HttpResponseStatus status = HttpResponseStatus.valueOf(statusCode);
         final int length = RntbdResponseStatus.LENGTH + this.headers.computeLength();
@@ -132,7 +132,7 @@ public final class RntbdResponse implements ReferenceCounted {
 
         } else {
 
-            content = new EmptyByteBuf(in.alloc());
+            content = Unpooled.EMPTY_BUFFER;
         }
 
         return new RntbdResponse(frame, headers, content);
@@ -193,14 +193,23 @@ public final class RntbdResponse implements ReferenceCounted {
     @Override
     public boolean release(final int decrement) {
 
-        return this.referenceCount.getAndAccumulate(decrement, (value, n) -> {
+        return this.referenceCount.accumulateAndGet(decrement, (value, n) -> {
+
             value = value - min(value, n);
+
             if (value == 0) {
-                assert this.headers != null && this.content != null;
+
+                checkState(this.headers != null && this.content != null);
+
+                if (this.content != Unpooled.EMPTY_BUFFER) {
+                    checkState(this.content.release());
+                }
+
                 this.headers.releaseBuffers();
-                this.content.release();
             }
+
             return value;
+
         }) == 0;
     }
 

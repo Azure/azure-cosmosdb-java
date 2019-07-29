@@ -63,7 +63,7 @@ import io.netty.channel.pool.ChannelHealthChecker;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.IdleStateEvent;
-import io.netty.util.ReferenceCountUtil;
+import io.netty.util.ReferenceCounted;
 import io.netty.util.Timeout;
 import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.Future;
@@ -187,27 +187,32 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
         this.traceOperation(context, "channelRead");
 
-        if (message instanceof RntbdResponse) {
+        try {
+            if (message instanceof RntbdResponse) {
 
-            try {
-                this.messageReceived(context, (RntbdResponse)message);
-            } catch (Throwable throwable) {
-                reportIssue(context, "{} ", message, throwable);
-                this.exceptionCaught(context, throwable);
-            } finally {
-                ReferenceCountUtil.release(message);
+                try {
+                    this.messageReceived(context, (RntbdResponse)message);
+                } catch (Throwable throwable) {
+                    reportIssue(context, "{} ", message, throwable);
+                    this.exceptionCaught(context, throwable);
+                }
+
+            } else {
+
+                final IllegalStateException error = new IllegalStateException(
+                    Strings.lenientFormat("expected message of %s, not %s: %s",
+                        RntbdResponse.class, message.getClass(), message
+                    )
+                );
+
+                reportIssue(context, "", error);
+                this.exceptionCaught(context, error);
             }
-
-        } else {
-
-            final IllegalStateException error = new IllegalStateException(
-                Strings.lenientFormat("expected message of %s, not %s: %s",
-                    RntbdResponse.class, message.getClass(), message
-                )
-            );
-
-            reportIssue(context, "", error);
-            this.exceptionCaught(context, error);
+        } finally {
+            if (message instanceof ReferenceCounted) {
+                boolean released = ((ReferenceCounted)message).release();
+                reportIssueUnless(released, context, "failed to release message: {}", message);
+            }
         }
     }
 

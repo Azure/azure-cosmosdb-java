@@ -66,6 +66,9 @@ import static com.microsoft.azure.cosmosdb.internal.directconnectivity.RntbdTran
 @JsonSerialize(using = RntbdServiceEndpoint.JsonSerializer.class)
 public final class RntbdServiceEndpoint implements RntbdEndpoint {
 
+    // region Fields
+
+    private static final String TAG_NAME = RntbdServiceEndpoint.class.getSimpleName();
     private static final long QUIET_PERIOD = 2L * 1_000_000_000L;
 
     private static final AtomicLong instanceCount = new AtomicLong();
@@ -76,16 +79,20 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
     private final AtomicBoolean closed;
     private final AtomicInteger concurrentRequests;
     private final long id;
+    private final AtomicLong lastRequestTime;
     private final RntbdMetrics metrics;
+    private final Provider provider;
     private final SocketAddress remoteAddress;
     private final RntbdRequestTimer requestTimer;
     private final Tag tag;
 
+    // endregion
+
     // region Constructors
 
     private RntbdServiceEndpoint(
-        final RntbdTransportClient transportClient, final Config config, final NioEventLoopGroup group,
-        final RntbdRequestTimer timer, final URI physicalAddress
+        final Provider provider, final Config config, final NioEventLoopGroup group, final RntbdRequestTimer timer,
+        final URI physicalAddress
     ) {
 
         final Bootstrap bootstrap = new Bootstrap()
@@ -98,15 +105,18 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
             .option(ChannelOption.SO_KEEPALIVE, true)
             .remoteAddress(physicalAddress.getHost(), physicalAddress.getPort());
 
-        this.channelPool = new RntbdClientChannelPool(bootstrap, config);
-        this.closed = new AtomicBoolean();
-        this.concurrentRequests = new AtomicInteger();
+        this.channelPool = new RntbdClientChannelPool(this, bootstrap, config);
         this.remoteAddress = bootstrap.config().remoteAddress();
+        this.concurrentRequests = new AtomicInteger();
+        this.lastRequestTime = new AtomicLong();
+        this.closed = new AtomicBoolean();
         this.requestTimer = timer;
 
-        this.tag = Tag.of(RntbdServiceEndpoint.class.getSimpleName(), this.remoteAddress.toString());
+        this.tag = Tag.of(TAG_NAME, RntbdMetrics.escape(this.remoteAddress.toString()));
         this.id = instanceCount.incrementAndGet();
-        this.metrics = new RntbdMetrics(transportClient, this);
+        this.provider = provider;
+
+        this.metrics = new RntbdMetrics(provider.transportClient, this);
     }
 
     // endregion
@@ -136,6 +146,10 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
     @Override
     public boolean isClosed() {
         return this.closed.get();
+    }
+
+    public long lastRequestTime() {
+        return this.lastRequestTime.get();
     }
 
     @Override
@@ -170,6 +184,7 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
     @Override
     public void close() {
         if (this.closed.compareAndSet(false, true)) {
+            this.provider.evict(this);
             this.channelPool.close();
         }
     }
@@ -177,7 +192,9 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
     public RntbdRequestRecord request(final RntbdRequestArgs args) {
 
         this.throwIfClosed();
+
         this.concurrentRequests.incrementAndGet();
+        this.lastRequestTime.set(args.creationTime());
 
         if (logger.isDebugEnabled()) {
             args.traceOperation(logger, null, "request");
@@ -306,16 +323,17 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
 
         private static final Logger logger = LoggerFactory.getLogger(Provider.class);
 
-        private final AtomicBoolean closed = new AtomicBoolean();
+        private final AtomicBoolean closed;
         private final Config config;
-        private final ConcurrentHashMap<String, RntbdEndpoint> endpoints = new ConcurrentHashMap<>();
+        private final ConcurrentHashMap<String, RntbdEndpoint> endpoints;
         private final NioEventLoopGroup eventLoopGroup;
+        private final AtomicInteger evictions;
         private final RntbdRequestTimer requestTimer;
         private final RntbdTransportClient transportClient;
 
         public Provider(final RntbdTransportClient transportClient, final Options options, final SslContext sslContext) {
 
-            checkNotNull(transportClient, "transportClient");
+            checkNotNull(transportClient, "provider");
             checkNotNull(options, "options");
             checkNotNull(sslContext, "sslContext");
 
@@ -335,10 +353,14 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
             this.config = new Config(options, sslContext, wireLogLevel);
             this.requestTimer = new RntbdRequestTimer(config.requestTimeout());
             this.eventLoopGroup = new NioEventLoopGroup(threadCount, threadFactory);
+
+            this.endpoints = new ConcurrentHashMap<>();
+            this.evictions = new AtomicInteger();
+            this.closed = new AtomicBoolean();
         }
 
         @Override
-        public void close() throws RuntimeException {
+        public void close() {
 
             if (this.closed.compareAndSet(false, true)) {
 
@@ -372,9 +394,14 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
         }
 
         @Override
+        public int evictions() {
+            return this.evictions.get();
+        }
+
+        @Override
         public RntbdEndpoint get(URI physicalAddress) {
             return endpoints.computeIfAbsent(physicalAddress.getAuthority(), authority ->
-                new RntbdServiceEndpoint(this.transportClient, config, eventLoopGroup, requestTimer, physicalAddress)
+                new RntbdServiceEndpoint(this, config, eventLoopGroup, requestTimer, physicalAddress)
             );
         }
 
@@ -383,7 +410,7 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
             return this.endpoints.values().stream();
         }
 
-        private void deleteEndpoint(final URI physicalAddress) {
+        private void evict(RntbdEndpoint endpoint) {
 
             // TODO: DANOBLE: Utilize this method of tearing down unhealthy endpoints
             //  Specifically, ensure that this method is called when a Read/WriteTimeoutException occurs or a health
@@ -392,13 +419,8 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
             //  https://msdata.visualstudio.com/CosmosDB/_workitems/edit/331552
             //  https://msdata.visualstudio.com/CosmosDB/_workitems/edit/331593
 
-            checkNotNull(physicalAddress, "physicalAddress: %s", physicalAddress);
-
-            final String authority = physicalAddress.getAuthority();
-            final RntbdEndpoint endpoint = this.endpoints.remove(authority);
-
-            if (endpoint != null) {
-                endpoint.close();
+            if (this.endpoints.remove(endpoint.remoteAddress().toString()) != null) {
+                this.evictions.incrementAndGet();
             }
         }
     }

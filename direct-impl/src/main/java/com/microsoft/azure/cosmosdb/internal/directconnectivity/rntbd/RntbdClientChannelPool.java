@@ -47,6 +47,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.nio.channels.ClosedChannelException;
+import java.time.Duration;
 import java.util.ArrayDeque;
 import java.util.Queue;
 import java.util.concurrent.ScheduledFuture;
@@ -88,6 +89,7 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
     private final long acquisitionTimeoutNanos;
     private final PooledByteBufAllocatorMetric allocatorMetric;
     private final EventExecutor executor;
+    private final ScheduledFuture<?> idleStateDetectionScheduledFuture;
     private final int maxChannels;
     private final int maxPendingAcquisitions;
     private final int maxRequestsPerChannel;
@@ -108,12 +110,13 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
      *  @param bootstrap the {@link Bootstrap} that is used for connections
      * @param config    the {@link Config} that is used for the channel pool instance created
      */
-    RntbdClientChannelPool(final Bootstrap bootstrap, final Config config) {
-        this(bootstrap, config, new RntbdClientChannelHealthChecker(config));
+    RntbdClientChannelPool(final RntbdServiceEndpoint endpoint, final Bootstrap bootstrap, final Config config) {
+        this(endpoint, bootstrap, config, new RntbdClientChannelHealthChecker(config));
     }
 
     private RntbdClientChannelPool(
-        final Bootstrap bootstrap, final Config config, final RntbdClientChannelHealthChecker healthChecker
+        final RntbdServiceEndpoint endpoint, final Bootstrap bootstrap, final Config config,
+        final RntbdClientChannelHealthChecker healthChecker
     ) {
 
         super(bootstrap, new RntbdClientChannelHandler(config, healthChecker), healthChecker, true, true);
@@ -163,6 +166,28 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
                     throw new Error();
             }
         }
+
+        final long idleEndpointTimeout = config.idleEndpointTimeout();
+
+        this.idleStateDetectionScheduledFuture = this.executor.scheduleAtFixedRate(
+            () -> {
+
+                final long currentTime = System.nanoTime();
+                final long lastRequestTime = endpoint.lastRequestTime();
+                final long elapsedTime = currentTime - lastRequestTime;
+
+                if (elapsedTime > idleEndpointTimeout) {
+
+                    if (logger.isWarnEnabled()) {
+                        logger.warn(
+                            "{} closing due to inactivity (time elapsed since last request: {} > idleEndpointTimeout: {})",
+                            endpoint, Duration.ofNanos(elapsedTime), Duration.ofNanos(idleEndpointTimeout));
+                    }
+
+                    endpoint.close();
+                }
+
+            }, idleEndpointTimeout, idleEndpointTimeout, TimeUnit.NANOSECONDS);
     }
 
     // region Accessors
@@ -239,7 +264,7 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
     @Override
     public Future<Void> release(final Channel channel, final Promise<Void> promise) {
 
-        this.throwIfClosed();
+        // We do not call this.throwIfClosed because a channel may be released back to the pool during close
 
         super.release(channel, this.executor.<Void>newPromise().addListener((FutureListener<Void>)future -> {
 
@@ -368,7 +393,7 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
 
             } else {
 
-                // Add a task to the pending acquisition queue and we'll satisfy this request later
+                // Add a task to the pending acquisition queue and we'll satisfy the request later
 
                 AcquireTask task = new AcquireTask(this, promise);
 
@@ -391,6 +416,7 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
 
         checkState(this.executor.inEventLoop());
 
+        this.idleStateDetectionScheduledFuture.cancel(false);
         this.acquiredChannelCount.set(0);
         this.availableChannelCount.set(0);
 

@@ -85,6 +85,8 @@ public interface RntbdEndpoint extends AutoCloseable {
 
         int count();
 
+        int evictions();
+
         RntbdEndpoint get(URI physicalAddress);
 
         Stream<RntbdEndpoint> list();
@@ -132,7 +134,12 @@ public interface RntbdEndpoint extends AutoCloseable {
 
         @JsonProperty
         public long idleConnectionTimeout() {
-            return this.options.idleTimeout().toNanos();
+            return this.options.idleChannelTimeout().toNanos();
+        }
+
+        @JsonProperty
+        public long idleEndpointTimeout() {
+            return this.options.idleEndpointTimeout().toNanos();
         }
 
         @JsonProperty

@@ -29,8 +29,10 @@ import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.google.common.net.PercentEscaper;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.RntbdTransportClient;
 import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -46,6 +48,7 @@ import io.micrometer.core.lang.Nullable;
 
 import java.util.concurrent.TimeUnit;
 
+@SuppressWarnings("UnstableApiUsage")
 @JsonPropertyOrder({
     "tags", "concurrentRequests", "requests", "responseErrors", "responseSuccesses", "completionRate", "responseRate",
     "channelsAcquired", "channelsAvailable", "requestQueueLength", "usedDirectMemory", "usedHeapMemory"
@@ -54,7 +57,9 @@ public final class RntbdMetrics {
 
     // region Fields
 
+    private static final PercentEscaper escaper = new PercentEscaper("_-", false);
     private static final CompositeMeterRegistry registry = new CompositeMeterRegistry();
+
     private static final String prefix = "cosmos.directTcp.";
     private static MeterRegistry consoleLoggingRegistry;
 
@@ -83,16 +88,17 @@ public final class RntbdMetrics {
         this.endpoint = endpoint;
 
         this.tags = Tags.of(client.tag(), endpoint.tag());
-
         this.requests = registry.timer(nameOf("requests"), tags);
         this.responseErrors = registry.timer(nameOf("responseErrors"), tags);
         this.responseSuccesses = registry.timer(nameOf("responseSuccesses"), tags);
 
-        final Timer responseSuccesses = this.responseSuccesses;
-        final Timer requests = this.requests;
-
         Gauge.builder(nameOf("endpoints"), client, RntbdTransportClient::endpointCount)
              .description("endpoint count")
+             .tag(client.tag().getKey(), client.tag().getValue())
+             .register(registry);
+
+        Gauge.builder(nameOf("endpointsEvicted"), client, RntbdTransportClient::endpointEvictionCount)
+             .description("endpoint eviction count")
              .tag(client.tag().getKey(), client.tag().getValue())
              .register(registry);
 
@@ -116,13 +122,13 @@ public final class RntbdMetrics {
              .tags(this.tags)
              .register(registry);
 
-        Gauge.builder(nameOf("usedDirectMemory"), endpoint, x -> (double)x.usedDirectMemory() / (1024L * 1024L))
+        Gauge.builder(nameOf("usedDirectMemory"), endpoint, x -> x.usedDirectMemory())
              .description("Java direct memory usage")
-             .baseUnit("MiB")
+             .baseUnit("bytes")
              .tags(this.tags)
              .register(registry);
 
-        Gauge.builder(nameOf("usedHeapMemory"), endpoint, x -> (double)x.usedHeapMemory() / (1024L * 1024L))
+        Gauge.builder(nameOf("usedHeapMemory"), endpoint, x -> x.usedHeapMemory())
              .description("Java heap memory usage")
              .baseUnit("MiB")
              .tags(this.tags)
@@ -258,6 +264,10 @@ public final class RntbdMetrics {
 
     public void markComplete(RntbdRequestRecord record) {
         record.stop(this.requests, record.isCompletedExceptionally() ? this.responseErrors : this.responseSuccesses);
+    }
+
+    public static String escape(String value) {
+        return escaper.escape(value);
     }
 
     @Override

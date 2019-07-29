@@ -33,6 +33,7 @@ import io.netty.buffer.ByteBuf;
 import java.util.stream.Collector;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdConstants.RntbdHeader;
 
 @SuppressWarnings("UnstableApiUsage")
@@ -114,7 +115,7 @@ abstract class RntbdTokenStream<T extends Enum<T> & RntbdHeader> {
 
     final void releaseBuffers() {
         for (final RntbdToken token : this.tokens.values()) {
-            token.releaseBuffer();
+            checkState(token.releaseBuffer(), "failed to release byte buffer for token %s", token);
         }
     }
 

@@ -95,7 +95,6 @@ import static org.testng.Assert.fail;
 
 public final class RntbdTransportClientTest {
 
-    private static final Logger logger = LoggerFactory.getLogger(RntbdTransportClientTest.class);
     private static final int lsn = 5;
     private static final ByteBuf noContent = Unpooled.wrappedBuffer(new byte[0]);
     private static final String partitionKeyRangeId = "3";
@@ -955,6 +954,11 @@ public final class RntbdTransportClientTest {
             @Override
             public int count() {
                 return 1;
+            }
+
+            @Override
+            public int evictions() {
+                return 0;
             }
 
             @Override

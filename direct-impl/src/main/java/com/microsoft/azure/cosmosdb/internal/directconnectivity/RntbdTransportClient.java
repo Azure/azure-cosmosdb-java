@@ -61,6 +61,8 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
 
     // region Fields
 
+    private static final String TAG_NAME = RntbdTransportClient.class.getSimpleName();
+
     private static final AtomicLong instanceCount = new AtomicLong();
     private static final Logger logger = LoggerFactory.getLogger(RntbdTransportClient.class);
 
@@ -74,23 +76,15 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
     // region Constructors
 
     RntbdTransportClient(final RntbdEndpoint.Provider endpointProvider) {
-
         this.endpointProvider = endpointProvider;
         this.id = instanceCount.incrementAndGet();
-
-        this.tag = Tag.of(RntbdTransportClient.class.getSimpleName(), Strings.padStart(
-            Long.toHexString(this.id).toUpperCase(), 4, '0')
-        );
+        this.tag = RntbdTransportClient.tag(this.id);
     }
 
     RntbdTransportClient(final Options options, final SslContext sslContext) {
-
         this.endpointProvider = new RntbdServiceEndpoint.Provider(this, options, sslContext);
         this.id = instanceCount.incrementAndGet();
-
-        this.tag = Tag.of(RntbdTransportClient.class.getSimpleName(), Strings.padStart(
-            Long.toHexString(this.id).toUpperCase(), 4, '0')
-        );
+        this.tag = RntbdTransportClient.tag(this.id);
     }
 
     RntbdTransportClient(final Configs configs, final int requestTimeoutInSeconds, final UserAgentContainer userAgent) {
@@ -103,6 +97,10 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
 
     public int endpointCount() {
         return this.endpointProvider.count();
+    }
+
+    public int endpointEvictionCount() {
+        return this.endpointProvider.evictions();
     }
 
     public long id() {
@@ -177,6 +175,14 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
 
     // endregion
 
+    // region Privates
+
+    private static Tag tag(long id) {
+        return Tag.of(TAG_NAME, Strings.padStart(Long.toHexString(id).toUpperCase(), 4, '0'));
+    }
+
+    // endregion
+
     // region Types
 
     static final class JsonSerializer extends StdSerializer<RntbdTransportClient> {
@@ -214,7 +220,8 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
         private final int bufferPageSize;
         private final String certificateHostNameOverride;
         private final Duration connectionTimeout;
-        private final Duration idleTimeout;
+        private final Duration idleChannelTimeout;
+        private final Duration idleEndpointTimeout;
         private final int maxBufferCapacity;
         private final int maxChannelsPerEndpoint;
         private final int maxRequestsPerChannel;
@@ -233,7 +240,8 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
             this.bufferPageSize = builder.bufferPageSize;
             this.certificateHostNameOverride = builder.certificateHostNameOverride;
             this.connectionTimeout = builder.connectionTimeout == null ? builder.requestTimeout : builder.connectionTimeout;
-            this.idleTimeout = builder.idleTimeout;
+            this.idleChannelTimeout = builder.idleChannelTimeout;
+            this.idleEndpointTimeout = builder.idleEndpointTimeout;
             this.maxBufferCapacity = builder.maxBufferCapacity;
             this.maxChannelsPerEndpoint = builder.maxChannelsPerEndpoint;
             this.maxRequestsPerChannel = builder.maxRequestsPerChannel;
@@ -261,8 +269,12 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
             return this.connectionTimeout;
         }
 
-        public Duration idleTimeout() {
-            return this.idleTimeout;
+        public Duration idleChannelTimeout() {
+            return this.idleChannelTimeout;
+        }
+
+        public Duration idleEndpointTimeout() {
+            return this.idleEndpointTimeout;
         }
 
         public int maxBufferCapacity() {
@@ -320,13 +332,15 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
 
             private static final UserAgentContainer DEFAULT_USER_AGENT_CONTAINER = new UserAgentContainer();
             private static final Duration FIFTEEN_SECONDS = Duration.ofSeconds(15L);
+            private static final Duration SEVENTY_SECONDS = Duration.ofSeconds(70L);
             private static final Duration SIXTY_FIVE_SECONDS = Duration.ofSeconds(65L);
             private static final Duration TEN_SECONDS = Duration.ofSeconds(10L);
 
             private int bufferPageSize = 8192;
             private String certificateHostNameOverride = null;
             private Duration connectionTimeout = null;
-            private Duration idleTimeout = Duration.ZERO;
+            private Duration idleChannelTimeout = Duration.ZERO;
+            private Duration idleEndpointTimeout = SEVENTY_SECONDS;
             private int maxBufferCapacity = 8192 << 10;
             private int maxChannelsPerEndpoint = 10;
             private int maxRequestsPerChannel = 30;
@@ -377,9 +391,15 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
                 return this;
             }
 
-            public Builder idleTimeout(final Duration value) {
+            public Builder idleChannelTimeout(final Duration value) {
                 checkNotNull(value, "value: null");
-                this.idleTimeout = value;
+                this.idleChannelTimeout = value;
+                return this;
+            }
+
+            public Builder idleEndpointTimeout(final Duration value) {
+                checkArgument(value != null && value.compareTo(Duration.ZERO) > 0, "value: %s", value);
+                this.idleEndpointTimeout = value;
                 return this;
             }
 

@@ -28,6 +28,7 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.google.common.base.Strings;
 import com.google.common.net.HostAndPort;
+import com.google.common.net.PercentEscaper;
 import com.microsoft.azure.cosmosdb.ConnectionMode;
 import com.microsoft.azure.cosmosdb.ConnectionPolicy;
 import com.microsoft.azure.cosmosdb.ConsistencyLevel;
@@ -44,6 +45,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.time.Duration;
 import java.util.Arrays;
 
@@ -404,6 +407,8 @@ class Configuration {
 
             final GraphiteConfig config = new GraphiteConfig() {
 
+                private String[] tagNames = { "source" };
+
                 @Override
                 @Nullable
                 public String get(@Nullable String key) {
@@ -432,10 +437,27 @@ class Configuration {
                 public Duration step() {
                     return step;
                 }
+
+                @Override
+                @Nullable
+                public String[] tagsAsPrefix() {
+                    return this.tagNames;
+                }
             };
 
             this.graphiteMeterRegistry = new GraphiteMeterRegistry(config, Clock.SYSTEM);
-            this.graphiteMeterRegistry.config().namingConvention(NamingConvention.dot);
+            String source;
+
+            try {
+                PercentEscaper escaper = new PercentEscaper("_-", false);
+                source = escaper.escape(InetAddress.getLocalHost().getHostName());
+            } catch (UnknownHostException error) {
+                source = "unknown-host";
+            }
+
+            this.graphiteMeterRegistry.config()
+                .namingConvention(NamingConvention.dot)
+                .commonTags("source", source);
         }
 
         return this.graphiteMeterRegistry;
