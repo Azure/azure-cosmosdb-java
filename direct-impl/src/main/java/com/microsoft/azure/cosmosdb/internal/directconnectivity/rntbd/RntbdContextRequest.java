@@ -30,6 +30,7 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import com.google.common.base.Strings;
 import com.microsoft.azure.cosmosdb.internal.UserAgentContainer;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.CorruptedFrameException;
 
 import java.nio.charset.StandardCharsets;
@@ -135,17 +136,15 @@ public final class RntbdContextRequest {
         RntbdToken userAgent;
 
         Headers(final UserAgentContainer container) {
-
-            this();
-
+            this(Unpooled.EMPTY_BUFFER);
             this.clientVersion.setValue(ClientVersion);
-            this.protocolVersion.setValue(CurrentProtocolVersion);
             this.userAgent.setValue(container.getUserAgent());
+            this.protocolVersion.setValue(CurrentProtocolVersion);
         }
 
-        private Headers() {
+        private Headers(ByteBuf in) {
 
-            super(RntbdContextRequestHeader.set, RntbdContextRequestHeader.map);
+            super(RntbdContextRequestHeader.set, RntbdContextRequestHeader.map, in);
 
             this.clientVersion = this.get(RntbdContextRequestHeader.ClientVersion);
             this.protocolVersion = this.get(RntbdContextRequestHeader.ProtocolVersion);
@@ -153,7 +152,7 @@ public final class RntbdContextRequest {
         }
 
         static Headers decode(final ByteBuf in) {
-            return Headers.decode(in, new Headers());
+            return Headers.decode(new Headers(in));
         }
     }
 }

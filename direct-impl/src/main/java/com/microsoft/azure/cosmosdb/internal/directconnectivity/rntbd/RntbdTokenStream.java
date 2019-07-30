@@ -39,17 +39,20 @@ import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.Rnt
 @SuppressWarnings("UnstableApiUsage")
 abstract class RntbdTokenStream<T extends Enum<T> & RntbdHeader> {
 
+    final ByteBuf in;
     final ImmutableMap<Short, T> headers;
     final ImmutableMap<T, RntbdToken> tokens;
 
-    RntbdTokenStream(final ImmutableSet<T> headers, final ImmutableMap<Short, T> ids) {
+    RntbdTokenStream(final ImmutableSet<T> headers, final ImmutableMap<Short, T> ids, final ByteBuf in) {
 
         checkNotNull(headers, "headers");
         checkNotNull(ids, "ids");
+        checkNotNull(in, "in");
 
         final Collector<T, ?, ImmutableMap<T, RntbdToken>> collector = Maps.toImmutableEnumMap(h -> h, RntbdToken::create);
         this.tokens = headers.stream().collect(collector);
         this.headers = ids;
+        this.in = in.retain();
     }
 
     final int computeCount() {
@@ -76,7 +79,9 @@ abstract class RntbdTokenStream<T extends Enum<T> & RntbdHeader> {
         return total;
     }
 
-    static <T extends RntbdTokenStream<?>> T decode(final ByteBuf in, final T stream) {
+    static <T extends RntbdTokenStream<?>> T decode(final T stream) {
+
+        ByteBuf in = stream.in;
 
         while (in.readableBytes() > 0) {
 
@@ -115,8 +120,9 @@ abstract class RntbdTokenStream<T extends Enum<T> & RntbdHeader> {
 
     final void releaseBuffers() {
         for (final RntbdToken token : this.tokens.values()) {
-            checkState(token.releaseBuffer(), "failed to release byte buffer for token %s", token);
+            token.releaseBuffer();
         }
+        in.release();
     }
 
     private static final class UndefinedHeader implements RntbdHeader {

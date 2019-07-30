@@ -65,14 +65,17 @@ public final class RntbdResponse implements ReferenceCounted {
     @JsonProperty
     private final RntbdResponseHeaders headers;
 
-    private AtomicInteger referenceCount = new AtomicInteger();
+    private final ByteBuf in;
+
+    private final AtomicInteger referenceCount = new AtomicInteger();
 
     // endregion
 
     public RntbdResponse(final UUID activityId, final int statusCode, final Map<String, String> map, final ByteBuf content) {
 
         this.headers = RntbdResponseHeaders.fromMap(map, content.readableBytes() > 0);
-        this.content = content.copy();
+        this.in = Unpooled.EMPTY_BUFFER;
+        this.content = content.copy().retain();
 
         final HttpResponseStatus status = HttpResponseStatus.valueOf(statusCode);
         final int length = RntbdResponseStatus.LENGTH + this.headers.computeLength();
@@ -80,8 +83,10 @@ public final class RntbdResponse implements ReferenceCounted {
         this.frame = new RntbdResponseStatus(length, status, activityId);
     }
 
-    private RntbdResponse(final RntbdResponseStatus frame, final RntbdResponseHeaders headers, final ByteBuf content) {
-
+    private RntbdResponse(
+        final ByteBuf in, final RntbdResponseStatus frame, final RntbdResponseHeaders headers, final ByteBuf content
+    ) {
+        this.in = in.retain();
         this.frame = frame;
         this.headers = headers;
         this.content = content.retain();
@@ -113,17 +118,18 @@ public final class RntbdResponse implements ReferenceCounted {
 
     static RntbdResponse decode(final ByteBuf in) {
 
-        in.markReaderIndex();
+        int start = in.markReaderIndex().readerIndex();
 
         final RntbdResponseStatus frame = RntbdResponseStatus.decode(in);
-        final RntbdResponseHeaders headers = RntbdResponseHeaders.decode(in.readSlice(frame.getHeadersLength()));
 
+        final RntbdResponseHeaders headers = RntbdResponseHeaders.decode(in.readSlice(frame.getHeadersLength()));
         final boolean hasPayload = headers.isPayloadPresent();
         final ByteBuf content;
 
         if (hasPayload) {
 
             if (!RntbdFramer.canDecodePayload(in)) {
+                headers.releaseBuffers();
                 in.resetReaderIndex();
                 return null;
             }
@@ -135,7 +141,10 @@ public final class RntbdResponse implements ReferenceCounted {
             content = Unpooled.EMPTY_BUFFER;
         }
 
-        return new RntbdResponse(frame, headers, content);
+        int end = in.readerIndex();
+        in.resetReaderIndex();
+
+        return new RntbdResponse(in.readSlice(end - start), frame, headers, content);
     }
 
     public void encode(final ByteBuf out) {
@@ -200,12 +209,18 @@ public final class RntbdResponse implements ReferenceCounted {
             if (value == 0) {
 
                 checkState(this.headers != null && this.content != null);
+                this.headers.releaseBuffers();
 
-                if (this.content != Unpooled.EMPTY_BUFFER) {
-                    checkState(this.content.release());
+                if (this.in != Unpooled.EMPTY_BUFFER) {
+                    this.in.release();
                 }
 
-                this.headers.releaseBuffers();
+                if (this.content != Unpooled.EMPTY_BUFFER) {
+                    this.content.release();
+                }
+
+                checkState(this.in == Unpooled.EMPTY_BUFFER || this.in.refCnt() == 0);
+                checkState(this.content == Unpooled.EMPTY_BUFFER || this.content.refCnt() == 0);
             }
 
             return value;

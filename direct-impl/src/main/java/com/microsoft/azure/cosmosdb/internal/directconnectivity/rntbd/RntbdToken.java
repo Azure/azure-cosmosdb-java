@@ -36,6 +36,7 @@ import io.netty.buffer.ByteBuf;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdConstants.RntbdHeader;
 
 @JsonPropertyOrder({ "id", "name", "type", "present", "required", "value" })
@@ -140,7 +141,7 @@ final class RntbdToken {
 
         if (this.value instanceof ByteBuf) {
             final ByteBuf buffer = (ByteBuf)this.value;
-            assert buffer.readerIndex() == 0;
+            checkState(buffer.readerIndex() == 0);
             return HEADER_LENGTH + buffer.readableBytes();
         }
 
@@ -190,7 +191,7 @@ final class RntbdToken {
     }
 
     public boolean releaseBuffer() {
-        return !(this.value instanceof ByteBuf) || ((ByteBuf)this.value).release();
+        return this.value instanceof ByteBuf && ((ByteBuf)this.value).release();
     }
 
     @Override
