@@ -1,5 +1,32 @@
 ## Changelog
 
+### 2.6.0
+
+* Retrieving query info using new query plan retriever ([#111](https://github.com/Azure/azure-cosmosdb-java/commit/6cdbc90386a343484f37c67bec5ec6321729b60a)) 
+* Offset limit query support ([#234](https://github.com/Azure/azure-cosmosdb-java/commit/65606c714a6e8019e52889a8b3d49e2a5e0f6a02))  
+
+### 2.5.1
+
+* Fixing executeStoredProcedureInternal to use client retry policy ([#210](https://github.com/Azure/azure-cosmosdb-java/commit/eb99c15c930a7f3a413445a9e257504468329710))
+
+### 2.5.0
+
+* TCP transport enabled by default
+* TCP transport improvements
+* Lots of testing improvements
+
+### 2.4.6
+
+* memory improvements
+
+### 2.4.5
+
+* Added support for Hash v2 ([#96](https://github.com/Azure/azure-cosmosdb-java/commit/f780e2d3210fbf875afcdd5e245877a49f7697ee))
+* Open source direct connectivity implementation ([#94](https://github.com/Azure/azure-cosmosdb-java/commit/81a56e9506827e647253b1b6ae39f95a7aee37a3)) 
+
+### 2.4.4
+
+
 ### 2.4.3
 * Fixed resource leak issue on closing client
 
