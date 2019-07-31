@@ -23,6 +23,7 @@
 package com.microsoft.azure.cosmosdb.rx.internal.query;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -40,6 +41,7 @@ import com.microsoft.azure.cosmosdb.internal.ResourceType;
 import com.microsoft.azure.cosmosdb.internal.routing.PartitionKeyInternal;
 import com.microsoft.azure.cosmosdb.internal.routing.PartitionKeyRangeIdentity;
 import com.microsoft.azure.cosmosdb.internal.routing.Range;
+import com.microsoft.azure.cosmosdb.internal.routing.RoutingMapProviderHelper;
 import com.microsoft.azure.cosmosdb.rx.internal.BackoffRetryUtility;
 import com.microsoft.azure.cosmosdb.rx.internal.IDocumentClientRetryPolicy;
 import com.microsoft.azure.cosmosdb.rx.internal.InvalidPartitionExceptionRetryPolicy;
@@ -132,10 +134,14 @@ public class DefaultDocumentQueryExecutionContext<T extends Resource> extends Do
     }
 
     public Single<List<PartitionKeyRange>> getTargetPartitionKeyRanges(String resourceId, List<Range<String>> queryRanges) {
-        // TODO: FIXME this needs to be revisited
-
-        Range<String> r = new Range<>("", "FF", true, false);
-        return client.getPartitionKeyRangeCache().tryGetOverlappingRangesAsync(resourceId, r, false, null);
+        return RoutingMapProviderHelper.getOverlappingRanges(client.getPartitionKeyRangeCache(), resourceId, queryRanges);
+    }
+    
+    public Single<List<PartitionKeyRange>> getTargetPartitionKeyRangesById(String resourceId, String partitionKeyRangeIdInternal) {
+        return client.getPartitionKeyRangeCache().tryGetPartitionKeyRangeByIdAsync(resourceId,
+                partitionKeyRangeIdInternal,
+                false,
+                null).flatMap(partitionKeyRange -> Single.just(Collections.singletonList(partitionKeyRange)));
     }
 
     protected Func1<RxDocumentServiceRequest, Observable<FeedResponse<T>>> executeInternalAsyncFunc() {

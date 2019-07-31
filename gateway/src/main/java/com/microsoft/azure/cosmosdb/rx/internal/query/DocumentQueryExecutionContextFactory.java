@@ -22,23 +22,29 @@
  */
 package com.microsoft.azure.cosmosdb.rx.internal.query;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
+import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.PartitionKeyRange;
 import com.microsoft.azure.cosmosdb.Resource;
 import com.microsoft.azure.cosmosdb.SqlQuerySpec;
+import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.internal.OperationType;
 import com.microsoft.azure.cosmosdb.internal.ResourceType;
 import com.microsoft.azure.cosmosdb.internal.query.PartitionedQueryExecutionInfo;
 import com.microsoft.azure.cosmosdb.internal.query.QueryInfo;
+import com.microsoft.azure.cosmosdb.internal.routing.Range;
 import com.microsoft.azure.cosmosdb.rx.internal.BadRequestException;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
+import com.microsoft.azure.cosmosdb.rx.internal.Strings;
 import com.microsoft.azure.cosmosdb.rx.internal.Utils;
 import com.microsoft.azure.cosmosdb.rx.internal.caches.RxCollectionCache;
 
+import org.apache.commons.lang3.StringUtils;
 import rx.Observable;
 import rx.Single;
 
@@ -74,31 +80,84 @@ public class DocumentQueryExecutionContextFactory {
             boolean isContinuationExpected,
             UUID correlatedActivityId) {
 
-        // return proxy
         Observable<DocumentCollection> collectionObs = Observable.just(null);
         
         if (resourceTypeEnum.isCollectionChild()) {
             collectionObs = resolveCollection(client, query, resourceTypeEnum, resourceLink).toObservable();
         }
 
-        // We create a ProxyDocumentQueryExecutionContext that will be initialized with DefaultDocumentQueryExecutionContext
-        // which will be used to send the query to Gateway and on getting 400(bad request) with 1004(cross parition query not servable), we initialize it with
-        // PipelinedDocumentQueryExecutionContext by providing the partition query execution info that's needed(which we get from the exception returned from Gateway).
+        DefaultDocumentQueryExecutionContext<T> queryExecutionContext =  new DefaultDocumentQueryExecutionContext<T>(
+                client,
+                resourceTypeEnum,
+                resourceType,
+                query,
+                feedOptions,
+                resourceLink,
+                correlatedActivityId,
+                isContinuationExpected);
 
-        Observable<ProxyDocumentQueryExecutionContext<T>> proxyQueryExecutionContext =
-                collectionObs.flatMap(collection -> 
-                ProxyDocumentQueryExecutionContext.createAsync(
-                        client,
-                        resourceTypeEnum,
-                        resourceType,
-                        query,
-                        feedOptions,
-                        resourceLink,
-                        collection,
-                        isContinuationExpected,
-                        correlatedActivityId));
+        if (ResourceType.Document != resourceTypeEnum
+                || (feedOptions != null && feedOptions.getPartitionKeyRangeIdInternal() != null)) {
+            return Observable.just(queryExecutionContext);
+        }
 
-        return proxyQueryExecutionContext;
+        Single<PartitionedQueryExecutionInfo> queryExecutionInfoSingle =
+                QueryPlanRetriever.getQueryPlanThroughGatewayAsync(client, query, resourceLink);
+
+        return collectionObs.flatMap(collection -> queryExecutionInfoSingle.toObservable()
+                .flatMap(partitionedQueryExecutionInfo -> {
+                    QueryInfo queryInfo = partitionedQueryExecutionInfo.getQueryInfo();
+                    
+                    // Non value aggregates must go through DefaultDocumentQueryExecutionContext
+                    // Single partition query can serve queries like SELECT AVG(c.age) FROM c
+                    // SELECT MIN(c.age) + 5 FROM c
+                    // SELECT MIN(c.age), MAX(c.age) FROM c
+                    // while pipelined queries can only serve
+                    // SELECT VALUE <AGGREGATE>. So we send the query down the old pipeline to avoid a breaking change.
+                    // We will skip this in V3 SDK
+                    if(queryInfo.hasAggregates() && !queryInfo.hasSelectValue()){
+                        if(feedOptions != null && feedOptions.getEnableCrossPartitionQuery()){
+                            return Observable.error(new DocumentClientException(HttpConstants.StatusCodes.BADREQUEST,
+                                    "Cross partition query only supports 'VALUE <AggreateFunc>' for aggregates"));
+                        }
+                        return Observable.just( queryExecutionContext);
+                    }
+
+                    Single<List<PartitionKeyRange>> partitionKeyRanges;
+
+                    if (feedOptions != null && !StringUtils.isEmpty(feedOptions.getPartitionKeyRangeIdInternal())) {
+                        partitionKeyRanges = queryExecutionContext.getTargetPartitionKeyRangesById(collection.getResourceId(),
+                                feedOptions.getPartitionKeyRangeIdInternal());
+                    } else {
+                        List<Range<String>> queryRanges = partitionedQueryExecutionInfo.getQueryRanges();
+
+                        if (feedOptions != null && feedOptions.getPartitionKey() != null) {
+                            Range<String> range = Range.getPointRange(feedOptions.getPartitionKey()
+                                    .getInternalPartitionKey()
+                                    .getEffectivePartitionKeyString(feedOptions.getPartitionKey()
+                                            .getInternalPartitionKey(), collection.getPartitionKey()));
+                            queryRanges = Collections.singletonList(range);
+                        }
+                        partitionKeyRanges = queryExecutionContext
+                                .getTargetPartitionKeyRanges(collection.getResourceId(), queryRanges);
+                    }
+                    
+                    Observable<IDocumentQueryExecutionContext<T>> exContext = partitionKeyRanges
+                            .toObservable()
+                            .flatMap(pkranges -> createSpecializedDocumentQueryExecutionContextAsync(client,
+                                                                                                     resourceTypeEnum,
+                                                                                                     resourceType,
+                                                                                                     query,
+                                                                                                     feedOptions,
+                                                                                                     resourceLink,
+                                                                                                     isContinuationExpected,
+                                                                                                     partitionedQueryExecutionInfo,
+                                                                                                     pkranges,
+                                                                                                     collection.getResourceId(),
+                                                                                                     correlatedActivityId));
+
+                    return exContext;
+                }));
     }
 
 	public static <T extends Resource> Observable<? extends IDocumentQueryExecutionContext<T>> createSpecializedDocumentQueryExecutionContextAsync(
@@ -114,7 +173,12 @@ public class DocumentQueryExecutionContextFactory {
             String collectionRid,
             UUID correlatedActivityId) {
 
-        int initialPageSize = Utils.getValueOrDefault(feedOptions.getMaxItemCount(), ParallelQueryConfig.ClientInternalPageSize);
+        if (feedOptions == null) {
+            feedOptions = new FeedOptions();
+        }
+
+        int initialPageSize = Utils.getValueOrDefault(feedOptions.getMaxItemCount(),
+                                                      ParallelQueryConfig.ClientInternalPageSize);
 
         BadRequestException validationError = Utils.checkRequestOrReturnException
                 (initialPageSize > 0, "MaxItemCount", "Invalid MaxItemCount %s", initialPageSize);
@@ -123,6 +187,10 @@ public class DocumentQueryExecutionContextFactory {
         }
 
         QueryInfo queryInfo = partitionedQueryExecutionInfo.getQueryInfo();
+        
+        if (!Strings.isNullOrEmpty(queryInfo.getRewrittenQuery())) {
+                query = new SqlQuerySpec(queryInfo.getRewrittenQuery(), query.getParameters());
+        }
 
         boolean getLazyFeedResponse = queryInfo.hasTop();
 
