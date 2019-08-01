@@ -28,7 +28,7 @@ SOFTWARE.
   <groupId>com.microsoft.azure</groupId>
   <artifactId>azure-cosmosdb-direct</artifactId>
   <name>Azure Cosmos DB Async SDK Direct Internal Implementation</name>
-  <version>2.5.2-SNAPSHOT</version>
+  <version>2.6.1-SNAPSHOT</version>
   <description>Azure Cosmos DB Async SDK Direct Internal Implementation</description>
   <url>https://docs.microsoft.com/en-us/azure/cosmos-db</url>
   <packaging>jar</packaging>

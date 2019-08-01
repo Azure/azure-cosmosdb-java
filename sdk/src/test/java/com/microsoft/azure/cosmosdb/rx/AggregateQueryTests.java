@@ -92,8 +92,14 @@ public class AggregateQueryTests extends TestSuiteBase {
         options.setEnableCrossPartitionQuery(true);
         options.setPopulateQueryMetrics(qmEnabled);
         options.setMaxDegreeOfParallelism(2);
-
-        for (QueryConfig queryConfig : queryConfigs) {    
+        
+        for (QueryConfig queryConfig : queryConfigs) {
+            // Cross partition Non value aggregates are not supported
+            if(queryConfig.query.contains("VALUE")){
+                options.setEnableCrossPartitionQuery(true);
+            }else{
+                options.setEnableCrossPartitionQuery(false);
+            }
 
             Observable<FeedResponse<Document>> queryObservable = client
                 .queryDocuments(createdCollection.getSelfLink(), queryConfig.query, options);

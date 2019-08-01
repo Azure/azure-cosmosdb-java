@@ -233,7 +233,10 @@ implements IDocumentQueryExecutionContext<T> {
         }
 
         if (this.resourceTypeEnum.isPartitioned()) {
-            request.routeTo(new PartitionKeyRangeIdentity(collectionRid, range.getId()));
+            boolean hasPartitionKey = request.getHeaders().get(HttpConstants.HttpHeaders.PARTITION_KEY) != null;
+            if(!hasPartitionKey){
+                request.routeTo(new PartitionKeyRangeIdentity(collectionRid, range.getId()));
+            }
         }
     }
 

@@ -87,6 +87,9 @@ public class TopDocumentQueryExecutionContext<T extends Resource> implements IDo
         if (this.component instanceof AggregateDocumentQueryExecutionContext<?>) {
             context = (ParallelDocumentQueryExecutionContextBase<T>) ((AggregateDocumentQueryExecutionContext<T>) this.component)
                     .getComponent();
+        } else if (this.component instanceof SkipDocumentQueryExecutionContext<?>) {
+            context = (ParallelDocumentQueryExecutionContextBase<T>) ((SkipDocumentQueryExecutionContext<T>) this.component)
+                    .getComponent();
         } else {
             context = (ParallelDocumentQueryExecutionContextBase<T>) this.component;
         }

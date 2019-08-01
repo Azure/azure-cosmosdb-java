@@ -42,6 +42,7 @@ import rx.Observable;
 import rx.observers.TestSubscriber;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -301,7 +302,7 @@ public class ParallelDocumentQueryTest extends TestSuiteBase {
 
         createdDocuments = bulkInsertBlocking(client, getCollectionLink(), docDefList);
 
-        waitIfNeededForReplicasToCatchUp(this.clientBuilder());
+        waitIfNeededForReplicasToCatchUp(clientBuilder());
     }
 
     @AfterClass(groups = { "simple", "non-emulator" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)
@@ -387,4 +388,31 @@ public class ParallelDocumentQueryTest extends TestSuiteBase {
 
         return receivedDocuments;
     }
+
+    @Test(groups = { "simple" }, timeOut = TIMEOUT)
+    public void unsupportedQueries() {
+        String aggregateWithoutValue = "SELECT COUNT(1) FROM c";
+        String compositeAggregate = "SELECT COUNT(1) + 5 FROM c";
+        String multipleAggregates = "SELECT COUNT(1) + SUM(c) FROM c";
+        List<String> unsupportedQueries = Arrays.asList(aggregateWithoutValue,
+                                                        compositeAggregate,
+                                                        multipleAggregates);
+        
+        unsupportedQueries.forEach(this::runUnsupportedQueryForFailures);
+    }
+    
+    private void runUnsupportedQueryForFailures(String query){
+        FeedOptions options = new FeedOptions();
+        options.setEnableCrossPartitionQuery(true);
+        options.setMaxDegreeOfParallelism(2);
+        Observable<FeedResponse<Document>> queryObservable = client.queryDocuments(getCollectionLink(),
+                                                                                   query,
+                                                                                   options);
+        FailureValidator validator = new FailureValidator.Builder()
+                .instanceOf(DocumentClientException.class)
+                .statusCode(400)
+                .build();
+        validateQueryFailure(queryObservable, validator);
+    }
+
 }

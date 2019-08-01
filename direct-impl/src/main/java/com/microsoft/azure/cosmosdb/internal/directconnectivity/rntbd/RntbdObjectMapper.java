@@ -36,7 +36,6 @@ import com.google.common.base.Strings;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.handler.codec.CorruptedFrameException;
-import io.netty.handler.codec.EncoderException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

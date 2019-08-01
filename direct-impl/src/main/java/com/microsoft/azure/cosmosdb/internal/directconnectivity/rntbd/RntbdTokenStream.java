@@ -33,7 +33,6 @@ import io.netty.buffer.ByteBuf;
 import java.util.stream.Collector;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdConstants.RntbdHeader;
 
 @SuppressWarnings("UnstableApiUsage")

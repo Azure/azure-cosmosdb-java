@@ -259,20 +259,6 @@ public class OrderbyDocumentQueryTest extends TestSuiteBase {
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
-    public void crossPartitionQueryNotEnabled() throws Exception {
-        String query = "SELECT * FROM r ORDER BY r.propInt";
-        FeedOptions options = new FeedOptions();
-        Observable<FeedResponse<Document>> queryObservable = client
-                .queryDocuments(getCollectionLink(), query, options);
-
-        FailureValidator validator = new FailureValidator.Builder()
-                .instanceOf(DocumentClientException.class)
-                .statusCode(400)
-                .build();
-        validateQueryFailure(queryObservable, validator);
-    }
-
-    @Test(groups = { "simple" }, timeOut = TIMEOUT)
     public void queryScopedToSinglePartition_StartWithContinuationToken() throws Exception {
         String query = "SELECT * FROM r ORDER BY r.propScopedPartitionInt ASC";
         FeedOptions options = new FeedOptions();

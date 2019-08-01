@@ -59,7 +59,8 @@ import rx.functions.Func3;
  */
 public class ParallelDocumentQueryExecutionContext<T extends Resource>
         extends ParallelDocumentQueryExecutionContextBase<T> {
-
+    FeedOptions feedOptions;
+    
     private ParallelDocumentQueryExecutionContext(
             IDocumentQueryClient client,
             List<PartitionKeyRange> partitionKeyRanges,
@@ -75,6 +76,7 @@ public class ParallelDocumentQueryExecutionContext<T extends Resource>
             UUID correlatedActivityId) {
         super(client, partitionKeyRanges, resourceTypeEnum, resourceType, query, feedOptions, resourceLink,
                 rewrittenQuery, isContinuationExpected, getLazyFeedResponse, correlatedActivityId);
+        this.feedOptions = feedOptions;
     }
 
     public static <T extends Resource> Observable<IDocumentQueryExecutionComponent<T>> createAsync(
@@ -194,9 +196,9 @@ public class ParallelDocumentQueryExecutionContext<T extends Resource>
             implements Transformer<DocumentProducer<T>.DocumentProducerFeedResponse, FeedResponse<T>> {
         private final RequestChargeTracker tracker;
         private DocumentProducer<T>.DocumentProducerFeedResponse previousPage;
+        private final FeedOptions feedOptions;
 
-        public EmptyPagesFilterTransformer(
-                RequestChargeTracker tracker) {
+        public EmptyPagesFilterTransformer(RequestChargeTracker tracker, FeedOptions feedOptions) {
 
             if (tracker == null) {
                 throw new IllegalArgumentException("Request Charge Tracker must not be null.");
@@ -204,6 +206,7 @@ public class ParallelDocumentQueryExecutionContext<T extends Resource>
 
             this.tracker = tracker;
             this.previousPage = null;
+            this.feedOptions = feedOptions;
         }
 
         private DocumentProducer<T>.DocumentProducerFeedResponse plusCharge(
@@ -246,7 +249,7 @@ public class ParallelDocumentQueryExecutionContext<T extends Resource>
         public Observable<FeedResponse<T>> call(
                 Observable<DocumentProducer<T>.DocumentProducerFeedResponse> source) {
             return source.filter(documentProducerFeedResponse -> {
-                if (documentProducerFeedResponse.pageResult.getResults().isEmpty()) {
+                if (documentProducerFeedResponse.pageResult.getResults().isEmpty() && !this.feedOptions.getAllowEmptyPages()) {
                     // filter empty pages and accumulate charge
                     tracker.addCharge(documentProducerFeedResponse.pageResult.getRequestCharge());
                     return false;
@@ -306,7 +309,6 @@ public class ParallelDocumentQueryExecutionContext<T extends Resource>
                 page = current;
                 page = this.addCompositeContinuationToken(page,
                         compositeContinuationToken);
-
                 return page;
             }).map(documentProducerFeedResponse -> {
                 // Unwrap the documentProducerFeedResponse and get back the feedResponse
@@ -333,7 +335,8 @@ public class ParallelDocumentQueryExecutionContext<T extends Resource>
                 .map(dp -> dp.produceAsync())
                 // Merge results from all partitions.
                 .collect(Collectors.toList());
-        return Observable.concat(obs).compose(new EmptyPagesFilterTransformer<>(new RequestChargeTracker()));
+        return Observable.concat(obs).compose(new EmptyPagesFilterTransformer<>(new RequestChargeTracker(),
+                                                                                this.feedOptions));
     }
 
     @Override

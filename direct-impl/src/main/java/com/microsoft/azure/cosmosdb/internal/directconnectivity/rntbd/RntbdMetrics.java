@@ -32,7 +32,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.google.common.net.PercentEscaper;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.RntbdTransportClient;
 import io.micrometer.core.instrument.Clock;
-import io.micrometer.core.instrument.FunctionCounter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Measurement;
 import io.micrometer.core.instrument.MeterRegistry;
