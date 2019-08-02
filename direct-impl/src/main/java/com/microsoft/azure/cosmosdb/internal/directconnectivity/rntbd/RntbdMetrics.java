@@ -192,8 +192,9 @@ public final class RntbdMetrics {
     }
 
     /***
-     * Computes the number of successful (non-error) responses received divided by the total number of completed
-     * requests
+     * Computes the number of successful (non-error) responses received divided by the number of completed requests
+     *
+     * @return The number of successful (non-error) responses received divided by the number of completed requests
      */
     @JsonProperty
     public double completionRate() {
@@ -226,7 +227,9 @@ public final class RntbdMetrics {
     }
 
     /***
-     * Computes the number of successful (non-error) responses received divided by the total number of requests sent
+     * Computes the number of successful (non-error) responses received divided by the number of requests sent
+     *
+     * @return The number of successful (non-error) responses received divided by the number of requests sent
      */
     @JsonProperty
     public double responseRate() {
