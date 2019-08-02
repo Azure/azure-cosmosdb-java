@@ -206,15 +206,19 @@ public class ParallelDocumentQueryTest extends TestSuiteBase {
         String query = "SELECT * from root";
         FeedOptions options = new FeedOptions();
         Observable<FeedResponse<Document>> queryObservable = client
-                .queryDocuments(getCollectionLink(), query, options);
+            .queryDocuments(getCollectionLink(), query, options);
+        List<Document> expectedDocs = createdDocuments;
 
-        FailureValidator validator = new FailureValidator.Builder()
-                .instanceOf(DocumentClientException.class)
-                .statusCode(400)
-                .build();
-        validateQueryFailure(queryObservable, validator);
+        FeedResponseListValidator<Document> validator = new FeedResponseListValidator.Builder<Document>()
+            .totalSize(expectedDocs.size())
+            .exactlyContainsInAnyOrder(expectedDocs.stream().map(d -> d.getResourceId()).collect(Collectors.toList()))
+            .allPagesSatisfy(new FeedResponseValidator.Builder<Document>()
+                .requestChargeGreaterThanOrEqualTo(1.0).build())
+            .build();
+
+        validateQuerySuccess(queryObservable, validator);
     }
-
+    
     @Test(groups = { "simple" }, timeOut = 2 * TIMEOUT)
     public void partitionKeyRangeId() {
         int sum = 0;
