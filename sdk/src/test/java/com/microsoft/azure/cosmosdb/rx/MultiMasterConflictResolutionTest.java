@@ -37,7 +37,6 @@ import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 import rx.Observable;
 
-import javax.net.ssl.SSLException;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -120,8 +119,9 @@ public class MultiMasterConflictResolutionTest extends TestSuiteBase {
         // 1. Custom with valid sprocLink
         // 2. Custom with null sprocLink, should default to empty string
         // 3. Custom with empty sprocLink, should default to empty string
-        testConflictResolutionPolicyRequiringPath(ConflictResolutionMode.Custom,
-                new String[] { "randomSprocName", null, "" }, new String[] { "randomSprocName", "", "" });
+        testConflictResolutionPolicyRequiringPath(ConflictResolutionMode.Custom, new String[] { "dbs/mydb/colls" +
+            "/mycoll/sprocs/randomSprocName", null, "" }, new String[] { "dbs/mydb/colls/mycoll/sprocs" +
+            "/randomSprocName", "", "" });
     }
 
     private void testConflictResolutionPolicyRequiringPath(ConflictResolutionMode conflictResolutionMode,
