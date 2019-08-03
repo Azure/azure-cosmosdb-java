@@ -218,7 +218,7 @@ public class ParallelDocumentQueryTest extends TestSuiteBase {
 
         validateQuerySuccess(queryObservable, validator);
     }
-    
+
     @Test(groups = { "simple" }, timeOut = 2 * TIMEOUT)
     public void partitionKeyRangeId() {
         int sum = 0;
