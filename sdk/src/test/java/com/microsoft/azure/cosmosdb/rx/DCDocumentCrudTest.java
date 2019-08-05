@@ -229,13 +229,13 @@ public class DCDocumentCrudTest extends TestSuiteBase {
         }
 
         documentList = bulkInsert(client, getCollectionLink(), documentList).map(ResourceResponse::getResource).toList().toBlocking().single();
-
         waitIfNeededForReplicasToCatchUp(this.clientBuilder());
 
         FeedOptions options = new FeedOptions();
         options.setEnableCrossPartitionQuery(true);
         options.setMaxDegreeOfParallelism(-1);
         options.setMaxItemCount(100);
+
         Observable<FeedResponse<Document>> results = client.queryDocuments(getCollectionLink(), "SELECT * FROM r", options);
 
         FeedResponseListValidator<Document> validator = new FeedResponseListValidator.Builder<Document>()
@@ -244,7 +244,7 @@ public class DCDocumentCrudTest extends TestSuiteBase {
 
         validateQuerySuccess(results, validator, QUERY_TIMEOUT);
         validateNoDocumentQueryOperationThroughGateway();
-        // validates only the first query for fetching query plan goes to gateway.
+        // verify that only the first query for fetching the query plan goes to gateway
         assertThat(client.getCapturedRequests().stream().filter(r -> r.getResourceType() == ResourceType.Document)).hasSize(1);
     }
 
@@ -291,7 +291,7 @@ public class DCDocumentCrudTest extends TestSuiteBase {
         for(RxDocumentServiceRequest request: client.getCapturedRequests()) {
             if (request.getOperationType() == OperationType.Query) {
                 assertThat(request.getPartitionKeyRangeIdentity()).isNull();
-            } else {
+            } else if (request.getOperationType() != OperationType.QueryPlan) {
                 validateResourceTypesSentToGateway.validate(request);
             }
         }
