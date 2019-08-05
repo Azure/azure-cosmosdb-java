@@ -63,7 +63,7 @@ public class DocumentClientException extends Exception {
     String resourceAddress;
 
     private DocumentClientException(int statusCode, String message, Map<String, String> responseHeaders, Throwable cause) {
-        super(message, cause, /* enableSuppression */ false, /* writableStackTrace */ false);
+        super(message, cause);
         this.statusCode = statusCode;
         this.responseHeaders = responseHeaders == null ? new HashMap<>() : new HashMap<>(responseHeaders);
     }
