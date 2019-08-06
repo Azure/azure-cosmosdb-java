@@ -24,11 +24,11 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd;
 
+import com.google.common.base.Strings;
 import com.microsoft.azure.cosmosdb.internal.OperationType;
 import com.microsoft.azure.cosmosdb.internal.ResourceType;
 import io.netty.buffer.ByteBuf;
 
-import java.util.Locale;
 import java.util.UUID;
 
 import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdConstants.RntbdOperationType;
@@ -150,7 +150,7 @@ final class RntbdRequestFrame {
             case RidRange:
                 return RntbdResourceType.RidRange;
             default:
-                final String reason = String.format(Locale.ROOT, "Unrecognized resource type: %s", resourceType);
+                final String reason = Strings.lenientFormat("Unrecognized resource type: %s", resourceType);
                 throw new UnsupportedOperationException(reason);
         }
     }
@@ -225,7 +225,7 @@ final class RntbdRequestFrame {
             case AddComputeGatewayRequestCharges:
                 return RntbdOperationType.AddComputeGatewayRequestCharges;
             default:
-                final String reason = String.format(Locale.ROOT, "Unrecognized operation type: %s", operationType);
+                final String reason = Strings.lenientFormat("Unrecognized operation type: %s", operationType);
                 throw new UnsupportedOperationException(reason);
         }
     }

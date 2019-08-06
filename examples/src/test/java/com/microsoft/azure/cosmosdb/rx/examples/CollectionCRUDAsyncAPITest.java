@@ -92,7 +92,6 @@ public class CollectionCRUDAsyncAPITest extends DocumentClientTest {
     private DocumentCollection collectionDefinition;
     private Database createdDatabase;
 
-
     @BeforeClass(groups = "samples", timeOut = TIMEOUT)
     public void setUp() {
 

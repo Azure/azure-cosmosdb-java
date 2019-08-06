@@ -24,8 +24,6 @@ package com.microsoft.azure.cosmosdb.rx;
 
 import java.util.UUID;
 
-import com.microsoft.azure.cosmosdb.internal.directconnectivity.Protocol;
-import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
@@ -86,7 +84,7 @@ public class AttachmentCrudTest extends TestSuiteBase {
         options.setPartitionKey(new PartitionKey(createdDocument.getId()));
         Attachment readBackAttachment = client.createAttachment(getDocumentLink(), attachment, options).toBlocking().single().getResource();
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder());
+        waitIfNeededForReplicasToCatchUp(this.clientBuilder());
 
         // read attachment
         Observable<ResourceResponse<Attachment>> readObservable = client.readAttachment(readBackAttachment.getSelfLink(), options);
@@ -131,7 +129,7 @@ public class AttachmentCrudTest extends TestSuiteBase {
         Attachment readBackAttachment = client.upsertAttachment(getDocumentLink(), attachment, options).toBlocking().single().getResource();
 
         // read attachment
-        waitIfNeededForReplicasToCatchUp(clientBuilder());
+        waitIfNeededForReplicasToCatchUp(this.clientBuilder());
         Observable<ResourceResponse<Attachment>> readObservable = client.readAttachment(readBackAttachment.getSelfLink(), options);
 
         // validate attachment read
@@ -168,7 +166,7 @@ public class AttachmentCrudTest extends TestSuiteBase {
 
 
         // read attachment
-        waitIfNeededForReplicasToCatchUp(clientBuilder());
+        waitIfNeededForReplicasToCatchUp(this.clientBuilder());
         Observable<ResourceResponse<Attachment>> readObservable = client.readAttachment(readBackAttachment.getSelfLink(), options);
 
         // validate attachment read

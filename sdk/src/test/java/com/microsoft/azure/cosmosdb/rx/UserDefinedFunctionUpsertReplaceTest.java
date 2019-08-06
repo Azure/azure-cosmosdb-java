@@ -24,8 +24,6 @@ package com.microsoft.azure.cosmosdb.rx;
 
 import java.util.UUID;
 
-import com.microsoft.azure.cosmosdb.internal.directconnectivity.Protocol;
-import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
@@ -64,19 +62,10 @@ public class UserDefinedFunctionUpsertReplaceTest extends TestSuiteBase {
 
         UserDefinedFunction readBackUdf = null;
 
-        try {
-            readBackUdf = client.upsertUserDefinedFunction(getCollectionLink(), udf, null).toBlocking().single().getResource();
-        } catch (Throwable error) {
-            if (this.clientBuilder().configs.getProtocol() == Protocol.Tcp) {
-                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder().desiredConsistencyLevel);
-                logger.info(message, error);
-                throw new SkipException(message, error);
-            }
-            throw error;
-        }
+        readBackUdf = client.upsertUserDefinedFunction(getCollectionLink(), udf, null).toBlocking().single().getResource();
 
         // read udf to validate creation
-        waitIfNeededForReplicasToCatchUp(clientBuilder());
+        waitIfNeededForReplicasToCatchUp(this.clientBuilder());
         Observable<ResourceResponse<UserDefinedFunction>> readObservable = client.readUserDefinedFunction(readBackUdf.getSelfLink(), null);
 
         // validate udf create
@@ -111,19 +100,10 @@ public class UserDefinedFunctionUpsertReplaceTest extends TestSuiteBase {
 
         UserDefinedFunction readBackUdf = null;
 
-        try {
-            readBackUdf = client.createUserDefinedFunction(getCollectionLink(), udf, null).toBlocking().single().getResource();
-        } catch (Throwable error) {
-            if (this.clientBuilder().configs.getProtocol() == Protocol.Tcp) {
-                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder().desiredConsistencyLevel);
-                logger.info(message, error);
-                throw new SkipException(message, error);
-            }
-            throw error;
-        }
-        
+        readBackUdf = client.createUserDefinedFunction(getCollectionLink(), udf, null).toBlocking().single().getResource();
+
         // read udf to validate creation
-        waitIfNeededForReplicasToCatchUp(clientBuilder());
+        waitIfNeededForReplicasToCatchUp(this.clientBuilder());
         Observable<ResourceResponse<UserDefinedFunction>> readObservable = client.readUserDefinedFunction(readBackUdf.getSelfLink(), null);
 
         // validate udf creation

@@ -146,7 +146,7 @@ public class UserQueryTest extends TestSuiteBase {
             createdUsers.add(createUser(client, databaseId, user));
         }
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder());
+        waitIfNeededForReplicasToCatchUp(this.clientBuilder());
     }
 
     @AfterClass(groups = { "simple" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)

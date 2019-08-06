@@ -261,8 +261,8 @@ public class CollectionCrudTest extends TestSuiteBase {
 
     @Test(groups = { "emulator" }, timeOut = 10 * TIMEOUT, retryAnalyzer = RetryAnalyzer.class)
     public void sessionTokenConsistencyCollectionDeleteCreateSameName() {
-        AsyncDocumentClient client1 = clientBuilder().build();
-        AsyncDocumentClient client2 = clientBuilder().build();
+        AsyncDocumentClient client1 = this.clientBuilder().build();
+        AsyncDocumentClient client2 = this.clientBuilder().build();
 
         String dbId = DatabaseForTest.generateId();
         String collectionId = "coll";

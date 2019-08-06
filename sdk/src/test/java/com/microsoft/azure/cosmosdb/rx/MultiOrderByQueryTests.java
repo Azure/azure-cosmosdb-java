@@ -182,7 +182,7 @@ public class MultiOrderByQueryTests extends TestSuiteBase {
 
         bulkInsertBlocking(client, documentCollection.getSelfLink(), documents);
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder());
+        waitIfNeededForReplicasToCatchUp(this.clientBuilder());
     }
 
     private Document generateMultiOrderByDocument() {

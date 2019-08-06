@@ -68,7 +68,6 @@ abstract public class EndpointMock {
         }
     }
 
-
     public void validate(EndpointMockVerificationBuilder verificationBuilder) {
         this.addressSelectorWrapper.validate();
         this.transportClientWrapper.validate();

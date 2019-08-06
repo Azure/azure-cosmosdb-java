@@ -57,7 +57,7 @@ public class NetworkFailureTest extends TestSuiteBase {
         SpyClientUnderTestFactory.ClientWithGatewaySpy client = null;
 
         try {
-            client = SpyClientUnderTestFactory.createClientWithGatewaySpy(clientBuilder());
+            client = SpyClientUnderTestFactory.createClientWithGatewaySpy(this.clientBuilder());
 
             Database database = SHARED_DATABASE;
 

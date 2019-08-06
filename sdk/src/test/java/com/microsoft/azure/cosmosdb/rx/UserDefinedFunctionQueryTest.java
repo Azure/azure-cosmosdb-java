@@ -167,7 +167,7 @@ public class UserDefinedFunctionQueryTest extends TestSuiteBase {
             createdUDF.add(createUserDefinedFunction(client));
         }
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder());
+        waitIfNeededForReplicasToCatchUp(this.clientBuilder());
     }
 
     @AfterClass(groups = { "simple" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)

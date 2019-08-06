@@ -24,18 +24,19 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.PropertyWriter;
 import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
+import com.google.common.base.Strings;
 import io.netty.buffer.ByteBuf;
-import io.netty.handler.codec.CorruptedFrameException;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdConstants.RntbdHeader;
 
 @JsonPropertyOrder({ "id", "name", "type", "present", "required", "value" })
@@ -55,6 +56,8 @@ final class RntbdToken {
 
     // endregion
 
+    // region Constructors
+
     private RntbdToken(final RntbdHeader header) {
         checkNotNull(header, "header");
         this.header = header;
@@ -62,25 +65,27 @@ final class RntbdToken {
         this.length = Integer.MIN_VALUE;
     }
 
-    @JsonProperty
-    final short getId() {
-        return this.header.id();
-    }
+    // endregion
 
     // region Accessors
 
     @JsonProperty
-    final String getName() {
+    public short getId() {
+        return this.header.id();
+    }
+
+    @JsonProperty
+    public String getName() {
         return this.header.name();
     }
 
     @JsonProperty
-    final RntbdTokenType getType() {
+    public RntbdTokenType getTokenType() {
         return this.header.type();
     }
 
     @JsonProperty
-    final Object getValue() {
+    public Object getValue() {
 
         if (this.value == null) {
             return this.header.type().codec().defaultValue();
@@ -97,24 +102,38 @@ final class RntbdToken {
         return this.value;
     }
 
-    @JsonProperty
-    final void setValue(final Object value) {
-        this.ensureValid(value);
-        this.length = Integer.MIN_VALUE;
-        this.value = value;
+    public <T> T getValue(final Class<T> cls) {
+        return cls.cast(this.getValue());
     }
 
     @JsonProperty
-    final boolean isPresent() {
+    public void setValue(final Object value) {
+        this.ensureValid(value);
+        this.releaseBuffer();
+        this.value = value;
+        this.length = Integer.MIN_VALUE;
+    }
+
+    @JsonIgnore
+    public final Class<?> getValueType() {
+        return this.header.type().codec().valueType();
+    }
+
+    @JsonProperty
+    public boolean isPresent() {
         return this.value != null;
     }
 
     @JsonProperty
-    final boolean isRequired() {
+    public boolean isRequired() {
         return this.header.isRequired();
     }
 
-    final int computeLength() {
+    // endregion
+
+    // region Methods
+
+    public int computeLength() {
 
         if (!this.isPresent()) {
             return 0;
@@ -122,7 +141,7 @@ final class RntbdToken {
 
         if (this.value instanceof ByteBuf) {
             final ByteBuf buffer = (ByteBuf)this.value;
-            assert buffer.readerIndex() == 0;
+            checkState(buffer.readerIndex() == 0);
             return HEADER_LENGTH + buffer.readableBytes();
         }
 
@@ -133,15 +152,11 @@ final class RntbdToken {
         return this.length;
     }
 
-    // endregion
-
-    // region Methods
-
-    static RntbdToken create(final RntbdHeader header) {
+    public static RntbdToken create(final RntbdHeader header) {
         return new RntbdToken(header);
     }
 
-    void decode(final ByteBuf in) {
+    public void decode(final ByteBuf in) {
 
         checkNotNull(in, "in");
 
@@ -149,23 +164,23 @@ final class RntbdToken {
             ((ByteBuf)this.value).release();
         }
 
-        this.value = this.header.type().codec().readSlice(in).retain(); // No data transfer until the first call to RntbdToken.getValue
+        this.value = this.header.type().codec().readSlice(in).retain(); // No data transfer until first call to RntbdToken.getValue
     }
 
-    final void encode(final ByteBuf out) {
+    public void encode(final ByteBuf out) {
 
         checkNotNull(out, "out");
 
         if (!this.isPresent()) {
             if (this.isRequired()) {
-                final String message = String.format("Missing value for required header: %s", this);
+                final String message = Strings.lenientFormat("Missing value for required header: %s", this);
                 throw new IllegalStateException(message);
             }
             return;
         }
 
         out.writeShortLE(this.getId());
-        out.writeByte(this.getType().id());
+        out.writeByte(this.getTokenType().id());
 
         if (this.value instanceof ByteBuf) {
             out.writeBytes((ByteBuf)this.value);
@@ -175,35 +190,22 @@ final class RntbdToken {
         }
     }
 
-    final <T> T getValue(final Class<T> cls) {
-        return cls.cast(this.getValue());
-    }
-
-    final void releaseBuffer() {
-        if (this.value instanceof ByteBuf) {
-            final ByteBuf buffer = (ByteBuf)this.value;
-            buffer.release();
-        }
+    public boolean releaseBuffer() {
+        return this.value instanceof ByteBuf && ((ByteBuf)this.value).release();
     }
 
     @Override
     public String toString() {
-        final ObjectWriter writer = RntbdObjectMapper.writer();
-        try {
-            return writer.writeValueAsString(this);
-        } catch (final JsonProcessingException error) {
-            throw new CorruptedFrameException(error);
-        }
+        return RntbdObjectMapper.toString(this);
     }
 
+    // endregion
+
+    // region Privates
+
     private void ensureValid(final Object value) {
-
-        checkNotNull(value, "value");
-
-        if (!this.header.type().codec().isValid(value)) {
-            final String reason = String.format("value: %s", value.getClass());
-            throw new IllegalArgumentException(reason);
-        }
+        checkArgument(value != null, "value: null");
+        checkArgument(this.header.type().codec().isValid(value), "value: %s = %s", value.getClass().getName(), value);
     }
 
     // endregion

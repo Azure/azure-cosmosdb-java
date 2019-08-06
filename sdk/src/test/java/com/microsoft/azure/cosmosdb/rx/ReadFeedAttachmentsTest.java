@@ -75,7 +75,7 @@ public class ReadFeedAttachmentsTest extends TestSuiteBase {
         for(int i = 0; i < 5; i++) {
             createdAttachments.add(createAttachments(client));
         }
-        waitIfNeededForReplicasToCatchUp(clientBuilder());
+        waitIfNeededForReplicasToCatchUp(this.clientBuilder());
 
         FeedOptions options = new FeedOptions();
         options.setMaxItemCount(2);

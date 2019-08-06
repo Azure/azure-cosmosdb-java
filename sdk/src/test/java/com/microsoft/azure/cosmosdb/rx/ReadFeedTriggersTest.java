@@ -92,7 +92,7 @@ public class ReadFeedTriggersTest extends TestSuiteBase {
             this.createdTriggers.add(this.createTriggers(client));
         }
 
-        this.waitIfNeededForReplicasToCatchUp(clientBuilder());
+        this.waitIfNeededForReplicasToCatchUp(this.clientBuilder());
     }
 
     @AfterClass(groups = { "simple" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)

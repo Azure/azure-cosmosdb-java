@@ -192,7 +192,7 @@ public class RetryCreateDocumentTest extends TestSuiteBase {
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
         // set up the client        
-        client = SpyClientUnderTestFactory.createClientWithGatewaySpy(clientBuilder());
+        client = SpyClientUnderTestFactory.createClientWithGatewaySpy(this.clientBuilder());
 
         database = SHARED_DATABASE;
         collection = SHARED_SINGLE_PARTITION_COLLECTION;

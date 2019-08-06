@@ -40,6 +40,7 @@ import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.ResourceResponse;
 import com.microsoft.azure.cosmosdb.benchmark.Configuration.Operation;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -121,16 +122,29 @@ abstract class AsyncBenchmark<T> {
         }
 
         if (configuration.getGraphiteEndpoint() != null) {
-            final Graphite graphite = new Graphite(new InetSocketAddress(configuration.getGraphiteEndpoint(), configuration.getGraphiteEndpointPort()));
+            final Graphite graphite = new Graphite(new InetSocketAddress(configuration.getGraphiteEndpoint(),
+                configuration.getGraphiteEndpointPort()));
             reporter = GraphiteReporter.forRegistry(metricsRegistry)
-                    .prefixedWith(configuration.getOperationType().name())
-                    .convertRatesTo(TimeUnit.SECONDS)
-                    .convertDurationsTo(TimeUnit.MILLISECONDS)
-                    .filter(MetricFilter.ALL)
-                    .build(graphite);
+                                       .prefixedWith(configuration.getOperationType().name())
+                                       .convertRatesTo(TimeUnit.SECONDS)
+                                       .convertDurationsTo(TimeUnit.MILLISECONDS)
+                                       .filter(MetricFilter.ALL)
+                                       .build(graphite);
         } else {
             reporter = ConsoleReporter.forRegistry(metricsRegistry).convertRatesTo(TimeUnit.SECONDS)
-                    .convertDurationsTo(TimeUnit.MILLISECONDS).build();
+                                      .convertDurationsTo(TimeUnit.MILLISECONDS).build();
+        }
+
+        MeterRegistry registry = configuration.getAzureMonitorMeterRegistry();
+
+        if (registry != null) {
+            AsyncDocumentClient.monitor(registry);
+        }
+
+        registry = configuration.getGraphiteMeterRegistry();
+
+        if (registry != null) {
+            AsyncDocumentClient.monitor(registry);
         }
     }
 

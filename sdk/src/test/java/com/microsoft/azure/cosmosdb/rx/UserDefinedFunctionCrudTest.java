@@ -78,7 +78,7 @@ public class UserDefinedFunctionCrudTest extends TestSuiteBase {
 
 
         // read udf
-        waitIfNeededForReplicasToCatchUp(clientBuilder());
+        waitIfNeededForReplicasToCatchUp(this.clientBuilder());
         Observable<ResourceResponse<UserDefinedFunction>> readObservable = client.readUserDefinedFunction(readBackUdf.getSelfLink(), null);
 
         //validate udf read

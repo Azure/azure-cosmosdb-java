@@ -160,7 +160,7 @@ public class PermissionQueryTest extends TestSuiteBase {
             createdPermissions.add(createPermissions(client, i));
         }
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder());
+        waitIfNeededForReplicasToCatchUp(this.clientBuilder());
     }
 
     @AfterClass(groups = { "simple" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)

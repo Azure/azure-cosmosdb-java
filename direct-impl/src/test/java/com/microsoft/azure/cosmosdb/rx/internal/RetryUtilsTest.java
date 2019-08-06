@@ -39,8 +39,6 @@ import com.microsoft.azure.cosmosdb.internal.directconnectivity.GoneException;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.StoreResponse;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.StoreResponseBuilder;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.StoreResponseValidator;
-import com.microsoft.azure.cosmosdb.rx.internal.IRetryPolicy;
-import com.microsoft.azure.cosmosdb.rx.internal.RetryUtils;
 import com.microsoft.azure.cosmosdb.rx.internal.IRetryPolicy.ShouldRetryResult;
 
 import rx.Single;

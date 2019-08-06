@@ -42,7 +42,6 @@ import com.microsoft.azure.cosmosdb.internal.directconnectivity.RetryWithExcepti
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.ServiceUnavailableException;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.StoreResponse;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.UnauthorizedException;
-import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdConstants.RntbdResponseHeader;
 import com.microsoft.azure.cosmosdb.rx.internal.BadRequestException;
 import com.microsoft.azure.cosmosdb.rx.internal.InvalidPartitionException;
 import com.microsoft.azure.cosmosdb.rx.internal.NotFoundException;
@@ -60,51 +59,69 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.CoalescingBufferQueue;
 import io.netty.channel.EventLoop;
+import io.netty.channel.pool.ChannelHealthChecker;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.ssl.SslHandler;
-import io.netty.util.ReferenceCountUtil;
+import io.netty.handler.timeout.IdleStateEvent;
+import io.netty.util.ReferenceCounted;
 import io.netty.util.Timeout;
 import io.netty.util.concurrent.EventExecutor;
+import io.netty.util.concurrent.Future;
+import io.netty.util.internal.ThrowableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.math.BigDecimal;
 import java.net.SocketAddress;
+import java.nio.channels.ClosedChannelException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.SubStatusCodes;
-import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdReporter.reportIssue;
-import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdReporter.reportIssueUnless;
+import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdClientChannelHealthChecker.Timestamps;
+import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdConstants.RntbdResponseHeader;
 
 public final class RntbdRequestManager implements ChannelHandler, ChannelInboundHandler, ChannelOutboundHandler {
 
     // region Fields
 
+    private static final ClosedChannelException ON_CHANNEL_UNREGISTERED =
+        ThrowableUtil.unknownStackTrace(new ClosedChannelException(), RntbdRequestManager.class, "channelUnregistered");
+
+    private static final ClosedChannelException ON_CLOSE =
+        ThrowableUtil.unknownStackTrace(new ClosedChannelException(), RntbdRequestManager.class, "close");
+
+    private static final ClosedChannelException ON_DEREGISTER =
+        ThrowableUtil.unknownStackTrace(new ClosedChannelException(), RntbdRequestManager.class, "deregister");
+
     private static final Logger logger = LoggerFactory.getLogger(RntbdRequestManager.class);
 
     private final CompletableFuture<RntbdContext> contextFuture = new CompletableFuture<>();
     private final CompletableFuture<RntbdContextRequest> contextRequestFuture = new CompletableFuture<>();
+    private final ChannelHealthChecker healthChecker;
+    private final int pendingRequestLimit;
     private final ConcurrentHashMap<Long, RntbdRequestRecord> pendingRequests;
+    private final Timestamps timestamps = new Timestamps();
 
     private boolean closingExceptionally = false;
-    private ChannelHandlerContext context;
-    private RntbdRequestRecord pendingRequest;
     private CoalescingBufferQueue pendingWrites;
 
     // endregion
 
-    public RntbdRequestManager(int capacity) {
-        checkState(capacity > 0);
-        this.pendingRequests = new ConcurrentHashMap<>(capacity);
+    public RntbdRequestManager(final ChannelHealthChecker healthChecker, final int pendingRequestLimit) {
+
+        checkArgument(pendingRequestLimit > 0, "pendingRequestLimit: %s", pendingRequestLimit);
+        checkNotNull(healthChecker, "healthChecker");
+
+        this.pendingRequests = new ConcurrentHashMap<>(pendingRequestLimit);
+        this.pendingRequestLimit = pendingRequestLimit;
+        this.healthChecker = healthChecker;
     }
 
     // region ChannelHandler methods
@@ -141,12 +158,12 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
      */
     @Override
     public void channelActive(final ChannelHandlerContext context) {
-        this.traceOperation(this.context, "channelActive");
+        this.traceOperation(context, "channelActive");
         context.fireChannelActive();
     }
 
     /**
-     * Completes all pending requests exceptionally when a channel reaches the end of its lifetime
+     * The {@link Channel} of the {@link ChannelHandlerContext} was registered and has reached the end of its lifetime
      * <p>
      * This method will only be called after the channel is closed.
      *
@@ -154,39 +171,55 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
      */
     @Override
     public void channelInactive(final ChannelHandlerContext context) {
-        this.traceOperation(this.context, "channelInactive");
+        this.traceOperation(context, "channelInactive");
         context.fireChannelInactive();
     }
 
+    /**
+     * The {@link Channel} of the {@link ChannelHandlerContext} has read a message from its peer
+     * <p>
+     *
+     * @param context {@link ChannelHandlerContext} to which this {@link RntbdRequestManager} belongs
+     * @param message The message read
+     */
     @Override
     public void channelRead(final ChannelHandlerContext context, final Object message) {
 
         this.traceOperation(context, "channelRead");
 
-        if (message instanceof RntbdResponse) {
-            try {
-                this.messageReceived(context, (RntbdResponse)message);
-            } catch (Throwable throwable) {
-                reportIssue(logger, context, "{} ", message, throwable);
-                this.exceptionCaught(context, throwable);
-            } finally {
-                ReferenceCountUtil.release(message);
+        try {
+            if (message instanceof RntbdResponse) {
+
+                try {
+                    this.messageReceived(context, (RntbdResponse)message);
+                } catch (Throwable throwable) {
+                    reportIssue(context, "{} ", message, throwable);
+                    this.exceptionCaught(context, throwable);
+                }
+
+            } else {
+
+                final IllegalStateException error = new IllegalStateException(
+                    Strings.lenientFormat("expected message of %s, not %s: %s",
+                        RntbdResponse.class, message.getClass(), message
+                    )
+                );
+
+                reportIssue(context, "", error);
+                this.exceptionCaught(context, error);
             }
-            this.traceOperation(context, "channelReadComplete");
-            return;
+        } finally {
+            if (message instanceof ReferenceCounted) {
+                boolean released = ((ReferenceCounted)message).release();
+                reportIssueUnless(released, context, "failed to release message: {}", message);
+            }
         }
-
-        final String reason = Strings.lenientFormat("expected message of type %s, not %s: %s", RntbdResponse.class, message.getClass(), message);
-        final IllegalStateException error = new IllegalStateException(reason);
-        reportIssue(logger, context, "", error);
-
-        this.exceptionCaught(context, error);
     }
 
     /**
-     * Invoked when the last message read by the current read operation has been consumed
+     * The {@link Channel} of the {@link ChannelHandlerContext} has fully consumed the most-recent message read
      * <p>
-     * If {@link ChannelOption#AUTO_READ} is off, no further attempt to read an inbound data from the current
+     * If {@link ChannelOption#AUTO_READ} is off, no further attempt to read inbound data from the current
      * {@link Channel} will be made until {@link ChannelHandlerContext#read} is called. This leaves time
      * for outbound messages to be written.
      *
@@ -195,6 +228,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
     @Override
     public void channelReadComplete(final ChannelHandlerContext context) {
         this.traceOperation(context, "channelReadComplete");
+        this.timestamps.channelReadCompleted();
         context.fireChannelReadComplete();
     }
 
@@ -213,12 +247,8 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
         this.traceOperation(context, "channelRegistered");
 
-        if (!(this.context == null && this.pendingWrites == null)) {
-            throw new IllegalStateException();
-        }
-
+        reportIssueUnless(this.pendingWrites == null, context, "pendingWrites: {}", pendingWrites);
         this.pendingWrites = new CoalescingBufferQueue(context.channel());
-        this.context = context;
 
         context.fireChannelRegistered();
     }
@@ -233,13 +263,11 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
         this.traceOperation(context, "channelUnregistered");
 
-        if (this.context == null || this.pendingWrites == null) {
-            throw new IllegalStateException();
+        if (!this.closingExceptionally) {
+            this.completeAllPendingRequestsExceptionally(context, ON_CHANNEL_UNREGISTERED);
+        } else {
+            logger.warn("{} channelUnregistered exceptionally", context);
         }
-
-        this.completeAllPendingRequestsExceptionally(context, ClosedWithPendingRequestsException.INSTANCE);
-        this.pendingWrites = null;
-        this.context = null;
 
         context.fireChannelUnregistered();
     }
@@ -279,12 +307,9 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         this.traceOperation(context, "exceptionCaught", cause);
 
         if (!this.closingExceptionally) {
-
-            reportIssueUnless(cause != ClosedWithPendingRequestsException.INSTANCE, logger, context,
-                "expected an exception other than ", ClosedWithPendingRequestsException.INSTANCE);
-
             this.completeAllPendingRequestsExceptionally(context, cause);
-            context.pipeline().flush().close();
+            logger.warn("{} closing due to:", context, cause);
+            context.flush().close();
         }
     }
 
@@ -301,17 +326,44 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
         this.traceOperation(context, "userEventTriggered", event);
 
-        if (event instanceof RntbdContext) {
-            try {
-                this.completeRntbdContextFuture(context, (RntbdContext)event);
-            } catch (Throwable error) {
-                reportIssue(logger, context, "{}: ", event, error);
-                this.exceptionCaught(context, error);
-            }
-            return;
-        }
+        try {
 
-        context.fireUserEventTriggered(event);
+            if (event instanceof IdleStateEvent) {
+
+                this.healthChecker.isHealthy(context.channel()).addListener((Future<Boolean> future) -> {
+
+                    final Throwable cause;
+
+                    if (future.isSuccess()) {
+                        if (future.get()) {
+                            return;
+                        }
+                        cause = UnhealthyChannelException.INSTANCE;
+                    } else {
+                        cause = future.cause();
+                    }
+
+                    this.exceptionCaught(context, cause);
+                });
+
+                return;
+            }
+            if (event instanceof RntbdContext) {
+                this.contextFuture.complete((RntbdContext)event);
+                this.removeContextNegotiatorAndFlushPendingWrites(context);
+                return;
+            }
+            if (event instanceof RntbdContextException) {
+                this.contextFuture.completeExceptionally((RntbdContextException)event);
+                context.pipeline().flush().close();
+                return;
+            }
+            context.fireUserEventTriggered(event);
+
+        } catch (Throwable error) {
+            reportIssue(context, "{}: ", event, error);
+            this.exceptionCaught(context, error);
+        }
     }
 
     // endregion
@@ -327,7 +379,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
      */
     @Override
     public void bind(final ChannelHandlerContext context, final SocketAddress localAddress, final ChannelPromise promise) {
-        this.traceOperation(context, "bind");
+        this.traceOperation(context, "bind", localAddress);
         context.bind(localAddress, promise);
     }
 
@@ -342,7 +394,12 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
         this.traceOperation(context, "close");
 
-        this.completeAllPendingRequestsExceptionally(context, ClosedWithPendingRequestsException.INSTANCE);
+        if (!this.closingExceptionally) {
+            this.completeAllPendingRequestsExceptionally(context, ON_CLOSE);
+        } else {
+            logger.warn("{} closed exceptionally", context);
+        }
+
         final SslHandler sslHandler = context.pipeline().get(SslHandler.class);
 
         if (sslHandler != null) {
@@ -368,19 +425,27 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         final ChannelHandlerContext context, final SocketAddress remoteAddress, final SocketAddress localAddress,
         final ChannelPromise promise
     ) {
-        this.traceOperation(context, "connect");
+        this.traceOperation(context, "connect", remoteAddress, localAddress);
         context.connect(remoteAddress, localAddress, promise);
     }
 
     /**
      * Called once a deregister operation is made from the current registered {@link EventLoop}.
      *
-     * @param context the {@link ChannelHandlerContext} for which the close operation is made
+     * @param context the {@link ChannelHandlerContext} for which the deregister operation is made
      * @param promise the {@link ChannelPromise} to notify once the operation completes
      */
     @Override
     public void deregister(final ChannelHandlerContext context, final ChannelPromise promise) {
+
         this.traceOperation(context, "deregister");
+
+        if (!this.closingExceptionally) {
+            this.completeAllPendingRequestsExceptionally(context, ON_DEREGISTER);
+        } else {
+            logger.warn("{} deregistered exceptionally", context);
+        }
+
         context.deregister(promise);
     }
 
@@ -434,43 +499,88 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
     public void write(final ChannelHandlerContext context, final Object message, final ChannelPromise promise) {
 
         // TODO: DANOBLE: Ensure that all write errors are reported with a root cause of type EncoderException
+        //  Requires a full scan of the rntbd code
 
         this.traceOperation(context, "write", message);
 
         if (message instanceof RntbdRequestRecord) {
-            context.write(this.addPendingRequestRecord(context, (RntbdRequestRecord)message), promise);
-        } else {
-            final String reason = Strings.lenientFormat("Expected message of type %s, not %s", RntbdRequestArgs.class, message.getClass());
-            this.exceptionCaught(context, new IllegalStateException(reason));
+
+            this.timestamps.channelWriteAttempted();
+
+            context.write(this.addPendingRequestRecord(context, (RntbdRequestRecord)message), promise).addListener(completed -> {
+                if (completed.isSuccess()) {
+                    this.timestamps.channelWriteCompleted();
+                }
+            });
+
+            return;
         }
+
+        if (message == RntbdHealthCheckRequest.MESSAGE) {
+
+            context.write(RntbdHealthCheckRequest.MESSAGE, promise).addListener(completed -> {
+                if (completed.isSuccess()) {
+                    this.timestamps.channelPingCompleted();
+                }
+            });
+
+            return;
+        }
+
+        final IllegalStateException error = new IllegalStateException(Strings.lenientFormat("message of %s: %s", message.getClass(), message));
+        reportIssue(context, "", error);
+        this.exceptionCaught(context, error);
     }
 
     // endregion
 
-    // region Private and package private methods
+    // region Package private methods
 
-    CompletableFuture<RntbdContextRequest> getRntbdContextRequestFuture() {
+    int pendingRequestCount() {
+        return this.pendingRequests.size();
+    }
+
+    Optional<RntbdContext> rntbdContext() {
+        return Optional.of(this.contextFuture.getNow(null));
+    }
+
+    CompletableFuture<RntbdContextRequest> rntbdContextRequestFuture() {
         return this.contextRequestFuture;
+    }
+
+    boolean hasRequestedRntbdContext() {
+        return this.contextRequestFuture.getNow(null) != null;
     }
 
     boolean hasRntbdContext() {
         return this.contextFuture.getNow(null) != null;
     }
 
-    boolean isServiceable(int capacity) {
-        final int pendingRequestLimit = this.hasRntbdContext() ? capacity : Math.min(capacity, 30);
-        return this.pendingRequests.size() < pendingRequestLimit;
+    boolean isServiceable(final int demand) {
+        final int limit = this.hasRntbdContext() ? this.pendingRequestLimit : Math.min(this.pendingRequestLimit, demand);
+        return this.pendingRequests.size() < limit;
     }
 
     void pendWrite(final ByteBuf out, final ChannelPromise promise) {
         this.pendingWrites.add(out, promise);
     }
 
+    RntbdClientChannelHealthChecker.Timestamps snapshotTimestamps() {
+        return new RntbdClientChannelHealthChecker.Timestamps(this.timestamps);
+    }
+
+    // endregion
+
+    // region Private methods
+
     private RntbdRequestArgs addPendingRequestRecord(final ChannelHandlerContext context, final RntbdRequestRecord record) {
 
-        this.pendingRequest = this.pendingRequests.compute(record.getTransportRequestId(), (id, current) -> {
+        return this.pendingRequests.compute(record.transportRequestId(), (id, current) -> {
 
-            reportIssueUnless(current == null, logger, context, "id: {}, current: {}, request: {}", id, current, record);
+            boolean predicate = current == null;
+            String format = "id: {}, current: {}, request: {}";
+
+            reportIssueUnless(predicate, context, format, record);
 
             final Timeout pendingRequestTimeout = record.newTimeout(timeout -> {
 
@@ -491,33 +601,18 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
             });
 
             return record;
-        });
 
-        return this.pendingRequest.getArgs();
-    }
-
-    private Optional<RntbdContext> getRntbdContext() {
-        return Optional.of(this.contextFuture.getNow(null));
+        }).args();
     }
 
     private void completeAllPendingRequestsExceptionally(final ChannelHandlerContext context, final Throwable throwable) {
 
-        if (this.closingExceptionally) {
-
-            reportIssueUnless(throwable == ClosedWithPendingRequestsException.INSTANCE, logger, context,
-                "throwable: ", throwable);
-
-            reportIssueUnless(this.pendingRequests.isEmpty() && this.pendingWrites.isEmpty(), logger, context,
-                "pendingRequests: {}, pendingWrites: {}", this.pendingRequests.isEmpty(),
-                this.pendingWrites.isEmpty());
-
-            return;
-        }
-
+        reportIssueUnless(!this.closingExceptionally, context, "", throwable);
         this.closingExceptionally = true;
 
-        if (!this.pendingWrites.isEmpty()) {
-            this.pendingWrites.releaseAndFailAll(context, ClosedWithPendingRequestsException.INSTANCE);
+        if (this.pendingWrites != null && !this.pendingWrites.isEmpty()) {
+            // an expensive call that fires at least one exceptionCaught event
+            this.pendingWrites.releaseAndFailAll(context, throwable);
         }
 
         if (!this.pendingRequests.isEmpty()) {
@@ -572,10 +667,10 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
             final String message = Strings.lenientFormat("%s %s with %s pending requests", context, phrase, count);
             final Exception cause;
 
-            if (throwable == ClosedWithPendingRequestsException.INSTANCE) {
+            if (throwable instanceof ClosedChannelException) {
 
                 cause = contextRequestException == null
-                    ? ClosedWithPendingRequestsException.INSTANCE
+                    ? (ClosedChannelException)throwable
                     : contextRequestException;
 
             } else {
@@ -587,27 +682,14 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
             for (RntbdRequestRecord record : this.pendingRequests.values()) {
 
-                final Map<String, String> requestHeaders = record.getArgs().getServiceRequest().getHeaders();
-                final String requestUri = record.getArgs().getPhysicalAddress().toString();
+                final Map<String, String> requestHeaders = record.args().serviceRequest().getHeaders();
+                final String requestUri = record.args().physicalAddress().toString();
 
                 final GoneException error = new GoneException(message, cause, (Map<String, String>)null, requestUri);
                 BridgeInternal.setRequestHeaders(error, requestHeaders);
 
                 record.completeExceptionally(error);
             }
-        }
-    }
-
-    private void completeRntbdContextFuture(final ChannelHandlerContext context, final RntbdContext value) {
-
-        this.contextFuture.complete(value);
-
-        final RntbdContextNegotiator negotiator = context.channel().pipeline().get(RntbdContextNegotiator.class);
-        negotiator.removeInboundHandler();
-        negotiator.removeOutboundHandler();
-
-        if (!this.pendingWrites.isEmpty()) {
-            this.pendingWrites.writeAndRemoveAll(context);
         }
     }
 
@@ -622,14 +704,14 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         final Long transportRequestId = response.getTransportRequestId();
 
         if (transportRequestId == null) {
-            reportIssue(logger, context, "{} ignored because there is no transport request identifier, response");
+            reportIssue(context, "response ignored because its transport request identifier is missing: {}", response);
             return;
         }
 
         final RntbdRequestRecord pendingRequest = this.pendingRequests.get(transportRequestId);
 
         if (pendingRequest == null) {
-            reportIssue(logger, context, "{} ignored because there is no matching pending request", response);
+            logger.warn("{} response ignored because there is no matching pending request: {}", context, response);
             return;
         }
 
@@ -661,7 +743,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
             // ..Map RNTBD response headers to HTTP response headers
 
             final Map<String, String> responseHeaders = response.getHeaders().asMap(
-                this.getRntbdContext().orElseThrow(IllegalStateException::new), activityId
+                this.rntbdContext().orElseThrow(IllegalStateException::new), activityId
             );
 
             // ..Create DocumentClientException based on status and sub-status codes
@@ -752,59 +834,51 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
                     break;
             }
 
-            logger.trace("\n  {}\n  [transportRequestId: {}, activityId: {}, statusCode: {}, subStatusCode: {}]\n  ",
-                context.channel(), transportRequestId, cause.getActivityId(), cause.getStatusCode(),
-                cause.getSubStatusCode(), cause);
-
             pendingRequest.completeExceptionally(cause);
         }
     }
 
-    private void traceOperation(final ChannelHandlerContext context, final String operationName, final Object... args) {
+    private void removeContextNegotiatorAndFlushPendingWrites(final ChannelHandlerContext context) {
 
-        if (logger.isTraceEnabled()) {
+        final RntbdContextNegotiator negotiator = context.pipeline().get(RntbdContextNegotiator.class);
+        negotiator.removeInboundHandler();
+        negotiator.removeOutboundHandler();
 
-            final long birthTime;
-            final BigDecimal lifetime;
-
-            if (this.pendingRequest == null) {
-                birthTime = System.nanoTime();
-                lifetime = BigDecimal.ZERO;
-            } else {
-                birthTime = this.pendingRequest.getBirthTime();
-                lifetime = BigDecimal.valueOf(this.pendingRequest.getLifetime().toNanos(), 6);
-            }
-
-            logger.trace("{},{},\"{}({})\",\"{}\",\"{}\"", birthTime, lifetime, operationName, Stream.of(args).map(arg ->
-                    arg == null ? "null" : arg.toString()).collect(Collectors.joining(",")
-                ), this.pendingRequest, context
-            );
+        if (!this.pendingWrites.isEmpty()) {
+            this.pendingWrites.writeAndRemoveAll(context);
+            context.flush();
         }
+    }
+
+    private static void reportIssue(final Object subject, final String format, final Object... args) {
+        RntbdReporter.reportIssue(logger, subject, format, args);
+    }
+
+    private static void reportIssueUnless(
+        final boolean predicate, final Object subject, final String format, final Object... args
+    ) {
+        RntbdReporter.reportIssueUnless(logger, predicate, subject, format, args);
+    }
+
+    private void traceOperation(final ChannelHandlerContext context, final String operationName, final Object... args) {
+        logger.trace("{}\n{}\n{}", operationName, context, args);
     }
 
     // endregion
 
     // region Types
 
-    private static class ClosedWithPendingRequestsException extends RuntimeException {
+    private static final class UnhealthyChannelException extends ChannelException {
 
-        static ClosedWithPendingRequestsException INSTANCE = new ClosedWithPendingRequestsException();
+        static final UnhealthyChannelException INSTANCE = new UnhealthyChannelException();
 
-        // TODO: DANOBLE: Consider revising strategy for closing an RntbdTransportClient with pending requests
-        //  One possibility:
-        //  A channel associated with an RntbdTransportClient will not be closed immediately, if there are any pending
-        //  requests on it. Instead it will be scheduled to close after the request timeout interval (default: 60s) has
-        //  elapsed.
-        //  Algorithm:
-        //  When the RntbdTransportClient is closed, it closes each of its RntbdServiceEndpoint instances. In turn each
-        //  RntbdServiceEndpoint closes its RntbdClientChannelPool. The RntbdClientChannelPool.close method should
-        //  schedule closure of any channel with pending requests for later; when the request timeout interval has
-        //  elapsed or--ideally--when all pending requests have completed.
-        //  Links:
-        //  https://msdata.visualstudio.com/CosmosDB/_workitems/edit/388987
+        private UnhealthyChannelException() {
+            super("health check failed");
+        }
 
-        private ClosedWithPendingRequestsException() {
-            super(null, null, /* enableSuppression */ false, /* writableStackTrace */ false);
+        @Override
+        public Throwable fillInStackTrace() {
+            return this;
         }
     }
 

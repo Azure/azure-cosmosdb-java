@@ -94,7 +94,7 @@ public class SimpleSerializationTest extends TestSuiteBase {
     @BeforeClass(groups = {"simple"}, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
         createdCollection = SHARED_MULTI_PARTITION_COLLECTION;
-        client = this.clientBuilder().build();
+        client = clientBuilder().build();
     }
 
     @AfterClass(groups = {"simple"}, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)

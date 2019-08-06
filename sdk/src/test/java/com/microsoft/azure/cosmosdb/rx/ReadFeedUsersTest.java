@@ -87,7 +87,7 @@ public class ReadFeedUsersTest extends TestSuiteBase {
             createdUsers.add(createUsers(client));
         }
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder());
+        waitIfNeededForReplicasToCatchUp(this.clientBuilder());
     }
 
     @AfterClass(groups = { "simple" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)

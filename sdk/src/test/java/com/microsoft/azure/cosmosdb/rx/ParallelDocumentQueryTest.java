@@ -23,20 +23,6 @@
 package com.microsoft.azure.cosmosdb.rx;
 
 import com.microsoft.azure.cosmosdb.BridgeInternal;
-import static org.assertj.core.api.Assertions.assertThat;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Factory;
-import org.testng.annotations.Test;
-
 import com.microsoft.azure.cosmosdb.Database;
 import com.microsoft.azure.cosmosdb.Document;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
@@ -44,19 +30,26 @@ import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.FeedOptions;
 import com.microsoft.azure.cosmosdb.FeedResponse;
 import com.microsoft.azure.cosmosdb.QueryMetrics;
-import com.microsoft.azure.cosmosdb.internal.directconnectivity.Protocol;
-
-import org.testng.SkipException;
-import org.testng.annotations.DataProvider;
 import com.microsoft.azure.cosmosdb.internal.routing.Range;
-import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import com.microsoft.azure.cosmosdb.rx.internal.Utils.ValueHolder;
 import com.microsoft.azure.cosmosdb.rx.internal.query.CompositeContinuationToken;
-
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Factory;
+import org.testng.annotations.Test;
 import rx.Observable;
 import rx.observers.TestSubscriber;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class ParallelDocumentQueryTest extends TestSuiteBase {
     private Database createdDatabase;
@@ -104,16 +97,7 @@ public class ParallelDocumentQueryTest extends TestSuiteBase {
                 .hasValidQueryMetrics(qmEnabled)
                 .build();
 
-        try {
-            validateQuerySuccess(queryObservable, validator, TIMEOUT);
-        } catch (Throwable error) {
-            if (this.clientBuilder().configs.getProtocol() == Protocol.Tcp) {
-                String message = String.format(String.format("Direct TCP test failure: desiredConsistencyLevel=%s", this.clientBuilder().desiredConsistencyLevel));
-                logger.info(message, error);
-                throw new SkipException(message, error);
-            }
-            throw error;
-        }
+        validateQuerySuccess(queryObservable, validator, TIMEOUT);
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
@@ -197,16 +181,8 @@ public class ParallelDocumentQueryTest extends TestSuiteBase {
                                          .pageSizeIsLessThanOrEqualTo(pageSize)
                                          .build())
                 .build();
-        try {
-            validateQuerySuccess(queryObservable, validator, 2 * subscriberValidationTimeout);
-        } catch (Throwable error) {
-            if (this.clientBuilder().configs.getProtocol() == Protocol.Tcp) {
-                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder().desiredConsistencyLevel);
-                logger.info(message, error);
-                throw new SkipException(message, error);
-            }
-            throw error;
-        }
+
+        validateQuerySuccess(queryObservable, validator, 2 * subscriberValidationTimeout);
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
@@ -230,43 +206,35 @@ public class ParallelDocumentQueryTest extends TestSuiteBase {
         String query = "SELECT * from root";
         FeedOptions options = new FeedOptions();
         Observable<FeedResponse<Document>> queryObservable = client
-                .queryDocuments(getCollectionLink(), query, options);
+            .queryDocuments(getCollectionLink(), query, options);
         List<Document> expectedDocs = createdDocuments;
 
         FeedResponseListValidator<Document> validator = new FeedResponseListValidator.Builder<Document>()
-                .totalSize(expectedDocs.size())
-                .exactlyContainsInAnyOrder(expectedDocs.stream().map(d -> d.getResourceId()).collect(Collectors.toList()))
-                .allPagesSatisfy(new FeedResponseValidator.Builder<Document>()
-                        .requestChargeGreaterThanOrEqualTo(1.0).build())
-                .build();
-        
+            .totalSize(expectedDocs.size())
+            .exactlyContainsInAnyOrder(expectedDocs.stream().map(d -> d.getResourceId()).collect(Collectors.toList()))
+            .allPagesSatisfy(new FeedResponseValidator.Builder<Document>()
+                .requestChargeGreaterThanOrEqualTo(1.0).build())
+            .build();
+
         validateQuerySuccess(queryObservable, validator);
     }
 
     @Test(groups = { "simple" }, timeOut = 2 * TIMEOUT)
     public void partitionKeyRangeId() {
         int sum = 0;
-        try {
-            for (String partitionKeyRangeId : client.readPartitionKeyRanges(getCollectionLink(), null)
+
+        for (String partitionKeyRangeId : client.readPartitionKeyRanges(getCollectionLink(), null)
                 .flatMap(p -> Observable.from(p.getResults()))
                 .map(pkr -> pkr.getId()).toList().toBlocking().single()) {
-                String query = "SELECT * from root";
-                FeedOptions options = new FeedOptions();
-                options.setPartitionKeyRangeIdInternal(partitionKeyRangeId);
-                int queryResultCount = client
-                    .queryDocuments(getCollectionLink(), query, options)
-                    .flatMap(p -> Observable.from(p.getResults()))
-                    .toList().toBlocking().single().size();
+            String query = "SELECT * from root";
+            FeedOptions options = new FeedOptions();
+            options.setPartitionKeyRangeIdInternal(partitionKeyRangeId);
+            int queryResultCount = client
+                .queryDocuments(getCollectionLink(), query, options)
+                .flatMap(p -> Observable.from(p.getResults()))
+                .toList().toBlocking().single().size();
 
-                sum += queryResultCount;
-            }
-        } catch (Throwable error) {
-            if (this.clientBuilder().configs.getProtocol() == Protocol.Tcp) {
-                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder().desiredConsistencyLevel);
-                logger.info(message, error);
-                throw new SkipException(message, error);
-            }
-            throw error;
+            sum += queryResultCount;
         }
 
         assertThat(sum).isEqualTo(createdDocuments.size());

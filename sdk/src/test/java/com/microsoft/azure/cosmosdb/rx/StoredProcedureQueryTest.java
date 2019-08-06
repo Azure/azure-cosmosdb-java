@@ -29,8 +29,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import com.microsoft.azure.cosmosdb.internal.directconnectivity.Protocol;
-import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
@@ -89,16 +87,7 @@ public class StoredProcedureQueryTest extends TestSuiteBase {
                         .requestChargeGreaterThanOrEqualTo(1.0).build())
                 .build();
 
-        try {
-            validateQuerySuccess(queryObservable, validator, 10000);
-        } catch (Throwable error) {
-            if (this.clientBuilder().configs.getProtocol() == Protocol.Tcp) {
-                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder().desiredConsistencyLevel);
-                logger.info(message, error);
-                throw new SkipException(message, error);
-            }
-            throw error;
-        }
+        validateQuerySuccess(queryObservable, validator, 10000);
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
@@ -144,16 +133,7 @@ public class StoredProcedureQueryTest extends TestSuiteBase {
                 .requestChargeGreaterThanOrEqualTo(1.0).build())
             .build();
 
-        try {
-            validateQuerySuccess(queryObservable, validator);
-        } catch (Throwable error) {
-            if (this.clientBuilder().configs.getProtocol() == Protocol.Tcp) {
-                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder().desiredConsistencyLevel);
-                logger.info(message, error);
-                throw new SkipException(message, error);
-            }
-            throw error;
-        }
+        validateQuerySuccess(queryObservable, validator);
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
@@ -188,7 +168,7 @@ public class StoredProcedureQueryTest extends TestSuiteBase {
             createdStoredProcs.add(createStoredProc(client));
         }
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder());
+        waitIfNeededForReplicasToCatchUp(this.clientBuilder());
     }
 
     @AfterClass(groups = { "simple" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)

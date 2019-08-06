@@ -91,7 +91,7 @@ public class ReadFeedUdfsTest extends TestSuiteBase {
             createdUserDefinedFunctions.add(createUserDefinedFunctions(client));
         }
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder());
+        waitIfNeededForReplicasToCatchUp(this.clientBuilder());
     }
 
     @AfterClass(groups = { "simple" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)

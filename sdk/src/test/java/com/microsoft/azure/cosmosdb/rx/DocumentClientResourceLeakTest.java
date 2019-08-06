@@ -25,9 +25,7 @@ package com.microsoft.azure.cosmosdb.rx;
 import com.microsoft.azure.cosmosdb.Database;
 import com.microsoft.azure.cosmosdb.Document;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
-import com.microsoft.azure.cosmosdb.internal.directconnectivity.Protocol;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient.Builder;
-import org.testng.SkipException;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
@@ -40,7 +38,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class DocumentClientResourceLeakTest extends TestSuiteBase {
 
-    private static final int TIMEOUT = 240000;
+    private static final int TIMEOUT = 4 * 60 * 1000;  // 4 minutes
     private static final int MAX_NUMBER = 1000;
     private AsyncDocumentClient client;
 

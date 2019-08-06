@@ -50,8 +50,8 @@ public class InMemoryGroupbyTest extends DocumentClientTest {
     private final static int TIMEOUT = 60000;
 
     private AsyncDocumentClient client;
-    private Database createdDatabase;
     private DocumentCollection createdCollection;
+    private Database createdDatabase;
 
     @BeforeClass(groups = "samples", timeOut = TIMEOUT)
     public void setUp() throws Exception {

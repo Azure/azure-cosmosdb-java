@@ -53,15 +53,15 @@ public class PartitionKeyRangeGoneException extends DocumentClientException {
     }
 
     public PartitionKeyRangeGoneException(String message) {
-        this(message, (Exception) null, null, null);
+        this(message, null, null, null);
     }
 
     public PartitionKeyRangeGoneException(String message, Exception innerException) {
-        this(message, innerException, (HttpResponseHeaders) null, null);
+        this(message, innerException, null, null);
     }
 
     public PartitionKeyRangeGoneException(Exception innerException) {
-        this(RMResources.Gone, innerException, (HttpResponseHeaders) null, null);
+        this(RMResources.Gone, innerException, null, null);
     }
 
 

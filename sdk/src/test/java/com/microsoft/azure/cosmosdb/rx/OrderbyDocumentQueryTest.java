@@ -110,15 +110,7 @@ public class OrderbyDocumentQueryTest extends TestSuiteBase {
                 .hasValidQueryMetrics(qmEnabled)
                 .build();
 
-        try {
-            validateQuerySuccess(queryObservable, validator);
-        } catch (Throwable error) {
-            String message = String.format("%s %s mode with %s consistency test failure",
-                this.clientBuilder().connectionPolicy.getConnectionMode(),
-                this.clientBuilder().configs.getProtocol(),
-                this.clientBuilder().desiredConsistencyLevel);
-            throw new AssertionError(message, error);
-        }
+        validateQuerySuccess(queryObservable, validator);
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
@@ -464,7 +456,7 @@ public class OrderbyDocumentQueryTest extends TestSuiteBase {
                 .readPartitionKeyRanges(getCollectionLink(), null)
                 .flatMap(p -> Observable.from(p.getResults())).toList().toBlocking().single().size();
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder());
+        waitIfNeededForReplicasToCatchUp(this.clientBuilder());
     }
 
     @AfterClass(groups = { "simple" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)

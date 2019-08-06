@@ -24,8 +24,6 @@ package com.microsoft.azure.cosmosdb.rx;
 
 import java.util.ArrayList;
 
-import com.microsoft.azure.cosmosdb.internal.directconnectivity.Protocol;
-import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
@@ -112,16 +110,7 @@ public class AggregateQueryTests extends TestSuiteBase {
                 .hasValidQueryMetrics(qmEnabled)
                 .build();
 
-            try {
-                validateQuerySuccess(queryObservable, validator);
-            } catch (Throwable error) {
-                if (this.clientBuilder().configs.getProtocol() == Protocol.Tcp) {
-                    String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder().desiredConsistencyLevel);
-                    logger.info(message, error);
-                    throw new SkipException(message, error);
-                }
-                throw error;
-            }
+            validateQuerySuccess(queryObservable, validator);
         }
     }
 
@@ -231,6 +220,6 @@ public class AggregateQueryTests extends TestSuiteBase {
         bulkInsert(client);
         generateTestConfigs();
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder());
+        waitIfNeededForReplicasToCatchUp(this.clientBuilder());
     }
 }

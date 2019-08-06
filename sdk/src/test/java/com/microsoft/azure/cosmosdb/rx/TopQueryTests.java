@@ -31,8 +31,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import com.microsoft.azure.cosmosdb.RetryAnalyzer;
-import com.microsoft.azure.cosmosdb.internal.directconnectivity.Protocol;
-import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
@@ -66,8 +64,7 @@ public class TopQueryTests extends TestSuiteBase {
         super(clientBuilder);
     }
 
-    @Test(groups = { "simple" }, timeOut = TIMEOUT, dataProvider = "queryMetricsArgProvider", retryAnalyzer = RetryAnalyzer.class
-    )
+    @Test(groups = { "simple" }, timeOut = TIMEOUT, dataProvider = "queryMetricsArgProvider", retryAnalyzer = RetryAnalyzer.class)
     public void queryDocumentsWithTop(boolean qmEnabled) throws Exception {
 
         FeedOptions options = new FeedOptions();
@@ -87,16 +84,7 @@ public class TopQueryTests extends TestSuiteBase {
             FeedResponseListValidator<Document> validator1 = new FeedResponseListValidator.Builder<Document>()
                     .totalSize(0).build();
 
-            try {
-                validateQuerySuccess(queryObservable1, validator1, TIMEOUT);
-            } catch (Throwable error) {
-                if (this.clientBuilder().configs.getProtocol() == Protocol.Tcp) {
-                    String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder().desiredConsistencyLevel);
-                    logger.info(message, error);
-                    throw new SkipException(message, error);
-                }
-                throw error;
-            }
+            validateQuerySuccess(queryObservable1, validator1, TIMEOUT);
 
             Observable<FeedResponse<Document>> queryObservable2 = client.queryDocuments(createdCollection.getSelfLink(),
                     "SELECT TOP 1 value AVG(c.field) from c", options);
@@ -118,11 +106,9 @@ public class TopQueryTests extends TestSuiteBase {
             if (i == 0) {
                 options.setPartitionKey(new PartitionKey(firstPk));
                 options.setEnableCrossPartitionQuery(false);
-
                 expectedTotalSize = 10;
                 expectedNumberOfPages = 2;
                 expectedPageLengths = new int[] { 9, 1 };
-
             }
         }
     }
@@ -240,6 +226,6 @@ public class TopQueryTests extends TestSuiteBase {
 
         bulkInsert(client);
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder());
+        waitIfNeededForReplicasToCatchUp(this.clientBuilder());
     }
 }

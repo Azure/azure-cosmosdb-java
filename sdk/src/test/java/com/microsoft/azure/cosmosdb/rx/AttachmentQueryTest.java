@@ -182,7 +182,7 @@ public class AttachmentQueryTest extends TestSuiteBase {
             createdAttachments.add(createAttachment(client));
         }
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder());
+        waitIfNeededForReplicasToCatchUp(this.clientBuilder());
     }
 
     private static Attachment getAttachmentDefinition() {

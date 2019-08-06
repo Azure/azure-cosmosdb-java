@@ -62,8 +62,8 @@ public class TokenResolverTest extends DocumentClientTest {
     private final static String USER_ID = "userId";
 
     private AsyncDocumentClient client;
-    private Database createdDatabase;
     private DocumentCollection createdCollection;
+    private Database createdDatabase;
     private Map<String, String> userToReadOnlyResourceTokenMap = new HashMap<>();
     private Map<String, String> documentToReadUserMap = new HashMap<>();
 
@@ -150,7 +150,7 @@ public class TokenResolverTest extends DocumentClientTest {
         try {
             ConnectionPolicy connectionPolicy = new ConnectionPolicy();
             connectionPolicy.setConnectionMode(ConnectionMode.Direct);
-            asyncClientWithTokenResolver = new AsyncDocumentClient.Builder()
+            asyncClientWithTokenResolver = this.clientBuilder()
                     .withServiceEndpoint(TestConfigurations.HOST)
                     .withConnectionPolicy(connectionPolicy)
                     .withConsistencyLevel(ConsistencyLevel.Session)
@@ -193,7 +193,7 @@ public class TokenResolverTest extends DocumentClientTest {
         try {
             ConnectionPolicy connectionPolicy = new ConnectionPolicy();
             connectionPolicy.setConnectionMode(ConnectionMode.Direct);
-            asyncClientWithTokenResolver = new AsyncDocumentClient.Builder()
+            asyncClientWithTokenResolver = this.clientBuilder()
                     .withServiceEndpoint(TestConfigurations.HOST)
                     .withConnectionPolicy(connectionPolicy)
                     .withConsistencyLevel(ConsistencyLevel.Session)
@@ -240,7 +240,7 @@ public class TokenResolverTest extends DocumentClientTest {
         try {
             ConnectionPolicy connectionPolicy = new ConnectionPolicy();
             connectionPolicy.setConnectionMode(ConnectionMode.Direct);
-            asyncClientWithTokenResolver = new AsyncDocumentClient.Builder()
+            asyncClientWithTokenResolver = this.clientBuilder()
                     .withServiceEndpoint(TestConfigurations.HOST)
                     .withConnectionPolicy(connectionPolicy)
                     .withConsistencyLevel(ConsistencyLevel.Session)

@@ -25,6 +25,7 @@
 package com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.common.base.Strings;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
 import io.netty.buffer.ByteBuf;
 
@@ -35,7 +36,7 @@ import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.Rnt
 
 public final class RntbdRequest {
 
-    private static final byte[] EmptyByteArray = {};
+    private static final byte[] EMPTY_BYTE_ARRAY = {};
 
     private final RntbdRequestFrame frame;
     private final RntbdRequestHeaders headers;
@@ -48,7 +49,7 @@ public final class RntbdRequest {
 
         this.frame = frame;
         this.headers = headers;
-        this.payload = payload == null ? EmptyByteArray : payload;
+        this.payload = payload == null ? EMPTY_BYTE_ARRAY : payload;
     }
 
     public UUID getActivityId() {
@@ -84,7 +85,7 @@ public final class RntbdRequest {
         final int observedLength = in.readerIndex() - start;
 
         if (observedLength != expectedLength) {
-            final String reason = String.format("expectedLength=%d, observedLength=%d", expectedLength, observedLength);
+            final String reason = Strings.lenientFormat("expectedLength=%s, observedLength=%s", expectedLength, observedLength);
             throw new IllegalStateException(reason);
         }
 
@@ -114,10 +115,10 @@ public final class RntbdRequest {
 
     public static RntbdRequest from(final RntbdRequestArgs args) {
 
-        final RxDocumentServiceRequest serviceRequest = args.getServiceRequest();
+        final RxDocumentServiceRequest serviceRequest = args.serviceRequest();
 
         final RntbdRequestFrame frame = new RntbdRequestFrame(
-            args.getActivityId(),
+            args.activityId(),
             serviceRequest.getOperationType(),
             serviceRequest.getResourceType());
 

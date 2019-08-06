@@ -66,7 +66,7 @@ public class TriggerUpsertReplaceTest extends TestSuiteBase {
         Trigger readBackTrigger = client.upsertTrigger(getCollectionLink(), trigger, null).toBlocking().single().getResource();
         
         // read trigger to validate creation
-        waitIfNeededForReplicasToCatchUp(clientBuilder());
+        waitIfNeededForReplicasToCatchUp(this.clientBuilder());
         Observable<ResourceResponse<Trigger>> readObservable = client.readTrigger(readBackTrigger.getSelfLink(), null);
 
         // validate trigger creation
@@ -105,7 +105,7 @@ public class TriggerUpsertReplaceTest extends TestSuiteBase {
         Trigger readBackTrigger = client.createTrigger(getCollectionLink(), trigger, null).toBlocking().single().getResource();
         
         // read trigger to validate creation
-        waitIfNeededForReplicasToCatchUp(clientBuilder());
+        waitIfNeededForReplicasToCatchUp(this.clientBuilder());
         Observable<ResourceResponse<Trigger>> readObservable = client.readTrigger(readBackTrigger.getSelfLink(), null);
 
         // validate trigger creation

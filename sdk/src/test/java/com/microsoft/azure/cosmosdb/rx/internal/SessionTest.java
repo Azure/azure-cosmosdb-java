@@ -79,20 +79,20 @@ public class SessionTest extends TestSuiteBase {
     }
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
-    public void beforeClass() throws Exception {
+    public void beforeClass() throws InterruptedException {
         createdDatabase = SHARED_DATABASE;
 
         DocumentCollection collection = new DocumentCollection();
         collection.setId(collectionId);
         createdCollection = createCollection(createGatewayHouseKeepingDocumentClient().build(), createdDatabase.getId(),
-                                             collection, null);
-        houseKeepingClient = clientBuilder().build();
+            collection, null);
+        houseKeepingClient = this.clientBuilder().build();
         connectionMode = houseKeepingClient.getConnectionPolicy().getConnectionMode();
 
         if (connectionMode == ConnectionMode.Direct) {
-            spyClient = SpyClientUnderTestFactory.createDirectHttpsClientUnderTest(clientBuilder());
+            spyClient = SpyClientUnderTestFactory.createDirectHttpsClientUnderTest(this.clientBuilder());
         } else {
-            spyClient = SpyClientUnderTestFactory.createClientUnderTest(clientBuilder());
+            spyClient = SpyClientUnderTestFactory.createClientUnderTest(this.clientBuilder());
         }
 
         TimeUnit.SECONDS.sleep(10);

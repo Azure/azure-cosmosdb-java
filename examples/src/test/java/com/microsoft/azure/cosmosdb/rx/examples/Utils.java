@@ -118,7 +118,6 @@ public class Utils extends DocumentClientTest {
 
         @Override
         public Observable<ResourceResponse<Database>> deleteDatabase(String id) {
-
             return client.deleteDatabase("dbs/" + id, null);
         }
     }

@@ -34,12 +34,10 @@ import com.microsoft.azure.cosmosdb.IndexingPolicy;
 import com.microsoft.azure.cosmosdb.PartitionKeyDefinition;
 import com.microsoft.azure.cosmosdb.RequestOptions;
 import com.microsoft.azure.cosmosdb.ResourceResponse;
-import com.microsoft.azure.cosmosdb.internal.directconnectivity.Protocol;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient.Builder;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentClientUnderTest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -149,51 +147,33 @@ public class BackPressureCrossPartitionTest extends TestSuiteBase {
         int i = 0;
 
         // use a test subscriber and request for more result and sleep in between
-        try {
-            while(subscriber.getCompletions() == 0 && subscriber.getOnErrorEvents().isEmpty()) {
-                log.debug("loop " + i);
+        while (subscriber.getCompletions() == 0 && subscriber.getOnErrorEvents().isEmpty()) {
+            log.debug("loop " + i);
 
-                TimeUnit.MILLISECONDS.sleep(sleepTimeInMillis);
-                sleepTimeInMillis /= 2;
+            TimeUnit.MILLISECONDS.sleep(sleepTimeInMillis);
+            sleepTimeInMillis /= 2;
 
-                if (sleepTimeInMillis > 4000) {
-                    // validate that only one item is returned to subscriber in each iteration
-                    assertThat(subscriber.getValueCount() - i).isEqualTo(1);
-                }
-
-                log.debug("subscriber.getValueCount(): " + subscriber.getValueCount());
-                log.debug("client.httpRequests.size(): " + client.httpRequests.size());
-                // validate that the difference between the number of requests to backend
-                // and the number of returned results is always less than a fixed threshold
-
-                assertThat(client.httpRequests.size() - subscriber.getValueCount())
-                        .isLessThanOrEqualTo(maxExpectedBufferedCountForBackPressure);
-
-                log.debug("requesting more");
-                subscriber.requestMore(1);
-                i++;
+            if (sleepTimeInMillis > 4000) {
+                // validate that only one item is returned to subscriber in each iteration
+                assertThat(subscriber.getValueCount() - i).isEqualTo(1);
             }
-        } catch (Throwable error) {
-            if (this.clientBuilder().configs.getProtocol() == Protocol.Tcp) {
-                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder().desiredConsistencyLevel);
-                logger.info(message, error);
-                throw new SkipException(message, error);
-            }
-            throw error;
+
+            log.debug("subscriber.getValueCount(): " + subscriber.getValueCount());
+            log.debug("client.httpRequests.size(): " + client.httpRequests.size());
+            // validate that the difference between the number of requests to backend
+            // and the number of returned results is always less than a fixed threshold
+
+            assertThat(client.httpRequests.size() - subscriber.getValueCount())
+                .isLessThanOrEqualTo(maxExpectedBufferedCountForBackPressure);
+
+            log.debug("requesting more");
+            subscriber.requestMore(1);
+            i++;
         }
 
-        try {
-            subscriber.assertNoErrors();
-            subscriber.assertCompleted();
-            assertThat(subscriber.getOnNextEvents().stream().mapToInt(p -> p.getResults().size()).sum()).isEqualTo(expectedNumberOfResults);
-        } catch (Throwable error) {
-            if (this.clientBuilder().configs.getProtocol() == Protocol.Tcp) {
-                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder().desiredConsistencyLevel);
-                logger.info(message, error);
-                throw new SkipException(message, error);
-            }
-            throw error;
-        }
+        subscriber.assertNoErrors();
+        subscriber.assertCompleted();
+        assertThat(subscriber.getOnNextEvents().stream().mapToInt(p -> p.getResults().size()).sum()).isEqualTo(expectedNumberOfResults);
     }
 
     @BeforeClass(groups = { "long" }, timeOut = 2 * SETUP_TIMEOUT)
@@ -203,7 +183,7 @@ public class BackPressureCrossPartitionTest extends TestSuiteBase {
         createdDatabase = SHARED_DATABASE;
         createdCollection = createCollection(createdDatabase.getId(), getCollectionDefinition(), options);
 
-        client = new ClientUnderTestBuilder(clientBuilder()).build();
+        client = new ClientUnderTestBuilder(this.clientBuilder()).build();
 
         ArrayList<Document> docDefList = new ArrayList<>();
         for(int i = 0; i < numberOfDocs; i++) {
@@ -221,7 +201,7 @@ public class BackPressureCrossPartitionTest extends TestSuiteBase {
         numberOfPartitions = client.readPartitionKeyRanges(getCollectionLink(), null)
                 .flatMap(p -> Observable.from(p.getResults())).toList().toBlocking().single().size();
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder());
+        waitIfNeededForReplicasToCatchUp(this.clientBuilder());
         warmUp();
     }
 
