@@ -50,7 +50,7 @@
     <commons-text.version>1.6</commons-text.version>
     <guava.version>27.0.1-jre</guava.version>
     <hamcrest.version>1.3</hamcrest.version>
-    <jackson-databind.version>2.9.9.2</jackson-databind.version>
+    <jackson-databind.version>2.9.9.3</jackson-databind.version>
     <java-uuid-generator.version>3.1.4</java-uuid-generator.version>
     <log4j.version>1.2.17</log4j.version>
     <metrics.version>4.1.0</metrics.version>
@@ -313,50 +313,33 @@
         <version>1.8</version>
         <executions>
           <execution>
-            <phase></phase>
+            <phase/>
             <id>default-cli</id>
             <configuration>
               <target>
-                <copy file="sdk/pom.xml"
-                      tofile="${collectedArtifactsForReleaseLocation}/azure-cosmosdb-${sdk-version}.pom"/>
-                <copy file="pom.xml"
-                      tofile="${collectedArtifactsForReleaseLocation}/azure-cosmosdb-parent-${sdk-version}.pom"/>
+                <copy file="sdk/pom.xml" tofile="${collectedArtifactsForReleaseLocation}/azure-cosmosdb-${sdk-version}.pom"/>
+                <copy file="pom.xml" tofile="${collectedArtifactsForReleaseLocation}/azure-cosmosdb-parent-${sdk-version}.pom"/>
 
-                 <copy file="sdk/target/azure-cosmosdb-${sdk-version}-sources.jar"
-                      tofile="${collectedArtifactsForReleaseLocation}/azure-cosmosdb-${sdk-version}-sources.jar"/>
-                <copy file="sdk/target/azure-cosmosdb-${sdk-version}-javadoc.jar"
-                      tofile="${collectedArtifactsForReleaseLocation}/azure-cosmosdb-${sdk-version}-javadoc.jar"/>
-                <copy file="sdk/target/azure-cosmosdb-${sdk-version}.jar"
-                      tofile="${collectedArtifactsForReleaseLocation}/azure-cosmosdb-${sdk-version}.jar"/>
+                 <copy file="sdk/target/azure-cosmosdb-${sdk-version}-sources.jar" tofile="${collectedArtifactsForReleaseLocation}/azure-cosmosdb-${sdk-version}-sources.jar"/>
+                <copy file="sdk/target/azure-cosmosdb-${sdk-version}-javadoc.jar" tofile="${collectedArtifactsForReleaseLocation}/azure-cosmosdb-${sdk-version}-javadoc.jar"/>
+                <copy file="sdk/target/azure-cosmosdb-${sdk-version}.jar" tofile="${collectedArtifactsForReleaseLocation}/azure-cosmosdb-${sdk-version}.jar"/>
 
-                 <copy file="commons/pom.xml"
-                      tofile="${collectedArtifactsForReleaseLocation}/azure-cosmosdb-commons-${sdk-version}.pom"/>
-                <copy file="commons/target/azure-cosmosdb-commons-${sdk-version}-sources.jar"
-                      tofile="${collectedArtifactsForReleaseLocation}/azure-cosmosdb-commons-${sdk-version}-sources.jar"/>
-                <copy file="commons/target/azure-cosmosdb-commons-${sdk-version}-javadoc.jar"
-                      tofile="${collectedArtifactsForReleaseLocation}/azure-cosmosdb-commons-${sdk-version}-javadoc.jar"/>
-                <copy file="commons/target/azure-cosmosdb-commons-${sdk-version}.jar"
-                      tofile="${collectedArtifactsForReleaseLocation}/azure-cosmosdb-commons-${sdk-version}.jar"/>
+                 <copy file="commons/pom.xml" tofile="${collectedArtifactsForReleaseLocation}/azure-cosmosdb-commons-${sdk-version}.pom"/>
+                <copy file="commons/target/azure-cosmosdb-commons-${sdk-version}-sources.jar" tofile="${collectedArtifactsForReleaseLocation}/azure-cosmosdb-commons-${sdk-version}-sources.jar"/>
+                <copy file="commons/target/azure-cosmosdb-commons-${sdk-version}-javadoc.jar" tofile="${collectedArtifactsForReleaseLocation}/azure-cosmosdb-commons-${sdk-version}-javadoc.jar"/>
+                <copy file="commons/target/azure-cosmosdb-commons-${sdk-version}.jar" tofile="${collectedArtifactsForReleaseLocation}/azure-cosmosdb-commons-${sdk-version}.jar"/>
 
-                 <copy file="gateway/pom.xml"
-                      tofile="${collectedArtifactsForReleaseLocation}/azure-cosmosdb-gateway-${sdk-version}.pom"/>
-                <copy file="gateway/target/azure-cosmosdb-gateway-${sdk-version}-sources.jar"
-                      tofile="${collectedArtifactsForReleaseLocation}/azure-cosmosdb-gateway-${sdk-version}-sources.jar"/>
-                <copy file="gateway/target/azure-cosmosdb-gateway-${sdk-version}-javadoc.jar"
-                      tofile="${collectedArtifactsForReleaseLocation}/azure-cosmosdb-gateway-${sdk-version}-javadoc.jar"/>
-                <copy file="gateway/target/azure-cosmosdb-gateway-${sdk-version}.jar"
-                      tofile="${collectedArtifactsForReleaseLocation}/azure-cosmosdb-gateway-${sdk-version}.jar"/>
+                 <copy file="gateway/pom.xml" tofile="${collectedArtifactsForReleaseLocation}/azure-cosmosdb-gateway-${sdk-version}.pom"/>
+                <copy file="gateway/target/azure-cosmosdb-gateway-${sdk-version}-sources.jar" tofile="${collectedArtifactsForReleaseLocation}/azure-cosmosdb-gateway-${sdk-version}-sources.jar"/>
+                <copy file="gateway/target/azure-cosmosdb-gateway-${sdk-version}-javadoc.jar" tofile="${collectedArtifactsForReleaseLocation}/azure-cosmosdb-gateway-${sdk-version}-javadoc.jar"/>
+                <copy file="gateway/target/azure-cosmosdb-gateway-${sdk-version}.jar" tofile="${collectedArtifactsForReleaseLocation}/azure-cosmosdb-gateway-${sdk-version}.jar"/>
 
-                 <copy file="direct-impl/pom.xml"
-                      tofile="${collectedArtifactsForReleaseLocation}/azure-cosmosdb-direct-${direct-connectivity-version}.pom"/>
-                <copy file="direct-impl/target/azure-cosmosdb-direct-${direct-connectivity-version}.jar"
-                      tofile="${collectedArtifactsForReleaseLocation}/azure-cosmosdb-direct-${direct-connectivity-version}.jar"/>
+                 <copy file="direct-impl/pom.xml" tofile="${collectedArtifactsForReleaseLocation}/azure-cosmosdb-direct-${direct-connectivity-version}.pom"/>
+                <copy file="direct-impl/target/azure-cosmosdb-direct-${direct-connectivity-version}.jar" tofile="${collectedArtifactsForReleaseLocation}/azure-cosmosdb-direct-${direct-connectivity-version}.jar"/>
 
                  <!-- sources and javadoc are empty jars, nexus maven enforces uploading javadoc and source jars -->
-                <copy file="direct-impl/target/azure-cosmosdb-direct-${direct-connectivity-version}-empty-sources.jar"
-                      tofile="${collectedArtifactsForReleaseLocation}/azure-cosmosdb-direct-${direct-connectivity-version}-sources.jar"/>
-                <copy file="direct-impl/target/azure-cosmosdb-direct-${direct-connectivity-version}-empty-javadoc.jar"
-                      tofile="${collectedArtifactsForReleaseLocation}/azure-cosmosdb-direct-${direct-connectivity-version}-javadoc.jar"/>
+                <copy file="direct-impl/target/azure-cosmosdb-direct-${direct-connectivity-version}-empty-sources.jar" tofile="${collectedArtifactsForReleaseLocation}/azure-cosmosdb-direct-${direct-connectivity-version}-sources.jar"/>
+                <copy file="direct-impl/target/azure-cosmosdb-direct-${direct-connectivity-version}-empty-javadoc.jar" tofile="${collectedArtifactsForReleaseLocation}/azure-cosmosdb-direct-${direct-connectivity-version}-javadoc.jar"/>
               </target>
             </configuration>
             <goals>
@@ -415,7 +398,7 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
-  <dependencies />
+  <dependencies/>
   <licenses>
     <license>
       <name>MIT License</name>
