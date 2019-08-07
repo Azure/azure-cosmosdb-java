@@ -299,3 +299,6 @@ If you encounter any bugs with the SDK please file an [issue](https://github.com
 ## License
 MIT License
 Copyright (c) 2018 Copyright (c) Microsoft Corporation
+
+## Attribution
+This project includes the MurmurHash3 algorithm, which came with the following notice: “The MurmurHash3 algorithm was created by Austin Appleby and placed in the public domain. * This java port was authored by Yonik Seeley and also placed into the public domain. * The author hereby disclaims copyright to this source code.”
