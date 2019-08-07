@@ -52,9 +52,11 @@ import com.microsoft.azure.cosmosdb.TokenResolver;
 import com.microsoft.azure.cosmosdb.Trigger;
 import com.microsoft.azure.cosmosdb.User;
 import com.microsoft.azure.cosmosdb.UserDefinedFunction;
+import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdMetrics;
 import com.microsoft.azure.cosmosdb.rx.internal.Configs;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentClientImpl;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import rx.Observable;
 
 /**
@@ -285,6 +287,15 @@ public interface AsyncDocumentClient {
         public void setTokenResolver(TokenResolver tokenResolver) {
             this.tokenResolver = tokenResolver;
         }
+    }
+
+    /**
+     * Adds a meter registry for reporting Direct TCP metrics
+     *
+     * @param registry a meter registry to use for reporting Direct TCP metrics
+     */
+    public static void monitor(MeterRegistry registry) {
+        RntbdMetrics.add(registry);
     }
 
     /**

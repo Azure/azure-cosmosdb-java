@@ -29,10 +29,7 @@ import com.microsoft.azure.cosmosdb.Error;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.rx.internal.RMResources;
 import io.reactivex.netty.protocol.http.client.HttpResponseHeaders;
-import org.apache.commons.collections4.CollectionUtils;
 
-import java.net.URL;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -56,15 +53,15 @@ public class PartitionKeyRangeGoneException extends DocumentClientException {
     }
 
     public PartitionKeyRangeGoneException(String message) {
-        this(message, (Exception) null, null, null);
+        this(message, null, null, null);
     }
 
     public PartitionKeyRangeGoneException(String message, Exception innerException) {
-        this(message, innerException, (HttpResponseHeaders) null, null);
+        this(message, innerException, null, null);
     }
 
     public PartitionKeyRangeGoneException(Exception innerException) {
-        this(RMResources.Gone, innerException, (HttpResponseHeaders) null, null);
+        this(RMResources.Gone, innerException, null, null);
     }
 
 

@@ -227,10 +227,6 @@ public class ConsistencyTests2 extends ConsistencyTestsBase {
         // https://msdata.visualstudio.com/CosmosDB/_workitems/edit/355053
     }
 
-    // TODO: DANOBLE: Investigate Direct TCP performance issue
-    // Note that we need multiple CONSISTENCY_TEST_TIMEOUT
-    // SEE: https://msdata.visualstudio.com/CosmosDB/_workitems/edit/367028https://msdata.visualstudio.com/CosmosDB/_workitems/edit/367028
-
     @Test(groups = {"direct"}, timeOut = 2 * CONSISTENCY_TEST_TIMEOUT)
     public void validateSessionTokenAsync() {
         // Validate that document query never fails
@@ -269,6 +265,7 @@ public class ConsistencyTests2 extends ConsistencyTestsBase {
                     try {
                         FeedOptions feedOptions = new FeedOptions();
                         feedOptions.setEnableCrossPartitionQuery(true);
+                        feedOptions.setAllowEmptyPages(true);
                         FeedResponse<Document> queryResponse = client.queryDocuments(createdCollection.getSelfLink(), "SELECT * FROM c WHERE c.Id = 'foo'", feedOptions).toBlocking().first();
                         String lsnHeaderValue = queryResponse.getResponseHeaders().get(WFConstants.BackendHeaders.LSN);
                         long lsn = Long.valueOf(lsnHeaderValue);

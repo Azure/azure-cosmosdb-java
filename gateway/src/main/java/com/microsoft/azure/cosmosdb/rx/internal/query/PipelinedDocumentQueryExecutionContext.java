@@ -106,14 +106,36 @@ public class PipelinedDocumentQueryExecutionContext<T extends Resource> implemen
             createAggregateComponentFunction = createBaseComponentFunction;
         }
 
+        Function<String, Observable<IDocumentQueryExecutionComponent<T>>> createSkipComponentFunction;
+        if (queryInfo.hasOffset()) {
+            createSkipComponentFunction = (continuationToken) -> {
+                return SkipDocumentQueryExecutionContext.createAsync(createAggregateComponentFunction,
+                        queryInfo.getOffset(),
+                        continuationToken);
+            };
+        } else {
+            createSkipComponentFunction = createAggregateComponentFunction;
+        }
+
         Function<String, Observable<IDocumentQueryExecutionComponent<T>>> createTopComponentFunction;
         if (queryInfo.hasTop()) {
             createTopComponentFunction = (continuationToken) -> {
-                return TopDocumentQueryExecutionContext.createAsync(createAggregateComponentFunction,
+                return TopDocumentQueryExecutionContext.createAsync(createSkipComponentFunction,
                         queryInfo.getTop(), continuationToken);
             };
         } else {
-            createTopComponentFunction = createAggregateComponentFunction;
+            createTopComponentFunction = createSkipComponentFunction;
+        }
+
+        Function<String, Observable<IDocumentQueryExecutionComponent<T>>> createTakeComponentFunction;
+        if (queryInfo.hasLimit()) {
+            createTakeComponentFunction = (continuationToken) -> {
+                return TopDocumentQueryExecutionContext.createAsync(createTopComponentFunction,
+                        queryInfo.getLimit(),
+                        continuationToken);
+            };
+        } else {
+            createTakeComponentFunction = createTopComponentFunction;
         }
 
         int actualPageSize = Utils.getValueOrDefault(feedOptions.getMaxItemCount(),
@@ -124,7 +146,7 @@ public class PipelinedDocumentQueryExecutionContext<T extends Resource> implemen
         }
 
         int pageSize = Math.min(actualPageSize, Utils.getValueOrDefault(queryInfo.getTop(), (actualPageSize)));
-        return createTopComponentFunction.apply(feedOptions.getRequestContinuation())
+        return createTakeComponentFunction.apply(feedOptions.getRequestContinuation())
                 .map(c -> new PipelinedDocumentQueryExecutionContext<>(c, pageSize, correlatedActivityId));
     }
 

@@ -43,7 +43,6 @@ import com.microsoft.azure.cosmosdb.rx.internal.Configs;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
 import com.microsoft.azure.cosmosdb.rx.internal.SpyClientUnderTestFactory;
 import org.mockito.stubbing.Answer;
-import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
@@ -67,7 +66,7 @@ import static org.mockito.Mockito.spy;
  * The tests in other test classes validate the actual behaviour and different scenarios.
  */
 public class DCDocumentCrudTest extends TestSuiteBase {
-    private final static int QUERY_TIMEOUT = 30000;
+    private final static int QUERY_TIMEOUT = 40000;
     private final static String PARTITION_KEY_FIELD_NAME = "mypk";
 
     private static Database createdDatabase;
@@ -98,7 +97,7 @@ public class DCDocumentCrudTest extends TestSuiteBase {
 
     @Factory(dataProvider = "directClientBuilder")
     public DCDocumentCrudTest(Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "direct" }, timeOut = TIMEOUT)
@@ -162,7 +161,7 @@ public class DCDocumentCrudTest extends TestSuiteBase {
         Document document = client.createDocument(getCollectionLink(), docDefinition, null, false).toBlocking().single().getResource();
 
         // give times to replicas to catch up after a write
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(this.clientBuilder());
 
         String pkValue = document.getString(PARTITION_KEY_FIELD_NAME);
 
@@ -196,7 +195,7 @@ public class DCDocumentCrudTest extends TestSuiteBase {
             .getResource();
 
         // give times to replicas to catch up after a write
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(this.clientBuilder());
 
         String pkValue = document.getString(PARTITION_KEY_FIELD_NAME);
         RequestOptions options = new RequestOptions();
@@ -218,7 +217,7 @@ public class DCDocumentCrudTest extends TestSuiteBase {
     public void crossPartitionQuery() {
 
         truncateCollection(createdCollection);
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(this.clientBuilder());
 
         client.getCapturedRequests().clear();
 
@@ -230,31 +229,23 @@ public class DCDocumentCrudTest extends TestSuiteBase {
         }
 
         documentList = bulkInsert(client, getCollectionLink(), documentList).map(ResourceResponse::getResource).toList().toBlocking().single();
-
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(this.clientBuilder());
 
         FeedOptions options = new FeedOptions();
         options.setEnableCrossPartitionQuery(true);
         options.setMaxDegreeOfParallelism(-1);
         options.setMaxItemCount(100);
+
         Observable<FeedResponse<Document>> results = client.queryDocuments(getCollectionLink(), "SELECT * FROM r", options);
 
         FeedResponseListValidator<Document> validator = new FeedResponseListValidator.Builder<Document>()
                 .totalSize(documentList.size())
                 .exactlyContainsInAnyOrder(documentList.stream().map(Document::getResourceId).collect(Collectors.toList())).build();
 
-        try {
-            validateQuerySuccess(results, validator, QUERY_TIMEOUT);
-            validateNoDocumentQueryOperationThroughGateway();
-            // validates only the first query for fetching query plan goes to gateway.
-            assertThat(client.getCapturedRequests().stream().filter(r -> r.getResourceType() == ResourceType.Document)).hasSize(1);
-        } catch (Throwable error) {
-            if (clientBuilder.configs.getProtocol() == Protocol.Tcp) {
-                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.desiredConsistencyLevel);
-                logger.info(message, error);
-                throw new SkipException(message, error);
-            }
-        }
+        validateQuerySuccess(results, validator, QUERY_TIMEOUT);
+        validateNoDocumentQueryOperationThroughGateway();
+        // verify that only the first query for fetching the query plan goes to gateway
+        assertThat(client.getCapturedRequests().stream().filter(r -> r.getResourceType() == ResourceType.Document)).hasSize(1);
     }
 
     private void validateNoStoredProcExecutionOperationThroughGateway() {
@@ -300,7 +291,7 @@ public class DCDocumentCrudTest extends TestSuiteBase {
         for(RxDocumentServiceRequest request: client.getCapturedRequests()) {
             if (request.getOperationType() == OperationType.Query) {
                 assertThat(request.getPartitionKeyRangeIdentity()).isNull();
-            } else {
+            } else if (request.getOperationType() != OperationType.QueryPlan) {
                 validateResourceTypesSentToGateway.validate(request);
             }
         }
@@ -313,7 +304,7 @@ public class DCDocumentCrudTest extends TestSuiteBase {
         options.setOfferThroughput(10100);
         createdDatabase = SHARED_DATABASE;
         createdCollection = createCollection(createdDatabase.getId(), getCollectionDefinition(), options);
-        client = SpyClientUnderTestFactory.createClientWithGatewaySpy(clientBuilder);
+        client = SpyClientUnderTestFactory.createClientWithGatewaySpy(this.clientBuilder());
 
         assertThat(client.getCapturedRequests()).isNotEmpty();
     }
@@ -325,7 +316,6 @@ public class DCDocumentCrudTest extends TestSuiteBase {
 
     @BeforeMethod(groups = { "direct" })
     public void beforeMethod(Method method) {
-        super.beforeMethod(method);
         client.getCapturedRequests().clear();
     }
 

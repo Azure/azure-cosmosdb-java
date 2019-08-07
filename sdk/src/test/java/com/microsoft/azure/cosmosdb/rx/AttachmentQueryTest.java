@@ -66,7 +66,7 @@ public class AttachmentQueryTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuilders")
     public AttachmentQueryTest(Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
@@ -168,7 +168,7 @@ public class AttachmentQueryTest extends TestSuiteBase {
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() throws Exception {
-        client = clientBuilder.build();
+        client = this.clientBuilder().build();
         createdDatabase = SHARED_DATABASE;
         createdCollection = SHARED_SINGLE_PARTITION_COLLECTION_WITHOUT_PARTITION_KEY;
         truncateCollection(SHARED_SINGLE_PARTITION_COLLECTION_WITHOUT_PARTITION_KEY);
@@ -182,7 +182,7 @@ public class AttachmentQueryTest extends TestSuiteBase {
             createdAttachments.add(createAttachment(client));
         }
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(this.clientBuilder());
     }
 
     private static Attachment getAttachmentDefinition() {

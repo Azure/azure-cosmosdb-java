@@ -60,7 +60,7 @@ public class PermissionQueryTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuilders")
     public PermissionQueryTest(AsyncDocumentClient.Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
@@ -150,7 +150,7 @@ public class PermissionQueryTest extends TestSuiteBase {
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
-        client = clientBuilder.build();
+        client = this.clientBuilder().build();
         Database d = new Database();
         d.setId(databaseId);
         createdDatabase = createDatabase(client, d);
@@ -160,7 +160,7 @@ public class PermissionQueryTest extends TestSuiteBase {
             createdPermissions.add(createPermissions(client, i));
         }
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(this.clientBuilder());
     }
 
     @AfterClass(groups = { "simple" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)

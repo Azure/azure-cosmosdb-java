@@ -58,7 +58,7 @@ public class UserQueryTest extends TestSuiteBase {
     
     @Factory(dataProvider = "clientBuilders")
     public UserQueryTest(Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
@@ -134,7 +134,7 @@ public class UserQueryTest extends TestSuiteBase {
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() throws Exception {
-        client = clientBuilder.build();
+        client = this.clientBuilder().build();
 
         Database d1 = new Database();
         d1.setId(databaseId);
@@ -146,7 +146,7 @@ public class UserQueryTest extends TestSuiteBase {
             createdUsers.add(createUser(client, databaseId, user));
         }
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(this.clientBuilder());
     }
 
     @AfterClass(groups = { "simple" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)

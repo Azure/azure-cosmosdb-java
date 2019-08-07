@@ -63,7 +63,7 @@ public class ReadFeedAttachmentsTest extends TestSuiteBase {
     private PartitionKey pk;
     @Factory(dataProvider = "clientBuildersWithDirect")
     public ReadFeedAttachmentsTest(AsyncDocumentClient.Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "simple" }, timeOut = 30000000)
@@ -75,7 +75,7 @@ public class ReadFeedAttachmentsTest extends TestSuiteBase {
         for(int i = 0; i < 5; i++) {
             createdAttachments.add(createAttachments(client));
         }
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(this.clientBuilder());
 
         FeedOptions options = new FeedOptions();
         options.setMaxItemCount(2);
@@ -133,7 +133,7 @@ public class ReadFeedAttachmentsTest extends TestSuiteBase {
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
-        client = clientBuilder.build();
+        client = this.clientBuilder().build();
         createdDatabase = SHARED_DATABASE;
         createdCollection = SHARED_SINGLE_PARTITION_COLLECTION;
     }

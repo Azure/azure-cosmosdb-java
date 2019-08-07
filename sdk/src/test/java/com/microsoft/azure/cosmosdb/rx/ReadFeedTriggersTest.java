@@ -53,7 +53,7 @@ public class ReadFeedTriggersTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuildersWithDirect")
     public ReadFeedTriggersTest(AsyncDocumentClient.Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "simple" }, timeOut = FEED_TIMEOUT)
@@ -83,7 +83,7 @@ public class ReadFeedTriggersTest extends TestSuiteBase {
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
 
-        this.client = clientBuilder.build();
+        this.client = this.clientBuilder().build();
         this.createdDatabase = SHARED_DATABASE;
         this.createdCollection = SHARED_SINGLE_PARTITION_COLLECTION_WITHOUT_PARTITION_KEY;
         this.truncateCollection(SHARED_SINGLE_PARTITION_COLLECTION_WITHOUT_PARTITION_KEY);
@@ -92,7 +92,7 @@ public class ReadFeedTriggersTest extends TestSuiteBase {
             this.createdTriggers.add(this.createTriggers(client));
         }
 
-        this.waitIfNeededForReplicasToCatchUp(clientBuilder);
+        this.waitIfNeededForReplicasToCatchUp(this.clientBuilder());
     }
 
     @AfterClass(groups = { "simple" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)

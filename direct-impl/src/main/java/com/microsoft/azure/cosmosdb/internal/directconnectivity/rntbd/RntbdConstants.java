@@ -24,6 +24,7 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
@@ -50,12 +51,12 @@ final class RntbdConstants {
 
         private final byte id;
 
-        RntbdConsistencyLevel(byte id) {
+        RntbdConsistencyLevel(final byte id) {
             this.id = id;
         }
 
         public byte id() {
-            return id;
+            return this.id;
         }
     }
 
@@ -68,15 +69,16 @@ final class RntbdConstants {
 
         private final byte id;
 
-        RntbdContentSerializationFormat(byte id) {
+        RntbdContentSerializationFormat(final byte id) {
             this.id = id;
         }
 
         public byte id() {
-            return id;
+            return this.id;
         }
     }
 
+    @SuppressWarnings("UnstableApiUsage")
     enum RntbdContextHeader implements RntbdHeader {
 
         ProtocolVersion((short)0x0000, RntbdTokenType.ULong, false),
@@ -90,7 +92,7 @@ final class RntbdConstants {
         public static final ImmutableSet<RntbdContextHeader> set = Sets.immutableEnumSet(EnumSet.allOf(RntbdContextHeader.class));
 
         static {
-            Collector<RntbdContextHeader, ?, ImmutableMap<Short, RntbdContextHeader>> collector = ImmutableMap.toImmutableMap(RntbdContextHeader::id, h -> h);
+            final Collector<RntbdContextHeader, ?, ImmutableMap<Short, RntbdContextHeader>> collector = ImmutableMap.toImmutableMap(RntbdContextHeader::id, h -> h);
             map = set.stream().collect(collector);
         }
 
@@ -98,18 +100,18 @@ final class RntbdConstants {
         private final boolean isRequired;
         private final RntbdTokenType type;
 
-        RntbdContextHeader(short id, RntbdTokenType type, boolean isRequired) {
+        RntbdContextHeader(final short id, final RntbdTokenType type, final boolean isRequired) {
             this.id = id;
             this.type = type;
             this.isRequired = isRequired;
         }
 
-        public short id() {
-            return this.id;
-        }
-
         public boolean isRequired() {
             return this.isRequired;
+        }
+
+        public short id() {
+            return this.id;
         }
 
         public RntbdTokenType type() {
@@ -127,7 +129,7 @@ final class RntbdConstants {
         public static final ImmutableSet<RntbdContextRequestHeader> set = Sets.immutableEnumSet(EnumSet.allOf(RntbdContextRequestHeader.class));
 
         static {
-            Collector<RntbdContextRequestHeader, ?, ImmutableMap<Short, RntbdContextRequestHeader>> collector = ImmutableMap.toImmutableMap(h -> h.id(), h -> h);
+            final Collector<RntbdContextRequestHeader, ?, ImmutableMap<Short, RntbdContextRequestHeader>> collector = ImmutableMap.toImmutableMap(h -> h.id(), h -> h);
             map = set.stream().collect(collector);
         }
 
@@ -135,18 +137,18 @@ final class RntbdConstants {
         private final boolean isRequired;
         private final RntbdTokenType type;
 
-        RntbdContextRequestHeader(short id, RntbdTokenType type, boolean isRequired) {
+        RntbdContextRequestHeader(final short id, final RntbdTokenType type, final boolean isRequired) {
             this.id = id;
             this.type = type;
             this.isRequired = isRequired;
         }
 
-        public short id() {
-            return id;
-        }
-
         public boolean isRequired() {
             return this.isRequired;
+        }
+
+        public short id() {
+            return this.id;
         }
 
         public RntbdTokenType type() {
@@ -163,12 +165,12 @@ final class RntbdConstants {
 
         private final byte id;
 
-        RntbdEnumerationDirection(byte id) {
+        RntbdEnumerationDirection(final byte id) {
             this.id = id;
         }
 
         public byte id() {
-            return id;
+            return this.id;
         }
     }
 
@@ -179,12 +181,12 @@ final class RntbdConstants {
 
         private final byte id;
 
-        RntbdFanoutOperationState(byte id) {
+        RntbdFanoutOperationState(final byte id) {
             this.id = id;
         }
 
         public byte id() {
-            return id;
+            return this.id;
         }
     }
 
@@ -197,11 +199,11 @@ final class RntbdConstants {
 
         private final byte id;
 
-        RntbdIndexingDirective(byte id) {
+        RntbdIndexingDirective(final byte id) {
             this.id = id;
         }
 
-        public static RntbdIndexingDirective fromId(byte id) {
+        public static RntbdIndexingDirective fromId(final byte id) {
             switch (id) {
                 case (byte)0x00:
                     return Default;
@@ -216,7 +218,7 @@ final class RntbdConstants {
         }
 
         public byte id() {
-            return id;
+            return this.id;
         }
     }
 
@@ -229,12 +231,12 @@ final class RntbdConstants {
 
         private final byte id;
 
-        RntbdMigrateCollectionDirective(byte id) {
+        RntbdMigrateCollectionDirective(final byte id) {
             this.id = id;
         }
 
         public byte id() {
-            return id;
+            return this.id;
         }
     }
 
@@ -278,11 +280,11 @@ final class RntbdConstants {
 
         private final short id;
 
-        RntbdOperationType(short id) {
+        RntbdOperationType(final short id) {
             this.id = id;
         }
 
-        public static RntbdOperationType fromId(short id) throws IllegalArgumentException {
+        public static RntbdOperationType fromId(final short id) throws IllegalArgumentException {
 
             switch (id) {
                 case 0x0000:
@@ -359,7 +361,7 @@ final class RntbdConstants {
         }
 
         public short id() {
-            return id;
+            return this.id;
         }
     }
 
@@ -371,12 +373,12 @@ final class RntbdConstants {
 
         private final byte id;
 
-        RntbdReadFeedKeyType(byte id) {
+        RntbdReadFeedKeyType(final byte id) {
             this.id = id;
         }
 
         public byte id() {
-            return id;
+            return this.id;
         }
     }
 
@@ -389,12 +391,12 @@ final class RntbdConstants {
 
         private final byte id;
 
-        RntbdRemoteStorageType(byte id) {
+        RntbdRemoteStorageType(final byte id) {
             this.id = id;
         }
 
         public byte id() {
-            return id;
+            return this.id;
         }
     }
 
@@ -510,7 +512,7 @@ final class RntbdConstants {
         public static final ImmutableSet<RntbdRequestHeader> set = Sets.immutableEnumSet(EnumSet.allOf(RntbdRequestHeader.class));
 
         static {
-            Collector<RntbdRequestHeader, ?, ImmutableMap<Short, RntbdRequestHeader>> collector = ImmutableMap.toImmutableMap(RntbdRequestHeader::id, h -> h);
+            final Collector<RntbdRequestHeader, ?, ImmutableMap<Short, RntbdRequestHeader>> collector = ImmutableMap.toImmutableMap(RntbdRequestHeader::id, h -> h);
             map = set.stream().collect(collector);
         }
 
@@ -518,18 +520,18 @@ final class RntbdConstants {
         private final boolean isRequired;
         private final RntbdTokenType type;
 
-        RntbdRequestHeader(short id, RntbdTokenType type, boolean isRequired) {
+        RntbdRequestHeader(final short id, final RntbdTokenType type, final boolean isRequired) {
             this.id = id;
             this.type = type;
             this.isRequired = isRequired;
         }
 
-        public short id() {
-            return this.id;
-        }
-
         public boolean isRequired() {
             return this.isRequired;
+        }
+
+        public short id() {
+            return this.id;
         }
 
         public RntbdTokenType type() {
@@ -572,11 +574,11 @@ final class RntbdConstants {
 
         private final short id;
 
-        RntbdResourceType(short id) {
+        RntbdResourceType(final short id) {
             this.id = id;
         }
 
-        public static RntbdResourceType fromId(short id) throws IllegalArgumentException {
+        public static RntbdResourceType fromId(final short id) throws IllegalArgumentException {
             switch (id) {
                 case 0x0000:
                     return RntbdResourceType.Connection;
@@ -638,11 +640,11 @@ final class RntbdConstants {
                 case 0x001D:
                     return RntbdResourceType.UserDefinedType;
             }
-            throw new IllegalArgumentException(String.format("id: %d", id));
+            throw new IllegalArgumentException(Strings.lenientFormat("id: %s", id));
         }
 
         public short id() {
-            return id;
+            return this.id;
         }
     }
 
@@ -710,7 +712,7 @@ final class RntbdConstants {
         public static final ImmutableSet<RntbdResponseHeader> set = Sets.immutableEnumSet(EnumSet.allOf(RntbdResponseHeader.class));
 
         static {
-            Collector<RntbdResponseHeader, ?, ImmutableMap<Short, RntbdResponseHeader>> collector = ImmutableMap.toImmutableMap(RntbdResponseHeader::id, header -> header);
+            final Collector<RntbdResponseHeader, ?, ImmutableMap<Short, RntbdResponseHeader>> collector = ImmutableMap.toImmutableMap(RntbdResponseHeader::id, header -> header);
             map = set.stream().collect(collector);
         }
 
@@ -718,18 +720,18 @@ final class RntbdConstants {
         private final boolean isRequired;
         private final RntbdTokenType type;
 
-        RntbdResponseHeader(short id, RntbdTokenType type, boolean isRequired) {
+        RntbdResponseHeader(final short id, final RntbdTokenType type, final boolean isRequired) {
             this.id = id;
             this.type = type;
             this.isRequired = isRequired;
         }
 
-        public short id() {
-            return this.id;
-        }
-
         public boolean isRequired() {
             return this.isRequired;
+        }
+
+        public short id() {
+            return this.id;
         }
 
         public RntbdTokenType type() {
@@ -739,9 +741,9 @@ final class RntbdConstants {
 
     interface RntbdHeader {
 
-        short id();
-
         boolean isRequired();
+
+        short id();
 
         String name();
 
