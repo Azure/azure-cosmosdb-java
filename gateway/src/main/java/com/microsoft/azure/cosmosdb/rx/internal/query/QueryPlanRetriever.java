@@ -28,8 +28,13 @@ import com.microsoft.azure.cosmosdb.internal.OperationType;
 import com.microsoft.azure.cosmosdb.internal.ResourceType;
 import com.microsoft.azure.cosmosdb.internal.RuntimeConstants;
 import com.microsoft.azure.cosmosdb.internal.query.PartitionedQueryExecutionInfo;
+import com.microsoft.azure.cosmosdb.rx.internal.BackoffRetryUtility;
+import com.microsoft.azure.cosmosdb.rx.internal.IDocumentClientRetryPolicy;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import rx.Single;
+import rx.functions.Func1;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -61,10 +66,20 @@ class QueryPlanRetriever {
         request.UseGatewayMode = true;
         request.setContentBytes(sqlQuerySpec.toJson().getBytes(StandardCharsets.UTF_8));
 
-        return queryClient.executeQueryAsync(request).flatMap(rxDocumentServiceResponse -> {
-            PartitionedQueryExecutionInfo partitionedQueryExecutionInfo =
-                    new PartitionedQueryExecutionInfo(rxDocumentServiceResponse.getReponseBodyAsString());
-            return Single.just(partitionedQueryExecutionInfo);
-        });
+        final IDocumentClientRetryPolicy retryPolicyInstance = queryClient.getResetSessionTokenRetryPolicy().getRequestPolicy();
+
+        Func1<RxDocumentServiceRequest, Single<PartitionedQueryExecutionInfo>> executeFunc = req -> {
+            return BackoffRetryUtility.executeRetry(() -> {
+                retryPolicyInstance.onBeforeSendRequest(req);
+                return queryClient.executeQueryAsync(request).flatMap(rxDocumentServiceResponse -> {
+                    PartitionedQueryExecutionInfo partitionedQueryExecutionInfo =
+                            new PartitionedQueryExecutionInfo(rxDocumentServiceResponse.getReponseBodyAsString());
+                    return Single.just(partitionedQueryExecutionInfo);
+
+                });
+            }, retryPolicyInstance);
+        };
+
+        return executeFunc.call(request);
     }
 }

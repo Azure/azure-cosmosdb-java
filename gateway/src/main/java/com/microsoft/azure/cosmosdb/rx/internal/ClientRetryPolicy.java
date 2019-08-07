@@ -34,6 +34,7 @@ import rx.Single;
 
 import java.net.URL;
 import java.time.Duration;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * While this class is public, but it is not part of our published public APIs.
@@ -60,6 +61,7 @@ public class ClientRetryPolicy implements IDocumentClientRetryPolicy {
     private URL locationEndpoint;
     private RetryContext retryContext;
     private ClientSideRequestStatistics clientSideRequestStatistics;
+    private AtomicInteger cnt = new AtomicInteger(0);
 
     public ClientRetryPolicy(GlobalEndpointManager globalEndpointManager,
                              boolean enableEndpointDiscovery,
@@ -79,6 +81,12 @@ public class ClientRetryPolicy implements IDocumentClientRetryPolicy {
 
     @Override
     public Single<ShouldRetryResult> shouldRetry(Exception e) {
+        logger.debug("retry count {}, isReadRequest {}, canUseMultipleWriteLocations {}, due to failure {}",
+                    cnt.incrementAndGet(),
+                    isReadRequest,
+                    canUseMultipleWriteLocations,
+                    e);
+
         if (this.locationEndpoint == null) {
             // on before request is not invoked because Document Service Request creation failed.
             logger.error("locationEndpoint is null because ClientRetryPolicy::onBeforeRequest(.) is not invoked, " +
