@@ -31,8 +31,6 @@ import com.microsoft.azure.cosmosdb.internal.query.PartitionedQueryExecutionInfo
 import com.microsoft.azure.cosmosdb.rx.internal.BackoffRetryUtility;
 import com.microsoft.azure.cosmosdb.rx.internal.IDocumentClientRetryPolicy;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import rx.Single;
 import rx.functions.Func1;
 
