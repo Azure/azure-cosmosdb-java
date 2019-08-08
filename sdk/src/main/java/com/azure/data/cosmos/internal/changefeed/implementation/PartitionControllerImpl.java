@@ -153,9 +153,9 @@ class PartitionControllerImpl implements PartitionController {
                         PartitionSplitException ex = (PartitionSplitException) throwable;
                         return self.handleSplit(lease, ex.getLastContinuation());
                     } else if (throwable instanceof TaskCancelledException) {
-                        logger.debug("Partition %s: processing canceled.", lease.getLeaseToken());
+                        logger.debug("Partition {}: processing canceled.", lease.getLeaseToken());
                     } else {
-                        logger.warn("Partition %s: processing failed.", lease.getLeaseToken(), throwable);
+                        logger.warn("Partition {}: processing failed.", lease.getLeaseToken(), throwable);
                     }
 
                     return Mono.empty();
@@ -178,7 +178,7 @@ class PartitionControllerImpl implements PartitionController {
                 return self.addOrUpdateLease(l);
             }).then(self.leaseManager.delete(lease))
             .onErrorResume(throwable -> {
-                logger.warn("Partition %s: failed to split", lease.getLeaseToken(), throwable);
+                logger.warn("Partition {}: failed to split", lease.getLeaseToken(), throwable);
                 return  Mono.empty();
             });
     }
