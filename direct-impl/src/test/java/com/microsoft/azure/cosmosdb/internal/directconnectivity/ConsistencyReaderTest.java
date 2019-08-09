@@ -49,7 +49,6 @@ import rx.observers.TestSubscriber;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.net.URI;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -155,8 +154,8 @@ public class ConsistencyReaderTest {
 
     @Test(groups = "unit")
     public void readAny() {
-        List<URI> secondaries = ImmutableList.of(URI.create("secondary1"), URI.create("secondary2"), URI.create("secondary3"));
-        URI primaryAddress = URI.create("primary");
+        List<Uri> secondaries = ImmutableList.of(Uri.create("secondary1"), Uri.create("secondary2"), Uri.create("secondary3"));
+        Uri primaryAddress = Uri.create("primary");
         AddressSelectorWrapper addressSelectorWrapper = AddressSelectorWrapper.Builder.Simple.create()
                 .withPrimary(primaryAddress)
                 .withSecondary(secondaries)
@@ -244,8 +243,8 @@ public class ConsistencyReaderTest {
         String partitionKeyRangeId = "1";
         long fasterReplicaLSN = 651177;
 
-        List<URI> secondaries = ImmutableList.of(URI.create("secondary1"), URI.create("secondary2"), URI.create("secondary3"));
-        URI primaryAddress = URI.create("primary");
+        List<Uri> secondaries = ImmutableList.of(Uri.create("secondary1"), Uri.create("secondary2"), Uri.create("secondary3"));
+        Uri primaryAddress = Uri.create("primary");
         AddressSelectorWrapper addressSelectorWrapper = AddressSelectorWrapper.Builder.Simple.create()
                 .withPrimary(primaryAddress)
                 .withSecondary(secondaries)
@@ -395,10 +394,10 @@ public class ConsistencyReaderTest {
                 .then(storeResponse)  // 4th replica read returns storeResponse satisfying requested session token
                 .build();
 
-        URI primaryUri = URI.create("primary");
-        URI secondaryUri1 = URI.create("secondary1");
-        URI secondaryUri2 = URI.create("secondary2");
-        URI secondaryUri3 = URI.create("secondary3");
+        Uri primaryUri = Uri.create("primary");
+        Uri secondaryUri1 = Uri.create("secondary1");
+        Uri secondaryUri2 = Uri.create("secondary2");
+        Uri secondaryUri3 = Uri.create("secondary3");
 
         AddressSelectorWrapper addressSelectorWrapper = AddressSelectorWrapper.Builder.Simple.create()
                 .withPrimary(primaryUri)
@@ -464,10 +463,10 @@ public class ConsistencyReaderTest {
                 .then(foundException) // 4th replica read returns not found lsn(response) >= lsn(request)
                 .build();
 
-        URI primaryUri = URI.create("primary");
-        URI secondaryUri1 = URI.create("secondary1");
-        URI secondaryUri2 = URI.create("secondary2");
-        URI secondaryUri3 = URI.create("secondary3");
+        Uri primaryUri = Uri.create("primary");
+        Uri secondaryUri1 = Uri.create("secondary1");
+        Uri secondaryUri2 = Uri.create("secondary2");
+        Uri secondaryUri3 = Uri.create("secondary3");
 
         AddressSelectorWrapper addressSelectorWrapper = AddressSelectorWrapper.Builder.Simple.create()
                 .withPrimary(primaryUri)
@@ -530,10 +529,10 @@ public class ConsistencyReaderTest {
                 .then(foundException) // 4th replica read lsn lags behind the request lsn
                 .build();
 
-        URI primaryUri = URI.create("primary");
-        URI secondaryUri1 = URI.create("secondary1");
-        URI secondaryUri2 = URI.create("secondary2");
-        URI secondaryUri3 = URI.create("secondary3");
+        Uri primaryUri = Uri.create("primary");
+        Uri secondaryUri1 = Uri.create("secondary1");
+        Uri secondaryUri2 = Uri.create("secondary2");
+        Uri secondaryUri3 = Uri.create("secondary3");
 
         AddressSelectorWrapper addressSelectorWrapper = AddressSelectorWrapper.Builder.Simple.create()
                 .withPrimary(primaryUri)
@@ -594,10 +593,10 @@ public class ConsistencyReaderTest {
                 .then(requestTooLargeException) // 4th replica read result in throttling
                 .build();
 
-        URI primaryUri = URI.create("primary");
-        URI secondaryUri1 = URI.create("secondary1");
-        URI secondaryUri2 = URI.create("secondary2");
-        URI secondaryUri3 = URI.create("secondary3");
+        Uri primaryUri = Uri.create("primary");
+        Uri secondaryUri1 = Uri.create("secondary1");
+        Uri secondaryUri2 = Uri.create("secondary2");
+        Uri secondaryUri3 = Uri.create("secondary3");
 
         AddressSelectorWrapper addressSelectorWrapper = AddressSelectorWrapper.Builder.Simple.create()
                 .withPrimary(primaryUri)
@@ -651,8 +650,8 @@ public class ConsistencyReaderTest {
     @Test(groups = "unit", dataProvider = "simpleReadStrongArgProvider")
     public void basicReadStrong_AllReplicasSameLSN(int replicaCountToRead, ReadMode readMode) {
         ISessionContainer sessionContainer = Mockito.mock(ISessionContainer.class);
-        URI primaryReplicaURI = URI.create("primary");
-        ImmutableList<URI> secondaryReplicaURIs = ImmutableList.of(URI.create("secondary1"), URI.create("secondary2"), URI.create("secondary3"));
+        Uri primaryReplicaURI = Uri.create("primary");
+        ImmutableList<Uri> secondaryReplicaURIs = ImmutableList.of(Uri.create("secondary1"), Uri.create("secondary2"), Uri.create("secondary3"));
         AddressSelectorWrapper addressSelectorWrapper = AddressSelectorWrapper.Builder.Simple.create()
                 .withPrimary(primaryReplicaURI)
                 .withSecondary(secondaryReplicaURIs)

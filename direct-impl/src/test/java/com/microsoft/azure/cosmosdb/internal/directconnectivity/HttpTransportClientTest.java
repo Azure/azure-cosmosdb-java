@@ -64,10 +64,10 @@ public class HttpTransportClientTest {
     private final static Configs configs = new Configs();
     private final static int TIMEOUT = 1000;
 
-    private final URI physicalAddress = URI.create(
+    private final String physicalAddress =
             "https://by4prdddc03-docdb-1.documents.azure.com:9056" +
                     "/apps/b76af614-5421-4318-4c9e-33056ff5a2bf/services/e7c8d429-c379-40c9-9486-65b89b70be2f" +
-                    "/partitions/5f5b8766-3bdf-4713-b85a-a55ac2ccd62c/replicas/131828696163674404p/");
+                    "/partitions/5f5b8766-3bdf-4713-b85a-a55ac2ccd62c/replicas/131828696163674404p/";
 
     private final long lsn = 5;
     private final String partitionKeyRangeId = "3";
@@ -76,7 +76,7 @@ public class HttpTransportClientTest {
     public void getResourceFeedUri_Document() throws Exception {
         RxDocumentServiceRequest req = RxDocumentServiceRequest.createFromName(
                 OperationType.Create, "dbs/db/colls/col", ResourceType.Document);
-        URI res = HttpTransportClient.getResourceFeedUri(req.getResourceType(), physicalAddress, req);
+        String res = HttpTransportClient.getResourceFeedUri(req.getResourceType(), physicalAddress, req);
         assertThat(res.toString()).isEqualTo(physicalAddress.toString() + HttpUtils.urlEncode("dbs/db/colls/col/docs"));
     }
 
@@ -84,7 +84,7 @@ public class HttpTransportClientTest {
     public void getResourceFeedUri_Attachment() throws Exception {
         RxDocumentServiceRequest req = RxDocumentServiceRequest.createFromName(
                 OperationType.Create, "dbs/db/colls/col", ResourceType.Attachment);
-        URI res = HttpTransportClient.getResourceFeedUri(req.getResourceType(), physicalAddress, req);
+        String res = HttpTransportClient.getResourceFeedUri(req.getResourceType(), physicalAddress, req);
         assertThat(res.toString()).isEqualTo(physicalAddress.toString() + HttpUtils.urlEncode("dbs/db/colls/col/attachments"));
     }
 
@@ -92,7 +92,7 @@ public class HttpTransportClientTest {
     public void getResourceFeedUri_Collection() throws Exception {
         RxDocumentServiceRequest req = RxDocumentServiceRequest.createFromName(
                 OperationType.Create, "dbs/db", ResourceType.DocumentCollection);
-        URI res = HttpTransportClient.getResourceFeedUri(req.getResourceType(), physicalAddress, req);
+        String res = HttpTransportClient.getResourceFeedUri(req.getResourceType(), physicalAddress, req);
         assertThat(res.toString()).isEqualTo(physicalAddress.toString() + HttpUtils.urlEncode("dbs/db/colls"));
     }
 
@@ -100,7 +100,7 @@ public class HttpTransportClientTest {
     public void getResourceFeedUri_Conflict() throws Exception {
         RxDocumentServiceRequest req = RxDocumentServiceRequest.createFromName(
                 OperationType.Create, "/dbs/db/colls/col", ResourceType.Conflict);
-        URI res = HttpTransportClient.getResourceFeedUri(req.getResourceType(), physicalAddress, req);
+        String res = HttpTransportClient.getResourceFeedUri(req.getResourceType(), physicalAddress, req);
         assertThat(res.toString()).isEqualTo(physicalAddress.toString() + HttpUtils.urlEncode("dbs/db/colls/col/conflicts"));
     }
 
@@ -108,7 +108,7 @@ public class HttpTransportClientTest {
     public void getResourceFeedUri_Database() throws Exception {
         RxDocumentServiceRequest req = RxDocumentServiceRequest.createFromName(
                 OperationType.Create, "/", ResourceType.Database);
-        URI res = HttpTransportClient.getResourceFeedUri(req.getResourceType(), physicalAddress, req);
+        String res = HttpTransportClient.getResourceFeedUri(req.getResourceType(), physicalAddress, req);
         assertThat(res.toString()).isEqualTo(physicalAddress.toString() + "dbs");
     }
 
@@ -148,7 +148,7 @@ public class HttpTransportClientTest {
                 OperationType.Create, "dbs/db/colls/col", ResourceType.Document);
         request.setContentBytes(new byte[0]);
 
-        transportClient.invokeStoreAsync(physicalAddress,
+        transportClient.invokeStoreAsync(Uri.create(physicalAddress),
                 new ResourceOperation(OperationType.Create, ResourceType.Document),
                 request).toBlocking().value();
 
@@ -468,7 +468,7 @@ public class HttpTransportClientTest {
         request.setContentBytes(new byte[0]);
 
         Single<StoreResponse> storeResp = transportClient.invokeStoreAsync(
-                physicalAddress,
+                Uri.create(physicalAddress),
                 new ResourceOperation(OperationType.Create, ResourceType.Document),
                 request);
 
@@ -577,7 +577,7 @@ public class HttpTransportClientTest {
                 httpClientMockWrapper.getClient());
 
         Single<StoreResponse> storeResp = transportClient.invokeStoreAsync(
-                physicalAddress,
+                Uri.create(physicalAddress),
                 new ResourceOperation(OperationType.Create, ResourceType.Document),
                 request);
 

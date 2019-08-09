@@ -148,12 +148,12 @@ public class ConsistencyWriter {
         if (request.requestContext.globalStrongWriteResponse == null) {
 
             Single<List<AddressInformation>> replicaAddressesObs = this.addressSelector.resolveAddressesAsync(request, forceRefresh);
-            AtomicReference<URI> primaryURI = new AtomicReference<>();
+            AtomicReference<Uri> primaryURI = new AtomicReference<>();
 
             return replicaAddressesObs.flatMap(replicaAddresses -> {
                 try {
                     List<URI> contactedReplicas = new ArrayList<>();
-                    replicaAddresses.forEach(replicaAddress -> contactedReplicas.add(HttpUtils.toURI(replicaAddress.getPhysicalUri())));
+                    replicaAddresses.forEach(replicaAddress -> contactedReplicas.add(replicaAddress.getPhysicalUri().uri));
                     request.requestContext.clientSideRequestStatistics.setContactedReplicas(contactedReplicas);
                     return Single.just(AddressSelector.getPrimaryUri(request, replicaAddresses));
                 } catch (GoneException e) {
