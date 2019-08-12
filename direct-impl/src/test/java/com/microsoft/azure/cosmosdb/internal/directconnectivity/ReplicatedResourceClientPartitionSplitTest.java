@@ -44,7 +44,6 @@ import rx.Single;
 import rx.functions.Func1;
 import rx.observers.TestSubscriber;
 
-import java.net.URI;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -63,11 +62,11 @@ public class ReplicatedResourceClientPartitionSplitTest {
 
     @Test(groups = { "unit" }, dataProvider = "partitionIsSplittingArgProvider", timeOut = TIMEOUT)
     public void partitionSplit_RefreshCache_Read(ConsistencyLevel consistencyLevel, int partitionIsSplitting) {
-        URI secondary1AddressBeforeMove = URI.create("secondary");
-        URI secondary1AddressAfterMove = URI.create("secondaryNew");
+        Uri secondary1AddressBeforeMove = Uri.create("secondary");
+        Uri secondary1AddressAfterMove = Uri.create("secondaryNew");
 
-        URI primaryAddressBeforeMove = URI.create("primary");
-        URI primaryAddressAfterMove = URI.create("primaryNew");
+        Uri primaryAddressBeforeMove = Uri.create("primary");
+        Uri primaryAddressAfterMove = Uri.create("primaryNew");
 
         String partitionKeyRangeIdBeforeSplit = "1";
         String partitionKeyRangeIdAfterSplit = "2";

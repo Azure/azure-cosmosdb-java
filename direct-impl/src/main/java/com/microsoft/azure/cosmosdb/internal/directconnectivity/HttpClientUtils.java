@@ -49,7 +49,7 @@ public class HttpClientUtils {
     }
 
     private static Single<DocumentClientException> createDocumentClientException(HttpClientResponse<ByteBuf> responseMessage) {
-        Single<String> readStream = ResponseUtils.toString(responseMessage.getContent()).toSingle();
+        Single<String> readStream = ResponseUtils.toString(responseMessage.getContent(), responseMessage.getHeaders().getIntHeader(HttpConstants.HttpHeaders.CONTENT_LENGTH, -1)).toSingle();
 
         return readStream.map(body -> {
             Error error = new Error(body);

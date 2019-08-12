@@ -23,6 +23,7 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
+import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import io.netty.buffer.ByteBuf;
 import io.reactivex.netty.protocol.http.client.HttpClientResponse;
 import org.apache.commons.lang3.StringUtils;
@@ -42,11 +43,11 @@ public class ErrorUtils {
             return Single.just(StringUtils.EMPTY);
         }
 
-        return getErrorFromStream(responseMessage.getContent());
+        return getErrorFromStream(responseMessage.getContent(), responseMessage.getHeaders().getIntHeader(HttpConstants.HttpHeaders.CONTENT_LENGTH, -1));
     }
 
-    protected static Single<String> getErrorFromStream(Observable<ByteBuf> stream) {
-        return ResponseUtils.toString(stream).toSingle();
+    protected static Single<String> getErrorFromStream(Observable<ByteBuf> stream, int contentLength) {
+        return ResponseUtils.toString(stream, contentLength).toSingle();
     }
 
     protected static void logGoneException(URI physicalAddress, String activityId) {
