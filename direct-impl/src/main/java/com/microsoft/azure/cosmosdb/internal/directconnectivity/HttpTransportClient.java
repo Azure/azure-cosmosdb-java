@@ -117,7 +117,7 @@ public class HttpTransportClient extends TransportClient {
 
         try {
 
-            URI physicalAddress = physicalAddressUri.uri;
+            URI physicalAddress = physicalAddressUri.getURI();
 
             // uuid correlation manager
             String activityId = request.getActivityId();
@@ -130,7 +130,7 @@ public class HttpTransportClient extends TransportClient {
                 throw new InternalServerErrorException(RMResources.InternalServerError, null, errorResponseHeaders, null);
             }
 
-            HttpClientRequest<ByteBuf> httpRequest = prepareHttpMessage(activityId, physicalAddressUri.uriAsString, resourceOperation, request);
+            HttpClientRequest<ByteBuf> httpRequest = prepareHttpMessage(activityId, physicalAddressUri.getURIAsString(), resourceOperation, request);
             RxClient.ServerInfo serverInfo = new RxClient.ServerInfo(physicalAddress.getHost(), physicalAddress.getPort());
 
             MutableVolatile<Instant> sendTimeUtc = new MutableVolatile<>();

@@ -70,14 +70,14 @@ public class AddressSelector {
                 primaryAddress = replicaAddresses.get(defaultReplicaIndex);
             }
         } else {
-            primaryAddress = replicaAddresses.stream().filter(address -> address.isPrimary() && !address.getPhysicalUri().uriAsString.contains("["))
+            primaryAddress = replicaAddresses.stream().filter(address -> address.isPrimary() && !address.getPhysicalUri().getURIAsString().contains("["))
                 .findAny().orElse(null);
         }
 
         if (primaryAddress == null) {
             // Primary endpoint (of the desired protocol) was not found.
             throw new GoneException(String.format("The requested resource is no longer available at the server. Returned addresses are {%s}",
-                String.join(",", replicaAddresses.stream().map(address -> address.getPhysicalUri().uriAsString).collect(Collectors.toList()))), null);
+                String.join(",", replicaAddresses.stream().map(address -> address.getPhysicalUri().getURIAsString()).collect(Collectors.toList()))), null);
         }
 
         return primaryAddress.getPhysicalUri();
@@ -88,7 +88,7 @@ public class AddressSelector {
             (this.addressResolver.resolveAsync(request, forceAddressRefresh))
                 .map(addresses -> Arrays.stream(addresses)
                     .filter(address -> {
-                        return !Strings.isNullOrEmpty(address.getPhysicalUri().uriAsString) && Strings.areEqualIgnoreCase(address.getProtocolScheme(), this.protocol.scheme());
+                        return !Strings.isNullOrEmpty(address.getPhysicalUri().getURIAsString()) && Strings.areEqualIgnoreCase(address.getProtocolScheme(), this.protocol.scheme());
                     })
                     .collect(Collectors.toList()));
 

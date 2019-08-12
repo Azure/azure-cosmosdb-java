@@ -140,7 +140,7 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
         checkNotNull(request, "request");
         this.throwIfClosed();
 
-        URI physicalAddress = physicalAddressUri.uri;
+        URI physicalAddress = physicalAddressUri.getURI();
         final RntbdRequestArgs requestArgs = new RntbdRequestArgs(request, physicalAddress);
         requestArgs.traceOperation(logger, null, "invokeStoreAsync");
 

@@ -27,8 +27,8 @@ import java.net.URI;
 import java.util.Objects;
 
 public class Uri {
-    public String uriAsString;
-    public URI uri;
+    private final String uriAsString;
+    private final URI uri;
 
     public static Uri create(String uriAsString) {
         return new Uri(uriAsString);
@@ -36,11 +36,22 @@ public class Uri {
 
     public Uri(String uri) {
         this.uriAsString = uri;
+
+        URI uriValue = null;
         try {
-            this.uri = URI.create(uri);
+            uriValue = URI.create(uri);
         } catch (IllegalArgumentException e) {
-            this.uri = null;
+            uriValue = null;
         }
+        this.uri = uriValue;
+    }
+
+    public URI getURI() {
+        return this.uri;
+    }
+
+    public String getURIAsString() {
+        return this.uriAsString;
     }
 
     @Override

@@ -516,7 +516,7 @@ public class AddressSelectorWrapper {
             }
 
             private AddressInformation toAddressInformation(Uri uri, boolean isPrimary, Protocol protocol) {
-                return new AddressInformation(true, isPrimary, uri.uriAsString, protocol);
+                return new AddressInformation(true, isPrimary, uri.getURIAsString(), protocol);
             }
         }
 

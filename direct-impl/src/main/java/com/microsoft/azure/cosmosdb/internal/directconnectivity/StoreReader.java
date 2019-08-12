@@ -171,7 +171,7 @@ public class StoreReader {
                                         readMode != ReadMode.Strong,
                                         storeRespAndURI.getRight());
 
-                                request.requestContext.clientSideRequestStatistics.getContactedReplicas().add(storeRespAndURI.getRight().uri);
+                                request.requestContext.clientSideRequestStatistics.getContactedReplicas().add(storeRespAndURI.getRight().getURI());
                                 return Observable.just(storeResult);
                             } catch (Exception e) {
                                 // RxJava1 doesn't allow throwing checked exception from Observable operators
@@ -194,7 +194,7 @@ public class StoreReader {
                                 readMode != ReadMode.Strong,
                                 null);
                         if (storeException instanceof TransportException) {
-                            request.requestContext.clientSideRequestStatistics.getFailedReplicas().add(storeRespAndURI.getRight().uri);
+                            request.requestContext.clientSideRequestStatistics.getFailedReplicas().add(storeRespAndURI.getRight().getURI());
                         }
                         return Observable.just(storeResult);
                     } catch (Exception e) {
