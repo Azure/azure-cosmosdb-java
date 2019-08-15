@@ -19,8 +19,7 @@ class CheckpointerObserverFactory implements ChangeFeedObserverFactory {
      * @param observerFactory the instance of observer factory.
      * @param checkpointFrequency the the frequency of lease event.
      */
-    public CheckpointerObserverFactory(ChangeFeedObserverFactory observerFactory, CheckpointFrequency checkpointFrequency)
-    {
+    public CheckpointerObserverFactory(ChangeFeedObserverFactory observerFactory, CheckpointFrequency checkpointFrequency) {
         if (observerFactory == null) {
             throw new IllegalArgumentException("observerFactory");
         }
