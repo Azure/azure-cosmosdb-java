@@ -21,8 +21,13 @@ class CheckpointerObserverFactory implements ChangeFeedObserverFactory {
      */
     public CheckpointerObserverFactory(ChangeFeedObserverFactory observerFactory, CheckpointFrequency checkpointFrequency)
     {
-        if (observerFactory == null) throw new IllegalArgumentException("observerFactory");
-        if (checkpointFrequency == null) throw new IllegalArgumentException("checkpointFrequency");
+        if (observerFactory == null) {
+            throw new IllegalArgumentException("observerFactory");
+        }
+
+        if (checkpointFrequency == null) {
+            throw new IllegalArgumentException("checkpointFrequency");
+        }
 
         this.observerFactory = observerFactory;
         this.checkpointFrequency = checkpointFrequency;
@@ -34,7 +39,9 @@ class CheckpointerObserverFactory implements ChangeFeedObserverFactory {
     @Override
     public ChangeFeedObserver createObserver() {
         ChangeFeedObserver observer = new ObserverExceptionWrappingChangeFeedObserverDecorator(this.observerFactory.createObserver());
-        if (this.checkpointFrequency.isExplicitCheckpoint()) return observer;
+        if (this.checkpointFrequency.isExplicitCheckpoint()) {
+            return observer;
+        }
 
         return new AutoCheckpointer(this.checkpointFrequency, observer);
     }
