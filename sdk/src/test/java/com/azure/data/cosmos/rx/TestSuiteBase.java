@@ -453,7 +453,7 @@ public class TestSuiteBase extends CosmosClientTest {
         return cosmosContainer.createItem(item).block().item();
     }
 
-    private Flux<CosmosItemResponse> bulkInsert(CosmosContainer cosmosContainer,
+    public static Flux<CosmosItemResponse> bulkInsert(CosmosContainer cosmosContainer,
                                                 List<CosmosItemProperties> documentDefinitionList,
                                                 int concurrencyLevel) {
         List<Mono<CosmosItemResponse>> result = new ArrayList<>(documentDefinitionList.size());
