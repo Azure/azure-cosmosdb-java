@@ -26,6 +26,7 @@ package com.microsoft.azure.cosmosdb.rx.internal;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.microsoft.azure.cosmosdb.Attachment;
 import com.microsoft.azure.cosmosdb.BridgeInternal;
 import com.microsoft.azure.cosmosdb.ClientSideRequestStatistics;
@@ -168,18 +169,23 @@ public class RxDocumentServiceResponse {
                 JsonNode jToken = jTokenArray.get(i);
                 // Aggregate on single partition collection may return the aggregated value only
                 // In that case it needs to encapsulated in a special document
-                String resourceJson = jToken.isNumber() || jToken.isBoolean()
-                        ? String.format("{\"%s\": %s}", Constants.Properties.AGGREGATE, jToken.asText())
-                                : toJson(jToken);
-                        T resource = null;
-                        try {
-                            resource = c.getConstructor(String.class).newInstance(resourceJson);
-                        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-                                | InvocationTargetException | NoSuchMethodException | SecurityException e) {
-                            throw new IllegalStateException("Failed to instantiate class object.", e);
-                        }
+                String resourceJson;
+                if (jToken.getNodeType() == JsonNodeType.STRING || jToken.getNodeType() == JsonNodeType.NULL) {
+                    resourceJson = String.format("{\"%s\": %s}", Constants.Properties.AGGREGATE, jToken);
+                } else {
+                    resourceJson = jToken.isNumber() || jToken.isBoolean()
+                                           ? String.format("{\"%s\": %s}", Constants.Properties.AGGREGATE, jToken.asText())
+                                           : toJson(jToken);
+                }
+                T resource = null;
+                try {
+                    resource = c.getConstructor(String.class).newInstance(resourceJson);
+                } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+                                 | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+                    throw new IllegalStateException("Failed to instantiate class object.", e);
+                }
 
-                        queryResults.add(resource);
+                queryResults.add(resource);
             }
         }
 

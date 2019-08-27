@@ -26,6 +26,7 @@ package com.microsoft.azure.cosmosdb.internal.query;
 import java.util.Collection;
 import java.util.List;
 
+import com.microsoft.azure.cosmosdb.rx.internal.query.DistinctQueryType;
 import org.apache.commons.lang3.StringUtils;
 
 import com.microsoft.azure.cosmosdb.JsonSerializable;
@@ -43,6 +44,7 @@ public final class QueryInfo extends JsonSerializable {
     private String rewrittenQuery;
     private Integer offset;
     private Integer limit;
+    private DistinctQueryType distinctQueryType;
 
     public QueryInfo() { }
 
@@ -111,5 +113,30 @@ public final class QueryInfo extends JsonSerializable {
 
     public Integer getOffset() {
         return this.offset != null ? this.offset : (this.offset = super.getInt("offset"));
+    }
+
+    public boolean hasDistinct() {
+        return this.getDistinctQueryType() != DistinctQueryType.None;
+    }
+
+    public DistinctQueryType getDistinctQueryType() {
+        if (distinctQueryType != null) {
+            return distinctQueryType;
+        } else {
+            final String distinctType = super.getString("distinctType");
+            switch (distinctType) {
+                case "Ordered":
+                    distinctQueryType = DistinctQueryType.Ordered;
+                    break;
+                case "Unordered":
+                    distinctQueryType = DistinctQueryType.Unordered;
+                    break;
+                default:
+                    distinctQueryType = DistinctQueryType.None;
+                    break;
+            }
+            return distinctQueryType;
+        }
+
     }
 }
