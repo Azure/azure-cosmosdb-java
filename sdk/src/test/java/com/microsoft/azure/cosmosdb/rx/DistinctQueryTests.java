@@ -172,7 +172,7 @@ public class DistinctQueryTests extends TestSuiteBase {
                 "SELECT %s 1 AS p FROM c",
                 "SELECT %s 'a' AS p FROM c",
 
-//                // number value distinct queries
+                // number value distinct queries
                 "SELECT %s VALUE c.income from c",
                 "SELECT %s VALUE c.age from c",
                 "SELECT %s c.income, c.income AS income2 from c",

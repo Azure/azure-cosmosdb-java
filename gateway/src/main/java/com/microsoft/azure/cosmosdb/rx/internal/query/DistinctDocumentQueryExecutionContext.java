@@ -70,7 +70,8 @@ public class DistinctDocumentQueryExecutionContext<T extends Resource> implement
         }
 
         Utils.ValueHolder<DistinctContinuationToken> outDistinctcontinuationtoken = new Utils.ValueHolder<>();
-        DistinctContinuationToken distinctContinuationToken = new DistinctContinuationToken(null, null);
+        DistinctContinuationToken distinctContinuationToken = new DistinctContinuationToken(null /*lasthash*/,
+                null /*sourceToken*/);
 
         if (continuationToken != null) {
             if (!DistinctContinuationToken.tryParse(continuationToken, outDistinctcontinuationtoken)) {
@@ -110,8 +111,7 @@ public class DistinctDocumentQueryExecutionContext<T extends Resource> implement
 
             tFeedResponse.getResults().forEach(document -> {
                 Utils.ValueHolder<String> outHash = new Utils.ValueHolder<>();
-                if (this.distinctMap.add(document, outHash)) { // this.distinctMap.Add(document, out this.lastHash)
-                    System.out.println("document = " + document + "outhash: " + outHash);
+                if (this.distinctMap.add(document, outHash)) {
                     distinctResults.add(document);
                     lastHash = outHash.v;
                 }
@@ -123,7 +123,6 @@ public class DistinctDocumentQueryExecutionContext<T extends Resource> implement
                 final String sourceContinuationToken = tFeedResponse.getResponseContinuation();
                 final DistinctContinuationToken distinctContinuationToken = new DistinctContinuationToken(this.lastHash,
                         sourceContinuationToken);
-                System.out.println("distinctContinuationToken.toJson() = " + distinctContinuationToken.toJson());
                 headers.put(HttpConstants.HttpHeaders.CONTINUATION, distinctContinuationToken.toJson());
             }
 
