@@ -121,7 +121,7 @@ public class PipelinedDocumentQueryExecutionContext<T extends Resource> implemen
         if (queryInfo.hasTop()) {
             createTopComponentFunction = (continuationToken) -> {
                 return TopDocumentQueryExecutionContext.createAsync(createSkipComponentFunction,
-                        queryInfo.getTop(), continuationToken);
+                        queryInfo.getTop(), queryInfo.getTop(), continuationToken);
             };
         } else {
             createTopComponentFunction = createSkipComponentFunction;
@@ -130,8 +130,13 @@ public class PipelinedDocumentQueryExecutionContext<T extends Resource> implemen
         Function<String, Observable<IDocumentQueryExecutionComponent<T>>> createTakeComponentFunction;
         if (queryInfo.hasLimit()) {
             createTakeComponentFunction = (continuationToken) -> {
+                int totalLimit = queryInfo.getLimit();
+                if (queryInfo.hasOffset()){
+                    // This is being done to match the limit from rewritten query
+                     totalLimit = queryInfo.getOffset() + queryInfo.getLimit();
+                }
                 return TopDocumentQueryExecutionContext.createAsync(createTopComponentFunction,
-                        queryInfo.getLimit(),
+                        queryInfo.getLimit(), totalLimit,
                         continuationToken);
             };
         } else {
