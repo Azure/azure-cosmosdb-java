@@ -180,12 +180,10 @@ public class DocumentQueryExecutionContextFactory {
         int initialPageSize = Utils.getValueOrDefault(feedOptions.getMaxItemCount(),
                                                       ParallelQueryConfig.ClientInternalPageSize);
 
-        if (initialPageSize != -1) {
-            BadRequestException validationError = Utils.checkRequestOrReturnException
-                (initialPageSize > 0, "MaxItemCount", "Invalid MaxItemCount %s", initialPageSize);
-            if (validationError != null) {
-                return Observable.error(validationError);
-            }
+        BadRequestException validationError = Utils.checkRequestOrReturnException(
+            initialPageSize > 0 || initialPageSize == -1, "MaxItemCount", "Invalid MaxItemCount %s", initialPageSize);
+        if (validationError != null) {
+            return Observable.error(validationError);
         }
 
         QueryInfo queryInfo = partitionedQueryExecutionInfo.getQueryInfo();
