@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
+import org.testng.annotations.Ignore;
 import org.testng.annotations.Test;
 
 import com.microsoft.azure.cosmosdb.Database;
@@ -85,6 +86,7 @@ public class AggregateQueryTests extends TestSuiteBase {
         super(clientBuilder);
     }
 
+    @Ignore (value = "NonValueAggregate query is not supported by the SDK as of now")
     @Test(groups = { "simple" }, timeOut = 2 * TIMEOUT, dataProvider = "queryMetricsArgProvider")
     public void queryDocumentsWithAggregates(boolean qmEnabled) throws Exception {
 
