@@ -162,11 +162,9 @@ public class GatewayAddressCache implements IAddressCache {
         com.microsoft.azure.cosmosdb.rx.internal.Utils.checkNotNullOrThrow(request, "request", "");
         com.microsoft.azure.cosmosdb.rx.internal.Utils.checkNotNullOrThrow(partitionKeyRangeIdentity, "partitionKeyRangeIdentity", "");
 
-        if (logger.isDebugEnabled()) {
-            logger.debug("PartitionKeyRangeIdentity {}, forceRefreshPartitionAddresses {}",
-                         partitionKeyRangeIdentity,
-                         forceRefreshPartitionAddresses);
-        }
+        logger.debug("PartitionKeyRangeIdentity {}, forceRefreshPartitionAddresses {}",
+                     partitionKeyRangeIdentity,
+                     forceRefreshPartitionAddresses);
 
         if (StringUtils.equals(partitionKeyRangeIdentity.getPartitionKeyRangeId(),
                 PartitionKeyRange.MASTER_PARTITION_KEY_RANGE_ID)) {
@@ -408,9 +406,11 @@ public class GatewayAddressCache implements IAddressCache {
         Single<List<Pair<PartitionKeyRangeIdentity, AddressInformation[]>>> addressInfos =
                 addressResponse.map(
                         addresses -> {
-                                logger.debug("addresses from getServerAddressesViaGatewayAsync in getAddressesForRangeId {}",
-                                         JavaStreamUtils.info(addresses));
-
+                                if (logger.isDebugEnabled()) {
+                                    logger.debug("addresses from getServerAddressesViaGatewayAsync in getAddressesForRangeId {}",
+                                                 JavaStreamUtils.info(addresses));
+                                }
+                                
                                 return addresses.stream().filter(addressInfo ->
                                         this.protocolScheme.equals(addressInfo.getProtocolScheme()))
                                         .collect(Collectors.groupingBy(
