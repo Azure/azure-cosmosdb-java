@@ -2,7 +2,7 @@
 
 ## 2.6.2
 - Fixed query failure when setting MaxItemCount to -1 ([#261](https://github.com/Azure/azure-cosmosdb-java/issues/261)).
-- Fixed a NPE bug on Partitoin split ([#267](https://github.com/Azure/azure-cosmosdb-java/pull/267).
+- Fixed a NPE bug on Partitoin split ([#267](https://github.com/Azure/azure-cosmosdb-java/pull/267)).
 - Improved logging in Direct mode. 
 
 ## 2.6.1
