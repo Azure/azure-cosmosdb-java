@@ -273,6 +273,7 @@ public class HttpTransportClient extends TransportClient {
                 return request.getHeaders().get(HttpConstants.HttpHeaders.IF_NONE_MATCH);
 
             default:
+                logger.error("unexpected operation type {}", resourceOperation.operationType);
                 return null;
         }
     }
