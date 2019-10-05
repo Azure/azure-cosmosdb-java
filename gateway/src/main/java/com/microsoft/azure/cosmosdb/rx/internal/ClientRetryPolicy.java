@@ -81,7 +81,7 @@ public class ClientRetryPolicy implements IDocumentClientRetryPolicy {
 
     @Override
     public Single<ShouldRetryResult> shouldRetry(Exception e) {
-        logger.debug("retry count {}, isReadRequest {}, canUseMultipleWriteLocations {}, due to failure {}",
+        logger.debug("retry count {}, isReadRequest {}, canUseMultipleWriteLocations {}, due to failure:",
                     cnt.incrementAndGet(),
                     isReadRequest,
                     canUseMultipleWriteLocations,
