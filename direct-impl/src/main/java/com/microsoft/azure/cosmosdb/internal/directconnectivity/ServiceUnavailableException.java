@@ -39,7 +39,7 @@ public class ServiceUnavailableException extends DocumentClientException {
     }
 
     public ServiceUnavailableException(Error error, long lsn, String partitionKeyRangeId, Map<String, String> responseHeaders) {
-        super(HttpConstants.StatusCodes.NOTFOUND, error, responseHeaders);
+        super(HttpConstants.StatusCodes.SERVICE_UNAVAILABLE, error, responseHeaders);
         BridgeInternal.setLSN(this, lsn);
         BridgeInternal.setPartitionKeyRangeId(this, partitionKeyRangeId);
     }
