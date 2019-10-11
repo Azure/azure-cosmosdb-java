@@ -22,8 +22,6 @@ package com.microsoft.azure.cosmosdb;/*
  */
 
 import com.google.common.collect.ImmutableMap;
-import com.microsoft.azure.cosmosdb.DocumentClientException;
-import com.microsoft.azure.cosmosdb.Error;
 import com.microsoft.azure.cosmosdb.internal.InternalServerErrorException;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.GoneException;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.RequestTimeoutException;
@@ -37,20 +35,9 @@ import java.util.Map;
 
 import static com.google.common.base.Strings.lenientFormat;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes.BADREQUEST;
-import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes.CONFLICT;
-import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes.FORBIDDEN;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes.GONE;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes.INTERNAL_SERVER_ERROR;
-import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes.LOCKED;
-import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes.METHOD_NOT_ALLOWED;
-import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes.NOTFOUND;
-import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes.PRECONDITION_FAILED;
-import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes.REQUEST_ENTITY_TOO_LARGE;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes.REQUEST_TIMEOUT;
-import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes.RETRY_WITH;
-import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes.SERVICE_UNAVAILABLE;
-import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes.TOO_MANY_REQUESTS;
-import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes.UNAUTHORIZED;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.assertEquals;
 
