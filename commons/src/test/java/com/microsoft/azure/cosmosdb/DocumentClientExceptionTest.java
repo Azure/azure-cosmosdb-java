@@ -1,4 +1,4 @@
-/*
+package com.microsoft.azure.cosmosdb;/*
  * The MIT License (MIT)
  * Copyright (c) 2018 Microsoft Corporation
  *
@@ -21,45 +21,90 @@
  * SOFTWARE.
  */
 
-package com.microsoft.azure.cosmosdb;
-
-import com.microsoft.azure.cosmosdb.internal.directconnectivity.ConflictException;
-import com.microsoft.azure.cosmosdb.internal.directconnectivity.ForbiddenException;
-import com.microsoft.azure.cosmosdb.internal.directconnectivity.LockedException;
-import com.microsoft.azure.cosmosdb.internal.directconnectivity.MethodNotAllowedException;
-import com.microsoft.azure.cosmosdb.internal.directconnectivity.PartitionKeyRangeGoneException;
-import com.microsoft.azure.cosmosdb.internal.directconnectivity.PreconditionFailedException;
-import com.microsoft.azure.cosmosdb.internal.directconnectivity.RequestEntityTooLargeException;
-import com.microsoft.azure.cosmosdb.internal.directconnectivity.RequestRateTooLargeException;
-import com.microsoft.azure.cosmosdb.internal.directconnectivity.RetryWithException;
-import com.microsoft.azure.cosmosdb.internal.directconnectivity.ServiceUnavailableException;
-import com.microsoft.azure.cosmosdb.internal.directconnectivity.UnauthorizedException;
-import com.microsoft.azure.cosmosdb.rx.internal.InvalidPartitionException;
-import com.microsoft.azure.cosmosdb.rx.internal.NotFoundException;
-import com.microsoft.azure.cosmosdb.rx.internal.PartitionIsMigratingException;
-import com.microsoft.azure.cosmosdb.rx.internal.PartitionKeyRangeIsSplittingException;
+import com.google.common.collect.ImmutableMap;
+import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.Error;
+import com.microsoft.azure.cosmosdb.internal.InternalServerErrorException;
+import com.microsoft.azure.cosmosdb.internal.directconnectivity.GoneException;
+import com.microsoft.azure.cosmosdb.internal.directconnectivity.RequestTimeoutException;
+import com.microsoft.azure.cosmosdb.rx.internal.BadRequestException;
 import io.reactivex.netty.protocol.http.client.HttpResponseHeaders;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.Map;
 
 import static com.google.common.base.Strings.lenientFormat;
+import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes.BADREQUEST;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes.CONFLICT;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes.FORBIDDEN;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes.GONE;
+import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes.INTERNAL_SERVER_ERROR;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes.LOCKED;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes.METHOD_NOT_ALLOWED;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes.NOTFOUND;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes.PRECONDITION_FAILED;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes.REQUEST_ENTITY_TOO_LARGE;
+import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes.REQUEST_TIMEOUT;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes.RETRY_WITH;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes.SERVICE_UNAVAILABLE;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes.TOO_MANY_REQUESTS;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes.UNAUTHORIZED;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.assertEquals;
 
 public class DocumentClientExceptionTest {
+
+    @Test(groups = { "unit" })
+    public void headerNotNull1() {
+        DocumentClientException dce = new DocumentClientException(0);
+        assertThat(dce.getResponseHeaders()).isNotNull();
+        assertThat(dce.getResponseHeaders()).isEmpty();
+    }
+
+    @Test(groups = { "unit" })
+    public void headerNotNull2() {
+        DocumentClientException dce = new DocumentClientException(0, "dummy");
+        assertThat(dce.getResponseHeaders()).isNotNull();
+        assertThat(dce.getResponseHeaders()).isEmpty();
+    }
+
+    @Test(groups = { "unit" })
+    public void headerNotNull3() {
+        DocumentClientException dce = new DocumentClientException(0, new RuntimeException());
+        assertThat(dce.getResponseHeaders()).isNotNull();
+        assertThat(dce.getResponseHeaders()).isEmpty();
+    }
+
+    @Test(groups = { "unit" })
+    public void headerNotNull4() {
+        DocumentClientException dce = new DocumentClientException(0, (Error) null, (Map) null);
+        assertThat(dce.getResponseHeaders()).isNotNull();
+        assertThat(dce.getResponseHeaders()).isEmpty();
+    }
+
+    @Test(groups = { "unit" })
+    public void headerNotNull5() {
+        DocumentClientException dce = new DocumentClientException((String) null, 0, (Error) null, (Map) null);
+        assertThat(dce.getResponseHeaders()).isNotNull();
+        assertThat(dce.getResponseHeaders()).isEmpty();
+    }
+
+    @Test(groups = { "unit" })
+    public void headerNotNull6() {
+        DocumentClientException dce = new DocumentClientException((String) null, (Exception) null, (Map) null, 0, (String) null);
+        assertThat(dce.getResponseHeaders()).isNotNull();
+        assertThat(dce.getResponseHeaders()).isEmpty();
+    }
+
+    @Test(groups = { "unit" })
+    public void headerNotNull7() {
+        ImmutableMap<String, String> respHeaders = ImmutableMap.of("key", "value");
+        DocumentClientException dce = new DocumentClientException((String) null, (Exception) null, respHeaders, 0, (String) null);
+        assertThat(dce.getResponseHeaders()).isNotNull();
+        assertThat(dce.getResponseHeaders()).contains(respHeaders.entrySet().iterator().next());
+    }
 
     @Test(groups = { "unit" }, dataProvider = "subTypes")
     public void statusCodeIsCorrect(Class<DocumentClientException> type, int expectedStatusCode) {
@@ -77,21 +122,10 @@ public class DocumentClientExceptionTest {
     @DataProvider(name = "subTypes")
     private static Object[][] subTypes() {
         return new Object[][] {
-            { ConflictException.class, CONFLICT },
-            { ForbiddenException.class, FORBIDDEN },
-            { InvalidPartitionException.class, GONE },
-            { LockedException.class, LOCKED },
-            { MethodNotAllowedException.class, METHOD_NOT_ALLOWED },
-            { NotFoundException.class, NOTFOUND },
-            { PartitionIsMigratingException.class, GONE },
-            { PartitionKeyRangeGoneException.class, GONE },
-            { PartitionKeyRangeIsSplittingException.class, GONE },
-            { PreconditionFailedException.class, PRECONDITION_FAILED },
-            { RequestEntityTooLargeException.class, REQUEST_ENTITY_TOO_LARGE },
-            { RequestRateTooLargeException.class, TOO_MANY_REQUESTS },
-            { RetryWithException.class, RETRY_WITH },
-            { ServiceUnavailableException.class, SERVICE_UNAVAILABLE },
-            { UnauthorizedException.class, UNAUTHORIZED }
+            { BadRequestException.class, BADREQUEST },
+            { GoneException.class, GONE },
+            { InternalServerErrorException.class, INTERNAL_SERVER_ERROR },
+            { RequestTimeoutException.class, REQUEST_TIMEOUT },
         };
     }
 }
