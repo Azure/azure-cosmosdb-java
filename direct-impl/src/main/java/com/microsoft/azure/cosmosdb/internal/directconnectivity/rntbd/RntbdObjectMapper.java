@@ -60,7 +60,7 @@ public final class RntbdObjectMapper {
         try {
             return objectWriter.writeValueAsString(value);
         } catch (final JsonProcessingException error) {
-            logger.error("could not convert {} value to JSON due to:", value.getClass(), error);
+            logger.debug("could not convert {} value to JSON due to:", value.getClass(), error);
             try {
                 return Strings.lenientFormat("{\"error\":%s", objectWriter.writeValueAsString(error.toString()));
             } catch (final JsonProcessingException exception) {
