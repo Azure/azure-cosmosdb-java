@@ -29,6 +29,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import io.netty.buffer.ByteBuf;
+import io.netty.handler.codec.CorruptedFrameException;
 
 import java.util.stream.Collector;
 
@@ -99,9 +100,8 @@ abstract class RntbdTokenStream<T extends Enum<T> & RntbdHeader> {
 
         for (final RntbdToken token : stream.tokens.values()) {
             if (!token.isPresent() && token.isRequired()) {
-                final String reason = lenientFormat("Required token not found on token stream: type=%s, identifier=%s",
-                    token.getTokenType(), token.getId());
-                throw new IllegalStateException(reason);
+                final String message = lenientFormat("Required header not found on token stream: %s", token);
+                throw new CorruptedFrameException(message);
             }
         }
 
