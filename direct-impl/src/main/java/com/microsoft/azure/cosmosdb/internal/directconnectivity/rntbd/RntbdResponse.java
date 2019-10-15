@@ -118,10 +118,9 @@ public final class RntbdResponse implements ReferenceCounted {
 
     static RntbdResponse decode(final ByteBuf in) {
 
-        int start = in.markReaderIndex().readerIndex();
+        final int start = in.markReaderIndex().readerIndex();
 
         final RntbdResponseStatus frame = RntbdResponseStatus.decode(in);
-
         final RntbdResponseHeaders headers = RntbdResponseHeaders.decode(in.readSlice(frame.getHeadersLength()));
         final boolean hasPayload = headers.isPayloadPresent();
         final ByteBuf content;
@@ -141,7 +140,7 @@ public final class RntbdResponse implements ReferenceCounted {
             content = Unpooled.EMPTY_BUFFER;
         }
 
-        int end = in.readerIndex();
+        final int end = in.readerIndex();
         in.resetReaderIndex();
 
         return new RntbdResponse(in.readSlice(end - start), frame, headers, content);
