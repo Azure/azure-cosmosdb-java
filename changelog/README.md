@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.6.3
+- Addressed status code reporting errors that undermined retry policy:
+  - `RequestRateTooLargeException.getStatusCode` now correctly returns `TOO_MANY_REQUESTS`.
+  - `ServiceUnavailableException.getStatusCode` now correctly returns `SERVICE_UNAVAILABLE`.
+  - `DocumentClientExceptionTest` in commons and direct-impl now verify that the correct status code is returned for all `DocumentClientException` subtypes.
+  
 ## 2.6.2
 - Fixed query failure when setting MaxItemCount to -1 ([#261](https://github.com/Azure/azure-cosmosdb-java/issues/261)).
 - Fixed a NPE bug on Partitoin split ([#267](https://github.com/Azure/azure-cosmosdb-java/pull/267)).

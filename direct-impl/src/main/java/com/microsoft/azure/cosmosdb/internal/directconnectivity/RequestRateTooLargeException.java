@@ -41,7 +41,7 @@ public class RequestRateTooLargeException extends DocumentClientException {
     }
 
     public RequestRateTooLargeException(Error error, long lsn, String partitionKeyRangeId, Map<String, String> responseHeaders) {
-        super(HttpConstants.StatusCodes.NOTFOUND, error, responseHeaders);
+        super(HttpConstants.StatusCodes.TOO_MANY_REQUESTS, error, responseHeaders);
         BridgeInternal.setLSN(this, lsn);
         BridgeInternal.setPartitionKeyRangeId(this, partitionKeyRangeId);
     }
