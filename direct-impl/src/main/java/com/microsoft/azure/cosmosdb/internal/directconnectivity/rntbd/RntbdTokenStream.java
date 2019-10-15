@@ -82,7 +82,7 @@ abstract class RntbdTokenStream<T extends Enum<T> & RntbdHeader> {
 
     static <T extends RntbdTokenStream<?>> T decode(final T stream) {
 
-        ByteBuf in = stream.in;
+        final ByteBuf in = stream.in;
 
         while (in.readableBytes() > 0) {
 

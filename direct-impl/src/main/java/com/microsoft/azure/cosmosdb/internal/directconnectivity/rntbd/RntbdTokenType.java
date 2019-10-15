@@ -116,16 +116,14 @@ enum RntbdTokenType {
 
             if (length > maxLength) {
                 throw new CorruptedFrameException(
-                    lenientFormat("value length (%s) is greater than maxLength (%s)", length, maxLength)
-                );
+                    lenientFormat("value length (%s) is greater than maxLength (%s)", length, maxLength));
             }
 
             final int readableBytes = in.readableBytes();
 
             if (length != readableBytes) {
                 throw new CorruptedFrameException(
-                    lenientFormat("readableBytes (%s) does not match value length (%s)", readableBytes, length)
-                );
+                    lenientFormat("readableBytes (%s) does not match value length (%s)", readableBytes, length));
             }
         }
     }

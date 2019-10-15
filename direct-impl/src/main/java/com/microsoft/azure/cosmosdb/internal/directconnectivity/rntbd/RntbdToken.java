@@ -168,7 +168,7 @@ final class RntbdToken {
 
     public void decode(final ByteBuf in) {
 
-        checkNotNull(in, "in");
+        checkNotNull(in, "expected non-null in");
 
         if (this.value instanceof ByteBuf) {
             ((ByteBuf)this.value).release();
