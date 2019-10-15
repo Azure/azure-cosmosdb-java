@@ -23,7 +23,6 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd;
 
-import com.google.common.base.Strings;
 import com.microsoft.azure.cosmosdb.BridgeInternal;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.Error;
@@ -60,6 +59,7 @@ import io.netty.channel.ChannelPromise;
 import io.netty.channel.CoalescingBufferQueue;
 import io.netty.channel.EventLoop;
 import io.netty.channel.pool.ChannelHealthChecker;
+import io.netty.handler.codec.CorruptedFrameException;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.IdleStateEvent;
@@ -82,6 +82,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Strings.lenientFormat;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.SubStatusCodes;
 import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdClientChannelHealthChecker.Timestamps;
@@ -191,7 +192,9 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
             if (message instanceof RntbdResponse) {
 
                 try {
-                    this.messageReceived(context, (RntbdResponse)message);
+                    this.messageReceived(context, (RntbdResponse) message);
+                } catch (CorruptedFrameException error) {
+                    this.exceptionCaught(context, error);
                 } catch (Throwable throwable) {
                     reportIssue(context, "{} ", message, throwable);
                     this.exceptionCaught(context, throwable);
@@ -200,10 +203,10 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
             } else {
 
                 final IllegalStateException error = new IllegalStateException(
-                    Strings.lenientFormat("expected message of %s, not %s: %s",
-                        RntbdResponse.class, message.getClass(), message
-                    )
-                );
+                    lenientFormat("expected message of %s, not %s: %s",
+                        RntbdResponse.class,
+                        message.getClass(),
+                        message));
 
                 reportIssue(context, "", error);
                 this.exceptionCaught(context, error);
@@ -527,7 +530,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
             return;
         }
 
-        final IllegalStateException error = new IllegalStateException(Strings.lenientFormat("message of %s: %s", message.getClass(), message));
+        final IllegalStateException error = new IllegalStateException(lenientFormat("message of %s: %s", message.getClass(), message));
         reportIssue(context, "", error);
         this.exceptionCaught(context, error);
     }
@@ -664,7 +667,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
                 phrase = "closed exceptionally";
             }
 
-            final String message = Strings.lenientFormat("%s %s with %s pending requests", context, phrase, count);
+            final String message = lenientFormat("%s %s with %s pending requests", context, phrase, count);
             final Exception cause;
 
             if (throwable instanceof ClosedChannelException) {
