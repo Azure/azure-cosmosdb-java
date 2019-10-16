@@ -41,6 +41,7 @@ import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.graphite.GraphiteConfig;
 import io.micrometer.graphite.GraphiteMeterRegistry;
+import java.util.Collections;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
@@ -246,7 +247,7 @@ class Configuration {
         ConnectionPolicy policy = new ConnectionPolicy();
         policy.setConnectionMode(connectionMode);
         policy.setMaxPoolSize(maxConnectionPoolSize);
-        policy.setPreferredLocations(preferredLocations);
+        policy.setPreferredLocations(preferredLocations != null ? preferredLocations : Collections.emptyList());
         return policy;
     }
 
