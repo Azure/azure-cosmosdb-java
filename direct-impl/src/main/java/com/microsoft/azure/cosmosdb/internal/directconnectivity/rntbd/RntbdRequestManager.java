@@ -608,7 +608,9 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         }).args();
     }
 
-    private void completeAllPendingRequestsExceptionally(final ChannelHandlerContext context, final Throwable throwable) {
+    private void completeAllPendingRequestsExceptionally(
+        final ChannelHandlerContext context, final Throwable throwable
+    ) {
 
         reportIssueUnless(!this.closingExceptionally, context, "", throwable);
         this.closingExceptionally = true;
@@ -618,81 +620,82 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
             this.pendingWrites.releaseAndFailAll(context, throwable);
         }
 
-        if (!this.pendingRequests.isEmpty()) {
+        if (this.pendingRequests.isEmpty()) {
+            return;
+        }
 
-            if (!this.contextRequestFuture.isDone()) {
-                this.contextRequestFuture.completeExceptionally(throwable);
+        if (!this.contextRequestFuture.isDone()) {
+            this.contextRequestFuture.completeExceptionally(throwable);
+        }
+
+        if (!this.contextFuture.isDone()) {
+            this.contextFuture.completeExceptionally(throwable);
+        }
+
+        final int count = this.pendingRequests.size();
+        Exception contextRequestException = null;
+        String phrase = null;
+
+        if (this.contextRequestFuture.isCompletedExceptionally()) {
+
+            try {
+                this.contextRequestFuture.get();
+            } catch (final CancellationException error) {
+                phrase = "RNTBD context request write cancelled";
+                contextRequestException = error;
+            } catch (final Exception error) {
+                phrase = "RNTBD context request write failed";
+                contextRequestException = error;
+            } catch (final Throwable error) {
+                phrase = "RNTBD context request write failed";
+                contextRequestException = new ChannelException(error);
             }
 
-            if (!this.contextFuture.isDone()) {
-                this.contextFuture.completeExceptionally(throwable);
+        } else if (this.contextFuture.isCompletedExceptionally()) {
+
+            try {
+                this.contextFuture.get();
+            } catch (final CancellationException error) {
+                phrase = "RNTBD context request read cancelled";
+                contextRequestException = error;
+            } catch (final Exception error) {
+                phrase = "RNTBD context request read failed";
+                contextRequestException = error;
+            } catch (final Throwable error) {
+                phrase = "RNTBD context request read failed";
+                contextRequestException = new ChannelException(error);
             }
 
-            final int count = this.pendingRequests.size();
-            Exception contextRequestException = null;
-            String phrase = null;
+        } else {
 
-            if (this.contextRequestFuture.isCompletedExceptionally()) {
+            phrase = "closed exceptionally";
+        }
 
-                try {
-                    this.contextRequestFuture.get();
-                } catch (final CancellationException error) {
-                    phrase = "RNTBD context request write cancelled";
-                    contextRequestException = error;
-                } catch (final Exception error) {
-                    phrase = "RNTBD context request write failed";
-                    contextRequestException = error;
-                } catch (final Throwable error) {
-                    phrase = "RNTBD context request write failed";
-                    contextRequestException = new ChannelException(error);
-                }
+        final String message = lenientFormat("%s %s with %s pending requests", context, phrase, count);
+        final Exception cause;
 
-            } else if (this.contextFuture.isCompletedExceptionally()) {
+        if (throwable instanceof ClosedChannelException) {
 
-                try {
-                    this.contextFuture.get();
-                } catch (final CancellationException error) {
-                    phrase = "RNTBD context request read cancelled";
-                    contextRequestException = error;
-                } catch (final Exception error) {
-                    phrase = "RNTBD context request read failed";
-                    contextRequestException = error;
-                } catch (final Throwable error) {
-                    phrase = "RNTBD context request read failed";
-                    contextRequestException = new ChannelException(error);
-                }
+            cause = contextRequestException == null
+                ? (ClosedChannelException) throwable
+                : contextRequestException;
 
-            } else {
+        } else {
 
-                phrase = "closed exceptionally";
-            }
+            cause = throwable instanceof Exception
+                ? (Exception) throwable
+                : new ChannelException(throwable);
+        }
 
-            final String message = lenientFormat("%s %s with %s pending requests", context, phrase, count);
-            final Exception cause;
+        for (RntbdRequestRecord record : this.pendingRequests.values()) {
 
-            if (throwable instanceof ClosedChannelException) {
+            final Map<String, String> requestHeaders = record.args().serviceRequest().getHeaders();
+            final String requestUri = record.args().physicalAddress().toString();
 
-                cause = contextRequestException == null
-                    ? (ClosedChannelException)throwable
-                    : contextRequestException;
+            final GoneException error = new GoneException(message, cause, (Map<String, String>) null, requestUri);
+            BridgeInternal.setRequestHeaders(error, requestHeaders);
 
-            } else {
-
-                cause = throwable instanceof Exception
-                    ? (Exception)throwable
-                    : new ChannelException(throwable);
-            }
-
-            for (RntbdRequestRecord record : this.pendingRequests.values()) {
-
-                final Map<String, String> requestHeaders = record.args().serviceRequest().getHeaders();
-                final String requestUri = record.args().physicalAddress().toString();
-
-                final GoneException error = new GoneException(message, cause, (Map<String, String>)null, requestUri);
-                BridgeInternal.setRequestHeaders(error, requestHeaders);
-
-                record.completeExceptionally(error);
-            }
+            record.completeExceptionally(error);
         }
     }
 

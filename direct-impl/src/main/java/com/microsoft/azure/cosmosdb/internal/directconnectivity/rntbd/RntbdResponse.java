@@ -92,6 +92,7 @@ public final class RntbdResponse implements ReferenceCounted {
         this.content = content.retain();
     }
 
+    @JsonIgnore
     public UUID getActivityId() {
         return this.frame.getActivityId();
     }
@@ -302,8 +303,9 @@ public final class RntbdResponse implements ReferenceCounted {
             final int length = value.readableBytes();
 
             generator.writeStartObject();
-            generator.writeObjectField("length", length);
-            generator.writeObjectField("content", ByteBufUtil.hexDump(value, 0, length));
+            generator.writeObjectField("lengthInBytes", length);
+            generator.writeObjectField("hexDump", ByteBufUtil.hexDump(value, 0, length));
+            generator.writeObjectField("string", value.getCharSequence(0, length, StandardCharsets.UTF_8));
             generator.writeEndObject();
         }
     }
