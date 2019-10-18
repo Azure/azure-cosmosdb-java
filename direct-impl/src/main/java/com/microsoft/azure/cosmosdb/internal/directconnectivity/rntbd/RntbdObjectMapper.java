@@ -44,6 +44,7 @@ import java.io.InputStream;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Strings.lenientFormat;
 
 public final class RntbdObjectMapper {
 
@@ -62,7 +63,7 @@ public final class RntbdObjectMapper {
         } catch (final JsonProcessingException error) {
             logger.debug("could not convert {} value to JSON due to:", value.getClass(), error);
             try {
-                return Strings.lenientFormat("{\"error\":%s", objectWriter.writeValueAsString(error.toString()));
+                return lenientFormat("{\"error\":%s}", objectWriter.writeValueAsString(error.toString()));
             } catch (final JsonProcessingException exception) {
                 return "null";
             }
@@ -71,7 +72,7 @@ public final class RntbdObjectMapper {
 
     public static String toString(final Object value) {
         final String name = simpleClassNames.computeIfAbsent(value.getClass(), Class::getSimpleName);
-        return Strings.lenientFormat("%s(%s)", name, toJson(value));
+        return lenientFormat("%s(%s)", name, toJson(value));
     }
 
     public static ObjectWriter writer() {
@@ -98,7 +99,7 @@ public final class RntbdObjectMapper {
             return (ObjectNode)node;
         }
 
-        final String cause = Strings.lenientFormat("Expected %s, not %s", JsonNodeType.OBJECT, node.getNodeType());
+        final String cause = lenientFormat("Expected %s, not %s", JsonNodeType.OBJECT, node.getNodeType());
         throw new CorruptedFrameException(cause);
     }
 

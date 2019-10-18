@@ -23,6 +23,9 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.microsoft.azure.cosmosdb.BridgeInternal;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.RequestTimeoutException;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.StoreResponse;
@@ -34,19 +37,26 @@ import java.time.Duration;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+@JsonPropertyOrder({ "state", "args" })
 public final class RntbdRequestRecord extends CompletableFuture<StoreResponse> {
+
+    private static final AtomicReferenceFieldUpdater<RntbdRequestRecord, State>
+        stateUpdater = AtomicReferenceFieldUpdater.newUpdater(RntbdRequestRecord.class, State.class,"state");
 
     private final RntbdRequestArgs args;
     private final RntbdRequestTimer timer;
+    private volatile State state;
 
     public RntbdRequestRecord(final RntbdRequestArgs args, final RntbdRequestTimer timer) {
 
         checkNotNull(args, "args");
         checkNotNull(timer, "timer");
 
+        this.state = State.Created;
         this.args = args;
         this.timer = timer;
     }
@@ -57,6 +67,7 @@ public final class RntbdRequestRecord extends CompletableFuture<StoreResponse> {
         return this.args.activityId();
     }
 
+    @JsonProperty
     public RntbdRequestArgs args() {
         return this.args;
     }
@@ -64,18 +75,6 @@ public final class RntbdRequestRecord extends CompletableFuture<StoreResponse> {
     public long creationTime() {
         return this.args.creationTime();
     }
-
-    public Duration lifetime() {
-        return this.args.lifetime();
-    }
-
-    public long transportRequestId() {
-        return this.args.transportRequestId();
-    }
-
-    // endregion
-
-    // region Methods
 
     public boolean expire() {
 
@@ -88,6 +87,24 @@ public final class RntbdRequestRecord extends CompletableFuture<StoreResponse> {
         return this.completeExceptionally(error);
     }
 
+    public Duration lifetime() {
+        return this.args.lifetime();
+    }
+
+    @JsonProperty
+    public State state() {
+        return stateUpdater.get(this);
+    }
+
+    public RntbdRequestRecord state(State value) {
+        stateUpdater.set(this, value);
+        return this;
+    }
+
+    // endregion
+
+    // region Methods
+
     public Timeout newTimeout(final TimerTask task) {
         return this.timer.newTimeout(task);
     }
@@ -98,7 +115,19 @@ public final class RntbdRequestRecord extends CompletableFuture<StoreResponse> {
 
     @Override
     public String toString() {
-        return RntbdObjectMapper.toString(this.args);
+        return RntbdObjectMapper.toString(this);
+    }
+
+    public long transportRequestId() {
+        return this.args.transportRequestId();
+    }
+
+    // endregion
+
+    // region Types
+
+    enum State {
+        Created, Queued, Sent
     }
 
     // endregion

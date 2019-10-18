@@ -508,10 +508,12 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
         if (message instanceof RntbdRequestRecord) {
 
+            RntbdRequestRecord record = (RntbdRequestRecord) message;
             this.timestamps.channelWriteAttempted();
 
-            context.write(this.addPendingRequestRecord(context, (RntbdRequestRecord)message), promise).addListener(completed -> {
+            context.write(this.addPendingRequestRecord(context, record), promise).addListener(completed -> {
                 if (completed.isSuccess()) {
+                    record.state(RntbdRequestRecord.State.Sent);
                     this.timestamps.channelWriteCompleted();
                 }
             });
@@ -580,10 +582,8 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
         return this.pendingRequests.compute(record.transportRequestId(), (id, current) -> {
 
-            boolean predicate = current == null;
-            String format = "id: {}, current: {}, request: {}";
-
-            reportIssueUnless(predicate, context, format, record);
+            reportIssueUnless(current == null, context, "id: {}, current: {}, request: {}", record);
+            record.state(RntbdRequestRecord.State.Queued);
 
             final Timeout pendingRequestTimeout = record.newTimeout(timeout -> {
 
@@ -603,7 +603,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
                 pendingRequestTimeout.cancel();
             });
 
-            return record;
+            return record.state(RntbdRequestRecord.State.Queued);
 
         }).args();
     }
