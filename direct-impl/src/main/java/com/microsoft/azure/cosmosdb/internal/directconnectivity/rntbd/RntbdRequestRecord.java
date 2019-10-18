@@ -23,7 +23,6 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.microsoft.azure.cosmosdb.BridgeInternal;
@@ -40,8 +39,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Strings.lenientFormat;
 
-@JsonPropertyOrder({ "state", "args" })
+@JsonPropertyOrder({ "state", "args", "timeoutIntervalInMillis" })
 public final class RntbdRequestRecord extends CompletableFuture<StoreResponse> {
 
     private static final AtomicReferenceFieldUpdater<RntbdRequestRecord, State>
@@ -77,18 +77,17 @@ public final class RntbdRequestRecord extends CompletableFuture<StoreResponse> {
     }
 
     public boolean expire() {
-
-        final long timeoutInterval = this.timer.getRequestTimeout(TimeUnit.MILLISECONDS);
-        final String message = String.format("Request timeout interval (%,d ms) elapsed", timeoutInterval);
-        final RequestTimeoutException error = new RequestTimeoutException(message, this.args.physicalAddress());
-
+        final RequestTimeoutException error = new RequestTimeoutException(this.toString(), this.args.physicalAddress());
         BridgeInternal.setRequestHeaders(error, this.args.serviceRequest().getHeaders());
-
         return this.completeExceptionally(error);
     }
 
     public Duration lifetime() {
         return this.args.lifetime();
+    }
+
+    public Timeout newTimeout(final TimerTask task) {
+        return this.timer.newTimeout(task);
     }
 
     @JsonProperty
@@ -101,13 +100,18 @@ public final class RntbdRequestRecord extends CompletableFuture<StoreResponse> {
         return this;
     }
 
+    @JsonProperty
+    public long timeoutIntervalInMillis() {
+        return this.timer.getRequestTimeout(TimeUnit.MILLISECONDS);
+    }
+
+    public long transportRequestId() {
+        return this.args.transportRequestId();
+    }
+
     // endregion
 
     // region Methods
-
-    public Timeout newTimeout(final TimerTask task) {
-        return this.timer.newTimeout(task);
-    }
 
     public long stop(Timer requests, Timer responses) {
         return this.args.stop(requests, responses);
@@ -116,10 +120,6 @@ public final class RntbdRequestRecord extends CompletableFuture<StoreResponse> {
     @Override
     public String toString() {
         return RntbdObjectMapper.toString(this);
-    }
-
-    public long transportRequestId() {
-        return this.args.transportRequestId();
     }
 
     // endregion
