@@ -501,9 +501,6 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
     @Override
     public void write(final ChannelHandlerContext context, final Object message, final ChannelPromise promise) {
 
-        // TODO: DANOBLE: Ensure that all write errors are reported with a root cause of type EncoderException
-        //  Requires a full scan of the rntbd code
-
         this.traceOperation(context, "write", message);
 
         if (message instanceof RntbdRequestRecord) {
@@ -513,8 +510,10 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
             context.write(this.addPendingRequestRecord(context, record), promise).addListener(completed -> {
                 if (completed.isSuccess()) {
-                    record.state(RntbdRequestRecord.State.Sent);
+                    record.state(RntbdRequestRecord.State.SENT);
                     this.timestamps.channelWriteCompleted();
+                } else {
+                    record.state(RntbdRequestRecord.State.UNSENT);
                 }
             });
 
@@ -583,7 +582,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         return this.pendingRequests.compute(record.transportRequestId(), (id, current) -> {
 
             reportIssueUnless(current == null, context, "id: {}, current: {}, request: {}", record);
-            record.state(RntbdRequestRecord.State.Queued);
+            record.state(RntbdRequestRecord.State.QUEUED);
 
             final Timeout pendingRequestTimeout = record.newTimeout(timeout -> {
 
@@ -603,7 +602,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
                 pendingRequestTimeout.cancel();
             });
 
-            return record.state(RntbdRequestRecord.State.Queued);
+            return record.state(RntbdRequestRecord.State.QUEUED);
 
         }).args();
     }

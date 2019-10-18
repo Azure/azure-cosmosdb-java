@@ -39,7 +39,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Strings.lenientFormat;
 
 @JsonPropertyOrder({ "state", "args", "timeoutIntervalInMillis" })
 public final class RntbdRequestRecord extends CompletableFuture<StoreResponse> {
@@ -56,7 +55,7 @@ public final class RntbdRequestRecord extends CompletableFuture<StoreResponse> {
         checkNotNull(args, "args");
         checkNotNull(timer, "timer");
 
-        this.state = State.Created;
+        this.state = State.CREATED;
         this.args = args;
         this.timer = timer;
     }
@@ -95,7 +94,7 @@ public final class RntbdRequestRecord extends CompletableFuture<StoreResponse> {
         return stateUpdater.get(this);
     }
 
-    public RntbdRequestRecord state(State value) {
+    RntbdRequestRecord state(State value) {
         stateUpdater.set(this, value);
         return this;
     }
@@ -127,7 +126,7 @@ public final class RntbdRequestRecord extends CompletableFuture<StoreResponse> {
     // region Types
 
     enum State {
-        Created, Queued, Sent
+        CREATED, QUEUED, SENT, UNSENT
     }
 
     // endregion
