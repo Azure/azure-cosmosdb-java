@@ -28,12 +28,17 @@ import io.netty.util.HashedWheelTimer;
 import io.netty.util.Timeout;
 import io.netty.util.Timer;
 import io.netty.util.TimerTask;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 public final class RntbdRequestTimer implements AutoCloseable {
 
     private static final long FIVE_MILLISECONDS = 5000000L;
+
+    private static final Logger logger = LoggerFactory.getLogger(RntbdRequestTimer.class);
     private final long requestTimeout;
     private final Timer timer;
 
@@ -53,7 +58,8 @@ public final class RntbdRequestTimer implements AutoCloseable {
 
     @Override
     public void close() throws RuntimeException {
-        this.timer.stop();
+        Set<Timeout> timeouts = this.timer.stop();
+        logger.debug("stopped with {} outstanding requests", timeouts.size());
     }
 
     public Timeout newTimeout(final TimerTask task) {
