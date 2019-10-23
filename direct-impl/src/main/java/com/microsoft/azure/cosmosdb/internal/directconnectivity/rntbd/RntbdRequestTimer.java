@@ -45,7 +45,7 @@ public final class RntbdRequestTimer implements AutoCloseable {
     public RntbdRequestTimer(final long requestTimeout) {
 
         // Inspection of the HashWheelTimer code indicates that our choice of a 5 millisecond timer resolution ensures
-        // a request will timeout within 10 milliseconds of the specified requestTimeout interval. This is because
+        // a request will expire within 10 milliseconds of the specified requestTimeout interval. This is because
         // cancellation of a timeout takes two timer resolution units to complete.
 
         this.timer = new HashedWheelTimer(FIVE_MILLISECONDS, TimeUnit.NANOSECONDS);
@@ -57,10 +57,8 @@ public final class RntbdRequestTimer implements AutoCloseable {
     }
 
     @Override
-    public void close() throws RuntimeException {
-
+    public void close() {
         Set<Timeout> timeouts = this.timer.stop();
-
         if (logger.isDebugEnabled()) {
             int count = timeouts.size();
             if (count > 0) {
