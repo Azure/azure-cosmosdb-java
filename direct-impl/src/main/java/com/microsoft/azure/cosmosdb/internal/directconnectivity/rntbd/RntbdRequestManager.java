@@ -587,8 +587,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
             final Timeout pendingRequestTimeout = record.newTimeout(timeout -> {
 
                 // We don't wish to complete on the timeout thread, but rather on a thread doled out by our executor
-
-                EventExecutor executor = context.executor();
+                final EventExecutor executor = context.executor();
 
                 if (executor.inEventLoop()) {
                     record.expire();

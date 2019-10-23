@@ -58,8 +58,15 @@ public final class RntbdRequestTimer implements AutoCloseable {
 
     @Override
     public void close() throws RuntimeException {
+
         Set<Timeout> timeouts = this.timer.stop();
-        logger.debug("stopped with {} outstanding requests", timeouts.size());
+
+        if (logger.isDebugEnabled()) {
+            int count = timeouts.size();
+            if (count > 0) {
+                logger.debug("request expiration tasks cancelled: {}", count);
+            }
+        }
     }
 
     public Timeout newTimeout(final TimerTask task) {
