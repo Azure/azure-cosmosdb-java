@@ -24,7 +24,7 @@
 
 package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
-// TODO: DANOBLE: Use a TransportException derivative wherever CorruptFrameException is thrown in RntbdTransportClient
+// TODO: DANOBLE: Use a TransportException derivative wherever CorruptedFrameException is thrown in RntbdTransportClient
 //   * Continue to throw IllegalArgumentException, IllegalStateException, and NullPointerException.
 //   * Continue to complete all pending requests with a GoneException.
 //     Customers should then expect to see these causes for GoneException errors originating in RntbdTransportClient:

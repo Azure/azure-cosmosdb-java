@@ -269,7 +269,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         if (!this.closingExceptionally) {
             this.completeAllPendingRequestsExceptionally(context, ON_CHANNEL_UNREGISTERED);
         } else {
-            logger.warn("{} channelUnregistered exceptionally", context);
+            logger.debug("{} channelUnregistered exceptionally", context);
         }
 
         context.fireChannelUnregistered();
@@ -311,7 +311,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
         if (!this.closingExceptionally) {
             this.completeAllPendingRequestsExceptionally(context, cause);
-            logger.warn("{} closing due to:", context, cause);
+            logger.debug("{} closing due to:", context, cause);
             context.flush().close();
         }
     }
@@ -400,7 +400,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         if (!this.closingExceptionally) {
             this.completeAllPendingRequestsExceptionally(context, ON_CLOSE);
         } else {
-            logger.warn("{} closed exceptionally", context);
+            logger.debug("{} closed exceptionally", context);
         }
 
         final SslHandler sslHandler = context.pipeline().get(SslHandler.class);
@@ -446,7 +446,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         if (!this.closingExceptionally) {
             this.completeAllPendingRequestsExceptionally(context, ON_DEREGISTER);
         } else {
-            logger.warn("{} deregistered exceptionally", context);
+            logger.debug("{} deregistered exceptionally", context);
         }
 
         context.deregister(promise);
@@ -715,7 +715,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         final RntbdRequestRecord pendingRequest = this.pendingRequests.get(transportRequestId);
 
         if (pendingRequest == null) {
-            logger.warn("{} response ignored because there is no matching pending request: {}", context, response);
+            logger.debug("{} response ignored because there is no matching pending request: {}", context, response);
             return;
         }
 

@@ -197,6 +197,7 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
         private final int maxRequestsPerChannel;
         private final int partitionCount;
         private final Duration receiveHangDetectionTime;
+        private final Duration requestExpiryInterval;
         private final Duration requestTimeout;
         private final Duration sendHangDetectionTime;
         private final Duration shutdownTimeout;
@@ -217,6 +218,7 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
             this.maxRequestsPerChannel = builder.maxRequestsPerChannel;
             this.partitionCount = builder.partitionCount;
             this.receiveHangDetectionTime = builder.receiveHangDetectionTime;
+            this.requestExpiryInterval = builder.requestExpiryInterval;
             this.requestTimeout = builder.requestTimeout;
             this.sendHangDetectionTime = builder.sendHangDetectionTime;
             this.shutdownTimeout = builder.shutdownTimeout;
@@ -267,6 +269,8 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
             return this.receiveHangDetectionTime;
         }
 
+        public Duration requestExpiryInterval() { return this.requestExpiryInterval; }
+
         public Duration requestTimeout() {
             return this.requestTimeout;
         }
@@ -303,6 +307,7 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
 
             private static final UserAgentContainer DEFAULT_USER_AGENT_CONTAINER = new UserAgentContainer();
             private static final Duration FIFTEEN_SECONDS = Duration.ofSeconds(15L);
+            private static final Duration FIVE_SECONDS =Duration.ofSeconds(5L);
             private static final Duration SEVENTY_SECONDS = Duration.ofSeconds(70L);
             private static final Duration SIXTY_FIVE_SECONDS = Duration.ofSeconds(65L);
             private static final Duration TEN_SECONDS = Duration.ofSeconds(10L);
@@ -317,6 +322,7 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
             private int maxRequestsPerChannel = 30;
             private int partitionCount = 1;
             private Duration receiveHangDetectionTime = SIXTY_FIVE_SECONDS;
+            private Duration requestExpiryInterval = FIVE_SECONDS;
             private Duration requestTimeout;
             private Duration sendHangDetectionTime = TEN_SECONDS;
             private Duration shutdownTimeout = FIFTEEN_SECONDS;
@@ -412,6 +418,14 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
                     "expected positive value, not %s",
                     value);
                 this.receiveHangDetectionTime = value;
+                return this;
+            }
+
+            public Builder requestExpiryInterval(final Duration value) {
+                checkArgument(value != null && value.compareTo(Duration.ZERO) > 0,
+                    "expected positive value, not %s",
+                    value);
+                this.requestExpiryInterval = value;
                 return this;
             }
 
