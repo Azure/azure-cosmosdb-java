@@ -40,6 +40,7 @@
 
 - Added support for Hash v2 ([#96](https://github.com/Azure/azure-cosmosdb-java/commit/f780e2d3210fbf875afcdd5e245877a49f7697ee))
 - Open source direct connectivity implementation ([#94](https://github.com/Azure/azure-cosmosdb-java/commit/81a56e9506827e647253b1b6ae39f95a7aee37a3))
+- Added Support for Diagnostics String 
 
 ## 2.4.4 - 2019-06-25
 
