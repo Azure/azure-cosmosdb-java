@@ -41,6 +41,7 @@ import io.micrometer.core.instrument.config.NamingConvention;
 import io.micrometer.core.lang.Nullable;
 import io.micrometer.graphite.GraphiteConfig;
 import io.micrometer.graphite.GraphiteMeterRegistry;
+import java.util.Collections;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
@@ -49,6 +50,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.List;
 
 class Configuration {
 
@@ -133,6 +135,9 @@ class Configuration {
 
     @Parameter(names = "-numberOfPreCreatedDocuments", description = "Total Number Of Documents To pre create for a read workload to use")
     private int numberOfPreCreatedDocuments = 1000;
+    
+    @Parameter(names = "-preferredLocations", description = "Comma-separated list of Preferred regions")
+    private List<String> preferredLocations;
 
     @Parameter(names = {"-h", "-help", "--help"}, description = "Help", help = true)
     private boolean help = false;
@@ -242,6 +247,7 @@ class Configuration {
         ConnectionPolicy policy = new ConnectionPolicy();
         policy.setConnectionMode(connectionMode);
         policy.setMaxPoolSize(maxConnectionPoolSize);
+        policy.setPreferredLocations(preferredLocations != null ? preferredLocations : Collections.emptyList());
         return policy;
     }
 
