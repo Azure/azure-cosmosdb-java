@@ -680,7 +680,7 @@ public class TestSuiteBase extends DocumentClientTest {
                 try {
                     client.close();
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    logger.error("unexpected failure in closing client", e);
                 }
             }).start();
         }
@@ -691,7 +691,7 @@ public class TestSuiteBase extends DocumentClientTest {
             try {
                 client.close();
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("unexpected failure in closing client", e);
             }
         }
     }

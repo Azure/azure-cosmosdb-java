@@ -303,7 +303,6 @@ public class AddressResolverTest {
         try {
             resolvedAddresses = this.addressResolver.resolveAsync(request, forceAddressRefresh).toBlocking().value();
         } catch (RuntimeException e) {
-            e.printStackTrace();
             throw (Exception) e.getCause();
         } finally {
             assertThat(collectionCacheRefreshed).isEqualTo(collectionCacheRefreshedCount).describedAs("collection cache refresh count mismath");
