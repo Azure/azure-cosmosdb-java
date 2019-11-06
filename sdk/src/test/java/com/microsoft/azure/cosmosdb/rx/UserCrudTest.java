@@ -134,32 +134,28 @@ public class UserCrudTest extends TestSuiteBase {
                 .build();
         
         validateSuccess(readObservable, validatorForRead);
-        
+
         client.readUsers(getDatabaseLink(), null).toBlocking().subscribe(users -> {
-            try {
-                int initialNumberOfUsers = users.getResults().size();
-                //update user
-                readBackUser.setId(UUID.randomUUID().toString());
+            int initialNumberOfUsers = users.getResults().size();
+            //update user
+            readBackUser.setId(UUID.randomUUID().toString());
 
-                Observable<ResourceResponse<User>> updateObservable = client.upsertUser(getDatabaseLink(), readBackUser, null);
+            Observable<ResourceResponse<User>> updateObservable = client.upsertUser(getDatabaseLink(), readBackUser, null);
 
-                // validate user upsert
-                ResourceResponseValidator<User> validatorForUpdate = new ResourceResponseValidator.Builder<User>()
-                        .withId(readBackUser.getId())
-                        .notNullEtag()
-                        .build();
-                
-                validateSuccess(updateObservable, validatorForUpdate);
-                
-                //verify that new user is added due to upsert with changed id
-                client.readUsers(getDatabaseLink(), null).toBlocking().subscribe(newUsers ->{
-                    int finalNumberOfUsers = newUsers.getResults().size();
-                    assertThat(finalNumberOfUsers).isEqualTo(initialNumberOfUsers + 1);
-                });
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }); 
+            // validate user upsert
+            ResourceResponseValidator<User> validatorForUpdate = new ResourceResponseValidator.Builder<User>()
+                    .withId(readBackUser.getId())
+                    .notNullEtag()
+                    .build();
+
+            validateSuccess(updateObservable, validatorForUpdate);
+
+            //verify that new user is added due to upsert with changed id
+            client.readUsers(getDatabaseLink(), null).toBlocking().subscribe(newUsers -> {
+                int finalNumberOfUsers = newUsers.getResults().size();
+                assertThat(finalNumberOfUsers).isEqualTo(initialNumberOfUsers + 1);
+            });
+        });
     }
     
     @Test(groups = { "emulator" }, timeOut = TIMEOUT)
