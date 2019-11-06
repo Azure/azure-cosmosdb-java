@@ -61,6 +61,7 @@ import io.reactivex.netty.protocol.http.client.HttpClientRequest;
 import rx.Observable;
 
 public class DocumentQuerySpyWireContentTest extends TestSuiteBase {
+
     private Database createdDatabase;
     private DocumentCollection createdSinglePartitionCollection;
     private DocumentCollection createdMultiPartitionCollection;
@@ -80,7 +81,7 @@ public class DocumentQuerySpyWireContentTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuilders")
     public DocumentQuerySpyWireContentTest(Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @DataProvider(name = "responseContinuationTokenLimitParamProvider")
@@ -147,17 +148,21 @@ public class DocumentQuerySpyWireContentTest extends TestSuiteBase {
     }
 
     private void validateRequestHasContinuationTokenLimit(HttpClientRequest<ByteBuf> request, Integer expectedValue) {
-        if (expectedValue != null && expectedValue > 0) {
-            assertThat(request.getHeaders()
-                    .contains(HttpConstants.HttpHeaders.RESPONSE_CONTINUATION_TOKEN_LIMIT_IN_KB))
-                    .isTrue();
-            assertThat(request.getHeaders()
-                    .get("x-ms-documentdb-responsecontinuationtokenlimitinkb"))
-                    .isEqualTo(Integer.toString(expectedValue));
-        } else {
-            assertThat(request.getHeaders()
-                    .contains(HttpConstants.HttpHeaders.RESPONSE_CONTINUATION_TOKEN_LIMIT_IN_KB))
-                    .isFalse();
+        // query plan request does'nt have this header so checking only for queries
+        if(request.getHeaders().get(HttpConstants.HttpHeaders.IS_QUERY) != null ){
+
+            if (expectedValue != null && expectedValue > 0) {
+                assertThat(request.getHeaders()
+                        .contains(HttpConstants.HttpHeaders.RESPONSE_CONTINUATION_TOKEN_LIMIT_IN_KB))
+                        .isTrue();
+                assertThat(request.getHeaders()
+                        .get("x-ms-documentdb-responsecontinuationtokenlimitinkb"))
+                        .isEqualTo(Integer.toString(expectedValue));
+            } else {
+                assertThat(request.getHeaders()
+                        .contains(HttpConstants.HttpHeaders.RESPONSE_CONTINUATION_TOKEN_LIMIT_IN_KB))
+                        .isFalse();
+            }
         }
     }
 
@@ -170,7 +175,7 @@ public class DocumentQuerySpyWireContentTest extends TestSuiteBase {
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() throws Exception {
-        client = new SpyClientBuilder(clientBuilder).build();
+        client = new SpyClientBuilder(this.clientBuilder()).build();
         createdDatabase = SHARED_DATABASE;
         createdSinglePartitionCollection = SHARED_SINGLE_PARTITION_COLLECTION;
         truncateCollection(SHARED_SINGLE_PARTITION_COLLECTION);

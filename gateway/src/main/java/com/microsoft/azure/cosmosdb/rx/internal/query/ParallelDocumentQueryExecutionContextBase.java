@@ -84,11 +84,18 @@ public abstract class ParallelDocumentQueryExecutionContextBase<T extends Resour
         Map<String, String> commonRequestHeaders = createCommonHeadersAsync(this.getFeedOptions(null, null));
 
         for (PartitionKeyRange targetRange : partitionKeyRangeToContinuationTokenMap.keySet()) {
+
             Func3<PartitionKeyRange, String, Integer, RxDocumentServiceRequest> createRequestFunc = (partitionKeyRange,
                     continuationToken, pageSize) -> {
                 Map<String, String> headers = new HashMap<>(commonRequestHeaders);
                 headers.put(HttpConstants.HttpHeaders.CONTINUATION, continuationToken);
                 headers.put(HttpConstants.HttpHeaders.PAGE_SIZE, Strings.toString(pageSize));
+                if(feedOptions.getPartitionKey() != null){
+                    headers.put(HttpConstants.HttpHeaders.PARTITION_KEY, feedOptions
+                            .getPartitionKey()
+                            .getInternalPartitionKey()
+                            .toJson());
+                }
                 return this.createDocumentServiceRequest(headers, querySpecForInit, partitionKeyRange, collectionRid);
             };
 

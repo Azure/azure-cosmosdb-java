@@ -49,7 +49,7 @@ public class ReadFeedDocumentsTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuildersWithDirect")
     public ReadFeedDocumentsTest(AsyncDocumentClient.Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "simple" }, timeOut = FEED_TIMEOUT)
@@ -71,25 +71,9 @@ public class ReadFeedDocumentsTest extends TestSuiteBase {
         validateQuerySuccess(feedObservable, validator, FEED_TIMEOUT);
     }
 
-    @Test(groups = { "simple" }, timeOut = FEED_TIMEOUT)
-    public void readDocuments_withoutEnableCrossPartitionQuery() {
-        FeedOptions options = new FeedOptions();
-        options.setMaxItemCount(2);
-
-        Observable<FeedResponse<Document>> feedObservable = client.readDocuments(getCollectionLink(), options);
-        FailureValidator validator = FailureValidator.builder().instanceOf(DocumentClientException.class)
-                .statusCode(400)
-                .errorMessageContains("Cross partition query is required but disabled." +
-                                              " Please set x-ms-documentdb-query-enablecrosspartition to true," +
-                                              " specify x-ms-documentdb-partitionkey," +
-                                              " or revise your query to avoid this exception.")
-                .build();
-        validateQueryFailure(feedObservable, validator, FEED_TIMEOUT);
-    }
-
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT, alwaysRun = true)
     public void beforeClass() {
-        client = clientBuilder.build();
+        client = this.clientBuilder().build();
         createdDatabase = SHARED_DATABASE;
         createdCollection = SHARED_MULTI_PARTITION_COLLECTION;
 
@@ -101,7 +85,7 @@ public class ReadFeedDocumentsTest extends TestSuiteBase {
         }
 
         createdDocuments = bulkInsertBlocking(client, getCollectionLink(), docDefList);
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(this.clientBuilder());
     }
 
     @AfterClass(groups = { "simple" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)

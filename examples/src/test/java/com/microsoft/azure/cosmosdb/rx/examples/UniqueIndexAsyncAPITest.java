@@ -29,6 +29,7 @@ import com.microsoft.azure.cosmosdb.ConsistencyLevel;
 import com.microsoft.azure.cosmosdb.Database;
 import com.microsoft.azure.cosmosdb.Document;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
+import com.microsoft.azure.cosmosdb.DocumentClientTest;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.ResourceResponse;
 import com.microsoft.azure.cosmosdb.UniqueKey;
@@ -47,7 +48,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 
-public class UniqueIndexAsyncAPITest {
+public class UniqueIndexAsyncAPITest extends DocumentClientTest {
+
     private final static int TIMEOUT = 60000;
 
     private AsyncDocumentClient client;
@@ -55,7 +57,8 @@ public class UniqueIndexAsyncAPITest {
 
     @Test(groups = "samples", timeOut = TIMEOUT)
     public void uniqueIndex() {
-        DocumentCollection collectionDefinition = new DocumentCollection();
+
+        DocumentCollection collectionDefinition = new DocumentCollection();//
         collectionDefinition.setId(UUID.randomUUID().toString());
         UniqueKeyPolicy uniqueKeyPolicy = new UniqueKeyPolicy();
         UniqueKey uniqueKey = new UniqueKey();
@@ -90,15 +93,16 @@ public class UniqueIndexAsyncAPITest {
 
     @BeforeClass(groups = "samples", timeOut = TIMEOUT)
     public void setUp() {
-        // Sets up the requirements for each test
+
         ConnectionPolicy connectionPolicy = new ConnectionPolicy();
         connectionPolicy.setConnectionMode(ConnectionMode.Direct);
-        client = new AsyncDocumentClient.Builder()
-                .withServiceEndpoint(TestConfigurations.HOST)
-                .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
-                .withConnectionPolicy(connectionPolicy)
-                .withConsistencyLevel(ConsistencyLevel.Session)
-                .build();
+
+        this.client = this.clientBuilder()
+            .withServiceEndpoint(TestConfigurations.HOST)
+            .withMasterKeyOrResourceToken(TestConfigurations.MASTER_KEY)
+            .withConnectionPolicy(connectionPolicy)
+            .withConsistencyLevel(ConsistencyLevel.Session)
+            .build();
 
         DocumentCollection collectionDefinition = new DocumentCollection();
         collectionDefinition.setId(UUID.randomUUID().toString());

@@ -28,6 +28,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import com.google.common.base.Strings;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.CorruptedFrameException;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -39,21 +40,21 @@ final class RntbdResponseStatus {
 
     // region Fields
 
-    final static int LENGTH = Integer.BYTES  // length
+    static final int LENGTH = Integer.BYTES  // length
         + Integer.BYTES  // status
         + 2 * Long.BYTES;  // activityId
 
     @JsonProperty("activityId")
-    final private UUID activityId;
+    private final UUID activityId;
 
     @JsonProperty("length")
-    final private int length;
+    private final int length;
 
-    final private HttpResponseStatus status;
+    private final HttpResponseStatus status;
 
     // endregion
 
-    RntbdResponseStatus(int length, HttpResponseStatus status, UUID activityId) {
+    RntbdResponseStatus(final int length, final HttpResponseStatus status, final UUID activityId) {
         this.length = length;
         this.status = status;
         this.activityId = activityId;
@@ -80,28 +81,28 @@ final class RntbdResponseStatus {
         return this.status.code();
     }
 
-    static RntbdResponseStatus decode(ByteBuf in) {
+    static RntbdResponseStatus decode(final ByteBuf in) {
 
-        long length = in.readUnsignedIntLE();
+        final long length = in.readUnsignedIntLE();
 
         if (!(LENGTH <= length && length <= Integer.MAX_VALUE)) {
-            String reason = String.format("frame length: %d", length);
+            final String reason = Strings.lenientFormat("frame length: %s", length);
             throw new CorruptedFrameException(reason);
         }
 
-        int code = in.readIntLE();
-        HttpResponseStatus status = HttpResponseStatus.valueOf(code);
+        final int code = in.readIntLE();
+        final HttpResponseStatus status = HttpResponseStatus.valueOf(code);
 
         if (status == null) {
-            String reason = String.format("status code: %d", code);
+            final String reason = Strings.lenientFormat("status code: %s", code);
             throw new CorruptedFrameException(reason);
         }
 
-        UUID activityId = RntbdUUID.decode(in);
+        final UUID activityId = RntbdUUID.decode(in);
         return new RntbdResponseStatus((int)length, status, activityId);
     }
 
-    void encode(ByteBuf out) {
+    void encode(final ByteBuf out) {
         out.writeIntLE(this.getLength());
         out.writeIntLE(this.getStatusCode());
         RntbdUUID.encode(this.getActivityId(), out);
@@ -109,10 +110,10 @@ final class RntbdResponseStatus {
 
     @Override
     public String toString() {
-        ObjectWriter writer = RntbdObjectMapper.writer();
+        final ObjectWriter writer = RntbdObjectMapper.writer();
         try {
             return writer.writeValueAsString(this);
-        } catch (JsonProcessingException error) {
+        } catch (final JsonProcessingException error) {
             throw new CorruptedFrameException(error);
         }
     }

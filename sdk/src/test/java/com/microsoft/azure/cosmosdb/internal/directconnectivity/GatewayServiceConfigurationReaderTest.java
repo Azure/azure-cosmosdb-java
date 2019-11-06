@@ -30,6 +30,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
 
+import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import org.apache.commons.io.IOUtils;
 import org.mockito.Matchers;
 import org.mockito.Mockito;
@@ -81,15 +82,15 @@ public class GatewayServiceConfigurationReaderTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuilders")
     public GatewayServiceConfigurationReaderTest(Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @BeforeClass(groups = "simple")
     public void setup() throws Exception {
-        client = clientBuilder.build();
+        client = this.clientBuilder().build();
         mockHttpClient = (CompositeHttpClient<ByteBuf, ByteBuf>) Mockito.mock(CompositeHttpClient.class);
 
-        ClientUnderTest clientUnderTest = SpyClientUnderTestFactory.createClientUnderTest(this.clientBuilder);
+        ClientUnderTest clientUnderTest = SpyClientUnderTestFactory.createClientUnderTest(this.clientBuilder());
         httpClient = clientUnderTest.getSpyHttpClient();
         baseAuthorizationTokenProvider = new BaseAuthorizationTokenProvider(TestConfigurations.MASTER_KEY);
         connectionPolicy = ConnectionPolicy.GetDefault();
@@ -182,10 +183,14 @@ public class GatewayServiceConfigurationReaderTest extends TestSuiteBase {
     private HttpClientResponse<ByteBuf> getMockResponse(String databaseAccountJson) {
         HttpClientResponse<ByteBuf> resp = Mockito.mock(HttpClientResponse.class);
         Mockito.doReturn(HttpResponseStatus.valueOf(200)).when(resp).getStatus();
-        Mockito.doReturn(Observable.just(ByteBufUtil.writeUtf8(ByteBufAllocator.DEFAULT, databaseAccountJson)))
+        ByteBuf byteBuffer = ByteBufUtil.writeUtf8(ByteBufAllocator.DEFAULT, databaseAccountJson);
+
+        Mockito.doReturn(Observable.just(byteBuffer))
                 .when(resp).getContent();
 
         HttpHeaders httpHeaders = new DefaultHttpHeaders();
+        httpHeaders = httpHeaders.add(HttpConstants.HttpHeaders.CONTENT_LENGTH, byteBuffer.writerIndex());
+
         DefaultHttpResponse httpResponse = new DefaultHttpResponse(HttpVersion.HTTP_1_1,
                 HttpResponseStatus.valueOf(200), httpHeaders);
 

@@ -52,6 +52,7 @@ public class BackPressureTest extends TestSuiteBase {
 
     private static final int TIMEOUT = 200000;
     private static final int SETUP_TIMEOUT = 60000;
+    private static final int THRESHOLD = 5;
 
     private Database createdDatabase;
     private DocumentCollection createdCollection;
@@ -69,9 +70,9 @@ public class BackPressureTest extends TestSuiteBase {
         return collectionDefinition;
     }
 
-    @Factory(dataProvider = "simpleClientBuildersWithDirectHttps")
+    @Factory(dataProvider = "simpleClientBuildersWithDirect")
     public BackPressureTest(Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "long" }, timeOut = TIMEOUT)
@@ -101,7 +102,7 @@ public class BackPressureTest extends TestSuiteBase {
             // validate that the difference between the number of requests to backend
             // and the number of returned results is always less than a fixed threshold
             assertThat(client.httpRequests.size() - subscriber.getOnNextEvents().size())
-                .isLessThanOrEqualTo(RxRingBuffer.SIZE);
+                .isLessThanOrEqualTo(RxRingBuffer.SIZE + THRESHOLD);
 
             subscriber.requestMore(1);
             i++;
@@ -138,7 +139,7 @@ public class BackPressureTest extends TestSuiteBase {
             // validate that the difference between the number of requests to backend
             // and the number of returned results is always less than a fixed threshold
             assertThat(client.httpRequests.size() - subscriber.getValueCount())
-                    .isLessThanOrEqualTo(RxRingBuffer.SIZE);
+                    .isLessThanOrEqualTo(RxRingBuffer.SIZE + THRESHOLD);
 
             subscriber.requestMore(1);
             i++;
@@ -150,10 +151,6 @@ public class BackPressureTest extends TestSuiteBase {
         assertThat(subscriber.getOnNextEvents()).hasSize(createdDocuments.size());
     }
 
-    // TODO: DANOBLE: Investigate Direct TCP performance issue
-    // NOTE: This method requires multiple SHUTDOWN_TIMEOUT intervals
-    // SEE: https://msdata.visualstudio.com/CosmosDB/_workitems/edit/367028https://msdata.visualstudio.com/CosmosDB/_workitems/edit/367028
-
     @BeforeClass(groups = { "long" }, timeOut = 2 * SETUP_TIMEOUT)
     public void beforeClass() throws Exception {
 
@@ -162,7 +159,7 @@ public class BackPressureTest extends TestSuiteBase {
         createdDatabase = SHARED_DATABASE;
         createdCollection = createCollection(createdDatabase.getId(), getSinglePartitionCollectionDefinition(), options);
 
-        client = new ClientUnderTestBuilder(clientBuilder).build();
+        client = new ClientUnderTestBuilder(this.clientBuilder()).build();
 
         // increase throughput to max for a single partition collection to avoid throttling
         // for bulk insert and later queries.
@@ -187,7 +184,7 @@ public class BackPressureTest extends TestSuiteBase {
 
         createdDocuments = documentBulkInsertObs.map(ResourceResponse::getResource).toList().toBlocking().single();
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(this.clientBuilder());
         warmUp();
     }
 
@@ -195,10 +192,6 @@ public class BackPressureTest extends TestSuiteBase {
         // ensure collection is cached
         client.queryDocuments(getCollectionLink(), "SELECT * from r", null).first().toBlocking().single();
     }
-
-    // TODO: DANOBLE: Investigate Direct TCP performance issue
-    // NOTE: This method requires multiple SHUTDOWN_TIMEOUT intervals
-    // SEE: https://msdata.visualstudio.com/CosmosDB/_workitems/edit/367028https://msdata.visualstudio.com/CosmosDB/_workitems/edit/367028
 
     @AfterClass(groups = { "long" }, timeOut = 2 * SHUTDOWN_TIMEOUT, alwaysRun = true)
     public void afterClass() {

@@ -51,7 +51,6 @@ import rx.Single;
 import rx.observers.TestSubscriber;
 import rx.subjects.PublishSubject;
 
-import java.net.URI;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
@@ -79,15 +78,15 @@ public class StoreReaderTest {
         StoreReader storeReader = new StoreReader(transportClient, addressSelector, sessionContainer);
 
         CyclicBarrier b = new CyclicBarrier(2);
-        PublishSubject<List<URI>> subject = PublishSubject.create();
+        PublishSubject<List<Uri>> subject = PublishSubject.create();
         CountDownLatch c = new CountDownLatch(1);
 
-        List<URI> uris = ImmutableList.of(URI.create("https://localhost:5050"), URI.create("https://localhost:5051"),
-                                          URI.create("https://localhost:50502"), URI.create("https://localhost:5053"));
+        List<Uri> uris = ImmutableList.of(Uri.create("https://localhost:5050"), Uri.create("https://localhost:5051"),
+                                          Uri.create("https://localhost:50502"), Uri.create("https://localhost:5053"));
 
         Mockito.doAnswer(new Answer() {
             @Override
-            public Single<List<URI>> answer(InvocationOnMock invocationOnMock) throws Throwable {
+            public Single<List<Uri>> answer(InvocationOnMock invocationOnMock) throws Throwable {
 
                 return subject.toSingle().doOnSuccess(x -> c.countDown()).doAfterTerminate(() -> {
                     new Thread() {
@@ -162,10 +161,10 @@ public class StoreReaderTest {
                 .then(ex)
                 .build();
 
-        URI primaryUri = URI.create("primary");
-        URI secondaryUri1 = URI.create("secondary1");
-        URI secondaryUri2 = URI.create("secondary2");
-        URI secondaryUri3 = URI.create("secondary3");
+        Uri primaryUri = Uri.create("primary");
+        Uri secondaryUri1 = Uri.create("secondary1");
+        Uri secondaryUri2 = Uri.create("secondary2");
+        Uri secondaryUri3 = Uri.create("secondary3");
 
         AddressSelectorWrapper addressSelectorWrapper = AddressSelectorWrapper.Builder.Simple.create()
                 .withPrimary(primaryUri)
@@ -232,10 +231,10 @@ public class StoreReaderTest {
                 .then(storeResponse)  // 4th replica read returns storeResponse satisfying requested session token
                 .build();
 
-        URI primaryUri = URI.create("primary");
-        URI secondaryUri1 = URI.create("secondary1");
-        URI secondaryUri2 = URI.create("secondary2");
-        URI secondaryUri3 = URI.create("secondary3");
+        Uri primaryUri = Uri.create("primary");
+        Uri secondaryUri1 = Uri.create("secondary1");
+        Uri secondaryUri2 = Uri.create("secondary2");
+        Uri secondaryUri3 = Uri.create("secondary3");
 
         AddressSelectorWrapper addressSelectorWrapper = AddressSelectorWrapper.Builder.Simple.create()
                 .withPrimary(primaryUri)
@@ -309,10 +308,10 @@ public class StoreReaderTest {
                 .then(foundException) // 4th replica read returns not found
                 .build();
 
-        URI primaryUri = URI.create("primary");
-        URI secondaryUri1 = URI.create("secondary1");
-        URI secondaryUri2 = URI.create("secondary2");
-        URI secondaryUri3 = URI.create("secondary3");
+        Uri primaryUri = Uri.create("primary");
+        Uri secondaryUri1 = Uri.create("secondary1");
+        Uri secondaryUri2 = Uri.create("secondary2");
+        Uri secondaryUri3 = Uri.create("secondary3");
 
         AddressSelectorWrapper addressSelectorWrapper = AddressSelectorWrapper.Builder.Simple.create()
                 .withPrimary(primaryUri)
@@ -378,10 +377,10 @@ public class StoreReaderTest {
                 .then(foundException) // 4th replica read returns not found
                 .build();
 
-        URI primaryUri = URI.create("primary");
-        URI secondaryUri1 = URI.create("secondary1");
-        URI secondaryUri2 = URI.create("secondary2");
-        URI secondaryUri3 = URI.create("secondary3");
+        Uri primaryUri = Uri.create("primary");
+        Uri secondaryUri1 = Uri.create("secondary1");
+        Uri secondaryUri2 = Uri.create("secondary2");
+        Uri secondaryUri3 = Uri.create("secondary3");
 
         AddressSelectorWrapper addressSelectorWrapper = AddressSelectorWrapper.Builder.Simple.create()
                 .withPrimary(primaryUri)
@@ -440,10 +439,10 @@ public class StoreReaderTest {
                 .then(requestRateTooLargeException) // 4th replica read returns 429
                 .build();
 
-        URI primaryUri = URI.create("primary");
-        URI secondaryUri1 = URI.create("secondary1");
-        URI secondaryUri2 = URI.create("secondary2");
-        URI secondaryUri3 = URI.create("secondary3");
+        Uri primaryUri = Uri.create("primary");
+        Uri secondaryUri1 = Uri.create("secondary1");
+        Uri secondaryUri2 = Uri.create("secondary2");
+        Uri secondaryUri3 = Uri.create("secondary3");
 
         AddressSelectorWrapper addressSelectorWrapper = AddressSelectorWrapper.Builder.Simple.create()
                 .withPrimary(primaryUri)
@@ -489,7 +488,7 @@ public class StoreReaderTest {
         AddressSelector addressSelector = Mockito.mock(AddressSelector.class);
         ISessionContainer sessionContainer = Mockito.mock(ISessionContainer.class);
 
-        URI primaryURI = URI.create("primaryLoc");
+        Uri primaryURI = Uri.create("primaryLoc");
 
         RxDocumentServiceRequest request = RxDocumentServiceRequest.createFromName(
                 OperationType.Read, "/dbs/db/colls/col/docs/docId", ResourceType.Document);
@@ -520,7 +519,7 @@ public class StoreReaderTest {
         AddressSelector addressSelector = Mockito.mock(AddressSelector.class);
         ISessionContainer sessionContainer = Mockito.mock(ISessionContainer.class);
 
-        URI primaryURI = URI.create("primaryLoc");
+        Uri primaryURI = Uri.create("primaryLoc");
 
         RxDocumentServiceRequest request = RxDocumentServiceRequest.createFromName(
                 OperationType.Read, "/dbs/db/colls/col/docs/docId", ResourceType.Document);
@@ -547,7 +546,7 @@ public class StoreReaderTest {
         AddressSelector addressSelector = Mockito.mock(AddressSelector.class);
         ISessionContainer sessionContainer = Mockito.mock(ISessionContainer.class);
 
-        URI primaryURI = URI.create("primaryLoc");
+        Uri primaryURI = Uri.create("primaryLoc");
 
         RxDocumentServiceRequest request = RxDocumentServiceRequest.createFromName(
                 OperationType.Read, "/dbs/db/colls/col/docs/docId", ResourceType.Document);
@@ -628,8 +627,8 @@ public class StoreReaderTest {
                 .then(response)
                 .build();
 
-        URI primaryURIPriorToRefresh = URI.create("stale");
-        URI primaryURIAfterRefresh = URI.create("new");
+        Uri primaryURIPriorToRefresh = Uri.create("stale");
+        Uri primaryURIAfterRefresh = Uri.create("new");
 
         RxDocumentServiceRequest request = RxDocumentServiceRequest.createFromName(
                 OperationType.Read, "/dbs/db/colls/col/docs/docId", ResourceType.Document);
@@ -690,8 +689,8 @@ public class StoreReaderTest {
         // This adds basic tests for StoreReader.readMultipleReplicasAsync(.) without failure
         // TODO: add some tests for readMultipleReplicasAsync which mock behaviour of failure of reading from a replica
         ISessionContainer sessionContainer = Mockito.mock(ISessionContainer.class);
-        URI primaryReplicaURI = URI.create("primary");
-        ImmutableList<URI> secondaryReplicaURIs = ImmutableList.of(URI.create("secondary1"), URI.create("secondary2"), URI.create("secondary3"));
+        Uri primaryReplicaURI = Uri.create("primary");
+        ImmutableList<Uri> secondaryReplicaURIs = ImmutableList.of(Uri.create("secondary1"), Uri.create("secondary2"), Uri.create("secondary3"));
         AddressSelectorWrapper addressSelectorWrapper = AddressSelectorWrapper.Builder.Simple.create()
                 .withPrimary(primaryReplicaURI)
                 .withSecondary(secondaryReplicaURIs)

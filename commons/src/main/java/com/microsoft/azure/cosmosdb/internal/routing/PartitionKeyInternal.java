@@ -35,6 +35,7 @@ import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import com.microsoft.azure.cosmosdb.PartitionKeyDefinition;
 import com.microsoft.azure.cosmosdb.Undefined;
 import com.microsoft.azure.cosmosdb.internal.Utils;
 import com.microsoft.azure.cosmosdb.rx.internal.RMResources;
@@ -220,6 +221,10 @@ public class PartitionKeyInternal implements Comparable<PartitionKeyInternal> {
 
     public List<IPartitionKeyComponent> getComponents() {
         return components;
+    }
+
+    public String getEffectivePartitionKeyString(PartitionKeyInternal internalPartitionKey, PartitionKeyDefinition partitionKey) {
+        return PartitionKeyInternalHelper.getEffectivePartitionKeyString(internalPartitionKey, partitionKey);
     }
 
     @SuppressWarnings("serial")

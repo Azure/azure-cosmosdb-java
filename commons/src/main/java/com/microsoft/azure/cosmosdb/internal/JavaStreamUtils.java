@@ -23,24 +23,36 @@
 
 package com.microsoft.azure.cosmosdb.internal;
 
-import org.apache.commons.lang3.StringUtils;
-
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class JavaStreamUtils {
-
     private static <T> String safeToString(T t) {
         return t != null ? t.toString() : "null";
     }
 
-    public static <T> String toString(Collection<T> collection, String delimiter) {
-        return collection.stream()
-                .map( t -> safeToString(t) )
-                .collect(Collectors.joining(delimiter));
+    public static <T> String info(Collection<T> collection) {
+        return collection == null ? "null collection" :
+                "collection size: " + collection.size();
     }
 
+    public static <T> String info(T[] collection) {
+        return collection == null ? "null collection" :
+                "collection size: " + collection.length;
+    }
+
+    public static <T> String toString(Collection<T> collection, String delimiter) {
+        return collection == null ? "null collection" :
+                collection.isEmpty() ? "empty collection" :
+                collection.stream()
+                        .map(t -> safeToString(t))
+                        .collect(Collectors.joining(delimiter));
+    }
+
+    public static <T> String toString(T[] array, String delimiter) {
+        return array == null ? "null array" :
+                toString(Arrays.asList(array), delimiter);
+    }
 
 }

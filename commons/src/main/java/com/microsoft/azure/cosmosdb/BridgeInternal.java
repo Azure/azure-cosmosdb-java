@@ -26,6 +26,7 @@ package com.microsoft.azure.cosmosdb;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
+import com.microsoft.azure.cosmosdb.internal.directconnectivity.Uri;
 import com.microsoft.azure.cosmosdb.internal.query.metrics.ClientSideMetrics;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceResponse;
 import com.microsoft.azure.cosmosdb.rx.internal.Strings;
@@ -216,7 +217,7 @@ public class BridgeInternal {
         policy.setUsingMultipleWriteLocations(value);
     }
 
-    public static <E extends  DocumentClientException> URI getRequestUri(DocumentClientException documentClientException) {
+    public static <E extends  DocumentClientException> Uri getRequestUri(DocumentClientException documentClientException) {
         return documentClientException.requestUri;
     }
 

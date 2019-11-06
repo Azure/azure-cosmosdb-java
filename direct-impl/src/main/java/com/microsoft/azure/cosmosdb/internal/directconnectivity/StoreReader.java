@@ -50,7 +50,6 @@ import rx.Single;
 import rx.exceptions.CompositeException;
 import rx.schedulers.Schedulers;
 
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -142,7 +141,7 @@ public class StoreReader {
         }).toSingle();
     }
 
-    private Observable<ReadReplicaResult> earlyResultIfNotEnoughReplicas(List<URI> replicaAddresses,
+    private Observable<ReadReplicaResult> earlyResultIfNotEnoughReplicas(List<Uri> replicaAddresses,
                                                                          RxDocumentServiceRequest request,
                                                                          int replicaCountToRead) {
         if (replicaAddresses.size() < replicaCountToRead) {
@@ -159,7 +158,7 @@ public class StoreReader {
     }
 
     private Observable<StoreResult> toStoreResult(RxDocumentServiceRequest request,
-                                                  Pair<Observable<StoreResponse>, URI> storeRespAndURI,
+                                                  Pair<Observable<StoreResponse>, Uri> storeRespAndURI,
                                                   ReadMode readMode,
                                                   boolean requiresValidLsn) {
 
@@ -172,7 +171,7 @@ public class StoreReader {
                                         readMode != ReadMode.Strong,
                                         storeRespAndURI.getRight());
 
-                                request.requestContext.clientSideRequestStatistics.getContactedReplicas().add(storeRespAndURI.getRight());
+                                request.requestContext.clientSideRequestStatistics.getContactedReplicas().add(storeRespAndURI.getRight().getURI());
                                 return Observable.just(storeResult);
                             } catch (Exception e) {
                                 // RxJava1 doesn't allow throwing checked exception from Observable operators
@@ -195,7 +194,7 @@ public class StoreReader {
                                 readMode != ReadMode.Strong,
                                 null);
                         if (storeException instanceof TransportException) {
-                            request.requestContext.clientSideRequestStatistics.getFailedReplicas().add(storeRespAndURI.getRight());
+                            request.requestContext.clientSideRequestStatistics.getFailedReplicas().add(storeRespAndURI.getRight().getURI());
                         }
                         return Observable.just(storeResult);
                     } catch (Exception e) {
@@ -206,7 +205,7 @@ public class StoreReader {
     }
 
     private Observable<List<StoreResult>> readFromReplicas(List<StoreResult> resultCollector,
-                                                           List<URI> resolveApiResults,
+                                                           List<Uri> resolveApiResults,
                                                            final AtomicInteger replicasToRead,
                                                            RxDocumentServiceRequest entity,
                                                            boolean includePrimary,
@@ -223,13 +222,13 @@ public class StoreReader {
         if (entity.requestContext.timeoutHelper.isElapsed()) {
             return Observable.error(new GoneException());
         }
-        List<Pair<Observable<StoreResponse>, URI>> readStoreTasks = new ArrayList<>();
+        List<Pair<Observable<StoreResponse>, Uri>> readStoreTasks = new ArrayList<>();
         int uriIndex = StoreReader.generateNextRandom(resolveApiResults.size());
 
         while (resolveApiResults.size() > 0) {
             uriIndex = uriIndex % resolveApiResults.size();
-            URI uri = resolveApiResults.get(uriIndex);
-            Pair<Single<StoreResponse>, URI> res;
+            Uri uri = resolveApiResults.get(uriIndex);
+            Pair<Single<StoreResponse>, Uri> res;
             try {
                 res = this.readFromStoreAsync(resolveApiResults.get(uriIndex),
                                               entity);
@@ -270,7 +269,11 @@ public class StoreReader {
             for (StoreResult srr : newStoreResults) {
 
                 entity.requestContext.requestChargeTracker.addCharge(srr.requestCharge);
-                entity.requestContext.clientSideRequestStatistics.recordResponse(entity, srr);
+                try {
+                    entity.requestContext.clientSideRequestStatistics.recordResponse(entity, srr);
+                } catch (Exception e) {
+                    logger.error("unexpected failure failure", e);
+                }
                 if (srr.isValid) {
 
                     try {
@@ -364,7 +367,7 @@ public class StoreReader {
             requestedCollectionId = entity.requestContext.resolvedCollectionRid;
         }
 
-        Single<List<URI>> resolveApiResultsObs = this.addressSelector.resolveAllUriAsync(
+        Single<List<Uri>> resolveApiResultsObs = this.addressSelector.resolveAllUriAsync(
                 entity,
                 includePrimary,
                 entity.requestContext.forceRefreshAddressCache);
@@ -515,7 +518,7 @@ public class StoreReader {
             return Single.error(new GoneException());
         }
 
-        Single<URI> primaryUriObs = this.addressSelector.resolvePrimaryUriAsync(
+        Single<Uri> primaryUriObs = this.addressSelector.resolvePrimaryUriAsync(
                 entity,
                 entity.requestContext.forceRefreshAddressCache);
 
@@ -532,7 +535,7 @@ public class StoreReader {
                         }
 
 
-                        Pair<Single<StoreResponse>, URI> storeResponseObsAndUri = this.readFromStoreAsync(primaryUri, entity);
+                        Pair<Single<StoreResponse>, Uri> storeResponseObsAndUri = this.readFromStoreAsync(primaryUri, entity);
 
                         return storeResponseObsAndUri.getLeft().flatMap(
                                 storeResponse -> {
@@ -579,7 +582,11 @@ public class StoreReader {
         });
 
         return storeResultObs.map(storeResult -> {
-            entity.requestContext.clientSideRequestStatistics.recordResponse(entity, storeResult);
+            try {
+                entity.requestContext.clientSideRequestStatistics.recordResponse(entity, storeResult);
+            } catch (Exception e) {
+                logger.error("unexpected failure failure", e);
+            }
             entity.requestContext.requestChargeTracker.addCharge(storeResult.requestCharge);
 
             if (storeResult.isGoneException && !storeResult.isInvalidPartitionException) {
@@ -590,8 +597,8 @@ public class StoreReader {
         });
     }
 
-    private Pair<Single<StoreResponse>, URI> readFromStoreAsync(
-            URI physicalAddress,
+    private Pair<Single<StoreResponse>, Uri> readFromStoreAsync(
+            Uri physicalAddress,
             RxDocumentServiceRequest request) throws DocumentClientException {
 
         if (request.requestContext.timeoutHelper.isElapsed()) {
@@ -671,7 +678,7 @@ public class StoreReader {
                                   Exception responseException,
                                   boolean requiresValidLsn,
                                   boolean useLocalLSNBasedHeaders,
-                                  URI storePhysicalAddress) throws DocumentClientException {
+                                  Uri storePhysicalAddress) throws DocumentClientException {
 
         if (responseException == null) {
             String headerValue = null;

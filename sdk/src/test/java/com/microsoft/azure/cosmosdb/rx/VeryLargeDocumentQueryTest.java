@@ -26,10 +26,9 @@ import com.microsoft.azure.cosmosdb.Database;
 import com.microsoft.azure.cosmosdb.Document;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.ResourceResponse;
-import com.microsoft.azure.cosmosdb.internal.directconnectivity.Protocol;
+import com.microsoft.azure.cosmosdb.RetryAnalyzer;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient.Builder;
 import org.apache.commons.lang3.StringUtils;
-import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
@@ -50,27 +49,17 @@ public class VeryLargeDocumentQueryTest extends TestSuiteBase {
 
     @Factory(dataProvider = "simpleClientBuildersWithDirect")
     public VeryLargeDocumentQueryTest(Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
-    @Test(groups = { "emulator" }, timeOut = TIMEOUT)
+    @Test(groups = { "emulator" }, timeOut = TIMEOUT, retryAnalyzer = RetryAnalyzer.class)
     public void queryLargeDocuments() {
         int cnt = 5;
         for(int i = 0; i < cnt; i++) {
             createLargeDocument();
         }
-
-        try {
-            validateQuerySuccess(client.queryDocuments(getCollectionLink(), "SELECT * FROM r", null),
-                new FeedResponseListValidator.Builder().totalSize(cnt).build());
-        } catch (Throwable error) {
-            if (this.clientBuilder.configs.getProtocol() == Protocol.Tcp) {
-                String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.desiredConsistencyLevel);
-                logger.info(message, error);
-                throw new SkipException(message, error);
-            }
-            throw error;
-        }
+        validateQuerySuccess(client.queryDocuments(getCollectionLink(), "SELECT * FROM r", null),
+            new FeedResponseListValidator.Builder().totalSize(cnt).build());
     }
 
     private void createLargeDocument() {
@@ -92,7 +81,7 @@ public class VeryLargeDocumentQueryTest extends TestSuiteBase {
 
     @BeforeClass(groups = { "emulator" }, timeOut = 2 * SETUP_TIMEOUT)
     public void beforeClass() throws Exception {
-        client = clientBuilder.build();
+        client = this.clientBuilder().build();
         createdDatabase = SHARED_DATABASE;
         createdCollection = SHARED_SINGLE_PARTITION_COLLECTION_WITHOUT_PARTITION_KEY;
         truncateCollection(SHARED_SINGLE_PARTITION_COLLECTION_WITHOUT_PARTITION_KEY);

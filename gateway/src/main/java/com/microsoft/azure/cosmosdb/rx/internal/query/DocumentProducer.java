@@ -151,10 +151,14 @@ class DocumentProducer<T extends Resource> {
             IDocumentClientRetryPolicy retryPolicy = null;
             if (createRetryPolicyFunc != null) {
                 retryPolicy = createRetryPolicyFunc.call();
-                retryPolicy.onBeforeSendRequest(request);
             }
+            final IDocumentClientRetryPolicy finalRetryPolicy = retryPolicy;
+
             return ObservableHelper.inlineIfPossibleAsObs(
                     () -> {
+                        if (finalRetryPolicy != null) {
+                            finalRetryPolicy.onBeforeSendRequest(request);
+                        }
                         ++retries;
                         return executeRequestFunc.call(request);
                     }, retryPolicy);

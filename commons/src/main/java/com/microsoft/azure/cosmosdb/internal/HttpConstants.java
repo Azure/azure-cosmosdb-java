@@ -24,7 +24,8 @@
 package com.microsoft.azure.cosmosdb.internal;
 
 /**
- * Used internally. HTTP constants in the Azure Cosmos DB database service Java SDK.
+ * Used internally. HTTP constants in the Azure Cosmos DB database service Java
+ * SDK.
  */
 public class HttpConstants {
     public static class HttpMethods {
@@ -97,6 +98,9 @@ public class HttpConstants {
         public static final String IS_QUERY = "x-ms-documentdb-isquery";
         public static final String ENABLE_CROSS_PARTITION_QUERY = "x-ms-documentdb-query-enablecrosspartition";
         public static final String PARALLELIZE_CROSS_PARTITION_QUERY = "x-ms-documentdb-query-parallelizecrosspartitionquery";
+        public static final String IS_QUERY_PLAN_REQUEST = "x-ms-cosmos-is-query-plan-request";
+        public static final String SUPPORTED_QUERY_FEATURES = "x-ms-cosmos-supported-query-features";
+        public static final String QUERY_VERSION = "x-ms-cosmos-query-version";
 
         // Our custom DocDB headers
         public static final String CONTINUATION = "x-ms-continuation";
@@ -125,7 +129,7 @@ public class HttpConstants {
         public static final String TARGET_LSN = "x-ms-target-lsn";
         public static final String TARGET_GLOBAL_COMMITTED_LSN = "x-ms-target-global-committed-lsn";
 
-        //Request validation
+        // Request validation
         public static final String REQUEST_VALIDATION_FAILURE = "x-ms-request-validation-failure";
 
         public static final String WRITE_REQUEST_TRIGGER_ADDRESS_REFRESH = "x-ms-write-request-trigger-refresh";
@@ -192,7 +196,7 @@ public class HttpConstants {
         public static final String INDEX_TRANSFORMATION_PROGRESS = "x-ms-documentdb-collection-index-transformation-progress";
         public static final String LAZY_INDEXING_PROGRESS = "x-ms-documentdb-collection-lazy-indexing-progress";
 
-        //Owner name
+        // Owner name
         public static final String OWNER_FULL_NAME = "x-ms-alt-content-path";
 
         // Owner ID used for name based request in session token.
@@ -218,7 +222,8 @@ public class HttpConstants {
         public static final String A_IM = "A-IM";
         public static final String ALLOW_TENTATIVE_WRITES = "x-ms-cosmos-allow-tentative-writes";
 
-        // These settings were added to support RNTBD and they've been added here to reduce merge conflicts
+        // These settings were added to support RNTBD and they've been added here to
+        // reduce merge conflicts
 
         public static final String CAN_CHARGE = "x-ms-cancharge";
         public static final String CAN_OFFER_REPLACE_COMPLETE = "x-ms-can-offer-replace-complete";
@@ -268,9 +273,11 @@ public class HttpConstants {
         public static final String CURRENT_VERSION = "2018-09-17";
 
         // TODO: FIXME we can use maven plugin for generating a version file
-        // @see https://stackoverflow.com/questions/2469922/generate-a-version-java-file-in-maven
-        public static final String SDK_VERSION = "2.4.5-SNAPSHOT";
+        // @see
+        // https://stackoverflow.com/questions/2469922/generate-a-version-java-file-in-maven
+        public static final String SDK_VERSION = "2.6.3";
         public static final String SDK_NAME = "cosmosdb-java-sdk";
+        public static final String QUERY_VERSION = "1.0";
     }
 
     public static class StatusCodes {
@@ -296,7 +303,7 @@ public class HttpConstants {
     }
 
     public static class SubStatusCodes {
-        //  Unknown SubStatus Code
+        // Unknown SubStatus Code
         public static final int UNKNOWN = 0;
 
         // 400: Bad Request substatus
@@ -318,6 +325,6 @@ public class HttpConstants {
     }
 
     public static class HeaderValues {
-        public  static final String NoCache = "no-cache";
+        public static final String NoCache = "no-cache";
     }
 }

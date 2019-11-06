@@ -42,7 +42,6 @@ import rx.Single;
 import rx.observers.TestSubscriber;
 import rx.subjects.PublishSubject;
 
-import java.net.URI;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -83,10 +82,10 @@ public class ConsistencyWriterTest {
                 .then(ex)
                 .build();
 
-        URI primaryUri = URI.create("primary");
-        URI secondaryUri1 = URI.create("secondary1");
-        URI secondaryUri2 = URI.create("secondary2");
-        URI secondaryUri3 = URI.create("secondary3");
+        Uri primaryUri = Uri.create("primary");
+        Uri secondaryUri1 = Uri.create("secondary1");
+        Uri secondaryUri2 = Uri.create("secondary2");
+        Uri secondaryUri3 = Uri.create("secondary3");
 
         AddressSelectorWrapper addressSelectorWrapper = AddressSelectorWrapper.Builder.Simple.create()
                 .withPrimary(primaryUri)
@@ -129,15 +128,15 @@ public class ConsistencyWriterTest {
         initializeConsistencyWriter(false);
 
         CyclicBarrier b = new CyclicBarrier(2);
-        PublishSubject<URI> subject = PublishSubject.create();
+        PublishSubject<Uri> subject = PublishSubject.create();
         CountDownLatch c = new CountDownLatch(1);
 
-        URI uri = URI.create("https://localhost:5050");
+        Uri uri = Uri.create("https://localhost:5050");
 
         List<InvocationOnMock> invocationOnMocks = Collections.synchronizedList(new ArrayList<>());
         Mockito.doAnswer(new Answer() {
             @Override
-            public Single<URI> answer(InvocationOnMock invocationOnMock)  {
+            public Single<Uri> answer(InvocationOnMock invocationOnMock)  {
                 invocationOnMocks.add(invocationOnMock);
                 return subject.toSingle().doOnSuccess(x -> c.countDown()).doAfterTerminate(() -> {
                     new Thread() {

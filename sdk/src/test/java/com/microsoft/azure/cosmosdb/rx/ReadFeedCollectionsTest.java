@@ -58,7 +58,7 @@ public class ReadFeedCollectionsTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuilders")
     public ReadFeedCollectionsTest(AsyncDocumentClient.Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "simple" }, timeOut = FEED_TIMEOUT)
@@ -85,7 +85,7 @@ public class ReadFeedCollectionsTest extends TestSuiteBase {
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
-        client = clientBuilder.build();
+        client = this.clientBuilder().build();
         createdDatabase = createDatabase(client, databaseId);
 
         for(int i = 0; i < 3; i++) {

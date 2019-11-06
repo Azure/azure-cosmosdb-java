@@ -31,12 +31,12 @@ import java.net.URI;
 public abstract class TransportClient implements AutoCloseable {
 
     // Uses requests's ResourceOperation to determine the operation
-    public Single<StoreResponse> invokeResourceOperationAsync(URI physicalAddress, RxDocumentServiceRequest request) {
+    public Single<StoreResponse> invokeResourceOperationAsync(Uri physicalAddress, RxDocumentServiceRequest request) {
         return this.invokeStoreAsync(physicalAddress, new ResourceOperation(request.getOperationType(), request.getResourceType()), request);
     }
 
     protected abstract Single<StoreResponse> invokeStoreAsync(
-        URI physicalAddress,
-        ResourceOperation resourceOperation,
-        RxDocumentServiceRequest request);
+            Uri physicalAddress,
+            ResourceOperation resourceOperation,
+            RxDocumentServiceRequest request);
 }

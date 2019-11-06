@@ -235,10 +235,9 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
     public RxDocumentClientImpl(URI serviceEndpoint, String masterKeyOrResourceToken, ConnectionPolicy connectionPolicy,
                                 ConsistencyLevel consistencyLevel, Configs configs) {
 
-        logger.info(
-                "Initializing DocumentClient with"
-                        + " serviceEndpoint [{}], ConnectionPolicy [{}], ConsistencyLevel [{}]",
-                serviceEndpoint, connectionPolicy, consistencyLevel);
+        logger.info("Initializing DocumentClient with serviceEndpoint [{}], connectionPolicy [{}], "
+            + "consistencyLevel [{}], protocol [{}]", serviceEndpoint, connectionPolicy,
+            consistencyLevel, configs.getProtocol());
 
         this.configs = configs;
         this.masterKeyOrResourceToken = masterKeyOrResourceToken;
@@ -1726,11 +1725,18 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
     @Override
     public Observable<StoredProcedureResponse> executeStoredProcedure(String storedProcedureLink,
                                                                       RequestOptions options, Object[] procedureParams) {
-        return ObservableHelper.inlineIfPossibleAsObs(() -> executeStoredProcedureInternal(storedProcedureLink, options, procedureParams), this.resetSessionTokenRetryPolicy.getRequestPolicy());
+        IDocumentClientRetryPolicy retryPolicyInstance = this.resetSessionTokenRetryPolicy.getRequestPolicy();
+        return ObservableHelper.inlineIfPossibleAsObs(() -> executeStoredProcedureInternal(storedProcedureLink,
+                                                                                            options,
+                                                                                            procedureParams,
+                                                                                            retryPolicyInstance),
+                                                                                            retryPolicyInstance);
     }
 
     private Observable<StoredProcedureResponse> executeStoredProcedureInternal(String storedProcedureLink,
-                                                                               RequestOptions options, Object[] procedureParams) {
+                                                                               RequestOptions options, 
+                                                                               Object[] procedureParams,
+                                                                               IDocumentClientRetryPolicy retryPolicyInstance) {
 
         try {
             logger.debug("Executing a StoredProcedure. storedProcedureLink [{}]", storedProcedureLink);
@@ -1745,11 +1751,16 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
                     requestHeaders, options);
 
             Observable<RxDocumentServiceRequest> reqObs = addPartitionKeyInformation(request, null, options).toObservable();
-            return reqObs.flatMap(req -> create(request)
-                    .map(response -> {
-                        this.captureSessionToken(request, response);
-                        return toStoredProcedureResponse(response);
-                    }));
+            return reqObs.flatMap(req -> {
+                if (retryPolicyInstance != null) {
+                    retryPolicyInstance.onBeforeSendRequest(request);
+                }
+                return create(request).map(response -> {
+                    this.captureSessionToken(request, response);
+                    return toStoredProcedureResponse(response);
+                });
+            });
+                    
 
         } catch (Exception e) {
             logger.debug("Failure in executing a StoredProcedure due to [{}]", e.getMessage(), e);

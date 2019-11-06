@@ -348,6 +348,7 @@ public final class Utils {
                 requestOperationType == OperationType.ReadFeed ||
                 requestOperationType == OperationType.Query ||
                 requestOperationType == OperationType.SqlQuery ||
+                requestOperationType == OperationType.QueryPlan ||
                 requestOperationType == OperationType.HeadFeed;
     }
 

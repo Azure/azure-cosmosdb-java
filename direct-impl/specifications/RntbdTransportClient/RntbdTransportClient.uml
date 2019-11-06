@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Diagram>
+  <ID>JAVA</ID>
+  <OriginalElement>com.microsoft.azure.cosmosdb.internal.directconnectivity.RntbdTransportClient</OriginalElement>
+  <nodes>
+    <node x="172.0" y="86.0">com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdMetrics</node>
+    <node x="444.0" y="86.0">com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdEndpoint</node>
+    <node x="601.0" y="86.0">com.fasterxml.jackson.databind.annotation.JsonSerialize</node>
+    <node x="56.5" y="172.0">com.microsoft.azure.cosmosdb.internal.directconnectivity.RntbdTransportClient</node>
+    <node x="487.8560606060606" y="172.0">com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdServiceEndpoint</node>
+    <node x="0.0" y="243.0">com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdClientChannelHandler</node>
+    <node x="236.49999999999997" y="0.0">java.lang.AutoCloseable</node>
+    <node x="693.8560606060606" y="172.0">com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdClientChannelPool</node>
+    <node x="0.0" y="86.0">com.microsoft.azure.cosmosdb.internal.directconnectivity.TransportClient</node>
+    <node x="322.0" y="86.0">com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdEndpoint.Provider</node>
+  </nodes>
+  <notes />
+  <edges>
+    <edge source="com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdMetrics" target="java.lang.AutoCloseable">
+      <point x="0.0" y="-13.0" />
+      <point x="237.0" y="66.0" />
+      <point x="293.58333333333326" y="66.0" />
+      <point x="-11.416666666666686" y="13.0" />
+    </edge>
+    <edge source="com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdClientChannelPool" target="com.fasterxml.jackson.databind.annotation.JsonSerialize">
+      <point x="-50.0" y="-13.0" />
+      <point x="743.8560606060606" y="152.0" />
+      <point x="715.1666666666666" y="152.0" />
+      <point x="45.66666666666663" y="13.0" />
+    </edge>
+    <edge source="com.microsoft.azure.cosmosdb.internal.directconnectivity.TransportClient" target="java.lang.AutoCloseable">
+      <point x="0.0" y="-13.0" />
+      <point x="75.5" y="46.0" />
+      <point x="247.91666666666666" y="46.0" />
+      <point x="-57.083333333333314" y="13.0" />
+    </edge>
+    <edge source="com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdClientChannelPool" target="java.lang.AutoCloseable">
+      <point x="50.0" y="-13.0" />
+      <point x="843.8560606060606" y="152.0" />
+      <point x="832.7575757575758" y="152.0" />
+      <point x="832.7575757575758" y="46.0" />
+      <point x="362.08333333333326" y="46.0" />
+      <point x="57.083333333333314" y="13.0" />
+    </edge>
+    <edge source="com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdEndpoint" target="java.lang.AutoCloseable">
+      <point x="0.0" y="-13.0" />
+      <point x="512.5" y="56.0" />
+      <point x="339.25" y="56.0" />
+      <point x="34.25" y="13.0" />
+    </edge>
+    <edge source="com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdServiceEndpoint" target="com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdEndpoint">
+      <point x="-46.5" y="-13.0" />
+      <point x="534.3560606060606" y="132.0" />
+      <point x="512.5" y="132.0" />
+      <point x="0.0" y="13.0" />
+    </edge>
+    <edge source="com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdEndpoint.Provider" target="java.lang.AutoCloseable">
+      <point x="0.0" y="-13.0" />
+      <point x="373.0" y="66.0" />
+      <point x="316.41666666666663" y="66.0" />
+      <point x="11.416666666666686" y="13.0" />
+    </edge>
+    <edge source="com.microsoft.azure.cosmosdb.internal.directconnectivity.RntbdTransportClient" target="com.fasterxml.jackson.databind.annotation.JsonSerialize">
+      <point x="62.0" y="-13.0" />
+      <point x="211.5" y="142.0" />
+      <point x="623.8333333333333" y="142.0" />
+      <point x="-45.666666666666686" y="13.0" />
+    </edge>
+    <edge source="com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdServiceEndpoint" target="com.fasterxml.jackson.databind.annotation.JsonSerialize">
+      <point x="46.5" y="-13.0" />
+      <point x="627.3560606060606" y="152.0" />
+      <point x="669.5" y="152.0" />
+      <point x="0.0" y="13.0" />
+    </edge>
+    <edge source="com.microsoft.azure.cosmosdb.internal.directconnectivity.RntbdTransportClient" target="com.microsoft.azure.cosmosdb.internal.directconnectivity.TransportClient">
+      <point x="-62.0" y="-13.0" />
+      <point x="87.5" y="152.0" />
+      <point x="75.5" y="152.0" />
+      <point x="0.0" y="13.0" />
+    </edge>
+    <edge source="com.microsoft.azure.cosmosdb.internal.directconnectivity.RntbdTransportClient" target="java.lang.AutoCloseable">
+      <point x="0.0" y="-13.0" />
+      <point x="149.5" y="152.0" />
+      <point x="161.5" y="152.0" />
+      <point x="161.5" y="56.0" />
+      <point x="270.75" y="56.0" />
+      <point x="-34.25" y="13.0" />
+    </edge>
+  </edges>
+  <settings layout="Hierarchic Group" zoom="1.0" x="648.0" y="451.5" />
+  <SelectedNodes />
+  <Categories />
+  <SCOPE>All</SCOPE>
+  <VISIBILITY>private</VISIBILITY>
+</Diagram>
+

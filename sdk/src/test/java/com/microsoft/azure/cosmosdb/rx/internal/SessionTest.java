@@ -48,6 +48,7 @@ import java.lang.reflect.Method;
 import java.net.URLDecoder;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -64,7 +65,7 @@ public class SessionTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuildersWithDirectSession")
     public SessionTest(AsyncDocumentClient.Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
         this.subscriberValidationTimeout = TIMEOUT;
     }
 
@@ -78,21 +79,23 @@ public class SessionTest extends TestSuiteBase {
     }
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
-    public void beforeClass() {
+    public void beforeClass() throws InterruptedException {
         createdDatabase = SHARED_DATABASE;
-        
+
         DocumentCollection collection = new DocumentCollection();
         collection.setId(collectionId);
         createdCollection = createCollection(createGatewayHouseKeepingDocumentClient().build(), createdDatabase.getId(),
-                collection, null);
-        houseKeepingClient = clientBuilder.build();
+            collection, null);
+        houseKeepingClient = this.clientBuilder().build();
         connectionMode = houseKeepingClient.getConnectionPolicy().getConnectionMode();
 
         if (connectionMode == ConnectionMode.Direct) {
-            spyClient = SpyClientUnderTestFactory.createDirectHttpsClientUnderTest(clientBuilder);
+            spyClient = SpyClientUnderTestFactory.createDirectHttpsClientUnderTest(this.clientBuilder());
         } else {
-            spyClient = SpyClientUnderTestFactory.createClientUnderTest(clientBuilder);
+            spyClient = SpyClientUnderTestFactory.createClientUnderTest(this.clientBuilder());
         }
+
+        TimeUnit.SECONDS.sleep(10);
     }
 
     @AfterClass(groups = { "simple" }, timeOut = SHUTDOWN_TIMEOUT, alwaysRun = true)
@@ -105,13 +108,16 @@ public class SessionTest extends TestSuiteBase {
 
     @BeforeMethod(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeTest(Method method) {
-        super.beforeMethod(method);
         spyClient.clearCapturedRequests();
     }
 
     private List<String> getSessionTokensInRequests() {
         return spyClient.getCapturedRequests().stream()
                 .map(r -> r.getHeaders().get(HttpConstants.HttpHeaders.SESSION_TOKEN)).collect(Collectors.toList());
+    }
+
+    private void clearCapturedRequests() {
+        spyClient.clearCapturedRequests();
     }
     
     @Test(groups = { "simple" }, timeOut = TIMEOUT, dataProvider = "sessionTestArgProvider")
@@ -125,21 +131,17 @@ public class SessionTest extends TestSuiteBase {
             Document documentCreated = spyClient.createDocument(getCollectionLink(isNameBased), new Document(), null, false)
                     .toBlocking().single().getResource();
 
-            // We send session tokens on Writes in Gateway mode
-            if (connectionMode == ConnectionMode.Gateway) {
-                assertThat(getSessionTokensInRequests()).hasSize(3 * i + 1);
-                assertThat(getSessionTokensInRequests().get(3 * i + 0)).isNotEmpty();
-            }
+            clearCapturedRequests();
 
             spyClient.readDocument(getDocumentLink(documentCreated, isNameBased), null).toBlocking().single();
 
-            assertThat(getSessionTokensInRequests()).hasSize(3 * i + 2);
-            assertThat(getSessionTokensInRequests().get(3 * i + 1)).isNotEmpty();
+            assertThat(getSessionTokensInRequests()).hasSize(1);
+            assertThat(getSessionTokensInRequests().get(0)).isNotEmpty();
 
             spyClient.readDocument(getDocumentLink(documentCreated, isNameBased), null).toBlocking().single();
 
-            assertThat(getSessionTokensInRequests()).hasSize(3 * i + 3);
-            assertThat(getSessionTokensInRequests().get(3 * i + 2)).isNotEmpty();
+            assertThat(getSessionTokensInRequests()).hasSize(2);
+            assertThat(getSessionTokensInRequests().get(1)).isNotEmpty();
         }
     }
 

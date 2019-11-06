@@ -22,21 +22,23 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.microsoft.azure</groupId>
   <artifactId>azure-cosmosdb-direct</artifactId>
   <name>Azure Cosmos DB Async SDK Direct Internal Implementation</name>
-  <version>2.4.5-SNAPSHOT</version>
+  <version>2.6.3</version>
   <description>Azure Cosmos DB Async SDK Direct Internal Implementation</description>
   <url>https://docs.microsoft.com/en-us/azure/cosmos-db</url>
   <packaging>jar</packaging>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <test.groups>unit</test.groups>
-    <cosmosdb-sdk.version>2.4.5-SNAPSHOT</cosmosdb-sdk.version>
     <guava.version>27.0.1-jre</guava.version>
-    </properties>
+    <metrics.version>4.1.0</metrics.version>
+    <micrometer.version>1.2.0</micrometer.version>
+  </properties>
   <profiles>
     <profile>
       <!-- unit test -->
@@ -54,7 +56,7 @@ SOFTWARE.
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
-              </configuration>
+            </configuration>
           </plugin>
         </plugins>
       </build>
@@ -219,7 +221,6 @@ SOFTWARE.
           </classpathContainers>
         </configuration>
       </plugin>
-
       <plugin>
         <artifactId>maven-javadoc-plugin</artifactId>
         <version>3.0.1</version>
@@ -286,18 +287,28 @@ SOFTWARE.
     <dependency>
       <groupId>com.microsoft.azure</groupId>
       <artifactId>azure-cosmosdb-gateway</artifactId>
-      <version>${cosmosdb-sdk.version}</version>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>com.microsoft.azure</groupId>
       <artifactId>azure-cosmosdb-commons-test-utils</artifactId>
-      <version>${cosmosdb-sdk.version}</version>
+      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
       <version>${guava.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.dropwizard.metrics</groupId>
+      <artifactId>metrics-core</artifactId>
+      <version>${metrics.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-core</artifactId>
+      <version>${micrometer.version}</version>
     </dependency>
   </dependencies>
   <licenses>

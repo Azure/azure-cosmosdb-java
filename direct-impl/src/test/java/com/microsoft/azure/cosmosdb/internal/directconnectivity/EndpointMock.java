@@ -26,9 +26,8 @@ package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 import com.google.common.collect.ImmutableList;
 import com.microsoft.azure.cosmosdb.internal.OperationType;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
-import org.apache.commons.collections.map.HashedMap;
+import org.apache.commons.collections4.map.HashedMap;
 
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -68,7 +67,6 @@ abstract public class EndpointMock {
         }
     }
 
-
     public void validate(EndpointMockVerificationBuilder verificationBuilder) {
         this.addressSelectorWrapper.validate();
         this.transportClientWrapper.validate();
@@ -85,17 +83,17 @@ abstract public class EndpointMock {
 
         class ReplicasWithSameSpeed extends Builder {
 
-            URI primary;
-            List<URI> secondaries = new ArrayList<>();
+            Uri primary;
+            List<Uri> secondaries = new ArrayList<>();
             StoreResponse headStoreResponse;
             StoreResponse readStoreResponse;
 
-            ReplicasWithSameSpeed addPrimary(URI replicaAddress) {
+            ReplicasWithSameSpeed addPrimary(Uri replicaAddress) {
                 primary = replicaAddress;
                 return this;
             }
 
-            ReplicasWithSameSpeed addSecondary(URI replicaAddress) {
+            ReplicasWithSameSpeed addSecondary(Uri replicaAddress) {
                 secondaries.add(replicaAddress);
                 return this;
             }
@@ -113,9 +111,9 @@ abstract public class EndpointMock {
             public EndpointMock build() {
                 TransportClientWrapper.Builder.ReplicaResponseBuilder transportClientWrapperBuilder = TransportClientWrapper.Builder.replicaResponseBuilder();
 
-                ImmutableList<URI> replicas = ImmutableList.<URI>builder().add(primary).addAll(secondaries).build();
+                ImmutableList<Uri> replicas = ImmutableList.<Uri>builder().add(primary).addAll(secondaries).build();
 
-                for(URI replica: replicas) {
+                for(Uri replica: replicas) {
                     transportClientWrapperBuilder.addReplica(replica, (i, request) -> {
                         if (request.getOperationType() == OperationType.Head || request.getOperationType() == OperationType.HeadFeed) {
                             return headStoreResponse;
@@ -133,20 +131,20 @@ abstract public class EndpointMock {
         }
 
         class QuorumNotMetSecondaryReplicasDisappear {
-            URI primary;
-            Map<URI, Function2WithCheckedException<Integer, RxDocumentServiceRequest, Boolean>> disappearDictionary = new HashedMap();
-            public QuorumNotMetSecondaryReplicasDisappear primaryReplica(URI primaryReplica) {
+            Uri primary;
+            Map<Uri, Function2WithCheckedException<Integer, RxDocumentServiceRequest, Boolean>> disappearDictionary = new HashedMap();
+            public QuorumNotMetSecondaryReplicasDisappear primaryReplica(Uri primaryReplica) {
                 this.primary = primaryReplica;
                 return this;
             }
 
-            public QuorumNotMetSecondaryReplicasDisappear secondaryReplicasDisappearWhen(URI secondary,
+            public QuorumNotMetSecondaryReplicasDisappear secondaryReplicasDisappearWhen(Uri secondary,
                                                                Function2WithCheckedException<Integer, RxDocumentServiceRequest, Boolean> disappearPredicate) {
                 disappearDictionary.put(secondary, disappearPredicate);
                 return this;
             }
 
-            public QuorumNotMetSecondaryReplicasDisappear secondaryReplicasDisappearAfter(URI secondary, int attempt) {
+            public QuorumNotMetSecondaryReplicasDisappear secondaryReplicasDisappearAfter(Uri secondary, int attempt) {
                 disappearDictionary.put(secondary, (i, r) -> i >= attempt);
                 return this;
             }
@@ -155,8 +153,8 @@ abstract public class EndpointMock {
         static public class NoSecondaryReplica extends Builder {
             private long LOCAL_LSN = 19;
             private long LSN = 52;
-            private URI defaultPrimaryURI = URI.create("primary");
-            private URI primary = defaultPrimaryURI;
+            private Uri defaultPrimaryURI = Uri.create("primary");
+            private Uri primary = defaultPrimaryURI;
             private StoreResponse defaultResponse = StoreResponseBuilder.create()
                     .withLSN(LSN)
                     .withLocalLSN(LOCAL_LSN)
@@ -170,7 +168,7 @@ abstract public class EndpointMock {
             private StoreResponse readStoreResponse = defaultResponse;
             private Function1WithCheckedException<RxDocumentServiceRequest, StoreResponse> storeResponseFunc;
 
-            public NoSecondaryReplica primaryReplica(URI primaryReplica) {
+            public NoSecondaryReplica primaryReplica(Uri primaryReplica) {
                 this.primary = primaryReplica;
                 return this;
             }
@@ -190,9 +188,9 @@ abstract public class EndpointMock {
 
                 TransportClientWrapper.Builder.ReplicaResponseBuilder transportClientWrapperBuilder = TransportClientWrapper.Builder.replicaResponseBuilder();
 
-                ImmutableList<URI> replicas = ImmutableList.<URI>builder().add(primary).build();
+                ImmutableList<Uri> replicas = ImmutableList.<Uri>builder().add(primary).build();
 
-                for(URI replica: replicas) {
+                for(Uri replica: replicas) {
                     transportClientWrapperBuilder.addReplica(replica, (i, request) -> {
 
                         if (storeResponseFunc != null) {
@@ -217,8 +215,8 @@ abstract public class EndpointMock {
         static public class NoSecondaryReplica_TwoSecondaryReplicasGoLiveAfterFirstHitOnPrimary extends Builder {
             private long LOCAL_LSN = 19;
             private long LSN = 52;
-            private URI primary = URI.create("primary");
-            private ImmutableList<URI> secondaryReplicas = ImmutableList.of(URI.create("secondary1"), URI.create("secondary2"));
+            private Uri primary = Uri.create("primary");
+            private ImmutableList<Uri> secondaryReplicas = ImmutableList.of(Uri.create("secondary1"), Uri.create("secondary2"));
             private StoreResponse primaryDefaultResponse = StoreResponseBuilder.create()
                     .withLSN(LSN)
                     .withLocalLSN(LOCAL_LSN)
@@ -235,17 +233,17 @@ abstract public class EndpointMock {
                     .withHeader(WFConstants.BackendHeaders.QUORUM_ACKED_LOCAL_LSN, Long.toString(LOCAL_LSN))
                     .withRequestCharge(0)
                     .build();
-            Map<URI, Function1WithCheckedException<RxDocumentServiceRequest, StoreResponse>> secondaryResponseFunc =
+            Map<Uri, Function1WithCheckedException<RxDocumentServiceRequest, StoreResponse>> secondaryResponseFunc =
                     new HashMap<>();
 
 
-            public NoSecondaryReplica_TwoSecondaryReplicasGoLiveAfterFirstHitOnPrimary primaryReplica(URI primaryReplica) {
+            public NoSecondaryReplica_TwoSecondaryReplicasGoLiveAfterFirstHitOnPrimary primaryReplica(Uri primaryReplica) {
                 this.primary = primaryReplica;
                 return this;
             }
 
             public NoSecondaryReplica_TwoSecondaryReplicasGoLiveAfterFirstHitOnPrimary responseFromSecondary(
-                    URI replica,
+                    Uri replica,
                     Function1WithCheckedException<RxDocumentServiceRequest, StoreResponse> func) {
                 secondaryResponseFunc.put(replica, func);
                 return this;

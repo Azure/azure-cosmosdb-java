@@ -24,11 +24,10 @@ package com.microsoft.azure.cosmosdb.rx;
 
 import java.util.ArrayList;
 
-import com.microsoft.azure.cosmosdb.internal.directconnectivity.Protocol;
-import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Factory;
+import org.testng.annotations.Ignore;
 import org.testng.annotations.Test;
 
 import com.microsoft.azure.cosmosdb.Database;
@@ -84,17 +83,10 @@ public class AggregateQueryTests extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuildersWithDirect")
     public AggregateQueryTests(Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
-
-    // TODO: DANOBLE: Investigate Direct TCP performance issue
-    // Links: https://msdata.visualstudio.com/CosmosDB/_workitems/edit/367028https://msdata.visualstudio.com/CosmosDB/_workitems/edit/367028
-    // Notes:
-    // I've seen this test time out in my development environment. I test against a debug instance of the public
-    // emulator and so what I'm seeing could be the result of a public emulator performance issue. Of course, it
-    // might also be the result of a Tcp protocol performance problem.
-
+    @Ignore (value = "NonValueAggregate query is not supported by the SDK as of now")
     @Test(groups = { "simple" }, timeOut = 2 * TIMEOUT, dataProvider = "queryMetricsArgProvider")
     public void queryDocumentsWithAggregates(boolean qmEnabled) throws Exception {
 
@@ -102,8 +94,14 @@ public class AggregateQueryTests extends TestSuiteBase {
         options.setEnableCrossPartitionQuery(true);
         options.setPopulateQueryMetrics(qmEnabled);
         options.setMaxDegreeOfParallelism(2);
-
-        for (QueryConfig queryConfig : queryConfigs) {    
+        
+        for (QueryConfig queryConfig : queryConfigs) {
+            // Cross partition Non value aggregates are not supported
+            if(queryConfig.query.contains("VALUE")){
+                options.setEnableCrossPartitionQuery(true);
+            }else{
+                options.setEnableCrossPartitionQuery(false);
+            }
 
             Observable<FeedResponse<Document>> queryObservable = client
                 .queryDocuments(createdCollection.getSelfLink(), queryConfig.query, options);
@@ -114,16 +112,7 @@ public class AggregateQueryTests extends TestSuiteBase {
                 .hasValidQueryMetrics(qmEnabled)
                 .build();
 
-            try {
-                validateQuerySuccess(queryObservable, validator);
-            } catch (Throwable error) {
-                if (this.clientBuilder.configs.getProtocol() == Protocol.Tcp) {
-                    String message = String.format("Direct TCP test failure ignored: desiredConsistencyLevel=%s", this.clientBuilder.desiredConsistencyLevel);
-                    logger.info(message, error);
-                    throw new SkipException(message, error);
-                }
-                throw error;
-            }
+            validateQuerySuccess(queryObservable, validator);
         }
     }
 
@@ -225,7 +214,7 @@ public class AggregateQueryTests extends TestSuiteBase {
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() throws Exception {
-        client = clientBuilder.build();
+        client = this.clientBuilder().build();
         createdDatabase = SHARED_DATABASE;
         createdCollection = SHARED_MULTI_PARTITION_COLLECTION;
         truncateCollection(SHARED_MULTI_PARTITION_COLLECTION);
@@ -233,6 +222,6 @@ public class AggregateQueryTests extends TestSuiteBase {
         bulkInsert(client);
         generateTestConfigs();
 
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(this.clientBuilder());
     }
 }

@@ -27,7 +27,7 @@ SOFTWARE.
   <parent>
     <groupId>com.microsoft.azure</groupId>
     <artifactId>azure-cosmosdb-parent</artifactId>
-    <version>2.4.5-SNAPSHOT</version>
+    <version>2.6.3</version>
   </parent>
   <artifactId>azure-cosmosdb-commons</artifactId>
   <name>Common Components for Async SDK for SQL API of Azure Cosmos DB Service</name>
@@ -92,11 +92,6 @@ SOFTWARE.
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
       <version>${commons-io.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>commons-validator</groupId>
-      <artifactId>commons-validator</artifactId>
-      <version>${commons-validator.version}</version>
     </dependency>
     <dependency>
       <groupId>com.github.davidmoten</groupId>
@@ -174,12 +169,6 @@ SOFTWARE.
       <groupId>org.assertj</groupId>
       <artifactId>assertj-core</artifactId>
       <version>${assertj.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.mockito</groupId>
-      <artifactId>mockito-all</artifactId>
-      <version>${mockito.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>

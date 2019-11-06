@@ -47,7 +47,7 @@ public class UserDefinedFunctionCrudTest extends TestSuiteBase {
 
     @Factory(dataProvider = "clientBuildersWithDirect")
     public UserDefinedFunctionCrudTest(AsyncDocumentClient.Builder clientBuilder) {
-        this.clientBuilder = clientBuilder;
+        super(clientBuilder);
     }
 
     @Test(groups = { "simple" }, timeOut = TIMEOUT)
@@ -78,7 +78,7 @@ public class UserDefinedFunctionCrudTest extends TestSuiteBase {
 
 
         // read udf
-        waitIfNeededForReplicasToCatchUp(clientBuilder);
+        waitIfNeededForReplicasToCatchUp(this.clientBuilder());
         Observable<ResourceResponse<UserDefinedFunction>> readObservable = client.readUserDefinedFunction(readBackUdf.getSelfLink(), null);
 
         //validate udf read
@@ -110,7 +110,7 @@ public class UserDefinedFunctionCrudTest extends TestSuiteBase {
 
     @BeforeClass(groups = { "simple" }, timeOut = SETUP_TIMEOUT)
     public void beforeClass() {
-        client = clientBuilder.build();
+        client = this.clientBuilder().build();
         createdDatabase = SHARED_DATABASE;
         createdCollection = SHARED_MULTI_PARTITION_COLLECTION;
     }
