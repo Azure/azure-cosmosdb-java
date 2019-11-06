@@ -1,4 +1,4 @@
-/*
+package com.microsoft.azure.cosmosdb;/*
  * The MIT License (MIT)
  * Copyright (c) 2018 Microsoft Corporation
  *
@@ -21,14 +21,25 @@
  * SOFTWARE.
  */
 
-package com.microsoft.azure.cosmosdb;
-
 import com.google.common.collect.ImmutableMap;
+import com.microsoft.azure.cosmosdb.internal.InternalServerErrorException;
+import com.microsoft.azure.cosmosdb.internal.directconnectivity.GoneException;
+import com.microsoft.azure.cosmosdb.internal.directconnectivity.RequestTimeoutException;
+import com.microsoft.azure.cosmosdb.rx.internal.BadRequestException;
+import io.reactivex.netty.protocol.http.client.HttpResponseHeaders;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 
+import static com.google.common.base.Strings.lenientFormat;
+import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes.BADREQUEST;
+import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes.GONE;
+import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes.INTERNAL_SERVER_ERROR;
+import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes.REQUEST_TIMEOUT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.testng.Assert.assertEquals;
 
 public class DocumentClientExceptionTest {
 
@@ -80,5 +91,28 @@ public class DocumentClientExceptionTest {
         DocumentClientException dce = new DocumentClientException((String) null, (Exception) null, respHeaders, 0, (String) null);
         assertThat(dce.getResponseHeaders()).isNotNull();
         assertThat(dce.getResponseHeaders()).contains(respHeaders.entrySet().iterator().next());
+    }
+
+    @Test(groups = { "unit" }, dataProvider = "subTypes")
+    public void statusCodeIsCorrect(Class<DocumentClientException> type, int expectedStatusCode) {
+        try {
+            final DocumentClientException instance = type
+                .getConstructor(String.class,  HttpResponseHeaders.class, String.class)
+                .newInstance("some-message", null, "some-uri");
+            assertEquals(instance.getStatusCode(), expectedStatusCode);
+        } catch (IllegalAccessException | InstantiationException | NoSuchMethodException | InvocationTargetException error) {
+            String message = lenientFormat("could not create instance of %s due to %s", type, error);
+            throw new AssertionError(message, error);
+        }
+    }
+
+    @DataProvider(name = "subTypes")
+    private static Object[][] subTypes() {
+        return new Object[][] {
+            { BadRequestException.class, BADREQUEST },
+            { GoneException.class, GONE },
+            { InternalServerErrorException.class, INTERNAL_SERVER_ERROR },
+            { RequestTimeoutException.class, REQUEST_TIMEOUT },
+        };
     }
 }

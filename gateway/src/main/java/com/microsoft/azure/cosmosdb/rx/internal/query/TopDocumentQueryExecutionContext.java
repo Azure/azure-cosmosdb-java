@@ -41,15 +41,18 @@ public class TopDocumentQueryExecutionContext<T extends Resource> implements IDo
 
     private final IDocumentQueryExecutionComponent<T> component;
     private final int top;
+    // limit from rewritten query
+    private final int limit;
 
-    public TopDocumentQueryExecutionContext(IDocumentQueryExecutionComponent<T> component, int top) {
+    public TopDocumentQueryExecutionContext(IDocumentQueryExecutionComponent<T> component, int top, int limit) {
         this.component = component;
         this.top = top;
+        this.limit = limit;
     }
 
     public static <T extends Resource> Observable<IDocumentQueryExecutionComponent<T>> createAsync(
             Function<String, Observable<IDocumentQueryExecutionComponent<T>>> createSourceComponentFunction,
-            int topCount, String topContinuationToken) {
+            int topCount, int limit, String topContinuationToken) {
         TakeContinuationToken takeContinuationToken;
 
         if (topContinuationToken == null) {
@@ -76,7 +79,7 @@ public class TopDocumentQueryExecutionContext<T extends Resource> implements IDo
         }
 
         return createSourceComponentFunction.apply(takeContinuationToken.getSourceToken()).map(component -> {
-            return new TopDocumentQueryExecutionContext<T>(component, takeContinuationToken.getTakeCount());
+            return new TopDocumentQueryExecutionContext<T>(component, takeContinuationToken.getTakeCount(), limit);
         });
     }
 
@@ -94,7 +97,8 @@ public class TopDocumentQueryExecutionContext<T extends Resource> implements IDo
             context = (ParallelDocumentQueryExecutionContextBase<T>) this.component;
         }
 
-        context.setTop(this.top);
+        // we are setting the new limit from rewritten query
+        context.setTop(this.limit);
 
         return this.component.drainAsync(maxPageSize).takeUntil(new Func1<FeedResponse<T>, Boolean>() {
 
