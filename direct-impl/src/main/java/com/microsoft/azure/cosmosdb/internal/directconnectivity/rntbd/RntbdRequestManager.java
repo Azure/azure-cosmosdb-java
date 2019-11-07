@@ -508,7 +508,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
             RntbdRequestRecord record = (RntbdRequestRecord) message;
             this.timestamps.channelWriteAttempted();
 
-            context.write(this.addPendingRequestRecord(context, record), promise).addListener(completed -> {
+            context.writeAndFlush(this.addPendingRequestRecord(context, record), promise).addListener(completed -> {
                 if (completed.isSuccess()) {
                     record.state(RntbdRequestRecord.State.SENT);
                     this.timestamps.channelWriteCompleted();
@@ -522,7 +522,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
         if (message == RntbdHealthCheckRequest.MESSAGE) {
 
-            context.write(RntbdHealthCheckRequest.MESSAGE, promise).addListener(completed -> {
+            context.writeAndFlush(RntbdHealthCheckRequest.MESSAGE, promise).addListener(completed -> {
                 if (completed.isSuccess()) {
                     this.timestamps.channelPingCompleted();
                 }

@@ -95,5 +95,6 @@ public class Main {
             System.err.println("Try '-help' for more information.");
             throw e;
         }
+        System.exit(0); // ensures that all threads are terminated and the benchmark app exits
     }
 }

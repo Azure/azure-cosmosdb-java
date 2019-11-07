@@ -76,7 +76,6 @@ class AsyncReadBenchmark extends AsyncBenchmark<ResourceResponse<Document>> {
         options.setPartitionKey(new PartitionKey(docsToRead.get(index).getId()));
 
         Observable<ResourceResponse<Document>> obs = client.readDocument(getDocumentLink(docsToRead.get(index)), options);
-
         concurrencyControlSemaphore.acquire();
 
         if (configuration.getOperationType() == Operation.ReadThroughput) {

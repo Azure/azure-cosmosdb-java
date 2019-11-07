@@ -269,7 +269,9 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
             return this.receiveHangDetectionTime;
         }
 
-        public Duration requestExpiryInterval() { return this.requestExpiryInterval; }
+        public Duration requestExpiryInterval() {
+            return this.requestExpiryInterval;
+        }
 
         public Duration requestTimeout() {
             return this.requestTimeout;
