@@ -213,7 +213,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
             }
         } finally {
             if (message instanceof ReferenceCounted) {
-                boolean released = ((ReferenceCounted)message).release();
+                boolean released = ((ReferenceCounted) message).release();
                 reportIssueUnless(released, context, "failed to release message: {}", message);
             }
         }
@@ -352,12 +352,12 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
                 return;
             }
             if (event instanceof RntbdContext) {
-                this.contextFuture.complete((RntbdContext)event);
+                this.contextFuture.complete((RntbdContext) event);
                 this.removeContextNegotiatorAndFlushPendingWrites(context);
                 return;
             }
             if (event instanceof RntbdContextException) {
-                this.contextFuture.completeExceptionally((RntbdContextException)event);
+                this.contextFuture.completeExceptionally((RntbdContextException) event);
                 context.pipeline().flush().close();
                 return;
             }
@@ -510,10 +510,10 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
 
             context.writeAndFlush(this.addPendingRequestRecord(context, record), promise).addListener(completed -> {
                 if (completed.isSuccess()) {
-                    record.state(RntbdRequestRecord.State.SENT);
+                    record.stage(RntbdRequestRecord.Stage.SENT);
                     this.timestamps.channelWriteCompleted();
                 } else {
-                    record.state(RntbdRequestRecord.State.UNSENT);
+                    record.stage(RntbdRequestRecord.Stage.UNSENT);
                 }
             });
 
@@ -569,8 +569,8 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         this.pendingWrites.add(out, promise);
     }
 
-    RntbdClientChannelHealthChecker.Timestamps snapshotTimestamps() {
-        return new RntbdClientChannelHealthChecker.Timestamps(this.timestamps);
+    Timestamps snapshotTimestamps() {
+        return new Timestamps(this.timestamps);
     }
 
     // endregion
@@ -582,7 +582,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         return this.pendingRequests.compute(record.transportRequestId(), (id, current) -> {
 
             reportIssueUnless(current == null, context, "id: {}, current: {}, request: {}", record);
-            record.state(RntbdRequestRecord.State.QUEUED);
+            record.stage(RntbdRequestRecord.Stage.QUEUED);
 
             final Timeout pendingRequestTimeout = record.newTimeout(timeout -> {
 
@@ -601,7 +601,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
                 pendingRequestTimeout.cancel();
             });
 
-            return record.state(RntbdRequestRecord.State.QUEUED);
+            return record.stage(RntbdRequestRecord.Stage.QUEUED);
 
         }).args();
     }
@@ -708,14 +708,14 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         final Long transportRequestId = response.getTransportRequestId();
 
         if (transportRequestId == null) {
-            reportIssue(context, "response ignored because its transport request identifier is missing: {}", response);
+            reportIssue(context, "response ignored because its transportRequestId is missing: {}", response);
             return;
         }
 
-        final RntbdRequestRecord pendingRequest = this.pendingRequests.get(transportRequestId);
+        final RntbdRequestRecord requestRecord = this.pendingRequests.get(transportRequestId);
 
-        if (pendingRequest == null) {
-            logger.debug("{} response ignored because there is no matching pending request: {}", context, response);
+        if (requestRecord == null) {
+            logger.debug("response {} ignored because its requestRecord is missing: {}", transportRequestId, response);
             return;
         }
 
@@ -725,7 +725,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
         if (HttpResponseStatus.OK.code() <= status.code() && status.code() < HttpResponseStatus.MULTIPLE_CHOICES.code()) {
 
             final StoreResponse storeResponse = response.toStoreResponse(this.contextFuture.getNow(null));
-            pendingRequest.complete(storeResponse);
+            requestRecord.complete(storeResponse);
 
         } else {
 
@@ -838,7 +838,7 @@ public final class RntbdRequestManager implements ChannelHandler, ChannelInbound
                     break;
             }
 
-            pendingRequest.completeExceptionally(cause);
+            requestRecord.completeExceptionally(cause);
         }
     }
 

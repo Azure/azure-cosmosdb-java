@@ -74,14 +74,19 @@ class ReadMyWriteWorkflow extends AsyncBenchmark<Document> {
 
     @Override
     protected void performWorkload(Subscriber<Document> subs, long i) throws Exception {
+
         Observable<Document> obs;
         boolean readyMyWrite = RandomUtils.nextBoolean();
+
         if (readyMyWrite) {
+
             // will do a write and immediately upon success will either
             // do a point read
             // or single partition query
             // or cross partition query to find the write.
+
             int j = Math.toIntExact(Math.floorMod(i, 3));
+
             switch (j) {
                 case 0:
                     // write a random document to cosmodb and update the cache.
@@ -110,12 +115,15 @@ class ReadMyWriteWorkflow extends AsyncBenchmark<Document> {
                     throw new IllegalStateException();
             }
         } else {
+
             // will either do
             // a write
             // a point read for a in memory cached document
             // or single partition query for a in memory cached document
             // or cross partition query for a in memory cached document
+
             int j = Math.toIntExact(Math.floorMod(i, 4));
+
             switch (j) {
                 case 0:
                     // write a random document to cosmosdb and update the cache
@@ -144,8 +152,14 @@ class ReadMyWriteWorkflow extends AsyncBenchmark<Document> {
         }
 
         concurrencyControlSemaphore.acquire();
+        logger.debug("concurrencyControlSemaphore: {}", concurrencyControlSemaphore);
 
-        obs.subscribeOn(Schedulers.computation()).subscribe(subs);
+        try {
+            obs.subscribeOn(Schedulers.computation()).subscribe(subs);
+        } catch (Throwable error) {
+            concurrencyControlSemaphore.release();
+            logger.error("subscription failed due to ", error);
+        }
     }
 
     private void populateCache() {

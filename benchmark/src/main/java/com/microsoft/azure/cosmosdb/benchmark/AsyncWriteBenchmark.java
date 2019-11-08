@@ -96,8 +96,7 @@ class AsyncWriteBenchmark extends AsyncBenchmark<ResourceResponse<Document>> {
         if (configuration.getOperationType() == Operation.WriteThroughput) {
             obs.subscribeOn(Schedulers.computation()).subscribe(subs);
         } else {
-            LatencySubscriber<ResourceResponse<Document>> latencySubscriber = new LatencySubscriber<>(
-                    subs);
+            LatencySubscriber<ResourceResponse<Document>> latencySubscriber = new LatencySubscriber<>(subs);
             latencySubscriber.context = latency.time();
             obs.subscribeOn(Schedulers.computation()).subscribe(latencySubscriber);
         }

@@ -103,14 +103,13 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
     @Override
     public void close() {
 
-        logger.debug("\n  [{}] CLOSE", this);
-
         if (this.closed.compareAndSet(false, true)) {
+            logger.debug("close {}", this);
             this.endpointProvider.close();
             return;
         }
 
-        logger.debug("\n  [{}]\n  already closed", this);
+        logger.debug("already closed {}", this);
     }
 
     public int endpointCount() {
@@ -129,16 +128,20 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
     public Single<StoreResponse> invokeStoreAsync(
         final Uri address, final ResourceOperation unused, final RxDocumentServiceRequest request
     ) {
+        logger.debug("RntbdTransportClient.invokeStoreAsync({}, {})", address, request);
+
         checkNotNull(address, "expected non-null address");
         checkNotNull(request, "expected non-null request");
         this.throwIfClosed();
 
-        URI physicalAddress = address.getURI();
+        final URI physicalAddress = address.getURI();
         final RntbdRequestArgs requestArgs = new RntbdRequestArgs(request, physicalAddress);
         requestArgs.traceOperation(logger, null, "invokeStoreAsync");
 
         final RntbdEndpoint endpoint = this.endpointProvider.get(physicalAddress);
         final RntbdRequestRecord record = endpoint.request(requestArgs);
+
+        logger.debug("RntbdTransportClient.invokeStoreAsync({}, {}): {}", address, request, record);
 
         return Single.fromEmitter((SingleEmitter<StoreResponse> emitter) -> {
 
@@ -486,13 +489,16 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
             generator.writeNumberField("id", value.id());
             generator.writeBooleanField("isClosed", value.isClosed());
             generator.writeObjectField("configuration", value.endpointProvider.config());
-            generator.writeArrayFieldStart("serviceEndpoints");
+            generator.writeObjectFieldStart("serviceEndpoints");
+            generator.writeNumberField("count", value.endpointCount());
+            generator.writeArrayFieldStart("items");
 
             for (final Iterator<RntbdEndpoint> iterator = value.endpointProvider.list().iterator(); iterator.hasNext(); ) {
                 generator.writeObject(iterator.next());
             }
 
             generator.writeEndArray();
+            generator.writeEndObject();
             generator.writeEndObject();
         }
     }

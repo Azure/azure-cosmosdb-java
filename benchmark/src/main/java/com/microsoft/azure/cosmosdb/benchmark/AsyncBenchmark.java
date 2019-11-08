@@ -75,11 +75,11 @@ abstract class AsyncBenchmark<T> {
 
     AsyncBenchmark(Configuration cfg) {
         client = new AsyncDocumentClient.Builder()
-                .withServiceEndpoint(cfg.getServiceEndpoint())
-                .withMasterKeyOrResourceToken(cfg.getMasterKey())
-                .withConnectionPolicy(cfg.getConnectionPolicy())
-                .withConsistencyLevel(cfg.getConsistencyLevel())
-                .build();
+            .withServiceEndpoint(cfg.getServiceEndpoint())
+            .withMasterKeyOrResourceToken(cfg.getMasterKey())
+            .withConnectionPolicy(cfg.getConnectionPolicy())
+            .withConsistencyLevel(cfg.getConsistencyLevel())
+            .build();
 
         logger = LoggerFactory.getLogger(this.getClass());
 
@@ -180,8 +180,10 @@ abstract class AsyncBenchmark<T> {
     protected abstract void performWorkload(Subscriber<T> subs, long i) throws Exception;
 
     private boolean shouldContinue(long startTimeMillis, long iterationCount) {
+
         Duration maxDurationTime = configuration.getMaxRunningTimeDuration();
         int maxNumberOfOperations = configuration.getNumberOfOperations();
+
         if (maxDurationTime == null) {
             return iterationCount < maxNumberOfOperations;
         }
@@ -201,16 +203,18 @@ abstract class AsyncBenchmark<T> {
 
         successMeter = metricsRegistry.meter("#Successful Operations");
         failureMeter = metricsRegistry.meter("#Unsuccessful Operations");
-        if (configuration.getOperationType() == Operation.ReadLatency
-                || configuration.getOperationType() == Operation.WriteLatency)
+
+        if (configuration.getOperationType() == Configuration.Operation.ReadLatency
+                || configuration.getOperationType() == Configuration.Operation.WriteLatency) {
             latency = metricsRegistry.timer("Latency");
+        }
 
         reporter.start(configuration.getPrintingInterval(), TimeUnit.SECONDS);
-
         long startTime = System.currentTimeMillis();
 
         AtomicLong count = new AtomicLong(0);
         long i;
+
         for ( i = 0; shouldContinue(startTime, i); i++) {
 
             Subscriber<T> subs = new Subscriber<T>() {
@@ -261,7 +265,7 @@ abstract class AsyncBenchmark<T> {
 
         long endTime = System.currentTimeMillis();
         logger.info("[{}] operations performed in [{}] seconds.",
-                    configuration.getNumberOfOperations(), (int) ((endTime - startTime) / 1000));
+            configuration.getNumberOfOperations(), (int) ((endTime - startTime) / 1000));
 
         reporter.report();
         reporter.close();
