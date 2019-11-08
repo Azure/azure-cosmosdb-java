@@ -70,7 +70,7 @@ public class ReadMyWritesConsistencyTest {
                 System.getenv().get("DESIRED_CONSISTENCY")), "Session"));
 
     private final String directModeProtocol =
-        System.getProperty("cosmos.directModeProtocol",
+        System.getProperty("azure.cosmos.directModeProtocol",
             StringUtils.defaultString(Strings.emptyToNull(
                 System.getenv().get("DIRECT_MODE_PROTOCOL")), Protocol.Tcp.name()));
 
@@ -122,7 +122,7 @@ public class ReadMyWritesConsistencyTest {
         Configuration cfg = new Configuration();
         new JCommander(cfg, StringUtils.split(cmd));
 
-        logger.info("cosmos.directModeProtocol={}, {}", directModeProtocol, cfg);
+        logger.info("azure.cosmos.directModeProtocol={}, {}", directModeProtocol, cfg);
         AtomicInteger success = new AtomicInteger();
         AtomicInteger error = new AtomicInteger();
 
