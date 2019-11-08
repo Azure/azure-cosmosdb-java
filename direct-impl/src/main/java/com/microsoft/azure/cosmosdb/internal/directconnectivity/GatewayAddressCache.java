@@ -58,7 +58,6 @@ import rx.Observable;
 import rx.Single;
 
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.time.Duration;
@@ -288,8 +287,7 @@ public class GatewayAddressCache implements IAddressCache {
             headers.put(HttpConstants.HttpHeaders.FORCE_REFRESH, Boolean.TRUE.toString());
         }
 
-        if(request.forceCollectionRoutingMapRefresh)
-        {
+        if (request.forceCollectionRoutingMapRefresh) {
             headers.put(HttpConstants.HttpHeaders.FORCE_COLLECTION_ROUTING_MAP_REFRESH, Boolean.TRUE.toString());
         }
 
@@ -488,8 +486,7 @@ public class GatewayAddressCache implements IAddressCache {
             headers.put(HttpConstants.HttpHeaders.USE_MASTER_COLLECTION_RESOLVER, Boolean.TRUE.toString());
         }
 
-        if(request.forceCollectionRoutingMapRefresh)
-        {
+        if (request.forceCollectionRoutingMapRefresh) {
             headers.put(HttpConstants.HttpHeaders.FORCE_COLLECTION_ROUTING_MAP_REFRESH, Boolean.TRUE.toString());
         }
 

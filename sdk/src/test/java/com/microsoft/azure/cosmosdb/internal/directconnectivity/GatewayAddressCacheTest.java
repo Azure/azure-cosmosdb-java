@@ -119,15 +119,13 @@ public class GatewayAddressCacheTest extends TestSuiteBase {
                 null,
                 getCompositeHttpClient(configs));
 
-        for(int i = 0; i < 2 ;i++)
-        {
+        for (int i = 0; i < 2; i++) {
             RxDocumentServiceRequest req =
             RxDocumentServiceRequest.create(OperationType.Create, ResourceType.Document,
             collectionLink + "/docs/",
             getDocumentDefinition(), new HashMap<>());
 
-            if(i == 1)
-            {
+            if (i == 1) {
                 req.forceCollectionRoutingMapRefresh = true; //testing address api with x-ms-collectionroutingmap-refresh true
             }
 
