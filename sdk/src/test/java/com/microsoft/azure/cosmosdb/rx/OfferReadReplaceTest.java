@@ -55,47 +55,40 @@ public class OfferReadReplaceTest extends TestSuiteBase {
 
     @Test(groups = { "emulator" }, timeOut = TIMEOUT)
     public void readAndReplaceOffer() {
-
         client.readOffers(null).toBlocking().subscribe((offersFeed) -> {
-            try {
-                int i;
-                List<Offer> offers = offersFeed.getResults();
-                for (i = 0; i < offers.size(); i++) {
-                    if (offers.get(i).getOfferResourceId().equals(createdCollection.getResourceId())) {
-                        break;
-                    }
+            int i;
+            List<Offer> offers = offersFeed.getResults();
+            for (i = 0; i < offers.size(); i++) {
+                if (offers.get(i).getOfferResourceId().equals(createdCollection.getResourceId())) {
+                    break;
                 }
-
-                Offer rOffer = client.readOffer(offers.get(i).getSelfLink()).toBlocking().single().getResource();
-                int oldThroughput = rOffer.getThroughput();
-                
-                Observable<ResourceResponse<Offer>> readObservable = client.readOffer(offers.get(i).getSelfLink());
-
-                // validate offer read
-                ResourceResponseValidator<Offer> validatorForRead = new ResourceResponseValidator.Builder<Offer>()
-                        .withOfferThroughput(oldThroughput)
-                        .notNullEtag()
-                        .build();
-
-                validateSuccess(readObservable, validatorForRead);
-
-                // update offer
-                int newThroughput = oldThroughput + 100;
-                offers.get(i).setThroughput(newThroughput);
-                Observable<ResourceResponse<Offer>> replaceObservable = client.replaceOffer(offers.get(i));
-
-                // validate offer replace
-                ResourceResponseValidator<Offer> validatorForReplace = new ResourceResponseValidator.Builder<Offer>()
-                        .withOfferThroughput(newThroughput)
-                        .notNullEtag()
-                        .build();
-                
-                validateSuccess(replaceObservable, validatorForReplace);
-                
-            } catch (Exception e) {
-                e.printStackTrace();
             }
 
+            Offer rOffer = client.readOffer(offers.get(i).getSelfLink()).toBlocking().single().getResource();
+            int oldThroughput = rOffer.getThroughput();
+
+            Observable<ResourceResponse<Offer>> readObservable = client.readOffer(offers.get(i).getSelfLink());
+
+            // validate offer read
+            ResourceResponseValidator<Offer> validatorForRead = new ResourceResponseValidator.Builder<Offer>()
+                    .withOfferThroughput(oldThroughput)
+                    .notNullEtag()
+                    .build();
+
+            validateSuccess(readObservable, validatorForRead);
+
+            // update offer
+            int newThroughput = oldThroughput + 100;
+            offers.get(i).setThroughput(newThroughput);
+            Observable<ResourceResponse<Offer>> replaceObservable = client.replaceOffer(offers.get(i));
+
+            // validate offer replace
+            ResourceResponseValidator<Offer> validatorForReplace = new ResourceResponseValidator.Builder<Offer>()
+                    .withOfferThroughput(newThroughput)
+                    .notNullEtag()
+                    .build();
+
+            validateSuccess(replaceObservable, validatorForReplace);
         });
     }
 
