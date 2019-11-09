@@ -288,6 +288,14 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
             return this.shutdownTimeout;
         }
 
+        public UserAgentContainer userAgent() {
+            return this.userAgent;
+        }
+
+        // endregion
+
+        // region Methods
+
         @Override
         public String toString() {
             return RntbdObjectMapper.toJson(this);
@@ -295,17 +303,8 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
 
         // endregion
 
-        // region Methods
-
-        public UserAgentContainer userAgent() {
-            return this.userAgent;
-        }
-
-        // endregion
-
         // region Types
 
-        @SuppressWarnings("UnusedReturnValue")
         public static class Builder {
 
             // region Fields
