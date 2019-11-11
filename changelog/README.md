@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.6.4-SNAPSHOT - 2019-11-08
+## Unreleased
 - Improved diagnostics in Direct TCP transport client ([#287](https://github.com/Azure/azure-cosmosdb-java/pull/287))
 - Bumped netty.version to 4.1.42.Final and netty-tcnative.version to 2.0.26.Final to address a Direct TCP SSL issue ([#274](https://github.com/Azure/azure-cosmosdb-java/pull/274))
 
