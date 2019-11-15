@@ -25,7 +25,9 @@ package com.microsoft.azure.cosmosdb.rx;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
 import com.microsoft.azure.cosmosdb.DatabaseForTest;
@@ -149,14 +151,12 @@ public class CollectionCrudTest extends TestSuiteBase {
         };
         Collection<SpatialSpec> spatialIndexes = new ArrayList<SpatialSpec>();
         for (int index = 0; index < 2; index++) {
-            Collection<SpatialType> collectionOfSpatialTypes = new ArrayList<SpatialType>();
 
             SpatialSpec spec = new SpatialSpec();
             spec.setPath("/path" + index + "/*");
 
-            for (int i = index; i < index + 3; i++) {
-                collectionOfSpatialTypes.add(spatialTypes[i]);
-            }
+            List<SpatialType> collectionOfSpatialTypes = new ArrayList<SpatialType>(Arrays.asList(spatialTypes).subList(0, index + 3));
+
             spec.setSpatialTypes(collectionOfSpatialTypes);
             spatialIndexes.add(spec);
         }
