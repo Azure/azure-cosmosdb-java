@@ -259,6 +259,51 @@ public class CollectionCrudTest extends TestSuiteBase {
         safeDeleteAllCollections(client, database);
     }
 
+    @Test(groups = { "emulator" }, timeOut = TIMEOUT, dataProvider = "collectionCrudArgProvider")
+    public void replaceCollectionWithTTL(String collectionName, boolean isNameBased)  {
+        // create a collection
+        DocumentCollection collectionDefinition = new DocumentCollection();
+        collectionDefinition.setId(collectionName);
+        DocumentCollection collection = createCollection(client, databaseId, collectionDefinition);
+
+        Document document1 = new Document();
+        document1.setId("doc1");
+        document1.set("name", "New Document1");
+        createDocument(client, databaseId, collectionName, document1);
+
+        Integer timeToLive = 120;
+        collection.setDefaultTimeToLive(timeToLive);
+
+        DocumentCollection replacedCollection = client.replaceCollection(collection,
+            null).toBlocking().single().getResource();
+
+        assertThat(replacedCollection.getDefaultTimeToLive()).isEqualTo(timeToLive);
+
+        DocumentCollection readCollection = client.readCollection(getCollectionLink(collection),
+            null).toBlocking().single().getResource();
+
+        assertThat(readCollection.getDefaultTimeToLive()).isEqualTo(timeToLive);
+
+        Document readDocument1 = client.readDocument(Utils.getDocumentNameLink(databaseId, collectionName, document1.getId()), null)
+                                      .toBlocking().single().getResource();
+
+        //  TODO: Document should also have time to live property set up correctly.
+        assertThat(readDocument1.getTimeToLive()).isNull();
+
+        Document document2 = new Document();
+        document2.setId("doc2");
+        document2.set("name", "New Document2");
+        createDocument(client, databaseId, collectionName, document2);
+
+        Document readDocument2 = client.readDocument(Utils.getDocumentNameLink(databaseId, collectionName, document2.getId()), null)
+                                       .toBlocking().single().getResource();
+
+        //  TODO: Document should also have time to live property set up correctly.
+        assertThat(readDocument2.getTimeToLive()).isNull();
+
+        safeDeleteAllCollections(client, database);
+    }
+
     @Test(groups = { "emulator" }, timeOut = 10 * TIMEOUT, retryAnalyzer = RetryAnalyzer.class)
     public void sessionTokenConsistencyCollectionDeleteCreateSameName() {
         AsyncDocumentClient client1 = this.clientBuilder().build();
@@ -332,5 +377,10 @@ public class CollectionCrudTest extends TestSuiteBase {
 
     private static String getCollectionLink(Database db, DocumentCollection documentCollection, boolean isNameLink) {
         return isNameLink ? "dbs/" + db.getId() + "/colls/" + documentCollection.getId() : documentCollection.getSelfLink();
+    }
+
+    private String getDocumentLink(Database db, DocumentCollection documentCollection, Document doc, boolean isNameBased) {
+        return isNameBased ? "dbs/" + db.getId() + "/colls/" + documentCollection.getId() + "/docs/" + doc.getId() :
+            "dbs/" + db.getResourceId() + "/colls/" + documentCollection.getResourceId() + "/docs/" + doc.getResourceId();
     }
 }
