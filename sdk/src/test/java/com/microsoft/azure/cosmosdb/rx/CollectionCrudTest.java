@@ -31,7 +31,9 @@ import java.util.List;
 import java.util.UUID;
 
 import com.microsoft.azure.cosmosdb.DatabaseForTest;
+import com.microsoft.azure.cosmosdb.PartitionKey;
 import com.microsoft.azure.cosmosdb.PartitionKeyDefinition;
+import com.microsoft.azure.cosmosdb.RequestOptions;
 import com.microsoft.azure.cosmosdb.RetryAnalyzer;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -263,12 +265,25 @@ public class CollectionCrudTest extends TestSuiteBase {
         // create a collection
         DocumentCollection collectionDefinition = new DocumentCollection();
         collectionDefinition.setId(collectionName);
+        collectionDefinition.set("name", collectionName);
+
+        IndexingPolicy indexingPolicy = new IndexingPolicy();
+        indexingPolicy.setIndexingMode(IndexingMode.Lazy);
+        collectionDefinition.setIndexingPolicy(indexingPolicy);
+
         DocumentCollection collection = createCollection(client, databaseId, collectionDefinition);
 
-        Document document1 = new Document();
-        document1.setId("doc1");
-        document1.set("name", "New Document1");
-        createDocument(client, databaseId, collectionName, document1);
+        Document document = new Document();
+        document.setId("doc");
+        document.set("name", "New Document");
+
+        createDocument(client, databaseId, collectionName, document, null);
+
+        DocumentCollection readCollection = client.readCollection(getCollectionLink(collection),
+            null).toBlocking().single().getResource();
+
+        //  sanity check
+        assertThat(readCollection.getIndexingPolicy().getIndexingMode()).isEqualTo(IndexingMode.Lazy);
 
         Integer timeToLive = 120;
         collection.setDefaultTimeToLive(timeToLive);
@@ -276,29 +291,14 @@ public class CollectionCrudTest extends TestSuiteBase {
         DocumentCollection replacedCollection = client.replaceCollection(collection,
             null).toBlocking().single().getResource();
 
+        assertThat(readCollection.getIndexingPolicy().getIndexingMode()).isEqualTo(IndexingMode.Lazy);
+
         assertThat(replacedCollection.getDefaultTimeToLive()).isEqualTo(timeToLive);
 
-        DocumentCollection readCollection = client.readCollection(getCollectionLink(collection),
-            null).toBlocking().single().getResource();
-
-        assertThat(readCollection.getDefaultTimeToLive()).isEqualTo(timeToLive);
-
-        Document readDocument1 = client.readDocument(Utils.getDocumentNameLink(databaseId, collectionName, document1.getId()), null)
+        Document readDocument = client.readDocument(Utils.getDocumentNameLink(databaseId, collectionName, document.getId()), null)
                                       .toBlocking().single().getResource();
 
-        //  TODO: Document should also have time to live property set up correctly.
-        assertThat(readDocument1.getTimeToLive()).isNull();
-
-        Document document2 = new Document();
-        document2.setId("doc2");
-        document2.set("name", "New Document2");
-        createDocument(client, databaseId, collectionName, document2);
-
-        Document readDocument2 = client.readDocument(Utils.getDocumentNameLink(databaseId, collectionName, document2.getId()), null)
-                                       .toBlocking().single().getResource();
-
-        //  TODO: Document should also have time to live property set up correctly.
-        assertThat(readDocument2.getTimeToLive()).isNull();
+        assertThat(readDocument).isNotNull();
 
         safeDeleteAllCollections(client, database);
     }
