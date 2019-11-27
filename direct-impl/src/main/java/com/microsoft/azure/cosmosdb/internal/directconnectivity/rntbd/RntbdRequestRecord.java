@@ -84,10 +84,6 @@ public final class RntbdRequestRecord extends CompletableFuture<StoreResponse> {
         return this.args;
     }
 
-    public long creationTime() {
-        return this.args.creationTime();
-    }
-
     public boolean expire() {
         final RequestTimeoutException error = new RequestTimeoutException(this.toString(), this.args.physicalAddress());
         BridgeInternal.setRequestHeaders(error, this.args.serviceRequest().getHeaders());
