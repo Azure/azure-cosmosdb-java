@@ -27,6 +27,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import com.google.common.base.MoreObjects;
 import com.microsoft.azure.cosmosdb.BridgeInternal;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.RequestTimeline;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.RequestTimeoutException;
@@ -197,6 +198,7 @@ public final class RntbdRequestRecord extends CompletableFuture<StoreResponse> {
             final SerializerProvider provider) throws IOException {
 
             generator.writeStartObject();
+
             generator.writeObjectFieldStart("status");
             generator.writeBooleanField("done", value.isDone());
             generator.writeBooleanField("cancelled", value.isCancelled());
@@ -227,7 +229,37 @@ public final class RntbdRequestRecord extends CompletableFuture<StoreResponse> {
             }
 
             generator.writeEndObject();
+
             generator.writeObjectField("args", value.args);
+
+            generator.writeStartObject("timeline");
+
+            if (value.timeCreated() != null) {
+                generator.writeStringField("created", value.timeCreated().toString());
+            } else {
+                generator.writeNullField("created");
+            }
+
+            if (value.timeQueued() != null) {
+                generator.writeStringField("queued", value.timeQueued().toString());
+            } else {
+                generator.writeNullField("queued");
+            }
+
+            if (value.timeSent() != null) {
+                generator.writeStringField("sent", value.timeSent().toString());
+            } else {
+                generator.writeNullField("sent");
+            }
+
+            if (value.timeCompleted() != null) {
+                generator.writeStringField("completed", value.timeCompleted().toString());
+            } else {
+                generator.writeNullField("completed");
+            }
+
+            generator.writeEndObject();
+
             generator.writeEndObject();
         }
     }
