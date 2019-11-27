@@ -148,6 +148,7 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
             record.whenComplete((response, error) -> {
 
                 requestArgs.traceOperation(logger, null, "emitSingle", response, error);
+                record.stage(RntbdRequestRecord.Stage.COMPLETED);
 
                 if (error == null) {
                     emitter.onSuccess(response);

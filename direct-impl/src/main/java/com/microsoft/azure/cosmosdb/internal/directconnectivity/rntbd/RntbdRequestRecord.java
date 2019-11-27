@@ -28,6 +28,7 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import com.microsoft.azure.cosmosdb.BridgeInternal;
+import com.microsoft.azure.cosmosdb.internal.directconnectivity.RequestTimeline;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.RequestTimeoutException;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.StoreResponse;
 import io.micrometer.core.instrument.Timer;
@@ -36,30 +37,38 @@ import io.netty.util.TimerTask;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 @JsonSerialize(using = RntbdRequestRecord.JsonSerializer.class)
 public final class RntbdRequestRecord extends CompletableFuture<StoreResponse> {
 
-    private static final AtomicReferenceFieldUpdater<RntbdRequestRecord, Stage>
-        stageUpdater = AtomicReferenceFieldUpdater.newUpdater(RntbdRequestRecord.class, Stage.class, "stage");
+    private static final AtomicReferenceFieldUpdater<RntbdRequestRecord, Stage> updater = AtomicReferenceFieldUpdater
+        .newUpdater(RntbdRequestRecord.class, Stage.class, "stage");
 
     private final RntbdRequestArgs args;
     private final RntbdRequestTimer timer;
+
     private volatile Stage stage;
+
+    private volatile OffsetDateTime timeCompleted;
+    private volatile OffsetDateTime timeCreated;
+    private volatile OffsetDateTime timeQueued;
+    private volatile OffsetDateTime timeSent;
 
     public RntbdRequestRecord(final RntbdRequestArgs args, final RntbdRequestTimer timer) {
 
-        checkNotNull(args, "args");
-        checkNotNull(timer, "timer");
+        checkNotNull(args, "expected non-null args");
+        checkNotNull(timer, "expected non-null timer");
 
+        this.timeCreated = OffsetDateTime.now();
         this.stage = Stage.CREATED;
         this.args = args;
         this.timer = timer;
@@ -89,21 +98,61 @@ public final class RntbdRequestRecord extends CompletableFuture<StoreResponse> {
         return this.args.lifetime();
     }
 
-    public Timeout newTimeout(final TimerTask task) {
-        return this.timer.newTimeout(task);
-    }
-
     public Stage stage() {
-        return stageUpdater.get(this);
+        return updater.get(this);
     }
 
-    public RntbdRequestRecord stage(Stage value) {
-        stageUpdater.set(this, value);
+    public RntbdRequestRecord stage(final Stage value) {
+
+        final OffsetDateTime time = OffsetDateTime.now();
+
+        updater.updateAndGet(this, current -> {
+
+            switch (value) {
+                case QUEUED:
+                    checkState(current == Stage.CREATED,
+                        "expected transition from Stage.CREATED to Stage.QUEUED, not Stage.%s",
+                        value);
+                    this.timeQueued = time;
+                    break;
+                case SENT:
+                    checkState(current == Stage.QUEUED,
+                        "expected transition from Stage.QUEUED to Stage.SENT, not Stage.%s",
+                        value);
+                    this.timeSent = time;
+                    break;
+                case COMPLETED:
+                    checkState(current == Stage.SENT,
+                        "expected transition from Stage.SENT to Stage.COMPLETED, not Stage.%s",
+                        value);
+                    this.timeCompleted = time;
+                    break;
+            }
+
+            return value;
+        });
+
         return this;
     }
 
-    public long timeoutIntervalInMillis() {
-        return this.timer.getRequestTimeout(TimeUnit.MILLISECONDS);
+    public OffsetDateTime timeCompleted() {
+        return this.timeCompleted;
+    }
+
+    public OffsetDateTime timeCreated() {
+        return this.timeCreated;
+    }
+
+    public OffsetDateTime timeQueued() {
+        return this.timeQueued;
+    }
+
+    public OffsetDateTime timeSent() {
+        return this.timeSent;
+    }
+
+    public RequestTimeline timeline() {
+        return new RequestTimeline(this);
     }
 
     public long transportRequestId() {
@@ -113,6 +162,10 @@ public final class RntbdRequestRecord extends CompletableFuture<StoreResponse> {
     // endregion
 
     // region Methods
+
+    public Timeout newTimeout(final TimerTask task) {
+        return this.timer.newTimeout(task);
+    }
 
     public long stop(Timer requests, Timer responses) {
         return this.args.stop(requests, responses);
@@ -128,7 +181,7 @@ public final class RntbdRequestRecord extends CompletableFuture<StoreResponse> {
     // region Types
 
     public enum Stage {
-        CREATED, QUEUED, SENT, UNSENT, CANCELLED_BY_CLIENT
+        CREATED, QUEUED, SENT, COMPLETED
     }
 
     static final class JsonSerializer extends StdSerializer<RntbdRequestRecord> {
