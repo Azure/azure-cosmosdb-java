@@ -26,30 +26,30 @@ package com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd;
 
 import io.netty.util.HashedWheelTimer;
 import io.netty.util.Timeout;
-import io.netty.util.Timer;
 import io.netty.util.TimerTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.google.common.base.Strings.lenientFormat;
 
 public final class RntbdRequestTimer implements AutoCloseable {
 
-    private static final long FIVE_MILLISECONDS = 5000000L;
+    private static final long TIMER_RESOLUTION_IN_NANOS = 100_000_000L; // 100 ms
 
     private static final Logger logger = LoggerFactory.getLogger(RntbdRequestTimer.class);
-    private final long requestTimeout;
-    private final Timer timer;
+    private final AtomicBoolean closed = new AtomicBoolean();
 
-    public RntbdRequestTimer(final long requestTimeout) {
-        // Inspection of the HashWheelTimer code indicates that our choice of a 5 millisecond timer resolution ensures
-        // a request will expire within 10 milliseconds of the specified requestTimeout interval. This is because
-        // cancellation of a timeout takes two timer resolution units to complete.
-        this.timer = new HashedWheelTimer(FIVE_MILLISECONDS, TimeUnit.NANOSECONDS);
-        this.requestTimeout = requestTimeout;
+    private final long requestTimeout;
+    private final HashedWheelTimer timer;
+
+    public RntbdRequestTimer(final long requestTimeoutInNanos) {
+        // HashedWheelTimer code inspection shows that timeout tasks expire within two timer resolution units
+        this.timer = new HashedWheelTimer(TIMER_RESOLUTION_IN_NANOS, TimeUnit.NANOSECONDS);
+        this.requestTimeout = requestTimeoutInNanos;
     }
 
     public long getRequestTimeout(final TimeUnit unit) {
@@ -59,27 +59,24 @@ public final class RntbdRequestTimer implements AutoCloseable {
     @Override
     public void close() {
 
+        if (this.closed.compareAndSet(false, true)) {
+
         final Set<Timeout> timeouts = this.timer.stop();
         final int count = timeouts.size();
 
-        if (count == 0) {
-            logger.debug("no outstanding request timeout tasks");
-            return;
-        }
-
-        logger.debug("stopping {} request timeout tasks", count);
+            if (count > 0) {
 
         for (final Timeout timeout : timeouts) {
             if (!timeout.isExpired()) {
                 try {
                     timeout.task().run(timeout);
                 } catch (Throwable error) {
-                    logger.warn(lenientFormat("request timeout task failed due to ", error));
+                            logger.warn("timeout task failed due to ", error);
+                        }
+                    }
                 }
             }
         }
-
-        logger.debug("{} request timeout tasks stopped", count);
     }
 
     public Timeout newTimeout(final TimerTask task) {
