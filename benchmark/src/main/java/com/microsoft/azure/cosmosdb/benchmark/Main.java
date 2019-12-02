@@ -23,11 +23,10 @@
 
 package com.microsoft.azure.cosmosdb.benchmark;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Main {
 
@@ -86,6 +85,7 @@ public class Main {
                 throw new RuntimeException(cfg.getOperationType() + " is not supported");
             }
 
+            LOGGER.info("Starting {}", cfg.getOperationType());
             benchmark.run();
             benchmark.shutdown();
 

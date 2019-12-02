@@ -117,7 +117,7 @@ public final class RntbdClientChannelHealthChecker implements ChannelHealthCheck
 
     public Future<Boolean> isHealthy(final Channel channel) {
 
-        checkNotNull(channel, "channel: null");
+        checkNotNull(channel, "expected non-null channel");
 
         final RntbdRequestManager requestManager = channel.pipeline().get(RntbdRequestManager.class);
         final Promise<Boolean> promise = channel.eventLoop().newPromise();

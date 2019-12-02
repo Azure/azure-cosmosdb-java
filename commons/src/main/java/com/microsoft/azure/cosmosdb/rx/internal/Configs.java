@@ -75,6 +75,7 @@ public class Configs {
     private SslContext sslContextInit() {
         try {
             SslProvider sslProvider = SslContext.defaultClientProvider();
+            logger.info("SSL Provider: {}", sslProvider.name());
             return SslContextBuilder.forClient().sslProvider(sslProvider).build();
         } catch (SSLException sslException) {
             logger.error("Fatal error cannot instantiate ssl context due to {}", sslException.getMessage(), sslException);

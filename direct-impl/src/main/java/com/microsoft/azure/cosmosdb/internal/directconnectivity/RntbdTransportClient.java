@@ -48,6 +48,7 @@ import rx.SingleEmitter;
 import java.io.IOException;
 import java.net.URI;
 import java.time.Duration;
+import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -93,7 +94,23 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
 
     // endregion
 
-    // region Accessors
+    // region Methods
+
+    public boolean isClosed() {
+        return this.closed.get();
+    }
+
+    @Override
+    public void close() {
+
+        if (this.closed.compareAndSet(false, true)) {
+            logger.debug("close {}", this);
+            this.endpointProvider.close();
+            return;
+        }
+
+        logger.debug("already closed {}", this);
+    }
 
     public int endpointCount() {
         return this.endpointProvider.count();
@@ -107,45 +124,24 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
         return this.id;
     }
 
-    public boolean isClosed() {
-        return this.closed.get();
-    }
-
-    public Tag tag() {
-        return this.tag;
-    }
-
-    // endregion
-
-    // region Methods
-
-    @Override
-    public void close() {
-
-        logger.debug("\n  [{}] CLOSE", this);
-
-        if (this.closed.compareAndSet(false, true)) {
-            this.endpointProvider.close();
-            return;
-        }
-
-        logger.debug("\n  [{}]\n  already closed", this);
-    }
-
     @Override
     public Single<StoreResponse> invokeStoreAsync(
-        final Uri physicalAddressUri, final ResourceOperation unused, final RxDocumentServiceRequest request
+        final Uri address, final ResourceOperation unused, final RxDocumentServiceRequest request
     ) {
-        checkNotNull(physicalAddressUri, "physicalAddress");
-        checkNotNull(request, "request");
+        logger.debug("RntbdTransportClient.invokeStoreAsync({}, {})", address, request);
+
+        checkNotNull(address, "expected non-null address");
+        checkNotNull(request, "expected non-null request");
         this.throwIfClosed();
 
-        URI physicalAddress = physicalAddressUri.getURI();
+        final URI physicalAddress = address.getURI();
         final RntbdRequestArgs requestArgs = new RntbdRequestArgs(request, physicalAddress);
         requestArgs.traceOperation(logger, null, "invokeStoreAsync");
 
         final RntbdEndpoint endpoint = this.endpointProvider.get(physicalAddress);
         final RntbdRequestRecord record = endpoint.request(requestArgs);
+
+        logger.debug("RntbdTransportClient.invokeStoreAsync({}, {}): {}", address, request, record);
 
         return Single.fromEmitter((SingleEmitter<StoreResponse> emitter) -> {
 
@@ -165,18 +161,14 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
         });
     }
 
+    public Tag tag() {
+        return this.tag;
+    }
+
     @Override
     public String toString() {
         return RntbdObjectMapper.toString(this);
     }
-
-    private void throwIfClosed() {
-        checkState(!this.closed.get(), "%s is closed", this);
-    }
-
-    // endregion
-
-    // region Privates
 
     private static Tag tag(long id) {
         return Tag.of(TAG_NAME, Strings.padStart(Long.toHexString(id).toUpperCase(), 4, '0'));
@@ -184,35 +176,15 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
 
     // endregion
 
-    // region Types
+    // region Privates
 
-    static final class JsonSerializer extends StdSerializer<RntbdTransportClient> {
-
-        public JsonSerializer() {
-            super(RntbdTransportClient.class);
-        }
-
-        @Override
-        public void serialize(RntbdTransportClient value, JsonGenerator generator, SerializerProvider provider) throws IOException {
-
-            generator.writeStartObject();
-            generator.writeNumberField("id", value.id());
-            generator.writeBooleanField("isClosed", value.isClosed());
-            generator.writeObjectField("configuration", value.endpointProvider.config());
-            generator.writeArrayFieldStart("serviceEndpoints");
-
-            value.endpointProvider.list().forEach(endpoint -> {
-                try {
-                    generator.writeObject(endpoint);
-                } catch (IOException error) {
-                    logger.error("failed to serialize instance {} due to:", value.id(), error);
-                }
-            });
-
-            generator.writeEndArray();
-            generator.writeEndObject();
-        }
+    private void throwIfClosed() {
+        checkState(!this.closed.get(), "%s is closed", this);
     }
+
+    // endregion
+
+    // region Types
 
     public static final class Options {
 
@@ -228,6 +200,7 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
         private final int maxRequestsPerChannel;
         private final int partitionCount;
         private final Duration receiveHangDetectionTime;
+        private final Duration requestExpiryInterval;
         private final Duration requestTimeout;
         private final Duration sendHangDetectionTime;
         private final Duration shutdownTimeout;
@@ -248,6 +221,7 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
             this.maxRequestsPerChannel = builder.maxRequestsPerChannel;
             this.partitionCount = builder.partitionCount;
             this.receiveHangDetectionTime = builder.receiveHangDetectionTime;
+            this.requestExpiryInterval = builder.requestExpiryInterval;
             this.requestTimeout = builder.requestTimeout;
             this.sendHangDetectionTime = builder.sendHangDetectionTime;
             this.shutdownTimeout = builder.shutdownTimeout;
@@ -298,6 +272,10 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
             return this.receiveHangDetectionTime;
         }
 
+        public Duration requestExpiryInterval() {
+            return this.requestExpiryInterval;
+        }
+
         public Duration requestTimeout() {
             return this.requestTimeout;
         }
@@ -310,14 +288,6 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
             return this.shutdownTimeout;
         }
 
-        public UserAgentContainer userAgent() {
-            return this.userAgent;
-        }
-
-        // endregion
-
-        // region Methods
-
         @Override
         public String toString() {
             return RntbdObjectMapper.toJson(this);
@@ -325,14 +295,24 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
 
         // endregion
 
+        // region Methods
+
+        public UserAgentContainer userAgent() {
+            return this.userAgent;
+        }
+
+        // endregion
+
         // region Types
 
+        @SuppressWarnings("UnusedReturnValue")
         public static class Builder {
 
             // region Fields
 
             private static final UserAgentContainer DEFAULT_USER_AGENT_CONTAINER = new UserAgentContainer();
             private static final Duration FIFTEEN_SECONDS = Duration.ofSeconds(15L);
+            private static final Duration FIVE_SECONDS =Duration.ofSeconds(5L);
             private static final Duration SEVENTY_SECONDS = Duration.ofSeconds(70L);
             private static final Duration SIXTY_FIVE_SECONDS = Duration.ofSeconds(65L);
             private static final Duration TEN_SECONDS = Duration.ofSeconds(10L);
@@ -347,6 +327,7 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
             private int maxRequestsPerChannel = 30;
             private int partitionCount = 1;
             private Duration receiveHangDetectionTime = SIXTY_FIVE_SECONDS;
+            private Duration requestExpiryInterval = FIVE_SECONDS;
             private Duration requestTimeout;
             private Duration sendHangDetectionTime = TEN_SECONDS;
             private Duration shutdownTimeout = FIFTEEN_SECONDS;
@@ -368,17 +349,20 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
 
             // region Methods
 
-            public Options build() {
-                checkState(this.bufferPageSize <= this.maxBufferCapacity, "bufferPageSize (%s) > maxBufferCapacity (%s)",
-                    this.bufferPageSize, this.maxBufferCapacity
-                );
-                return new Options(this);
-            }
-
             public Builder bufferPageSize(final int value) {
-                checkArgument(value >= 4096 && (value & (value - 1)) == 0, "value: %s", value);
+                checkArgument(value >= 4096 && (value & (value - 1)) == 0,
+                    "expected value to be a power of 2 >= 4096, not %s",
+                    value);
                 this.bufferPageSize = value;
                 return this;
+            }
+
+            public Options build() {
+                checkState(this.bufferPageSize <= this.maxBufferCapacity,
+                    "expected bufferPageSize (%s) <= maxBufferCapacity (%s)",
+                    this.bufferPageSize,
+                    this.maxBufferCapacity);
+                return new Options(this);
             }
 
             public Builder certificateHostNameOverride(final String value) {
@@ -387,85 +371,95 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
             }
 
             public Builder connectionTimeout(final Duration value) {
-                checkArgument(value == null || value.compareTo(Duration.ZERO) > 0, "value: %s", value);
+                checkArgument(value == null || value.compareTo(Duration.ZERO) > 0,
+                    "expected positive value, not %s",
+                    value);
                 this.connectionTimeout = value;
                 return this;
             }
 
             public Builder idleChannelTimeout(final Duration value) {
-                checkNotNull(value, "value: null");
+                checkNotNull(value, "expected non-null value");
                 this.idleChannelTimeout = value;
                 return this;
             }
 
             public Builder idleEndpointTimeout(final Duration value) {
-                checkArgument(value != null && value.compareTo(Duration.ZERO) > 0, "value: %s", value);
+                checkArgument(value != null && value.compareTo(Duration.ZERO) > 0,
+                    "expected positive value, not %s",
+                    value);
                 this.idleEndpointTimeout = value;
                 return this;
             }
 
             public Builder maxBufferCapacity(final int value) {
-                checkArgument(value > 0 && (value & (value - 1)) == 0, "value: %s", value);
+                checkArgument(value > 0 && (value & (value - 1)) == 0,
+                    "expected positive value, not %s",
+                    value);
                 this.maxBufferCapacity = value;
                 return this;
             }
 
             public Builder maxChannelsPerEndpoint(final int value) {
-                checkArgument(value > 0, "value: %s", value);
+                checkArgument(value > 0, "expected positive value, not %s", value);
                 this.maxChannelsPerEndpoint = value;
                 return this;
             }
 
             public Builder maxRequestsPerChannel(final int value) {
-                checkArgument(value > 0, "value: %s", value);
+                checkArgument(value > 0, "expected positive value, not %s", value);
                 this.maxRequestsPerChannel = value;
                 return this;
             }
 
             public Builder partitionCount(final int value) {
-                checkArgument(value > 0, "value: %s", value);
+                checkArgument(value > 0, "expected positive value, not %s", value);
                 this.partitionCount = value;
                 return this;
             }
 
             public Builder receiveHangDetectionTime(final Duration value) {
-
-                checkNotNull(value, "value: null");
-                checkArgument(value.compareTo(Duration.ZERO) > 0, "value: %s", value);
-
+                checkArgument(value != null && value.compareTo(Duration.ZERO) > 0,
+                    "expected positive value, not %s",
+                    value);
                 this.receiveHangDetectionTime = value;
                 return this;
             }
 
+            public Builder requestExpiryInterval(final Duration value) {
+                checkArgument(value != null && value.compareTo(Duration.ZERO) > 0,
+                    "expected positive value, not %s",
+                    value);
+                this.requestExpiryInterval = value;
+                return this;
+            }
+
             public Builder requestTimeout(final Duration value) {
-
-                checkNotNull(value, "value: null");
-                checkArgument(value.compareTo(Duration.ZERO) > 0, "value: %s", value);
-
+                checkArgument(value != null && value.compareTo(Duration.ZERO) > 0,
+                    "expected positive value, not %s",
+                    value);
                 this.requestTimeout = value;
                 return this;
             }
 
             public Builder sendHangDetectionTime(final Duration value) {
-
-                checkNotNull(value, "value: null");
-                checkArgument(value.compareTo(Duration.ZERO) > 0, "value: %s", value);
-
+                checkArgument(value != null && value.compareTo(Duration.ZERO) > 0,
+                    "expected positive value, not %s",
+                    value);
                 this.sendHangDetectionTime = value;
                 return this;
             }
 
             public Builder shutdownTimeout(final Duration value) {
-
-                checkNotNull(value, "value: null");
-                checkArgument(value.compareTo(Duration.ZERO) > 0, "value: %s", value);
-
+                checkArgument(value != null && value.compareTo(Duration.ZERO) > 0,
+                    "expected positive value, not %s",
+                    value);
                 this.shutdownTimeout = value;
                 return this;
             }
 
             public Builder userAgent(final UserAgentContainer value) {
-                checkNotNull(value, "value: null");
+                checkNotNull(value, "expected non-null value");
                 this.userAgent = value;
                 return this;
             }
@@ -474,6 +468,39 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
         }
 
         // endregion
+    }
+
+    static final class JsonSerializer extends StdSerializer<RntbdTransportClient> {
+
+        public JsonSerializer() {
+            super(RntbdTransportClient.class);
+        }
+
+        @Override
+        public void serialize(
+
+            final RntbdTransportClient value,
+            final JsonGenerator generator,
+            final SerializerProvider provider
+
+        ) throws IOException {
+
+            generator.writeStartObject();
+            generator.writeNumberField("id", value.id());
+            generator.writeBooleanField("isClosed", value.isClosed());
+            generator.writeObjectField("configuration", value.endpointProvider.config());
+            generator.writeObjectFieldStart("serviceEndpoints");
+            generator.writeNumberField("count", value.endpointCount());
+            generator.writeArrayFieldStart("items");
+
+            for (final Iterator<RntbdEndpoint> iterator = value.endpointProvider.list().iterator(); iterator.hasNext(); ) {
+                generator.writeObject(iterator.next());
+            }
+
+            generator.writeEndArray();
+            generator.writeEndObject();
+            generator.writeEndObject();
+        }
     }
 
     // endregion
