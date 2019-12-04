@@ -306,6 +306,7 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
 
         // region Types
 
+        @SuppressWarnings("UnusedReturnValue")
         public static class Builder {
 
             // region Fields
