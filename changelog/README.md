@@ -1,7 +1,8 @@
 # Changelog
 
 ## Unreleased
-- Addressed a memory leak in `RntbdRequestTimer` memory leak ([#289](https://github.com/Azure/azure-cosmosdb-java/pull/289)
+- Added support for recording important events in the lifetime of a request ([#296](https://github.com/Azure/azure-cosmosdb-java/pull/296/))
+- Addressed a memory leak in `RntbdRequestTimer` memory leak ([#289](https://github.com/Azure/azure-cosmosdb-java/pull/289))
 - Improved diagnostics in Direct TCP transport client ([#287](https://github.com/Azure/azure-cosmosdb-java/pull/287))
 - Bumped netty.version to 4.1.42.Final and netty-tcnative.version to 2.0.26.Final to address a Direct TCP SSL issue ([#274](https://github.com/Azure/azure-cosmosdb-java/pull/274))
 
