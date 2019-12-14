@@ -118,8 +118,8 @@ public final class RntbdObjectMapper {
         checkNotNull(in, "in");
         final JsonNode node;
 
-        try (final InputStream istream = new ByteBufInputStream(in)) {
-            node = objectMapper.readTree(istream);
+        try (final InputStream stream = new ByteBufInputStream(in)) {
+            node = objectMapper.readTree(stream);
         } catch (final IOException error) {
             throw new CorruptedFrameException(error);
         }
