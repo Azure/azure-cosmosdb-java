@@ -32,12 +32,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.SSLException;
+import java.util.Objects;
 
 public class Configs {
     private static final Logger logger = LoggerFactory.getLogger(Configs.class);
     private final SslContext sslContext;
 
-    private static final String PROTOCOL = "cosmos.directModeProtocol";
+    private static final String PROTOCOL = "azure.cosmos.directModeProtocol";
     private static final Protocol DEFAULT_PROTOCOL = Protocol.Tcp;
 
     private static final String UNAVAILABLE_LOCATIONS_EXPIRATION_TIME_IN_SECONDS = "COSMOS.UNAVAILABLE_LOCATIONS_EXPIRATION_TIME_IN_SECONDS";
@@ -88,7 +89,13 @@ public class Configs {
     }
 
     public Protocol getProtocol() {
-        String protocol = getJVMConfigAsString(PROTOCOL, DEFAULT_PROTOCOL.name());
+
+        String protocol = getJVMConfigAsString(PROTOCOL, StringUtils.defaultString(
+            StringUtils.defaultString(
+                System.getProperty("cosmos.directModeProtocol"),
+                System.getenv("DIRECT_MODE_PROTOCOL")),
+            DEFAULT_PROTOCOL.name()));
+
         try {
             return Protocol.valueOf(WordUtils.capitalize(protocol.toLowerCase()));
         } catch (Exception e) {
