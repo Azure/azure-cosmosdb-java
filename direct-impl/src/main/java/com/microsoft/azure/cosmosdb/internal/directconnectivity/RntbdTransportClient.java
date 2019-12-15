@@ -161,10 +161,9 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
                     emitter.onError(error);
                 }
 
-                RequestTimeline timeline = RequestTimeline.from(record);
+                RequestTimeline timeline = record.takeTimelineSnapshot();
 
-                // TODO (DANOBLE) Add timeline to StoreResponse or DocumentClientException, if error is non-null
-                //  ensure that the completion duration includes the time spent in the emitter
+                // TODO (DANOBLE) Add timeline to StoreResponse or, if error is non-null, DocumentClientException
 
                 requestArgs.traceOperation(logger, null, "emitSingleComplete", timeline);
             });
