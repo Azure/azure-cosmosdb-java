@@ -69,11 +69,6 @@ public class ReadMyWritesConsistencyTest {
             StringUtils.defaultString(Strings.emptyToNull(
                 System.getenv().get("DESIRED_CONSISTENCY")), "Session"));
 
-    private final String documentDataFieldSize =
-        System.getProperty("DOCUMENT_DATA_FIELD_SIZE",
-            StringUtils.defaultString(Strings.emptyToNull(
-                System.getenv().get("DOCUMENT_DATA_FIELD_SIZE")), "20"));
-
     private final int initialCollectionThroughput = 10_000;
 
     private final String maxRunningTime =
@@ -105,7 +100,6 @@ public class ReadMyWritesConsistencyTest {
             " -operation ReadMyWrites" +
             " -connectionMode Direct" +
             " -numberOfPreCreatedDocuments 100" +
-            " -documentDataFieldSize %s" +
             " -printingInterval 60" +
             "%s";
 
@@ -118,7 +112,6 @@ public class ReadMyWritesConsistencyTest {
             concurrency,
             numberOfOperationsAsString,
             maxRunningTime,
-            documentDataFieldSize,
             (useNameLink ? " -useNameLink" : ""));
 
         Configuration cfg = new Configuration();
