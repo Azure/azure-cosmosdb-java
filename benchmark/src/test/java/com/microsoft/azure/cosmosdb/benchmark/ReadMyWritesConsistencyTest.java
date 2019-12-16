@@ -69,10 +69,10 @@ public class ReadMyWritesConsistencyTest {
             StringUtils.defaultString(Strings.emptyToNull(
                 System.getenv().get("DESIRED_CONSISTENCY")), "Session"));
 
-    private final String directModeProtocol =
-        System.getProperty("azure.cosmos.directModeProtocol",
+    private final String documentDataFieldSize =
+        System.getProperty("DOCUMENT_DATA_FIELD_SIZE",
             StringUtils.defaultString(Strings.emptyToNull(
-                System.getenv().get("DIRECT_MODE_PROTOCOL")), Protocol.Tcp.name()));
+                System.getenv().get("DOCUMENT_DATA_FIELD_SIZE")), "20"));
 
     private final int initialCollectionThroughput = 10_000;
 
@@ -105,6 +105,7 @@ public class ReadMyWritesConsistencyTest {
             " -operation ReadMyWrites" +
             " -connectionMode Direct" +
             " -numberOfPreCreatedDocuments 100" +
+            " -documentDataFieldSize %s" +
             " -printingInterval 60" +
             "%s";
 
@@ -117,12 +118,12 @@ public class ReadMyWritesConsistencyTest {
             concurrency,
             numberOfOperationsAsString,
             maxRunningTime,
+            documentDataFieldSize,
             (useNameLink ? " -useNameLink" : ""));
 
         Configuration cfg = new Configuration();
         new JCommander(cfg, StringUtils.split(cmd));
 
-        logger.info("azure.cosmos.directModeProtocol={}, {}", directModeProtocol, cfg);
         AtomicInteger success = new AtomicInteger();
         AtomicInteger error = new AtomicInteger();
 
