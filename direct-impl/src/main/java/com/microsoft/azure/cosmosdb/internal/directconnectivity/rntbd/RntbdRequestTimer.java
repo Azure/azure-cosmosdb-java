@@ -36,18 +36,14 @@ import java.util.concurrent.TimeUnit;
 
 public final class RntbdRequestTimer implements AutoCloseable {
 
-    private static final long TIMER_RESOLUTION = 100_000_000L;
+    private static final long TIMER_RESOLUTION = 5_000_000L;
 
     private static final Logger logger = LoggerFactory.getLogger(RntbdRequestTimer.class);
     private final long requestTimeout;
     private final Timer timer;
 
     public RntbdRequestTimer(final long requestTimeout) {
-
-        // Inspection of the HashWheelTimer code indicates that our choice of a 5 millisecond timer resolution ensures
-        // a request will expire within 10 milliseconds of the specified requestTimeout interval. This is because
-        // cancellation of a timeout takes two timer resolution units to complete.
-
+        // The HashWheelTimer code shows that cancellation of a timeout takes two timer resolution units to complete.
         this.timer = new HashedWheelTimer(TIMER_RESOLUTION, TimeUnit.NANOSECONDS);
         this.requestTimeout = requestTimeout;
     }
