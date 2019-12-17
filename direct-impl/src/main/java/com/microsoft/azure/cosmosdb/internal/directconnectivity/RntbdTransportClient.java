@@ -254,8 +254,8 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
         }
 
         private Options(Builder builder) {
+
             this.bufferPageSize = builder.bufferPageSize;
-            this.connectionTimeout = builder.connectionTimeout == null ? builder.requestTimeout : builder.connectionTimeout;
             this.idleChannelTimeout = builder.idleChannelTimeout;
             this.idleEndpointTimeout = builder.idleEndpointTimeout;
             this.maxBufferCapacity = builder.maxBufferCapacity;
@@ -267,6 +267,10 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
             this.sendHangDetectionTime = builder.sendHangDetectionTime;
             this.shutdownTimeout = builder.shutdownTimeout;
             this.userAgent = builder.userAgent;
+
+            this.connectionTimeout = builder.connectionTimeout == null
+                ? builder.requestTimeout
+                : builder.connectionTimeout;
         }
 
         // endregion
@@ -343,6 +347,7 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
 
             // region Fields
 
+            private static final String DEFAULT_OPTIONS_PROPERTY_NAME = "azure.cosmos.directTcp.defaultOptions";
             private static final Options DEFAULT_OPTIONS;
 
             static {
@@ -360,11 +365,10 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
                 Options options = null;
 
                 try {
-                    String propertyName = "azure.cosmos.directTcp.defaultOptions";
-                    String string = System.getProperty(propertyName);
+                    final String string = System.getProperty(DEFAULT_OPTIONS_PROPERTY_NAME);
 
                     if (string != null) {
-                        // Attempt to set default Direct TCP options based on the JSON string value of "{propertyName}"
+                        // Attempt to set default options based on the JSON string value of "{propertyName}"
                         try {
                             options = RntbdObjectMapper.readValue(string, Options.class);
                         } catch (IOException error) {
@@ -374,10 +378,10 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
 
                     if (options == null) {
 
-                        String path = System.getProperty(propertyName + "File");
+                        final String path = System.getProperty(DEFAULT_OPTIONS_PROPERTY_NAME + "File");
 
                         if (path != null) {
-                            // Attempt to load default Direct TCP options from the JSON file on the path specified by
+                            // Attempt to load default options from the JSON file on the path specified by
                             // "{propertyName}File"
                             try {
                                 options = RntbdObjectMapper.readValue(new File(path), Options.class);
@@ -389,16 +393,16 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
 
                     if (options == null) {
 
-                        String name = propertyName + ".json";
-                        InputStream stream = RntbdTransportClient.class.getClassLoader().getResourceAsStream(name);
+                        final ClassLoader loader = RntbdTransportClient.class.getClassLoader();
+                        final String name = DEFAULT_OPTIONS_PROPERTY_NAME + ".json";
 
-                        if (stream != null) {
-                            // Attempt to load default Direct TCP options from the JSON resource file "{propertyName}.json"
-                            try {
+                        try (final InputStream stream = loader.getResourceAsStream(name)) {
+                            if (stream != null) {
+                                // Attempt to load default options from the JSON resource file "{propertyName}.json"
                                 options = RntbdObjectMapper.readValue(stream, Options.class);
-                            } catch (IOException error) {
-                                logger.error("failed to load Direct TCP options from resource {} due to ", name, error);
                             }
+                        } catch (IOException error) {
+                            logger.error("failed to load Direct TCP options from resource {} due to ", name, error);
                         }
                     }
                 } finally {
