@@ -357,50 +357,53 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
                 // set of hard-wired values defined in the default private parameterless constructor for
                 // RntbdTransportClient.Options.
 
-                String propertyName = "azure.cosmos.directTcp.defaultOptions";
-                String string = System.getProperty(propertyName);
                 Options options = null;
 
-                if (string != null) {
-                    // Attempt to set default Direct TCP options based on the JSON string value of "{propertyName}"
-                    try {
-                        options = RntbdObjectMapper.readValue(string, Options.class);
-                    } catch (IOException error) {
-                        logger.error("failed to parse default Direct TCP options {} due to ", string, error);
-                    }
-                }
+                try {
+                    String propertyName = "azure.cosmos.directTcp.defaultOptions";
+                    String string = System.getProperty(propertyName);
 
-                if (options == null) {
-
-                    String path = System.getProperty(propertyName + "File");
-
-                    if (path != null) {
-                        // Attempt to load default Direct TCP options from the JSON file on the path specified by
-                        // "{propertyName}File"
+                    if (string != null) {
+                        // Attempt to set default Direct TCP options based on the JSON string value of "{propertyName}"
                         try {
-                            options = RntbdObjectMapper.readValue(new File(path), Options.class);
+                            options = RntbdObjectMapper.readValue(string, Options.class);
                         } catch (IOException error) {
-                            logger.error("failed to load default Direct TCP options from {} due to ", path, error);
+                            logger.error("failed to parse default Direct TCP options {} due to ", string, error);
                         }
                     }
-                }
 
-                if (options == null) {
+                    if (options == null) {
 
-                    String name = propertyName + ".json";
-                    InputStream stream = RntbdTransportClient.class.getClassLoader().getResourceAsStream(name);
+                        String path = System.getProperty(propertyName + "File");
 
-                    if (stream != null) {
-                        // Attempt to load default Direct TCP options from the JSON resource file "{propertyName}.json"
-                        try {
-                            options = RntbdObjectMapper.readValue(stream, Options.class);
-                        } catch (IOException error) {
-                            logger.error("failed to load Direct TCP options from resource {} due to ", name, error);
+                        if (path != null) {
+                            // Attempt to load default Direct TCP options from the JSON file on the path specified by
+                            // "{propertyName}File"
+                            try {
+                                options = RntbdObjectMapper.readValue(new File(path), Options.class);
+                            } catch (IOException error) {
+                                logger.error("failed to load default Direct TCP options from {} due to ", path, error);
+                            }
                         }
                     }
-                }
 
-                DEFAULT_OPTIONS = options != null ? options : new Options();
+                    if (options == null) {
+
+                        String name = propertyName + ".json";
+                        InputStream stream = RntbdTransportClient.class.getClassLoader().getResourceAsStream(name);
+
+                        if (stream != null) {
+                            // Attempt to load default Direct TCP options from the JSON resource file "{propertyName}.json"
+                            try {
+                                options = RntbdObjectMapper.readValue(stream, Options.class);
+                            } catch (IOException error) {
+                                logger.error("failed to load Direct TCP options from resource {} due to ", name, error);
+                            }
+                        }
+                    }
+                } finally {
+                    DEFAULT_OPTIONS = options != null ? options : new Options();
+                }
             }
 
             private int bufferPageSize;
