@@ -167,7 +167,7 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
             }
         }
 
-        final long idleEndpointTimeout = config.idleEndpointTimeout();
+        final long idleEndpointTimeout = config.idleEndpointTimeoutInNanos();
 
         this.idleStateDetectionScheduledFuture = this.executor.scheduleAtFixedRate(
             () -> {

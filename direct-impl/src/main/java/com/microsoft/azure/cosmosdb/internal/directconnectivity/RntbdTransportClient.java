@@ -225,6 +225,9 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
         private final Duration requestTimeout;
 
         @JsonProperty()
+        private final Duration requestTimerResolution;
+
+        @JsonProperty()
         private final Duration sendHangDetectionTime;
 
         @JsonProperty()
@@ -248,6 +251,7 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
             this.receiveHangDetectionTime = Duration.ofSeconds(65L);
             this.requestExpiryInterval = Duration.ofSeconds(5L);
             this.requestTimeout = null;
+            this.requestTimerResolution = Duration.ofMillis(5L);
             this.sendHangDetectionTime = Duration.ofSeconds(10L);
             this.shutdownTimeout = Duration.ofSeconds(15L);
             this.userAgent = new UserAgentContainer();
@@ -264,6 +268,7 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
             this.receiveHangDetectionTime = builder.receiveHangDetectionTime;
             this.requestExpiryInterval = builder.requestExpiryInterval;
             this.requestTimeout = builder.requestTimeout;
+            this.requestTimerResolution = builder.requestTimerResolution;
             this.sendHangDetectionTime = builder.sendHangDetectionTime;
             this.shutdownTimeout = builder.shutdownTimeout;
             this.userAgent = builder.userAgent;
@@ -315,6 +320,10 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
 
         public Duration requestTimeout() {
             return this.requestTimeout;
+        }
+
+        public Duration requestTimerResolution() {
+            return this.requestTimerResolution;
         }
 
         public Duration sendHangDetectionTime() {
@@ -420,6 +429,7 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
             private Duration receiveHangDetectionTime;
             private Duration requestExpiryInterval;
             private Duration requestTimeout;
+            private Duration requestTimerResolution;
             private Duration sendHangDetectionTime;
             private Duration shutdownTimeout;
             private UserAgentContainer userAgent;
@@ -441,6 +451,7 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
                 this.maxRequestsPerChannel = DEFAULT_OPTIONS.maxRequestsPerChannel;
                 this.receiveHangDetectionTime = DEFAULT_OPTIONS.receiveHangDetectionTime;
                 this.requestExpiryInterval = DEFAULT_OPTIONS.requestExpiryInterval;
+                this.requestTimerResolution = DEFAULT_OPTIONS.requestTimerResolution;
                 this.sendHangDetectionTime = DEFAULT_OPTIONS.sendHangDetectionTime;
                 this.shutdownTimeout = DEFAULT_OPTIONS.shutdownTimeout;
                 this.userAgent = DEFAULT_OPTIONS.userAgent;
@@ -533,6 +544,14 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
                     "expected positive value, not %s",
                     value);
                 this.requestTimeout = value;
+                return this;
+            }
+
+            public Builder requestTimerResolution(final Duration value) {
+                checkArgument(value != null && value.compareTo(Duration.ZERO) > 0,
+                    "expected positive value, not %s",
+                    value);
+                this.requestTimerResolution = value;
                 return this;
             }
 
