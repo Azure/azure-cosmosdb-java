@@ -33,7 +33,6 @@ import com.microsoft.azure.cosmosdb.SqlParameterCollection;
 import com.microsoft.azure.cosmosdb.SqlQuerySpec;
 import com.microsoft.azure.cosmosdb.internal.Utils;
 import com.microsoft.azure.cosmosdb.rx.internal.NotFoundException;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import rx.Observable;
 import rx.Subscriber;
