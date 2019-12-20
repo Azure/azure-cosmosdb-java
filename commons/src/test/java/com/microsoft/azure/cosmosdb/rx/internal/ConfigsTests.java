@@ -26,6 +26,7 @@ package com.microsoft.azure.cosmosdb.rx.internal;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.Protocol;
+import org.apache.commons.lang3.StringUtils;
 import org.testng.annotations.Test;
 
 public class ConfigsTests {
@@ -45,7 +46,12 @@ public class ConfigsTests {
     @Test(groups = { "unit" })
     public void getProtocol() {
         Configs config = new Configs();
-        assertThat(config.getProtocol()).isEqualTo(Protocol.valueOf(System.getProperty("cosmos.directModeProtocol", "Tcp")));
+        Protocol expected = Protocol.valueOf(System.getProperty("cosmos.directModeProtocol",
+            System.getProperty("azure.cosmos.directModeProtocol",
+                StringUtils.defaultString(
+                    System.getenv("DIRECT_MODE_PROTOCOL"),
+                    "Tcp"))));
+        assertThat(config.getProtocol()).isEqualTo(expected);
     }
 
     @Test(groups = { "unit" })

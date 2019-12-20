@@ -100,7 +100,7 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
             .group(group)
             .option(ChannelOption.ALLOCATOR, config.allocator())
             .option(ChannelOption.AUTO_READ, true)
-            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, config.connectionTimeout())
+            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, config.connectionTimeoutInMillis())
             .option(ChannelOption.RCVBUF_ALLOCATOR, receiveBufferAllocator)
             .option(ChannelOption.SO_KEEPALIVE, true)
             .remoteAddress(physicalAddress.getHost(), physicalAddress.getPort());
@@ -351,9 +351,12 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
 
             this.transportClient = transportClient;
             this.config = new Config(options, sslContext, wireLogLevel);
-            this.requestTimer = new RntbdRequestTimer(config.requestTimeout());
-            this.eventLoopGroup = new NioEventLoopGroup(threadCount, threadFactory);
 
+            this.requestTimer = new RntbdRequestTimer(
+                config.requestTimeoutInNanos(),
+                config.requestTimerResolutionInNanos());
+
+            this.eventLoopGroup = new NioEventLoopGroup(threadCount, threadFactory);
             this.endpoints = new ConcurrentHashMap<>();
             this.evictions = new AtomicInteger();
             this.closed = new AtomicBoolean();
@@ -370,7 +373,7 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
                     endpoint.close();
                 }
 
-                this.eventLoopGroup.shutdownGracefully(QUIET_PERIOD, this.config.shutdownTimeout(), NANOSECONDS)
+                this.eventLoopGroup.shutdownGracefully(QUIET_PERIOD, this.config.shutdownTimeoutInNanos(), NANOSECONDS)
                     .addListener(future -> {
                         if (future.isSuccess()) {
                             logger.debug("\n  [{}]\n  closed endpoints", this);
