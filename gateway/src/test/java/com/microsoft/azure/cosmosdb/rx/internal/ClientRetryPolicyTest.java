@@ -87,10 +87,10 @@ public class ClientRetryPolicyTest {
         clientRetryPolicy.onBeforeSendRequest(dsr);
         for (int i = 0; i < 10; i++) {
             Single<IRetryPolicy.ShouldRetryResult> shouldRetry = clientRetryPolicy.shouldRetry(exception);
+            //  We don't want to retry writes on network failure
             validateSuccess(shouldRetry, ShouldRetryValidator.builder()
                     .nullException()
-                    .shouldRetry(true)
-                    .backOfTime(i > 0 ? Duration.ofMillis(ClientRetryPolicy.RetryIntervalInMS) : Duration.ZERO)
+                    .shouldRetry(false)
                     .build());
 
             Mockito.verify(endpointManager, Mockito.times(0)).markEndpointUnavailableForRead(Mockito.any());
