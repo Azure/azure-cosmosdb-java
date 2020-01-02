@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.6.4 - 2019-01-02
+## 2.6.4 - 2020-01-02
 - Fixed a bug where SDK was retrying on writes on network failure([#301](https://github.com/Azure/azure-cosmosdb-java/pull/301))
 - Add support for specifying default Direct TCP options using System properties ([#299](https://github.com/Azure/azure-cosmosdb-java/pull/299))
 - Improved diagnostics in Direct TCP transport client ([#287](https://github.com/Azure/azure-cosmosdb-java/pull/287))
@@ -193,6 +193,7 @@ Any request to Cosmos DB using a retired SDK will be rejected by the service.
 
 | Version | Release Date | Retirement Date |
 | --- | --- | --- |
+| 2.6.4 |Jan 2, 2020|--- |
 | 2.6.3 |Oct 23, 2019|--- |
 | 2.6.2 |Oct 5, 2019|--- |
 | 2.6.1 |Sept 4, 2019|--- |
