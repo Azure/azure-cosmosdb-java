@@ -69,7 +69,7 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
     // region Fields
 
     private static final String TAG_NAME = RntbdServiceEndpoint.class.getSimpleName();
-    private static final long QUIET_PERIOD = 2L * 1_000_000_000L; // 2 seconds
+    private static final long QUIET_PERIOD = 2_000_000_000L; // 2 seconds
 
     private static final AtomicLong instanceCount = new AtomicLong();
     private static final Logger logger = LoggerFactory.getLogger(RntbdServiceEndpoint.class);
@@ -333,11 +333,11 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
 
         public Provider(final RntbdTransportClient transportClient, final Options options, final SslContext sslContext) {
 
-            checkNotNull(transportClient, "provider");
-            checkNotNull(options, "options");
-            checkNotNull(sslContext, "sslContext");
+            checkNotNull(transportClient, "expected non-null provider");
+            checkNotNull(options, "expected non-null options");
+            checkNotNull(sslContext, "expected non-null sslContext");
 
-            final DefaultThreadFactory threadFactory = new DefaultThreadFactory("CosmosEventLoop", true);
+            final DefaultThreadFactory threadFactory = new DefaultThreadFactory("cosmos-rntbd-nio", true);
             final int threadCount = Runtime.getRuntime().availableProcessors();
             final LogLevel wireLogLevel;
 
@@ -381,6 +381,7 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
                         }
                         logger.error("\n  [{}]\n  failed to close endpoints due to ", this, future.cause());
                     });
+
                 return;
             }
 
