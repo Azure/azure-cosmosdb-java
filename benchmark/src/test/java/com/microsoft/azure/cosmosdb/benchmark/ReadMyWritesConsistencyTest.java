@@ -69,11 +69,6 @@ public class ReadMyWritesConsistencyTest {
             StringUtils.defaultString(Strings.emptyToNull(
                 System.getenv().get("DESIRED_CONSISTENCY")), "Session"));
 
-    private final String directModeProtocol =
-        System.getProperty("cosmos.directModeProtocol",
-            StringUtils.defaultString(Strings.emptyToNull(
-                System.getenv().get("DIRECT_MODE_PROTOCOL")), Protocol.Tcp.name()));
-
     private final int initialCollectionThroughput = 10_000;
 
     private final String maxRunningTime =
@@ -122,7 +117,6 @@ public class ReadMyWritesConsistencyTest {
         Configuration cfg = new Configuration();
         new JCommander(cfg, StringUtils.split(cmd));
 
-        logger.info("cosmos.directModeProtocol={}, {}", directModeProtocol, cfg);
         AtomicInteger success = new AtomicInteger();
         AtomicInteger error = new AtomicInteger();
 

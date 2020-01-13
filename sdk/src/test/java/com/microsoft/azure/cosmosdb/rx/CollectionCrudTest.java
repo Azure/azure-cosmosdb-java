@@ -31,7 +31,9 @@ import java.util.List;
 import java.util.UUID;
 
 import com.microsoft.azure.cosmosdb.DatabaseForTest;
+import com.microsoft.azure.cosmosdb.PartitionKey;
 import com.microsoft.azure.cosmosdb.PartitionKeyDefinition;
+import com.microsoft.azure.cosmosdb.RequestOptions;
 import com.microsoft.azure.cosmosdb.RetryAnalyzer;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -156,7 +158,6 @@ public class CollectionCrudTest extends TestSuiteBase {
             spec.setPath("/path" + index + "/*");
 
             List<SpatialType> collectionOfSpatialTypes = new ArrayList<SpatialType>(Arrays.asList(spatialTypes).subList(0, index + 3));
-
             spec.setSpatialTypes(collectionOfSpatialTypes);
             spatialIndexes.add(spec);
         }
@@ -259,6 +260,49 @@ public class CollectionCrudTest extends TestSuiteBase {
         safeDeleteAllCollections(client, database);
     }
 
+    @Test(groups = { "emulator" }, timeOut = TIMEOUT, dataProvider = "collectionCrudArgProvider")
+    public void replaceCollectionWithTTL(String collectionName, boolean isNameBased)  {
+        // create a collection
+        DocumentCollection collectionDefinition = new DocumentCollection();
+        collectionDefinition.setId(collectionName);
+        collectionDefinition.set("name", collectionName);
+
+        IndexingPolicy indexingPolicy = new IndexingPolicy();
+        indexingPolicy.setIndexingMode(IndexingMode.Lazy);
+        collectionDefinition.setIndexingPolicy(indexingPolicy);
+
+        DocumentCollection collection = createCollection(client, databaseId, collectionDefinition);
+
+        Document document = new Document();
+        document.setId("doc");
+        document.set("name", "New Document");
+
+        createDocument(client, databaseId, collectionName, document, null);
+
+        DocumentCollection readCollection = client.readCollection(getCollectionLink(collection),
+            null).toBlocking().single().getResource();
+
+        //  sanity check
+        assertThat(readCollection.getIndexingPolicy().getIndexingMode()).isEqualTo(IndexingMode.Lazy);
+
+        Integer timeToLive = 120;
+        collection.setDefaultTimeToLive(timeToLive);
+
+        DocumentCollection replacedCollection = client.replaceCollection(collection,
+            null).toBlocking().single().getResource();
+
+        assertThat(readCollection.getIndexingPolicy().getIndexingMode()).isEqualTo(IndexingMode.Lazy);
+
+        assertThat(replacedCollection.getDefaultTimeToLive()).isEqualTo(timeToLive);
+
+        Document readDocument = client.readDocument(Utils.getDocumentNameLink(databaseId, collectionName, document.getId()), null)
+                                      .toBlocking().single().getResource();
+
+        assertThat(readDocument).isNotNull();
+
+        safeDeleteAllCollections(client, database);
+    }
+
     @Test(groups = { "emulator" }, timeOut = 10 * TIMEOUT, retryAnalyzer = RetryAnalyzer.class)
     public void sessionTokenConsistencyCollectionDeleteCreateSameName() {
         AsyncDocumentClient client1 = this.clientBuilder().build();
@@ -332,5 +376,10 @@ public class CollectionCrudTest extends TestSuiteBase {
 
     private static String getCollectionLink(Database db, DocumentCollection documentCollection, boolean isNameLink) {
         return isNameLink ? "dbs/" + db.getId() + "/colls/" + documentCollection.getId() : documentCollection.getSelfLink();
+    }
+
+    private String getDocumentLink(Database db, DocumentCollection documentCollection, Document doc, boolean isNameBased) {
+        return isNameBased ? "dbs/" + db.getId() + "/colls/" + documentCollection.getId() + "/docs/" + doc.getId() :
+            "dbs/" + db.getResourceId() + "/colls/" + documentCollection.getResourceId() + "/docs/" + doc.getResourceId();
     }
 }

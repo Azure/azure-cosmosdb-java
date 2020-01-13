@@ -75,6 +75,7 @@ public class Configs {
     private SslContext sslContextInit() {
         try {
             SslProvider sslProvider = SslContext.defaultClientProvider();
+            logger.info("SSL Provider: {}", sslProvider.name());
             return SslContextBuilder.forClient().sslProvider(sslProvider).build();
         } catch (SSLException sslException) {
             logger.error("Fatal error cannot instantiate ssl context due to {}", sslException.getMessage(), sslException);
@@ -87,7 +88,13 @@ public class Configs {
     }
 
     public Protocol getProtocol() {
-        String protocol = getJVMConfigAsString(PROTOCOL, DEFAULT_PROTOCOL.name());
+
+        String protocol = getJVMConfigAsString(PROTOCOL, StringUtils.defaultString(
+            StringUtils.defaultString(
+                System.getProperty("azure.cosmos.directModeProtocol"),
+                System.getenv("DIRECT_MODE_PROTOCOL")),
+            DEFAULT_PROTOCOL.name()));
+
         try {
             return Protocol.valueOf(WordUtils.capitalize(protocol.toLowerCase()));
         } catch (Exception e) {
