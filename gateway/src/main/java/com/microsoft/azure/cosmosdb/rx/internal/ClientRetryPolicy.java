@@ -102,7 +102,7 @@ public class ClientRetryPolicy implements IDocumentClientRetryPolicy {
         // Received Connection error (HttpRequestException), initiate the endpoint rediscovery
         if (WebExceptionUtility.isNetworkFailure(e)) {
             logger.warn("Endpoint not reachable. Will refresh cache and retry. {}" , e.toString());
-            return this.shouldRetryOnEndpointFailureAsync(this.isReadRequest, e);
+            return this.shouldRetryOnEndpointFailureAsync(this.isReadRequest, false, e);
         }
 
         this.retryContext = null;
@@ -116,7 +116,7 @@ public class ClientRetryPolicy implements IDocumentClientRetryPolicy {
                 Exceptions.isSubStatusCode(clientException, HttpConstants.SubStatusCodes.FORBIDDEN_WRITEFORBIDDEN))
         {
             logger.warn("Endpoint not writable. Will refresh cache and retry. {}", e.toString());
-            return this.shouldRetryOnEndpointFailureAsync(false, e);
+            return this.shouldRetryOnEndpointFailureAsync(false, true, e);
         }
 
         // Regional endpoint is not available yet for reads (e.g. add/ online of region is in progress)
@@ -126,7 +126,13 @@ public class ClientRetryPolicy implements IDocumentClientRetryPolicy {
                 (this.isReadRequest || this.canUseMultipleWriteLocations))
         {
             logger.warn("Endpoint not available for reads. Will refresh cache and retry. {}", e.toString());
-            return this.shouldRetryOnEndpointFailureAsync(true, e);
+            return this.shouldRetryOnEndpointFailureAsync(true, false, e);
+        }
+
+        // Received Connection error (HttpRequestException), initiate the endpoint rediscovery
+        if (WebExceptionUtility.isNetworkFailure(e)) {
+            logger.warn("Endpoint not reachable. Will refresh cache and retry. {}" , e.toString());
+            return this.shouldRetryOnEndpointFailureAsync(this.isReadRequest, false, e);
         }
 
         if (clientException != null && 
@@ -169,7 +175,7 @@ public class ClientRetryPolicy implements IDocumentClientRetryPolicy {
         }
     }
 
-    private Single<ShouldRetryResult> shouldRetryOnEndpointFailureAsync(boolean isReadRequest, Exception e) {
+    private Single<ShouldRetryResult> shouldRetryOnEndpointFailureAsync(boolean isReadRequest , boolean forceRefresh, Exception e) {
         if (!this.enableEndpointDiscovery || this.failoverRetryCount > MaxRetryCount) {
             logger.warn("ShouldRetryOnEndpointFailureAsync() Not retrying. Retry count = {}", this.failoverRetryCount);
             return Single.just(ShouldRetryResult.noRetry());
@@ -202,7 +208,7 @@ public class ClientRetryPolicy implements IDocumentClientRetryPolicy {
         }
         this.retryContext = new RetryContext(this.failoverRetryCount, false);
 
-        Completable refreshCompletion = this.globalEndpointManager.refreshLocationAsync(null);
+        Completable refreshCompletion = this.globalEndpointManager.refreshLocationAsync(null, forceRefresh);
 
         if (isReadRequest || WebExceptionUtility.isWebExceptionRetriable(e)) {
             // refresh cache and
