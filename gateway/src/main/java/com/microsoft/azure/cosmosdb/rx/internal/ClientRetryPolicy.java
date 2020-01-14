@@ -186,7 +186,7 @@ public class ClientRetryPolicy implements IDocumentClientRetryPolicy {
         // Therefore just skip the retry here to avoid the delay because retrying won't go through in the end.
 
         Duration retryDelay = Duration.ZERO;
-        if (!this.isReadRequest) {
+        if (!isReadRequest) {
             logger.debug("Failover happening. retryCount {}",  this.failoverRetryCount);
             if (this.failoverRetryCount > 1) {
                 //if retried both endpoints, follow regular retry interval.
