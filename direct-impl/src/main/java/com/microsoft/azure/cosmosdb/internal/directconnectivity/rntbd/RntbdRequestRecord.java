@@ -139,7 +139,7 @@ public final class RntbdRequestRecord extends CompletableFuture<StoreResponse> {
 
         @Override
         public void serialize(
-            final RntbdRequestRecord value, 
+            final RntbdRequestRecord value,
             final JsonGenerator generator,
             final SerializerProvider provider) throws IOException {
 
