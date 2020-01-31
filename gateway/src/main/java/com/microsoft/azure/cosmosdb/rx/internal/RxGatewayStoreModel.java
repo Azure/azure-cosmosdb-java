@@ -53,6 +53,7 @@ import org.slf4j.LoggerFactory;
 import rx.Observable;
 import rx.Single;
 import rx.functions.Func0;
+import rx.schedulers.Schedulers;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -195,7 +196,7 @@ class RxGatewayStoreModel implements RxStoreModel {
 
             Observable<HttpClientResponse<ByteBuf>> clientResponseObservable = this.httpClient.submit(serverInfo, httpRequest);
 
-            return toDocumentServiceResponse(clientResponseObservable, request);
+            return toDocumentServiceResponse(clientResponseObservable, request).observeOn(Schedulers.computation());
 
         } catch (Exception e) {
             return Observable.error(e);
