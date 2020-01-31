@@ -194,7 +194,7 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
         this.throwIfClosed();
 
         this.concurrentRequests.incrementAndGet();
-        this.lastRequestTime.set(args.creationTime());
+        this.lastRequestTime.set(args.nanoTimeCreated());
 
         if (logger.isDebugEnabled()) {
             args.traceOperation(logger, null, "request");
@@ -260,11 +260,7 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
                 requestArgs.traceOperation(logger, null, "write");
                 final Channel channel = (Channel)connected.get();
                 this.releaseToPool(channel);
-
-                channel.write(requestRecord).addListener((ChannelFuture future) -> {
-                    requestArgs.traceOperation(logger, null, "writeComplete", channel);
-                });
-
+                channel.write(requestRecord.stage(RntbdRequestRecord.Stage.PIPELINED));
                 return;
             }
 
@@ -341,10 +337,8 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
             final int threadCount = Runtime.getRuntime().availableProcessors();
             final LogLevel wireLogLevel;
 
-            if (logger.isTraceEnabled()) {
+            if (logger.isDebugEnabled()) {
                 wireLogLevel = LogLevel.TRACE;
-            } else if (logger.isDebugEnabled()) {
-                wireLogLevel = LogLevel.DEBUG;
             } else {
                 wireLogLevel = null;
             }
@@ -367,8 +361,6 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
 
             if (this.closed.compareAndSet(false, true)) {
 
-                this.requestTimer.close();
-
                 for (final RntbdEndpoint endpoint : this.endpoints.values()) {
                     endpoint.close();
                 }
@@ -382,6 +374,7 @@ public final class RntbdServiceEndpoint implements RntbdEndpoint {
                         logger.error("\n  [{}]\n  failed to close endpoints due to ", this, future.cause());
                     });
 
+                this.requestTimer.close();
                 return;
             }
 
