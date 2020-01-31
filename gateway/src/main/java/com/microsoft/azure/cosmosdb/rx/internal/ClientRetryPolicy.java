@@ -30,6 +30,7 @@ import com.microsoft.azure.cosmosdb.internal.directconnectivity.WebExceptionUtil
 import org.apache.commons.collections4.list.UnmodifiableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import rx.Completable;
 import rx.Single;
 
 import java.net.URL;
@@ -81,7 +82,7 @@ public class ClientRetryPolicy implements IDocumentClientRetryPolicy {
 
     @Override
     public Single<ShouldRetryResult> shouldRetry(Exception e) {
-        logger.debug("retry count {}, isReadRequest {}, canUseMultipleWriteLocations {}, due to failure {}",
+        logger.debug("retry count {}, isReadRequest {}, canUseMultipleWriteLocations {}, due to failure:",
                     cnt.incrementAndGet(),
                     isReadRequest,
                     canUseMultipleWriteLocations,
@@ -108,8 +109,8 @@ public class ClientRetryPolicy implements IDocumentClientRetryPolicy {
                 Exceptions.isStatusCode(clientException, HttpConstants.StatusCodes.FORBIDDEN) &&
                 Exceptions.isSubStatusCode(clientException, HttpConstants.SubStatusCodes.FORBIDDEN_WRITEFORBIDDEN))
         {
-            logger.warn("Endpoint not writable. Will refresh cache and retry. {}", e.toString());
-            return this.shouldRetryOnEndpointFailureAsync(false);
+            logger.warn("Endpoint not writable. Will refresh cache and retry. ", e);
+            return this.shouldRetryOnEndpointFailureAsync(false, true);
         }
 
         // Regional endpoint is not available yet for reads (e.g. add/ online of region is in progress)
@@ -118,14 +119,18 @@ public class ClientRetryPolicy implements IDocumentClientRetryPolicy {
                 Exceptions.isSubStatusCode(clientException, HttpConstants.SubStatusCodes.DATABASE_ACCOUNT_NOTFOUND) &&
                 (this.isReadRequest || this.canUseMultipleWriteLocations))
         {
-            logger.warn("Endpoint not available for reads. Will refresh cache and retry. {}", e.toString());
-            return this.shouldRetryOnEndpointFailureAsync(true);
+            logger.warn("Endpoint not available for reads. Will refresh cache and retry. ", e);
+            return this.shouldRetryOnEndpointFailureAsync(true, false);
         }
 
         // Received Connection error (HttpRequestException), initiate the endpoint rediscovery
         if (WebExceptionUtility.isNetworkFailure(e)) {
-            logger.warn("Endpoint not reachable. Will refresh cache and retry. {}" , e.toString());
-            return this.shouldRetryOnEndpointFailureAsync(this.isReadRequest);
+            if (this.isReadRequest || WebExceptionUtility.isWebExceptionRetriable(e)) {
+                logger.warn("Endpoint not reachable. Will refresh cache and retry. ", e);
+                return this.shouldRetryOnEndpointFailureAsync(this.isReadRequest, false);
+            } else {
+                return this.shouldNotRetryOnEndpointFailureAsync(this.isReadRequest, false);
+            }
         }
 
         if (clientException != null && 
@@ -168,29 +173,20 @@ public class ClientRetryPolicy implements IDocumentClientRetryPolicy {
         }
     }
 
-    private Single<ShouldRetryResult> shouldRetryOnEndpointFailureAsync(boolean isReadRequest) {
+    private Single<ShouldRetryResult> shouldRetryOnEndpointFailureAsync(boolean isReadRequest , boolean forceRefresh) {
         if (!this.enableEndpointDiscovery || this.failoverRetryCount > MaxRetryCount) {
             logger.warn("ShouldRetryOnEndpointFailureAsync() Not retrying. Retry count = {}", this.failoverRetryCount);
             return Single.just(ShouldRetryResult.noRetry());
         }
 
-        this.failoverRetryCount++;
-
-        // Mark the current read endpoint as unavailable
-        if (this.isReadRequest) {
-            logger.warn("marking the endpoint {} as unavailable for read",this.locationEndpoint);
-            this.globalEndpointManager.markEndpointUnavailableForRead(this.locationEndpoint);
-        } else {
-            logger.warn("marking the endpoint {} as unavailable for write",this.locationEndpoint);
-            this.globalEndpointManager.markEndpointUnavailableForWrite(this.locationEndpoint);
-        }
+        Completable refreshCompletion = this.refreshLocation(isReadRequest, forceRefresh);
 
         // Some requests may be in progress when the endpoint manager and client are closed.
         // In that case, the request won't succeed since the http client is closed.
         // Therefore just skip the retry here to avoid the delay because retrying won't go through in the end.
 
         Duration retryDelay = Duration.ZERO;
-        if (!this.isReadRequest) {
+        if (!isReadRequest) {
             logger.debug("Failover happening. retryCount {}",  this.failoverRetryCount);
             if (this.failoverRetryCount > 1) {
                 //if retried both endpoints, follow regular retry interval.
@@ -199,9 +195,33 @@ public class ClientRetryPolicy implements IDocumentClientRetryPolicy {
         } else {
             retryDelay = Duration.ofMillis(ClientRetryPolicy.RetryIntervalInMS);
         }
+        return refreshCompletion.andThen(Single.just(ShouldRetryResult.retryAfter(retryDelay)));
+    }
+
+    private Single<ShouldRetryResult> shouldNotRetryOnEndpointFailureAsync(boolean isReadRequest , boolean forceRefresh) {
+        if (!this.enableEndpointDiscovery || this.failoverRetryCount > MaxRetryCount) {
+            logger.warn("ShouldRetryOnEndpointFailureAsync() Not retrying. Retry count = {}", this.failoverRetryCount);
+            return Single.just(ShouldRetryResult.noRetry());
+        }
+        Completable refreshCompletion = this.refreshLocation(isReadRequest, forceRefresh);
+        return refreshCompletion.andThen(Single.just(ShouldRetryResult.noRetry()));
+    }
+
+    private Completable refreshLocation(boolean isReadRequest, boolean forceRefresh) {
+        this.failoverRetryCount++;
+
+        // Mark the current read endpoint as unavailable
+        if (isReadRequest) {
+            logger.warn("marking the endpoint {} as unavailable for read",this.locationEndpoint);
+            this.globalEndpointManager.markEndpointUnavailableForRead(this.locationEndpoint);
+        } else {
+            logger.warn("marking the endpoint {} as unavailable for write",this.locationEndpoint);
+            this.globalEndpointManager.markEndpointUnavailableForWrite(this.locationEndpoint);
+        }
+
         this.retryContext = new RetryContext(this.failoverRetryCount, false);
-        return this.globalEndpointManager.refreshLocationAsync(null)
-                .andThen(Single.just(ShouldRetryResult.retryAfter(retryDelay)));
+
+        return this.globalEndpointManager.refreshLocationAsync(null, forceRefresh);
     }
 
     @Override

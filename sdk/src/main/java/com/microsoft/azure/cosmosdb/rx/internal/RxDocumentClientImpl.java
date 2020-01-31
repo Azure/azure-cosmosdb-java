@@ -299,7 +299,7 @@ public class RxDocumentClientImpl implements AsyncDocumentClient, IAuthorization
 
         // TODO: add support for openAsync
         // https://msdata.visualstudio.com/CosmosDB/_workitems/edit/332589
-        this.globalEndpointManager.refreshLocationAsync(databaseAccount).await();
+        this.globalEndpointManager.refreshLocationAsync(databaseAccount, false).await();
     }
 
     public void init() {

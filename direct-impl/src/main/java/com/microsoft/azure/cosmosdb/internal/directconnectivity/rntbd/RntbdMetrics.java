@@ -45,6 +45,7 @@ import io.micrometer.core.instrument.dropwizard.DropwizardMeterRegistry;
 import io.micrometer.core.instrument.util.HierarchicalNameMapper;
 import io.micrometer.core.lang.Nullable;
 
+import javax.annotation.Nonnull;
 import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings("UnstableApiUsage")
@@ -59,7 +60,7 @@ public final class RntbdMetrics {
     private static final PercentEscaper escaper = new PercentEscaper("_-", false);
     private static final CompositeMeterRegistry registry = new CompositeMeterRegistry();
 
-    private static final String prefix = "cosmos.directTcp.";
+    private static final String prefix = "azure.cosmos.directTcp.";
     private static MeterRegistry consoleLoggingRegistry;
 
     private final RntbdTransportClient transportClient;
@@ -71,7 +72,7 @@ public final class RntbdMetrics {
     private final Tags tags;
 
     static {
-        int step = Integer.getInteger("cosmos.monitoring.consoleLogging.step", 0);
+        int step = Integer.getInteger("azure.cosmos.monitoring.consoleLogging.step", 0);
         if (step > 0) {
             RntbdMetrics.add(RntbdMetrics.consoleLoggingRegistry(step));
         }
@@ -169,9 +170,9 @@ public final class RntbdMetrics {
 
             consoleLoggingRegistry = new DropwizardMeterRegistry(dropwizardConfig, dropwizardRegistry, HierarchicalNameMapper.DEFAULT, Clock.SYSTEM) {
                 @Override
-                @Nullable
+                @Nonnull
                 protected Double nullGaugeValue() {
-                    return null;
+                    return Double.NaN;
                 }
             };
 

@@ -28,7 +28,7 @@ SOFTWARE.
   <groupId>com.microsoft.azure</groupId>
   <artifactId>azure-cosmosdb-direct</artifactId>
   <name>Azure Cosmos DB Async SDK Direct Internal Implementation</name>
-  <version>2.6.1</version>
+  <version>2.6.5-SNAPSHOT</version>
   <description>Azure Cosmos DB Async SDK Direct Internal Implementation</description>
   <url>https://docs.microsoft.com/en-us/azure/cosmos-db</url>
   <packaging>jar</packaging>
@@ -36,6 +36,7 @@ SOFTWARE.
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <test.groups>unit</test.groups>
     <guava.version>27.0.1-jre</guava.version>
+    <jackson-datatype-jsr310.version>2.9.9</jackson-datatype-jsr310.version>
     <metrics.version>4.1.0</metrics.version>
     <micrometer.version>1.2.0</micrometer.version>
   </properties>
@@ -294,6 +295,11 @@ SOFTWARE.
       <artifactId>azure-cosmosdb-commons-test-utils</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-jsr310</artifactId>
+      <version>${jackson-datatype-jsr310.version}</version>
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>

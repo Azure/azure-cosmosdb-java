@@ -34,12 +34,10 @@ import com.microsoft.azure.cosmosdb.internal.ResourceType;
 import com.microsoft.azure.cosmosdb.internal.UserAgentContainer;
 import com.microsoft.azure.cosmosdb.internal.Utils;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdClientChannelHealthChecker;
-import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdClientChannelPool;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdContext;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdContextNegotiator;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdContextRequest;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdEndpoint;
-import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdReporter;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdRequest;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdRequestArgs;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdRequestEncoder;
@@ -76,7 +74,6 @@ import rx.Subscriber;
 import rx.observers.TestSubscriber;
 
 import java.net.ConnectException;
-import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.URI;
 import java.time.Duration;
@@ -937,7 +934,9 @@ public final class RntbdTransportClientTest {
 
             Provider(RntbdTransportClient.Options options, SslContext sslContext, RntbdResponse expected) {
                 this.config = new Config(options, sslContext, LogLevel.WARN);
-                this.timer = new RntbdRequestTimer(config.requestTimeout());
+                this.timer = new RntbdRequestTimer(
+                    config.requestTimeoutInNanos(),
+                    config.requestTimerResolutionInNanos());
                 this.expected = expected;
             }
 

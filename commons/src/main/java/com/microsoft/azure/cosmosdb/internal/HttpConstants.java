@@ -148,6 +148,7 @@ public class HttpConstants {
 
         // Address related headers.
         public static final String FORCE_REFRESH = "x-ms-force-refresh";
+        public static final String FORCE_COLLECTION_ROUTING_MAP_REFRESH = "x-ms-collectionroutingmap-refresh";
         public static final String ITEM_COUNT = "x-ms-item-count";
         public static final String NEW_RESOURCE_ID = "x-ms-new-resource-id";
         public static final String USE_MASTER_COLLECTION_RESOLVER = "x-ms-use-master-collection-resolver";
@@ -275,7 +276,7 @@ public class HttpConstants {
         // TODO: FIXME we can use maven plugin for generating a version file
         // @see
         // https://stackoverflow.com/questions/2469922/generate-a-version-java-file-in-maven
-        public static final String SDK_VERSION = "2.6.1";
+        public static final String SDK_VERSION = "2.6.5-SNAPSHOT";
         public static final String SDK_NAME = "cosmosdb-java-sdk";
         public static final String QUERY_VERSION = "1.0";
     }
