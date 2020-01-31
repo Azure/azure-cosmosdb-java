@@ -76,14 +76,12 @@ class AsyncReadBenchmark extends AsyncBenchmark<ResourceResponse<Document>> {
         options.setPartitionKey(new PartitionKey(docsToRead.get(index).getId()));
 
         Observable<ResourceResponse<Document>> obs = client.readDocument(getDocumentLink(docsToRead.get(index)), options);
-
         concurrencyControlSemaphore.acquire();
 
         if (configuration.getOperationType() == Operation.ReadThroughput) {
             obs.subscribeOn(Schedulers.computation()).subscribe(subs);
         } else {
-            LatencySubscriber<ResourceResponse<Document>> latencySubscriber = new LatencySubscriber<>(
-                    subs);
+            LatencySubscriber<ResourceResponse<Document>> latencySubscriber = new LatencySubscriber<>(subs);
             latencySubscriber.context = latency.time();
             obs.subscribeOn(Schedulers.computation()).subscribe(latencySubscriber);
         }

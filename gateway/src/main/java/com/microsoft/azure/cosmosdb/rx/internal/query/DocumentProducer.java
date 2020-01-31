@@ -166,7 +166,7 @@ class DocumentProducer<T extends Resource> {
 
         this.correlatedActivityId = correlatedActivityId;
 
-        this.feedOptions = feedOptions != null ? feedOptions : new FeedOptions();
+        this.feedOptions = feedOptions != null ? new FeedOptions(feedOptions) : new FeedOptions();
         this.feedOptions.setRequestContinuation(initialContinuationToken);
         this.lastResponseContinuationToken = initialContinuationToken;
         this.resourceType = resourceType;
