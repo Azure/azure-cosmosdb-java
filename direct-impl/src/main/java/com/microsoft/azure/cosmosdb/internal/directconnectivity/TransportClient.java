@@ -24,7 +24,9 @@
 package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
+import rx.Scheduler;
 import rx.Single;
+import rx.schedulers.Schedulers;
 
 import java.net.URI;
 
@@ -32,7 +34,8 @@ public abstract class TransportClient implements AutoCloseable {
 
     // Uses requests's ResourceOperation to determine the operation
     public Single<StoreResponse> invokeResourceOperationAsync(Uri physicalAddress, RxDocumentServiceRequest request) {
-        return this.invokeStoreAsync(physicalAddress, new ResourceOperation(request.getOperationType(), request.getResourceType()), request);
+        return this.invokeStoreAsync(physicalAddress, new ResourceOperation(request.getOperationType(), request.getResourceType()), request)
+                .observeOn(Schedulers.computation());
     }
 
     protected abstract Single<StoreResponse> invokeStoreAsync(
