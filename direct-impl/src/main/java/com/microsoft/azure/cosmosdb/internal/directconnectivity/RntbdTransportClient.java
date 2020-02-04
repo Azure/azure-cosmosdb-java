@@ -160,6 +160,7 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
                     emitter.onError(error);
                 }
 
+                record.stage(RntbdRequestRecord.Stage.COMPLETED);
                 requestArgs.traceOperation(logger, null, "emitSingleComplete");
             });
         });
@@ -437,7 +438,7 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
                         final ClassLoader loader = RntbdTransportClient.class.getClassLoader();
                         final String name = DEFAULT_OPTIONS_PROPERTY_NAME + ".json";
 
-                        try (final InputStream stream = loader.getResourceAsStream(name)) {
+                        try (InputStream stream = loader.getResourceAsStream(name)) {
                             if (stream != null) {
                                 // Attempt to load default options from the JSON resource file "{propertyName}.json"
                                 options = RntbdObjectMapper.readValue(stream, Options.class);
@@ -447,7 +448,14 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
                         }
                     }
                 } finally {
-                    DEFAULT_OPTIONS = options != null ? options : new Options();
+                    if (options == null) {
+                        DEFAULT_OPTIONS = new Options();
+                    } else {
+                        logger.info("Updated default Direct TCP options from system property {}: {}",
+                            DEFAULT_OPTIONS_PROPERTY_NAME,
+                            options);
+                        DEFAULT_OPTIONS = options;
+                    }
                 }
             }
 
@@ -617,7 +625,9 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
 
     static final class JsonSerializer extends StdSerializer<RntbdTransportClient> {
 
-        public JsonSerializer() {
+        private static final long serialVersionUID = 1007663695768825670L;
+
+        JsonSerializer() {
             super(RntbdTransportClient.class);
         }
 
