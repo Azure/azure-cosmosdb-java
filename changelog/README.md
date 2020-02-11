@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.6.5 - 2020-01-31
+- Fixed an issue where continuation token is not being set properly when trying to resume cross partition queries([#312](https://github.com/Azure/azure-cosmosdb-java/pull/312))
+- Moving deserialization out of netty threads ([#315](https://github.com/Azure/azure-cosmosdb-java/pull/315))
+- Fixed dont retry writes on forbidden ([#307](https://github.com/Azure/azure-cosmosdb-java/pull/307))
+
 ## 2.6.4 - 2020-01-02
 - Fixed a bug where SDK was retrying on writes on network failure([#301](https://github.com/Azure/azure-cosmosdb-java/pull/301))
 - Add support for specifying default Direct TCP options using System properties ([#299](https://github.com/Azure/azure-cosmosdb-java/pull/299))
