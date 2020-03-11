@@ -23,15 +23,14 @@
 
 package com.microsoft.azure.cosmosdb;
 
-import java.net.URI;
-import java.util.HashMap;
-import java.util.Map;
-
+import com.microsoft.azure.cosmosdb.internal.Constants;
+import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.Uri;
 import org.apache.commons.lang3.StringUtils;
 
-import com.microsoft.azure.cosmosdb.internal.Constants;
-import com.microsoft.azure.cosmosdb.internal.HttpConstants;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * This class defines a custom exception type for all operations on
@@ -51,25 +50,19 @@ public class DocumentClientException extends Exception {
 
     private static final long serialVersionUID = 1L;
 
-    private final int statusCode;
+    private final Map<String, String> requestHeaders;
     private final Map<String, String> responseHeaders;
+    private final int statusCode;
 
-    private ClientSideRequestStatistics clientSideRequestStatistics;
-    private Error error;
-    long lsn;
-    String partitionKeyRangeId;
-    Map<String, String> requestHeaders;
-    Uri requestUri;
-    String resourceAddress;
-
-    private DocumentClientException(int statusCode, String message, Map<String, String> responseHeaders, Throwable cause) {
-        super(message, cause);
-        this.statusCode = statusCode;
-        this.responseHeaders = responseHeaders == null ? new HashMap<>() : new HashMap<>(responseHeaders);
-    }
+    private volatile ClientSideRequestStatistics clientSideRequestStatistics;
+    private volatile Error error;
+    private volatile long lsn;
+    private volatile String partitionKeyRangeId;
+    private volatile Uri requestUri;
+    private volatile String resourceAddress;
 
     /**
-     * Creates a new instance of the DocumentClientException class.
+     * Creates a new instance of the {@link DocumentClientException} class.
      *
      * @param statusCode the http status code of the response.
      */
@@ -78,7 +71,7 @@ public class DocumentClientException extends Exception {
     }
 
     /**
-     * Creates a new instance of the DocumentClientException class.
+     * Creates a new instance of the {@link DocumentClientException} class.
      *
      * @param statusCode   the http status code of the response.
      * @param errorMessage the error message.
@@ -90,7 +83,7 @@ public class DocumentClientException extends Exception {
     }
 
     /**
-     * Creates a new instance of the DocumentClientException class.
+     * Creates a new instance of the {@link DocumentClientException} class.
      *
      * @param statusCode     the http status code of the response.
      * @param innerException the original exception.
@@ -100,7 +93,7 @@ public class DocumentClientException extends Exception {
     }
 
     /**
-     * Creates a new instance of the DocumentClientException class.
+     * Creates a new instance of the {@link DocumentClientException} class.
      *
      * @param statusCode      the http status code of the response.
      * @param errorResource   the error resource object.
@@ -111,7 +104,7 @@ public class DocumentClientException extends Exception {
     }
 
     /**
-     * Creates a new instance of the DocumentClientException class.
+     * Creates a new instance of the {@link DocumentClientException} class.
      *
      * @param resourceAddress the address of the resource the request is associated with.
      * @param statusCode      the http status code of the response.
@@ -119,30 +112,40 @@ public class DocumentClientException extends Exception {
      * @param responseHeaders the response headers.
      */
 
-    public DocumentClientException(String resourceAddress, int statusCode, Error errorResource, Map<String, String> responseHeaders) {
+    public DocumentClientException(
+        String resourceAddress, int statusCode, Error errorResource, Map<String, String> responseHeaders) {
         this(statusCode, errorResource == null ? null : errorResource.getMessage(), responseHeaders, null);
         this.resourceAddress = resourceAddress;
         this.error = errorResource;
     }
 
-    /** Creates a new instance of the DocumentClientException class.
+    /**
+     * Creates a new instance of the {@link DocumentClientException} class.
+     *
      * @param message         the string message.
      * @param statusCode      the http status code of the response.
      * @param exception       the exception object.
      * @param responseHeaders the response headers.
      * @param resourceAddress the address of the resource the request is associated with.
      */
-    public DocumentClientException(String message, Exception exception, Map<String, String> responseHeaders, int statusCode, String resourceAddress) {
+    public DocumentClientException(
+        String message,
+        Exception exception,
+        Map<String, String> responseHeaders,
+        int statusCode,
+        String resourceAddress) {
         this(statusCode, message, responseHeaders, exception);
         this.resourceAddress = resourceAddress;
     }
 
-    @Override
-    public String getMessage() {
-        if (clientSideRequestStatistics == null) {
-            return getInnerErrorMessage();
-        }
-        return getInnerErrorMessage() + ", " + clientSideRequestStatistics.toString();
+    private DocumentClientException(
+        int statusCode, String message, Map<String, String> responseHeaders, Throwable cause) {
+        super(message, cause);
+        this.requestHeaders = new ConcurrentHashMap<>();
+        this.responseHeaders = responseHeaders == null
+            ? new ConcurrentHashMap<>()
+            : new ConcurrentHashMap<>(responseHeaders);
+        this.statusCode = statusCode;
     }
 
     /**
@@ -156,6 +159,123 @@ public class DocumentClientException extends Exception {
         }
 
         return null;
+    }
+
+    /**
+     * Gets the Client side request statistics associated with this exception.
+     *
+     * @return Client side request statistics associated with this exception.
+     */
+    public ClientSideRequestStatistics getClientSideRequestStatistics() {
+        return clientSideRequestStatistics;
+    }
+
+    /**
+     * Sets the Client side request statistics associated with this exception.
+     */
+    // TODO (DANOBLE) Consider changing the access of this method to package private and adding it to BridgeInternal
+    public void setClientSideRequestStatistics(ClientSideRequestStatistics clientSideRequestStatistics) {
+        this.clientSideRequestStatistics = clientSideRequestStatistics;
+    }
+
+    /**
+     * Gets the error code associated with the exception.
+     *
+     * @return the error.
+     */
+    public Error getError() {
+        return this.error;
+    }
+
+    /**
+     * Gets the LSN associated with this {@link DocumentClientException exception}.
+     *
+     * @return the LSN associated with this {@link DocumentClientException exception}.
+     */
+    public long getLsn() {
+        return lsn;
+    }
+
+    void setLsn(long lsn) {
+        this.lsn = lsn;
+    }
+
+    @Override
+    public String getMessage() {
+        if (clientSideRequestStatistics == null) {
+            return getInnerErrorMessage();
+        }
+        return getInnerErrorMessage() + ", " + clientSideRequestStatistics.toString();
+    }
+
+    public String getPartitionKeyRangeId() {
+        return this.partitionKeyRangeId;
+    }
+
+    void setPartitionKeyRangeId(String partitionKeyRangeId) {
+        this.partitionKeyRangeId = partitionKeyRangeId;
+    }
+
+    public Map<String, String> getRequestHeaders() {
+        return this.requestHeaders;
+    }
+
+    void setRequestHeaders(Map<String, String> values) {
+
+        this.requestHeaders.clear();
+
+        if (values != null) {
+            for (Map.Entry<String, String> entry : values.entrySet()) {
+                final String key = entry.getKey();
+                final String value = entry.getValue();
+                if (key != null && value != null) {
+                    this.requestHeaders.put(key, value);
+                }
+            }
+        }
+    }
+
+    public Uri getRequestUri() {
+        return requestUri;
+    }
+
+    public void setRequestUri(Uri requestUri) {
+        this.requestUri = requestUri;
+    }
+
+    /**
+     * Gets the response headers as key-value pairs
+     *
+     * @return the response headers
+     */
+    public Map<String, String> getResponseHeaders() {
+        return this.responseHeaders;
+    }
+
+    /**
+     * Gets the recommended time interval after which the client can retry
+     * failed requests
+     *
+     * @return the recommended time interval after which the client can retry
+     * failed requests.
+     */
+    public long getRetryAfterInMilliseconds() {
+        long retryIntervalInMilliseconds = 0;
+
+        if (this.responseHeaders != null) {
+            String header = this.responseHeaders.get(HttpConstants.HttpHeaders.RETRY_AFTER_IN_MILLISECONDS);
+
+            if (StringUtils.isNotEmpty(header)) {
+                try {
+                    retryIntervalInMilliseconds = Long.parseLong(header);
+                } catch (NumberFormatException e) {
+                    // If the value cannot be parsed as long, return 0.
+                }
+            }
+        }
+
+        // In the absence of explicit guidance from the backend, don't introduce any unilateral retry delays here.
+        return retryIntervalInMilliseconds;
     }
 
     /**
@@ -188,74 +308,6 @@ public class DocumentClientException extends Exception {
         return code;
     }
 
-    /**
-     * Gets the error code associated with the exception.
-     *
-     * @return the error.
-     */
-    public Error getError() {
-        return this.error;
-    }
-
-    /**
-     * Gets the recommended time interval after which the client can retry
-     * failed requests
-     *
-     * @return the recommended time interval after which the client can retry
-     * failed requests.
-     */
-    public long getRetryAfterInMilliseconds() {
-        long retryIntervalInMilliseconds = 0;
-
-        if (this.responseHeaders != null) {
-            String header = this.responseHeaders.get(HttpConstants.HttpHeaders.RETRY_AFTER_IN_MILLISECONDS);
-
-            if (StringUtils.isNotEmpty(header)) {
-                try {
-                    retryIntervalInMilliseconds = Long.parseLong(header);
-                } catch (NumberFormatException e) {
-                    // If the value cannot be parsed as long, return 0.
-                }
-            }
-        }
-
-        //
-        // In the absence of explicit guidance from the backend, don't introduce
-        // any unilateral retry delays here.
-        return retryIntervalInMilliseconds;
-    }
-
-    /**
-     * Gets the response headers as key-value pairs
-     *
-     * @return the response headers
-     */
-    public Map<String, String> getResponseHeaders() {
-        return this.responseHeaders;
-    }
-
-    /**
-     * Gets the resource address associated with this exception.
-     *
-     * @return the resource address associated with this exception.
-     */
-    String getResourceAddress() {
-        return this.resourceAddress;
-    }
-
-    /**
-     * Gets the Client side request statistics associated with this exception.
-     *
-     * @return Client side request statistics associated with this exception.
-     */
-    public ClientSideRequestStatistics getClientSideRequestStatistics() {
-        return clientSideRequestStatistics;
-    }
-
-    public void setClientSideRequestStatistics(ClientSideRequestStatistics clientSideRequestStatistics) {
-        this.clientSideRequestStatistics = clientSideRequestStatistics;
-    }
-
     @Override
     public String toString() {
         return getClass().getSimpleName() + "{" +
@@ -278,6 +330,19 @@ public class DocumentClientException extends Exception {
             }
         }
         return innerErrorMessage;
+    }
+
+    /**
+     * Gets the resource address associated with this exception.
+     *
+     * @return the resource address associated with this exception.
+     */
+    String getResourceAddress() {
+        return this.resourceAddress;
+    }
+
+    void setResourceAddress(String resourceAddress) {
+        this.resourceAddress = resourceAddress;
     }
 
     private String getCauseInfo() {

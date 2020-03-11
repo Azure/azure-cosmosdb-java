@@ -31,7 +31,6 @@ import com.microsoft.azure.cosmosdb.internal.query.metrics.ClientSideMetrics;
 import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceResponse;
 import com.microsoft.azure.cosmosdb.rx.internal.Strings;
 
-import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -179,29 +178,29 @@ public class BridgeInternal {
     }
 
     public static <E extends  DocumentClientException> E setResourceAddress(E e, String resourceAddress) {
-        e.resourceAddress = resourceAddress;
+        e.setResourceAddress(resourceAddress);
         return e;
     }
 
     public static <E extends  DocumentClientException> long getLSN(E e) {
-        return e.lsn;
+        return e.getLsn();
     }
 
     public static <E extends  DocumentClientException> String getPartitionKeyRangeId(E e) {
-        return e.partitionKeyRangeId;
+        return e.getPartitionKeyRangeId();
     }
 
     public static <E extends  DocumentClientException> String getResourceAddress(E e) {
-        return e.resourceAddress;
+        return e.getResourceAddress();
     }
 
     public static <E extends  DocumentClientException> E setLSN(E e, long lsn) {
-        e.lsn = lsn;
+        e.setLsn(lsn);
         return e;
     }
 
     public static <E extends  DocumentClientException> E setPartitionKeyRangeId(E e, String partitionKeyRangeId) {
-        e.partitionKeyRangeId = partitionKeyRangeId;
+        e.setPartitionKeyRangeId(partitionKeyRangeId);
         return e;
     }
 
@@ -218,15 +217,15 @@ public class BridgeInternal {
     }
 
     public static <E extends  DocumentClientException> Uri getRequestUri(DocumentClientException documentClientException) {
-        return documentClientException.requestUri;
+        return documentClientException.getRequestUri();
     }
 
     public static <E extends  DocumentClientException> void setRequestHeaders(DocumentClientException documentClientException, Map<String, String> requestHeaders) {
-        documentClientException.requestHeaders = requestHeaders;
+        documentClientException.setRequestHeaders(requestHeaders);
     }
 
     public static <E extends  DocumentClientException> Map<String, String> getRequestHeaders(DocumentClientException documentClientException) {
-        return documentClientException.requestHeaders;
+        return documentClientException.getRequestHeaders();
     }
 
     public static Map<String, Object> getQueryEngineConfiuration(DatabaseAccount databaseAccount) {
