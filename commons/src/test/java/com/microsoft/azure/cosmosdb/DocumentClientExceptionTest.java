@@ -26,12 +26,23 @@ import com.microsoft.azure.cosmosdb.internal.InternalServerErrorException;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.GoneException;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.RequestTimeoutException;
 import com.microsoft.azure.cosmosdb.rx.internal.BadRequestException;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.reactivex.netty.protocol.http.client.HttpResponseHeaders;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import static com.google.common.base.Strings.lenientFormat;
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes.BADREQUEST;
@@ -40,8 +51,85 @@ import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes.IN
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes.REQUEST_TIMEOUT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+import static org.testng.FileAssert.fail;
 
 public class DocumentClientExceptionTest {
+
+    @Test(groups = { "unit" })
+    public void canEnumerateWhileUpdatingHeaders(Method method) {
+
+        final DocumentClientException dce = new DocumentClientException(0, method.getName());
+        final ExecutorService threadPool = Executors.newFixedThreadPool(4);
+
+        final MeterRegistry meterRegistry = new SimpleMeterRegistry();
+
+        final DistributionSummary[] summary = {
+            DistributionSummary.builder("responseHeaders.size").register(meterRegistry),
+            DistributionSummary.builder("requestHeaders.size").register(meterRegistry),
+        };
+
+        final List<Callable<Boolean>> callables = Arrays.asList(
+            () -> {
+                for (int i = 0; i < 1000; i++) {
+                    final Map<String, String> headers = dce.getResponseHeaders();
+                    final String string = headers.toString();
+                    final double size = headers.size();
+                    summary[0].record(size);
+                }
+                return Boolean.TRUE;
+            },
+            () -> {
+
+                for (int i = 0; i < 5000; i++) {
+                    dce.getResponseHeaders().put("foo." + i, "bar");
+                }
+
+                Thread.sleep(1);
+
+                for (int i = 0; i < 5000; i++) {
+                    dce.getResponseHeaders().remove("foo." + i);
+                }
+
+                return Boolean.TRUE;
+            },
+            () -> {
+                for (int i = 0; i < 1000; i++) {
+                    final Map<String, String> headers = dce.getRequestHeaders();
+                    final String string = headers.toString();
+                    final double size = headers.size();
+                    summary[1].record(size);
+                }
+                return Boolean.TRUE;
+            },
+            () -> {
+                for (int i = 0; i < 1000; i++) {
+                    dce.setRequestHeaders(dce.getResponseHeaders());
+                }
+                return Boolean.TRUE;
+            });
+
+        final List<Future<Boolean>> futures;
+
+        try {
+            futures = threadPool.invokeAll(callables);
+        } catch (InterruptedException error) {
+            fail(lenientFormat("unexpected %s", error), error);
+            return;
+        }
+
+        for (Future<Boolean> future : futures) {
+            try {
+                assertTrue(future.get());
+            } catch (ExecutionException | InterruptedException error) {
+                fail(lenientFormat("unexpected %s", error), error);
+                return;
+            }
+        }
+
+        System.out.println(summary[0].takeSnapshot());
+        System.out.println(summary[1].takeSnapshot());
+    }
 
     @Test(groups = { "unit" })
     public void headerNotNull1() {
