@@ -26,7 +26,6 @@ package com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd;
 
 import com.codahale.metrics.ConsoleReporter;
 import com.codahale.metrics.MetricRegistry;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.google.common.net.PercentEscaper;
