@@ -227,7 +227,7 @@ public class ConsistencyTests2 extends ConsistencyTestsBase {
         // https://msdata.visualstudio.com/CosmosDB/_workitems/edit/355053
     }
 
-    @Test(groups = {"direct"}, timeOut = 2 * CONSISTENCY_TEST_TIMEOUT)
+    @Test(groups = {"direct"}, timeOut = 4 * CONSISTENCY_TEST_TIMEOUT)
     public void validateSessionTokenAsync() {
         // Validate that document query never fails
         // with NotFoundException

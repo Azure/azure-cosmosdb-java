@@ -36,6 +36,7 @@ import org.testng.annotations.Test;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -51,6 +52,7 @@ import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes.IN
 import static com.microsoft.azure.cosmosdb.internal.HttpConstants.StatusCodes.REQUEST_TIMEOUT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 import static org.testng.FileAssert.fail;
 
@@ -179,6 +181,54 @@ public class DocumentClientExceptionTest {
         DocumentClientException dce = new DocumentClientException((String) null, (Exception) null, respHeaders, 0, (String) null);
         assertThat(dce.getResponseHeaders()).isNotNull();
         assertThat(dce.getResponseHeaders()).contains(respHeaders.entrySet().iterator().next());
+    }
+
+    @Test(groups = { "unit" })
+    public void nullClearsRequestHeaders(Method method) {
+
+        final DocumentClientException dce = new DocumentClientException(0, method.getName());
+        final Map<String, String> values = new HashMap<>();
+
+        values.put("foo", "bar");
+        values.put("bar", "baz");
+
+        assertNotNull(dce.getRequestHeaders());
+
+        try {
+            dce.setRequestHeaders(values);
+        } catch (Throwable error) {
+            fail(lenientFormat("unexpected %s", error), error);
+            return;
+        }
+
+        assertThat(dce.getRequestHeaders().size()).isEqualTo(values.size());
+
+        try {
+            dce.setRequestHeaders(null);
+        } catch (Throwable error) {
+            fail(lenientFormat("unexpected %s", error), error);
+            return;
+        }
+
+        assertThat(dce.getRequestHeaders().size()).isZero();
+    }
+
+    @Test(groups = { "unit" })
+    public void nullValuesInRequestHeadersAreIgnored(Method method) {
+
+        final DocumentClientException dce = new DocumentClientException(0, method.getName());
+        final Map<String, String> values = new HashMap<>();
+        values.put("foo", null);
+
+        assertNotNull(dce.getRequestHeaders());
+
+        try {
+            dce.setRequestHeaders(values);
+        } catch (Throwable error) {
+            fail(lenientFormat("unexpected %s", error), error);
+        }
+
+        assertThat(dce.getRequestHeaders()).isEmpty();
     }
 
     @Test(groups = { "unit" }, dataProvider = "subTypes")
