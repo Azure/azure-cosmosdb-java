@@ -221,8 +221,18 @@ public class DocumentClientException extends Exception {
     }
 
     void setRequestHeaders(Map<String, String> values) {
+
         this.requestHeaders.clear();
-        this.requestHeaders.putAll(values);
+
+        if (values != null) {
+            for (Map.Entry<String, String> entry : values.entrySet()) {
+                final String key = entry.getKey();
+                final String value = entry.getValue();
+                if (key != null && value != null) {
+                    this.requestHeaders.put(key, value);
+                }
+            }
+        }
     }
 
     public Uri getRequestUri() {
