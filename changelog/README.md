@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.6.6 - 2020-03-12
+- Made DocumentClientException thread safe ([#323](https://github.com/Azure/azure-cosmosdb-java/pull/323))
+
 ## 2.6.5 - 2020-01-31
 - Fixed an issue where continuation token is not being set properly when trying to resume cross partition queries([#312](https://github.com/Azure/azure-cosmosdb-java/pull/312))
 - Moving deserialization out of netty threads ([#315](https://github.com/Azure/azure-cosmosdb-java/pull/315))
