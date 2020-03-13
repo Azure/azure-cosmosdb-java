@@ -46,9 +46,9 @@ abstract class RntbdTokenStream<T extends Enum<T> & RntbdHeader> {
 
     RntbdTokenStream(final ImmutableSet<T> headers, final ImmutableMap<Short, T> ids, final ByteBuf in) {
 
-        checkNotNull(headers, "headers");
-        checkNotNull(ids, "ids");
-        checkNotNull(in, "in");
+        checkNotNull(headers, "expected non-null headers");
+        checkNotNull(ids, "expected non-null ids");
+        checkNotNull(in, "expected non-null in");
 
         final Collector<T, ?, ImmutableMap<T, RntbdToken>> collector = Maps.toImmutableEnumMap(h -> h, RntbdToken::create);
         this.tokens = headers.stream().collect(collector);

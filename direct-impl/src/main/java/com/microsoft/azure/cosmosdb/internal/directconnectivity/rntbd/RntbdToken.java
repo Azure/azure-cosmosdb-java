@@ -95,7 +95,7 @@ final class RntbdToken {
         }
 
         if (this.value instanceof ByteBuf) {
-            final ByteBuf buffer = (ByteBuf)this.value;
+            final ByteBuf buffer = (ByteBuf) this.value;
             this.value = codec.defaultValue();
             try {
                 this.value = codec.read(buffer);
@@ -150,7 +150,7 @@ final class RntbdToken {
         }
 
         if (this.value instanceof ByteBuf) {
-            final ByteBuf buffer = (ByteBuf)this.value;
+            final ByteBuf buffer = (ByteBuf) this.value;
             checkState(buffer.readerIndex() == 0);
             return HEADER_LENGTH + buffer.readableBytes();
         }
@@ -171,10 +171,13 @@ final class RntbdToken {
         checkNotNull(in, "expected non-null in");
 
         if (this.value instanceof ByteBuf) {
-            ((ByteBuf)this.value).release();
+            // Ensure that any pre-existing buffered value is released and therefore doesn't leak
+            ((ByteBuf) this.value).release();
         }
 
-        this.value = this.header.type().codec().readSlice(in).retain(); // No data transfer until first call to RntbdToken.getValue
+        // TODO (DANOBLE) EXPERIMENTAL
+        // Ensures we retain this RntbdToken.value with no data transfer until the first call to RntbdToken.getValue
+        this.value = this.header.type().codec().readSlice(in).retain();
     }
 
     public void encode(final ByteBuf out) {
@@ -193,7 +196,7 @@ final class RntbdToken {
         out.writeByte(this.getTokenType().id());
 
         if (this.value instanceof ByteBuf) {
-            out.writeBytes((ByteBuf)this.value);
+            out.writeBytes((ByteBuf) this.value);
         } else {
             this.ensureValid(this.value);
             this.header.type().codec().write(this.value, out);
@@ -201,7 +204,7 @@ final class RntbdToken {
     }
 
     public boolean releaseBuffer() {
-        return this.value instanceof ByteBuf && ((ByteBuf)this.value).release();
+        return this.value instanceof ByteBuf && ((ByteBuf) this.value).release();
     }
 
     @Override
@@ -214,8 +217,10 @@ final class RntbdToken {
     // region Privates
 
     private void ensureValid(final Object value) {
-        checkArgument(value != null, "value: null");
-        checkArgument(this.header.type().codec().isValid(value), "value: %s = %s", value.getClass().getName(), value);
+        checkArgument(value != null, "expected non-null value");
+        checkArgument(this.header.type().codec().isValid(value), "invalid value: %s = %s",
+            value.getClass().getName(),
+            value);
     }
 
     // endregion
@@ -225,13 +230,17 @@ final class RntbdToken {
     static class PropertyFilter extends SimpleBeanPropertyFilter {
 
         @Override
-        public void serializeAsField(final Object object, final JsonGenerator generator, final SerializerProvider provider, final PropertyWriter writer) throws Exception {
+        public void serializeAsField(
+            final Object object,
+            final JsonGenerator generator,
+            final SerializerProvider provider,
+            final PropertyWriter writer) throws Exception {
 
             if (generator.canOmitFields()) {
 
                 final Object value = writer.getMember().getValue(object);
 
-                if (value instanceof RntbdToken && !((RntbdToken)value).isPresent()) {
+                if (value instanceof RntbdToken && !((RntbdToken) value).isPresent()) {
                     return;
                 }
             }
