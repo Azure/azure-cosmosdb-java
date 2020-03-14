@@ -96,14 +96,12 @@ final class RntbdToken {
 
         if (this.value instanceof ByteBuf) {
             final ByteBuf buffer = (ByteBuf) this.value;
-            this.value = codec.defaultValue();
             try {
+                this.value = codec.defaultValue();
                 this.value = codec.read(buffer);
             } catch (final CorruptedFrameException error) {
                 String message = lenientFormat("failed to read %s value: %s", this.getName(), error.getMessage());
                 throw new CorruptedFrameException(message);
-            } finally {
-                buffer.release();
             }
         } else {
             this.value = codec.convert(this.value);
@@ -119,7 +117,6 @@ final class RntbdToken {
     @JsonProperty
     public void setValue(final Object value) {
         this.ensureValid(value);
-        this.releaseBuffer();
         this.value = value;
         this.length = Integer.MIN_VALUE;
     }
@@ -169,15 +166,7 @@ final class RntbdToken {
     public void decode(final ByteBuf in) {
 
         checkNotNull(in, "expected non-null in");
-
-        if (this.value instanceof ByteBuf) {
-            // Ensure that any pre-existing buffered value is released and therefore doesn't leak
-            ((ByteBuf) this.value).release();
-        }
-
-        // TODO (DANOBLE) EXPERIMENTAL
-        // Ensures we retain this RntbdToken.value with no data transfer until the first call to RntbdToken.getValue
-        this.value = this.header.type().codec().readSlice(in).retain();
+        this.value = this.header.type().codec().readSlice(in);
     }
 
     public void encode(final ByteBuf out) {
@@ -201,10 +190,6 @@ final class RntbdToken {
             this.ensureValid(this.value);
             this.header.type().codec().write(this.value, out);
         }
-    }
-
-    public boolean releaseBuffer() {
-        return this.value instanceof ByteBuf && ((ByteBuf) this.value).release();
     }
 
     @Override
