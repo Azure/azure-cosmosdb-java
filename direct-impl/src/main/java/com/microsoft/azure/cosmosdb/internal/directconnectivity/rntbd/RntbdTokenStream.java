@@ -132,9 +132,6 @@ abstract class RntbdTokenStream<T extends Enum<T> & RntbdHeader> implements Refe
 
     @Override
     public final boolean release(final int count) {
-//        for (final RntbdToken token : this.tokens.values()) {
-//            token.release(count);
-//        }
         return this.in.release(count);
     }
 
@@ -145,9 +142,6 @@ abstract class RntbdTokenStream<T extends Enum<T> & RntbdHeader> implements Refe
 
     @Override
     public final RntbdTokenStream<T> retain(final int count) {
-//        for (final RntbdToken token : this.tokens.values()) {
-//            token.retain(count);
-//        }
         this.in.retain(count);
         return this;
     }

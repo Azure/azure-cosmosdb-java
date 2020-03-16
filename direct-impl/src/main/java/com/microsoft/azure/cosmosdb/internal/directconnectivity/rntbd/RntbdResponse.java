@@ -346,8 +346,7 @@ public final class RntbdResponse implements ReferenceCounted {
 
     StoreResponse toStoreResponse(final RntbdContext context) {
 
-        checkNotNull(context, "context");
-        final int length = this.content.readableBytes();
+        checkNotNull(context, "expected non-null context");
 
         return new StoreResponse(
             this.getStatus().code(),
