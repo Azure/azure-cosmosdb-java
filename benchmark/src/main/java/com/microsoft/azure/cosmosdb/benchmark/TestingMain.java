@@ -40,13 +40,14 @@ public class TestingMain {
         connectionPolicy.setUsingMultipleWriteLocations(true);
         connectionPolicy.setPreferredLocations(Lists.newArrayList("West US 2"));
         connectionPolicy.setConnectionMode(ConnectionMode.Direct);
+        String serviceEndpoint = args[0];
+        String key = args[1];
         AsyncDocumentClient client = new AsyncDocumentClient
             .Builder()
             .withConsistencyLevel(ConsistencyLevel.BoundedStaleness)
             .withConnectionPolicy(connectionPolicy)
-            .withMasterKeyOrResourceToken(
-                "")
-            .withServiceEndpoint("")
+            .withMasterKeyOrResourceToken(key)
+            .withServiceEndpoint(serviceEndpoint)
             .build();
 
         Database database = client.readDatabase(getDatabaseNameLink("test_db"),
@@ -108,8 +109,8 @@ public class TestingMain {
     private static void readDataFromFile(String[] args) throws IOException {
         String fileName = "id_partionkey_list.txt";
         File file = null;
-        if (args.length > 0) {
-            fileName = args[0];
+        if (args.length > 2) {
+            fileName = args[2];
             file = new File(fileName);
         } else {
             ClassLoader classLoader = TestingMain.class.getClassLoader();
