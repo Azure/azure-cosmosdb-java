@@ -148,9 +148,9 @@ public class TestingMain {
             long startTime = System.currentTimeMillis();
             Document document =
                 client.readDocument(documentNameLink, requestOptions).toBlocking().single().getResource();
-            log.info("Time taken {}", (System.currentTimeMillis() - startTime));
-            log.info("Document read id {} with - id {}, partition key {}",
-                document.getId(), documentData.id, documentData.partitionKey);
+            log.info("Read Time taken {}", (System.currentTimeMillis() - startTime));
+//            log.info("Document read id {} with - id {}, partition key {}",
+//                document.getId(), documentData.id, documentData.partitionKey);
         }
     }
 
