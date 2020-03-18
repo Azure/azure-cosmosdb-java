@@ -347,12 +347,12 @@ public final class RntbdResponse implements ReferenceCounted {
     StoreResponse toStoreResponse(final RntbdContext context) {
 
         checkNotNull(context, "expected non-null context");
+        final int contentLength = this.content.writerIndex();
 
         return new StoreResponse(
             this.getStatus().code(),
             this.headers.asList(context, this.getActivityId()),
-            length == 0 ? null : this.content.readCharSequence(length, StandardCharsets.UTF_8).toString()
-        );
+            contentLength == 0 ? null : this.content.getCharSequence(0, contentLength, StandardCharsets.UTF_8).toString());
     }
 
     // endregion
