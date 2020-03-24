@@ -32,6 +32,9 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
+import static com.google.common.base.Preconditions.checkState;
+import static com.microsoft.azure.cosmosdb.internal.directconnectivity.rntbd.RntbdReporter.reportIssue;
+
 class RntbdContextDecoder extends ByteToMessageDecoder {
 
     private static final Logger logger = LoggerFactory.getLogger(RntbdContextDecoder.class);
@@ -58,6 +61,9 @@ class RntbdContextDecoder extends ByteToMessageDecoder {
                 result = rntbdContext;
             } catch (RntbdContextException error) {
                 context.fireUserEventTriggered(error);
+                result = error;
+            } catch (Throwable error) {
+                context.fireExceptionCaught(error);
                 result = error;
             } finally {
                 in.discardReadBytes();

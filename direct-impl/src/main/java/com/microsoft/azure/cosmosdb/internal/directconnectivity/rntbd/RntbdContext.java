@@ -148,14 +148,10 @@ public final class RntbdContext {
                 map.put("serverVersion", headers.serverVersion.getValue());
             }
 
-            headers.releaseBuffers();
             throw new RntbdContextException(responseStatus.getStatus(), details, Collections.unmodifiableMap(map));
-
-        } else {
-            RntbdContext context = new RntbdContext(responseStatus, headers);
-            headers.releaseBuffers();
-            return context;
         }
+
+        return new RntbdContext(responseStatus, headers);
     }
 
     public void encode(final ByteBuf out) {
@@ -168,7 +164,7 @@ public final class RntbdContext {
 
         responseStatus.encode(out);
         headers.encode(out);
-        headers.releaseBuffers();
+        headers.release();
 
         final int end = out.writerIndex();
 
