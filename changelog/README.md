@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.6.7 - 2020-04-21
+- Fixed multiple memory leak in direct TCP transport client ([#326](https://github.com/Azure/azure-cosmosdb-java/pull/326))
+
 ## 2.6.6 - 2020-03-12
 - Made DocumentClientException thread safe ([#323](https://github.com/Azure/azure-cosmosdb-java/pull/323))
 
