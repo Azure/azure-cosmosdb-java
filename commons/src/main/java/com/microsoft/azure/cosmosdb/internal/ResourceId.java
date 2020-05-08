@@ -178,7 +178,7 @@ public class ResourceId {
                 rid.offer = 0;
                 for (int index = 0; index < ResourceId.OFFER_ID_LENGTH; index++)
                 {
-                    rid.offer |= (long)(buffer[index] << (index * 8));
+                    rid.offer |= (long) (buffer[index] << (index * 8));
                 }
                 return Pair.of(true, rid);
             }
@@ -381,8 +381,14 @@ public class ResourceId {
         return rid;
     }
 
+    /**
+     * Returns the long value of the document. The value computed is in Big Endian, so this method reverses the bytes 
+     * and returns Little Endian order value of the long
+     *
+     * @return document long value
+     */
     public long getDocument() {
-        return this.document;
+        return Long.reverseBytes(this.document);
     }
 
     public ResourceId getDocumentId() {
@@ -392,7 +398,7 @@ public class ResourceId {
         rid.document = this.document;
         return rid;
     }
-    
+
     public long getPartitionKeyRange() {
         return this.partitionKeyRange;
     }
@@ -458,9 +464,9 @@ public class ResourceId {
         if (this.documentCollection != 0 || this.user != 0)
             len += 4;
         if (this.document != 0 || this.permission != 0
-                || this.storedProcedure != 0 || this.trigger != 0
-                || this.userDefinedFunction != 0 || this.conflict != 0
-                || this.partitionKeyRange != 0)
+                    || this.storedProcedure != 0 || this.trigger != 0
+                    || this.userDefinedFunction != 0 || this.conflict != 0
+                    || this.partitionKeyRange != 0)
             len += 8;
         if (this.attachment != 0)
             len += 4;
@@ -469,48 +475,48 @@ public class ResourceId {
 
         if (this.offer != 0)
             ResourceId.blockCopy(convertToBytesUsingByteBuffer(this.offer),
-                    0, val, 0, ResourceId.OFFER_ID_LENGTH);
+                                 0, val, 0, ResourceId.OFFER_ID_LENGTH);
         else if (this.database != 0)
             ResourceId.blockCopy(convertToBytesUsingByteBuffer(this.database),
-                    0, val, 0, 4);
+                                 0, val, 0, 4);
 
         if (this.documentCollection != 0)
             ResourceId.blockCopy(
-                    convertToBytesUsingByteBuffer(this.documentCollection), 
+                    convertToBytesUsingByteBuffer(this.documentCollection),
                     0, val, 4, 4);
         else if (this.user != 0)
-            ResourceId.blockCopy(convertToBytesUsingByteBuffer(this.user), 
-                    0, val, 4, 4);
+            ResourceId.blockCopy(convertToBytesUsingByteBuffer(this.user),
+                                 0, val, 4, 4);
 
         if (this.storedProcedure != 0)
             ResourceId.blockCopy(
-                    convertToBytesUsingByteBuffer(this.storedProcedure), 
+                    convertToBytesUsingByteBuffer(this.storedProcedure),
                     0, val, 8, 8);
         else if (this.trigger != 0)
             ResourceId.blockCopy(convertToBytesUsingByteBuffer(this.trigger),
-                    0, val, 8, 8);
+                                 0, val, 8, 8);
         else if (this.userDefinedFunction != 0)
             ResourceId.blockCopy(
-                    convertToBytesUsingByteBuffer(this.userDefinedFunction), 
+                    convertToBytesUsingByteBuffer(this.userDefinedFunction),
                     0, val, 8, 8);
         else if (this.conflict != 0)
             ResourceId.blockCopy(convertToBytesUsingByteBuffer(this.conflict),
-                    0, val, 8, 8);
+                                 0, val, 8, 8);
         else if (this.document != 0)
             ResourceId.blockCopy(convertToBytesUsingByteBuffer(this.document),
-                    0, val, 8, 8);
+                                 0, val, 8, 8);
         else if (this.permission != 0)
             ResourceId.blockCopy(
-                    convertToBytesUsingByteBuffer(this.permission), 
+                    convertToBytesUsingByteBuffer(this.permission),
                     0, val, 8, 8);
         else if (this.partitionKeyRange != 0)
             ResourceId.blockCopy(
-                    convertToBytesUsingByteBuffer(this.partitionKeyRange), 
+                    convertToBytesUsingByteBuffer(this.partitionKeyRange),
                     0, val, 8, 8);
 
         if (this.attachment != 0)
             ResourceId.blockCopy(
-                    convertToBytesUsingByteBuffer(this.attachment), 
+                    convertToBytesUsingByteBuffer(this.attachment),
                     0, val, 16, 4);
 
         return val;
