@@ -141,10 +141,10 @@ class OrderByUtils {
                                     // If there is a tie in the sort order the documents should be in _rid order in the same direction as the first order by field.
                                     // So if it's ORDER BY c.age ASC, c.name DESC the _rids are ASC
                                     // If ti's ORDER BY c.age DESC, c.name DESC the _rids are DESC
-                                    cmp = (continuationTokenRid.getDocumentLittleEndian() - 
+                                    cmp = (continuationTokenRid.getDocument() - 
                                                      ResourceId.tryParse(tOrderByRowResult.getResourceId())
                                                              .getRight()
-                                                             .getDocumentLittleEndian());
+                                                             .getDocument());
 
                                     if (sortOrders.iterator().next().equals(SortOrder.Descending)) {
                                         cmp = -cmp;

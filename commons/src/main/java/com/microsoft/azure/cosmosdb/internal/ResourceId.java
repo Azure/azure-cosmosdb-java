@@ -381,17 +381,13 @@ public class ResourceId {
         return rid;
     }
 
-    public long getDocument() {
-        return this.document;
-    }
-
     /**
-     * ResourceID#getDocument returns the long value of the document in Big Endian, this method reverses the bytes 
+     * Returns the long value of the document. The value computed is in Big Endian, so this method reverses the bytes 
      * and returns Little Endian order value of the long
-     * 
+     *
      * @return document long value
      */
-    public long getDocumentLittleEndian() {
+    public long getDocument() {
         return Long.reverseBytes(this.document);
     }
 
