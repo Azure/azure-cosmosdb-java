@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.6.8 - 2020-05-11
+- Fixes an issue due to which the order by results when resuming from continuation token might contain duplicates/missing documents ([#332](https://github.com/Azure/azure-cosmosdb-java/pull/332))
+
 ## 2.6.7 - 2020-04-21
 - Fixed multiple memory leak in direct TCP transport client ([#326](https://github.com/Azure/azure-cosmosdb-java/pull/326))
 
