@@ -113,7 +113,7 @@ public class QueryValidationTests extends TestSuiteBase {
                 documentsInserted);
     }
 
-    private List<Document> queryWithContinuationTokens(String query, int pageSize, String collectionNameLink) {
+    private List<Document> queryWithContinuationTokens(String query, int pageSize, String collectionLink) {
         logger.info("querying: " + query);
         String requestContinuation = null;
 
@@ -125,7 +125,7 @@ public class QueryValidationTests extends TestSuiteBase {
             options.setEnableCrossPartitionQuery(true);
             options.setMaxDegreeOfParallelism(2);
             options.setRequestContinuation(requestContinuation);
-            Observable<FeedResponse<Document>> queryObservable = client.queryDocuments(collectionNameLink, query,
+            Observable<FeedResponse<Document>> queryObservable = client.queryDocuments(collectionLink, query,
                                                                                        options);
 
             FeedResponse<Document> firstPage = queryObservable.first().toBlocking().single();
@@ -155,12 +155,12 @@ public class QueryValidationTests extends TestSuiteBase {
                 null,
                 getDefaultCreatedCollectionLink());
         int numberOfPartitions = client
-                                         .readPartitionKeyRanges(getDefaultCreatedCollectionLink(), null)
-                                         .flatMap(p -> Observable.from(p.getResults())).toList().toBlocking().single()
-                                         .size();
+                                 .readPartitionKeyRanges(getDefaultCreatedCollectionLink(), null)
+                                 .flatMap(p -> Observable.from(p.getResults())).toList().toBlocking().single()
+                                 .size();
     }
 
-    private List<Document> insertDocuments(int documentCount, List<String> partitionKeys, String collectionNameLink) {
+    private List<Document> insertDocuments(int documentCount, List<String> partitionKeys, String collectionLink) {
         List<Document> documentsToInsert = new ArrayList<>();
 
         for (int i = 0; i < documentCount; i++) {
@@ -171,7 +171,7 @@ public class QueryValidationTests extends TestSuiteBase {
             documentsToInsert.add(getDocumentDefinition(UUID.randomUUID().toString(), partitionKey));
         }
 
-        List<Document> documentsInserted = bulkInsertBlocking(client, collectionNameLink, documentsToInsert);
+        List<Document> documentsInserted = bulkInsertBlocking(client, collectionLink, documentsToInsert);
 
         waitIfNeededForReplicasToCatchUp(this.clientBuilder());
 
