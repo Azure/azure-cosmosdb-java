@@ -35,6 +35,7 @@ import org.testng.annotations.Test;
 import rx.Observable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
@@ -90,23 +91,30 @@ public class QueryValidationTests extends TestSuiteBase {
 
         String collectionLink = Utils.getCollectionNameLink(createdDatabase.getId(), collection.getId());
 
-        List<String> partitionKeys = new ArrayList<>();
-        partitionKeys.add((UUID.randomUUID().toString()));
-        partitionKeys.add(UUID.randomUUID().toString());
+        int partitionDocCount = 5;
+        int pageSize = partitionDocCount + 1;
 
-        List<Document> documentsInserted = this.insertDocuments(
-                DEFAULT_NUM_DOCUMENTS,
-                partitionKeys,
-                collectionLink);
+        String partition1Key = UUID.randomUUID().toString();
+        String partition2Key = UUID.randomUUID().toString();
+
+        List<Document> documentsInserted = new ArrayList<>();
+        documentsInserted.addAll(this.insertDocuments(
+                partitionDocCount,
+                Collections.singletonList(partition1Key),
+                collectionLink));
+        documentsInserted.addAll(this.insertDocuments(
+                partitionDocCount,
+                Collections.singletonList(partition2Key),
+                collectionLink));
 
         String query = String.format(
                 "select * from c where c.mypk in ('%s', '%s') order by c.name DESC",
-                partitionKeys.get(0),
-                partitionKeys.get(1));
+                partition1Key,
+                partition2Key);
 
         queryWithOrderByAndAssert(
-                DEFAULT_PAGE_SIZE,
-                DEFAULT_NUM_DOCUMENTS,
+                pageSize,
+                partitionDocCount * 2,
                 query,
                 "name",
                 collectionLink,
