@@ -150,7 +150,7 @@ public class MurmurHash3_128 {
                 | ((bytes[offset] & 0xffL));
     }
 
-    private static int intAsLittleIndian(byte[] bytes, int i) {
+    private static int intAsLittleEndian(byte[] bytes, int i) {
         return (bytes[i] & 0xff) | ((bytes[i + 1] & 0xff) << 8) | ((bytes[i + 2] & 0xff) << 16) | (bytes[i + 3] << 24);
     }
 }
