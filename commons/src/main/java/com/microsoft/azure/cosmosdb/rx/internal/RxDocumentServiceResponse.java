@@ -52,10 +52,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * This is core Transport/Connection agnostic response for the Azure Cosmos DB database service.
@@ -69,7 +66,8 @@ public class RxDocumentServiceResponse {
         String[] headerNames = response.getResponseHeaderNames();
         String[] headerValues = response.getResponseHeaderValues();
 
-        this.headersMap = new HashMap<>(headerNames.length);
+        // headers in CosmosDB are case insensitive.
+        this.headersMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
         // Gets status code.
         this.statusCode = response.getStatus();
