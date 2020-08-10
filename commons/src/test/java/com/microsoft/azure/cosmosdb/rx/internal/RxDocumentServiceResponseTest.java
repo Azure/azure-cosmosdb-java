@@ -25,14 +25,11 @@ package com.microsoft.azure.cosmosdb.rx.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.StoreResponse;
-import org.apache.commons.io.IOUtils;
 import org.testng.annotations.Test;
 
 public class RxDocumentServiceResponseTest {
