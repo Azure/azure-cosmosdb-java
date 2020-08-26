@@ -49,6 +49,7 @@ public class ClientRetryPolicy implements IDocumentClientRetryPolicy {
 
     final static int RetryIntervalInMS = 1000; //Once we detect failover wait for 1 second before retrying request.
     final static int MaxRetryCount = 120;
+    private final static int MaxServiceUnavailableRetryCount = 1;
 
     private final IDocumentClientRetryPolicy throttlingRetry;
     private final ConnectionPoolExhaustedRetry rxNettyConnectionPoolExhaustedRetry;
@@ -63,6 +64,7 @@ public class ClientRetryPolicy implements IDocumentClientRetryPolicy {
     private RetryContext retryContext;
     private ClientSideRequestStatistics clientSideRequestStatistics;
     private AtomicInteger cnt = new AtomicInteger(0);
+    private int serviceUnavailableRetryCount;
 
     public ClientRetryPolicy(GlobalEndpointManager globalEndpointManager,
                              boolean enableEndpointDiscovery,
@@ -126,8 +128,13 @@ public class ClientRetryPolicy implements IDocumentClientRetryPolicy {
         // Received Connection error (HttpRequestException), initiate the endpoint rediscovery
         if (WebExceptionUtility.isNetworkFailure(e)) {
             if (this.isReadRequest || WebExceptionUtility.isWebExceptionRetriable(e)) {
-                logger.warn("Endpoint not reachable. Will refresh cache and retry. ", e);
-                return this.shouldRetryOnEndpointFailureAsync(this.isReadRequest, false);
+                if (clientException != null && Exceptions.isSubStatusCode(clientException, HttpConstants.SubStatusCodes.GATEWAY_ENDPOINT_UNAVAILABLE)) {
+                    logger.warn("Gateway endpoint not reachable. Will refresh cache and retry. ", e);
+                    return this.shouldRetryOnEndpointFailureAsync(this.isReadRequest, false);
+                } else {
+                    logger.warn("Backend endpoint not reachable. ", e);
+                    return this.shouldRetryOnBackendServiceUnavailableAsync(this.isReadRequest);
+                }
             } else {
                 return this.shouldNotRetryOnEndpointFailureAsync(this.isReadRequest, false);
             }
@@ -206,6 +213,31 @@ public class ClientRetryPolicy implements IDocumentClientRetryPolicy {
         Completable refreshCompletion = this.refreshLocation(isReadRequest, forceRefresh);
         return refreshCompletion.andThen(Single.just(ShouldRetryResult.noRetry()));
     }
+
+    private Single<ShouldRetryResult> shouldRetryOnBackendServiceUnavailableAsync(boolean isReadRequest) {
+		if (this.serviceUnavailableRetryCount++ > MaxServiceUnavailableRetryCount) {
+			logger.warn("shouldRetryOnBackendServiceUnavailableAsync() Not retrying. Retry count = {}", this.serviceUnavailableRetryCount);
+			return Single.just(ShouldRetryResult.noRetry());
+		}
+
+		if (!this.canUseMultipleWriteLocations && ! isReadRequest) {
+			// Write requests on single master cannot be retried, no other regions available
+			return Single.just(ShouldRetryResult.noRetry());
+		}
+
+		int availablePreferredLocations = this.globalEndpointManager.getPreferredLocationCount();
+		if (availablePreferredLocations <= 1) {
+			logger.warn("shouldRetryOnServiceUnavailable() Not retrying. No other regions available for the request. AvailablePreferredLocations = {}", availablePreferredLocations);
+			return Single.just(ShouldRetryResult.noRetry());
+		}
+
+		logger.warn("shouldRetryOnServiceUnavailable() Retrying. Received on endpoint {}, IsReadRequest = {}", this.locationEndpoint, isReadRequest);
+
+		// Retrying on second PreferredLocations
+		// RetryCount is used as zero-based index
+		this.retryContext = new RetryContext(this.serviceUnavailableRetryCount, true);
+		return Single.just(ShouldRetryResult.retryAfter(Duration.ZERO));
+	}
 
     private Completable refreshLocation(boolean isReadRequest, boolean forceRefresh) {
         this.failoverRetryCount++;

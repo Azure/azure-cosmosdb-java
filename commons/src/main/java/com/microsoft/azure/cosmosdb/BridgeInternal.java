@@ -224,6 +224,10 @@ public class BridgeInternal {
         documentClientException.setRequestHeaders(requestHeaders);
     }
 
+    public static void setSubStatusCode(DocumentClientException documentClientException, int subStatusCode) {
+        documentClientException.setSubStatusCode(subStatusCode);
+    }
+
     public static <E extends  DocumentClientException> Map<String, String> getRequestHeaders(DocumentClientException documentClientException) {
         return documentClientException.getRequestHeaders();
     }

@@ -28,9 +28,9 @@ import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.Uri;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * This class defines a custom exception type for all operations on
@@ -51,8 +51,8 @@ public class DocumentClientException extends Exception {
     private static final long serialVersionUID = 1L;
 
     private final Map<String, String> requestHeaders;
-    private final Map<String, String> responseHeaders;
-    private final int statusCode;
+	private final int statusCode;
+    private volatile Map<String, String> responseHeaders;
 
     private volatile ClientSideRequestStatistics clientSideRequestStatistics;
     private volatile Error error;
@@ -320,6 +320,14 @@ public class DocumentClientException extends Exception {
                 ", requestHeaders=" + requestHeaders +
                 '}';
     }
+
+	void setSubStatusCode(int subStatusCode) {
+		if (this.responseHeaders == null) {
+			this.responseHeaders = new HashMap<>();
+		}
+
+		this.responseHeaders.put(HttpConstants.HttpHeaders.SUB_STATUS, Integer.toString(subStatusCode));
+	}
 
     String getInnerErrorMessage() {
         String innerErrorMessage = super.getMessage();

@@ -29,6 +29,7 @@ import com.microsoft.azure.cosmosdb.DatabaseAccount;
 import com.microsoft.azure.cosmosdb.DatabaseAccountManagerInternal;
 import com.microsoft.azure.cosmosdb.internal.routing.LocationCache;
 import com.microsoft.azure.cosmosdb.rx.internal.routing.LocationHelper;
+import org.apache.commons.collections4.list.UnmodifiableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rx.Completable;
@@ -37,8 +38,6 @@ import rx.Scheduler;
 import rx.Single;
 import rx.functions.Func1;
 import rx.schedulers.Schedulers;
-import org.apache.commons.collections4.list.UnmodifiableList;
-
 
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -48,7 +47,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -149,6 +147,10 @@ public class GlobalEndpointManager implements AutoCloseable {
 
     public boolean CanUseMultipleWriteLocations(RxDocumentServiceRequest request) {
         return this.locationCache.canUseMultipleWriteLocations(request);
+    }
+
+    public int getPreferredLocationCount() {
+        return this.connectionPolicy.getPreferredLocations() != null ? this.connectionPolicy.getPreferredLocations().size() : 0;
     }
 
     public void close() {
