@@ -51,7 +51,7 @@ public class DocumentClientException extends Exception {
     private static final long serialVersionUID = 1L;
 
     private final Map<String, String> requestHeaders;
-	private final int statusCode;
+    private final int statusCode;
     private volatile Map<String, String> responseHeaders;
 
     private volatile ClientSideRequestStatistics clientSideRequestStatistics;
