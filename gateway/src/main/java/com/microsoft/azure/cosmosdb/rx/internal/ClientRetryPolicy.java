@@ -127,16 +127,16 @@ public class ClientRetryPolicy implements IDocumentClientRetryPolicy {
 
         // Received Connection error (HttpRequestException), initiate the endpoint rediscovery
         if (WebExceptionUtility.isNetworkFailure(e)) {
-            if (this.isReadRequest || WebExceptionUtility.isWebExceptionRetriable(e)) {
-                if (clientException != null && Exceptions.isSubStatusCode(clientException, HttpConstants.SubStatusCodes.GATEWAY_ENDPOINT_UNAVAILABLE)) {
+            if (clientException != null && Exceptions.isSubStatusCode(clientException, HttpConstants.SubStatusCodes.GATEWAY_ENDPOINT_UNAVAILABLE)) {
+                if (this.isReadRequest || WebExceptionUtility.isWebExceptionRetriable(e)) {
                     logger.warn("Gateway endpoint not reachable. Will refresh cache and retry. ", e);
                     return this.shouldRetryOnEndpointFailureAsync(this.isReadRequest, false);
                 } else {
-                    logger.warn("Backend endpoint not reachable. ", e);
-                    return this.shouldRetryOnBackendServiceUnavailableAsync(this.isReadRequest);
+                    return this.shouldNotRetryOnEndpointFailureAsync(this.isReadRequest, false);
                 }
             } else {
-                return this.shouldNotRetryOnEndpointFailureAsync(this.isReadRequest, false);
+                logger.warn("Backend endpoint not reachable. ", e);
+                return this.shouldRetryOnBackendServiceUnavailableAsync(this.isReadRequest, WebExceptionUtility.isWebExceptionRetriable(e));
             }
         }
 
@@ -214,8 +214,13 @@ public class ClientRetryPolicy implements IDocumentClientRetryPolicy {
         return refreshCompletion.andThen(Single.just(ShouldRetryResult.noRetry()));
     }
 
-    private Single<ShouldRetryResult> shouldRetryOnBackendServiceUnavailableAsync(boolean isReadRequest) {
-		if (this.serviceUnavailableRetryCount++ > MaxServiceUnavailableRetryCount) {
+    private Single<ShouldRetryResult> shouldRetryOnBackendServiceUnavailableAsync(boolean isReadRequest, boolean isWebExceptionRetriable) {
+        if (!isReadRequest && !isWebExceptionRetriable) {
+            logger.warn("shouldRetryOnBackendServiceUnavailableAsync() Not retrying on write with non retriable exception. Retry count = {}", this.serviceUnavailableRetryCount);
+            return Single.just(ShouldRetryResult.noRetry());
+        }
+
+        if (this.serviceUnavailableRetryCount++ > MaxServiceUnavailableRetryCount) {
 			logger.warn("shouldRetryOnBackendServiceUnavailableAsync() Not retrying. Retry count = {}", this.serviceUnavailableRetryCount);
 			return Single.just(ShouldRetryResult.noRetry());
 		}
