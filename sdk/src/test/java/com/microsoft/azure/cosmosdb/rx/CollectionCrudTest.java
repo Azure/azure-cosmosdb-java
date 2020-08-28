@@ -255,7 +255,7 @@ public class CollectionCrudTest extends TestSuiteBase {
 
         // validate
         ResourceResponseValidator<DocumentCollection> validator = new ResourceResponseValidator.Builder<DocumentCollection>()
-                .indexingMode(IndexingMode.Lazy).build();
+                .indexingMode(IndexingMode.Consistent).build();
         validateSuccess(readObservable, validator);
         safeDeleteAllCollections(client, database);
     }
@@ -283,7 +283,7 @@ public class CollectionCrudTest extends TestSuiteBase {
             null).toBlocking().single().getResource();
 
         //  sanity check
-        assertThat(readCollection.getIndexingPolicy().getIndexingMode()).isEqualTo(IndexingMode.Lazy);
+        assertThat(readCollection.getIndexingPolicy().getIndexingMode()).isEqualTo(IndexingMode.Consistent);
 
         Integer timeToLive = 120;
         collection.setDefaultTimeToLive(timeToLive);
@@ -291,7 +291,7 @@ public class CollectionCrudTest extends TestSuiteBase {
         DocumentCollection replacedCollection = client.replaceCollection(collection,
             null).toBlocking().single().getResource();
 
-        assertThat(readCollection.getIndexingPolicy().getIndexingMode()).isEqualTo(IndexingMode.Lazy);
+        assertThat(readCollection.getIndexingPolicy().getIndexingMode()).isEqualTo(IndexingMode.Consistent);
 
         assertThat(replacedCollection.getDefaultTimeToLive()).isEqualTo(timeToLive);
 
