@@ -52,7 +52,7 @@ public class DocumentClientException extends Exception {
 
     private final Map<String, String> requestHeaders;
     private final int statusCode;
-    private volatile Map<String, String> responseHeaders;
+    private Map<String, String> responseHeaders;
 
     private volatile ClientSideRequestStatistics clientSideRequestStatistics;
     private volatile Error error;
@@ -322,10 +322,6 @@ public class DocumentClientException extends Exception {
     }
 
 	void setSubStatusCode(int subStatusCode) {
-		if (this.responseHeaders == null) {
-			this.responseHeaders = new HashMap<>();
-		}
-
 		this.responseHeaders.put(HttpConstants.HttpHeaders.SUB_STATUS, Integer.toString(subStatusCode));
 	}
 

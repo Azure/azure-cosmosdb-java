@@ -221,9 +221,9 @@ public class ClientRetryPolicy implements IDocumentClientRetryPolicy {
         }
 
         if (this.serviceUnavailableRetryCount++ > MaxServiceUnavailableRetryCount) {
-			logger.warn("shouldRetryOnBackendServiceUnavailableAsync() Not retrying. Retry count = {}", this.serviceUnavailableRetryCount);
-			return Single.just(ShouldRetryResult.noRetry());
-		}
+            logger.warn("shouldRetryOnBackendServiceUnavailableAsync() Not retrying. Retry count = {}", this.serviceUnavailableRetryCount);
+            return Single.just(ShouldRetryResult.noRetry());
+        }
 
 		if (!this.canUseMultipleWriteLocations && ! isReadRequest) {
 			// Write requests on single master cannot be retried, no other regions available
