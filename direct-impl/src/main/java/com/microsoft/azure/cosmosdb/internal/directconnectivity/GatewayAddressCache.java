@@ -333,14 +333,37 @@ public class GatewayAddressCache implements IAddressCache {
         Single<RxDocumentServiceResponse> dsrObs = responseObs.toSingle().flatMap(rsp ->
                 HttpClientUtils.parseResponseAsync(rsp));
         return dsrObs.map(
-                dsr -> {
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("getServerAddressesViaGatewayAsync deserializes result");
-                    }
-                    logAddressResolutionEnd(request, identifier);
-                    List<Address> addresses = dsr.getQueryResponse(Address.class);
-                    return addresses;
-                });
+        dsr -> {
+            if (logger.isDebugEnabled()) {
+                logger.debug("getServerAddressesViaGatewayAsync deserializes result");
+            }
+            logAddressResolutionEnd(request, identifier);
+            List<Address> addresses = dsr.getQueryResponse(Address.class);
+            return addresses;
+        }).onErrorResumeNext(throwable -> {
+            if (!(throwable instanceof Exception)) {
+                // fatal error
+                logger.error("Unexpected failure {}", throwable.getMessage(), throwable);
+                return Single.error(throwable);
+            }
+
+            Exception exception = (Exception) throwable;
+            DocumentClientException dce;
+            if (!(exception instanceof DocumentClientException)) {
+                // wrap in DocumentClientException
+                logger.error("Network failure", exception);
+                dce = new DocumentClientException(0, exception);
+                BridgeInternal.setRequestHeaders(dce, request.getHeaders());
+            } else {
+                dce = (DocumentClientException) exception;
+            }
+
+            if (WebExceptionUtility.isNetworkFailure(dce)) {
+                BridgeInternal.setSubStatusCode(dce, HttpConstants.SubStatusCodes.GATEWAY_ENDPOINT_UNAVAILABLE);
+            }
+
+            return Single.error(dce);
+        });
     }
 
     public void dispose() {
