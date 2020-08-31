@@ -52,7 +52,7 @@ public class DocumentClientException extends Exception {
 
     private final Map<String, String> requestHeaders;
     private final int statusCode;
-    private Map<String, String> responseHeaders;
+    private final Map<String, String> responseHeaders;
 
     private volatile ClientSideRequestStatistics clientSideRequestStatistics;
     private volatile Error error;
