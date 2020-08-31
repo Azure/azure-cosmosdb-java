@@ -225,24 +225,24 @@ public class ClientRetryPolicy implements IDocumentClientRetryPolicy {
             return Single.just(ShouldRetryResult.noRetry());
         }
 
-		if (!this.canUseMultipleWriteLocations && ! isReadRequest) {
-			// Write requests on single master cannot be retried, no other regions available
-			return Single.just(ShouldRetryResult.noRetry());
-		}
+        if (!this.canUseMultipleWriteLocations && !isReadRequest) {
+            // Write requests on single master cannot be retried, no other regions available
+            return Single.just(ShouldRetryResult.noRetry());
+        }
 
-		int availablePreferredLocations = this.globalEndpointManager.getPreferredLocationCount();
-		if (availablePreferredLocations <= 1) {
-			logger.warn("shouldRetryOnServiceUnavailable() Not retrying. No other regions available for the request. AvailablePreferredLocations = {}", availablePreferredLocations);
-			return Single.just(ShouldRetryResult.noRetry());
-		}
+        int availablePreferredLocations = this.globalEndpointManager.getPreferredLocationCount();
+        if (availablePreferredLocations <= 1) {
+            logger.warn("shouldRetryOnServiceUnavailable() Not retrying. No other regions available for the request. AvailablePreferredLocations = {}", availablePreferredLocations);
+            return Single.just(ShouldRetryResult.noRetry());
+        }
 
-		logger.warn("shouldRetryOnServiceUnavailable() Retrying. Received on endpoint {}, IsReadRequest = {}", this.locationEndpoint, isReadRequest);
+        logger.warn("shouldRetryOnServiceUnavailable() Retrying. Received on endpoint {}, IsReadRequest = {}", this.locationEndpoint, isReadRequest);
 
-		// Retrying on second PreferredLocations
-		// RetryCount is used as zero-based index
-		this.retryContext = new RetryContext(this.serviceUnavailableRetryCount, true);
-		return Single.just(ShouldRetryResult.retryAfter(Duration.ZERO));
-	}
+        // Retrying on second PreferredLocations
+        // RetryCount is used as zero-based index
+        this.retryContext = new RetryContext(this.serviceUnavailableRetryCount, true);
+        return Single.just(ShouldRetryResult.retryAfter(Duration.ZERO));
+    }
 
     private Completable refreshLocation(boolean isReadRequest, boolean forceRefresh) {
         this.failoverRetryCount++;
