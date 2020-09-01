@@ -1,3 +1,6 @@
+## 2.6.10 - 2020-08-31
+- Fixes region fail over issue for direct tcp calls ([#351](https://github.com/Azure/azure-cosmosdb-java/pull/351))
+
 ## 2.6.9 - 2020-06-15
 - Fixed duplicate results on order by when resuming from continuation token ([#341](https://github.com/Azure/azure-cosmosdb-java/pull/341))
 
