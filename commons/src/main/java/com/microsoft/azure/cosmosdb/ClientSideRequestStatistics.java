@@ -22,6 +22,13 @@
  */
 package com.microsoft.azure.cosmosdb;
 
+import com.microsoft.azure.cosmosdb.internal.OperationType;
+import com.microsoft.azure.cosmosdb.internal.ResourceType;
+import com.microsoft.azure.cosmosdb.internal.Utils;
+import com.microsoft.azure.cosmosdb.internal.directconnectivity.StoreResult;
+import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
+import org.apache.commons.lang3.StringUtils;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Duration;
@@ -36,13 +43,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-
-import com.microsoft.azure.cosmosdb.internal.OperationType;
-import com.microsoft.azure.cosmosdb.internal.ResourceType;
-import com.microsoft.azure.cosmosdb.internal.Utils;
-import com.microsoft.azure.cosmosdb.internal.directconnectivity.StoreResult;
-import com.microsoft.azure.cosmosdb.rx.internal.RxDocumentServiceRequest;
-import org.apache.commons.lang3.StringUtils;
 
 public class ClientSideRequestStatistics {
 
@@ -133,7 +133,7 @@ public class ClientSideRequestStatistics {
         return identifier;
     }
 
-    public void recordAddressResolutionEnd(String identifier) {
+    public void recordAddressResolutionEnd(String identifier, String errorMessage) {
         if (StringUtils.isEmpty(identifier)) {
             return;
         }
@@ -150,6 +150,8 @@ public class ClientSideRequestStatistics {
 
             AddressResolutionStatistics resolutionStatistics = this.addressResolutionStatistics.get(identifier);
             resolutionStatistics.endTime = responseTime;
+            resolutionStatistics.errorMessage = errorMessage;
+            resolutionStatistics.inflightRequest = false;
         }
     }
 
@@ -259,6 +261,8 @@ public class ClientSideRequestStatistics {
         private ZonedDateTime startTime;
         private ZonedDateTime endTime;
         private String targetEndpoint;
+        private String errorMessage;
+        private boolean inflightRequest = true;
 
         AddressResolutionStatistics() {
         }
@@ -266,10 +270,12 @@ public class ClientSideRequestStatistics {
         @Override
         public String toString() {
             return "AddressResolutionStatistics{" +
-                    "startTime=\"" + formatDateTime(startTime) + "\"" +
-                    ", endTime=\"" + formatDateTime(endTime) + "\"" +
-                    ", targetEndpoint='" + targetEndpoint + '\'' +
-                    '}';
+            "startTime=\"" + formatDateTime(startTime) + "\"" +
+            ", endTime=\"" + formatDateTime(endTime) + "\"" +
+            ", inflightRequest='" + inflightRequest + '\'' +
+            ", targetEndpoint='" + targetEndpoint + '\'' +
+            ", errorMessage='" + errorMessage + '\'' +
+            '}';
         }
     }
 }
