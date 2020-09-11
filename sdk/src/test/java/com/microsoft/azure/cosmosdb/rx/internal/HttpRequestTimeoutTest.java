@@ -47,7 +47,6 @@ import static org.assertj.core.api.Assertions.fail;
 
 public class HttpRequestTimeoutTest extends TestSuiteBase {
 
-
 	@Test(groups = {"emulator"}, timeOut = TIMEOUT)
 	public void clientInitialization() {
 		AsyncDocumentClient client = null;
