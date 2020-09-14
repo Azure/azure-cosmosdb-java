@@ -70,7 +70,7 @@ public class ClientSideRequestStatisticsTest extends TestSuiteBase {
 			//Success address resolution client side statistics
 			assertThat(writeResourceResponse.getClientSideRequestStatistics().toString()).contains("AddressResolutionStatistics");
 			assertThat(writeResourceResponse.getClientSideRequestStatistics().toString()).contains("inflightRequest='false'");
-			assertThat(writeResourceResponse.getClientSideRequestStatistics().toString()).doesNotContain("31 Dec +999999999 23:59:59.999");
+			assertThat(writeResourceResponse.getClientSideRequestStatistics().toString()).doesNotContain("endTime=\"null\"");
 			assertThat(writeResourceResponse.getClientSideRequestStatistics().toString()).contains("errorMessage='null'");
 			assertThat(writeResourceResponse.getClientSideRequestStatistics().toString()).doesNotContain("errorMessage='java.nio.channels.ClosedChannelException");
 
@@ -108,7 +108,7 @@ public class ClientSideRequestStatisticsTest extends TestSuiteBase {
 			//Partial success address resolution client side statistics
 			assertThat(readResourceResponse.getClientSideRequestStatistics().toString()).contains("AddressResolutionStatistics");
 			assertThat(readResourceResponse.getClientSideRequestStatistics().toString()).contains("inflightRequest='false'");
-			assertThat(readResourceResponse.getClientSideRequestStatistics().toString()).doesNotContain("31 Dec +999999999 23:59:59.999");
+			assertThat(readResourceResponse.getClientSideRequestStatistics().toString()).doesNotContain("endTime=\"null\"");
 			assertThat(readResourceResponse.getClientSideRequestStatistics().toString()).contains("errorMessage='null'");
 			assertThat(readResourceResponse.getClientSideRequestStatistics().toString()).contains("errorMessage='java.nio.channels.ClosedChannelException");
 		} catch (Exception ex) {

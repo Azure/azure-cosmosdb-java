@@ -123,7 +123,7 @@ public class ClientSideRequestStatistics {
         AddressResolutionStatistics resolutionStatistics = new AddressResolutionStatistics();
         resolutionStatistics.startTime = ZonedDateTime.now(ZoneOffset.UTC);
         //  Very far in the future
-        resolutionStatistics.endTime = ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC);
+        resolutionStatistics.endTime = null;
         resolutionStatistics.targetEndpoint = targetEndpoint == null ? "<NULL>" : targetEndpoint.toString();
 
         synchronized (this) {

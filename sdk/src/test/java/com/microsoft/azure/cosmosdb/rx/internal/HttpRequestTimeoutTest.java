@@ -68,7 +68,7 @@ public class HttpRequestTimeoutTest extends TestSuiteBase {
 	}
 
 	@Test(groups = {"emulator"}, timeOut = TIMEOUT)
-	public void DocumentWrite() {
+	public void documentWrite() {
 		AsyncDocumentClient client = null;
 		try {
 			ConnectionPolicy connectionPolicy = new ConnectionPolicy();
@@ -124,7 +124,7 @@ public class HttpRequestTimeoutTest extends TestSuiteBase {
 	}
 
 	@Test(groups = {"emulator"}, timeOut = TIMEOUT)
-	public void DocumentRead() {
+	public void documentRead() {
 		AsyncDocumentClient client = null;
 		try {
 			ConnectionPolicy connectionPolicy = new ConnectionPolicy();
@@ -185,7 +185,7 @@ public class HttpRequestTimeoutTest extends TestSuiteBase {
 	}
 
 	@Test(groups = {"emulator"}, timeOut = TIMEOUT)
-	public void DocumentQuery() {
+	public void documentQuery() {
 		AsyncDocumentClient client = null;
 		try {
 			ConnectionPolicy connectionPolicy = new ConnectionPolicy();
@@ -240,9 +240,7 @@ public class HttpRequestTimeoutTest extends TestSuiteBase {
 			queryObservable = client.queryDocuments(SHARED_MULTI_PARTITION_COLLECTION.getSelfLink(), "Select * from C", feedOptions);
 			FailureValidator failureValidator = new FailureValidator.Builder().causeInstanceOf(ClosedChannelException.class).build();
 			validateQueryFailure(queryObservable, failureValidator);
-			// TODO https://github.com/Azure/azure-cosmosdb-java/issues/359
-			// After above fix, below check should be on markEndpointUnavailableForRead
-			Mockito.verify(spyGlobalEndpointManager, Mockito.times(0)).markEndpointUnavailableForWrite(Matchers.any(URL.class));
+			Mockito.verify(spyGlobalEndpointManager, Mockito.times(1)).markEndpointUnavailableForRead(Matchers.any(URL.class));
 		} catch (Exception ex) {
 			fail("Should not throw exception in the test" + ex.getMessage());
 		} finally {
