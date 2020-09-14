@@ -32,7 +32,6 @@ import org.apache.commons.lang3.StringUtils;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Duration;
-import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -262,6 +261,10 @@ public class ClientSideRequestStatistics {
         private ZonedDateTime endTime;
         private String targetEndpoint;
         private String errorMessage;
+
+        // If one replica return error we start address call in parallel,
+        // on other replica  valid response, we end the current user request,
+        // indicating background addressResolution is still inflight
         private boolean inflightRequest = true;
 
         AddressResolutionStatistics() {

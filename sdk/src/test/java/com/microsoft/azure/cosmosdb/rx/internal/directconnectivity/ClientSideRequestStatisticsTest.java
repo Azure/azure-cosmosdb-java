@@ -49,7 +49,7 @@ import static org.assertj.core.api.Assertions.fail;
 public class ClientSideRequestStatisticsTest extends TestSuiteBase {
 
 	@Test(groups = {"emulator"}, timeOut = TIMEOUT)
-	public void AddressResolutionStatistics() {
+	public void addressResolutionStatistics() {
 		AsyncDocumentClient client = null;
 		try {
 			ConnectionPolicy connectionPolicy = new ConnectionPolicy();
