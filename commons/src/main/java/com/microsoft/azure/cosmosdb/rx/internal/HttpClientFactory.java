@@ -23,6 +23,7 @@
 
 package com.microsoft.azure.cosmosdb.rx.internal;
 
+import com.microsoft.azure.cosmosdb.internal.Constants;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.ChannelPipeline;
@@ -30,9 +31,7 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.proxy.HttpProxyHandler;
 import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslHandler;
-import io.netty.handler.ssl.SslProvider;
 import io.reactivex.netty.pipeline.PipelineConfigurator;
 import io.reactivex.netty.pipeline.PipelineConfiguratorComposite;
 import io.reactivex.netty.pipeline.ssl.SSLEngineFactory;
@@ -41,15 +40,9 @@ import io.reactivex.netty.protocol.http.HttpObjectAggregationConfigurator;
 import io.reactivex.netty.protocol.http.client.CompositeHttpClientBuilder;
 import io.reactivex.netty.protocol.http.client.HttpClient.HttpClientConfig;
 import io.reactivex.netty.protocol.http.client.HttpClientPipelineConfigurator;
-import io.reactivex.netty.protocol.http.client.HttpClientRequest;
-import io.reactivex.netty.protocol.http.client.HttpClientResponse;
-
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLException;
-
-import com.microsoft.azure.cosmosdb.internal.Constants;
 import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.SSLEngine;
 import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
 
@@ -58,6 +51,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class HttpClientFactory {
     private final static String NETWORK_LOG_CATEGORY = "com.microsoft.azure.cosmosdb.netty-network";
+    private final static int MINIMUM_HTTP_REQUEST_TIMEOUT_IN_MILLIS = 60 * 1000;
 
     private final Configs configs;
     private Integer maxPoolSize;
@@ -85,7 +79,7 @@ public class HttpClientFactory {
     }
 
     public HttpClientFactory withRequestTimeoutInMillis(int requestTimeoutInMillis) {
-        this.requestTimeoutInMillis = requestTimeoutInMillis;
+        this.requestTimeoutInMillis = requestTimeoutInMillis < MINIMUM_HTTP_REQUEST_TIMEOUT_IN_MILLIS ? MINIMUM_HTTP_REQUEST_TIMEOUT_IN_MILLIS : requestTimeoutInMillis;
         return this;
     }
 
