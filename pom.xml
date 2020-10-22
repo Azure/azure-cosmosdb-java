@@ -56,7 +56,7 @@
     <metrics.version>4.1.0</metrics.version>
     <micrometer.version>1.2.0</micrometer.version>
     <mockito.version>1.10.19</mockito.version>
-    <netty.version>4.1.50.Final</netty.version>
+    <netty.version>4.1.53.Final</netty.version>
     <netty-tcnative.version>2.0.26.Final</netty-tcnative.version>
     <rxjava-extras.version>0.8.0.17</rxjava-extras.version>
     <rxjava-string.version>1.1.1</rxjava-string.version>
