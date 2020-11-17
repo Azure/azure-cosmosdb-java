@@ -1,3 +1,6 @@
+## 2.6.11 - 2020-09-15
+- Added http request time out cap for avoiding region failover for high latency request.([#360](https://github.com/Azure/azure-cosmosdb-java/pull/360))
+  
 ## 2.6.10 - 2020-08-31
 - Fixes region fail over issue for direct tcp calls, direct tcp calls network failure will be retried in other
   available region but it wont mark the current region unavailable, and subsequent tcp requests will still go to current region.([#351](https://github.com/Azure/azure-cosmosdb-java/pull/351))
