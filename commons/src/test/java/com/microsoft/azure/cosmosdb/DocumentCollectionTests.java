@@ -51,6 +51,14 @@ public class DocumentCollectionTests {
         assertThat(parsedColl.getPartitionKey().getKind().toString()).isEqualTo(partitionKeyDefinition.getKind().toString());
         assertThat(parsedColl.getPartitionKey().getPaths()).isEqualTo(partitionKeyDefinition.getPaths());
         assertThat(parsedColl.getPartitionKey().getVersion()).isEqualTo(partitionKeyDefinition.getVersion());
+        
+        DocumentCollection multiHashCollection = new DocumentCollection();
+        PartitionKeyDefinition multiHashPKDefinition = new PartitionKeyDefinition();
+        multiHashPKDefinition.setKind(PartitionKind.MultiHash);
+        multiHashPKDefinition.setPaths(ImmutableList.of("/mypk1","/mypk2"));
+        multiHashPKDefinition.setVersion(PartitionKeyDefinitionVersion.V2);
+        multiHashCollection.setPartitionKey(multiHashPKDefinition);
+        
     }
 
     @Test(groups = {"unit"})
