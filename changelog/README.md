@@ -1,3 +1,6 @@
+## 2.6.12 - 2021-01-18
+- Fixed an issue with excessive regional fail-overs when retrieving responses with invalid json from Gateway.
+
 ## 2.6.11 - 2020-09-15
 - Added http request time out cap for avoiding region failover for high latency request.([#360](https://github.com/Azure/azure-cosmosdb-java/pull/360))
   
