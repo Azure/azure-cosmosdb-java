@@ -23,9 +23,12 @@
 
 package com.microsoft.azure.cosmosdb.rx.internal;
 
+import com.microsoft.azure.cosmosdb.BridgeInternal;
 import com.microsoft.azure.cosmosdb.Database;
+import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.DocumentCollection;
 import com.microsoft.azure.cosmosdb.ResourceResponse;
+import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.internal.ResourceType;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
 import com.microsoft.azure.cosmosdb.rx.CollectionCrudTest;
@@ -71,7 +74,9 @@ public class NetworkFailureTest extends TestSuiteBase {
                 RxDocumentServiceRequest request = invocation.getArgumentAt(0, RxDocumentServiceRequest.class);
 
                 if (request.getResourceType() == ResourceType.DocumentCollection) {
-                    return Observable.error(new UnknownHostException());
+                    DocumentClientException dce = new DocumentClientException(0, new UnknownHostException());
+                    BridgeInternal.setSubStatusCode(dce, HttpConstants.SubStatusCodes.GATEWAY_ENDPOINT_UNAVAILABLE);
+                    return Observable.error(dce);
                 }
 
                 return origGatewayStoreModel.processMessage(request);
@@ -79,7 +84,7 @@ public class NetworkFailureTest extends TestSuiteBase {
             }).when(client.getSpyGatewayStoreModel()).processMessage(Mockito.any());
 
 
-            FailureValidator validator = new FailureValidator.Builder().instanceOf(UnknownHostException.class).build();
+            FailureValidator validator = new FailureValidator.Builder().instanceOf(DocumentClientException.class).build();
             Instant start = Instant.now();
             validateFailure(createObservable, validator, TIMEOUT);
             Instant after = Instant.now();

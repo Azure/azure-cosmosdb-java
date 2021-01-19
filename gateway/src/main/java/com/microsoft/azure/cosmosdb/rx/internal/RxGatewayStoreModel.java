@@ -37,6 +37,7 @@ import com.microsoft.azure.cosmosdb.internal.RuntimeConstants;
 import com.microsoft.azure.cosmosdb.internal.UserAgentContainer;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.HttpUtils;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.StoreResponse;
+import com.microsoft.azure.cosmosdb.internal.directconnectivity.WebExceptionUtility;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.HttpMethod;
@@ -401,15 +402,21 @@ class RxGatewayStoreModel implements RxStoreModel {
                         }
 
                         Exception exception = (Exception) throwable;
+                        DocumentClientException dce;
                         if (!(exception instanceof DocumentClientException)) {
                             // wrap in DocumentClientException
                             logger.error("Network failure", exception);
-                            DocumentClientException dce = new DocumentClientException(0, exception);
+                            dce = new DocumentClientException(0, exception);
                             BridgeInternal.setRequestHeaders(dce, request.getHeaders());
-                            return Observable.error(dce);
+                        } else {
+                            dce = (DocumentClientException) exception;
                         }
 
-                        return Observable.error(exception);
+                        if (WebExceptionUtility.isNetworkFailure(dce)) {
+                            BridgeInternal.setSubStatusCode(dce, HttpConstants.SubStatusCodes.GATEWAY_ENDPOINT_UNAVAILABLE);
+                        }
+
+                        return Observable.error(dce);
                     });
         }
     }

@@ -276,7 +276,7 @@ public class HttpConstants {
         // TODO: FIXME we can use maven plugin for generating a version file
         // @see
         // https://stackoverflow.com/questions/2469922/generate-a-version-java-file-in-maven
-        public static final String SDK_VERSION = "2.6.8";
+        public static final String SDK_VERSION = "2.6.12";
         public static final String SDK_NAME = "cosmosdb-java-sdk";
         public static final String QUERY_VERSION = "1.0";
     }
@@ -323,6 +323,9 @@ public class HttpConstants {
 
         // 404: LSN in session token is higher
         public static final int READ_SESSION_NOT_AVAILABLE = 1002;
+
+        // Client generated gateway network error substatus
+        public static final int GATEWAY_ENDPOINT_UNAVAILABLE = 10001;
     }
 
     public static class HeaderValues {

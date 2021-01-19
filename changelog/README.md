@@ -1,3 +1,16 @@
+## 2.6.12 - 2021-01-18
+- Fixed an issue with excessive regional fail-overs when retrieving responses with invalid json from Gateway.
+
+## 2.6.11 - 2020-09-15
+- Added http request time out cap for avoiding region failover for high latency request.([#360](https://github.com/Azure/azure-cosmosdb-java/pull/360))
+  
+## 2.6.10 - 2020-08-31
+- Fixes region fail over issue for direct tcp calls, direct tcp calls network failure will be retried in other
+  available region but it wont mark the current region unavailable, and subsequent tcp requests will still go to current region.([#351](https://github.com/Azure/azure-cosmosdb-java/pull/351))
+
+## 2.6.9 - 2020-06-15
+- Fixed duplicate results on order by when resuming from continuation token ([#341](https://github.com/Azure/azure-cosmosdb-java/pull/341))
+
 ## 2.6.8 - 2020-05-11
 - Fixes an issue due to which the order by results when resuming from continuation token might contain duplicates/missing documents ([#332](https://github.com/Azure/azure-cosmosdb-java/pull/332))
 
