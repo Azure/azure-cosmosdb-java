@@ -33,6 +33,7 @@ import io.netty.channel.pool.ChannelHealthChecker;
 import io.netty.channel.pool.ChannelPool;
 import io.netty.channel.pool.ChannelPoolHandler;
 import io.netty.handler.logging.LoggingHandler;
+import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.AttributeKey;
 import org.slf4j.Logger;
@@ -134,7 +135,8 @@ public class RntbdClientChannelHandler extends ChannelInitializer<Channel> imple
         }
 
         pipeline.addFirst(
-            this.config.sslContext().newHandler(channel.alloc()),
+            // Initialize sslHandler with jdkCompatibilityMode = true for openssl context.
+            new SslHandler(this.config.sslContext().newEngine(channel.alloc())),
             new IdleStateHandler(readerIdleTime, writerIdleTime, allIdleTime, TimeUnit.NANOSECONDS)
         );
 
