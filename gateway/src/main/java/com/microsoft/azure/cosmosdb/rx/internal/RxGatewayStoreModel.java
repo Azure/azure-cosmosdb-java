@@ -537,11 +537,18 @@ class RxGatewayStoreModel implements RxStoreModel {
     private void applySessionToken(RxDocumentServiceRequest request) {
         Map<String, String> headers = request.getHeaders();
 
-        if (headers != null &&
-                !Strings.isNullOrEmpty(request.getHeaders().get(HttpConstants.HttpHeaders.SESSION_TOKEN))) {
-            if (ReplicatedResourceClientUtils.isMasterResource(request.getResourceType())) {
+        // Master resource operations don't require session token.
+        if (isMasterOperation(request.getResourceType(), request.getOperationType())) {
+            if (isSessionTokenPresent(request)) {
                 request.getHeaders().remove(HttpConstants.HttpHeaders.SESSION_TOKEN);
             }
+            return;
+        }
+
+        //  NOTE: Words of wisdom: do not combine these two checks
+        //  We want to make sure if session token is not present then we don't add it in case of master operation.
+        //  Which the above check takes care of.
+        if (isSessionTokenPresent(request)) {
             return; //User is explicitly controlling the session.
         }
 
@@ -552,7 +559,7 @@ class RxGatewayStoreModel implements RxStoreModel {
                         (!Strings.isNullOrEmpty(requestConsistencyLevel)
                                 && Strings.areEqual(requestConsistencyLevel, ConsistencyLevel.Session.name()));
 
-        if (!sessionConsistency || ReplicatedResourceClientUtils.isMasterResource(request.getResourceType())) {
+        if (!sessionConsistency) {
             return; // Only apply the session token in case of session consistency and when resource is not a master resource
         }
 
@@ -562,5 +569,21 @@ class RxGatewayStoreModel implements RxStoreModel {
         if (!Strings.isNullOrEmpty(sessionToken)) {
             headers.put(HttpConstants.HttpHeaders.SESSION_TOKEN, sessionToken);
         }
-    }    
+    }
+
+    private boolean isSessionTokenPresent(RxDocumentServiceRequest request) {
+        return request.getHeaders() != null && !Strings.isNullOrEmpty(request.getHeaders().get(HttpConstants.HttpHeaders.SESSION_TOKEN));
+    }
+
+    private static boolean isMasterOperation(ResourceType resourceType, OperationType operationType) {
+        // Stored procedures CRUD operations are done on master so they do not require the session token.
+        // Stored procedures execute is not a master operation
+        return ReplicatedResourceClientUtils.isMasterResource(resourceType) ||
+            isStoredProcedureMasterOperation(resourceType, operationType) ||
+            operationType == OperationType.QueryPlan;
+    }
+
+    private static boolean isStoredProcedureMasterOperation(ResourceType resourceType, OperationType operationType) {
+        return resourceType == ResourceType.StoredProcedure && operationType != OperationType.ExecuteJavaScript;
+    }
 }
