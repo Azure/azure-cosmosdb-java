@@ -1,3 +1,6 @@
+## 2.6.13 - 2021-01-20
+- Fixes "request headers is too long" for query plan and CRUD operations on stored procedures.
+
 ## 2.6.12 - 2021-01-18
 - Fixed an issue with excessive regional fail-overs when retrieving responses with invalid json from Gateway.
 
