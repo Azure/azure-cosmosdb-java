@@ -37,7 +37,7 @@ For example, using maven, you can add the following dependency to your maven pom
 <dependency>
   <groupId>com.microsoft.azure</groupId>
   <artifactId>azure-cosmosdb</artifactId>
-  <version>2.6.12</version>
+  <version>2.6.13</version>
 </dependency>
 ```
 
