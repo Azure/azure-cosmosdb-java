@@ -1,5 +1,10 @@
 # Java SDK for SQL API of Azure Cosmos DB
 
+> [!IMPORTANT]
+> Retirement of this SDK (Azure Cosmos DB Async Java SDK v2.x) has been announced for August 31, 2024.
+> We recommend upgrading to [Azure Cosmos DB Java SDK v4](https://docs.microsoft.com/azure/cosmos-db/sql-api-sdk-java-v4).
+> Please visit our [Azure Cosmos DB Java SDK migration guide](https://docs.microsoft.com/azure/cosmos-db/migrate-java-v4-sdk?tabs=java-v4-async) for details on the benefits of migration and the migration process.
+
 [![Maven Central](https://img.shields.io/maven-central/v/com.microsoft.azure/azure-cosmosdb.svg)](https://search.maven.org/artifact/com.microsoft.azure/azure-cosmosdb/)
 [![Build Status](https://api.travis-ci.org/Azure/azure-cosmosdb-java.svg?branch=master)](https://travis-ci.org/Azure/azure-cosmosdb-java)
 [![Known Vulnerabilities](https://snyk.io/test/github/Azure/azure-cosmosdb-java/badge.svg?targetFile=sdk%2Fpom.xml)](https://snyk.io/test/github/Azure/azure-cosmosdb-java?targetFile=sdk%2Fpom.xml)
