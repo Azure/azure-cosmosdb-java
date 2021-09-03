@@ -278,7 +278,7 @@ public final class ConnectionPolicy {
      * is also set to true.
      *
      * Default value is false indicating that writes are directed to
-     * first region in PreferredLocations property or the primary account region if no PreferredLocations are specified. 
+     * first region in PreferredLocations property if it's a write region or the primary account region if no PreferredLocations are specified. 
      *
      * The value should match your account configuration.
      * 
@@ -316,7 +316,7 @@ public final class ConnectionPolicy {
      * is also set to true.
      *
      * Default value is false indicating that writes are directed to
-     * first region in PreferredLocations property or the primary account region if no PreferredLocations are specified. 
+     * first region in PreferredLocations property if it's a write region or the primary account region if no PreferredLocations are specified. 
      *
      * The value should match your account configuration.
      * 
