@@ -277,8 +277,12 @@ public final class ConnectionPolicy {
      * to true has no effect until EnableMultipleWriteLocations in DatabaseAccount
      * is also set to true.
      *
-     * Default value is false indicating that writes are only directed to
-     * first region in PreferredLocations property.
+     * Default value is false indicating that writes are directed to
+     * first region in PreferredLocations property if it's a write region or the primary account region if no PreferredLocations are specified. 
+     *
+     * The value should match your account configuration.
+     * 
+     * During the client lifetime, writes can change regional endpoint in the case of any event described at https://docs.microsoft.com/azure/cosmos-db/troubleshoot-sdk-availability
      *
      * @return flag to enable writes on any locations (regions) for geo-replicated database accounts.
      */
@@ -311,8 +315,12 @@ public final class ConnectionPolicy {
      * to true has no effect until EnableMultipleWriteLocations in DatabaseAccount
      * is also set to true.
      *
-     * Default value is false indicating that writes are only directed to
-     * first region in PreferredLocations property.
+     * Default value is false indicating that writes are directed to
+     * first region in PreferredLocations property if it's a write region or the primary account region if no PreferredLocations are specified. 
+     *
+     * The value should match your account configuration.
+     * 
+     * During the client lifetime, writes can change regional endpoint in the case of any event described at https://docs.microsoft.com/azure/cosmos-db/troubleshoot-sdk-availability
      *
      * @param usingMultipleWriteLocations flag to enable writes on any locations (regions) for geo-replicated database accounts.
      */
