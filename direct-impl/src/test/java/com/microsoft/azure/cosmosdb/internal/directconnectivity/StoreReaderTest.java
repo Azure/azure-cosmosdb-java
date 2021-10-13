@@ -708,13 +708,24 @@ public class StoreReaderTest {
         StoreReader storeReader = new StoreReader(transportClient, addressSelector, sessionContainer);
 
         long bigLsn = 3629783308L;
+
+        // Test parsing GLSN from storeResponse
         StoreResponse storeResponse = StoreResponseBuilder.create()
-        .withLSN(bigLsn)
-        .withLocalLSN(bigLsn)
-        .withGlobalCommittedLsn(bigLsn)
-        .build();
+                .withLSN(bigLsn)
+                .withLocalLSN(bigLsn)
+                .withGlobalCommittedLsn(bigLsn)
+                .build();
 
         StoreResult result = storeReader.createStoreResult(storeResponse, null, false, false, null);
+        assertThat(result.globalCommittedLSN).isEqualTo(bigLsn);
+        assertThat(result.lsn).isEqualTo(bigLsn);
+
+        // Test parsing GLSN from cosmosException
+        GoneException goneException = new GoneException();
+        goneException.getResponseHeaders().put(WFConstants.BackendHeaders.GLOBAL_COMMITTED_LSN, Long.toString(bigLsn));
+        goneException.getResponseHeaders().put(WFConstants.BackendHeaders.LOCAL_LSN, Long.toString(bigLsn));
+
+        result = storeReader.createStoreResult(null, goneException, false, true, null);
         assertThat(result.globalCommittedLSN).isEqualTo(bigLsn);
         assertThat(result.lsn).isEqualTo(bigLsn);
     }
