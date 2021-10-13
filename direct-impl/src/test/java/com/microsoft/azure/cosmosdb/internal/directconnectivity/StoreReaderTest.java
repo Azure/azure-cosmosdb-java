@@ -716,7 +716,7 @@ public class StoreReaderTest {
                 .withGlobalCommittedLsn(bigLsn)
                 .build();
 
-        StoreResult result = storeReader.createStoreResult(storeResponse, null, false, false, null);
+        StoreResult result = storeReader.createStoreResult(storeResponse, new GoneException(),false, false, null);
         assertThat(result.globalCommittedLSN).isEqualTo(bigLsn);
         assertThat(result.lsn).isEqualTo(bigLsn);
 
