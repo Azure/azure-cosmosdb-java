@@ -787,7 +787,7 @@ public class StoreReader {
 
                 headerValue = documentClientException.getResponseHeaders().get(WFConstants.BackendHeaders.GLOBAL_COMMITTED_LSN);
                 if (!Strings.isNullOrEmpty(headerValue)) {
-                    globalCommittedLSN = Integer.parseInt(headerValue);
+                    globalCommittedLSN = Long.parseLong(headerValue);
                 }
 
                 long lsn = -1;
