@@ -1,3 +1,6 @@
+## 2.6.14 - 2021-10-14
+- Fixed an issue with "NumberFormatException" happening on requests on large containers.
+
 ## 2.6.13 - 2021-01-20
 - Fixed "request headers is too long" for query plan and CRUD operations on stored procedures.
 - Fixed issue with enabling openssl.
