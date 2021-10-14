@@ -684,6 +684,52 @@ public class StoreReaderTest {
         };
     }
 
+    @Test(groups = "unit")
+    public void canParseLongLsn() throws DocumentClientException {
+        TransportClient transportClient = Mockito.mock(TransportClient.class);
+        AddressSelector addressSelector = Mockito.mock(AddressSelector.class);
+        ISessionContainer sessionContainer = Mockito.mock(ISessionContainer.class);
+
+        Uri primaryURI = Uri.create("primaryLoc");
+
+        RxDocumentServiceRequest request = RxDocumentServiceRequest.createFromName(
+        OperationType.Read, "/dbs/db/colls/col/docs/docId", ResourceType.Document);
+
+        request.requestContext = Mockito.mock(DocumentServiceRequestContext.class);
+        request.requestContext.timeoutHelper = Mockito.mock(TimeoutHelper.class);
+        Mockito.doReturn(true).when(request.requestContext.timeoutHelper).isElapsed();
+        request.requestContext.resolvedPartitionKeyRange = partitionKeyRangeWithId("12");
+        request.requestContext.requestChargeTracker = new RequestChargeTracker();
+
+        Mockito.doReturn(Single.just(primaryURI)).when(addressSelector).resolvePrimaryUriAsync(
+        Mockito.eq(request) , Mockito.eq(false));
+
+
+        StoreReader storeReader = new StoreReader(transportClient, addressSelector, sessionContainer);
+
+        long bigLsn = 3629783308L;
+
+        // Test parsing GLSN from storeResponse
+        StoreResponse storeResponse = StoreResponseBuilder.create()
+                .withLSN(bigLsn)
+                .withLocalLSN(bigLsn)
+                .withGlobalCommittedLsn(bigLsn)
+                .build();
+
+        StoreResult result = storeReader.createStoreResult(storeResponse, null,false, false, null);
+        assertThat(result.globalCommittedLSN).isEqualTo(bigLsn);
+        assertThat(result.lsn).isEqualTo(bigLsn);
+
+        // Test parsing GLSN from cosmosException
+        GoneException goneException = new GoneException();
+        goneException.getResponseHeaders().put(WFConstants.BackendHeaders.GLOBAL_COMMITTED_LSN, Long.toString(bigLsn));
+        goneException.getResponseHeaders().put(WFConstants.BackendHeaders.LOCAL_LSN, Long.toString(bigLsn));
+
+        result = storeReader.createStoreResult(null, goneException, false, true, null);
+        assertThat(result.globalCommittedLSN).isEqualTo(bigLsn);
+        assertThat(result.lsn).isEqualTo(bigLsn);
+    }
+
     @Test(groups = "unit", dataProvider = "readMultipleReplicasAsyncArgProvider")
     public void readMultipleReplicasAsync(boolean includePrimary, int replicaCountToRead, ReadMode readMode) {
         // This adds basic tests for StoreReader.readMultipleReplicasAsync(.) without failure
