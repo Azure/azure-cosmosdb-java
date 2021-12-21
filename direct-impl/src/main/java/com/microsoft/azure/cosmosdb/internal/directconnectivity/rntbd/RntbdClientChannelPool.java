@@ -605,12 +605,15 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
         }
 
         private void fail(Throwable cause) {
-            if (this.acquired) {
-                this.pool.decrementAndRunTaskQueue();
-            } else {
-                this.pool.runTaskQueue();
-            }
             this.originalPromise.setFailure(cause);
+
+            if (!this.pool.isClosed()) {
+                if (this.acquired) {
+                    this.pool.decrementAndRunTaskQueue();
+                } else {
+                    this.pool.runTaskQueue();
+                }
+            }
         }
     }
 
