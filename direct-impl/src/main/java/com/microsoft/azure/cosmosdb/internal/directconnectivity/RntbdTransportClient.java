@@ -245,7 +245,7 @@ public final class RntbdTransportClient extends TransportClient implements AutoC
             this.bufferPageSize = 8192;
             this.connectionTimeout = null;
             this.idleChannelTimeout = Duration.ZERO;
-            this.idleEndpointTimeout = Duration.ofSeconds(70L);
+            this.idleEndpointTimeout = Duration.ofHours(1);
             this.maxBufferCapacity = 8192 << 10;
             this.maxChannelsPerEndpoint = 10;
             this.maxRequestsPerChannel = 30;
