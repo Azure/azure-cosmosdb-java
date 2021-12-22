@@ -612,6 +612,7 @@ public final class RntbdClientChannelPool extends SimpleChannelPool {
                     this.pool.runTaskQueue();
                 }
             }
+
             this.originalPromise.setFailure(cause);
         }
     }
