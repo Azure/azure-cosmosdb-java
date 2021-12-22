@@ -1,3 +1,6 @@
+## 2.6.15 - 2021-12-21
+- Fixed stale address cache on illegalStateException for old service endpoint.([#395](https://github.com/Azure/azure-cosmosdb-java/pull/397))
+
 ## 2.6.14 - 2021-10-14
 - Fixed an issue with "NumberFormatException" happening on requests on large containers.
 
