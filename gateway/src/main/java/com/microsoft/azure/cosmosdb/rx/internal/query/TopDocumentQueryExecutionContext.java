@@ -132,7 +132,8 @@ public class TopDocumentQueryExecutionContext<T extends Resource> implements IDo
                                     sourceContinuationToken);
                             headers.put(HttpConstants.HttpHeaders.CONTINUATION, takeContinuationToken.toJson());
                         } else {
-                            // Null out the continuation token
+                            // Null out the continuation token. The sourceContinuationToken being null means
+                            // that this is the last page and there are no more elements left to fetch.
                             headers.put(HttpConstants.HttpHeaders.CONTINUATION, null);
                         }
                     } else {
