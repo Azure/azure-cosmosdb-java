@@ -35,7 +35,7 @@ SOFTWARE.
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <test.groups>unit</test.groups>
-    <guava.version>27.0.1-jre</guava.version>
+    <guava.version>29.0-jre</guava.version>
     <jackson-datatype-jsr310.version>2.9.9</jackson-datatype-jsr310.version>
     <metrics.version>4.1.0</metrics.version>
     <micrometer.version>1.2.0</micrometer.version>
