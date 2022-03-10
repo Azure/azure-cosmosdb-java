@@ -1,3 +1,6 @@
+## 2.6.16 - 2022-03-10
+- Fixed the response header 'x-ms-continuation' value issue for top query.([#402](https://github.com/Azure/azure-cosmosdb-java/pull/402))
+
 ## 2.6.15 - 2021-12-21
 - Fixed stale address cache on illegalStateException for old service endpoint.([#395](https://github.com/Azure/azure-cosmosdb-java/pull/397))
 
