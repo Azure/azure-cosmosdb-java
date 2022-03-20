@@ -25,13 +25,7 @@ package com.microsoft.azure.cosmosdb.internal.directconnectivity;
 
 import com.microsoft.azure.cosmosdb.ConsistencyLevel;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
-import com.microsoft.azure.cosmosdb.internal.HttpConstants;
-import com.microsoft.azure.cosmosdb.internal.ISessionToken;
-import com.microsoft.azure.cosmosdb.internal.InternalServerErrorException;
-import com.microsoft.azure.cosmosdb.internal.OperationType;
-import com.microsoft.azure.cosmosdb.internal.ResourceType;
-import com.microsoft.azure.cosmosdb.internal.SessionContainer;
-import com.microsoft.azure.cosmosdb.internal.SessionTokenHelper;
+import com.microsoft.azure.cosmosdb.internal.*;
 import com.microsoft.azure.cosmosdb.rx.internal.BackoffRetryUtility;
 import com.microsoft.azure.cosmosdb.rx.internal.Configs;
 import com.microsoft.azure.cosmosdb.rx.internal.Exceptions;
@@ -199,7 +193,7 @@ public class StoreClient implements IStoreClient {
         ISessionToken sessionToken = null;
         String sessionTokenResponseHeader = headers.get(HttpConstants.HttpHeaders.SESSION_TOKEN);
         if (!Strings.isNullOrEmpty(sessionTokenResponseHeader)) {
-            sessionToken = SessionTokenHelper.parse(sessionTokenResponseHeader);
+            sessionToken = SessionTokenParser.parse(sessionTokenResponseHeader);
         }
 
         if (sessionToken != null) {

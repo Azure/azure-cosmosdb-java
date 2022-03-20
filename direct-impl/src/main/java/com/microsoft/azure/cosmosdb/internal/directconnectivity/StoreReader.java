@@ -27,13 +27,7 @@ import com.microsoft.azure.cosmosdb.BridgeInternal;
 import com.microsoft.azure.cosmosdb.ClientSideRequestStatistics;
 import com.microsoft.azure.cosmosdb.DocumentClientException;
 import com.microsoft.azure.cosmosdb.ISessionContainer;
-import com.microsoft.azure.cosmosdb.internal.HttpConstants;
-import com.microsoft.azure.cosmosdb.internal.ISessionToken;
-import com.microsoft.azure.cosmosdb.internal.Integers;
-import com.microsoft.azure.cosmosdb.internal.InternalServerErrorException;
-import com.microsoft.azure.cosmosdb.internal.MutableVolatile;
-import com.microsoft.azure.cosmosdb.internal.OperationType;
-import com.microsoft.azure.cosmosdb.internal.SessionTokenHelper;
+import com.microsoft.azure.cosmosdb.internal.*;
 import com.microsoft.azure.cosmosdb.rx.internal.BadRequestException;
 import com.microsoft.azure.cosmosdb.rx.internal.PartitionIsMigratingException;
 import com.microsoft.azure.cosmosdb.rx.internal.PartitionKeyRangeIsSplittingException;
@@ -732,7 +726,7 @@ public class StoreReader {
             // Session token response header is introduced from version HttpConstants.Versions.v2018_06_18 onwards.
             // Previously it was only a request header
             if ((headerValue = storeResponse.getHeaderValue(HttpConstants.HttpHeaders.SESSION_TOKEN)) != null) {
-                sessionToken = SessionTokenHelper.parse(headerValue);
+                sessionToken = SessionTokenParser.parse(headerValue);
             }
 
             return new StoreResult(
@@ -806,7 +800,7 @@ public class StoreReader {
                 // Previously it was only a request header
                 headerValue = documentClientException.getResponseHeaders().get(HttpConstants.HttpHeaders.SESSION_TOKEN);
                 if (!Strings.isNullOrEmpty(headerValue)) {
-                    sessionToken = SessionTokenHelper.parse(headerValue);
+                    sessionToken = SessionTokenParser.parse(headerValue);
                 }
 
                 return new StoreResult(

@@ -209,7 +209,7 @@ public final class SessionContainer implements ISessionContainer {
 
         String[] tokenParts = StringUtils.split(token, ':');
         partitionKeyRangeId = tokenParts[0];
-        parsedSessionToken = SessionTokenHelper.parse(tokenParts[1]);
+        parsedSessionToken = SessionTokenParser.parse(tokenParts[1]);
 
         logger.trace("Update Session token {} {} {}", resourceId.getUniqueDocumentCollectionId(), collectionName, parsedSessionToken);
 
