@@ -1,17 +1,17 @@
 /*
  * The MIT License (MIT)
  * Copyright (c) 2018 Microsoft Corporation
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -52,40 +52,29 @@ class ChangeFeedQueryImpl<T extends Resource> {
     private final String documentsLink;
     private final ChangeFeedOptions options;
 
-    public ChangeFeedQueryImpl(RxDocumentClientImpl client, 
-            ResourceType resourceType, 
-            Class<T> klass,
-            String collectionLink,
-            ChangeFeedOptions changeFeedOptions) {
+    public ChangeFeedQueryImpl(RxDocumentClientImpl client,
+                               ResourceType resourceType,
+                               Class<T> klass,
+                               String collectionLink,
+                               ChangeFeedOptions changeFeedOptions) {
 
         this.client = client;
         this.resourceType = resourceType;
         this.klass = klass;
         this.documentsLink = Utils.joinPath(collectionLink, Paths.DOCUMENTS_PATH_SEGMENT);
-        changeFeedOptions = changeFeedOptions != null ? changeFeedOptions: new ChangeFeedOptions();
-        
+        changeFeedOptions = changeFeedOptions != null ? changeFeedOptions : new ChangeFeedOptions();
 
-        if (resourceType.isPartitioned() && changeFeedOptions.getPartitionKeyRangeId() == null && changeFeedOptions.getPartitionKey() == null) {
-            throw new IllegalArgumentException(RMResources.PartitionKeyRangeIdOrPartitionKeyMustBeSpecified);
-        }
-
-        if (changeFeedOptions.getPartitionKey() != null && 
-                !Strings.isNullOrEmpty(changeFeedOptions.getPartitionKeyRangeId())) {
-
-            throw new IllegalArgumentException(String.format(
-                    RMResources.PartitionKeyAndParitionKeyRangeIdBothSpecified
-                    , "feedOptions"));
-        }
+        validateChangeFeedQuery(resourceType, changeFeedOptions);
 
         String initialNextIfNoneMatch = null;
-        
+
         boolean canUseStartFromBeginning = true;
         if (changeFeedOptions.getRequestContinuation() != null) {
             initialNextIfNoneMatch = changeFeedOptions.getRequestContinuation();
             canUseStartFromBeginning = false;
         }
 
-        if(changeFeedOptions.getStartDateTime() != null){
+        if (changeFeedOptions.getStartDateTime() != null) {
             canUseStartFromBeginning = false;
         }
 
@@ -96,6 +85,20 @@ class ChangeFeedQueryImpl<T extends Resource> {
         this.options = getChangeFeedOptions(changeFeedOptions, initialNextIfNoneMatch);
     }
 
+    private void validateChangeFeedQuery(ResourceType resourceType, ChangeFeedOptions changeFeedOptions) {
+        if (resourceType.isPartitioned() && changeFeedOptions.getPartitionKeyRangeId() == null && changeFeedOptions.getPartitionKey() == null) {
+            throw new IllegalArgumentException(RMResources.PartitionKeyRangeIdOrPartitionKeyMustBeSpecified);
+        }
+
+        if (changeFeedOptions.getPartitionKey() != null &&
+                !Strings.isNullOrEmpty(changeFeedOptions.getPartitionKeyRangeId())) {
+
+            throw new IllegalArgumentException(String.format(
+                    RMResources.PartitionKeyAndParitionKeyRangeIdBothSpecified
+                    , "feedOptions"));
+        }
+    }
+
     private RxDocumentServiceRequest createDocumentServiceRequest(String continuationToken, int pageSize) {
         Map<String, String> headers = new HashMap<>();
 
@@ -104,7 +107,7 @@ class ChangeFeedQueryImpl<T extends Resource> {
         }
 
         // On REST level, change feed is using IfNoneMatch/ETag instead of continuation.
-        if(continuationToken != null) {
+        if (continuationToken != null) {
             headers.put(HttpConstants.HttpHeaders.IF_NONE_MATCH, continuationToken);
         }
 
@@ -115,7 +118,7 @@ class ChangeFeedQueryImpl<T extends Resource> {
             headers.put(HttpConstants.HttpHeaders.PARTITION_KEY, partitionKey.toJson());
         }
 
-        if(options.getStartDateTime() != null){
+        if (options.getStartDateTime() != null) {
             String dateTimeInHttpFormat = Utils.zonedDateTimeAsUTCRFC1123(options.getStartDateTime());
             headers.put(HttpConstants.HttpHeaders.IF_MODIFIED_SINCE, dateTimeInHttpFormat);
         }
@@ -139,7 +142,7 @@ class ChangeFeedQueryImpl<T extends Resource> {
         newOps.setRequestContinuation(continuationToken);
         return newOps;
     }
-    
+
     public Observable<FeedResponse<T>> executeAsync() {
 
         Func2<String, Integer, RxDocumentServiceRequest> createRequestFunc = (continuationToken, pageSize) -> this.createDocumentServiceRequest(continuationToken, pageSize);
@@ -147,11 +150,11 @@ class ChangeFeedQueryImpl<T extends Resource> {
         // TODO: clean up if we want to use single vs observable.
         Func1<RxDocumentServiceRequest, Observable<FeedResponse<T>>> executeFunc = request -> this.executeRequestAsync(request).toObservable();
 
-        return Paginator.getPaginatedChangeFeedQueryResultAsObservable(options, createRequestFunc, executeFunc, klass, options.getMaxItemCount() != null ? options.getMaxItemCount(): -1);
+        return Paginator.getPaginatedChangeFeedQueryResultAsObservable(options, createRequestFunc, executeFunc, klass, options.getMaxItemCount() != null ? options.getMaxItemCount() : -1);
     }
 
     private Single<FeedResponse<T>> executeRequestAsync(RxDocumentServiceRequest request) {
         return client.readFeed(request).toSingle()
-                .map( rsp -> BridgeInternal.toChaneFeedResponsePage(rsp, klass));
+                .map(rsp -> BridgeInternal.toChaneFeedResponsePage(rsp, klass));
     }
 }
