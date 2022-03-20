@@ -66,11 +66,11 @@ class ChangeFeedQueryImpl<T extends Resource> {
 
         validateChangeFeedQuery(resourceType, changeFeedOptions);
 
-        String initialNextIfNoneMatch = null;
+        String requestContinuation = null;
 
         boolean canUseStartFromBeginning = true;
         if (changeFeedOptions.getRequestContinuation() != null) {
-            initialNextIfNoneMatch = changeFeedOptions.getRequestContinuation();
+            requestContinuation = changeFeedOptions.getRequestContinuation();
             canUseStartFromBeginning = false;
         }
 
@@ -79,10 +79,10 @@ class ChangeFeedQueryImpl<T extends Resource> {
         }
 
         if (canUseStartFromBeginning && !changeFeedOptions.isStartFromBeginning()) {
-            initialNextIfNoneMatch = IfNonMatchAllHeaderValue;
+            requestContinuation = IfNonMatchAllHeaderValue;
         }
 
-        this.options = getChangeFeedOptions(changeFeedOptions, initialNextIfNoneMatch);
+        this.options = getChangeFeedOptions(changeFeedOptions, requestContinuation);
     }
 
     private void validateChangeFeedQuery(ResourceType resourceType, ChangeFeedOptions changeFeedOptions) {
