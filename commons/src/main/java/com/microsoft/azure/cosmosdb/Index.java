@@ -163,4 +163,28 @@ public abstract class Index extends JsonSerializable {
     private void setKind(IndexKind indexKind) {
         super.set(Constants.Properties.INDEX_KIND, indexKind.name());
     }
+
+    /**
+     * Gets data type.
+     *
+     * @return the data type.
+     */
+    public DataType getDataType() {
+        DataType result = null;
+        try {
+            result = DataType.valueOf(WordUtils.capitalize(super.getString(Constants.Properties.DATA_TYPE)));
+        } catch (IllegalArgumentException e) {
+            this.getLogger().warn("Invalid index dataType value {}.", super.getString(Constants.Properties.DATA_TYPE));
+        }
+        return result;
+    }
+
+    /**
+     * Sets data type.
+     *
+     * @param dataType the data type.
+     */
+    public void setDataType(DataType dataType) {
+        super.set(Constants.Properties.DATA_TYPE, dataType.name());
+    }
 }
