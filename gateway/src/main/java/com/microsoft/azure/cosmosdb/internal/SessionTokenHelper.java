@@ -117,7 +117,7 @@ public class SessionTokenHelper {
                 throw new BadRequestException(String.format(RMResources.InvalidSessionToken, partitionKeyRangeId));
             }
 
-            ISessionToken parsedSessionToken = SessionTokenHelper.parse(items[1]);
+            ISessionToken parsedSessionToken = SessionTokenParser.parse(items[1]);
 
             if (partitionKeyRangeSet.contains(items[0])) {
 
@@ -154,26 +154,6 @@ public class SessionTokenHelper {
         }
 
         return null;
-    }
-
-    public static ISessionToken parse(String sessionToken) {
-        ValueHolder<ISessionToken> partitionKeyRangeSessionToken = ValueHolder.initialize(null);
-
-        if (SessionTokenHelper.tryParse(sessionToken, partitionKeyRangeSessionToken)) {
-            return partitionKeyRangeSessionToken.v;
-        } else {
-            throw new  RuntimeException(new BadRequestException(String.format(RMResources.InvalidSessionToken, sessionToken)));
-        }
-    }
-
-    static boolean tryParse(String sessionToken, ValueHolder<ISessionToken> parsedSessionToken) {
-        parsedSessionToken.v = null;
-        if (!Strings.isNullOrEmpty(sessionToken)) {
-            String[] sessionTokenSegments = StringUtils.split(sessionToken,":");
-            return VectorSessionToken.tryCreate(sessionTokenSegments[sessionTokenSegments.length - 1], parsedSessionToken);
-        } else {
-            return false;
-        }
     }
 
     public static void validateAndRemoveSessionToken(RxDocumentServiceRequest request) throws DocumentClientException {
