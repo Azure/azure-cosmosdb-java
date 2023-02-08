@@ -85,31 +85,6 @@ public final class HashIndex extends Index {
     }
 
     /**
-     * Gets data type.
-     *
-     * @return the data type.
-     */
-    public DataType getDataType() {
-        DataType result = null;
-        try {
-            result = DataType.valueOf(WordUtils.capitalize(super.getString(Constants.Properties.DATA_TYPE)));
-        } catch (IllegalArgumentException e) {
-            // Ignore exception and let the caller handle null value.
-            this.getLogger().warn("Invalid index dataType value {}.", super.getString(Constants.Properties.DATA_TYPE));
-        }
-        return result;
-    }
-
-    /**
-     * Sets data type.
-     *
-     * @param dataType the data type.
-     */
-    public void setDataType(DataType dataType) {
-        super.set(Constants.Properties.DATA_TYPE, dataType.name());
-    }
-
-    /**
      * Gets precision.
      *
      * @return the precision.

@@ -36,6 +36,7 @@ import com.microsoft.azure.cosmosdb.ResourceResponse;
 import com.microsoft.azure.cosmosdb.internal.HttpConstants;
 import com.microsoft.azure.cosmosdb.internal.ISessionToken;
 import com.microsoft.azure.cosmosdb.internal.SessionTokenHelper;
+import com.microsoft.azure.cosmosdb.internal.SessionTokenParser;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.WFConstants;
 import com.microsoft.azure.cosmosdb.internal.routing.PartitionKeyInternal;
 import com.microsoft.azure.cosmosdb.rx.AsyncDocumentClient;
@@ -206,7 +207,7 @@ public class ConsistencyTests2 extends ConsistencyTestsBase {
             ResourceResponse<Document> childResource = writeClient.createDocument(parentResource.getSelfLink(), documentDefinition, null, true).toBlocking().first();
             logger.info("Created {} child resource", childResource.getResource().getResourceId());
 
-            String token = childResource.getSessionToken().split(":")[0] + ":" + this.createSessionToken(SessionTokenHelper.parse(childResource.getSessionToken()), 100000000).convertToString();
+            String token = childResource.getSessionToken().split(":")[0] + ":" + this.createSessionToken(SessionTokenParser.parse(childResource.getSessionToken()), 100000000).convertToString();
 
             FeedOptions feedOptions = new FeedOptions();
             feedOptions.setPartitionKey(new PartitionKey(PartitionKeyInternal.Empty.toJson()));
@@ -270,7 +271,7 @@ public class ConsistencyTests2 extends ConsistencyTestsBase {
                         String lsnHeaderValue = queryResponse.getResponseHeaders().get(WFConstants.BackendHeaders.LSN);
                         long lsn = Long.valueOf(lsnHeaderValue);
                         String sessionTokenHeaderValue = queryResponse.getResponseHeaders().get(HttpConstants.HttpHeaders.SESSION_TOKEN);
-                        ISessionToken sessionToken = SessionTokenHelper.parse(sessionTokenHeaderValue);
+                        ISessionToken sessionToken = SessionTokenParser.parse(sessionTokenHeaderValue);
                         logger.info("Session Token = {}, LSN = {}", sessionToken.convertToString(), lsn);
                         assertThat(lsn).isEqualTo(sessionToken.getLSN());
                     } catch (Exception ex) {
@@ -282,7 +283,7 @@ public class ConsistencyTests2 extends ConsistencyTestsBase {
                                 String lsnHeaderValue = clientException.getResponseHeaders().get(WFConstants.BackendHeaders.LSN);
                                 long lsn = Long.valueOf(lsnHeaderValue);
                                 String sessionTokenHeaderValue = clientException.getResponseHeaders().get(HttpConstants.HttpHeaders.SESSION_TOKEN);
-                                ISessionToken sessionToken = SessionTokenHelper.parse(sessionTokenHeaderValue);
+                                ISessionToken sessionToken = SessionTokenParser.parse(sessionTokenHeaderValue);
 
                                 logger.info("Session Token = {}, LSN = {}", sessionToken.convertToString(), lsn);
                                 assertThat(lsn).isEqualTo(sessionToken.getLSN());

@@ -40,12 +40,7 @@ import com.microsoft.azure.cosmosdb.RequestOptions;
 import com.microsoft.azure.cosmosdb.Resource;
 import com.microsoft.azure.cosmosdb.ResourceResponse;
 import com.microsoft.azure.cosmosdb.User;
-import com.microsoft.azure.cosmosdb.internal.HttpConstants;
-import com.microsoft.azure.cosmosdb.internal.ISessionToken;
-import com.microsoft.azure.cosmosdb.internal.ResourceType;
-import com.microsoft.azure.cosmosdb.internal.SessionContainer;
-import com.microsoft.azure.cosmosdb.internal.SessionTokenHelper;
-import com.microsoft.azure.cosmosdb.internal.VectorSessionToken;
+import com.microsoft.azure.cosmosdb.internal.*;
 import com.microsoft.azure.cosmosdb.internal.directconnectivity.WFConstants;
 import com.microsoft.azure.cosmosdb.internal.routing.PartitionKeyInternalHelper;
 import com.microsoft.azure.cosmosdb.internal.routing.Range;
@@ -692,7 +687,7 @@ public class ConsistencyTestsBase extends TestSuiteBase {
 
             // this token can read childresource2 but not childresource1
             String sessionToken =
-                    StringUtils.split(childResource1.getSessionToken(), ':')[0] + ":" + createSessionToken(SessionTokenHelper.parse(childResource1.getSessionToken()), 100000000).convertToString() + "," + childResource2.getSessionToken();
+                    StringUtils.split(childResource1.getSessionToken(), ':')[0] + ":" + createSessionToken(SessionTokenParser.parse(childResource1.getSessionToken()), 100000000).convertToString() + "," + childResource2.getSessionToken();
 
             RequestOptions option = new RequestOptions();
             option.setSessionToken(sessionToken);
@@ -771,7 +766,7 @@ public class ConsistencyTestsBase extends TestSuiteBase {
 
     private String getDifferentLSNToken(String token, long lsnDifferent) throws Exception {
         String[] tokenParts = StringUtils.split(token, ':');
-        ISessionToken sessionToken = SessionTokenHelper.parse(tokenParts[1]);
+        ISessionToken sessionToken = SessionTokenParser.parse(tokenParts[1]);
         ISessionToken differentSessionToken = createSessionToken(sessionToken, sessionToken.getLSN() + lsnDifferent);
         return String.format("%s:%s", tokenParts[0], differentSessionToken.convertToString());
     }
